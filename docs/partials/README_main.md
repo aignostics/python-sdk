@@ -62,17 +62,18 @@ fi
 uv tool install copier                                # Install copier as global tool
 ```
 
-**Step 2**: [Create an empty repository on GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository), clone to your local machine, and change into it's directory.
+**Step 2**: [Create a repository on GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository), clone to your local machine, and change into it's directory.
 
 **Step 3**: Generate the project. Copy
 ```shell
+# ensure to stand in a git repository before executing the next command
 copier copy --trust gh:helmut-hoffer-von-ankershoffen/oe-python-template .
 ```
 
 **Step 4**: Perform initial commit and push. Copy the following code into your terminal and execute it.
 ```shell
 git add .
-git commit -m "feat: Initial commit"
+git commit -m "chore: Initial commit"
 git push
 ```
 
