@@ -81,7 +81,7 @@ html_theme_options = {
         '<a target="_blank" href="https://github.com/aignostics/python-sdk">GitHub</a> - '
         '<a target="_blank" href="https://pypi.org/project/aignostics">PyPI</a> - '
         '<a target="_blank" href="https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags">Docker</a> - '
-        '<a target="_blank" href="https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk">SonarQube</a> - '  # noqa: E501
+        '<a target="_blank" href="https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk">SonarQube</a> - '
         '<a target="_blank" href="https://app.codecov.io/gh/aignostics/python-sdk">Codecov</a>'
     ),
 }
