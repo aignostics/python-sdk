@@ -123,7 +123,7 @@ Notes:
 ### Docker
 
 ```shell
-docker build -t aignostics-python-sdk .
+docker build -t aignostics .
 ```
 
 ```shell

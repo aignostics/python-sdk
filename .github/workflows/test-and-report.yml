@@ -65,7 +65,7 @@ jobs:
 
       - name: Validate installation
         run: |
-            OUTPUT=$(uv run aignostics-python-sdk --help)
+            OUTPUT=$(uv run aignostics --help)
             if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
             echo "Output does not contain 'built with love in Berlin'"
             exit 1
@@ -73,7 +73,7 @@ jobs:
 
       - name: Smoke tests
         run: |
-          uv run aignostics-python-sdk hello-world
+          uv run aignostics hello-world
 
       - name: Run unit tests, measure coverage, lint, and check vulnerabilities
         run: |

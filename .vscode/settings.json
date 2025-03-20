@@ -71,6 +71,6 @@
     "github.copilot.chat.search.semanticTextResults": true,
     "sonarlint.connectedMode.project": {
         "connectionId": "aignostics-gmbh",
-        "projectKey": "aignostics-gmbh_aignostics-python-sdk"
+        "projectKey": "aignostics_python-sdk"
     }
 }
