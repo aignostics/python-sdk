@@ -1,0 +1,36 @@
+# Read the Docs configuration file for Aignostics Python SDK
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Don't publish the docs if there are any warnings, as they might be relevant
+# https://github.com/readthedocs/readthedocs.org/issues/6837#issuecomment-607229633
+sphinx:
+  builder: html
+  configuration: docs/source/conf.py
+  fail_on_warning: true
+
+# Formats of the documentation to be built
+formats:
+  - htmlzip
+  - pdf
+
+# Build configuration
+# We use Ubuntu 22.04 with Python 3.12 and set up uv as package manager
+# for faster and more reliable dependency installation
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.12"
+  apt_packages:
+    - imagemagick
+  jobs:
+    install:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+      - echo $READTHEDOCS_VIRTUALENV_PATH
+      - uv venv $READTHEDOCS_VIRTUALENV_PATH
+      - . ${READTHEDOCS_VIRTUALENV_PATH}/bin/activate
+      - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --frozen --all-extras

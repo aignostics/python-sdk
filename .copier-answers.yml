@@ -1,0 +1,23 @@
+_commit: v0.6.27
+_src_path: gh:helmut-hoffer-von-ankershoffen/oe-python-template
+author_email: helmut@aignostics.com
+author_github_username: helmut-hoffer-von-ankershoffen
+author_name: Helmut Hoffer von Ankershoffen
+docker_io_enabled: true
+docker_io_image_name: aignostics-python-sdk
+docker_io_owner: helmuthva
+github_repository_name: python-sdk
+github_repository_owner: aignostics
+github_repository_url_https: https://github.com/aignostics/python-sdk
+github_repository_url_ssh: git@github.com:aignostics/python-sdk.git
+import_package_name: aignostics
+org_email: support@aignostics.com
+org_name: Aignostics GmbH
+project_description: Python SDK providing access to Aignostics AI services.
+project_icon: 🔬
+project_name: Aignostics Python SDK
+pypi_distribution_name: aignostics
+readthedocs_domain: readthedocs.org
+readthedocs_project_key: aignostics
+sonarqube_key: aignostics_python-sdk
+streamlit_project_key: aignostics

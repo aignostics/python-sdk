@@ -1,0 +1,27 @@
+{
+    "recommendations": [
+        "charliermarsh.ruff",
+        "codecov.codecov",
+        "donjayamanne.python-environment-manager",
+        "fill-labs.dependi",
+        "github.vscode-github-actions",
+        "github.copilot",
+        "github.copilot-chat",
+        "gruntfuggly.todo-tree",
+        "joshrmosier.streamlit-runner",
+        "kaih2o.python-resource-monitor",
+        "marimo-team.vscode-marimo",
+        "mikestead.dotenv",
+        "ms-azuretools.vscode-docker",
+        "ms-python.debugpy",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "oderwat.indent-rainbow",
+        "samuelcolvin.jinjahtml",
+        "sonarsource.sonarlint-vscode",
+        "tamasfe.even-better-toml",
+        "tomoki1207.pdf",
+        "wayou.vscode-todo-highlight",
+    ]
+}

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "postCreateCommand:start"
+echo "postCreateCommand:end"

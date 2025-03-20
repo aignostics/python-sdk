@@ -1,0 +1,28 @@
+#!/bin/sh
+# Wrapper script for running nox tasks with uv.
+# Allows simpler commands: `./n <session>` instead of `uv run nox -s <session>`
+
+if [ $# -lt 1 ]; then
+echo "Usage: ./n <session_name> [additional_args]"
+    echo "Examples:"
+    echo " ./n setup_dev"
+    echo " ./n lint"
+    echo " ./n docs"
+    echo " ./n audit"
+    echo " ./n test"
+    echo " ./n act"
+    echo " ./n update_from_template"
+    echo " ./n bump patch"
+    echo " ./n bump minor"
+    echo " ./n bump major"
+    echo " ./n bump x.y.z"
+    echo " ./n docs_pdf"
+    exit 1
+    fi
+
+
+    session=$1
+    shift # Remove the first argument, remaining args will be passed through
+
+    # Execute the command, forwarding all output
+    exec uv run nox -s "$session" -- "$@"

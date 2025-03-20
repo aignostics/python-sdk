@@ -1,0 +1,76 @@
+# .pre-commit-config.yaml
+default_install_hook_types:
+  - pre-commit
+  - post-checkout
+  - post-merge
+  - post-rewrite
+fail_fast: true
+repos:
+  - repo: meta
+    hooks:
+      - id: check-useless-excludes
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+        exclude: "^examples/notebook.py$"
+      - id: python-check-mock-methods
+      - id: python-no-eval
+      - id: python-no-log-warn
+      - id: python-use-type-annotations
+      - id: rst-backticks
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+      - id: text-unicode-replacement-char
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-merge-conflict
+        args: ["--assume-in-merge"]
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+        exclude: |
+          (?x)^(
+            test.*|
+            mkdocs.yml
+          )$
+        args: [--allow-multiple-documents]
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: "^tests/fixtures/|.json$"
+      - id: fix-byte-order-marker
+      - id: fix-encoding-pragma
+        args: ["--remove"]
+      - id: mixed-line-ending
+      - id: name-tests-test
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+        exclude: "docs/source/_static"
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        additional_dependencies: ["gibberish-detector"]
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.6.5
+    hooks:
+      - id: uv-lock
+  - repo: local
+    hooks:
+      - id: nox
+        name: nox
+        entry: uv run nox
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true

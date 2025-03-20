@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "postAttachCommand:start"
+echo "postAttachCommand:end"

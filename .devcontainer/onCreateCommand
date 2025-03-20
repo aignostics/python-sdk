@@ -1,0 +1,9 @@
+#!/bin/sh
+
+echo "onCreateCommand: start"
+git config --global --add safe.directory /workspaces/aignostics-python-sdk
+rm -rf .nox
+rm -rf .venv
+uv sync --frozen
+uv run pre-commit install
+echo "onCreateCommand: end"

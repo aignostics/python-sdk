@@ -1,0 +1,113 @@
+name: "CI"
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y libcairo2
+
+      - name: Install dev tools
+        run: |
+          sudo apt-get install -y curl jq xsltproc gnupg2 libcairo2
+
+      - name: Install uv (python package manager)
+        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
+        with:
+          version: "0.6.3"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install Python, venv and dependencies
+        run: |
+          uv sync --all-extras --frozen --link-mode=copy
+
+      - name: Release version check
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+
+          if [ "$TAG_VERSION" != "$TOML_VERSION" ]; then
+            echo "Release version mismatch: Tag $TAG_VERSION != pyproject.toml $TOML_VERSION"
+            exit 1
+          fi
+
+      - name: Print development version info
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
+
+      - name: Create .env file
+        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
+        with:
+          envkey_ENV_KEY: "ENV_VALUE"
+          fail_on_empty: true
+
+      - name: Validate installation
+        run: |
+            OUTPUT=$(uv run aignostics-python-sdk --help)
+            if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
+            echo "Output does not contain 'built with love in Berlin'"
+            exit 1
+            fi
+
+      - name: Smoke tests
+        run: |
+          uv run aignostics-python-sdk hello-world
+
+      - name: Run unit tests, measure coverage, lint, and check vulnerabilities
+        run: |
+          uv run nox
+
+      - name: Upload test results
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        with:
+          name: test-results
+          path: |
+            junit.xml
+            coverage.xml
+            coverage_html/
+            vulnerabilities.json
+            licenses.json
+            licenses-inverted.json
+          retention-days: 30
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: aignostics/python-sdk
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        uses: codecov/test-results-action@f2dba722c67b86c6caa034178c6e4d35335f6706 # v1.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: SonarQube Scan
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d # v5.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

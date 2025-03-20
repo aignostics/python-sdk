@@ -1,0 +1,78 @@
+# .gitignore of project Aignostics Python SDK
+
+# Environment
+.env
+.env.backup
+.env.bak
+ENV/
+env/
+.envrc
+
+## secrets
+.secret
+.secrets
+.secrets.toml
+.secrets.yaml
+.secrets.yml
+.secrets.json
+.act-env-secret
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python temps
+*.py[cdo]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+*.log
+dist/
+build/
+eggs/
+parts/
+sdist/
+develop-eggs/
+.installed.cfg
+.Python
+.pytest_cache/
+.ruff_cache/
+.nox
+.dmypy.json
+.mypy_cache/
+.coverage
+.coverage.*
+
+
+# Build Report
+reports/*
+!reports/.keep
+!reports/README.md
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Other OS
+lib/
+lib64/
+
+# Data
+var/
+tmp/
+
+# Node temps
+node_modules/
+
+# AI workflow
+.fixme
+
+# Copier
+*.rej
+
+# Application specific

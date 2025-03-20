@@ -1,0 +1,51 @@
+{
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/va-h/devcontainers-features/uv:1": {},
+		"ghcr.io/dhoeric/features/act:1": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/java:1": {},
+		"ghcr.io/devcontainers/features/node:1": {}
+	},
+	"onCreateCommand": ".devcontainer/onCreateCommand",
+	"postCreateCommand": ".devcontainer/postCreateCommand",
+	"postAttachCommand": ".devcontainer/postAttachCommand",
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"charliermarsh.ruff",
+				"codecov.codecov",
+				"donjayamanne.python-environment-manager",
+				"fill-labs.dependi",
+				"github.vscode-github-actions",
+				"github.copilot",
+				"github.copilot-chat",
+				"gruntfuggly.todo-tree",
+		        "joshrmosier.streamlit-runner",
+				"kaih2o.python-resource-monitor",
+		        "marimo-team.vscode-marimo",
+				"mikestead.dotenv",
+				"ms-azuretools.vscode-docker",
+				"ms-python.debugpy",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-toolsai.jupyter",
+				"oderwat.indent-rainbow",
+				"samuelcolvin.jinjahtml",
+				"sonarsource.sonarlint-vscode",
+				"tamasfe.even-better-toml",
+				"tomoki1207.pdf",
+				"wayou.vscode-todo-highlight"
+			]
+		}
+	},
+	"mounts": [
+		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
+	],
+	"forwardPorts": []
+}

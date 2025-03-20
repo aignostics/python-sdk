@@ -1,0 +1,35 @@
+services:
+  aignostics:
+    build: .
+    env_file:
+      - path: .env
+        required: true
+    develop:
+      watch:
+        - path: src
+          action: rebuild
+    restart: no
+    profiles:
+      - manual
+    tty: true
+    stdin_open: true
+  aignostics-api:
+    build: .
+    env_file:
+      - path: .env
+        required: true
+    develop:
+      watch:
+        - path: src
+          action: rebuild
+    command: serve --host=0.0.0.0 --port=8000 --no-reload
+    restart: always
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8000/healthz" ]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+      start_period: 5s
+      start_interval: 1s
