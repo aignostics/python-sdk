@@ -1,8 +1,10 @@
-_commit: v0.6.33
+_commit: v0.6.34
 _src_path: gh:helmut-hoffer-von-ankershoffen/oe-python-template
+attestations_enabled: false
 author_email: helmut@aignostics.com
 author_github_username: helmut-hoffer-von-ankershoffen
 author_name: Helmut Hoffer von Ankershoffen
+codeql_enabled: false
 docker_io_enabled: true
 docker_io_image_name: aignostics-python-sdk
 docker_io_owner: helmuthva
