@@ -3,10 +3,28 @@ Traceback (most recent call last):
     from aignostics.cli import cli
   File "/Users/helmut/Code/opt/src/aignostics/cli.py", line 7, in <module>
     import typer
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/__init__.py", line 7, in <module>
-    from click.exceptions import Abort as Abort
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/click/__init__.py", line 8, in <module>
-    from .core import Argument as Argument
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/__init__.py", line 29, in <module>
+    from .main import Typer as Typer
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/main.py", line 21, in <module>
+    from .core import (
+    ...<6 lines>...
+    )
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/core.py", line 36, in <module>
+    from . import rich_utils
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/rich_utils.py", line 18, in <module>
+    from rich.markdown import Markdown
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/rich/markdown.py", line 6, in <module>
+    from markdown_it import MarkdownIt
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/__init__.py", line 5, in <module>
+    from .main import MarkdownIt
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/main.py", line 10, in <module>
+    from .parser_core import ParserCore
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/parser_core.py", line 12, in <module>
+    from .rules_core import (
+    ...<7 lines>...
+    )
+  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/rules_core/__init__.py", line 17, in <module>
+    from .smartquotes import smartquotes
   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
   File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
   File "<frozen importlib._bootstrap>", line 935, in _load_unlocked

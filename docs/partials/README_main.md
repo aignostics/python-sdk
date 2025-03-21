@@ -1,35 +1,43 @@
 Python SDK providing access to Aignostics AI services.
 
-This [Copier](https://copier.readthedocs.io/en/stable/) template enables you to quickly generate a Python package with fully functioning build and test automation.
-Projects generated from this template can be [easily updated](https://copier.readthedocs.io/en/stable/updating/) to benefit from improvements and new features of the template.
+### Scaffolding
 
-Features:
-1. Package management with [uv](https://github.com/astral-sh/uv)
-2. Code formatting with [Ruff](https://github.com/astral-sh/ruff)
-3. Linting with [Ruff](https://github.com/astral-sh/ruff)
-4. Static type checking with [mypy](https://mypy.readthedocs.io/en/stable/)
-5. Complete set of [pre-commit](https://pre-commit.com/) hooks including [detect-secrets](https://github.com/Yelp/detect-secrets) and [pygrep](https://github.com/pre-commit/pygrep-hooks)
-6. Unit and E2E testing with [pytest](https://docs.pytest.org/en/stable/) including parallel test execution
-7. Matrix testing in multiple environments with [nox](https://nox.thea.codes/en/stable/)
-8. Test coverage reported with [Codecov](https://codecov.io/) and published as release artifact
-9. CI/CD pipeline automated with [GitHub Actions](https://github.com/features/actions)
-10. CI/CD pipeline can be run locally with [act](https://github.com/nektos/act)
-11. Code quality and security checks with [SonarQube](https://www.sonarsource.com/products/sonarcloud) and [GitHub CodeQL](https://codeql.github.com/)
-12. Dependency monitoring with [pip-audit](https://pypi.org/project/pip-audit/), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
-13. Licenses of dependencies extracted with [pip-licenses](https://pypi.org/project/pip-licenses/) and published as release artifacts in CSV and JSON format for compliance checks
-14. Software Bill of Materials (SBOM) generated with [cyclonedx-python](https://github.com/CycloneDX/cyclonedx-python) and published as release artifact
-15. Version and release management with [bump-my-version](https://callowayproject.github.io/bump-my-version/)
-16. Changelog and release notes generated with [git-cliff](https://git-cliff.org/)
-17. Documentation generated with [Sphinx](https://www.sphinx-doc.org/en/master/) including reference documentation and PDF export
-18. Documentation published to [Read The Docs](https://readthedocs.org/)
-19. Interactive OpenAPI specification with [Swagger](https://swagger.io/)
-20. Python package published to [PyPI](https://pypi.org/)
-21. Docker images published to [Docker.io](https://hub.docker.com/) and [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) with [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
-22. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
-23. Settings for use with [VSCode](https://code.visualstudio.com/)
-24. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+This [Copier](https://copier.readthedocs.io/en/stable/) template enables you to quickly generate (scaffold) a Python package with fully functioning build and test automation:
 
-The generated project includes code, documentation and configuration of a fully functioning demo-application and service, which can be used as a starting point for your own project.
+1. Projects generated from this template can be [easily updated](https://copier.readthedocs.io/en/stable/updating/) to benefit from improvements and new features of the template.
+2. During project generation, you can flexibly configure naming of the Python distribution, import package, main author, GitHub repository, organization, and many other aspects to match your specific requirements (see [copier.yml](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template/blob/main/copier.yml) for all available options).
+
+### Development Infrastructure
+
+Projects generated with this template come with a comprehensive development toolchain and quality assurance framework that supports the entire software development lifecycle - from coding and testing to documentation, release management, and compliance auditing. This infrastructure automates routine tasks, enforces code quality standards, and streamlines the path to production:
+
+1. Linting with [Ruff](https://github.com/astral-sh/ruff)
+2. Static type checking with [mypy](https://mypy.readthedocs.io/en/stable/)
+3. Complete set of [pre-commit](https://pre-commit.com/) hooks including [detect-secrets](https://github.com/Yelp/detect-secrets) and [pygrep](https://github.com/pre-commit/pygrep-hooks)
+4. Unit and E2E testing with [pytest](https://docs.pytest.org/en/stable/) including parallel test execution
+5. Matrix testing in multiple environments with [nox](https://nox.thea.codes/en/stable/)
+6. Test coverage reported with [Codecov](https://codecov.io/) and published as release artifact
+7. CI/CD pipeline automated with [GitHub Actions](https://github.com/features/actions)
+8. CI/CD pipeline can be run locally with [act](https://github.com/nektos/act)
+9. Code quality and security checks with [SonarQube](https://www.sonarsource.com/products/sonarcloud) and [GitHub CodeQL](https://codeql.github.com/)
+10. Dependency monitoring with [pip-audit](https://pypi.org/project/pip-audit/), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+11. Licenses of dependencies extracted with [pip-licenses](https://pypi.org/project/pip-licenses/) and published as release artifacts in CSV and JSON format for compliance checks
+12. Software Bill of Materials (SBOM) generated with [cyclonedx-python](https://github.com/CycloneDX/cyclonedx-python) and published as release artifact
+13. Version and release management with [bump-my-version](https://callowayproject.github.io/bump-my-version/)
+14. Changelog and release notes generated with [git-cliff](https://git-cliff.org/)
+15. Documentation generated with [Sphinx](https://www.sphinx-doc.org/en/master/) including reference documentation and PDF export
+16. Documentation published to [Read The Docs](https://readthedocs.org/)
+17. Interactive OpenAPI specification with [Swagger](https://swagger.io/)
+18. Python package published to [PyPI](https://pypi.org/)
+19. Docker images published to [Docker.io](https://hub.docker.com/) and [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) with [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
+20. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
+21. Settings for use with [VSCode](https://code.visualstudio.com/)
+22. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+
+### Application Features
+
+Beyond development tooling, projects generated with this template include the code, documentation, and configuration of a fully functioning demo application and service. This reference implementation serves as a starting point for your own business logic with modern patterns and practices already in place:
+
 1. Service architecture suitable for use as shared library
 2. Validation with [pydantic](https://docs.pydantic.dev/)
 3. Command-line interface (CLI) with [Typer](https://typer.tiangolo.com/)
@@ -87,9 +95,10 @@ external services such as CloudCov, SonarQube Cloud, Read The Docs, Docker.io, a
 ./n bump
 ```
 Notes:
-1. You can remove this section post having successfully generated your project.
-2. The following sections refer to the dummy application and service provided by this template.
-   Use them as inspiration and adapt them to your own project.
+1. You can remove the above sections - from "Scaffolding" to this notes - post having successfully generated your project.
+2. The following sections refer to the dummy application and service generated into the `tests` and `src` folder by this template.
+   Use the documentation and code as inspiration, adapt to your business logic, or remove and start documenting and coding from scratch.
+
 
 ## Overview
 
