@@ -54,28 +54,25 @@ def test_echo_endpoint_valid_input(client: TestClient) -> None:
     """Test that the echo endpoint returns the input text."""
     test_text = "Test message"
 
-    response = client.post(ECHO_PATH_V1, json={"text": test_text})
+    response = client.get(f"{ECHO_PATH_V1}/{test_text}")
     assert response.status_code == 200
-    assert response.json() == {"message": test_text}
+    assert response.json() == {"text": test_text.upper()}
 
-    response = client.post(ECHO_PATH_V2, json={"utterance": test_text})
+    response = client.post(ECHO_PATH_V2, json={"text": test_text})
     assert response.status_code == 200
-    assert response.json() == {"message": test_text}
+    assert response.json() == {"text": test_text.upper()}
 
 
 def test_echo_endpoint_empty_text(client: TestClient) -> None:
     """Test that the echo endpoint validates empty text."""
-    response = client.post(ECHO_PATH_V1, json={"text": ""})
-    assert response.status_code == 422  # Validation error
-
-    response = client.post(ECHO_PATH_V2, json={"utterance": ""})
+    response = client.post(ECHO_PATH_V2, json={"text": ""})
     assert response.status_code == 422  # Validation error
 
 
 def test_echo_endpoint_missing_text(client: TestClient) -> None:
     """Test that the echo endpoint validates missing text field."""
-    response = client.post(ECHO_PATH_V1, json={})
-    assert response.status_code == 422  # Validation error
+    response = client.get(ECHO_PATH_V1)
+    assert response.status_code == 404  # Not found
 
     response = client.post(ECHO_PATH_V2, json={})
     assert response.status_code == 422  # Validation error

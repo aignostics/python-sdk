@@ -1,8 +1,10 @@
-"""Service of Aignostics Python SDK."""
+"""Service of Aignostics Python SDK's."""
 
 import os
 
 from dotenv import load_dotenv
+
+from aignostics.models import Echo, Utterance
 
 load_dotenv()
 THE_VAR = os.getenv("THE_VAR", "not defined")
@@ -33,3 +35,19 @@ class Service:
             bool: True if the service is healthy, False otherwise.
         """
         return self.is_healthy
+
+    @staticmethod
+    def echo(utterance: Utterance) -> Echo:
+        """
+        Loudly echo utterance.
+
+        Args:
+            utterance (Utterance): The utterance to echo.
+
+        Returns:
+            Echo: The loudly echoed utterance.
+
+        Raises:
+            ValueError: If the utterance is empty or contains only whitespace.
+        """
+        return Echo(text=utterance.text.upper())

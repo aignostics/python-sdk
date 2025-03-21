@@ -125,7 +125,6 @@ dev = [
     "sphinx-copybutton>=0.5.2",
     "sphinx-inline-tabs>=2023.4.21",
     "sphinx-mdinclude>=0.6.2",
-    "sphinx-pydantic>=0.1.1",
     "sphinx-rtd-theme>=3.0.2",
     "sphinx_selective_exclude>=1.0.3",
     "sphinx-toolbox>=3.9.0",
@@ -135,6 +134,12 @@ dev = [
     "types-pyyaml>=6.0.12.20241230",
     "watchdog>=6.0.0",
 ]
+
+[tool.uv]
+override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
+    "rfc3987; sys_platform == 'never'",                 # GPLv3
+]
+
 
 [tool.ruff]
 target-version = "py311"

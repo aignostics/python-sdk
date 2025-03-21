@@ -29,9 +29,15 @@ def test_cli_built_with_love(runner) -> None:
 
 def test_cli_echo(runner: CliRunner) -> None:
     """Check hello world printed."""
-    result = runner.invoke(cli, ["echo", "4711"])
+    result = runner.invoke(cli, ["echo", "hello"])
     assert result.exit_code == 0
-    assert "4711" in result.output
+    assert "HELLO" in result.output
+
+
+def test_cli_echo_fails_on_silence(runner: CliRunner) -> None:
+    """Check hello world printed."""
+    result = runner.invoke(cli, ["echo", ""])
+    assert result.exit_code == 1
 
 
 def test_cli_hello_world(runner: CliRunner) -> None:
@@ -64,7 +70,7 @@ def test_cli_openapi_yaml(runner: CliRunner) -> None:
     assert "info:" in result.output
     assert "paths:" in result.output
     # Check for specific v1 elements
-    assert "EchoRequest:" in result.output
+    assert "Echo:" in result.output
 
     result = runner.invoke(cli, ["openapi", "--api-version", "v2"])
     assert result.exit_code == 0

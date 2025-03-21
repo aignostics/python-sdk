@@ -9,7 +9,7 @@ import uvicorn
 import yaml
 from rich.console import Console
 
-from aignostics import Service, __version__
+from aignostics import Service, Utterance, __version__
 from aignostics.api import api_v1, api_v2
 
 console = Console()
@@ -30,10 +30,11 @@ def echo(
     ] = False,
 ) -> None:
     """Echo the text."""
+    echo = Service.echo(Utterance(text=text))
     if json:
-        console.print_json(data={"text": text})
+        console.print_json(data={"text": echo.text})
     else:
-        console.print(text)
+        console.print(echo.text)
 
 
 @cli.command()

@@ -10,13 +10,12 @@ The endpoints use Pydantic models for request and response validation.
 
 import os
 from collections.abc import Generator
-from enum import StrEnum
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Response, status
 from pydantic import BaseModel, Field
 
-from aignostics import Service
+from aignostics import Echo, Health, HealthStatus, Service, Utterance
 
 TITLE = "Aignostics Python SDK"
 HELLO_WORLD_EXAMPLE = "Hello, world!"
@@ -94,30 +93,6 @@ api_v2 = FastAPI(
 )
 
 
-class _HealthStatus(StrEnum):
-    """Health status enumeration."""
-
-    UP = "UP"
-    DOWN = "DOWN"
-
-
-class Health(BaseModel):
-    """Health status model."""
-
-    status: _HealthStatus
-    reason: str | None = None
-
-
-class HealthResponse(BaseModel):
-    """Response model for health endpoint."""
-
-    health: str = Field(
-        ...,
-        description="The hello world message",
-        examples=[HELLO_WORLD_EXAMPLE],
-    )
-
-
 @api_v1.get("/healthz", tags=["Observability"])
 @api_v1.get("/health", tags=["Observability"])
 @api_v2.get("/healthz", tags=["Observability"])
@@ -136,17 +111,17 @@ async def health(service: Annotated[Service, Depends(get_service)], response: Re
         Health: The health status of the service.
     """
     if service.healthy():
-        health_result = Health(status=_HealthStatus.UP)
+        health_result = Health(status=HealthStatus.UP)
     else:
-        health_result = Health(status=_HealthStatus.DOWN, reason="Service is unhealthy")
+        health_result = Health(status=HealthStatus.DOWN, reason="Service is unhealthy")
 
-    if health_result.status == _HealthStatus.DOWN:
+    if health_result.status == HealthStatus.DOWN:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
     return health_result
 
 
-class HelloWorldResponse(BaseModel):
+class _HelloWorldResponse(BaseModel):
     """Response model for hello-world endpoint."""
 
     message: str = Field(
@@ -158,81 +133,48 @@ class HelloWorldResponse(BaseModel):
 
 @api_v1.get("/hello-world", tags=["Basics"])
 @api_v2.get("/hello-world", tags=["Basics"])
-async def hello_world() -> HelloWorldResponse:
+async def hello_world() -> _HelloWorldResponse:
     """
     Return a hello world message.
 
     Returns:
-        HelloWorldResponse: A response containing the hello world message.
+        _HelloWorldResponse: A response containing the hello world message.
     """
-    return HelloWorldResponse(message=Service.get_hello_world())
+    return _HelloWorldResponse(message=Service.get_hello_world())
 
 
-class EchoResponse(BaseModel):
-    """Response model for echo endpoint."""
-
-    message: str = Field(
-        ...,
-        min_length=1,
-        description="The message content",
-        examples=[HELLO_WORLD_EXAMPLE],
-    )
-
-
-class EchoRequest(BaseModel):
-    """Request model for echo endpoint."""
-
-    text: str = Field(
-        ...,
-        min_length=1,
-        description="The text to echo back",
-        examples=[HELLO_WORLD_EXAMPLE],
-    )
-
-
-@api_v1.post("/echo", tags=["Basics"])
-async def echo(request: EchoRequest) -> EchoResponse:
+@api_v1.get("/echo/{text}", tags=["Basics"])
+async def echo(text: str) -> Echo:
     """
     Echo back the provided text.
 
     Args:
-        request (EchoRequest): The request containing the text to echo back.
+        text (str): The text to echo.
 
     Returns:
-        EchoResponse: A response containing the echoed text.
+        Echo: The echo.
 
     Raises:
         422 Unprocessable Entity: If text is not provided or empty.
     """
-    return EchoResponse(message=request.text)
-
-
-class Utterance(BaseModel):
-    """Request model for echo endpoint."""
-
-    utterance: str = Field(
-        ...,
-        min_length=1,
-        description="The utterance to echo back",
-        examples=[HELLO_WORLD_EXAMPLE],
-    )
+    return Service.echo(Utterance(text=text))
 
 
 @api_v2.post("/echo", tags=["Basics"])
-async def echo_v2(request: Utterance) -> EchoResponse:
+async def echo_v2(request: Utterance) -> Echo:
     """
     Echo back the provided utterance.
 
     Args:
-        request (Utterance): The request containing the utterance to echo back.
+        request (Utterance): The utterance to echo back.
 
     Returns:
-        EchoResponse: A response containing the echoed utterance.
+        Echo: The echo.
 
     Raises:
         422 Unprocessable Entity: If utterance is not provided or empty.
     """
-    return EchoResponse(message=request.utterance)
+    return Service.echo(request)
 
 
 api.mount("/v1", api_v1)

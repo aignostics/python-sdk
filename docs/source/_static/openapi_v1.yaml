@@ -1,34 +1,189 @@
-Traceback (most recent call last):
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/bin/aignostics", line 4, in <module>
-    from aignostics.cli import cli
-  File "/Users/helmut/Code/opt/src/aignostics/cli.py", line 7, in <module>
-    import typer
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/__init__.py", line 29, in <module>
-    from .main import Typer as Typer
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/main.py", line 21, in <module>
-    from .core import (
-    ...<6 lines>...
-    )
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/core.py", line 36, in <module>
-    from . import rich_utils
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/typer/rich_utils.py", line 18, in <module>
-    from rich.markdown import Markdown
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/rich/markdown.py", line 6, in <module>
-    from markdown_it import MarkdownIt
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/__init__.py", line 5, in <module>
-    from .main import MarkdownIt
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/main.py", line 10, in <module>
-    from .parser_core import ParserCore
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/parser_core.py", line 12, in <module>
-    from .rules_core import (
-    ...<7 lines>...
-    )
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/lib/python3.13/site-packages/markdown_it/rules_core/__init__.py", line 17, in <module>
-    from .smartquotes import smartquotes
-  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
-  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
-  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
-  File "<frozen importlib._bootstrap_external>", line 1022, in exec_module
-  File "<frozen importlib._bootstrap_external>", line 1155, in get_code
-  File "<frozen importlib._bootstrap_external>", line 784, in _compile_bytecode
-KeyboardInterrupt
+components:
+  schemas:
+    Echo:
+      description: Response model for echo endpoint.
+      properties:
+        text:
+          description: The echo
+          examples:
+          - HELLO, WORLD!
+          minLength: 1
+          title: Text
+          type: string
+      required:
+      - text
+      title: Echo
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    Health:
+      description: Health status model.
+      properties:
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        status:
+          $ref: '#/components/schemas/HealthStatus'
+      required:
+      - status
+      title: Health
+      type: object
+    HealthStatus:
+      description: Health status enumeration.
+      enum:
+      - UP
+      - DOWN
+      title: HealthStatus
+      type: string
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+    _HelloWorldResponse:
+      description: Response model for hello-world endpoint.
+      properties:
+        message:
+          description: The hello world message
+          examples:
+          - Hello, world!
+          title: Message
+          type: string
+      required:
+      - message
+      title: _HelloWorldResponse
+      type: object
+info:
+  contact:
+    email: support@aignostics.com
+    name: Aignostics GmbH
+    url: https://github.com/aignostics
+  termsOfService: https://aignostics.readthedocs.io/en/latest/
+  title: Aignostics Python SDK
+  version: 1.0.0
+openapi: 3.1.0
+paths:
+  /echo/{text}:
+    get:
+      description: "Echo back the provided text.\n\nArgs:\n    text (str): The 
+text\
+        \ to echo.\n\nReturns:\n    Echo: The echo.\n\nRaises:\n    422 
+Unprocessable\
+        \ Entity: If text is not provided or empty."
+      operationId: echo_echo__text__get
+      parameters:
+      - in: path
+        name: text
+        required: true
+        schema:
+          title: Text
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Echo'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Echo
+      tags:
+      - Basics
+  /health:
+    get:
+      description: "Check the health of the service.\n\nThis endpoint returns 
+the\
+        \ health status of the service.\nThe health status can be either UP or 
+DOWN.\n\
+        If the service is healthy, the status will be UP.\nIf the service is 
+unhealthy,\
+        \ the status will be DOWN and a reason will be provided.\nThe response 
+will\
+        \ have a 200 OK status code if the service is healthy,\nand a 500 
+Internal\
+        \ Server Error status code if the service is unhealthy.\n\nReturns:\n   
+Health:\
+        \ The health status of the service."
+      operationId: health_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: Successful Response
+      summary: Health
+      tags:
+      - Observability
+  /healthz:
+    get:
+      description: "Check the health of the service.\n\nThis endpoint returns 
+the\
+        \ health status of the service.\nThe health status can be either UP or 
+DOWN.\n\
+        If the service is healthy, the status will be UP.\nIf the service is 
+unhealthy,\
+        \ the status will be DOWN and a reason will be provided.\nThe response 
+will\
+        \ have a 200 OK status code if the service is healthy,\nand a 500 
+Internal\
+        \ Server Error status code if the service is unhealthy.\n\nReturns:\n   
+Health:\
+        \ The health status of the service."
+      operationId: health_healthz_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: Successful Response
+      summary: Health
+      tags:
+      - Observability
+  /hello-world:
+    get:
+      description: "Return a hello world message.\n\nReturns:\n    
+_HelloWorldResponse:\
+        \ A response containing the hello world message."
+      operationId: hello_world_hello_world_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/_HelloWorldResponse'
+          description: Successful Response
+      summary: Hello World
+      tags:
+      - Basics

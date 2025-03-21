@@ -61,7 +61,7 @@
           "Basics"
         ],
         "summary": "Hello World",
-        "description": "Return a hello world message.\n\nReturns:\n    HelloWorldResponse: A response containing the hello world message.",
+        "description": "Return a hello world message.\n\nReturns:\n    _HelloWorldResponse: A response containing the hello world message.",
         "operationId": "hello_world_hello_world_get",
         "responses": {
           "200": {
@@ -69,7 +69,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HelloWorldResponse"
+                  "$ref": "#/components/schemas/_HelloWorldResponse"
                 }
               }
             }
@@ -83,7 +83,7 @@
           "Basics"
         ],
         "summary": "Echo V2",
-        "description": "Echo back the provided utterance.\n\nArgs:\n    request (Utterance): The request containing the utterance to echo back.\n\nReturns:\n    EchoResponse: A response containing the echoed utterance.\n\nRaises:\n    422 Unprocessable Entity: If utterance is not provided or empty.",
+        "description": "Echo back the provided utterance.\n\nArgs:\n    request (Utterance): The utterance to echo back.\n\nReturns:\n    Echo: The echo.\n\nRaises:\n    422 Unprocessable Entity: If utterance is not provided or empty.",
         "operationId": "echo_v2_echo_post",
         "requestBody": {
           "content": {
@@ -101,7 +101,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EchoResponse"
+                  "$ref": "#/components/schemas/Echo"
                 }
               }
             }
@@ -122,23 +122,23 @@
   },
   "components": {
     "schemas": {
-      "EchoResponse": {
+      "Echo": {
         "properties": {
-          "message": {
+          "text": {
             "type": "string",
             "minLength": 1,
-            "title": "Message",
-            "description": "The message content",
+            "title": "Text",
+            "description": "The echo",
             "examples": [
-              "Hello, world!"
+              "HELLO, WORLD!"
             ]
           }
         },
         "type": "object",
         "required": [
-          "message"
+          "text"
         ],
-        "title": "EchoResponse",
+        "title": "Echo",
         "description": "Response model for echo endpoint."
       },
       "HTTPValidationError": {
@@ -157,7 +157,7 @@
       "Health": {
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/_HealthStatus"
+            "$ref": "#/components/schemas/HealthStatus"
           },
           "reason": {
             "anyOf": [
@@ -178,30 +178,21 @@
         "title": "Health",
         "description": "Health status model."
       },
-      "HelloWorldResponse": {
-        "properties": {
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "The hello world message",
-            "examples": [
-              "Hello, world!"
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "message"
+      "HealthStatus": {
+        "type": "string",
+        "enum": [
+          "UP",
+          "DOWN"
         ],
-        "title": "HelloWorldResponse",
-        "description": "Response model for hello-world endpoint."
+        "title": "HealthStatus",
+        "description": "Health status enumeration."
       },
       "Utterance": {
         "properties": {
-          "utterance": {
+          "text": {
             "type": "string",
             "minLength": 1,
-            "title": "Utterance",
+            "title": "Text",
             "description": "The utterance to echo back",
             "examples": [
               "Hello, world!"
@@ -210,10 +201,10 @@
         },
         "type": "object",
         "required": [
-          "utterance"
+          "text"
         ],
         "title": "Utterance",
-        "description": "Request model for echo endpoint."
+        "description": "Model representing a text utterance."
       },
       "ValidationError": {
         "properties": {
@@ -248,14 +239,23 @@
         ],
         "title": "ValidationError"
       },
-      "_HealthStatus": {
-        "type": "string",
-        "enum": [
-          "UP",
-          "DOWN"
+      "_HelloWorldResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "The hello world message",
+            "examples": [
+              "Hello, world!"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
         ],
-        "title": "_HealthStatus",
-        "description": "Health status enumeration."
+        "title": "_HelloWorldResponse",
+        "description": "Response model for hello-world endpoint."
       }
     }
   }
