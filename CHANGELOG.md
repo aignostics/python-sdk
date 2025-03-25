@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-## [0.0.5](https://github.com/aignostics/python-sdk/compare/v0.0.4..0.0.5) - 2025-03-21
+## [0.0.6](https://github.com/aignostics/python-sdk/compare/v0.0.5..0.0.6) - 2025-03-25
+
+### ⚙️ Miscellaneous Tasks
+
+- *(sonarqube)* Workaround false positive code duplication check - ([50bf848](https://github.com/aignostics/python-sdk/commit/50bf8480acd67c2ab7be6375ccfa6c01ad745727))
+
+
+## [0.0.5](https://github.com/aignostics/python-sdk/compare/v0.0.4..v0.0.5) - 2025-03-21
 
 ### ⚙️ Miscellaneous Tasks
 
