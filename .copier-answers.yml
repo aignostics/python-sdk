@@ -1,4 +1,4 @@
-_commit: v0.6.34
+_commit: v0.7.4
 _src_path: gh:helmut-hoffer-von-ankershoffen/oe-python-template
 attestations_enabled: false
 author_email: helmut@aignostics.com
@@ -19,6 +19,7 @@ project_description: Python SDK providing access to Aignostics AI services.
 project_icon: 🔬
 project_name: Aignostics Python SDK
 pypi_distribution_name: aignostics
+pypi_enabled: true
 readthedocs_domain: readthedocs.org
 readthedocs_project_key: aignostics
 sonarqube_key: aignostics_python-sdk

@@ -265,9 +265,9 @@ OpenAPI pecification.
 
 ## Conventional Commits
 
-Our commit messages follow conventional commits format.
+Our commit messages follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) definition.
 
-1. We use 'feat','fix','chore','docs','style','refactor','test' prefixes and
+1. We use `feat`, `fix`, `chore`, `docs`, `style`, `perf`, `refactor`, `test` prefixes and
   components in parentheses. E.g.
   `feat(api): add new endpoint for user registration`.
 

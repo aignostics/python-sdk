@@ -17,6 +17,7 @@
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-toolsai.jupyter",
+        "ms-vscode.makefile-tools",
         "oderwat.indent-rainbow",
         "samuelcolvin.jinjahtml",
         "sonarsource.sonarlint-vscode",

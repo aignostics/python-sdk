@@ -13,7 +13,7 @@
 [![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-[![CodeQL](https://github.com/aignostics/python-sdk/actions/workflows/codeql.yml/badge.svg)](https://github.com/aignostics/python-sdk/security/code-scanning)
+
 [![Dependabot](https://img.shields.io/badge/dependabot-active-brightgreen?style=flat-square&logo=dependabot)](https://github.com/aignostics/python-sdk/security/dependabot)
 [![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://github.com/aignostics/python-sdk/issues?q=is%3Aissue%20state%3Aopen%20Dependency%20Dashboard)
 [![Coverage](https://codecov.io/gh/aignostics/python-sdk/graph/badge.svg?token=SX34YRP30E)](https://codecov.io/gh/aignostics/python-sdk)
@@ -96,48 +96,42 @@ Explore [here](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-templ
 
 ## Generate a new project
 
-This template is designed to be used with the [copier](https://copier.readthedocs.io/en/stable/) project generator. It allows you to create a new project based on this template and customize it according to your needs.
-To generate a new project, follow these steps:
+To generate, build and release a fully functioning project in a few minutes, follow these 5 steps:
 
-**Step 1**: Install uv package manager and copier. Copy the following code into your terminal and execute it.
+**Step 1**: Execute the following command to install or update tooling.
 ```shell
-if [[ "$OSTYPE" == "darwin"* ]]; then                 # Install dependencies for macOS X
-  if ! command -v brew &> /dev/null; then             ## Install Homebrew if not present
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  fi
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then            # Install dependencies for Linux
-  sudo apt-get update -y && sudo apt-get install curl -y # Install curl
-fi
-if ! command -v uvx &> /dev/null; then                # Install uv package manager if not present
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  source $HOME/.local/bin/env
-fi
-uv tool install copier                                # Install copier as global tool
+# Install Homebrew, uv package manager, copier and further dev tools
+curl -LsSf https://raw.githubusercontent.com/helmut-hoffer-von-ankershoffen/oe-python-template/HEAD/install.sh | sh
 ```
 
 **Step 2**: [Create a repository on GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository), clone to your local machine, and change into it's directory.
 
-**Step 3**: Generate the project. Copy
+**Step 3**: Execute the following command to generate a new project based on this template.
 ```shell
-# ensure to stand in a git repository before executing the next command
+# Ensure to stand in your freshly created git repository before executing this command
 copier copy --trust gh:helmut-hoffer-von-ankershoffen/oe-python-template .
 ```
 
-**Step 4**: Perform initial commit and push. Copy the following code into your terminal and execute it.
+**Step 4**: Execute the following commands to push your initial commit to GitHub.
 ```shell
 git add .
 git commit -m "chore: Initial commit"
 git push
 ```
 
-Visit your GitHub repository and check the Actions tab. The CI workflow should already be running! The workflow will fail at the SonarQube step, as this external service is not yet configured for our new repository.
+Check the [Actions tab](https://github.com/aignostics/python-sdk/actions) of your GitHub repository: The CI/CD workflow of your project is already running!
+
+The workflow will fail at the SonarQube step, as this external service is not yet configured for our new repository. We will configure SonarQube and other services in the next step!
+
+Notes:
+1. Check out [this manual](https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key) on how to set up signed commits
 
 **Step 5**: Follow the [instructions](SERVICE_CONNECTIONS.md) to wire up
 external services such as CloudCov, SonarQube Cloud, Read The Docs, Docker.io, and Streamlit Community Cloud.
 
-**Step 6**: Release the first versions
+**Step 6**: Release the first version of your project
 ```shell
-./n bump
+make bump
 ```
 Notes:
 1. You can remove the above sections - from "Scaffolding" to this notes - post having successfully generated your project.
@@ -348,11 +342,30 @@ docker compose run aignostics echo "Lorem"
 docker compose run aignostics echo "Lorem" --json
 docker compose run aignostics openapi
 docker compose run aignostics openapi --output-format=json
-docker compose up
+echo "Running Aignostics Python SDK's API container as a daemon ..."
+docker compose up -d
+echo "Waiting for the API server to start ..."
+sleep 5
+echo "Checking health of v1 API ..."
+curl http://127.0.0.1:8000/api/v1/healthz
+echo ""
+echo "Saying hello world with v1 API ..."
 curl http://127.0.0.1:8000/api/v1/hello-world
+echo ""
+echo "Swagger docs of v1 API ..."
 curl http://127.0.0.1:8000/api/v1/docs
+echo ""
+echo "Checking health of v2 API ..."
+curl http://127.0.0.1:8000/api/v2/healthz
+echo ""
+echo "Saying hello world with v1 API ..."
 curl http://127.0.0.1:8000/api/v2/hello-world
+echo ""
+echo "Swagger docs of v2 API ..."
 curl http://127.0.0.1:8000/api/v2/docs
+echo ""
+echo "Shutting down the API container ..."
+docker compose down
 ```
 
 ## Extra: Lorem Ipsum

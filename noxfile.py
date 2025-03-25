@@ -55,7 +55,22 @@ def lint(session: nox.Session) -> None:
 
 @nox.session(python=["3.13"])
 def docs(session: nox.Session) -> None:
-    """Build documentation and concatenate README."""
+    """Build documentation and concatenate README.
+
+    This function performs several documentation-related tasks:
+    1. Concatenates partial README files into a single README.md
+    2. Dumps OpenAPI schemas (v1 and v2) in both YAML and JSON formats
+    3. Builds HTML, single HTML, and LaTeX documentation
+    4. Optionally builds PDF documentation if "pdf" is in session arguments
+
+    Args:
+        session: The nox session instance
+
+    Raises:
+        CommandFailed: If latexmk is not installed or not in PATH
+        ValueError: If the installed latexmk version is outdated
+        AttributeError: If parsing the latexmk version information fails
+    """
     _setup_venv(session)
     # Concatenate README files
     preamble = "\n[//]: # (README.md generated from docs/partials/README_*.md)\n\n"
@@ -64,6 +79,7 @@ def docs(session: nox.Session) -> None:
     footer = Path("docs/partials/README_footer.md").read_text(encoding="utf-8")
     readme_content = f"{preamble}{header}\n\n{main}\n\n{footer}"
     Path("README.md").write_text(readme_content, encoding="utf-8")
+
     # Dump openapi schema to file
     with Path("docs/source/_static/openapi_v1.yaml").open("w", encoding="utf-8") as f:
         session.run("aignostics", "openapi", "--api-version=v1", stdout=f, external=True)
@@ -73,11 +89,41 @@ def docs(session: nox.Session) -> None:
         session.run("aignostics", "openapi", "--api-version=v2", stdout=f, external=True)
     with Path("docs/source/_static/openapi_v2.json").open("w", encoding="utf-8") as f:
         session.run("aignostics", "openapi", "--api-version=v2", "--output-format=json", stdout=f, external=True)
+
     # Build docs
     session.run("make", "-C", "docs", "clean", external=True)
     session.run("make", "-C", "docs", "html", external=True)
     session.run("make", "-C", "docs", "singlehtml", external=True)
     session.run("make", "-C", "docs", "latex", external=True)
+
+    # Check if PDF generation is requested
+    if "pdf" in session.posargs:
+        try:
+            out = session.run("latexmk", "--version", external=True, silent=True)
+
+            version_match = re.search(r"Version (\d+\.\d+\w*)", str(out))
+            if not version_match:
+                session.error("Could not determine latexmk version")
+
+            version_str = version_match.group(1)
+
+            # Parse version (handle cases like "4.86a")
+            match = re.match(r"(\d+\.\d+)", version_str)
+            if not match:
+                session.error(f"Could not parse version number from '{version_str}'")
+            base_version = match.group(1)
+
+            if float(base_version) < LATEXMK_VERSION_MIN:
+                message = f"latexmk version {version_str} is outdated. Please run 'brew upgrade mactex' to upgrade."
+                raise ValueError(message)  # noqa: TRY301
+            session.log(f"latexmk version {version_str} is sufficient")
+            session.run("make", "-C", "docs", "latexpdf", external=True)
+            session.log("PDF documentation generated and available at: docs/build/latex/aignostics.pdf")
+
+        except CommandFailed as e:
+            session.error(f"latexmk is not installed or not in PATH: {e}. Please run 'brew install mactex' to install")
+        except (ValueError, AttributeError) as e:
+            session.error(f"Failed to parse latexmk version information: {e}")
 
 
 @nox.session(python=["3.13"], default=False)
@@ -154,7 +200,7 @@ def test(session: nox.Session) -> None:
 
 
 @nox.session(python=["3.13"], default=False)
-def setup_dev(session: nox.Session) -> None:
+def setup(session: nox.Session) -> None:
     """Setup dev environment post project creation."""
     _setup_venv(session)
     session.run("ruff", "format", ".", external=True)
@@ -229,3 +275,10 @@ def bump(session: nox.Session) -> None:
 
     # Push changes to git
     session.run("git", "push", external=True)
+
+
+@nox.session(python=["3.13"])
+def dist(session: nox.Session) -> None:
+    """Build wheel and put in dist/."""
+    _setup_venv(session)
+    session.run("uv", "build", external=True)

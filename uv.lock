@@ -70,12 +70,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.115.11" },
+    { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.115.12" },
     { name = "jinja2", marker = "extra == 'examples'", specifier = ">=3.1.6" },
     { name = "jupyter", marker = "extra == 'examples'", specifier = ">=1.1.1" },
-    { name = "marimo", marker = "extra == 'examples'", specifier = ">=0.11.19" },
+    { name = "marimo", marker = "extra == 'examples'", specifier = ">=0.11.26" },
     { name = "pydantic", specifier = ">=2.10.6" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "streamlit", marker = "extra == 'examples'", specifier = ">=1.43.2" },
     { name = "typer", specifier = ">=0.15.1" },
 ]
@@ -84,7 +84,7 @@ provides-extras = ["examples"]
 [package.metadata.requires-dev]
 dev = [
     { name = "autodoc-pydantic", specifier = ">=2.2.0" },
-    { name = "bump-my-version", specifier = ">=1.0.2" },
+    { name = "bump-my-version", specifier = ">=1.1.1" },
     { name = "cyclonedx-py", specifier = ">=1.0.1" },
     { name = "detect-secrets", specifier = ">=1.5.0" },
     { name = "enum-tools", specifier = ">=0.12.0" },
@@ -98,7 +98,7 @@ dev = [
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "pyright", specifier = ">=1.1.396" },
     { name = "pytest", specifier = ">=8.3.5" },
-    { name = "pytest-asyncio", specifier = ">=0.25.3" },
+    { name = "pytest-asyncio", specifier = ">=0.26.0" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pytest-docker", specifier = ">=3.2.0" },
     { name = "pytest-env", specifier = ">=1.1.5" },
@@ -380,7 +380,7 @@ wheels = [
 
 [[package]]
 name = "bump-my-version"
-version = "1.0.2"
+version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -393,9 +393,9 @@ dependencies = [
     { name = "tomlkit" },
     { name = "wcmatch" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/61/c9/22f5e6de03ec21357fd37e61fad2970043c406a9af217a0bfc68747148d8/bump_my_version-1.0.2.tar.gz", hash = "sha256:2f156877d2cdcda69afcb257ae4564c26e70f2fd5e5b15f2c7f26ab9e91502da", size = 1102688 }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/0a/b4e0dea19ca92d871b011dfbd4271d2ea627db74a6b651ea642a7c605cf7/bump_my_version-1.1.1.tar.gz", hash = "sha256:2f590e0eabe894196289c296c52170559c09876454514ae8fce5db75bd47289e", size = 1108000 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/ce/dc13887c45dead36075a210487ff66304ef0dc3fbc997d2b12bcde2f0401/bump_my_version-1.0.2-py3-none-any.whl", hash = "sha256:61d350b8c71968dd4520fc6b9df8b982c7df254cd30858b8645eff0f4eaf380b", size = 58573 },
+    { url = "https://files.pythonhosted.org/packages/b0/a7/c516c75f624b4dc7afde397af3bf5c01c6b191e18bcccfa44ec0d7d4a4e4/bump_my_version-1.1.1-py3-none-any.whl", hash = "sha256:6bd78e20421f6335c1a49d7e85a2f16ae8966897d0a2dd130a0e8b6b55954686", size = 59474 },
 ]
 
 [[package]]
@@ -929,16 +929,16 @@ wheels = [
 
 [[package]]
 name = "fastapi"
-version = "0.115.11"
+version = "0.115.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/28/c5d26e5860df807241909a961a37d45e10533acef95fc368066c7dd186cd/fastapi-0.115.11.tar.gz", hash = "sha256:cc81f03f688678b92600a65a5e618b93592c65005db37157147204d8924bf94f", size = 294441 }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/55/ae499352d82338331ca1e28c7f4a63bfd09479b16395dce38cf50a39e2c2/fastapi-0.115.12.tar.gz", hash = "sha256:1e2c2a2646905f9e83d32f04a3f86aff4a286669c6c950ca95b5fd68c2602681", size = 295236 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/5d/4d8bbb94f0dbc22732350c06965e40740f4a92ca560e90bb566f4f73af41/fastapi-0.115.11-py3-none-any.whl", hash = "sha256:32e1541b7b74602e4ef4a0260ecaf3aadf9d4f19590bba3e1bf2ac4666aa2c64", size = 94926 },
+    { url = "https://files.pythonhosted.org/packages/50/b3/b51f09c2ba432a576fe63758bddc81f78f0c6309d9e5c10d194313bf021e/fastapi-0.115.12-py3-none-any.whl", hash = "sha256:e94613d6c05e27be7ffebdd6ea5f388112e5e430c8f7d6494a9d1d88d43e814d", size = 95164 },
 ]
 
 [package.optional-dependencies]
@@ -1740,7 +1740,7 @@ wheels = [
 
 [[package]]
 name = "marimo"
-version = "0.11.23"
+version = "0.11.26"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1761,9 +1761,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/23/ef/464ee41364235e7017b0bebcde845bf17fc6c27df84aa805646678c4d81b/marimo-0.11.23.tar.gz", hash = "sha256:81978fd3104951b371f2c329543743b9b624a6ae067dd562f0038ce826f73b29", size = 10676393 }
+sdist = { url = "https://files.pythonhosted.org/packages/72/53/073592d7c1d87716529b9901b4bb77b87868c99d010314239578dc8e6d9c/marimo-0.11.26.tar.gz", hash = "sha256:9435dc83a4c5e69d6050519a4327d5f3c340e5a8a7c33f888e964c01261b76d7", size = 10682435 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/45/3e8ed50fd49e6551089b6d3cc21b3227cb40fbbfd3fc928c840b0fad7e01/marimo-0.11.23-py3-none-any.whl", hash = "sha256:e5b5ffcf71fbf376f8e7183dbaac9b903d8aaac021ed2facdf9e45d98937e558", size = 11021576 },
+    { url = "https://files.pythonhosted.org/packages/68/eb/f8ff1b0da191aaf1629b904de7d5a90477eb32235dad6a2ac2208d640d16/marimo-0.11.26-py3-none-any.whl", hash = "sha256:cb112552eadd43937101eebb2822bf37457a9504de64de5519e9edcc4b3bd921", size = 11029647 },
 ]
 
 [[package]]
@@ -2823,14 +2823,14 @@ wheels = [
 
 [[package]]
 name = "pytest-asyncio"
-version = "0.25.3"
+version = "0.26.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/a8/ecbc8ede70921dd2f544ab1cadd3ff3bf842af27f87bbdea774c7baa1d38/pytest_asyncio-0.25.3.tar.gz", hash = "sha256:fc1da2cf9f125ada7e710b4ddad05518d4cee187ae9412e9ac9271003497f07a", size = 54239 }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/c4/453c52c659521066969523e87d85d54139bbd17b78f09532fb8eb8cdb58e/pytest_asyncio-0.26.0.tar.gz", hash = "sha256:c4df2a697648241ff39e7f0e4a73050b03f123f760673956cf0d72a4990e312f", size = 54156 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/17/3493c5624e48fd97156ebaec380dcaafee9506d7e2c46218ceebbb57d7de/pytest_asyncio-0.25.3-py3-none-any.whl", hash = "sha256:9e89518e0f9bd08928f97a3482fdc4e244df17529460bc038291ccaf8f85c7c3", size = 19467 },
+    { url = "https://files.pythonhosted.org/packages/20/7f/338843f449ace853647ace35870874f69a764d251872ed1b4de9f234822c/pytest_asyncio-0.26.0-py3-none-any.whl", hash = "sha256:7b51ed894f4fbea1340262bdae5135797ebbe21d8638978e35d31c6d19f72fb0", size = 19694 },
 ]
 
 [[package]]
@@ -2929,11 +2929,11 @@ wheels = [
 
 [[package]]
 name = "python-dotenv"
-version = "1.0.1"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bc/57/e84d88dfe0aec03b7a2d4327012c1627ab5f03652216c63d49846d7a6c58/python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca", size = 39115 }
+sdist = { url = "https://files.pythonhosted.org/packages/88/2c/7bb1416c5620485aa793f2de31d3df393d3686aa8a8506d11e10e13c5baf/python_dotenv-1.1.0.tar.gz", hash = "sha256:41f90bc6f5f177fb41f53e87666db362025010eb28f60a01c9143bfa33a2b2d5", size = 39920 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/3e/b68c118422ec867fa7ab88444e1274aa40681c606d59ac27de5a5588f082/python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a", size = 19863 },
+    { url = "https://files.pythonhosted.org/packages/1e/18/98a99ad95133c6a6e2005fe89faedf294a748bd5dc803008059409ac9b1e/python_dotenv-1.1.0-py3-none-any.whl", hash = "sha256:d7c01d9e2293916c18baf562d95698754b0dbbb5e74d457c45d4f6561fb9d55d", size = 20256 },
 ]
 
 [[package]]
