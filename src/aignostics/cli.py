@@ -9,12 +9,24 @@ import uvicorn
 import yaml
 from rich.console import Console
 
-from aignostics import Service, Utterance, __version__
-from aignostics.api import api_v1, api_v2
-
-console = Console()
+from . import Service, Utterance, __version__
+from .api import api_v1, api_v2
 
 cli = typer.Typer(name="Command Line Interface of Aignostics Python SDK")
+_service = Service()
+_console = Console()
+
+
+@cli.command()
+def health() -> None:
+    """Indicate if service is healthy."""
+    _console.print(_service.healthy())
+
+
+@cli.command()
+def info() -> None:
+    """Print info about service configuration."""
+    _console.print(_service.info())
 
 
 @cli.command()
@@ -32,15 +44,15 @@ def echo(
     """Echo the text."""
     echo = Service.echo(Utterance(text=text))
     if json:
-        console.print_json(data={"text": echo.text})
+        _console.print_json(data={"text": echo.text})
     else:
-        console.print(echo.text)
+        _console.print(echo.text)
 
 
 @cli.command()
 def hello_world() -> None:
     """Print hello world message and what's in the environment variable THE_VAR."""
-    console.print(Service.get_hello_world())
+    _console.print(_service.get_hello_world())
 
 
 @cli.command()
@@ -50,7 +62,7 @@ def serve(
     watch: Annotated[bool, typer.Option(help="Enable auto-reload")] = True,
 ) -> None:
     """Start the API server."""
-    console.print(f"Starting API server at http://{host}:{port}")
+    _console.print(f"Starting API server at http://{host}:{port}")
     os.environ["UVICORN_HOST"] = host
     os.environ["UVICORN_PORT"] = str(port)
     uvicorn.run(
@@ -111,9 +123,9 @@ def openapi(
             schema = api_v2.openapi()
     match output_format:
         case OutputFormat.JSON:
-            console.print_json(data=schema)
+            _console.print_json(data=schema)
         case OutputFormat.YAML:
-            console.print(yaml.dump(schema, default_flow_style=False), end="")
+            _console.print(yaml.dump(schema, default_flow_style=False), end="")
 
 
 def _apply_cli_settings(cli: typer.Typer, epilog: str) -> None:

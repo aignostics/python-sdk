@@ -64,7 +64,7 @@ requires-python = ">=3.11, <4.0"
 dependencies = [
     "fastapi[standard,all]>=0.115.12",
     "pydantic>=2.10.6",
-    "python-dotenv>=1.1.0",
+    "pydantic-settings>=2.8.1",
     "typer>=0.15.1",
 ]
 
@@ -118,6 +118,7 @@ dev = [
     "pytest-docker>=3.2.0",
     "pytest-env>=1.1.5",
     "pytest-regressions>=2.7.0",
+    "pytest-subprocess>=1.5.3",
     "pytest-xdist[psutil]>=3.6.1",
     "ruff>=0.10.0",
     "sphinx>=8.2.3",
@@ -137,7 +138,7 @@ dev = [
 
 [tool.uv]
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
-    "rfc3987; sys_platform == 'never'",                 # GPLv3
+    "rfc3987; sys_platform == 'never'", # GPLv3
 ]
 
 
@@ -199,7 +200,7 @@ ignore = [
 [tool.ruff.lint.extend-per-file-ignores]
 "examples/notebook.py" = [
     # we are more relaxed in notebooks, while sill applying hundreds of rules
-    "B018",     # notebooks surface variable without print
+    "B018", # notebooks surface variable without print
 ]
 
 [tool.ruff.format]
@@ -208,7 +209,7 @@ docstring-code-format = true
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
+[tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -221,7 +222,7 @@ show_error_codes = true
 show_error_context = true
 warn_unreachable = true
 
-[tool.pydantic-mypy]  # https://docs.pydantic.dev/latest/integrations/mypy/#configuring-the-plugin
+[tool.pydantic-mypy] # https://docs.pydantic.dev/latest/integrations/mypy/#configuring-the-plugin
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true

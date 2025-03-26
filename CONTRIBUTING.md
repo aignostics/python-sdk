@@ -33,8 +33,9 @@ If you are one of the committers of https://github.com/aignostics/python-sdk you
 src/aignostics/  # Source code
 ├── __init__.py          # Package initialization
 ├── constants.py         # Constants used throughout the app
-├── service.py           # Service exposed for use as shared library
+├── settings.py          # Settings loaded from environment and .env
 ├── models.py            # Models and data structures
+├── service.py           # Service exposed for use as shared library
 ├── cli.py               # CLI enabling to interact with service from terminal
 └── api.py               # API exposing service as web service
 tests/                   # Unit and E2E tests
@@ -154,7 +155,7 @@ Build and run the Docker image with docker compose:
 
 ```shell
 echo "Building the Docker image with docker compose and running CLI..."
-docker compose run --build oe-python-template --help
+docker compose run --build aignostics --help
 echo "Building the Docker image with docker compose and running API container as a daemon ..."
 docker compose up --build -d
 echo "Waiting for the API server to start..."

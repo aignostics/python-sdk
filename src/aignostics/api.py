@@ -15,7 +15,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Response, status
 from pydantic import BaseModel, Field
 
-from aignostics import Echo, Health, HealthStatus, Service, Utterance
+from . import Echo, Health, HealthStatus, Service, Utterance
 
 TITLE = "Aignostics Python SDK"
 HELLO_WORLD_EXAMPLE = "Hello, world!"
@@ -133,14 +133,14 @@ class _HelloWorldResponse(BaseModel):
 
 @api_v1.get("/hello-world", tags=["Basics"])
 @api_v2.get("/hello-world", tags=["Basics"])
-async def hello_world() -> _HelloWorldResponse:
+async def hello_world(service: Annotated[Service, Depends(get_service)]) -> _HelloWorldResponse:
     """
     Return a hello world message.
 
     Returns:
         _HelloWorldResponse: A response containing the hello world message.
     """
-    return _HelloWorldResponse(message=Service.get_hello_world())
+    return _HelloWorldResponse(message=service.get_hello_world())
 
 
 @api_v1.get("/echo/{text}", tags=["Basics"])
