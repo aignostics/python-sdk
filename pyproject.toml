@@ -90,8 +90,8 @@ packages = ["src/aignostics"]
 
 [project.optional-dependencies]
 examples = [
-    "streamlit>=1.43.2",
-    "marimo>=0.11.26",
+    "streamlit>=1.44.0",
+    "marimo>=0.11.28",
     "jupyter>=1.1.1",
     "jinja2>=3.1.6",
 ]
@@ -111,7 +111,7 @@ dev = [
     "pip-audit>=2.8.0",
     "pip-licenses>=5.0.0",
     "pre-commit>=4.1.0",
-    "pyright>=1.1.396",
+    "pyright>=1.1.398",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
     "pytest-cov>=6.0.0",
@@ -120,7 +120,7 @@ dev = [
     "pytest-regressions>=2.7.0",
     "pytest-subprocess>=1.5.3",
     "pytest-xdist[psutil]>=3.6.1",
-    "ruff>=0.10.0",
+    "ruff>=0.11.2",
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
@@ -132,7 +132,7 @@ dev = [
     "sphinxext.opengraph>=0.9.1",
     "swagger-plugin-for-sphinx>=5.1.0",
     "tomli>=2.1.0",
-    "types-pyyaml>=6.0.12.20241230",
+    "types-pyyaml>=6.0.12.20250326",
     "watchdog>=6.0.0",
 ]
 
