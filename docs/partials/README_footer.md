@@ -3,6 +3,7 @@
 * Check out the [reference](https://aignostics.readthedocs.io/en/latest/reference.html) with detailed documentation of public classes and functions.
 * Our [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html) provide a complete log of recent improvements and changes.
 * In case you want to help us improve 🔬 Aignostics Python SDK: The [contribution guidelines](https://aignostics.readthedocs.io/en/latest/contributing.html) explain how to setup your development environment and create pull requests.
+* We gratefully acknowledge the [open source projects](ATTRIBUTIONS.md) that this project builds upon. Thank you to all these wonderful contributors!
 
 ## Star History
 

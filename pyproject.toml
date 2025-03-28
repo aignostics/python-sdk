@@ -109,7 +109,7 @@ dev = [
     "mypy>=1.5.0",
     "nox[uv]>=2025.2.9",
     "pip-audit>=2.8.0",
-    "pip-licenses>=5.0.0",
+    "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
     "pyright>=1.1.398",
     "pytest>=8.3.5",

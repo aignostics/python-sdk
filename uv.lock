@@ -95,7 +95,7 @@ dev = [
     { name = "mypy", specifier = ">=1.5.0" },
     { name = "nox", extras = ["uv"], specifier = ">=2025.2.9" },
     { name = "pip-audit", specifier = ">=2.8.0" },
-    { name = "pip-licenses", specifier = ">=5.0.0" },
+    { name = "pip-licenses", git = "https://github.com/neXenio/pip-licenses.git?rev=master" },
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "pyright", specifier = ">=1.1.398" },
     { name = "pytest", specifier = ">=8.3.5" },
@@ -2427,14 +2427,10 @@ wheels = [
 [[package]]
 name = "pip-licenses"
 version = "5.0.0"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/neXenio/pip-licenses.git?rev=master#57501f2725b2bb917c99006cd283cc7c6ba0e72d" }
 dependencies = [
     { name = "prettytable" },
     { name = "tomli" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/49/d36a3ddb73d22970a35afa3e9fd53c8318150f8122e4257ca9875f1d4e38/pip_licenses-5.0.0.tar.gz", hash = "sha256:0633a1f9aab58e5a6216931b0e1d5cdded8bcc2709ff563674eb0e2ff9e77e8e", size = 41542 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/0a/bfaf1479d09d19f503a669d9c8e433ac59ae687fb8da1d8207eb85c5a9f4/pip_licenses-5.0.0-py3-none-any.whl", hash = "sha256:82c83666753efb86d1af1c405c8ab273413eb10d6689c218df2f09acf40e477d", size = 20497 },
 ]
 
 [[package]]

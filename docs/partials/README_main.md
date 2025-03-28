@@ -21,18 +21,19 @@ Projects generated with this template come with a comprehensive development tool
 8. CI/CD pipeline can be run locally with [act](https://github.com/nektos/act)
 9. Code quality and security checks with [SonarQube](https://www.sonarsource.com/products/sonarcloud) and [GitHub CodeQL](https://codeql.github.com/)
 10. Dependency monitoring with [pip-audit](https://pypi.org/project/pip-audit/), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
-11. Licenses of dependencies extracted with [pip-licenses](https://pypi.org/project/pip-licenses/) and published as release artifacts in CSV and JSON format for compliance checks
-12. Software Bill of Materials (SBOM) generated with [cyclonedx-python](https://github.com/CycloneDX/cyclonedx-python) and published as release artifact
-13. Version and release management with [bump-my-version](https://callowayproject.github.io/bump-my-version/)
-14. Changelog and release notes generated with [git-cliff](https://git-cliff.org/)
-15. Documentation generated with [Sphinx](https://www.sphinx-doc.org/en/master/) including reference documentation and PDF export
-16. Documentation published to [Read The Docs](https://readthedocs.org/)
-17. Interactive OpenAPI specification with [Swagger](https://swagger.io/)
-18. Python package published to [PyPI](https://pypi.org/)
-19. Docker images published to [Docker.io](https://hub.docker.com/) and [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) with [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
-20. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
-21. Settings for use with [VSCode](https://code.visualstudio.com/)
-22. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+11. Licenses of dependencies extracted with [pip-licenses](https://pypi.org/project/pip-licenses/), matched with allow list, and published as release artifacts in CSV and JSON format for compliance checks
+12. Generation of attributions from extracted licenses
+13. Software Bill of Materials (SBOM) generated with [cyclonedx-python](https://github.com/CycloneDX/cyclonedx-python) and published as release artifact
+14. Version and release management with [bump-my-version](https://callowayproject.github.io/bump-my-version/)
+15. Changelog and release notes generated with [git-cliff](https://git-cliff.org/)
+16. Documentation generated with [Sphinx](https://www.sphinx-doc.org/en/master/) including reference documentation and PDF export
+17. Documentation published to [Read The Docs](https://readthedocs.org/)
+18. Interactive OpenAPI specification with [Swagger](https://swagger.io/)
+19. Python package published to [PyPI](https://pypi.org/)
+20. Docker images published to [Docker.io](https://hub.docker.com/) and [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) with [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
+21. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
+22. Settings for use with [VSCode](https://code.visualstudio.com/)
+23. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
 
 ### Application Features
 

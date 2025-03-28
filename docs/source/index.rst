@@ -18,6 +18,8 @@
    release-notes
    contributing
    code-style
+   license
+   attributions
 
 .. sidebar-links::
    :caption: Links
