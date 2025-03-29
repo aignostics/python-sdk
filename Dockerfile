@@ -38,5 +38,8 @@ ENV AIGNOSTICS_PYTHON_SDK_RUNNING_IN_CONTAINER=1
 # API will run on port 8000 by default
 EXPOSE 8000/tcp
 
+# No healthcheck by default
+HEALTHCHECK NONE
+
 # But feel free to add arguments and options as needed when doing a docker run
 ENTRYPOINT ["uv", "run", "--no-dev", "aignostics"]

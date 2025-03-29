@@ -337,7 +337,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.0.7) - MIT License
+## aignostics (0.0.8) - MIT License
 
 🔬 Python SDK providing access to Aignostics AI services.
 

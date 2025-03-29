@@ -65,10 +65,10 @@ Projects generated with this template come with a comprehensive development tool
 7. CI/CD pipeline automated with [GitHub Actions](https://github.com/features/actions)
 8. CI/CD pipeline can be run locally with [act](https://github.com/nektos/act)
 9. Code quality and security checks with [SonarQube](https://www.sonarsource.com/products/sonarcloud) and [GitHub CodeQL](https://codeql.github.com/)
-10. Dependency monitoring with [pip-audit](https://pypi.org/project/pip-audit/), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
-11. Licenses of dependencies extracted with [pip-licenses](https://pypi.org/project/pip-licenses/), matched with allow list, and published as release artifacts in CSV and JSON format for compliance checks
+10. Dependency monitoring and vulnerability scanning with [pip-audit](https://pypi.org/project/pip-audit/), [trivy](https://trivy.dev/latest/), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+11. Licenses of dependencies extracted with [pip-licenses](https://pypi.org/project/pip-licenses/), matched with allow list, and published as release artifacts in CSV and JSON format for further compliance checks
 12. Generation of attributions from extracted licenses
-13. Software Bill of Materials (SBOM) generated with [cyclonedx-python](https://github.com/CycloneDX/cyclonedx-python) and published as release artifact
+13. Software Bill of Materials (SBOM) generated in [CycloneDX](https://cyclonedx.org/) and [SPDX](https://spdx.dev/) formats with [cyclonedx-python](https://github.com/CycloneDX/cyclonedx-python) resp. [trivy](https://trivy.dev/latest/), published as release artifacts
 14. Version and release management with [bump-my-version](https://callowayproject.github.io/bump-my-version/)
 15. Changelog and release notes generated with [git-cliff](https://git-cliff.org/)
 16. Documentation generated with [Sphinx](https://www.sphinx-doc.org/en/master/) including reference documentation and PDF export
@@ -376,8 +376,9 @@ Dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet i
 
 ## Further Reading
 
-* Check out the [reference](https://aignostics.readthedocs.io/en/latest/reference.html) with detailed documentation of public classes and functions.
+* Inspect our [security policy](https://aignostics.readthedocs.io/en/latest/security.html) with detailed documentation of checks, tools and principles.
 * Our [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html) provide a complete log of recent improvements and changes.
+* Check out the [reference](https://aignostics.readthedocs.io/en/latest/reference.html) with detailed documentation of public classes and functions.
 * In case you want to help us improve 🔬 Aignostics Python SDK: The [contribution guidelines](https://aignostics.readthedocs.io/en/latest/contributing.html) explain how to setup your development environment and create pull requests.
 * We gratefully acknowledge the [open source projects](ATTRIBUTIONS.md) that this project builds upon. Thank you to all these wonderful contributors!
 

@@ -1,5 +1,8 @@
 FROM mcr.microsoft.com/devcontainers/python:1-3.11-bullseye
 
+# No healthcheck by default
+HEALTHCHECK NONE
+
 RUN curl --proto '=https' --tlsv1.2 -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt update -y && \
     apt install -y --no-install-recommends curl gnupg2 jq less nano nodejs procps psmisc && \

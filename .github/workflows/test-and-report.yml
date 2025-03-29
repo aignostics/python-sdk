@@ -21,13 +21,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y libcairo2
-
       - name: Install dev tools
         run: |
-          sudo apt-get install -y curl jq xsltproc gnupg2 libcairo2
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y curl jq xsltproc gnupg2 trivy
+
+      - name: Install project specific dependencies
+        run: |
+          sudo apt-get install -y libcairo2
 
       - name: Install uv (python package manager)
         uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1

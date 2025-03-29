@@ -1,7 +1,7 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all audit bump build clean docs lint setup setup test update_from_template
+.PHONY: all act audit bump clean dist docs docker_build lint setup setup test update_from_template
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
@@ -24,7 +24,7 @@ else \
 fi
 
 # Individual Nox sessions
-act audit bump docs lint setup test update_from_template:
+act audit bump clean dist docs docker_build lint setup test update_from_template:
 	$(nox-cmd)
 
 # Standalone targets
@@ -59,9 +59,9 @@ help:
 	@echo "  act                 - Run GitHub actions locally via act"
 	@echo "  all                 - Run all default nox sessions, i.e. lint, test, docs, audit"
 	@echo "  audit               - Run security and license compliance audit"
-	@echo "  build               - Build wheel package with uv"
 	@echo "  bump patch|minor|major|x.y.z - Bump version"
 	@echo "  clean               - Clean build artifacts and caches"
+	@echo "  dist               - Build wheel package with uv"
 	@echo "  docs [pdf]          - Build documentation (add pdf for PDF format)"
 	@echo "  docker_build        - Build Docker image aignostics"
 	@echo "  lint                - Run linting and formatting checks"
