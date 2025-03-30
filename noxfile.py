@@ -464,8 +464,7 @@ def bump(session: nox.Session) -> None:
     session.run("git", "push", external=True)
 
 
-@nox.session(python=["3.13"])
+@nox.session()
 def dist(session: nox.Session) -> None:
     """Build wheel and put in dist/."""
-    _setup_venv(session)
     session.run("uv", "build", external=True)

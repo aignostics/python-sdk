@@ -94,7 +94,7 @@ def test_cli_serve(mock_uvicorn_run, runner: CliRunner) -> None:
     assert result.exit_code == 0
     assert "Starting API server at http://127.0.0.1:8000" in result.output
     mock_uvicorn_run.assert_called_once_with(
-        "aignostics.api:api",
+        "aignostics.api:app",
         host="127.0.0.1",
         port=8000,
         reload=False,

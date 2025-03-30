@@ -41,7 +41,7 @@ def get_service() -> Generator[Service, None, None]:
         pass
 
 
-api = FastAPI(
+app = FastAPI(
     root_path="/api",
     title=TITLE,
     contact={
@@ -177,5 +177,5 @@ async def echo_v2(request: Utterance) -> Echo:
     return Service.echo(request)
 
 
-api.mount("/v1", api_v1)
-api.mount("/v2", api_v2)
+app.mount("/v1", api_v1)
+app.mount("/v2", api_v2)

@@ -47,6 +47,7 @@ Beyond development tooling, projects generated with this template include the co
 6. Simple Web UI with [Streamlit](https://streamlit.io/)
 7. Configuration to run the CLI and API in a Docker container including setup for [Docker Compose](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-docker-compose/)
 8. Documentation including badges, setup instructions, contribution guide and security policy
+9. Preparation to deploy API as serverless function to Vercel
 
 Explore [here](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template-example) for what's generated out of the box.
 
@@ -192,6 +193,7 @@ Serve the functionality provided by Aignostics Python SDK in the web by easily i
 uv sync --all-extras                                # Install streamlit dependency part of the examples extra, see pyproject.toml
 uv run streamlit run examples/streamlit.py          # Serve on localhost:8501, opens browser
 ```
+
 
 ## Notebooks
 

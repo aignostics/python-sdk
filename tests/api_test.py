@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from aignostics.api import api
+from aignostics.api import app
 
 HELLO_WORLD_PATH_V1 = "/api/v1/hello-world"
 HELLO_WORLD_PATH_V2 = "/api/v2/hello-world"
@@ -29,7 +29,7 @@ SERVICE_IS_UNHEALTHY = "Service is unhealthy"
 @pytest.fixture
 def client() -> TestClient:
     """Provide a FastAPI test client fixture."""
-    return TestClient(api)
+    return TestClient(app)
 
 
 def test_root_endpoint_returns_404(client: TestClient) -> None:
