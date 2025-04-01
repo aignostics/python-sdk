@@ -46,7 +46,7 @@ jsf = "0.11.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
-pytest-cov = "^5.0.0"
+pytest-cov = "^6.0.0"
 pytest-timeout = "2.3.1"
 
 
