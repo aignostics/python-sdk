@@ -90,8 +90,10 @@ openapi: 3.1.0
 paths:
   /echo/{text}:
     get:
-      description: "Echo back the provided text.\n\nArgs:\n    text (str): The text\
-        \ to echo.\n\nReturns:\n    Echo: The echo.\n\nRaises:\n    422 Unprocessable\
+      description: "Echo back the provided text.\n\nArgs:\n    text (str): The 
+text\
+        \ to echo.\n\nReturns:\n    Echo: The echo.\n\nRaises:\n    422 
+Unprocessable\
         \ Entity: If text is not provided or empty."
       operationId: echo_echo__text__get
       parameters:
@@ -119,12 +121,18 @@ paths:
       - Basics
   /health:
     get:
-      description: "Check the health of the service.\n\nThis endpoint returns the\
-        \ health status of the service.\nThe health status can be either UP or DOWN.\n\
-        If the service is healthy, the status will be UP.\nIf the service is unhealthy,\
-        \ the status will be DOWN and a reason will be provided.\nThe response will\
-        \ have a 200 OK status code if the service is healthy,\nand a 500 Internal\
-        \ Server Error status code if the service is unhealthy.\n\nReturns:\n    Health:\
+      description: "Check the health of the service.\n\nThis endpoint returns 
+the\
+        \ health status of the service.\nThe health status can be either UP or 
+DOWN.\n\
+        If the service is healthy, the status will be UP.\nIf the service is 
+unhealthy,\
+        \ the status will be DOWN and a reason will be provided.\nThe response 
+will\
+        \ have a 200 OK status code if the service is healthy,\nand a 500 
+Internal\
+        \ Server Error status code if the service is unhealthy.\n\nReturns:\n   
+Health:\
         \ The health status of the service."
       operationId: health_health_get
       responses:
@@ -139,12 +147,18 @@ paths:
       - Observability
   /healthz:
     get:
-      description: "Check the health of the service.\n\nThis endpoint returns the\
-        \ health status of the service.\nThe health status can be either UP or DOWN.\n\
-        If the service is healthy, the status will be UP.\nIf the service is unhealthy,\
-        \ the status will be DOWN and a reason will be provided.\nThe response will\
-        \ have a 200 OK status code if the service is healthy,\nand a 500 Internal\
-        \ Server Error status code if the service is unhealthy.\n\nReturns:\n    Health:\
+      description: "Check the health of the service.\n\nThis endpoint returns 
+the\
+        \ health status of the service.\nThe health status can be either UP or 
+DOWN.\n\
+        If the service is healthy, the status will be UP.\nIf the service is 
+unhealthy,\
+        \ the status will be DOWN and a reason will be provided.\nThe response 
+will\
+        \ have a 200 OK status code if the service is healthy,\nand a 500 
+Internal\
+        \ Server Error status code if the service is unhealthy.\n\nReturns:\n   
+Health:\
         \ The health status of the service."
       operationId: health_healthz_get
       responses:
@@ -159,7 +173,8 @@ paths:
       - Observability
   /hello-world:
     get:
-      description: "Return a hello world message.\n\nReturns:\n    _HelloWorldResponse:\
+      description: "Return a hello world message.\n\nReturns:\n    
+_HelloWorldResponse:\
         \ A response containing the hello world message."
       operationId: hello_world_hello_world_get
       responses:
