@@ -1,6 +1,5 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
-from enum import StrEnum
 from typing import Annotated
 
 import typer
@@ -9,37 +8,44 @@ from rich.console import Console
 
 import aignx.platform
 
-from . import APIVersion, OpenAPIOutputFormat, Service, __version__
+from . import APIVersion, InfoOutputFormat, OpenAPIOutputFormat, Service, __version__
+from .utils import prepare_cli
 
 cli = typer.Typer(name="Command Line Interface of Aignostics Python SDK")
+applications_app = typer.Typer()
+cli.add_typer(applications_app, name="applications", help="Manage AI applications")
+runs_app = typer.Typer()
+cli.add_typer(runs_app, name="runs", help="Manage AI runs")
+diagnostics_app = typer.Typer()
+cli.add_typer(diagnostics_app, name="system", help="System diagnostics")
+
 _service = Service()
 _console = Console()
 
 
-@cli.command()
+@applications_app.command("list")
+def applications_list() -> None:
+    """List AI applications."""
+    papi_client = aignx.platform.Client()
+    applications = papi_client.applications.list()
+    _console.print(applications)
+
+
+@runs_app.command("list")
+def runs_list() -> None:
+    """List runs."""
+    papi_client = aignx.platform.Client()
+    runs = papi_client.runs.list()
+    _console.print(runs)
+
+
+@diagnostics_app.command("health")
 def health() -> None:
     """Indicate if service is healthy."""
     _console.print(_service.healthy())
 
 
-class InfoOutputFormat(StrEnum):
-    """
-    Enum representing the supported output formats.
-
-    This enum defines the possible formats for output data:
-    - YAML: Output data in YAML format
-    - JSON: Output data in JSON format
-
-    Usage:
-        format = InfoOutputFormat.YAML
-        print(f"Using {format} format")
-    """
-
-    YAML = "yaml"
-    JSON = "json"
-
-
-@cli.command()
+@diagnostics_app.command("info")
 def info(
     output_format: Annotated[
         InfoOutputFormat, typer.Option(help="Output format", case_sensitive=False)
@@ -56,15 +62,7 @@ def info(
             _console.print(yaml.dump(info, default_flow_style=False), end="")
 
 
-@cli.command()
-def papi_applications_list() -> None:
-    """Check PAPI health."""
-    papi_client = aignx.platform.Client()
-    applications = papi_client.applications.list()
-    _console.print(applications)
-
-
-@cli.command()
+@diagnostics_app.command("openapi")
 def openapi(
     api_version: Annotated[APIVersion, typer.Option(help="API Version", case_sensitive=False)] = APIVersion.V1,
     output_format: Annotated[
@@ -82,19 +80,7 @@ def openapi(
             _console.print(yaml.dump(schema, default_flow_style=False), end="")
 
 
-def _apply_cli_settings(cli: typer.Typer, epilog: str) -> None:
-    """Add epilog to all typers in the tree and configure default behavior."""
-    cli.info.epilog = epilog
-    cli.info.no_args_is_help = True
-    for command in cli.registered_commands:
-        command.epilog = cli.info.epilog
-
-
-_apply_cli_settings(
-    cli,
-    f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻",
-)
-
+prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")
 
 if __name__ == "__main__":
     cli()

@@ -8,12 +8,13 @@ from .constants import (
 from .exceptions import OpenAPISchemaError
 from .models import Health, HealthStatus
 from .service import Service
-from .types import APIVersion, OpenAPIOutputFormat
+from .types import APIVersion, InfoOutputFormat, OpenAPIOutputFormat
 
 __all__ = [
     "APIVersion",
     "Health",
     "HealthStatus",
+    "InfoOutputFormat",
     "OpenAPIOutputFormat",
     "OpenAPISchemaError",
     "Service",

@@ -34,3 +34,20 @@ class OpenAPIOutputFormat(StrEnum):
 
     YAML = "yaml"
     JSON = "json"
+
+
+class InfoOutputFormat(StrEnum):
+    """
+    Enum representing the supported output formats.
+
+    This enum defines the possible formats for output data:
+    - YAML: Output data in YAML format
+    - JSON: Output data in JSON format
+
+    Usage:
+        format = InfoOutputFormat.YAML
+        print(f"Using {format} format")
+    """
+
+    YAML = "yaml"
+    JSON = "json"

@@ -235,10 +235,11 @@ def _dump_openapi_schemas(session: nox.Session) -> None:
         # Generate API v1 schemas
         try:
             with Path("docs/source/_static/openapi_v1.yaml").open("w", encoding="utf-8") as f:
-                session.run("aignostics", "openapi", "--api-version=v1", stdout=f, external=True)
+                session.run("aignostics", "system", "openapi", "--api-version=v1", stdout=f, external=True)
             with Path("docs/source/_static/openapi_v1.json").open("w", encoding="utf-8") as f:
                 session.run(
                     "aignostics",
+                    "system",
                     "openapi",
                     "--api-version=v1",
                     "--output-format=json",

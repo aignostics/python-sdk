@@ -27,21 +27,21 @@ def test_cli_built_with_love(runner) -> None:
 
 def test_cli_health(runner: CliRunner) -> None:
     """Check health is true."""
-    result = runner.invoke(cli, ["health"])
+    result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
     assert "True" in result.output
 
 
 def test_cli_info(runner: CliRunner) -> None:
     """Check health is true."""
-    result = runner.invoke(cli, ["info"])
+    result = runner.invoke(cli, ["system", "info"])
     assert result.exit_code == 0
     assert "CPython" in result.output
 
 
 def test_cli_openapi_yaml(runner: CliRunner) -> None:
     """Check openapi command outputs YAML schema."""
-    result = runner.invoke(cli, ["openapi"])
+    result = runner.invoke(cli, ["system", "openapi"])
     assert result.exit_code == 0
     # Check for common OpenAPI YAML elements
     assert "openapi:" in result.output
@@ -51,7 +51,7 @@ def test_cli_openapi_yaml(runner: CliRunner) -> None:
 
 def test_cli_openapi_json(runner: CliRunner) -> None:
     """Check openapi command outputs JSON schema."""
-    result = runner.invoke(cli, ["openapi", "--output-format", "json"])
+    result = runner.invoke(cli, ["system", "openapi", "--output-format", "json"])
     assert result.exit_code == 0
     # Check for common OpenAPI JSON elements
     assert '"openapi":' in result.output
