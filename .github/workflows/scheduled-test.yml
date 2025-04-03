@@ -49,8 +49,8 @@ jobs:
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
-          envkey_CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          envkey_CLIENT_ID2: ${{ secrets.CLIENT_ID2 }}
+          envkey_CLIENT_ID_DEVICE: ${{ secrets.CLIENT_ID_DEVICE }}
+          envkey_CLIENT_ID_INTERACTIVE: ${{ secrets.CLIENT_ID_INTERACTIVE }}
           fail_on_empty: true
 
       # https://nox.thea.codes/en/stable/usage.html
