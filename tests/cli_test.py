@@ -25,6 +25,7 @@ def test_cli_built_with_love(runner) -> None:
     assert __version__ in result.output
 
 
+@pytest.mark.scheduled
 def test_cli_health(runner: CliRunner) -> None:
     """Check health is true."""
     result = runner.invoke(cli, ["system", "health"])

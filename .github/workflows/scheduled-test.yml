@@ -3,8 +3,8 @@ name: "CI"
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron:  '30 5,17 * * *'
-  push:
+    - cron:  '0 * * * *'
+    push:
     branches:
       - "**"
   pull_request:
@@ -56,4 +56,4 @@ jobs:
       # https://nox.thea.codes/en/stable/usage.html
       - name: Run unit tests, measure coverage, lint, and check vulnerabilities
         run: |
-          uv run --all-extras nox -t "scheduled"
+          uv run --all-extras nox -s test -- -m scheduled
