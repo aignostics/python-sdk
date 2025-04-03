@@ -17,6 +17,7 @@ BREW_TOOLS=(
     "act;act;https://nektosact.com/"
     "pinact;pinact;https://github.com/suzuki-shunsuke/pinact"
     "trivy;trivy;https://trivy.dev/latest/"
+    "pnpm;pnpm;https://pnpm.io/"
 )
 
 MAC_BREW_TOOLS=(

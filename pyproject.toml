@@ -62,9 +62,9 @@ classifiers = [
 requires-python = ">=3.11, <4.0"
 
 dependencies = [
-    # From template
+    # From Template
     "fastapi[standard,all]>=0.115.12",
-    "pydantic>=2.10.6",
+    "pydantic>=2.11.1",
     "pydantic-settings>=2.8.1",
     "typer>=0.15.1",
     # Custom
@@ -100,15 +100,18 @@ requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["src/*"]
+include = ["src/*", "codegen/*"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aignostics"]
+packages = ["src/aignostics", "codegen/aignx", "src/aignx"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"codegen" = "codegen"
 
 [project.optional-dependencies]
 examples = [
-    "streamlit>=1.44.0",
-    "marimo>=0.11.28",
+    "streamlit>=1.44.1",
+    "marimo>=0.12.2",
     "jupyter>=1.1.1",
     "jinja2>=3.1.6",
 ]
@@ -131,11 +134,12 @@ dev = [
     "pyright>=1.1.398",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
-    "pytest-cov>=6.0.0",
+    "pytest-cov>=6.1.0",
     "pytest-docker>=3.2.0",
     "pytest-env>=1.1.5",
     "pytest-regressions>=2.7.0",
     "pytest-subprocess>=1.5.3",
+    "pytest-timeout>=2.3.1",
     "pytest-xdist[psutil]>=3.6.1",
     "ruff>=0.11.2",
     "sphinx>=8.2.3",
@@ -149,7 +153,7 @@ dev = [
     "sphinxext.opengraph>=0.9.1",
     "swagger-plugin-for-sphinx>=5.1.0",
     "tomli>=2.1.0",
-    "types-pyyaml>=6.0.12.20250326",
+    "types-pyyaml>=6.0.12.20250402",
     "watchdog>=6.0.0",
 ]
 
@@ -246,9 +250,10 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
-addopts = "-v --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
+addopts = "-v --strict-markers --cov=aignostics --cov=aignx --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 testpaths = ["tests"]
 python_files = ["*_test.py"]
+pythonpath = [".", "src", "codegen"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
@@ -263,7 +268,6 @@ markers = [
     "requirements: mark tests with ids (e.g., PAPI-123, HETA-123) of requirements in Jira. The test will be linked to them - optional; comma-separated",
     "specifications: mark test with ids (e.g., PAPI-123, HETA-123) of specifications in Jira. The test will be linked to them - optional; comma-separated",
 ]
-
 
 [tool.coverage.run]
 sigterm = true

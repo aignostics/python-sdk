@@ -9,6 +9,8 @@ import uvicorn
 import yaml
 from rich.console import Console
 
+import aignx.platform
+
 from . import Service, Utterance, __version__
 from .api import api_v1, api_v2
 
@@ -71,6 +73,14 @@ def serve(
         port=port,
         reload=watch,
     )
+
+
+@cli.command()
+def papi_applications_list() -> None:
+    """Check PAPI health."""
+    papi_client = aignx.platform.Client()
+    applications = papi_client.applications.list()
+    _console.print(applications)
 
 
 class APIVersion(StrEnum):

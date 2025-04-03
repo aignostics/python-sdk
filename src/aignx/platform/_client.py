@@ -32,6 +32,6 @@ class Client:
                 # api_key_prefix={"Authorization": "Bearer"},
             ),
             header_name="Authorization",
-            header_value=f"Bearer {token}"
+            header_value=f"Bearer {token}",
         )
         return ExternalsApi(client)

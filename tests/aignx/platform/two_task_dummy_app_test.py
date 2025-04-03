@@ -30,9 +30,9 @@ def three_spots_payload():
                         "base_mpp": 0.46499982,
                         "width": 3728,
                         "height": 3640,
-                    }
+                    },
                 )
-            ]
+            ],
         ),
         ItemCreationRequest(
             reference="2",
@@ -47,9 +47,9 @@ def three_spots_payload():
                         "base_mpp": 0.46499982,
                         "width": 3616,
                         "height": 3400,
-                    }
+                    },
                 )
-            ]
+            ],
         ),
         ItemCreationRequest(
             reference="3",
@@ -64,30 +64,29 @@ def three_spots_payload():
                         "base_mpp": 0.46499982,
                         "width": 4016,
                         "height": 3952,
-                    }
+                    },
                 )
-            ]
-        )
+            ],
+        ),
     ]
 
 
-@pytest.mark.timeout(240)
+@pytest.mark.timeout(2)
 def test_two_task_dummy_app():
     application_version = "60e7b441-307a-4b41-8a97-5b02e7bc73a4"
     print(f"Create application run for application version: {application_version}")
     platform = aignx.platform.Client()
     application_run = platform.runs.create(
-        RunCreationRequest(
-            application_version=ApplicationVersion(application_version),
-            items=three_spots_payload()
-        )
+        RunCreationRequest(application_version=ApplicationVersion(application_version), items=three_spots_payload())
     )
 
     with tempfile.TemporaryDirectory() as dir:
         dir = Path(dir)
         application_run.download_to_folder(dir)
 
-        assert application_run.status().status == ApplicationRunStatus.COMPLETED, "Application run did not finish in completed status"
+        assert application_run.status().status == ApplicationRunStatus.COMPLETED, (
+            "Application run did not finish in completed status"
+        )
 
         run_result_folder = dir / application_run.application_run_id
         assert run_result_folder.exists(), "Application run result folder does not exist"
