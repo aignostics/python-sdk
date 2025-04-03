@@ -62,10 +62,27 @@ classifiers = [
 requires-python = ">=3.11, <4.0"
 
 dependencies = [
+    # From template
     "fastapi[standard,all]>=0.115.12",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.8.1",
     "typer>=0.15.1",
+    # Custom
+    "appdirs>=1.4.4",
+    "google-cloud-storage>=3.1.0",
+    "google-crc32c>=1.7.1",
+    "httpx>=0.28.1",
+    "jsf>=0.11.2",
+    "jsonschema>=4.23.0",
+    "pyjwt>=2.10.1",
+    "pyrfc6266>=1.0.2",
+    "python-dateutil>=2.9.0.post0",
+    "python-dotenv>=1.1.0",         # Can be removed later
+    "requests>=2.32.3",
+    "requests-oauthlib>=2.0.0",
+    "tifffile>=2025.1.10",
+    "tqdm>=4.67.1",
+    "urllib3>=2.2.3",
 ]
 
 [project.scripts]
@@ -236,9 +253,17 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
 markers = [
-    "sequential: exclude from parallel test execution",
+    # From Template
     "no_extras: tests that do require no extras installed",
+    "sequential: exclude from parallel test execution",
+    # Custom
+    # Nothing yet
+    "description: textual description what the test does, goes in `description` field in the Jira ticket - optional",
+    "labels: mark test with labels that are attached to the test tickets in Jira - optional; comma-separated",
+    "requirements: mark tests with ids (e.g., PAPI-123, HETA-123) of requirements in Jira. The test will be linked to them - optional; comma-separated",
+    "specifications: mark test with ids (e.g., PAPI-123, HETA-123) of specifications in Jira. The test will be linked to them - optional; comma-separated",
 ]
+
 
 [tool.coverage.run]
 sigterm = true
