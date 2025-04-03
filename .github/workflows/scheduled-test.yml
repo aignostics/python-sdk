@@ -2,7 +2,6 @@ name: "CI Scheduled"
 
 on:
   schedule:
-    # * is a special character in YAML so you have to quote this string
     - cron:  '0 * * * *'
   push:
     branches:
@@ -22,13 +21,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dev tools
-        run: |
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install -y curl jq xsltproc gnupg2 trivy
-
       - name: Install uv (python package manager)
         uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
         with:
@@ -40,12 +32,6 @@ jobs:
         run: |
           uv sync --all-extras --frozen --link-mode=copy
 
-      - name: Print development version info
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-        run: |
-          TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
-          echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
-
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
@@ -53,7 +39,6 @@ jobs:
           envkey_CLIENT_ID_INTERACTIVE: ${{ secrets.CLIENT_ID_INTERACTIVE }}
           fail_on_empty: true
 
-      # https://nox.thea.codes/en/stable/usage.html
       - name: Run unit tests, measure coverage, lint, and check vulnerabilities
         run: |
           uv run --all-extras nox -s test -- -m scheduled

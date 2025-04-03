@@ -368,7 +368,6 @@ def test(session: nox.Session) -> None:
     if _is_act_environment():
         pytest_args.extend(["-k", NOT_SKIP_WITH_ACT])
 
-    # Pass any additional arguments to pytest (like -m for markers)
     pytest_args.extend(session.posargs)
 
     session.run(*pytest_args)
