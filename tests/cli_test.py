@@ -1,8 +1,5 @@
 """Tests to verify the CLI functionality of Aignostics Python SDK."""
 
-import os
-import subprocess
-
 import pytest
 from typer.testing import CliRunner
 
@@ -39,16 +36,7 @@ def test_cli_info(runner: CliRunner) -> None:
     """Check health is true."""
     result = runner.invoke(cli, ["info"])
     assert result.exit_code == 0
-    assert "en_US" in result.output
-
-
-def test_cli_info_de() -> None:
-    """Check hello world printed."""
-    env_de = os.environ.copy()
-    env_de.update({"AIGNOSTICS_LANGUAGE": "de_DE"})
-    cli = "aignostics"
-    completed_process = subprocess.run([cli, "info"], capture_output=True, check=False, env=env_de)
-    assert completed_process.stdout == b'{"language":"de_DE"}\n'
+    assert "CPython" in result.output
 
 
 def test_cli_openapi_yaml(runner: CliRunner) -> None:

@@ -1,5 +1,6 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
+from enum import StrEnum
 from typing import Annotated
 
 import typer
@@ -21,10 +22,38 @@ def health() -> None:
     _console.print(_service.healthy())
 
 
+class InfoOutputFormat(StrEnum):
+    """
+    Enum representing the supported output formats.
+
+    This enum defines the possible formats for output data:
+    - YAML: Output data in YAML format
+    - JSON: Output data in JSON format
+
+    Usage:
+        format = InfoOutputFormat.YAML
+        print(f"Using {format} format")
+    """
+
+    YAML = "yaml"
+    JSON = "json"
+
+
 @cli.command()
-def info() -> None:
+def info(
+    output_format: Annotated[
+        InfoOutputFormat, typer.Option(help="Output format", case_sensitive=False)
+    ] = InfoOutputFormat.YAML,
+    env: Annotated[bool, typer.Option(help="Include environment variables in output")] = False,
+    filter_secrets: Annotated[bool, typer.Option(help="Filter out secret values from environment variables")] = True,
+) -> None:
     """Print info about service configuration."""
-    _console.print(_service.info())
+    info = _service.info(env=env, filter_secrets=filter_secrets)
+    match output_format:
+        case InfoOutputFormat.JSON:
+            _console.print_json(data=info)
+        case InfoOutputFormat.YAML:
+            _console.print(yaml.dump(info, default_flow_style=False), end="")
 
 
 @cli.command()
