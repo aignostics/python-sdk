@@ -75,12 +75,9 @@ dependencies = [
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
     "pyjwt>=2.10.1",
-    "pyrfc6266>=1.0.2",
-    "python-dateutil>=2.9.0.post0",
     "python-dotenv>=1.1.0",         # Can be removed later
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
-    "tifffile>=2025.1.10",
     "tqdm>=4.67.1",
     "urllib3>=2.2.3",
 ]
@@ -103,7 +100,7 @@ build-backend = "hatchling.build"
 include = ["src/*", "codegen/*"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aignostics", "codegen/aignx", "src/aignx"]
+packages = ["src/aignostics", "codegen/aignostics"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "codegen" = "codegen"

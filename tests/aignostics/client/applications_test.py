@@ -2,10 +2,10 @@ from unittest.mock import Mock
 
 import pytest
 
+from aignostics.client.resources.applications import Applications, Versions
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.models import ApplicationVersionReadResponse
-from aignx.platform.resources.applications import Applications, Versions
-from codegen.aignx.codegen.models.application_read_response import ApplicationReadResponse
+from aignx.codegen.models.application_read_response import ApplicationReadResponse
 
 
 @pytest.fixture

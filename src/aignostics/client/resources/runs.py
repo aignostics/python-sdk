@@ -6,6 +6,8 @@ from jsf import JSF
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
+from aignostics.client.resources.applications import Versions
+from aignostics.client.utils import _calculate_file_crc32c, _download_file, mime_type_to_file_ending
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.models import (
     ApplicationRunStatus,
@@ -15,25 +17,57 @@ from aignx.codegen.models import (
     RunCreationResponse,
     RunReadResponse,
 )
-from aignx.platform.resources.applications import Versions
-from aignx.platform.utils import _calculate_file_crc32c, _download_file, mime_type_to_file_ending
 
 
 class ApplicationRun:
+    """Represents a single application run.
+
+    Provides operations to check status, retrieve results, and download artifacts.
+    """
     def __init__(self, api: ExternalsApi, application_run_id: str):
+        """Initializes an ApplicationRun instance.
+
+        Args:
+            api: The configured API client.
+            application_run_id: The ID of the application run.
+        """
         self._api = api
         self.application_run_id = application_run_id
 
     @classmethod
     def for_application_run_id(cls, application_run_id: str) -> "ApplicationRun":
-        from aignx.platform import Client
+        """Creates an ApplicationRun instance for an existing run.
+
+        Args:
+            application_run_id: The ID of the application run.
+
+        Returns:
+            ApplicationRun: The initialized ApplicationRun instance.
+        """
+        from aignostics.client import Client
         return cls(Client._get_api_client(), application_run_id)
 
     def status(self) -> RunReadResponse:
+        """Retrieves the current status of the application run.
+
+        Returns:
+            RunReadResponse: The run status details.
+
+        Raises:
+            Exception: If the API request fails.
+        """
         res = self._api.get_run_v1_runs_application_run_id_get(self.application_run_id, include=None)
         return res
 
     def item_status(self) -> dict[str, ItemStatus]:
+        """Retrieves the status of all items in the run.
+
+        Returns:
+            dict[str, ItemStatus]: A dictionary mapping item references to their status.
+
+        Raises:
+            Exception: If the API request fails.
+        """
         results = self.results()
         item_status = {}
         for item in results:
@@ -41,14 +75,38 @@ class ApplicationRun:
         return item_status
 
     def cancel(self):
+        """Cancels the application run.
+
+        Raises:
+            Exception: If the API request fails.
+        """
         res = self._api.cancel_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
 
     def results(self) -> list[ItemResultReadResponse]:
+        """Retrieves the results of all items in the run.
+
+        Returns:
+            list[ItemResultReadResponse]: A list of item results.
+
+        Raises:
+            Exception: If the API request fails.
+        """
         # TODO(andreas): paging, sorting
         res = self._api.list_run_results_v1_runs_application_run_id_results_get(self.application_run_id)
         return res
 
     def download_to_folder(self, download_base: Path | str):
+        """Downloads all result artifacts to a folder.
+
+        Monitors run progress and downloads results as they become available.
+
+        Args:
+            download_base: Base directory to download results to.
+
+        Raises:
+            ValueError: If the provided path is not a directory.
+            Exception: If downloads or API requests fail.
+        """
         # create application run base folder
         download_base = Path(download_base)
         if not download_base.is_dir():
@@ -75,6 +133,18 @@ class ApplicationRun:
 
     @staticmethod
     def ensure_artifacts_downloaded(base_folder: Path, item: ItemResultReadResponse):
+        """Ensures all artifacts for an item are downloaded.
+
+        Downloads missing or partially downloaded artifacts and verifies their integrity.
+
+        Args:
+            base_folder: Base directory to download artifacts to.
+            item: The item result containing the artifacts to download.
+
+        Raises:
+            ValueError: If checksums don't match.
+            Exception: If downloads fail.
+        """
         item_dir = base_folder / item.reference
 
         downloaded_at_least_one_artifact = False
@@ -104,6 +174,13 @@ class ApplicationRun:
             print(f"Results for item: {item.reference} already present in {item_dir}")
 
     def __str__(self):
+        """Returns a string representation of the application run.
+
+        The string includes run ID, status, and item statistics.
+
+        Returns:
+            str: String representation of the application run.
+        """
         app_status = self.status().status.value
         item_status = self.item_status()
         pending, succeeded, error = 0, 0, 0
@@ -121,19 +198,56 @@ class ApplicationRun:
 
 
 class Runs:
+    """Resource class for managing application runs.
+
+    Provides operations to create, list, and retrieve runs.
+    """
     def __init__(self, api: ExternalsApi):
+        """Initializes the Runs resource with the API client.
+
+        Args:
+            api: The configured API client.
+        """
         self._api = api
 
     def __call__(self, application_run_id: str) -> ApplicationRun:
+        """Retrieves an ApplicationRun instance for an existing run.
+
+        Args:
+            application_run_id: The ID of the application run.
+
+        Returns:
+            ApplicationRun: The initialized ApplicationRun instance.
+        """
         return ApplicationRun(self._api, application_run_id)
 
     def create(self, payload: RunCreationRequest) -> ApplicationRun:
+        """Creates a new application run.
+
+        Args:
+            payload: The run creation request payload.
+
+        Returns:
+            ApplicationRun: The created application run.
+
+        Raises:
+            ValueError: If the payload is invalid.
+            Exception: If the API request fails.
+        """
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
         return ApplicationRun(self._api, res.application_run_id)
 
     def generate_example_payload(self, application_version_id: str):
-        app_version = Versions(self._api)(for_application_version_id=application_version_id)
+        """Generates an example payload for creating a run.
+
+        Args:
+            application_version_id: The ID of the application version.
+
+        Raises:
+            Exception: If the API request fails.
+        """
+        app_version = Versions(self._api).details(for_application_version_id=application_version_id)
         schema_idx = {
             input_artifact.name: input_artifact.metadata_schema
             for input_artifact in app_version.input_artifacts
@@ -156,6 +270,17 @@ class Runs:
         # validate(artifact.metadata, schema=schema_idx[artifact.name])
 
     def list(self, for_application_version: str = None) -> list[ApplicationRun]:
+        """Lists application runs, optionally filtered by application version.
+
+        Args:
+            for_application_version: Optional application version ID to filter by.
+
+        Returns:
+            list[ApplicationRun]: A list of application runs.
+
+        Raises:
+            Exception: If the API request fails.
+        """
         # TODO(andreas): pagination
         if not for_application_version:
             res = self._api.list_application_runs_v1_runs_get()
@@ -167,8 +292,20 @@ class Runs:
         ]
 
     def _validate_input_items(self, payload: RunCreationRequest):
+        """Validates the input items in a run creation request.
+
+        Checks that references are unique, all required artifacts are provided,
+        and artifact metadata matches the expected schema.
+
+        Args:
+            payload: The run creation request payload.
+
+        Raises:
+            ValueError: If validation fails.
+            Exception: If the API request fails.
+        """
         # validate metadata based on schema of application version
-        app_version = Versions(self._api)(for_application_version_id=payload.application_version.actual_instance)
+        app_version = Versions(self._api).details(for_application_version_id=payload.application_version.actual_instance)
         schema_idx = {
             input_artifact.name: input_artifact.metadata_schema
             for input_artifact in app_version.input_artifacts

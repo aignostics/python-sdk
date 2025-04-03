@@ -6,7 +6,7 @@ import typer
 import yaml
 from rich.console import Console
 
-import aignx.platform
+import aignostics.client
 
 from . import APIVersion, InfoOutputFormat, OpenAPIOutputFormat, Service, __version__
 from .utils import prepare_cli
@@ -26,7 +26,7 @@ _console = Console()
 @applications_app.command("list")
 def applications_list() -> None:
     """List AI applications."""
-    papi_client = aignx.platform.Client()
+    papi_client = aignostics.client.Client()
     applications = papi_client.applications.list()
     _console.print(applications)
 

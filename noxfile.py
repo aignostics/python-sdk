@@ -42,7 +42,7 @@ def _is_act_environment() -> bool:
     return os.environ.get("GITHUB_WORKFLOW_RUNTIME") == "ACT"
 
 
-@nox.session(python=["3.13"])
+@nox.session(python=["3.12"])
 def lint(session: nox.Session) -> None:
     """Run code formatting checks, linting, and static type checking."""
     _setup_venv(session)

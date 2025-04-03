@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from requests_oauthlib import OAuth2Session
 
 # load client ids
-load_dotenv()
+load_dotenv(dotenv_path=Path.home() / ".aignostics/env")
 
 CLIENT_ID_DEVICE = os.getenv("CLIENT_ID_DEVICE")
 CLIENT_ID_INTERACTIVE = os.getenv("CLIENT_ID_INTERACTIVE")
@@ -26,6 +26,11 @@ AUTHORIZATION_BASE_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize"
 TOKEN_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"
 DEVICE_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/device/code"
 
+# AUDIENCE = "https://aignostics-platform-staging-samia"
+# AUTHORIZATION_BASE_URL = "https://aignostics-platform-staging.eu.auth0.com/authorize"
+# TOKEN_URL = "https://aignostics-platform-staging.eu.auth0.com/oauth/token"
+# DEVICE_URL = "https://aignostics-platform-staging.eu.auth0.com/oauth/device/code"
+
 # constants for token caching
 CLIENT_APP_NAME = "python-sdk"
 CACHE_DIR = appdirs.user_cache_dir(CLIENT_APP_NAME, "aignostics")
@@ -35,6 +40,18 @@ AUTHORIZATION_BACKOFF_SECONDS = 3
 
 
 def get_token(store: bool = True):
+    """Retrieves an authentication token, either from cache or via login.
+
+    Args:
+        store: Boolean indicating whether to store the token to disk cache.
+            Defaults to True.
+
+    Returns:
+        str: The JWT access token.
+
+    Raises:
+        RuntimeError: If token retrieval fails.
+    """
     if not store:
         return _login()
 
@@ -52,8 +69,7 @@ def get_token(store: bool = True):
                 return token
 
     # If we got here, we need a new token
-    refresh_token = os.getenv("AIGNX_REFRESH_TOKEN")
-    if refresh_token:
+    if refresh_token := os.getenv("AIGNX_REFRESH_TOKEN"):
         new_token = _token_from_refresh_token(refresh_token)
     else:
         new_token = _login()
@@ -71,7 +87,18 @@ def get_token(store: bool = True):
 
 
 def _login() -> str:
-    """Allows the user to login, returns the JSON Web Token."""
+    """Allows the user to login and obtain an access token.
+
+    Determines the appropriate authentication flow based on whether
+    a browser can be opened, then executes that flow.
+
+    Returns:
+        str: The JWT access token.
+
+    Raises:
+        RuntimeError: If authentication fails.
+        AssertionError: If the returned token doesn't have the expected format.
+    """
     flow_type = "browser" if _can_open_browser() else "device"
     if flow_type == "browser":
         token = _perform_authorization_code_with_pkce_flow()
@@ -82,6 +109,11 @@ def _login() -> str:
 
 
 def _can_open_browser() -> bool:
+    """Checks if a browser can be opened for authentication.
+
+    Returns:
+        bool: True if a browser can be opened, False otherwise.
+    """
     launch_browser = False
     try:
         _ = webbrowser.get()
@@ -93,13 +125,31 @@ def _can_open_browser() -> bool:
 
 
 class _OAuthHttpServer(HTTPServer):
+    """HTTP server for OAuth authorization code flow.
+
+    Extends HTTPServer to store the authorization code received during OAuth flow.
+    """
     def __init__(self, *args, **kwargs):
+        """Initializes the server with storage for the authorization code.
+
+        Args:
+            *args: Variable length argument list passed to parent.
+            **kwargs: Arbitrary keyword arguments passed to parent.
+        """
         HTTPServer.__init__(self, *args, **kwargs)
         self.authorization_code = ""
 
 
 class _OAuthHttpHandler(BaseHTTPRequestHandler):
+    """HTTP request handler for OAuth authorization code flow.
+
+    Processes the OAuth callback redirect and extracts the authorization code.
+    """
     def do_GET(self):
+        """Handles GET requests containing OAuth response parameters.
+
+        Extracts authorization code or error from the URL and updates the server state.
+        """
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.end_headers()
@@ -129,14 +179,34 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
         self.wfile.write(response + status)
 
     def log_message(self, format, *args):
-        pass
+        """Suppresses log messages from the HTTP server.
+
+        Args:
+            format: The log message format string.
+            *args: The arguments to be applied to the format string.
+        """
 
 
 def _perform_authorization_code_with_pkce_flow():
+    """Performs the OAuth 2.0 Authorization Code flow with PKCE.
+
+    Opens a browser for user authentication and uses a local redirect
+    to receive the authorization code.
+
+    Returns:
+        str: The JWT access token.
+
+    Raises:
+        RuntimeError: If authentication fails.
+    """
     parsed_redirect = urlparse(REDIRECT_URI)
-    with _OAuthHttpServer((parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler) as httpd:
+    with _OAuthHttpServer(
+        (parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler
+    ) as httpd:
         # initialize flow (generate code_challenge and code_verifier)
-        session = OAuth2Session(CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256")
+        session = OAuth2Session(
+            CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256"
+        )
         authorization_url, state = session.authorization_url(
             AUTHORIZATION_BASE_URL, access_type="offline", audience=AUDIENCE
         )
@@ -155,9 +225,22 @@ def _perform_authorization_code_with_pkce_flow():
 
 
 def _perform_device_flow():
-    resp = requests.post(DEVICE_URL, data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE})
+    """Performs the OAuth 2.0 Device Authorization flow.
+
+    Used when a browser cannot be opened. Provides a URL for the user to visit
+    on another device and polls for authorization completion.
+
+    Returns:
+        str: The JWT access token.
+
+    Raises:
+        RuntimeError: If authentication fails or is denied.
+    """
+    resp = requests.post(
+        DEVICE_URL, data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE}
+    )
     device_code = resp.json()["device_code"]
-    print(f"Please visit: {resp.json()['verification_uri_complete']}")
+    print(f'Please visit: {resp.json()["verification_uri_complete"]}')
 
     # Polling for access token with received device code
     while True:
@@ -180,6 +263,17 @@ def _perform_device_flow():
 
 
 def _token_from_refresh_token(refresh_token: str):
+    """Obtains a new access token using a refresh token.
+
+    Args:
+        refresh_token: The refresh token to use for obtaining a new access token.
+
+    Returns:
+        str: The new JWT access token.
+
+    Raises:
+        RuntimeError: If token refresh fails.
+    """
     while True:
         resp = requests.post(
             TOKEN_URL,
