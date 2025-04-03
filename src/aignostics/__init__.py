@@ -5,15 +5,18 @@ from .constants import (
     __project_path__,
     __version__,
 )
-from .models import Echo, Health, HealthStatus, Utterance
+from .exceptions import OpenAPISchemaError
+from .models import Health, HealthStatus
 from .service import Service
+from .types import APIVersion, OpenAPIOutputFormat
 
 __all__ = [
-    "Echo",
+    "APIVersion",
     "Health",
     "HealthStatus",
+    "OpenAPIOutputFormat",
+    "OpenAPISchemaError",
     "Service",
-    "Utterance",
     "__project_name__",
     "__project_path__",
     "__version__",

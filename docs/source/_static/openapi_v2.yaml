@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/helmut/Code/opt/.nox/docs-3-13/bin/aignostics", line 4, in <module>
-    from aignostics.cli import cli
-  File "/Users/helmut/Code/opt/src/aignostics/cli.py", line 85
-    uvx aignostics applications list
-        ^^^^^^^^^^
-SyntaxError: invalid syntax

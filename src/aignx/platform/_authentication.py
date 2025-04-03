@@ -21,10 +21,6 @@ CLIENT_ID_INTERACTIVE = os.getenv("CLIENT_ID_INTERACTIVE")
 SCOPE = ["offline_access"]  # include a refresh token as well
 REDIRECT_URI = "http://localhost:8080"  # is configured in Auth0 - do not change
 
-print(CLIENT_ID_DEVICE)
-print(CLIENT_ID_INTERACTIVE)
-exit
-
 AUDIENCE = "https://dev-8ouohmmrbuh2h4vu-samia"
 AUTHORIZATION_BASE_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize"
 TOKEN_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"

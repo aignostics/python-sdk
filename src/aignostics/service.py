@@ -1,14 +1,14 @@
 """Service of Aignostics Python SDK."""
 
-import os
+import json
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .models import Echo, Utterance
-from .settings import Language, Settings
+from . import OpenAPISchemaError
+from .settings import Settings
 
 load_dotenv()
-THE_VAR = os.getenv("THE_VAR", "not defined")
 
 
 class Service:
@@ -39,31 +39,20 @@ class Service:
         """
         return self._settings.model_dump_json()
 
-    def get_hello_world(self) -> str:
-        """
-        Get a hello world message.
-
-        Returns:
-            str: Hello world message.
-        """
-        match self._settings.language:
-            case Language.GERMAN:
-                return "Hallo, Welt!"
-            case _:
-                return "Hello, world!"
-
     @staticmethod
-    def echo(utterance: Utterance) -> Echo:
+    def openapi_schema() -> dict:
         """
-        Loudly echo utterance.
-
-        Args:
-            utterance (Utterance): The utterance to echo.
+        Get OpenAPI schema.
 
         Returns:
-            Echo: The loudly echoed utterance.
+            dict: OpenAPI schema.
 
         Raises:
-            ValueError: If the utterance is empty or contains only whitespace.
+            OpenAPISchemaError: If the OpenAPI schema file cannot be found or is not valid JSON.
         """
-        return Echo(text=utterance.text.upper())
+        schema_path = Path(__file__).parent.parent.parent / "schema" / "api.json"
+        try:
+            with schema_path.open(encoding="utf-8") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            raise OpenAPISchemaError(e) from e

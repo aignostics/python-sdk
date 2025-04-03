@@ -12,7 +12,6 @@
 
    main
    api_v1
-   api_v2
    reference
    security
    release-notes

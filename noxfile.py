@@ -249,23 +249,6 @@ def _dump_openapi_schemas(session: nox.Session) -> None:
         except CommandFailed:
             session.log("Failed to generate API v1 OpenAPI schemas - command may not be supported")
 
-        # Generate API v2 schemas
-        try:
-            with Path("docs/source/_static/openapi_v2.yaml").open("w", encoding="utf-8") as f:
-                session.run("aignostics", "openapi", "--api-version=v2", stdout=f, external=True)
-            with Path("docs/source/_static/openapi_v2.json").open("w", encoding="utf-8") as f:
-                session.run(
-                    "aignostics",
-                    "openapi",
-                    "--api-version=v2",
-                    "--output-format=json",
-                    stdout=f,
-                    external=True,
-                )
-            session.log("Generated API v2 OpenAPI schemas")
-        except CommandFailed:
-            session.log("Failed to generate API v2 OpenAPI schemas - command may not be supported")
-
         session.log("OpenAPI schema generation completed")
     except Exception as e:  # noqa: BLE001
         session.log(f"Warning: Could not generate OpenAPI schemas: {e}")
