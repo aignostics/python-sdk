@@ -3,11 +3,6 @@ name: "CI Scheduled"
 on:
   schedule:
     - cron:  '0 * * * *'
-  push:
-    branches:
-      - "**"
-  pull_request:
-    branches: [main]
 
 jobs:
   test-scheduled:
