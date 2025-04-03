@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  test-scheduled:
     runs-on: ubuntu-latest
     permissions:
       packages: write

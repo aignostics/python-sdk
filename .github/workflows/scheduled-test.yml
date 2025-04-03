@@ -1,7 +1,8 @@
-name: "CI"
+name: "CI Scheduled"
 
 on:
   schedule:
+    # * is a special character in YAML so you have to quote this string
     - cron:  '0 * * * *'
   push:
     branches:
@@ -10,7 +11,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  test-scheduled:
     runs-on: ubuntu-latest
     permissions:
       contents: read
