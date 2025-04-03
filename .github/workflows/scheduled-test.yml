@@ -41,4 +41,4 @@ jobs:
 
       - name: Run unit tests, measure coverage, lint, and check vulnerabilities
         run: |
-          uv run --all-extras nox -s test -- -m scheduled
+          uv run --all-extras nox -s test -p 3.11 -- -m scheduled
