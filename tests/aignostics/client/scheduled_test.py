@@ -10,6 +10,7 @@ from aignx.codegen.models import ApplicationRunStatus, ApplicationVersion, ItemS
 
 
 @pytest.mark.timeout(240)
+@pytest.mark.scheduled
 def test_two_task_dummy_app():
     application_version = "60e7b441-307a-4b41-8a97-5b02e7bc73a4"
     print(f"Create application run for application version: {application_version}")

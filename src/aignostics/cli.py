@@ -34,7 +34,7 @@ def applications_list() -> None:
 @runs_app.command("list")
 def runs_list() -> None:
     """List runs."""
-    papi_client = aignx.platform.Client()
+    papi_client = aignostics.client.Client()
     runs = papi_client.runs.list()
     _console.print(runs)
 
