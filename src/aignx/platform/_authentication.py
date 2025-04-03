@@ -21,6 +21,10 @@ CLIENT_ID_INTERACTIVE = os.getenv("CLIENT_ID_INTERACTIVE")
 SCOPE = ["offline_access"]  # include a refresh token as well
 REDIRECT_URI = "http://localhost:8080"  # is configured in Auth0 - do not change
 
+print(CLIENT_ID_DEVICE)
+print(CLIENT_ID_INTERACTIVE)
+exit
+
 AUDIENCE = "https://dev-8ouohmmrbuh2h4vu-samia"
 AUTHORIZATION_BASE_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize"
 TOKEN_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"
@@ -134,13 +138,9 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
 
 def _perform_authorization_code_with_pkce_flow():
     parsed_redirect = urlparse(REDIRECT_URI)
-    with _OAuthHttpServer(
-        (parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler
-    ) as httpd:
+    with _OAuthHttpServer((parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler) as httpd:
         # initialize flow (generate code_challenge and code_verifier)
-        session = OAuth2Session(
-            CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256"
-        )
+        session = OAuth2Session(CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256")
         authorization_url, state = session.authorization_url(
             AUTHORIZATION_BASE_URL, access_type="offline", audience=AUDIENCE
         )
@@ -159,11 +159,9 @@ def _perform_authorization_code_with_pkce_flow():
 
 
 def _perform_device_flow():
-    resp = requests.post(
-        DEVICE_URL, data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE}
-    )
+    resp = requests.post(DEVICE_URL, data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE})
     device_code = resp.json()["device_code"]
-    print(f'Please visit: {resp.json()["verification_uri_complete"]}')
+    print(f"Please visit: {resp.json()['verification_uri_complete']}")
 
     # Polling for access token with received device code
     while True:

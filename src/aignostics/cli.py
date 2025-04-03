@@ -82,6 +82,8 @@ def papi_applications_list() -> None:
     applications = papi_client.applications.list()
     _console.print(applications)
 
+uvx aignostics applications list
+uvx aignostics run poll
 
 class APIVersion(StrEnum):
     """

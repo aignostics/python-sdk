@@ -56,5 +56,5 @@ markers = [
     "requirements: mark tests with ids (e.g., PAPI-123, HETA-123) of requirements in Jira. The test will be linked to them - optional; comma-separated",
     "specifications: mark test with ids (e.g., PAPI-123, HETA-123) of specifications in Jira. The test will be linked to them - optional; comma-separated",
     "labels: mark test with labels that are attached to the test tickets in Jira - optional; comma-separated",
-    "description: textual description what the test does, goes in `description` field in the Jira ticket - optional"
+    "description: textual description what the test does, goes in `description` field in the Jira ticket - optional",
 ]
