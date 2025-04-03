@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install uv (python package manager)
+      - name: Install uv
         uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
         with:
           version: "0.6.3"
@@ -39,6 +39,6 @@ jobs:
           envkey_CLIENT_ID_INTERACTIVE: ${{ secrets.CLIENT_ID_INTERACTIVE }}
           fail_on_empty: true
 
-      - name: Run unit tests, measure coverage, lint, and check vulnerabilities
+      - name: Run tests marked as scheduled
         run: |
           uv run --all-extras nox -s test -p 3.11 -- -m scheduled
