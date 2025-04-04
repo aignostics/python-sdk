@@ -7,6 +7,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
+
     return (mo,)
 
 
@@ -32,6 +33,7 @@ def _(mo):
 @app.cell
 def _():
     import aignostics.client
+
     client = aignostics.client.Client()
 
     # the following functions is just used to visualize the results nicely in this notebook
@@ -44,6 +46,7 @@ def _():
         else:
             items = (a.model_dump() for a in models)
         return pd.DataFrame(items)
+
     return BaseModel, aignostics, client, pd, show
 
 
@@ -94,15 +97,18 @@ def _(mo):
 def _(client):
     import os
 
-    from aignostics.samples import input_samples
     from aignx.codegen.models import ApplicationVersion, RunCreationRequest
 
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/akunft/Downloads/aignx-platform-api-shsodcule-9086ce65109a.json"
+    from aignostics.samples import input_samples
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
+        "/Users/akunft/Downloads/aignx-platform-api-shsodcule-9086ce65109a.json"
+    )
 
     application_run = client.runs.create(
         RunCreationRequest(
             application_version=ApplicationVersion("212470c6-103e-429e-a9a0-0f662166faf5"),
-            items=input_samples.three_spots_payload()
+            items=input_samples.three_spots_payload(),
         )
     )
     print(application_run)
@@ -123,6 +129,7 @@ def _(mo):
 @app.cell
 def _(application_run):
     from aignostics.resources.runs import ApplicationRun
+
     # if you have a reference to an application run
     download_folder = "/tmp/"
     application_run.download_to_folder(download_folder)

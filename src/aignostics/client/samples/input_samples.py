@@ -1,5 +1,6 @@
-from aignostics.client.utils import _generate_signed_url
 from aignx.codegen.models import InputArtifactCreationRequest, ItemCreationRequest
+
+from aignostics.client.utils import _generate_signed_url
 
 
 def three_spots_payload():
@@ -17,9 +18,9 @@ def three_spots_payload():
                         "base_mpp": 0.46499982,
                         "width": 3728,
                         "height": 3640,
-                    }
+                    },
                 )
-            ]
+            ],
         ),
         ItemCreationRequest(
             reference="2",
@@ -34,9 +35,9 @@ def three_spots_payload():
                         "base_mpp": 0.46499982,
                         "width": 3616,
                         "height": 3400,
-                    }
+                    },
                 )
-            ]
+            ],
         ),
         ItemCreationRequest(
             reference="3",
@@ -51,8 +52,8 @@ def three_spots_payload():
                         "base_mpp": 0.46499982,
                         "width": 4016,
                         "height": 3952,
-                    }
+                    },
                 )
-            ]
-        )
+            ],
+        ),
     ]

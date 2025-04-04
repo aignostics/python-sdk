@@ -18,6 +18,7 @@ BREW_TOOLS=(
     "pinact;pinact;https://github.com/suzuki-shunsuke/pinact"
     "trivy;trivy;https://trivy.dev/latest/"
     "pnpm;pnpm;https://pnpm.io/"
+    "openapi-generator;openapi-generator;https://github.com/OpenAPITools/openapi-generator"
 )
 
 MAC_BREW_TOOLS=(

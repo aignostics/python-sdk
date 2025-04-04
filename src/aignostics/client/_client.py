@@ -1,9 +1,10 @@
-from aignostics.client._authentication import get_token
-from aignostics.client.resources.applications import Applications, Versions
-from aignostics.client.resources.runs import Runs
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
+
+from aignostics.client._authentication import get_token
+from aignostics.client.resources.applications import Applications, Versions
+from aignostics.client.resources.runs import Runs
 
 API_ROOT = "https://platform-dev.aignostics.com"
 # API_ROOT = "https://platform-staging.aignostics.ai"
@@ -15,6 +16,7 @@ class Client:
     Provides access to platform resources like applications, versions, and runs.
     Handles authentication and API client configuration.
     """
+
     def __init__(self, cache_token: bool = True):
         """Initializes a client instance with authenticated API access.
 
@@ -53,6 +55,6 @@ class Client:
                 # api_key_prefix={"Authorization": "Bearer"},
             ),
             header_name="Authorization",
-            header_value=f"Bearer {token}"
+            header_value=f"Bearer {token}",
         )
         return ExternalsApi(client)

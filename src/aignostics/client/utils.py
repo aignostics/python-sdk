@@ -94,11 +94,7 @@ def _generate_signed_url(fully_qualified_gs_path: str):
     if not blob.exists():
         raise ValueError(f"Blob does not exist: {fully_qualified_gs_path}")
 
-    url = blob.generate_signed_url(
-        expiration=datetime.timedelta(hours=1),
-        method="GET",
-        version="v4"
-    )
+    url = blob.generate_signed_url(expiration=datetime.timedelta(hours=1), method="GET", version="v4")
     return url
 
 

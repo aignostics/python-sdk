@@ -111,7 +111,7 @@ class Service:
         Raises:
             OpenAPISchemaError: If the OpenAPI schema file cannot be found or is not valid JSON.
         """
-        schema_path = Path(__file__).parent.parent.parent / "schema" / "api.json"
+        schema_path = Path(__file__).parent.parent.parent / "codegen" / "in" / "api.json"
         try:
             with schema_path.open(encoding="utf-8") as f:
                 return json.load(f)

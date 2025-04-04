@@ -1,7 +1,7 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all act audit bump clean dist docs docker_build lint setup setup test test_scheduledupdate_from_template
+.PHONY: all act audit bump clean codegen dist docs docker_build lint setup setup test test_scheduledupdate_from_template
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
@@ -49,6 +49,22 @@ clean:
 ## Build Docker image
 docker_build:
 	docker build -t aignostics .
+
+# Project specific targets
+## codegen
+codegen:
+	docker run --rm -u "$(id -u):$(id -g)" -v "${PWD}:/local" openapitools/openapi-generator-cli:v7.10.0 generate \
+		-i "/local/codegen/in/api.json" \
+		-g python \
+		-o /local/codegen/out \
+		-c /local/codegen/config.json \
+	# Alternative
+	# openapi-generator generate -i codegen/in/api.json -g python -c codegen/config.json -o codegen/out
+
+	# Hotfix for https://github.com/OpenAPITools/openapi-generator/issues/18932
+	# create __init__.py files
+	find codegen/out/aignx/codegen/models/ -name "[a-z]*.py" -type f | sed 's|.*/\(.*\)\.py|\1|' | xargs -I{} echo "from .{} import *" > codegen/out/aignx/codegen/models/__init__.py
+	# ls codegen/out/aignx/codegen/models/ | awk -F . '/[a-z].py/ {print "from ."$1" import *"}' > codegen/out/aignx/codegen/models/__init__.py
 
 # Special rule to catch any arguments (like patch, minor, major, pdf, Python versions, or x.y.z)
 # This prevents "No rule to make target" errors when passing arguments to make commands

@@ -2,11 +2,11 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from aignx.codegen.models import ApplicationRunStatus, ApplicationVersion, ItemStatus, RunCreationRequest
 
 import aignostics.client
 from aignostics.client.samples import input_samples
 from aignostics.client.utils import _calculate_file_crc32c, mime_type_to_file_ending
-from aignx.codegen.models import ApplicationRunStatus, ApplicationVersion, ItemStatus, RunCreationRequest
 
 
 @pytest.mark.timeout(240)
@@ -17,8 +17,7 @@ def test_two_task_dummy_app():
     platform = aignostics.client.Client(cache_token=False)
     application_run = platform.runs.create(
         RunCreationRequest(
-            application_version=ApplicationVersion(application_version),
-            items=input_samples.three_spots_payload()
+            application_version=ApplicationVersion(application_version), items=input_samples.three_spots_payload()
         )
     )
 
@@ -26,7 +25,9 @@ def test_two_task_dummy_app():
         dir = Path(dir)
         application_run.download_to_folder(dir)
 
-        assert application_run.status().status == ApplicationRunStatus.COMPLETED, "Application run did not finish in completed status"
+        assert application_run.status().status == ApplicationRunStatus.COMPLETED, (
+            "Application run did not finish in completed status"
+        )
 
         run_result_folder = dir / application_run.application_run_id
         assert run_result_folder.exists(), "Application run result folder does not exist"

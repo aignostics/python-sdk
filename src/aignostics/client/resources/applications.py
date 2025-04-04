@@ -7,6 +7,7 @@ class Versions:
 
     Provides operations to list and retrieve application versions.
     """
+
     def __init__(self, api: ExternalsApi):
         """Initializes the Versions resource with the API client.
 
@@ -32,7 +33,9 @@ class Versions:
             application_id = for_application.application_id
         else:
             application_id = for_application
-        res = self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(application_id=application_id)
+        res = self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
+            application_id=application_id
+        )
         return res
 
     def details(self, for_application_version_id: str) -> VersionReadResponse:
@@ -47,7 +50,9 @@ class Versions:
         Raises:
             Exception: If the API request fails.
         """
-        return self._api.get_version_v1_versions_application_version_id_get(application_version_id=for_application_version_id)
+        return self._api.get_version_v1_versions_application_version_id_get(
+            application_version_id=for_application_version_id
+        )
 
 
 class Applications:

@@ -75,7 +75,7 @@ dependencies = [
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
     "pyjwt>=2.10.1",
-    "python-dotenv>=1.1.0",         # Can be removed later
+    "python-dotenv>=1.1.0",        # Can be removed later
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
     "tqdm>=4.67.1",
@@ -97,13 +97,13 @@ requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["src/*", "codegen/*"]
+include = ["src/*", "codegen/out/*"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aignostics", "codegen/aignostics"]
+packages = ["src/aignostics", "codegen/out/aignx"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"codegen" = "codegen"
+"codegen" = "codegen/out"
 
 [project.optional-dependencies]
 examples = [
@@ -165,7 +165,12 @@ target-version = "py311"
 preview = true
 fix = true
 line-length = 120
-extend-exclude = [".fixme", "notebook.py"]
+extend-exclude = [
+    ".fixme",
+    "notebook.py",
+    "playbook.py", # TODO (Helmut): refactor that code and reenable
+    "codegen",     # TODO (Helmut): check if codegen can be tweaked to generate better code
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -247,10 +252,10 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
-addopts = "-v --strict-markers --cov=aignostics --cov=aignx --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
+addopts = "-v --strict-markers --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 testpaths = ["tests"]
 python_files = ["*_test.py"]
-pythonpath = [".", "src", "codegen"]
+pythonpath = [".", "src", "codegen/out"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]

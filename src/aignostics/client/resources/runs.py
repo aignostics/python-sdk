@@ -2,12 +2,6 @@ import json
 from pathlib import Path
 from time import sleep
 
-from jsf import JSF
-from jsonschema.exceptions import ValidationError
-from jsonschema.validators import validate
-
-from aignostics.client.resources.applications import Versions
-from aignostics.client.utils import _calculate_file_crc32c, _download_file, mime_type_to_file_ending
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.models import (
     ApplicationRunStatus,
@@ -17,6 +11,12 @@ from aignx.codegen.models import (
     RunCreationResponse,
     RunReadResponse,
 )
+from jsf import JSF
+from jsonschema.exceptions import ValidationError
+from jsonschema.validators import validate
+
+from aignostics.client.resources.applications import Versions
+from aignostics.client.utils import _calculate_file_crc32c, _download_file, mime_type_to_file_ending
 
 
 class ApplicationRun:
@@ -24,6 +24,7 @@ class ApplicationRun:
 
     Provides operations to check status, retrieve results, and download artifacts.
     """
+
     def __init__(self, api: ExternalsApi, application_run_id: str):
         """Initializes an ApplicationRun instance.
 
@@ -45,6 +46,7 @@ class ApplicationRun:
             ApplicationRun: The initialized ApplicationRun instance.
         """
         from aignostics.client import Client
+
         return cls(Client._get_api_client(), application_run_id)
 
     def status(self) -> RunReadResponse:
@@ -202,6 +204,7 @@ class Runs:
 
     Provides operations to create, list, and retrieve runs.
     """
+
     def __init__(self, api: ExternalsApi):
         """Initializes the Runs resource with the API client.
 
@@ -249,8 +252,7 @@ class Runs:
         """
         app_version = Versions(self._api).details(for_application_version_id=application_version_id)
         schema_idx = {
-            input_artifact.name: input_artifact.metadata_schema
-            for input_artifact in app_version.input_artifacts
+            input_artifact.name: input_artifact.metadata_schema for input_artifact in app_version.input_artifacts
         }
         schema = RunCreationRequest.model_json_schema()
         faker = JSF(schema)
@@ -286,10 +288,7 @@ class Runs:
             res = self._api.list_application_runs_v1_runs_get()
         else:
             res = self._api.list_application_runs_v1_runs_get_with_http_info(for_application_version)
-        return [
-            ApplicationRun(self._api, response.application_run_id)
-            for response in res
-        ]
+        return [ApplicationRun(self._api, response.application_run_id) for response in res]
 
     def _validate_input_items(self, payload: RunCreationRequest):
         """Validates the input items in a run creation request.
@@ -305,10 +304,11 @@ class Runs:
             Exception: If the API request fails.
         """
         # validate metadata based on schema of application version
-        app_version = Versions(self._api).details(for_application_version_id=payload.application_version.actual_instance)
+        app_version = Versions(self._api).details(
+            for_application_version_id=payload.application_version.actual_instance
+        )
         schema_idx = {
-            input_artifact.name: input_artifact.metadata_schema
-            for input_artifact in app_version.input_artifacts
+            input_artifact.name: input_artifact.metadata_schema for input_artifact in app_version.input_artifacts
         }
         references = set()
         for item in payload.items:

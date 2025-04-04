@@ -129,6 +129,7 @@ class _OAuthHttpServer(HTTPServer):
 
     Extends HTTPServer to store the authorization code received during OAuth flow.
     """
+
     def __init__(self, *args, **kwargs):
         """Initializes the server with storage for the authorization code.
 
@@ -145,6 +146,7 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
 
     Processes the OAuth callback redirect and extracts the authorization code.
     """
+
     def do_GET(self):
         """Handles GET requests containing OAuth response parameters.
 
@@ -200,13 +202,9 @@ def _perform_authorization_code_with_pkce_flow():
         RuntimeError: If authentication fails.
     """
     parsed_redirect = urlparse(REDIRECT_URI)
-    with _OAuthHttpServer(
-        (parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler
-    ) as httpd:
+    with _OAuthHttpServer((parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler) as httpd:
         # initialize flow (generate code_challenge and code_verifier)
-        session = OAuth2Session(
-            CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256"
-        )
+        session = OAuth2Session(CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256")
         authorization_url, state = session.authorization_url(
             AUTHORIZATION_BASE_URL, access_type="offline", audience=AUDIENCE
         )
@@ -236,11 +234,9 @@ def _perform_device_flow():
     Raises:
         RuntimeError: If authentication fails or is denied.
     """
-    resp = requests.post(
-        DEVICE_URL, data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE}
-    )
+    resp = requests.post(DEVICE_URL, data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE})
     device_code = resp.json()["device_code"]
-    print(f'Please visit: {resp.json()["verification_uri_complete"]}')
+    print(f"Please visit: {resp.json()['verification_uri_complete']}")
 
     # Polling for access token with received device code
     while True:
