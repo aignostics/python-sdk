@@ -1,3 +1,9 @@
+"""Tests for the applications resource module.
+
+This module contains unit tests for the Applications and Versions classes,
+verifying their functionality for listing applications and application versions.
+"""
+
 from unittest.mock import Mock
 
 import pytest
@@ -9,22 +15,35 @@ from aignostics.client.resources.applications import Applications, Versions
 
 
 @pytest.fixture
-def mock_api():
+def mock_api() -> Mock:
+    """Create a mock ExternalsApi object for testing.
+
+    Returns:
+        Mock: A mock instance of ExternalsApi.
+    """
     return Mock(spec=ExternalsApi)
 
 
 @pytest.fixture
-def applications(mock_api):
+def applications(mock_api) -> Applications:
+    """Create an Applications instance with a mock API for testing.
+
+    Args:
+        mock_api: A mock instance of ExternalsApi.
+
+    Returns:
+        Applications: An Applications instance using the mock API.
+    """
     return Applications(mock_api)
 
 
-# @pytest.mark.specifications("SAM-56")
-# @pytest.mark.labels("custom-label")
-@pytest.mark.requirements("SAM-2")
-@pytest.mark.description(
-    "Verifies that the applications list method returns an empty list when the API returns no applications"
-)
-def test_applications_list_returns_empty_list_when_no_applications(applications, mock_api):
+def test_applications_list_returns_empty_list_when_no_applications(applications, mock_api) -> None:
+    """Test that Applications.list() returns an empty list when no applications are available.
+
+    Args:
+        applications: Applications instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
     # Arrange
     mock_api.list_applications_v1_applications_get.return_value = []
 
@@ -37,7 +56,13 @@ def test_applications_list_returns_empty_list_when_no_applications(applications,
     mock_api.list_applications_v1_applications_get.assert_called_once()
 
 
-def test_applications_list_returns_applications_when_available(applications, mock_api):
+def test_applications_list_returns_applications_when_available(applications, mock_api) -> None:
+    """Test that Applications.list() returns a list of applications when available.
+
+    Args:
+        applications: Applications instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
     # Arrange
     mock_app1 = Mock(spec=ApplicationReadResponse)
     mock_app2 = Mock(spec=ApplicationReadResponse)
@@ -54,7 +79,13 @@ def test_applications_list_returns_applications_when_available(applications, moc
     mock_api.list_applications_v1_applications_get.assert_called_once()
 
 
-def test_applications_list_passes_through_api_exception(applications, mock_api):
+def test_applications_list_passes_through_api_exception(applications, mock_api) -> None:
+    """Test that Applications.list() passes through exceptions from the API.
+
+    Args:
+        applications: Applications instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
     # Arrange
     mock_api.list_applications_v1_applications_get.side_effect = Exception("API error")
 
@@ -64,7 +95,12 @@ def test_applications_list_passes_through_api_exception(applications, mock_api):
     mock_api.list_applications_v1_applications_get.assert_called_once()
 
 
-def test_versions_property_returns_versions_instance(applications):
+def test_versions_property_returns_versions_instance(applications) -> None:
+    """Test that the versions property returns a Versions instance.
+
+    Args:
+        applications: Applications instance with mock API.
+    """
     # Act
     versions = applications.versions
 
@@ -73,7 +109,12 @@ def test_versions_property_returns_versions_instance(applications):
     assert versions._api == applications._api
 
 
-def test_versions_list_returns_versions_for_application(mock_api):
+def test_versions_list_returns_versions_for_application(mock_api) -> None:
+    """Test that Versions.list() returns versions for a specified application.
+
+    Args:
+        mock_api: Mock ExternalsApi instance.
+    """
     # Arrange
     versions = Versions(mock_api)
     mock_app = Mock(spec=ApplicationReadResponse)
@@ -93,7 +134,12 @@ def test_versions_list_returns_versions_for_application(mock_api):
     )
 
 
-def test_versions_list_returns_empty_list_when_no_versions(mock_api):
+def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
+    """Test that Versions.list() returns an empty list when no versions are available.
+
+    Args:
+        mock_api: Mock ExternalsApi instance.
+    """
     # Arrange
     versions = Versions(mock_api)
     mock_app = Mock(spec=ApplicationReadResponse)
@@ -111,7 +157,12 @@ def test_versions_list_returns_empty_list_when_no_versions(mock_api):
     )
 
 
-def test_versions_list_passes_through_api_exception(mock_api):
+def test_versions_list_passes_through_api_exception(mock_api) -> None:
+    """Test that Versions.list() passes through exceptions from the API.
+
+    Args:
+        mock_api: Mock ExternalsApi instance.
+    """
     # Arrange
     versions = Versions(mock_api)
     mock_app = Mock(spec=ApplicationReadResponse)

@@ -1,3 +1,5 @@
+import os
+
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
@@ -6,8 +8,7 @@ from aignostics.client._authentication import get_token
 from aignostics.client.resources.applications import Applications, Versions
 from aignostics.client.resources.runs import Runs
 
-API_ROOT = "https://platform-dev.aignostics.com"
-# API_ROOT = "https://platform-staging.aignostics.ai"
+API_ROOT = os.getenv("API_ROOT", "https://platform.aignostics.com")
 
 
 class Client:
@@ -17,7 +18,7 @@ class Client:
     Handles authentication and API client configuration.
     """
 
-    def __init__(self, cache_token: bool = True):
+    def __init__(self, cache_token: bool = True) -> None:
         """Initializes a client instance with authenticated API access.
 
         Args:
@@ -26,13 +27,13 @@ class Client:
 
         Sets up resource accessors for applications, versions, and runs.
         """
-        self._api = Client._get_api_client(cache_token=cache_token)
+        self._api = Client.get_api_client(cache_token=cache_token)
         self.applications: Applications = Applications(self._api)
         self.versions: Versions = Versions(self._api)
         self.runs: Runs = Runs(self._api)
 
     @staticmethod
-    def _get_api_client(cache_token: bool = True) -> ExternalsApi:
+    def get_api_client(cache_token: bool = True) -> ExternalsApi:
         """Creates and configures an authenticated API client.
 
         Args:
@@ -49,10 +50,6 @@ class Client:
         client = ApiClient(
             Configuration(
                 host=API_ROOT,
-                # debug=True,
-                # the following can be used if the auth is set in the schema
-                # api_key={"Authorization": T},
-                # api_key_prefix={"Authorization": "Bearer"},
             ),
             header_name="Authorization",
             header_value=f"Bearer {token}",

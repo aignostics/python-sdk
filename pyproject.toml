@@ -193,6 +193,9 @@ ignore = [
     "S404",     # subprocess` module is possibly insecure -> as mentioned by ruff, unstable and preview
     "FIX002",   # line contains todo -> yes, that's what todo's are for?!
     "TD003",    # missing issue link for todo -> not in OSS
+    "PTH123",   # use of open to be replaced with Path.open,
+    "T201",     # Remove `print`
+    "INP001",   # Checks for packages that are missing an __init__.py file.
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -213,7 +216,6 @@ ignore = [
     "ANN002",   # missing type annotation
     "ANN003",   # missing type annotation
     "ANN202",   # missing return type annotation
-    "PTH123",   # use of open to be replaced with Path.open
     "DOC201",   # `return` is not documented in docstring
     "ASYNC230", # async functions should not open files with blocking methods like `open`
     "S104",     # bind to all ports

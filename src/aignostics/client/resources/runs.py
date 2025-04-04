@@ -1,3 +1,9 @@
+"""Runs resource module for the Aignostics client.
+
+This module provides classes for creating and managing application runs on the Aignostics platform.
+It includes functionality for starting runs, monitoring status, and downloading results.
+"""
+
 import json
 from pathlib import Path
 from time import sleep
@@ -16,7 +22,7 @@ from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
 from aignostics.client.resources.applications import Versions
-from aignostics.client.utils import _calculate_file_crc32c, _download_file, mime_type_to_file_ending
+from aignostics.client.utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
 
 
 class ApplicationRun:
@@ -25,7 +31,7 @@ class ApplicationRun:
     Provides operations to check status, retrieve results, and download artifacts.
     """
 
-    def __init__(self, api: ExternalsApi, application_run_id: str):
+    def __init__(self, api: ExternalsApi, application_run_id: str) -> None:
         """Initializes an ApplicationRun instance.
 
         Args:
@@ -45,9 +51,9 @@ class ApplicationRun:
         Returns:
             ApplicationRun: The initialized ApplicationRun instance.
         """
-        from aignostics.client import Client
+        from aignostics.client import Client  # noqa: PLC0415
 
-        return cls(Client._get_api_client(), application_run_id)
+        return cls(Client.get_api_client(cache_token=False), application_run_id)
 
     def status(self) -> RunReadResponse:
         """Retrieves the current status of the application run.
@@ -58,8 +64,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        res = self._api.get_run_v1_runs_application_run_id_get(self.application_run_id, include=None)
-        return res
+        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id, include=None)
 
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run.
@@ -76,13 +81,13 @@ class ApplicationRun:
             item_status[item.reference] = item.status
         return item_status
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancels the application run.
 
         Raises:
             Exception: If the API request fails.
         """
-        res = self._api.cancel_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
+        self._api.cancel_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
 
     def results(self) -> list[ItemResultReadResponse]:
         """Retrieves the results of all items in the run.
@@ -94,10 +99,9 @@ class ApplicationRun:
             Exception: If the API request fails.
         """
         # TODO(andreas): paging, sorting
-        res = self._api.list_run_results_v1_runs_application_run_id_results_get(self.application_run_id)
-        return res
+        return self._api.list_run_results_v1_runs_application_run_id_results_get(self.application_run_id)
 
-    def download_to_folder(self, download_base: Path | str):
+    def download_to_folder(self, download_base: Path | str) -> None:
         """Downloads all result artifacts to a folder.
 
         Monitors run progress and downloads results as they become available.
@@ -112,7 +116,8 @@ class ApplicationRun:
         # create application run base folder
         download_base = Path(download_base)
         if not download_base.is_dir():
-            raise ValueError(f"{download_base} is not a directory")
+            msg = f"{download_base} is not a directory"
+            raise ValueError(msg)
         application_run_dir = Path(download_base) / self.application_run_id
 
         # incrementally check for available results
@@ -134,7 +139,7 @@ class ApplicationRun:
                     print(f"{item.reference} failed with {item.status.value}: {item.error}")
 
     @staticmethod
-    def ensure_artifacts_downloaded(base_folder: Path, item: ItemResultReadResponse):
+    def ensure_artifacts_downloaded(base_folder: Path, item: ItemResultReadResponse) -> None:
         """Ensures all artifacts for an item are downloaded.
 
         Downloads missing or partially downloaded artifacts and verifies their integrity.
@@ -158,7 +163,7 @@ class ApplicationRun:
                 checksum = artifact.metadata["checksum_crc32c"]
 
                 if file_path.exists():
-                    file_checksum = _calculate_file_crc32c(file_path)
+                    file_checksum = calculate_file_crc32c(file_path)
                     if file_checksum != checksum:
                         print(f"> Resume download for {artifact.name} to {file_path}")
                     else:
@@ -168,14 +173,14 @@ class ApplicationRun:
                     print(f"> Download for {artifact.name} to {file_path}")
 
                 # if file is not there at all or only partially downloaded yet
-                _download_file(artifact.download_url, file_path, checksum)
+                download_file(artifact.download_url, file_path, checksum)
 
         if downloaded_at_least_one_artifact:
             print(f"Downloaded results for item: {item.reference} to {item_dir}")
         else:
             print(f"Results for item: {item.reference} already present in {item_dir}")
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Returns a string representation of the application run.
 
         The string includes run ID, status, and item statistics.
@@ -205,7 +210,7 @@ class Runs:
     Provides operations to create, list, and retrieve runs.
     """
 
-    def __init__(self, api: ExternalsApi):
+    def __init__(self, api: ExternalsApi) -> None:
         """Initializes the Runs resource with the API client.
 
         Args:
@@ -241,37 +246,22 @@ class Runs:
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
         return ApplicationRun(self._api, res.application_run_id)
 
-    def generate_example_payload(self, application_version_id: str):
+    @staticmethod
+    def generate_example_payload(_application_version_id: str) -> None:
         """Generates an example payload for creating a run.
 
         Args:
-            application_version_id: The ID of the application version.
+            _application_version_id: The ID of the application version.
 
         Raises:
             Exception: If the API request fails.
         """
-        app_version = Versions(self._api).details(for_application_version_id=application_version_id)
-        schema_idx = {
-            input_artifact.name: input_artifact.metadata_schema for input_artifact in app_version.input_artifacts
-        }
         schema = RunCreationRequest.model_json_schema()
         faker = JSF(schema)
         example = faker.generate()
         print(json.dumps(example, indent=2))
-        # schema = ItemCreationRequest.model_json_schema()
-        # example = jsonschema_default.create_from(schema)
-        # print(json.dumps(example, indent=2))
-        #
-        # schema = InputArtifactCreationRequest.model_json_schema()
-        # example = jsonschema_default.create_from(schema)
-        # print(json.dumps(example, indent=2))
-        #
-        # for artifact, schema in schema_idx.items():
-        #     s = jsonschema_default.create_from(schema)
-        #     print(f"{artifact}:\n{json.dumps(s)}")
-        # validate(artifact.metadata, schema=schema_idx[artifact.name])
 
-    def list(self, for_application_version: str = None) -> list[ApplicationRun]:
+    def list(self, for_application_version: str | None = None) -> list[ApplicationRun]:
         """Lists application runs, optionally filtered by application version.
 
         Args:
@@ -290,7 +280,7 @@ class Runs:
             res = self._api.list_application_runs_v1_runs_get_with_http_info(for_application_version)
         return [ApplicationRun(self._api, response.application_run_id) for response in res]
 
-    def _validate_input_items(self, payload: RunCreationRequest):
+    def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.
 
         Checks that references are unique, all required artifacts are provided,
@@ -314,7 +304,8 @@ class Runs:
         for item in payload.items:
             # verify references are unique
             if item.reference in references:
-                raise ValueError(f"Duplicate reference `{item.reference}` in items.")
+                msg = f"Duplicate reference `{item.reference}` in items."
+                raise ValueError(msg)
             references.add(item.reference)
 
             schema_check = set(schema_idx.keys())
@@ -328,7 +319,9 @@ class Runs:
                     validate(artifact.metadata, schema=schema_idx[artifact.name])
                     schema_check.remove(artifact.name)
                 except ValidationError as e:
-                    raise ValueError(f"Invalid metadata for artifact `{artifact.name}`: {e.message}")
+                    msg = f"Invalid metadata for artifact `{artifact.name}`: {e.message}"
+                    raise ValueError(msg) from e
             # all artifacts set?
             if len(schema_check) > 0:
-                raise ValueError(f"Missing artifact(s): {schema_check}")
+                msg = f"Missing artifact(s): {schema_check}"
+                raise ValueError(msg)

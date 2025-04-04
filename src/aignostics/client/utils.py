@@ -1,3 +1,13 @@
+"""
+This module provides utility functions to support the Aignostics client operations.
+
+It includes helpers for file operations, checksum verification, and Google Cloud Storage
+interactions.
+
+These utilities primarily handle file operations, data integrity, and cloud storage
+interactions to support the main client functionality.
+"""
+
 import base64
 import contextlib
 import datetime
@@ -33,14 +43,15 @@ def mime_type_to_file_ending(mime_type: str) -> str:
         return ".tiff"
     if mime_type == "application/vnd.apache.parquet":
         return ".parquet"
-    if mime_type == "application/geo+json" or mime_type == "application/json":
+    if mime_type in {"application/geo+json", "application/json"}:
         return ".json"
     if mime_type == "text/csv":
         return ".csv"
-    raise ValueError(f"Unknown mime type: {mime_type}")
+    msg = f"Unknown mime type: {mime_type}"
+    raise ValueError(msg)
 
 
-def _download_file(signed_url: str, file_path: str, verify_checksum: str) -> None:
+def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None:
     """Downloads a file from a signed URL and verifies its integrity.
 
     Args:
@@ -53,9 +64,9 @@ def _download_file(signed_url: str, file_path: str, verify_checksum: str) -> Non
         requests.HTTPError: If the download request fails.
     """
     checksum = google_crc32c.Checksum()
-    with requests.get(signed_url, stream=True) as stream:
+    with requests.get(signed_url, stream=True, timeout=60) as stream:
         stream.raise_for_status()
-        with open(file_path, "wb") as file:
+        with open(file_path, mode="wb") as file:
             total_size = int(stream.headers.get("content-length", 0))
             progress_bar = tqdm(total=total_size, unit="B", unit_scale=True)
             for chunk in stream.iter_content(chunk_size=EIGHT_MB):
@@ -66,10 +77,11 @@ def _download_file(signed_url: str, file_path: str, verify_checksum: str) -> Non
             progress_bar.close()
     downloaded_file = base64.b64encode(checksum.digest()).decode("ascii")
     if downloaded_file != verify_checksum:
-        raise ValueError(f"Checksum mismatch: {downloaded_file} != {verify_checksum}")
+        msg = f"Checksum mismatch: {downloaded_file} != {verify_checksum}"
+        raise ValueError(msg)
 
 
-def _generate_signed_url(fully_qualified_gs_path: str):
+def _generate_signed_url(fully_qualified_gs_path: str) -> str:
     """Generates a signed URL for a Google Cloud Storage object.
 
     Args:
@@ -84,7 +96,8 @@ def _generate_signed_url(fully_qualified_gs_path: str):
     pattern = r"gs://(?P<bucket_name>[^/]+)/(?P<path>.*)"
     m = re.fullmatch(pattern, fully_qualified_gs_path)
     if not m:
-        raise ValueError("Invalid google storage URI")
+        msg = "Invalid google storage URI"
+        raise ValueError(msg)
     bucket_name = m.group(1)
     path = m.group(2)
 
@@ -92,13 +105,13 @@ def _generate_signed_url(fully_qualified_gs_path: str):
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(path)
     if not blob.exists():
-        raise ValueError(f"Blob does not exist: {fully_qualified_gs_path}")
+        msg = f"Blob does not exist: {fully_qualified_gs_path}"
+        raise ValueError(msg)
 
-    url = blob.generate_signed_url(expiration=datetime.timedelta(hours=1), method="GET", version="v4")
-    return url
+    return blob.generate_signed_url(expiration=datetime.timedelta(hours=1), method="GET", version="v4")
 
 
-def _calculate_file_crc32c(file: Path) -> str:
+def calculate_file_crc32c(file: Path) -> str:
     """Calculates the CRC32C checksum of a file.
 
     Args:
@@ -108,8 +121,8 @@ def _calculate_file_crc32c(file: Path) -> str:
         str: The CRC32C checksum in base64 encoding.
     """
     checksum = google_crc32c.Checksum()
-    with open(file, "rb") as file:
-        for _ in checksum.consume(file, EIGHT_MB):
+    with open(file, mode="rb") as f:
+        for _ in checksum.consume(f, EIGHT_MB):
             pass
     return base64.b64encode(checksum.digest()).decode("ascii")
 
@@ -130,5 +143,5 @@ def download_temporarily(signed_url: str, verify_checksum: str) -> Generator[IO[
         requests.HTTPError: If the download request fails.
     """
     with tempfile.NamedTemporaryFile() as file:
-        _download_file(signed_url, file.name, verify_checksum)
+        download_file(signed_url, file.name, verify_checksum)
         yield file
