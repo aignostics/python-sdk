@@ -13,7 +13,6 @@ import requests
 from dotenv import load_dotenv
 from requests_oauthlib import OAuth2Session
 
-# load client ids
 ENV_FILE = os.getenv("ENV_FILE", Path.home() / ".aignostics/env")
 load_dotenv(dotenv_path=ENV_FILE)
 
@@ -27,6 +26,8 @@ AUTHORIZATION_BASE_URL = os.getenv("AUTHORIZATION_BASE_URL")
 TOKEN_URL = os.getenv("TOKEN_URL")
 DEVICE_URL = os.getenv("DEVICE_URL")
 
+JWS_JSON_URL = os.getenv("JWS_JSON_URL")
+
 # constants for token caching
 CLIENT_APP_NAME = "python-sdk"
 CACHE_DIR = appdirs.user_cache_dir(CLIENT_APP_NAME, "aignostics")
@@ -36,11 +37,11 @@ AUTHORIZATION_BACKOFF_SECONDS = 3
 REQUEST_TIMEOUT_SECONDS = 30
 
 
-def get_token(store: bool = True) -> str:
+def get_token(use_cache: bool = True) -> str:
     """Retrieves an authentication token, either from cache or via login.
 
     Args:
-        store: Boolean indicating whether to store the token to disk cache.
+        use_cache: Boolean indicating whether to store & use the token from disk cache.
             Defaults to True.
 
     Returns:
@@ -49,10 +50,7 @@ def get_token(store: bool = True) -> str:
     Raises:
         RuntimeError: If token retrieval fails.
     """
-    if not store:
-        return _login()
-
-    if TOKEN_FILE.exists():
+    if use_cache and TOKEN_FILE.exists():
         stored_token = Path(TOKEN_FILE).read_text(encoding="utf-8")
         # Parse stored string "token:expiry_timestamp"
         parts = stored_token.split(":")
@@ -63,21 +61,54 @@ def get_token(store: bool = True) -> str:
         if datetime.now(tz=UTC) + timedelta(minutes=5) < expiry:
             return token
 
-    # If we got here, we need a new token
-    new_token = _login()
-
-    # we do not need to verify as we just want to obtain the expiry date
-    claims = jwt.decode(new_token.encode("ascii"), options={"verify_signature": False})
-    timestamp = claims["exp"]
+    # If we end up here, we:
+    # 1. Do not want to use the cached token
+    # 2. The cached token is expired
+    # 3. No token was cached yet
+    new_token = _authenticate()
+    claims = verify_and_decode_token(new_token)
 
     # Store new token with expiry
-    TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
-    Path(TOKEN_FILE).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
+    if use_cache:
+        timestamp = claims["exp"]
+        TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+        Path(TOKEN_FILE).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
 
     return new_token
 
 
-def _login() -> str:
+def verify_and_decode_token(token: str) -> dict[str, str]:
+    """
+    Verifies and decodes the JWT token using the public key from JWS JSON URL.
+
+    Args:
+        token: The JWT token to verify and decode.
+
+    Returns:
+        dict: The decoded token claims.
+
+    Raises:
+        RuntimeError: If token verification or decoding fails.
+    """
+    jwk_client = jwt.PyJWKClient(JWS_JSON_URL)
+    try:
+        # Get the public key from the JWK client
+        key = jwk_client.get_signing_key_from_jwt(token).key
+        # Get the algorithm from the token header
+        binary_token = token.encode("ascii")
+        header_data = jwt.get_unverified_header(binary_token)
+        algorithm = header_data["alg"]
+        # Verify and decode the token using the public key
+        return jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=AUDIENCE)
+    except jwt.exceptions.PyJWKClientError as e:
+        msg = "Authentication failed"
+        raise RuntimeError(msg) from e
+    except jwt.exceptions.DecodeError as e:
+        msg = "Authentication failed"
+        raise RuntimeError(msg) from e
+
+
+def _authenticate() -> str:
     """Allows the user to login and obtain an access token.
 
     Determines the appropriate authentication flow based on whether
@@ -213,7 +244,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
         return token_response["access_token"]
 
 
-def _perform_device_flow() -> str:
+def _perform_device_flow() -> str | None:
     """Performs the OAuth 2.0 Device Authorization flow.
 
     Used when a browser cannot be opened. Provides a URL for the user to visit
@@ -254,7 +285,7 @@ def _perform_device_flow() -> str:
         return resp["access_token"]
 
 
-def _token_from_refresh_token(refresh_token: str) -> str:
+def _token_from_refresh_token(refresh_token: str) -> str | None:
     """Obtains a new access token using a refresh token.
 
     Args:
@@ -286,4 +317,4 @@ def _token_from_refresh_token(refresh_token: str) -> str:
 
 
 if __name__ == "__main__":
-    print(get_token(store=False))
+    print(get_token(use_cache=False))

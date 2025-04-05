@@ -74,7 +74,7 @@ dependencies = [
     "httpx>=0.28.1",
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
-    "pyjwt>=2.10.1",
+    "pyjwt[crypto]>=2.10.1",
     "python-dotenv>=1.1.0",        # Can be removed later
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
@@ -254,10 +254,10 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
+testpaths = ["tests", "codegen/out/test"]
+# openapi code generate creates tests with test_*.py
+python_files = ["*_test.py", "test_*.py"]
 addopts = "-v --strict-markers --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
-testpaths = ["tests"]
-python_files = ["*_test.py"]
-pythonpath = [".", "src", "codegen/out"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]

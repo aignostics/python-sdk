@@ -53,7 +53,7 @@ def lint(session: nox.Session) -> None:
         "--check",
         ".",
     )
-    # session.run("mypy", "src") # noqa: ERA001
+    session.run("mypy", "src")
 
 
 @nox.session(python=["3.13"])

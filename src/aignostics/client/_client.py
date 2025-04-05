@@ -46,7 +46,7 @@ class Client:
         Raises:
             RuntimeError: If authentication fails.
         """
-        token = get_token(store=cache_token)
+        token = get_token(use_cache=cache_token)
         client = ApiClient(
             Configuration(
                 host=API_ROOT,
