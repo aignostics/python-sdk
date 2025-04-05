@@ -63,7 +63,6 @@ requires-python = ">=3.11, <4.0"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.115.12",
     "pydantic>=2.11.1",
     "pydantic-settings>=2.8.1",
     "typer>=0.15.1",
@@ -75,7 +74,6 @@ dependencies = [
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
     "pyjwt>=2.10.1",
-    "python-dotenv>=1.1.0",        # Can be removed later
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
     "tqdm>=4.67.1",
@@ -96,14 +94,12 @@ Issues = "https://github.com/aignostics/python-sdk/issues"
 requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
+
 [tool.hatch.build]
 include = ["src/*", "codegen/out/*"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aignostics", "codegen/out/aignx"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"codegen" = "codegen/out"
 
 [project.optional-dependencies]
 examples = [
@@ -112,6 +108,8 @@ examples = [
     "jupyter>=1.1.1",
     "jinja2>=3.1.6",
 ]
+formats = ["openslide-python>=1.4.1", "openslide-bin>=4.0.0.6"]
+aws = ["boto3>=1.37.27"]
 
 [dependency-groups]
 dev = [

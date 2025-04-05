@@ -7,7 +7,7 @@ from .constants import (
 )
 from .exceptions import OpenAPISchemaError
 from .models import Health, HealthStatus
-from .service import Service
+from .platform import Platform
 from .types import APIVersion, InfoOutputFormat, OpenAPIOutputFormat
 
 __all__ = [
@@ -17,7 +17,7 @@ __all__ = [
     "InfoOutputFormat",
     "OpenAPIOutputFormat",
     "OpenAPISchemaError",
-    "Service",
+    "Platform",
     "__project_name__",
     "__project_path__",
     "__version__",

@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API
@@ -13,7 +14,7 @@
 
 import unittest
 
-from aignostics.codegen.api.externals_api import ExternalsApi
+from aignx.codegen.api.externals_api import ExternalsApi
 
 
 class TestExternalsApi(unittest.TestCase):

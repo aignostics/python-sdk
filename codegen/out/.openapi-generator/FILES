@@ -62,3 +62,4 @@ aignx/codegen/models/version_creation_response.py
 aignx/codegen/models/version_read_response.py
 aignx/codegen/rest.py
 docs/ExternalsApi.md
+test/test_externals_api.py

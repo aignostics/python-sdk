@@ -1,4 +1,4 @@
-"""Service of Aignostics Python SDK."""
+"""Service providing platform diagnostics and utilities."""
 
 import json
 import os
@@ -15,8 +15,8 @@ from .settings import Settings
 load_dotenv()
 
 
-class Service:
-    """Service of Aignostics Python SDK."""
+class Platform:
+    """Service providing platform diagnostics and utilities."""
 
     _settings: Settings
 
@@ -27,21 +27,32 @@ class Service:
 
     def healthy(self) -> bool:
         """
-        Check if the service is healthy.
+        Check if the platform is healthy.
 
         Returns:
-            bool: True if the service is healthy, False otherwise.
+            bool: True if the platform is healthy, False otherwise.
         """
         return self.is_healthy
 
     def info(self, env: bool = True, filter_secrets: bool = True) -> dict:
         """
-        For diagnostics compile info about local and remote environment.
+        For diagnostics compile info about user and platform environment.
 
         Returns:
-            dict: Info about local and remote environment
+            dict: Info about user and environment, including organisation,
+                execution environment, local and remote platform.
         """
         info_dict = {
+            "user": {
+                "name": "TODO",
+                "email": "TODO",
+                "id": "TODO",
+                "organisation": {
+                    "name": "TODO",
+                    "id": "TODO",
+                    "tier": "TODO",
+                },
+            },
             "local": {
                 "sdk": {
                     "version": __version__,
@@ -70,15 +81,17 @@ class Service:
                 "settings": self._settings.model_dump_json(),
             },
             "remote": {
-                "dev": {
-                    "url": "https://api.dev.aignostics.com",
-                },
-                "staging": {
-                    "url": "https://api.staging.aignostics.com",
-                },
-                "production": {
-                    "url": "https://api.aignostics.com",
-                },
+                "platform": {
+                    "dev": {
+                        "url": "https://api.dev.aignostics.com",
+                    },
+                    "staging": {
+                        "url": "https://api.staging.aignostics.com",
+                    },
+                    "production": {
+                        "url": "https://api.aignostics.com",
+                    },
+                }
             },
         }
 
@@ -100,10 +113,14 @@ class Service:
 
         return info_dict
 
+    def install(self) -> None:
+        """Complete and validate installation of the CLI."""
+        # TODO (Helmut, Andreas)
+
     @staticmethod
     def openapi_schema() -> dict:
         """
-        Get OpenAPI schema.
+        Get OpenAPI schema of the webservice API provided by the platform.
 
         Returns:
             dict: OpenAPI schema.
