@@ -82,8 +82,8 @@ class Platform:
                     },
                 },
                 "settings": {
-                    "core": self._settings.model_dump(),
-                    "authentication": authentication_settings().model_dump(),
+                    "core": json.loads(self._settings.model_dump_json()),
+                    "authentication": json.loads(authentication_settings().model_dump_json()),
                 },
             },
             "remote": {
