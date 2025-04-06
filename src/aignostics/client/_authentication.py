@@ -162,7 +162,6 @@ def _authenticate() -> str:
         RuntimeError: If authentication fails.
         AssertionError: If the returned token doesn't have the expected format.
     """
-    print(authentication_settings().refresh_token)
     if refresh_token := authentication_settings().refresh_token:
         token = _token_from_refresh_token(refresh_token.get_secret_value())
     elif _can_open_browser():
