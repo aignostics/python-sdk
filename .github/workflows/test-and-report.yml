@@ -6,10 +6,7 @@ on:
       - "**"
   pull_request:
     branches: [main]
-
-env:
-  AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
-
+    
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -73,6 +70,8 @@ jobs:
           echo "AIGNOSTICS_ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
       
       - name: Smoke tests
+        env:
+          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: |
           uv run --no-dev aignostics platform health
           uv run --no-dev aignostics platform authentication-settings
@@ -84,6 +83,8 @@ jobs:
         run: make audit
       
       - name: Test
+        env:
+          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: make test
 
       - name: Upload test results
