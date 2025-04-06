@@ -36,8 +36,8 @@ class OutputArtifactResultReadResponse(BaseModel):
     @field_validator('mime_type')
     def mime_type_validate_regular_expression(cls, value):
         """Validates the regular expression"""
-        if not re.match(r"^\w+\/\w+(?:[-+.]|\w)+\w+$", value):
-            raise ValueError(r"must validate the regular expression /^\w+\/\w+(?:[-+.]|\w)+\w+$/")
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}\/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$", value):
+            raise ValueError(r"must validate the regular expression /^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}\/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$/")
         return value
 
     model_config = ConfigDict(

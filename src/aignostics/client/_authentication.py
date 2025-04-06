@@ -217,8 +217,9 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     if not host or not port:
         raise RuntimeError(INVALID_REDIRECT_URI)
     with HTTPServer((host, port), OAuthCallbackHandler) as server:
-        # Open browser for authentication
+        # Call Auth0 with challenge and redirect to localhost with code after successful authN
         webbrowser.open_new(authorization_url)
+        # Extract authorization_code from redirected request, see: OAuthCallbackHandler
         server.handle_request()
 
     if authentication_result.error:
@@ -262,7 +263,7 @@ def _perform_device_flow() -> str | None:
         user_code = json_response["user_code"]
         interval = int(json_response["interval"])
         print(
-            f"Your user code is: {user_code}.\nPlease visit: {verification_uri}, and verify the same code is displayed!"
+            f"Your user code is: {user_code}.\nPlease visit: {verification_uri} and verify the same code is displayed!"
         )
 
     except HTTPError as e:

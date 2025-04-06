@@ -113,7 +113,7 @@ components:
         mime_type:
           examples:
           - image/tiff
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -163,7 +163,7 @@ components:
         mime_type:
           examples:
           - image/tiff
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -263,7 +263,7 @@ components:
         mime_type:
           examples:
           - application/vnd.apache.parquet
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -289,7 +289,7 @@ components:
         mime_type:
           examples:
           - application/vnd.apache.parquet
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -320,7 +320,7 @@ components:
         mime_type:
           examples:
           - application/vnd.apache.parquet
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
