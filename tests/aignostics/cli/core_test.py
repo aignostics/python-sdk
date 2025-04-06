@@ -40,6 +40,13 @@ def test_cli_info(runner: CliRunner) -> None:
     assert "CPython" in result.output
 
 
+def test_cli_info_json(runner: CliRunner) -> None:
+    """Check info command returns system information."""
+    result = runner.invoke(cli, ["platform", "info", "--output-format", "json"])
+    assert result.exit_code == 0
+    assert "CPython" in result.output
+
+
 def test_cli_info_full(runner: CliRunner) -> None:
     """Check info command returns system information."""
     result = runner.invoke(cli, ["platform", "info", "--env", "--no-filter-secrets"])
