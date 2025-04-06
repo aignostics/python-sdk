@@ -4,8 +4,7 @@ components:
       properties:
         description:
           examples:
-          - 'H&E Tumor Micro Environment Analysis: Performing tissue QC, 
-segmentation,
+          - 'H&E Tumor Micro Environment Analysis: Performing tissue QC, segmentation,
             cell detection and cell classfication'
           title: Description
           type: string
@@ -134,12 +133,10 @@ segmentation,
       title: ApplicationVersionReadResponse
       type: object
     ArtifactEvent:
-      description: 'This is a subset of the OutputArtifactEvent used by the 
-state
+      description: 'This is a subset of the OutputArtifactEvent used by the state
         machine.
 
-        Only the variants defined below are allowed to be submitted from the 
-Algorithms/Applications.'
+        Only the variants defined below are allowed to be submitted from the Algorithms/Applications.'
       enum:
       - succeeded
       - failed_with_user_error
@@ -1062,12 +1059,9 @@ Algorithms/Applications.'
           tokenUrl: https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token
       type: oauth2
 info:
-  description: Pagination is done via `page` and `page_size`. Sorting via `sort`
-query
-    parameter. sort is a comma-separated list of field names. The sorting 
-direction
-    can be indicated via `+` (ascending) or `-` (descending) (e.g. 
-`/applications?sort=+name)`.
+  description: Pagination is done via `page` and `page_size`. Sorting via `sort` query
+    parameter. sort is a comma-separated list of field names. The sorting direction
+    can be indicated via `+` (ascending) or `-` (descending) (e.g. `/applications?sort=+name)`.
   summary: Interact with Aignostics' Application Platform
   title: Aignostics Platform API
   version: 0.1.0
@@ -1246,8 +1240,7 @@ paths:
       - Externals
   /v1/applications/{application_id}/versions:
     get:
-      operationId: 
-list_versions_by_application_id_v1_applications__application_id__versions_get
+      operationId: list_versions_by_application_id_v1_applications__application_id__versions_get
       parameters:
       - in: path
         name: application_id
@@ -1310,8 +1303,7 @@ list_versions_by_application_id_v1_applications__application_id__versions_get
               schema:
                 items:
                   $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Id V1 Applications 
-Application
+                title: Response List Versions By Application Id V1 Applications  Application
                   Id  Versions Get
                 type: array
           description: Successful Response
@@ -1328,8 +1320,7 @@ Application
       - Externals
   /v1/applications/{application_slug}:
     get:
-      operationId: 
-read_application_by_slug_v1_applications__application_slug__get
+      operationId: read_application_by_slug_v1_applications__application_slug__get
       parameters:
       - in: path
         name: application_slug
@@ -1357,9 +1348,7 @@ read_application_by_slug_v1_applications__application_slug__get
       - Externals
   /v1/applications/{application_slug}/versions:
     get:
-      operationId: 
-list_versions_by_application_slug_v1_applications__application_slug__versions_ge
-t
+      operationId: list_versions_by_application_slug_v1_applications__application_slug__versions_get
       parameters:
       - in: path
         name: application_slug
@@ -1422,8 +1411,7 @@ t
               schema:
                 items:
                   $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Slug V1 
-Applications  Application
+                title: Response List Versions By Application Slug V1 Applications  Application
                   Slug  Versions Get
                 type: array
           description: Successful Response
@@ -1440,8 +1428,7 @@ Applications  Application
       - Externals
   /v1/artifacts/{output_artifact_id}/event:
     post:
-      operationId: 
-trigger_artifact_event_v1_artifacts__output_artifact_id__event_post
+      operationId: trigger_artifact_event_v1_artifacts__output_artifact_id__event_post
       parameters:
       - in: path
         name: output_artifact_id
@@ -1856,8 +1843,7 @@ trigger_artifact_event_v1_artifacts__output_artifact_id__event_post
       - Externals
   /v1/runs/{application_run_id}/results:
     delete:
-      operationId: 
-delete_run_results_v1_runs__application_run_id__results_delete
+      operationId: delete_run_results_v1_runs__application_run_id__results_delete
       parameters:
       - in: path
         name: application_run_id
@@ -1957,8 +1943,7 @@ delete_run_results_v1_runs__application_run_id__results_delete
               schema:
                 items:
                   $ref: '#/components/schemas/ItemResultReadResponse'
-                title: Response List Run Results V1 Runs  Application Run Id  
-Results
+                title: Response List Run Results V1 Runs  Application Run Id  Results
                   Get
                 type: array
           description: Successful Response

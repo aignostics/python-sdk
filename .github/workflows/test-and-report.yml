@@ -73,7 +73,7 @@ jobs:
             fi
 
       - name: Smoke tests
-        run: uv run --no-dev aignostics hello-world
+        run: uv run --no-dev aignostics platform health
 
       - name: Lint
         run: make lint

@@ -1,2179 +1,5025 @@
 # API v1 Reference
----
-title:         machine.
-language_tabs:
-toc_footers: []
-includes: []
-search: true
-highlight_theme: darkula
----
+## Aignostics Platform API v0.1.0
+
+> Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
+
+Pagination is done via `page` and `page_size`. Sorting via `sort` query parameter. sort is a comma-separated list of field names. The sorting direction can be indicated via `+` (ascending) or `-` (descending) (e.g. `/applications?sort=+name)`.
+
+## Authentication
+
+- oAuth2 authentication. 
+
+    - Flow: authorizationCode
+    - Authorization URL = [https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize](https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize)
+    - Token URL = [https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token](https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token)
+
+|Scope|Scope Description|
+|---|---|
+
+## Default
+
+### get_documentation_docs_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json'
+}
+
+r = requests.get('/docs', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json'
+};
+
+fetch('/docs',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /docs`
+
+*Get Documentation*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|access_token|cookie|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+
+This operation does not require authentication
+
+
+## Externals
+
+Called by externals to interact with our API
+
+### list_applications_v1_applications_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/applications', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/applications',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/applications`
+
+*List Applications*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|page|query|integer|false|none|
+|page_size|query|integer|false|none|
+|sort|query|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+[
+  {
+    "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+    "description": "Aignostics H&E TME application",
+    "name": "HETA",
+    "regulatory_classes": [
+      "RuO"
+    ],
+    "slug": "heta"
+  }
+]
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+Status Code **200**
+
+*Response List Applications V1 Applications Get*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|Response List Applications V1 Applications Get|[[ApplicationReadResponse](#schemaapplicationreadresponse)]|false|none|none|
+|» ApplicationReadResponse|[ApplicationReadResponse](#schemaapplicationreadresponse)|false|none|none|
+|»» application_id|string(uuid)|true|none|none|
+|»» description|string|true|none|none|
+|»» name|string|true|none|none|
+|»» regulatory_classes|[string]|true|none|none|
+|»» slug|string|true|none|none|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### read_application_by_id_v1_applications__application_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/applications/{application_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/applications/{application_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/applications/{application_id}`
+
+*Read Application By Id*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_id|path|string(uuid)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "description": "Aignostics H&E TME application",
+  "name": "HETA",
+  "regulatory_classes": [
+    "RuO"
+  ],
+  "slug": "heta"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ApplicationReadResponse](#schemaapplicationreadresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### list_versions_by_application_id_v1_applications__application_id__versions_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/applications/{application_id}/versions', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/applications/{application_id}/versions',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/applications/{application_id}/versions`
+
+*List Versions By Application Id*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_id|path|string(uuid)|true|none|
+|page|query|integer|false|none|
+|page_size|query|integer|false|none|
+|version|query|any|false|none|
+|include|query|any|false|none|
+|sort|query|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+[
+  {
+    "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+    "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+    "application_version_slug": "tissue-segmentation-qc:v0.0.1",
+    "changelog": "string",
+    "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+    "input_artifacts": [
+      {
+        "metadata_schema": {},
+        "mime_type": "image/tiff",
+        "name": "string"
+      }
+    ],
+    "output_artifacts": [
+      {
+        "metadata_schema": {},
+        "mime_type": "application/vnd.apache.parquet",
+        "name": "string",
+        "scope": "item"
+      }
+    ],
+    "version": "string"
+  }
+]
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+Status Code **200**
+
+*Response List Versions By Application Id V1 Applications  Application Id  Versions Get*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|Response List Versions By Application Id V1 Applications  Application Id  Versions Get|[[ApplicationVersionReadResponse](#schemaapplicationversionreadresponse)]|false|none|none|
+|» ApplicationVersionReadResponse|[ApplicationVersionReadResponse](#schemaapplicationversionreadresponse)|false|none|none|
+|»» application_id|string(uuid)|true|none|none|
+|»» application_version_id|string(uuid)|true|none|none|
+|»» application_version_slug|string|true|none|none|
+|»» changelog|string|true|none|none|
+|»» flow_id|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string(uuid)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» input_artifacts|[[InputArtifactReadResponse](#schemainputartifactreadresponse)]|true|none|none|
+|»»» InputArtifactReadResponse|[InputArtifactReadResponse](#schemainputartifactreadresponse)|false|none|none|
+|»»»» metadata_schema|object|true|none|none|
+|»»»» mime_type|string|true|none|none|
+|»»»» name|string|true|none|none|
+|»» output_artifacts|[[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)]|true|none|none|
+|»»» OutputArtifactReadResponse|[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)|false|none|none|
+|»»»» metadata_schema|object|true|none|none|
+|»»»» mime_type|string|true|none|none|
+|»»»» name|string|true|none|none|
+|»»»» scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
+|»» version|string|true|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|scope|item|
+|scope|global|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### read_application_by_slug_v1_applications__application_slug__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/applications/{application_slug}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/applications/{application_slug}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/applications/{application_slug}`
+
+*Read Application By Slug*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_slug|path|string|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "description": "Aignostics H&E TME application",
+  "name": "HETA",
+  "regulatory_classes": [
+    "RuO"
+  ],
+  "slug": "heta"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ApplicationReadResponse](#schemaapplicationreadresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### list_versions_by_application_slug_v1_applications__application_slug__versions_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/applications/{application_slug}/versions', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/applications/{application_slug}/versions',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/applications/{application_slug}/versions`
+
+*List Versions By Application Slug*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_slug|path|string|true|none|
+|page|query|integer|false|none|
+|page_size|query|integer|false|none|
+|version|query|any|false|none|
+|include|query|any|false|none|
+|sort|query|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+[
+  {
+    "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+    "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+    "application_version_slug": "tissue-segmentation-qc:v0.0.1",
+    "changelog": "string",
+    "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+    "input_artifacts": [
+      {
+        "metadata_schema": {},
+        "mime_type": "image/tiff",
+        "name": "string"
+      }
+    ],
+    "output_artifacts": [
+      {
+        "metadata_schema": {},
+        "mime_type": "application/vnd.apache.parquet",
+        "name": "string",
+        "scope": "item"
+      }
+    ],
+    "version": "string"
+  }
+]
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+Status Code **200**
+
+*Response List Versions By Application Slug V1 Applications  Application Slug  Versions Get*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|Response List Versions By Application Slug V1 Applications  Application Slug  Versions Get|[[ApplicationVersionReadResponse](#schemaapplicationversionreadresponse)]|false|none|none|
+|» ApplicationVersionReadResponse|[ApplicationVersionReadResponse](#schemaapplicationversionreadresponse)|false|none|none|
+|»» application_id|string(uuid)|true|none|none|
+|»» application_version_id|string(uuid)|true|none|none|
+|»» application_version_slug|string|true|none|none|
+|»» changelog|string|true|none|none|
+|»» flow_id|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string(uuid)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» input_artifacts|[[InputArtifactReadResponse](#schemainputartifactreadresponse)]|true|none|none|
+|»»» InputArtifactReadResponse|[InputArtifactReadResponse](#schemainputartifactreadresponse)|false|none|none|
+|»»»» metadata_schema|object|true|none|none|
+|»»»» mime_type|string|true|none|none|
+|»»»» name|string|true|none|none|
+|»» output_artifacts|[[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)]|true|none|none|
+|»»» OutputArtifactReadResponse|[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)|false|none|none|
+|»»»» metadata_schema|object|true|none|none|
+|»»»» mime_type|string|true|none|none|
+|»»»» name|string|true|none|none|
+|»»»» scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
+|»» version|string|true|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|scope|item|
+|scope|global|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### list_application_runs_v1_runs_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/runs', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/runs',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/runs`
+
+*List Application Runs*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_id|query|any|false|none|
+|application_version_id|query|any|false|none|
+|include|query|any|false|none|
+|page|query|integer|false|none|
+|page_size|query|integer|false|none|
+|sort|query|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+[
+  {
+    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+    "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+    "organization_id": "string",
+    "status": "canceled_system",
+    "triggered_at": "2019-08-24T14:15:22Z",
+    "triggered_by": "string",
+    "user_payload": {
+      "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+      "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+      "global_output_artifacts": {
+        "property1": {
+          "data": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "metadata": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+        },
+        "property2": {
+          "data": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "metadata": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+        }
+      },
+      "items": [
+        {
+          "input_artifacts": {
+            "property1": {
+              "download_url": "http://example.com",
+              "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+              "metadata": {}
+            },
+            "property2": {
+              "download_url": "http://example.com",
+              "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+              "metadata": {}
+            }
+          },
+          "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+          "output_artifacts": {
+            "property1": {
+              "data": {
+                "download_url": "http://example.com",
+                "upload_url": "http://example.com"
+              },
+              "metadata": {
+                "download_url": "http://example.com",
+                "upload_url": "http://example.com"
+              },
+              "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+            },
+            "property2": {
+              "data": {
+                "download_url": "http://example.com",
+                "upload_url": "http://example.com"
+              },
+              "metadata": {
+                "download_url": "http://example.com",
+                "upload_url": "http://example.com"
+              },
+              "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+            }
+          }
+        }
+      ]
+    }
+  }
+]
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+Status Code **200**
+
+*Response List Application Runs V1 Runs Get*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|Response List Application Runs V1 Runs Get|[[RunReadResponse](#schemarunreadresponse)]|false|none|none|
+|» RunReadResponse|[RunReadResponse](#schemarunreadresponse)|false|none|none|
+|»» application_run_id|string(uuid)|true|none|none|
+|»» application_version_id|string(uuid)|true|none|none|
+|»» organization_id|string|true|none|none|
+|»» status|[ApplicationRunStatus](#schemaapplicationrunstatus)|true|none|none|
+|»» triggered_at|string(date-time)|true|none|none|
+|»» triggered_by|string|true|none|none|
+|»» user_payload|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|[UserPayload](#schemauserpayload)|false|none|none|
+|»»»» application_id|string(uuid)|true|none|none|
+|»»»» application_run_id|string(uuid)|true|none|none|
+|»»»» global_output_artifacts|any|true|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|object|false|none|none|
+|»»»»»» PayloadOutputArtifact|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
+|»»»»»»» data|[TransferUrls](#schematransferurls)|true|none|none|
+|»»»»»»»» download_url|string(uri)|true|none|none|
+|»»»»»»»» upload_url|string(uri)|true|none|none|
+|»»»»»»» metadata|[TransferUrls](#schematransferurls)|true|none|none|
+|»»»»»»» output_artifact_id|string(uuid)|true|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» items|[[PayloadItem](#schemapayloaditem)]|true|none|none|
+|»»»»» PayloadItem|[PayloadItem](#schemapayloaditem)|false|none|none|
+|»»»»»» input_artifacts|object|true|none|none|
+|»»»»»»» PayloadInputArtifact|[PayloadInputArtifact](#schemapayloadinputartifact)|false|none|none|
+|»»»»»»»» download_url|string(uri)|true|none|none|
+|»»»»»»»» input_artifact_id|string(uuid)|true|none|none|
+|»»»»»»»» metadata|object|true|none|none|
+|»»»»»» item_id|string(uuid)|true|none|none|
+|»»»»»» output_artifacts|object|true|none|none|
+|»»»»»»» PayloadOutputArtifact|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|status|canceled_system|
+|status|canceled_user|
+|status|completed|
+|status|completed_with_error|
+|status|received|
+|status|rejected|
+|status|running|
+|status|scheduled|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### create_application_run_v1_runs_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/v1/runs', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "application_version": "efbf9822-a1e5-4045-a283-dbf26e8064a9",
+  "items": [
+    {
+      "input_artifacts": [
+        {
+          "download_url": "https://example.com/case-no-1-slide.tiff",
+          "metadata": {
+            "checksum_crc32c": "752f9554",
+            "height": 2000,
+            "height_mpp": 0.5,
+            "width": 10000,
+            "width_mpp": 0.5
+          },
+          "name": "slide"
+        }
+      ],
+      "reference": "case-no-1"
+    }
+  ]
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/runs',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/runs`
+
+*Create Application Run*
+
+> Body parameter
+
+```json
+{
+  "application_version": "efbf9822-a1e5-4045-a283-dbf26e8064a9",
+  "items": [
+    {
+      "input_artifacts": [
+        {
+          "download_url": "https://example.com/case-no-1-slide.tiff",
+          "metadata": {
+            "checksum_crc32c": "752f9554",
+            "height": 2000,
+            "height_mpp": 0.5,
+            "width": 10000,
+            "width_mpp": 0.5
+          },
+          "name": "slide"
+        }
+      ],
+      "reference": "case-no-1"
+    }
+  ]
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|[RunCreationRequest](#schemaruncreationrequest)|true|none|
+
+> Example responses
+
+> 201 Response
+
+```json
+{
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|201|[Created](https://tools.ietf.org/html/rfc7231#section-6.3.2)|Successful Response|[RunCreationResponse](#schemaruncreationresponse)|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_run_v1_runs__application_run_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/runs/{application_run_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/runs/{application_run_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/runs/{application_run_id}`
+
+*Get Run*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_run_id|path|string(uuid)|true|none|
+|include|query|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+  "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+  "organization_id": "string",
+  "status": "canceled_system",
+  "triggered_at": "2019-08-24T14:15:22Z",
+  "triggered_by": "string",
+  "user_payload": {
+    "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+    "global_output_artifacts": {
+      "property1": {
+        "data": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "metadata": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+      },
+      "property2": {
+        "data": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "metadata": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+      }
+    },
+    "items": [
+      {
+        "input_artifacts": {
+          "property1": {
+            "download_url": "http://example.com",
+            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+            "metadata": {}
+          },
+          "property2": {
+            "download_url": "http://example.com",
+            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+            "metadata": {}
+          }
+        },
+        "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+        "output_artifacts": {
+          "property1": {
+            "data": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "metadata": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+          },
+          "property2": {
+            "data": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "metadata": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[RunReadResponse](#schemarunreadresponse)|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### cancel_run_v1_runs__application_run_id__cancel_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/v1/runs/{application_run_id}/cancel', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/runs/{application_run_id}/cancel',
+{
+  method: 'POST',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/runs/{application_run_id}/cancel`
+
+*Cancel Run*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_run_id|path|string(uuid)|true|none|
+
+> Example responses
+
+> 202 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|202|[Accepted](https://tools.ietf.org/html/rfc7231#section-6.3.3)|Successful Response|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### delete_run_results_v1_runs__application_run_id__results_delete
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.delete('/v1/runs/{application_run_id}/results', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/runs/{application_run_id}/results',
+{
+  method: 'DELETE',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`DELETE /v1/runs/{application_run_id}/results`
+
+*Delete Run Results*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_run_id|path|string(uuid)|true|none|
+
+> Example responses
+
+> 422 Response
+
+```json
+{
+  "detail": [
+    {
+      "loc": [
+        "string"
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|204|[No Content](https://tools.ietf.org/html/rfc7231#section-6.3.5)|Successful Response|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### list_run_results_v1_runs__application_run_id__results_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/runs/{application_run_id}/results', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/runs/{application_run_id}/results',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/runs/{application_run_id}/results`
+
+*List Run Results*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_run_id|path|string(uuid)|true|none|
+|item_id__in|query|any|false|none|
+|page|query|integer|false|none|
+|page_size|query|integer|false|none|
+|reference__in|query|any|false|none|
+|status__in|query|any|false|none|
+|sort|query|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+[
+  {
+    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+    "error": "string",
+    "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+    "output_artifacts": [
+      {
+        "download_url": "http://example.com",
+        "metadata": {},
+        "mime_type": "application/vnd.apache.parquet",
+        "name": "string",
+        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+      }
+    ],
+    "reference": "string",
+    "status": "pending"
+  }
+]
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+Status Code **200**
+
+*Response List Run Results V1 Runs  Application Run Id  Results Get*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|Response List Run Results V1 Runs  Application Run Id  Results Get|[[ItemResultReadResponse](#schemaitemresultreadresponse)]|false|none|none|
+|» ItemResultReadResponse|[ItemResultReadResponse](#schemaitemresultreadresponse)|false|none|none|
+|»» application_run_id|string(uuid)|true|none|none|
+|»» error|any|true|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» item_id|string(uuid)|true|none|none|
+|»» output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|none|
+|»»» OutputArtifactResultReadResponse|[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)|false|none|none|
+|»»»» download_url|any|true|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string(uri)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» metadata|object|true|none|none|
+|»»»» mime_type|string|true|none|none|
+|»»»» name|string|true|none|none|
+|»»»» output_artifact_id|string(uuid)|true|none|none|
+|»» reference|string|true|none|none|
+|»» status|[ItemStatus](#schemaitemstatus)|true|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|status|pending|
+|status|canceled_user|
+|status|canceled_system|
+|status|error_user|
+|status|error_system|
+|status|succeeded|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### create_user_v1_users__post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/v1/users/', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "email": "string",
+  "organization_id": "7c60d51f-b44e-4682-87d6-449835ea4de6",
+  "user_id": "string"
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/users/',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/users/`
+
+*Create User*
+
+> Body parameter
+
+```json
+{
+  "email": "string",
+  "organization_id": "7c60d51f-b44e-4682-87d6-449835ea4de6",
+  "user_id": "string"
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|[UserCreationRequest](#schemausercreationrequest)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "organization_id": "7c60d51f-b44e-4682-87d6-449835ea4de6",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  },
+  "user_id": "string"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[UserResponse](#schemauserresponse)|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|User not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_user_v1_users__user_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/users/{user_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/users/{user_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/users/{user_id}`
+
+*Get User*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|user_id|path|string(uuid)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "organization_id": "7c60d51f-b44e-4682-87d6-449835ea4de6",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  },
+  "user_id": "string"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[UserResponse](#schemauserresponse)|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|User not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### update_user_v1_users__user_id__patch
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.patch('/v1/users/{user_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "slide_quota": 0,
+  "user_id": "string"
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/users/{user_id}',
+{
+  method: 'PATCH',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`PATCH /v1/users/{user_id}`
+
+*Update User*
+
+> Body parameter
+
+```json
+{
+  "slide_quota": 0,
+  "user_id": "string"
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|user_id|path|string(uuid)|true|none|
+|body|body|[UserUpdateRequest](#schemauserupdaterequest)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "organization_id": "7c60d51f-b44e-4682-87d6-449835ea4de6",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  },
+  "user_id": "string"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[UserResponse](#schemauserresponse)|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|User not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### register_version_v1_versions_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/v1/versions', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "changelog": "string",
+  "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+  "input_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string",
+      "scope": "item",
+      "visibility": "internal"
+    }
+  ],
+  "version": "string"
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/versions',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/versions`
+
+*Register Version*
+
+> Body parameter
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "changelog": "string",
+  "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+  "input_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string",
+      "scope": "item",
+      "visibility": "internal"
+    }
+  ],
+  "version": "string"
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|[VersionCreationRequest](#schemaversioncreationrequest)|true|none|
+
+> Example responses
+
+> 201 Response
+
+```json
+{
+  "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|201|[Created](https://tools.ietf.org/html/rfc7231#section-6.3.2)|Successful Response|[VersionCreationResponse](#schemaversioncreationresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_version_v1_versions__application_version_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/versions/{application_version_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/versions/{application_version_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/versions/{application_version_id}`
+
+*Get Version*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|application_version_id|path|string(uuid)|true|none|
+|include|query|any|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+  "changelog": "string",
+  "created_at": "2019-08-24T14:15:22Z",
+  "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+  "input_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "image/tiff",
+      "name": "string"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string",
+      "scope": "item",
+      "visibility": "internal"
+    }
+  ],
+  "version": "string"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[VersionReadResponse](#schemaversionreadresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+## Algorithms/Apps
+
+Called by the Algorithms and applications to update statuses
+
+### trigger_artifact_event_v1_artifacts__output_artifact_id__event_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json'
+}
+
+r = requests.post('/v1/artifacts/{output_artifact_id}/event', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "error": "string",
+  "event": "succeeded",
+  "metadata": {}
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json'
+};
+
+fetch('/v1/artifacts/{output_artifact_id}/event',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/artifacts/{output_artifact_id}/event`
+
+*Trigger Artifact Event*
+
+> Body parameter
+
+```json
+{
+  "error": "string",
+  "event": "succeeded",
+  "metadata": {}
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|output_artifact_id|path|string(uuid)|true|none|
+|body|body|[OutputArtifactEventTriggerRequest](#schemaoutputartifacteventtriggerrequest)|true|none|
+
+> Example responses
+
+> 201 Response
+
+```json
+{
+  "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
+  "status": "pending"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|201|[Created](https://tools.ietf.org/html/rfc7231#section-6.3.2)|Successful Response|[OutputArtifactEventTriggerResponse](#schemaoutputartifacteventtriggerresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+This operation does not require authentication
+
+
+## Scheduler
+
+Called by the Scheduler
+
+### get_item_v1_items__item_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/items/{item_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/items/{item_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/items/{item_id}`
+
+*Get Item*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|item_id|path|string(uuid)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+  "error": "string",
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "reference": "string",
+  "status": "pending"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ItemReadResponse](#schemaitemreadresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### register_item_event_v1_items__item_id__event_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/v1/items/{item_id}/event', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "error": "string",
+  "event": "failed_with_system_error"
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/items/{item_id}/event',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/items/{item_id}/event`
+
+*Register Item Event*
+
+> Body parameter
+
+```json
+{
+  "error": "string",
+  "event": "failed_with_system_error"
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|item_id|path|string(uuid)|true|none|
+|body|body|[ItemEventCreationRequest](#schemaitemeventcreationrequest)|true|none|
+
+> Example responses
+
+> 202 Response
+
+```json
+{
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "status": "pending"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|202|[Accepted](https://tools.ietf.org/html/rfc7231#section-6.3.3)|Successful Response|[ItemEventCreationResponse](#schemaitemeventcreationresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+## Admins
+
+Called by Admins to manage and register entities
+
+### register_application_v1_applications_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/v1/applications', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "description": "H&E Tumor Micro Environment Analysis: Performing tissue QC, segmentation, cell detection and cell classfication",
+  "name": "HETA",
+  "regulatory_classes": [
+    "RuO"
+  ]
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/applications',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/applications`
+
+*Register Application*
+
+> Body parameter
+
+```json
+{
+  "description": "H&E Tumor Micro Environment Analysis: Performing tissue QC, segmentation, cell detection and cell classfication",
+  "name": "HETA",
+  "regulatory_classes": [
+    "RuO"
+  ]
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|[ApplicationCreationRequest](#schemaapplicationcreationrequest)|true|none|
+
+> Example responses
+
+> 201 Response
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c"
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|201|[Created](https://tools.ietf.org/html/rfc7231#section-6.3.2)|Successful Response|[ApplicationCreationResponse](#schemaapplicationcreationresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### list_quotas_v1_quotas_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/quotas', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/quotas',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/quotas`
+
+*List Quotas*
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "quotas": [
+    {
+      "name": "max_users",
+      "quota": 0
+    }
+  ]
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[QuotasReadResponse](#schemaquotasreadresponse)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### update_quotas_v1_quotas_patch
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.patch('/v1/quotas', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "quotas": [
+    {
+      "name": "max_users",
+      "quota": 0
+    }
+  ]
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/quotas',
+{
+  method: 'PATCH',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`PATCH /v1/quotas`
+
+*Update Quotas*
+
+> Body parameter
+
+```json
+{
+  "quotas": [
+    {
+      "name": "max_users",
+      "quota": 0
+    }
+  ]
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|[QuotasUpdateRequest](#schemaquotasupdaterequest)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "updated_quotas": [
+    {
+      "name": "max_users",
+      "quota": 0
+    }
+  ]
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[QuotasUpdateResponse](#schemaquotasupdateresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+## Infrastructure
+
+Called by other Infra
+
+### health_health_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json'
+}
+
+r = requests.get('/health', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json'
+};
+
+fetch('/health',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /health`
+
+*Health*
+
+Check that the API application is alive and responsive.
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+
+#### Response Schema
+
+
+This operation does not require authentication
+
+
+### liveness_liveness_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json'
+}
+
+r = requests.get('/liveness', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json'
+};
+
+fetch('/liveness',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /liveness`
+
+*Liveness*
+
+Check that the API application is alive and responsive.
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+
+#### Response Schema
+
+
+This operation does not require authentication
+
+
+### readiness_readiness_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json'
+}
+
+r = requests.get('/readiness', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json'
+};
+
+fetch('/readiness',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /readiness`
+
+*Readiness*
+
+Check that the API application is ready to serve.
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+
+#### Response Schema
+
+
+This operation does not require authentication
+
+
+## Organizations
+
+### create_organization_v1_organizations_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/v1/organizations', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "batch_size": 0,
+  "organization_id": "string",
+  "owner_email": "string",
+  "slide_quota": 0
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/organizations',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/organizations`
+
+*Create Organization*
+
+> Body parameter
+
+```json
+{
+  "batch_size": 0,
+  "organization_id": "string",
+  "owner_email": "string",
+  "slide_quota": 0
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|[OrganizationCreationRequest](#schemaorganizationcreationrequest)|true|none|
+
+> Example responses
+
+> 201 Response
+
+```json
+{
+  "batch_size": 0,
+  "organization_id": "string",
+  "owner_id": "8826ee2e-7933-4665-aef2-2393f84a0d05",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  }
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|201|[Created](https://tools.ietf.org/html/rfc7231#section-6.3.2)|Successful Response|[OrganizationResponse](#schemaorganizationresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_organization_v1_organizations__organization_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/v1/organizations/{organization_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/organizations/{organization_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/organizations/{organization_id}`
+
+*Get Organization*
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organization_id|path|string(uuid)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "batch_size": 0,
+  "organization_id": "string",
+  "owner_id": "8826ee2e-7933-4665-aef2-2393f84a0d05",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  }
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[OrganizationResponse](#schemaorganizationresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### update_organization_v1_organizations__organization_id__patch
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.patch('/v1/organizations/{organization_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+const inputBody = '{
+  "batch_size": 0,
+  "slide_quota": 0
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/v1/organizations/{organization_id}',
+{
+  method: 'PATCH',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`PATCH /v1/organizations/{organization_id}`
+
+*Update Organization*
+
+> Body parameter
+
+```json
+{
+  "batch_size": 0,
+  "slide_quota": 0
+}
+```
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|organization_id|path|string|true|none|
+|body|body|[OrganizationUpdateRequest](#schemaorganizationupdaterequest)|true|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "batch_size": 0,
+  "organization_id": "string",
+  "owner_id": "8826ee2e-7933-4665-aef2-2393f84a0d05",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  }
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[OrganizationResponse](#schemaorganizationresponse)|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+## Schemas
+
+### ApplicationCreationRequest
 
 
 
 
 
 
+```json
+{
+  "description": "H&E Tumor Micro Environment Analysis: Performing tissue QC, segmentation, cell detection and cell classfication",
+  "name": "HETA",
+  "regulatory_classes": [
+    "RuO"
+  ]
+}
+
+```
+
+ApplicationCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|description|string|true|none|none|
+|name|string|true|none|none|
+|regulatory_classes|[string]|true|none|none|
+
+### ApplicationCreationResponse
 
 
-segmentation,
-            cell detection and cell classfication'
-          title: Description
-          type: string
-        name:
-          examples:
-          - HETA
-          title: Name
-          type: string
-        regulatory_classes:
-          examples:
-          - - RuO
-          items:
-            type: string
-          title: Regulatory Classes
-          type: array
-      required:
-      - name
-      - description
-      - regulatory_classes
-      title: ApplicationCreationRequest
-      type: object
-    ApplicationCreationResponse:
-      properties:
-        application_id:
-          format: uuid
-          title: Application Id
-          type: string
-      required:
-      - application_id
-      title: ApplicationCreationResponse
-      type: object
-    ApplicationReadResponse:
-      properties:
-        application_id:
-          format: uuid
-          title: Application Id
-          type: string
-        description:
-          examples:
-          - Aignostics H&E TME application
-          title: Description
-          type: string
-        name:
-          examples:
-          - HETA
-          title: Name
-          type: string
-        regulatory_classes:
-          examples:
-          - - RuO
-          items:
-            type: string
-          title: Regulatory Classes
-          type: array
-        slug:
-          examples:
-          - heta
-          title: Slug
-          type: string
-      required:
-      - application_id
-      - name
-      - slug
-      - regulatory_classes
-      - description
-      title: ApplicationReadResponse
-      type: object
-    ApplicationRunStatus:
-      enum:
-      - canceled_system
-      - canceled_user
-      - completed
-      - completed_with_error
-      - received
-      - rejected
-      - running
-      - scheduled
-      title: ApplicationRunStatus
-      type: string
-    ApplicationVersionReadResponse:
-      properties:
-        application_id:
-          format: uuid
-          title: Application Id
-          type: string
-        application_version_id:
-          format: uuid
-          title: Application Version Id
-          type: string
-        application_version_slug:
-          examples:
-          - tissue-segmentation-qc:v0.0.1
-          pattern: ^(?:|-)*:v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
-          title: Application Version Slug
-          type: string
-        changelog:
-          title: Changelog
-          type: string
-        flow_id:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Flow Id
-        input_artifacts:
-          items:
-            $ref: '#/components/schemas/InputArtifactReadResponse'
-          title: Input Artifacts
-          type: array
-        output_artifacts:
-          items:
-            $ref: '#/components/schemas/OutputArtifactReadResponse'
-          title: Output Artifacts
-          type: array
-        version:
-          title: Version
-          type: string
-      required:
-      - application_version_id
-      - application_version_slug
-      - version
-      - application_id
-      - changelog
-      - input_artifacts
-      - output_artifacts
-      title: ApplicationVersionReadResponse
-      type: object
-    ArtifactEvent:
-      description: 'This is a subset of the OutputArtifactEvent used by the 
-state
-        machine.
 
-> components:
 
->   schemas:
 
->     ApplicationCreationRequest:
 
->       properties:
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c"
+}
 
->         description:
+```
 
->           examples:
+ApplicationCreationResponse
 
->           - 'H&E Tumor Micro Environment Analysis: Performing tissue QC, 
+#### Properties
 
-        Only the variants defined below are allowed to be submitted from the 
-Algorithms/Applications.'
-      enum:
-      - succeeded
-      - failed_with_user_error
-      - failed_with_system_error
-      title: ArtifactEvent
-      type: string
-    ArtifactStatus:
-      enum:
-      - pending
-      - canceled_user
-      - canceled_system
-      - error_user
-      - error_system_fatal
-      - error_system_recoverable
-      - skipped
-      - succeeded
-      title: ArtifactStatus
-      type: string
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          title: Detail
-          type: array
-      title: HTTPValidationError
-      type: object
-    InputArtifact:
-      properties:
-        metadata_schema:
-          title: Metadata Schema
-          type: object
-        mime_type:
-          examples:
-          - image/tiff
-          pattern: ^\w+\/\w+[-+.|\w+]+\w+$
-          title: Mime Type
-          type: string
-        name:
-          title: Name
-          type: string
-      required:
-      - name
-      - mime_type
-      - metadata_schema
-      title: InputArtifact
-      type: object
-    InputArtifactCreationRequest:
-      properties:
-        download_url:
-          examples:
-          - https://example.com/case-no-1-slide.tiff
-          format: uri
-          maxLength: 2083
-          minLength: 1
-          title: Download Url
-          type: string
-        metadata:
-          examples:
-          - checksum_crc32c: 752f9554
-            height: 2000
-            height_mpp: 0.5
-            width: 10000
-            width_mpp: 0.5
-          title: Metadata
-          type: object
-        name:
-          examples:
-          - slide
-          title: Name
-          type: string
-      required:
-      - name
-      - download_url
-      - metadata
-      title: InputArtifactCreationRequest
-      type: object
-    InputArtifactReadResponse:
-      properties:
-        metadata_schema:
-          title: Metadata Schema
-          type: object
-        mime_type:
-          examples:
-          - image/tiff
-          pattern: ^\w+\/\w+[-+.|\w+]+\w+$
-          title: Mime Type
-          type: string
-        name:
-          title: Name
-          type: string
-      required:
-      - name
-      - mime_type
-      - metadata_schema
-      title: InputArtifactReadResponse
-      type: object
-    InputArtifactSchemaCreationRequest:
-      properties:
-        metadata_schema:
-          title: Metadata Schema
-          type: object
-        mime_type:
-          examples:
-          - application/vnd.apache.parquet
-          title: Mime Type
-          type: string
-        name:
-          title: Name
-          type: string
-      required:
-      - name
-      - mime_type
-      - metadata_schema
-      title: InputArtifactSchemaCreationRequest
-      type: object
-    ItemCreationRequest:
-      properties:
-        input_artifacts:
-          items:
-            $ref: '#/components/schemas/InputArtifactCreationRequest'
-          title: Input Artifacts
-          type: array
-        reference:
-          examples:
-          - case-no-1
-          title: Reference
-          type: string
-      required:
-      - reference
-      - input_artifacts
-      title: ItemCreationRequest
-      type: object
-    ItemEvent:
-      enum:
-      - failed_with_system_error
-      - failed_recoverable
-      title: ItemEvent
-      type: string
-    ItemEventCreationRequest:
-      properties:
-        error:
-          title: Error
-          type: string
-        event:
-          $ref: '#/components/schemas/ItemEvent'
-      required:
-      - event
-      - error
-      title: ItemEventCreationRequest
-      type: object
-    ItemEventCreationResponse:
-      properties:
-        item_id:
-          format: uuid
-          title: Item Id
-          type: string
-        status:
-          $ref: '#/components/schemas/ItemStatus'
-      required:
-      - item_id
-      - status
-      title: ItemEventCreationResponse
-      type: object
-    ItemReadResponse:
-      properties:
-        application_run_id:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Application Run Id
-        error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Error
-        item_id:
-          format: uuid
-          title: Item Id
-          type: string
-        reference:
-          title: Reference
-          type: string
-        status:
-          $ref: '#/components/schemas/ItemStatus'
-      required:
-      - item_id
-      - reference
-      - status
-      - error
-      title: ItemReadResponse
-      type: object
-    ItemResultReadResponse:
-      properties:
-        application_run_id:
-          format: uuid
-          title: Application Run Id
-          type: string
-        error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Error
-        item_id:
-          format: uuid
-          title: Item Id
-          type: string
-        output_artifacts:
-          items:
-            $ref: '#/components/schemas/OutputArtifactResultReadResponse'
-          title: Output Artifacts
-          type: array
-        reference:
-          title: Reference
-          type: string
-        status:
-          $ref: '#/components/schemas/ItemStatus'
-      required:
-      - item_id
-      - application_run_id
-      - reference
-      - status
-      - error
-      - output_artifacts
-      title: ItemResultReadResponse
-      type: object
-    ItemStatus:
-      enum:
-      - pending
-      - canceled_user
-      - canceled_system
-      - error_user
-      - error_system
-      - succeeded
-      title: ItemStatus
-      type: string
-    OrganizationCreationRequest:
-      properties:
-        batch_size:
-          title: Batch Size
-          type: integer
-        organization_id:
-          title: Organization Id
-          type: string
-        owner_email:
-          title: Owner Email
-          type: string
-        slide_quota:
-          title: Slide Quota
-          type: integer
-      required:
-      - organization_id
-      - owner_email
-      - slide_quota
-      - batch_size
-      title: OrganizationCreationRequest
-      type: object
-    OrganizationQuota:
-      properties:
-        total:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Total
-        used:
-          title: Used
-          type: integer
-      required:
-      - total
-      - used
-      title: OrganizationQuota
-      type: object
-    OrganizationResponse:
-      properties:
-        batch_size:
-          title: Batch Size
-          type: integer
-        organization_id:
-          title: Organization Id
-          type: string
-        owner_id:
-          format: uuid
-          title: Owner Id
-          type: string
-        slide_quota:
-          $ref: '#/components/schemas/OrganizationQuota'
-      required:
-      - organization_id
-      - owner_id
-      - slide_quota
-      - batch_size
-      title: OrganizationResponse
-      type: object
-    OrganizationUpdateRequest:
-      properties:
-        batch_size:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Batch Size
-        slide_quota:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Slide Quota
-      title: OrganizationUpdateRequest
-      type: object
-    OutputArtifact:
-      properties:
-        metadata_schema:
-          title: Metadata Schema
-          type: object
-        mime_type:
-          examples:
-          - application/vnd.apache.parquet
-          pattern: ^\w+\/\w+[-+.|\w+]+\w+$
-          title: Mime Type
-          type: string
-        name:
-          title: Name
-          type: string
-        scope:
-          $ref: '#/components/schemas/OutputArtifactScope'
-        visibility:
-          $ref: '#/components/schemas/OutputArtifactVisibility'
-      required:
-      - name
-      - mime_type
-      - metadata_schema
-      - scope
-      - visibility
-      title: OutputArtifact
-      type: object
-    OutputArtifactEventTriggerRequest:
-      properties:
-        error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Error
-        event:
-          $ref: '#/components/schemas/ArtifactEvent'
-        metadata:
-          title: Metadata
-          type: object
-      required:
-      - event
-      - metadata
-      title: OutputArtifactEventTriggerRequest
-      type: object
-    OutputArtifactEventTriggerResponse:
-      properties:
-        output_artifact_id:
-          format: uuid
-          title: Output Artifact Id
-          type: string
-        status:
-          $ref: '#/components/schemas/ArtifactStatus'
-      required:
-      - output_artifact_id
-      - status
-      title: OutputArtifactEventTriggerResponse
-      type: object
-    OutputArtifactReadResponse:
-      properties:
-        metadata_schema:
-          title: Metadata Schema
-          type: object
-        mime_type:
-          examples:
-          - application/vnd.apache.parquet
-          pattern: ^\w+\/\w+[-+.|\w+]+\w+$
-          title: Mime Type
-          type: string
-        name:
-          title: Name
-          type: string
-        scope:
-          $ref: '#/components/schemas/OutputArtifactScope'
-      required:
-      - name
-      - mime_type
-      - metadata_schema
-      - scope
-      title: OutputArtifactReadResponse
-      type: object
-    OutputArtifactResultReadResponse:
-      properties:
-        download_url:
-          anyOf:
-          - format: uri
-            maxLength: 2083
-            minLength: 1
-            type: string
-          - type: 'null'
-          title: Download Url
-        metadata:
-          title: Metadata
-          type: object
-        mime_type:
-          examples:
-          - application/vnd.apache.parquet
-          pattern: ^\w+\/\w+[-+.|\w+]+\w+$
-          title: Mime Type
-          type: string
-        name:
-          title: Name
-          type: string
-        output_artifact_id:
-          format: uuid
-          title: Output Artifact Id
-          type: string
-      required:
-      - output_artifact_id
-      - name
-      - mime_type
-      - metadata
-      - download_url
-      title: OutputArtifactResultReadResponse
-      type: object
-    OutputArtifactSchemaCreationRequest:
-      properties:
-        metadata_schema:
-          title: Metadata Schema
-          type: object
-        mime_type:
-          examples:
-          - application/vnd.apache.parquet
-          title: Mime Type
-          type: string
-        name:
-          title: Name
-          type: string
-        scope:
-          $ref: '#/components/schemas/OutputArtifactScope'
-        visibility:
-          $ref: '#/components/schemas/OutputArtifactVisibility'
-      required:
-      - name
-      - mime_type
-      - scope
-      - visibility
-      - metadata_schema
-      title: OutputArtifactSchemaCreationRequest
-      type: object
-    OutputArtifactScope:
-      enum:
-      - item
-      - global
-      title: OutputArtifactScope
-      type: string
-    OutputArtifactVisibility:
-      enum:
-      - internal
-      - external
-      title: OutputArtifactVisibility
-      type: string
-    PayloadInputArtifact:
-      properties:
-        download_url:
-          format: uri
-          minLength: 1
-          title: Download Url
-          type: string
-        input_artifact_id:
-          format: uuid
-          title: Input Artifact Id
-          type: string
-        metadata:
-          title: Metadata
-          type: object
-      required:
-      - input_artifact_id
-      - metadata
-      - download_url
-      title: PayloadInputArtifact
-      type: object
-    PayloadItem:
-      properties:
-        input_artifacts:
-          additionalProperties:
-            $ref: '#/components/schemas/PayloadInputArtifact'
-          title: Input Artifacts
-          type: object
-        item_id:
-          format: uuid
-          title: Item Id
-          type: string
-        output_artifacts:
-          additionalProperties:
-            $ref: '#/components/schemas/PayloadOutputArtifact'
-          title: Output Artifacts
-          type: object
-      required:
-      - item_id
-      - input_artifacts
-      - output_artifacts
-      title: PayloadItem
-      type: object
-    PayloadOutputArtifact:
-      properties:
-        data:
-          $ref: '#/components/schemas/TransferUrls'
-        metadata:
-          $ref: '#/components/schemas/TransferUrls'
-        output_artifact_id:
-          format: uuid
-          title: Output Artifact Id
-          type: string
-      required:
-      - output_artifact_id
-      - data
-      - metadata
-      title: PayloadOutputArtifact
-      type: object
-    QuotaName:
-      description: Global, API-level, and slide-level quotas for Samia API.
-      enum:
-      - max_users
-      - max_organizations
-      - max_users_per_organization
-      - max_applications
-      - max_application_versions
-      - max_slides_per_run
-      - max_parallel_runs
-      - max_parallel_runs_per_organization
-      - max_parallel_runs_per_user
-      title: QuotaName
-      type: string
-    QuotaReadResponse:
-      description: GET response payload for quota read.
-      properties:
-        name:
-          $ref: '#/components/schemas/QuotaName'
-        quota:
-          title: Quota
-          type: integer
-      required:
-      - name
-      - quota
-      title: QuotaReadResponse
-      type: object
-    QuotaUpdateRequest:
-      description: PATCH request payload for quota update.
-      properties:
-        name:
-          $ref: '#/components/schemas/QuotaName'
-        quota:
-          exclusiveMinimum: 0.0
-          title: Quota
-          type: integer
-      required:
-      - name
-      - quota
-      title: QuotaUpdateRequest
-      type: object
-    QuotaUpdateResponse:
-      description: PATCH response payload for quota update.
-      properties:
-        name:
-          $ref: '#/components/schemas/QuotaName'
-        quota:
-          title: Quota
-          type: integer
-      required:
-      - name
-      - quota
-      title: QuotaUpdateResponse
-      type: object
-    QuotasReadResponse:
-      description: GET response payload for multiple quota reads.
-      properties:
-        quotas:
-          items:
-            $ref: '#/components/schemas/QuotaReadResponse'
-          title: Quotas
-          type: array
-      required:
-      - quotas
-      title: QuotasReadResponse
-      type: object
-    QuotasUpdateRequest:
-      description: PATCH request payload for quota updates.
-      properties:
-        quotas:
-          items:
-            $ref: '#/components/schemas/QuotaUpdateRequest'
-          title: Quotas
-          type: array
-      required:
-      - quotas
-      title: QuotasUpdateRequest
-      type: object
-    QuotasUpdateResponse:
-      description: PATCH response payload for quota updates.
-      properties:
-        updated_quotas:
-          items:
-            $ref: '#/components/schemas/QuotaUpdateResponse'
-          title: Updated Quotas
-          type: array
-      required:
-      - updated_quotas
-      title: QuotasUpdateResponse
-      type: object
-    RunCreationRequest:
-      properties:
-        application_version:
-          anyOf:
-          - format: uuid
-            type: string
-          - $ref: '#/components/schemas/SlugVersionRequest'
-          examples:
-          - efbf9822-a1e5-4045-a283-dbf26e8064a9
-          title: Application Version
-        items:
-          items:
-            $ref: '#/components/schemas/ItemCreationRequest'
-          title: Items
-          type: array
-      required:
-      - application_version
-      - items
-      title: RunCreationRequest
-      type: object
-    RunCreationResponse:
-      properties:
-        application_run_id:
-          format: uuid
-          title: Application Run Id
-          type: string
-      required:
-      - application_run_id
-      title: RunCreationResponse
-      type: object
-    RunReadResponse:
-      properties:
-        application_run_id:
-          format: uuid
-          title: Application Run Id
-          type: string
-        application_version_id:
-          format: uuid
-          title: Application Version Id
-          type: string
-        organization_id:
-          title: Organization Id
-          type: string
-        status:
-          $ref: '#/components/schemas/ApplicationRunStatus'
-        triggered_at:
-          format: date-time
-          title: Triggered At
-          type: string
-        triggered_by:
-          title: Triggered By
-          type: string
-        user_payload:
-          anyOf:
-          - $ref: '#/components/schemas/UserPayload'
-          - type: 'null'
-      required:
-      - application_run_id
-      - application_version_id
-      - organization_id
-      - status
-      - triggered_at
-      - triggered_by
-      title: RunReadResponse
-      type: object
-    SlugVersionRequest:
-      properties:
-        application_slug:
-          pattern: ^(-?)*$
-          title: Application Slug
-          type: string
-        version:
-          title: Version
-          type: string
-      required:
-      - application_slug
-      - version
-      title: SlugVersionRequest
-      type: object
-    TransferUrls:
-      properties:
-        download_url:
-          format: uri
-          minLength: 1
-          title: Download Url
-          type: string
-        upload_url:
-          format: uri
-          minLength: 1
-          title: Upload Url
-          type: string
-      required:
-      - upload_url
-      - download_url
-      title: TransferUrls
-      type: object
-    UserCreationRequest:
-      properties:
-        email:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Email
-        organization_id:
-          format: uuid
-          title: Organization Id
-          type: string
-        user_id:
-          title: User Id
-          type: string
-      required:
-      - user_id
-      - organization_id
-      - email
-      title: UserCreationRequest
-      type: object
-    UserPayload:
-      properties:
-        application_id:
-          format: uuid
-          title: Application Id
-          type: string
-        application_run_id:
-          format: uuid
-          title: Application Run Id
-          type: string
-        global_output_artifacts:
-          anyOf:
-          - additionalProperties:
-              $ref: '#/components/schemas/PayloadOutputArtifact'
-            type: object
-          - type: 'null'
-          title: Global Output Artifacts
-        items:
-          items:
-            $ref: '#/components/schemas/PayloadItem'
-          title: Items
-          type: array
-      required:
-      - application_id
-      - application_run_id
-      - global_output_artifacts
-      - items
-      title: UserPayload
-      type: object
-    UserQuota:
-      properties:
-        total:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Total
-        used:
-          title: Used
-          type: integer
-      required:
-      - total
-      - used
-      title: UserQuota
-      type: object
-    UserResponse:
-      properties:
-        organization_id:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Organization Id
-        slide_quota:
-          $ref: '#/components/schemas/UserQuota'
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-      required:
-      - user_id
-      - organization_id
-      - slide_quota
-      title: UserResponse
-      type: object
-    UserUpdateRequest:
-      properties:
-        slide_quota:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Slide Quota
-        user_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: User Id
-      title: UserUpdateRequest
-      type: object
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          title: Location
-          type: array
-        msg:
-          title: Message
-          type: string
-        type:
-          title: Error Type
-          type: string
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-      type: object
-    VersionCreationRequest:
-      properties:
-        application_id:
-          format: uuid
-          title: Application Id
-          type: string
-        changelog:
-          title: Changelog
-          type: string
-        flow_id:
-          format: uuid
-          title: Flow Id
-          type: string
-        input_artifacts:
-          items:
-            $ref: '#/components/schemas/InputArtifactSchemaCreationRequest'
-          title: Input Artifacts
-          type: array
-        output_artifacts:
-          items:
-            $ref: '#/components/schemas/OutputArtifactSchemaCreationRequest'
-          title: Output Artifacts
-          type: array
-        version:
-          title: Version
-          type: string
-      required:
-      - version
-      - application_id
-      - flow_id
-      - changelog
-      - input_artifacts
-      - output_artifacts
-      title: VersionCreationRequest
-      type: object
-    VersionCreationResponse:
-      properties:
-        application_version_id:
-          format: uuid
-          title: Application Version Id
-          type: string
-      required:
-      - application_version_id
-      title: VersionCreationResponse
-      type: object
-    VersionReadResponse:
-      properties:
-        application_id:
-          format: uuid
-          title: Application Id
-          type: string
-        application_version_id:
-          format: uuid
-          title: Application Version Id
-          type: string
-        changelog:
-          title: Changelog
-          type: string
-        created_at:
-          format: date-time
-          title: Created At
-          type: string
-        flow_id:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Flow Id
-        input_artifacts:
-          items:
-            $ref: '#/components/schemas/InputArtifact'
-          title: Input Artifacts
-          type: array
-        output_artifacts:
-          items:
-            $ref: '#/components/schemas/OutputArtifact'
-          title: Output Artifacts
-          type: array
-        version:
-          title: Version
-          type: string
-      required:
-      - application_version_id
-      - version
-      - application_id
-      - changelog
-      - input_artifacts
-      - output_artifacts
-      - created_at
-      title: VersionReadResponse
-      type: object
-  securitySchemes:
-    OAuth2AuthorizationCodeBearer:
-      flows:
-        authorizationCode:
-          authorizationUrl: https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize
-          scopes: {}
-          tokenUrl: https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token
-      type: oauth2
-info:
-  description: Pagination is done via `page` and `page_size`. Sorting via `sort`
-query
-    parameter. sort is a comma-separated list of field names. The sorting 
-direction
-    can be indicated via `+` (ascending) or `-` (descending) (e.g. 
-`/applications?sort=+name)`.
-  summary: Interact with Aignostics' Application Platform
-  title: Aignostics Platform API
-  version: 0.1.0
-openapi: 3.1.0
-paths:
-  /docs:
-    get:
-      operationId: get_documentation_docs_get
-      parameters:
-      - in: cookie
-        name: access_token
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Access Token
-      responses:
-        '200':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Get Documentation
-  /health:
-    get:
-      description: Check that the API application is alive and responsive.
-      operationId: health_health_get
-      responses:
-        '200':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-      summary: Health
-      tags:
-      - Infrastructure
-  /liveness:
-    get:
-      description: Check that the API application is alive and responsive.
-      operationId: liveness_liveness_get
-      responses:
-        '200':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-      summary: Liveness
-      tags:
-      - Infrastructure
-  /readiness:
-    get:
-      description: Check that the API application is ready to serve.
-      operationId: readiness_readiness_get
-      responses:
-        '200':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-      summary: Readiness
-      tags:
-      - Infrastructure
-  /v1/applications:
-    get:
-      operationId: list_applications_v1_applications_get
-      parameters:
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ApplicationReadResponse'
-                title: Response List Applications V1 Applications Get
-                type: array
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: List Applications
-      tags:
-      - Externals
-    post:
-      operationId: register_application_v1_applications_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationCreationRequest'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationCreationResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Register Application
-      tags:
-      - Admins
-  /v1/applications/{application_id}:
-    get:
-      operationId: read_application_by_id_v1_applications__application_id__get
-      parameters:
-      - in: path
-        name: application_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Id
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationReadResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Read Application By Id
-      tags:
-      - Externals
-  /v1/applications/{application_id}/versions:
-    get:
-      operationId: 
-list_versions_by_application_id_v1_applications__application_id__versions_get
-      parameters:
-      - in: path
-        name: application_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Id
-          type: string
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: version
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Version
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Id V1 Applications 
-Application
-                  Id  Versions Get
-                type: array
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: List Versions By Application Id
-      tags:
-      - Externals
-  /v1/applications/{application_slug}:
-    get:
-      operationId: 
-read_application_by_slug_v1_applications__application_slug__get
-      parameters:
-      - in: path
-        name: application_slug
-        required: true
-        schema:
-          title: Application Slug
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationReadResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Read Application By Slug
-      tags:
-      - Externals
-  /v1/applications/{application_slug}/versions:
-    get:
-      operationId: 
-list_versions_by_application_slug_v1_applications__application_slug__versions_ge
-t
-      parameters:
-      - in: path
-        name: application_slug
-        required: true
-        schema:
-          pattern: ^(-?)*$
-          title: Application Slug
-          type: string
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: version
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Version
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Slug V1 
-Applications  Application
-                  Slug  Versions Get
-                type: array
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: List Versions By Application Slug
-      tags:
-      - Externals
-  /v1/artifacts/{output_artifact_id}/event:
-    post:
-      operationId: 
-trigger_artifact_event_v1_artifacts__output_artifact_id__event_post
-      parameters:
-      - in: path
-        name: output_artifact_id
-        required: true
-        schema:
-          format: uuid
-          title: Output Artifact Id
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OutputArtifactEventTriggerRequest'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OutputArtifactEventTriggerResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Trigger Artifact Event
-      tags:
-      - Algorithms/Apps
-  /v1/items/{item_id}:
-    get:
-      operationId: get_item_v1_items__item_id__get
-      parameters:
-      - in: path
-        name: item_id
-        required: true
-        schema:
-          format: uuid
-          title: Item Id
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ItemReadResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Get Item
-      tags:
-      - Scheduler
-  /v1/items/{item_id}/event:
-    post:
-      operationId: register_item_event_v1_items__item_id__event_post
-      parameters:
-      - in: path
-        name: item_id
-        required: true
-        schema:
-          format: uuid
-          title: Item Id
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ItemEventCreationRequest'
-        required: true
-      responses:
-        '202':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ItemEventCreationResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Register Item Event
-      tags:
-      - Scheduler
-  /v1/organizations:
-    post:
-      operationId: create_organization_v1_organizations_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrganizationCreationRequest'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrganizationResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Create Organization
-      tags:
-      - Organizations
-  /v1/organizations/{organization_id}:
-    get:
-      operationId: get_organization_v1_organizations__organization_id__get
-      parameters:
-      - in: path
-        name: organization_id
-        required: true
-        schema:
-          format: uuid
-          title: Organization Id
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrganizationResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Get Organization
-      tags:
-      - Organizations
-    patch:
-      operationId: update_organization_v1_organizations__organization_id__patch
-      parameters:
-      - in: path
-        name: organization_id
-        required: true
-        schema:
-          title: Organization Id
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrganizationUpdateRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrganizationResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Update Organization
-      tags:
-      - Organizations
-  /v1/quotas:
-    get:
-      operationId: list_quotas_v1_quotas_get
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuotasReadResponse'
-          description: Successful Response
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: List Quotas
-      tags:
-      - Admins
-      - Admins
-    patch:
-      operationId: update_quotas_v1_quotas_patch
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuotasUpdateRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuotasUpdateResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Update Quotas
-      tags:
-      - Admins
-      - Admins
-  /v1/runs:
-    get:
-      operationId: list_application_runs_v1_runs_get
-      parameters:
-      - in: query
-        name: application_id
-        required: false
-        schema:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Application Id
-      - in: query
-        name: application_version_id
-        required: false
-        schema:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Application Version Id
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/RunReadResponse'
-                title: Response List Application Runs V1 Runs Get
-                type: array
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: List Application Runs
-      tags:
-      - Externals
-    post:
-      operationId: create_application_run_v1_runs_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RunCreationRequest'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunCreationResponse'
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Create Application Run
-      tags:
-      - Externals
-  /v1/runs/{application_run_id}:
-    get:
-      operationId: get_run_v1_runs__application_run_id__get
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunReadResponse'
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Get Run
-      tags:
-      - Externals
-      - Scheduler
-  /v1/runs/{application_run_id}/cancel:
-    post:
-      operationId: cancel_run_v1_runs__application_run_id__cancel_post
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      responses:
-        '202':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Cancel Run
-      tags:
-      - Externals
-  /v1/runs/{application_run_id}/results:
-    delete:
-      operationId: 
-delete_run_results_v1_runs__application_run_id__results_delete
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      responses:
-        '204':
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Delete Run Results
-      tags:
-      - Externals
-    get:
-      operationId: list_run_results_v1_runs__application_run_id__results_get
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      - in: query
-        name: item_id__in
-        required: false
-        schema:
-          anyOf:
-          - items:
-              format: uuid
-              type: string
-            type: array
-          - type: 'null'
-          title: Item Id  In
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: reference__in
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Reference  In
-      - in: query
-        name: status__in
-        required: false
-        schema:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/ItemStatus'
-            type: array
-          - type: 'null'
-          title: Status  In
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ItemResultReadResponse'
-                title: Response List Run Results V1 Runs  Application Run Id  
-Results
-                  Get
-                type: array
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: List Run Results
-      tags:
-      - Externals
-  /v1/users/:
-    post:
-      operationId: create_user_v1_users__post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserCreationRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-          description: Successful Response
-        '404':
-          description: User not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Create User
-      tags:
-      - Externals
-  /v1/users/{user_id}:
-    get:
-      operationId: get_user_v1_users__user_id__get
-      parameters:
-      - in: path
-        name: user_id
-        required: true
-        schema:
-          format: uuid
-          title: User Id
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-          description: Successful Response
-        '404':
-          description: User not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Get User
-      tags:
-      - Externals
-    patch:
-      operationId: update_user_v1_users__user_id__patch
-      parameters:
-      - in: path
-        name: user_id
-        required: true
-        schema:
-          format: uuid
-          title: User Id
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserUpdateRequest'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-          description: Successful Response
-        '404':
-          description: User not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Update User
-      tags:
-      - Externals
-  /v1/versions:
-    post:
-      operationId: register_version_v1_versions_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VersionCreationRequest'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VersionCreationResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Register Version
-      tags:
-      - Externals
-      - Scheduler
-      - Admins
-  /v1/versions/{application_version_id}:
-    get:
-      operationId: get_version_v1_versions__application_version_id__get
-      parameters:
-      - in: path
-        name: application_version_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Version Id
-          type: string
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VersionReadResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - OAuth2AuthorizationCodeBearer: []
-      summary: Get Version
-      tags:
-      - Externals
-      - Scheduler
-tags:
-- description: Called by externals to interact with our API
-  name: Externals
-- description: Called by the Algorithms and applications to update statuses
-  name: Algorithms/Apps
-- description: Called by the Scheduler
-  name: Scheduler
-- description: Called by Admins to manage and register entities
-  name: Admins
-- description: Called by other Infra
-  name: Infrastructure
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_id|string(uuid)|true|none|none|
+
+### ApplicationReadResponse
+
+
+
+
+
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "description": "Aignostics H&E TME application",
+  "name": "HETA",
+  "regulatory_classes": [
+    "RuO"
+  ],
+  "slug": "heta"
+}
+
+```
+
+ApplicationReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_id|string(uuid)|true|none|none|
+|description|string|true|none|none|
+|name|string|true|none|none|
+|regulatory_classes|[string]|true|none|none|
+|slug|string|true|none|none|
+
+### ApplicationRunStatus
+
+
+
+
+
+
+```json
+"canceled_system"
+
+```
+
+ApplicationRunStatus
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|ApplicationRunStatus|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|ApplicationRunStatus|canceled_system|
+|ApplicationRunStatus|canceled_user|
+|ApplicationRunStatus|completed|
+|ApplicationRunStatus|completed_with_error|
+|ApplicationRunStatus|received|
+|ApplicationRunStatus|rejected|
+|ApplicationRunStatus|running|
+|ApplicationRunStatus|scheduled|
+
+### ApplicationVersionReadResponse
+
+
+
+
+
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+  "application_version_slug": "tissue-segmentation-qc:v0.0.1",
+  "changelog": "string",
+  "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+  "input_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "image/tiff",
+      "name": "string"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string",
+      "scope": "item"
+    }
+  ],
+  "version": "string"
+}
+
+```
+
+ApplicationVersionReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_id|string(uuid)|true|none|none|
+|application_version_id|string(uuid)|true|none|none|
+|application_version_slug|string|true|none|none|
+|changelog|string|true|none|none|
+|flow_id|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uuid)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|input_artifacts|[[InputArtifactReadResponse](#schemainputartifactreadresponse)]|true|none|none|
+|output_artifacts|[[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)]|true|none|none|
+|version|string|true|none|none|
+
+### ArtifactEvent
+
+
+
+
+
+
+```json
+"succeeded"
+
+```
+
+ArtifactEvent
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|ArtifactEvent|string|false|none|This is a subset of the OutputArtifactEvent used by the state machine.Only the variants defined below are allowed to be submitted from the Algorithms/Applications.|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|ArtifactEvent|succeeded|
+|ArtifactEvent|failed_with_user_error|
+|ArtifactEvent|failed_with_system_error|
+
+### ArtifactStatus
+
+
+
+
+
+
+```json
+"pending"
+
+```
+
+ArtifactStatus
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|ArtifactStatus|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|ArtifactStatus|pending|
+|ArtifactStatus|canceled_user|
+|ArtifactStatus|canceled_system|
+|ArtifactStatus|error_user|
+|ArtifactStatus|error_system_fatal|
+|ArtifactStatus|error_system_recoverable|
+|ArtifactStatus|skipped|
+|ArtifactStatus|succeeded|
+
+### HTTPValidationError
+
+
+
+
+
+
+```json
+{
+  "detail": [
+    {
+      "loc": [
+        "string"
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+
+```
+
+HTTPValidationError
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|detail|[[ValidationError](#schemavalidationerror)]|false|none|none|
+
+### InputArtifact
+
+
+
+
+
+
+```json
+{
+  "metadata_schema": {},
+  "mime_type": "image/tiff",
+  "name": "string"
+}
+
+```
+
+InputArtifact
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|metadata_schema|object|true|none|none|
+|mime_type|string|true|none|none|
+|name|string|true|none|none|
+
+### InputArtifactCreationRequest
+
+
+
+
+
+
+```json
+{
+  "download_url": "https://example.com/case-no-1-slide.tiff",
+  "metadata": {
+    "checksum_crc32c": "752f9554",
+    "height": 2000,
+    "height_mpp": 0.5,
+    "width": 10000,
+    "width_mpp": 0.5
+  },
+  "name": "slide"
+}
+
+```
+
+InputArtifactCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|download_url|string(uri)|true|none|none|
+|metadata|object|true|none|none|
+|name|string|true|none|none|
+
+### InputArtifactReadResponse
+
+
+
+
+
+
+```json
+{
+  "metadata_schema": {},
+  "mime_type": "image/tiff",
+  "name": "string"
+}
+
+```
+
+InputArtifactReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|metadata_schema|object|true|none|none|
+|mime_type|string|true|none|none|
+|name|string|true|none|none|
+
+### InputArtifactSchemaCreationRequest
+
+
+
+
+
+
+```json
+{
+  "metadata_schema": {},
+  "mime_type": "application/vnd.apache.parquet",
+  "name": "string"
+}
+
+```
+
+InputArtifactSchemaCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|metadata_schema|object|true|none|none|
+|mime_type|string|true|none|none|
+|name|string|true|none|none|
+
+### ItemCreationRequest
+
+
+
+
+
+
+```json
+{
+  "input_artifacts": [
+    {
+      "download_url": "https://example.com/case-no-1-slide.tiff",
+      "metadata": {
+        "checksum_crc32c": "752f9554",
+        "height": 2000,
+        "height_mpp": 0.5,
+        "width": 10000,
+        "width_mpp": 0.5
+      },
+      "name": "slide"
+    }
+  ],
+  "reference": "case-no-1"
+}
+
+```
+
+ItemCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|input_artifacts|[[InputArtifactCreationRequest](#schemainputartifactcreationrequest)]|true|none|none|
+|reference|string|true|none|none|
+
+### ItemEvent
+
+
+
+
+
+
+```json
+"failed_with_system_error"
+
+```
+
+ItemEvent
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|ItemEvent|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|ItemEvent|failed_with_system_error|
+|ItemEvent|failed_recoverable|
+
+### ItemEventCreationRequest
+
+
+
+
+
+
+```json
+{
+  "error": "string",
+  "event": "failed_with_system_error"
+}
+
+```
+
+ItemEventCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error|string|true|none|none|
+|event|[ItemEvent](#schemaitemevent)|true|none|none|
+
+### ItemEventCreationResponse
+
+
+
+
+
+
+```json
+{
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "status": "pending"
+}
+
+```
+
+ItemEventCreationResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|item_id|string(uuid)|true|none|none|
+|status|[ItemStatus](#schemaitemstatus)|true|none|none|
+
+### ItemReadResponse
+
+
+
+
+
+
+```json
+{
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+  "error": "string",
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "reference": "string",
+  "status": "pending"
+}
+
+```
+
+ItemReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_run_id|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uuid)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|item_id|string(uuid)|true|none|none|
+|reference|string|true|none|none|
+|status|[ItemStatus](#schemaitemstatus)|true|none|none|
+
+### ItemResultReadResponse
+
+
+
+
+
+
+```json
+{
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+  "error": "string",
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "output_artifacts": [
+    {
+      "download_url": "http://example.com",
+      "metadata": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string",
+      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+    }
+  ],
+  "reference": "string",
+  "status": "pending"
+}
+
+```
+
+ItemResultReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_run_id|string(uuid)|true|none|none|
+|error|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|item_id|string(uuid)|true|none|none|
+|output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|none|
+|reference|string|true|none|none|
+|status|[ItemStatus](#schemaitemstatus)|true|none|none|
+
+### ItemStatus
+
+
+
+
+
+
+```json
+"pending"
+
+```
+
+ItemStatus
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|ItemStatus|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|ItemStatus|pending|
+|ItemStatus|canceled_user|
+|ItemStatus|canceled_system|
+|ItemStatus|error_user|
+|ItemStatus|error_system|
+|ItemStatus|succeeded|
+
+### OrganizationCreationRequest
+
+
+
+
+
+
+```json
+{
+  "batch_size": 0,
+  "organization_id": "string",
+  "owner_email": "string",
+  "slide_quota": 0
+}
+
+```
+
+OrganizationCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|batch_size|integer|true|none|none|
+|organization_id|string|true|none|none|
+|owner_email|string|true|none|none|
+|slide_quota|integer|true|none|none|
+
+### OrganizationQuota
+
+
+
+
+
+
+```json
+{
+  "total": 0,
+  "used": 0
+}
+
+```
+
+OrganizationQuota
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|total|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|used|integer|true|none|none|
+
+### OrganizationResponse
+
+
+
+
+
+
+```json
+{
+  "batch_size": 0,
+  "organization_id": "string",
+  "owner_id": "8826ee2e-7933-4665-aef2-2393f84a0d05",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  }
+}
+
+```
+
+OrganizationResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|batch_size|integer|true|none|none|
+|organization_id|string|true|none|none|
+|owner_id|string(uuid)|true|none|none|
+|slide_quota|[OrganizationQuota](#schemaorganizationquota)|true|none|none|
+
+### OrganizationUpdateRequest
+
+
+
+
+
+
+```json
+{
+  "batch_size": 0,
+  "slide_quota": 0
+}
+
+```
+
+OrganizationUpdateRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|batch_size|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|slide_quota|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+### OutputArtifact
+
+
+
+
+
+
+```json
+{
+  "metadata_schema": {},
+  "mime_type": "application/vnd.apache.parquet",
+  "name": "string",
+  "scope": "item",
+  "visibility": "internal"
+}
+
+```
+
+OutputArtifact
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|metadata_schema|object|true|none|none|
+|mime_type|string|true|none|none|
+|name|string|true|none|none|
+|scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
+|visibility|[OutputArtifactVisibility](#schemaoutputartifactvisibility)|true|none|none|
+
+### OutputArtifactEventTriggerRequest
+
+
+
+
+
+
+```json
+{
+  "error": "string",
+  "event": "succeeded",
+  "metadata": {}
+}
+
+```
+
+OutputArtifactEventTriggerRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|event|[ArtifactEvent](#schemaartifactevent)|true|none|This is a subset of the OutputArtifactEvent used by the state machine.Only the variants defined below are allowed to be submitted from the Algorithms/Applications.|
+|metadata|object|true|none|none|
+
+### OutputArtifactEventTriggerResponse
+
+
+
+
+
+
+```json
+{
+  "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
+  "status": "pending"
+}
+
+```
+
+OutputArtifactEventTriggerResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|output_artifact_id|string(uuid)|true|none|none|
+|status|[ArtifactStatus](#schemaartifactstatus)|true|none|none|
+
+### OutputArtifactReadResponse
+
+
+
+
+
+
+```json
+{
+  "metadata_schema": {},
+  "mime_type": "application/vnd.apache.parquet",
+  "name": "string",
+  "scope": "item"
+}
+
+```
+
+OutputArtifactReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|metadata_schema|object|true|none|none|
+|mime_type|string|true|none|none|
+|name|string|true|none|none|
+|scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
+
+### OutputArtifactResultReadResponse
+
+
+
+
+
+
+```json
+{
+  "download_url": "http://example.com",
+  "metadata": {},
+  "mime_type": "application/vnd.apache.parquet",
+  "name": "string",
+  "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+}
+
+```
+
+OutputArtifactResultReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|download_url|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uri)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|metadata|object|true|none|none|
+|mime_type|string|true|none|none|
+|name|string|true|none|none|
+|output_artifact_id|string(uuid)|true|none|none|
+
+### OutputArtifactSchemaCreationRequest
+
+
+
+
+
+
+```json
+{
+  "metadata_schema": {},
+  "mime_type": "application/vnd.apache.parquet",
+  "name": "string",
+  "scope": "item",
+  "visibility": "internal"
+}
+
+```
+
+OutputArtifactSchemaCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|metadata_schema|object|true|none|none|
+|mime_type|string|true|none|none|
+|name|string|true|none|none|
+|scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
+|visibility|[OutputArtifactVisibility](#schemaoutputartifactvisibility)|true|none|none|
+
+### OutputArtifactScope
+
+
+
+
+
+
+```json
+"item"
+
+```
+
+OutputArtifactScope
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|OutputArtifactScope|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|OutputArtifactScope|item|
+|OutputArtifactScope|global|
+
+### OutputArtifactVisibility
+
+
+
+
+
+
+```json
+"internal"
+
+```
+
+OutputArtifactVisibility
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|OutputArtifactVisibility|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|OutputArtifactVisibility|internal|
+|OutputArtifactVisibility|external|
+
+### PayloadInputArtifact
+
+
+
+
+
+
+```json
+{
+  "download_url": "http://example.com",
+  "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+  "metadata": {}
+}
+
+```
+
+PayloadInputArtifact
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|download_url|string(uri)|true|none|none|
+|input_artifact_id|string(uuid)|true|none|none|
+|metadata|object|true|none|none|
+
+### PayloadItem
+
+
+
+
+
+
+```json
+{
+  "input_artifacts": {
+    "property1": {
+      "download_url": "http://example.com",
+      "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+      "metadata": {}
+    },
+    "property2": {
+      "download_url": "http://example.com",
+      "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+      "metadata": {}
+    }
+  },
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "output_artifacts": {
+    "property1": {
+      "data": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "metadata": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+    },
+    "property2": {
+      "data": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "metadata": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+    }
+  }
+}
+
+```
+
+PayloadItem
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|input_artifacts|object|true|none|none|
+|» **additionalProperties**|[PayloadInputArtifact](#schemapayloadinputartifact)|false|none|none|
+|item_id|string(uuid)|true|none|none|
+|output_artifacts|object|true|none|none|
+|» **additionalProperties**|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
+
+### PayloadOutputArtifact
+
+
+
+
+
+
+```json
+{
+  "data": {
+    "download_url": "http://example.com",
+    "upload_url": "http://example.com"
+  },
+  "metadata": {
+    "download_url": "http://example.com",
+    "upload_url": "http://example.com"
+  },
+  "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+}
+
+```
+
+PayloadOutputArtifact
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|data|[TransferUrls](#schematransferurls)|true|none|none|
+|metadata|[TransferUrls](#schematransferurls)|true|none|none|
+|output_artifact_id|string(uuid)|true|none|none|
+
+### QuotaName
+
+
+
+
+
+
+```json
+"max_users"
+
+```
+
+QuotaName
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|QuotaName|string|false|none|Global, API-level, and slide-level quotas for Samia API.|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|QuotaName|max_users|
+|QuotaName|max_organizations|
+|QuotaName|max_users_per_organization|
+|QuotaName|max_applications|
+|QuotaName|max_application_versions|
+|QuotaName|max_slides_per_run|
+|QuotaName|max_parallel_runs|
+|QuotaName|max_parallel_runs_per_organization|
+|QuotaName|max_parallel_runs_per_user|
+
+### QuotaReadResponse
+
+
+
+
+
+
+```json
+{
+  "name": "max_users",
+  "quota": 0
+}
+
+```
+
+QuotaReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|name|[QuotaName](#schemaquotaname)|true|none|Global, API-level, and slide-level quotas for Samia API.|
+|quota|integer|true|none|none|
+
+### QuotaUpdateRequest
+
+
+
+
+
+
+```json
+{
+  "name": "max_users",
+  "quota": 0
+}
+
+```
+
+QuotaUpdateRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|name|[QuotaName](#schemaquotaname)|true|none|Global, API-level, and slide-level quotas for Samia API.|
+|quota|integer|true|none|none|
+
+### QuotaUpdateResponse
+
+
+
+
+
+
+```json
+{
+  "name": "max_users",
+  "quota": 0
+}
+
+```
+
+QuotaUpdateResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|name|[QuotaName](#schemaquotaname)|true|none|Global, API-level, and slide-level quotas for Samia API.|
+|quota|integer|true|none|none|
+
+### QuotasReadResponse
+
+
+
+
+
+
+```json
+{
+  "quotas": [
+    {
+      "name": "max_users",
+      "quota": 0
+    }
+  ]
+}
+
+```
+
+QuotasReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|quotas|[[QuotaReadResponse](#schemaquotareadresponse)]|true|none|[GET response payload for quota read.]|
+
+### QuotasUpdateRequest
+
+
+
+
+
+
+```json
+{
+  "quotas": [
+    {
+      "name": "max_users",
+      "quota": 0
+    }
+  ]
+}
+
+```
+
+QuotasUpdateRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|quotas|[[QuotaUpdateRequest](#schemaquotaupdaterequest)]|true|none|[PATCH request payload for quota update.]|
+
+### QuotasUpdateResponse
+
+
+
+
+
+
+```json
+{
+  "updated_quotas": [
+    {
+      "name": "max_users",
+      "quota": 0
+    }
+  ]
+}
+
+```
+
+QuotasUpdateResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|updated_quotas|[[QuotaUpdateResponse](#schemaquotaupdateresponse)]|true|none|[PATCH response payload for quota update.]|
+
+### RunCreationRequest
+
+
+
+
+
+
+```json
+{
+  "application_version": "efbf9822-a1e5-4045-a283-dbf26e8064a9",
+  "items": [
+    {
+      "input_artifacts": [
+        {
+          "download_url": "https://example.com/case-no-1-slide.tiff",
+          "metadata": {
+            "checksum_crc32c": "752f9554",
+            "height": 2000,
+            "height_mpp": 0.5,
+            "width": 10000,
+            "width_mpp": 0.5
+          },
+          "name": "slide"
+        }
+      ],
+      "reference": "case-no-1"
+    }
+  ]
+}
+
+```
+
+RunCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_version|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uuid)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|[SlugVersionRequest](#schemaslugversionrequest)|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|items|[[ItemCreationRequest](#schemaitemcreationrequest)]|true|none|none|
+
+### RunCreationResponse
+
+
+
+
+
+
+```json
+{
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe"
+}
+
+```
+
+RunCreationResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_run_id|string(uuid)|true|none|none|
+
+### RunReadResponse
+
+
+
+
+
+
+```json
+{
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+  "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+  "organization_id": "string",
+  "status": "canceled_system",
+  "triggered_at": "2019-08-24T14:15:22Z",
+  "triggered_by": "string",
+  "user_payload": {
+    "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+    "global_output_artifacts": {
+      "property1": {
+        "data": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "metadata": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+      },
+      "property2": {
+        "data": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "metadata": {
+          "download_url": "http://example.com",
+          "upload_url": "http://example.com"
+        },
+        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+      }
+    },
+    "items": [
+      {
+        "input_artifacts": {
+          "property1": {
+            "download_url": "http://example.com",
+            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+            "metadata": {}
+          },
+          "property2": {
+            "download_url": "http://example.com",
+            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+            "metadata": {}
+          }
+        },
+        "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+        "output_artifacts": {
+          "property1": {
+            "data": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "metadata": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+          },
+          "property2": {
+            "data": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "metadata": {
+              "download_url": "http://example.com",
+              "upload_url": "http://example.com"
+            },
+            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+          }
+        }
+      }
+    ]
+  }
+}
+
+```
+
+RunReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_run_id|string(uuid)|true|none|none|
+|application_version_id|string(uuid)|true|none|none|
+|organization_id|string|true|none|none|
+|status|[ApplicationRunStatus](#schemaapplicationrunstatus)|true|none|none|
+|triggered_at|string(date-time)|true|none|none|
+|triggered_by|string|true|none|none|
+|user_payload|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|[UserPayload](#schemauserpayload)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+### SlugVersionRequest
+
+
+
+
+
+
+```json
+{
+  "application_slug": "string",
+  "version": "string"
+}
+
+```
+
+SlugVersionRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_slug|string|true|none|none|
+|version|string|true|none|none|
+
+### TransferUrls
+
+
+
+
+
+
+```json
+{
+  "download_url": "http://example.com",
+  "upload_url": "http://example.com"
+}
+
+```
+
+TransferUrls
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|download_url|string(uri)|true|none|none|
+|upload_url|string(uri)|true|none|none|
+
+### UserCreationRequest
+
+
+
+
+
+
+```json
+{
+  "email": "string",
+  "organization_id": "7c60d51f-b44e-4682-87d6-449835ea4de6",
+  "user_id": "string"
+}
+
+```
+
+UserCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|email|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|organization_id|string(uuid)|true|none|none|
+|user_id|string|true|none|none|
+
+### UserPayload
+
+
+
+
+
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
+  "global_output_artifacts": {
+    "property1": {
+      "data": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "metadata": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+    },
+    "property2": {
+      "data": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "metadata": {
+        "download_url": "http://example.com",
+        "upload_url": "http://example.com"
+      },
+      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+    }
+  },
+  "items": [
+    {
+      "input_artifacts": {
+        "property1": {
+          "download_url": "http://example.com",
+          "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+          "metadata": {}
+        },
+        "property2": {
+          "download_url": "http://example.com",
+          "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
+          "metadata": {}
+        }
+      },
+      "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+      "output_artifacts": {
+        "property1": {
+          "data": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "metadata": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+        },
+        "property2": {
+          "data": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "metadata": {
+            "download_url": "http://example.com",
+            "upload_url": "http://example.com"
+          },
+          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
+        }
+      }
+    }
+  ]
+}
+
+```
+
+UserPayload
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_id|string(uuid)|true|none|none|
+|application_run_id|string(uuid)|true|none|none|
+|global_output_artifacts|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|object|false|none|none|
+|»» **additionalProperties**|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|items|[[PayloadItem](#schemapayloaditem)]|true|none|none|
+
+### UserQuota
+
+
+
+
+
+
+```json
+{
+  "total": 0,
+  "used": 0
+}
+
+```
+
+UserQuota
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|total|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|used|integer|true|none|none|
+
+### UserResponse
+
+
+
+
+
+
+```json
+{
+  "organization_id": "7c60d51f-b44e-4682-87d6-449835ea4de6",
+  "slide_quota": {
+    "total": 0,
+    "used": 0
+  },
+  "user_id": "string"
+}
+
+```
+
+UserResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|organization_id|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uuid)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|slide_quota|[UserQuota](#schemauserquota)|true|none|none|
+|user_id|any|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+### UserUpdateRequest
+
+
+
+
+
+
+```json
+{
+  "slide_quota": 0,
+  "user_id": "string"
+}
+
+```
+
+UserUpdateRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|slide_quota|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|user_id|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+### ValidationError
+
+
+
+
+
+
+```json
+{
+  "loc": [
+    "string"
+  ],
+  "msg": "string",
+  "type": "string"
+}
+
+```
+
+ValidationError
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|loc|[anyOf]|true|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|msg|string|true|none|none|
+|type|string|true|none|none|
+
+### VersionCreationRequest
+
+
+
+
+
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "changelog": "string",
+  "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+  "input_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string",
+      "scope": "item",
+      "visibility": "internal"
+    }
+  ],
+  "version": "string"
+}
+
+```
+
+VersionCreationRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_id|string(uuid)|true|none|none|
+|changelog|string|true|none|none|
+|flow_id|string(uuid)|true|none|none|
+|input_artifacts|[[InputArtifactSchemaCreationRequest](#schemainputartifactschemacreationrequest)]|true|none|none|
+|output_artifacts|[[OutputArtifactSchemaCreationRequest](#schemaoutputartifactschemacreationrequest)]|true|none|none|
+|version|string|true|none|none|
+
+### VersionCreationResponse
+
+
+
+
+
+
+```json
+{
+  "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c"
+}
+
+```
+
+VersionCreationResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_version_id|string(uuid)|true|none|none|
+
+### VersionReadResponse
+
+
+
+
+
+
+```json
+{
+  "application_id": "48ac72d0-a829-4896-a067-dcb1c2b0f30c",
+  "application_version_id": "4108b546-90d4-4689-8b58-78cd9ef4691c",
+  "changelog": "string",
+  "created_at": "2019-08-24T14:15:22Z",
+  "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
+  "input_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "image/tiff",
+      "name": "string"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "metadata_schema": {},
+      "mime_type": "application/vnd.apache.parquet",
+      "name": "string",
+      "scope": "item",
+      "visibility": "internal"
+    }
+  ],
+  "version": "string"
+}
+
+```
+
+VersionReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|application_id|string(uuid)|true|none|none|
+|application_version_id|string(uuid)|true|none|none|
+|changelog|string|true|none|none|
+|created_at|string(date-time)|true|none|none|
+|flow_id|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uuid)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|input_artifacts|[[InputArtifact](#schemainputartifact)]|true|none|none|
+|output_artifacts|[[OutputArtifact](#schemaoutputartifact)]|true|none|none|
+|version|string|true|none|none|
