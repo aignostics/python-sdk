@@ -469,7 +469,6 @@ def test(session: nox.Session) -> None:
     if _is_act_environment():
         pytest_args.extend(["-k", NOT_SKIP_WITH_ACT])
     session.run(*pytest_args)
-    session.run(*pytest_args)
 
 
 @nox.session(python=["3.13"], default=False)
