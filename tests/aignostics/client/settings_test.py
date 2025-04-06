@@ -194,7 +194,7 @@ def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_setti
 @pytest.mark.skip
 def test_custom_env_file_location(mock_env_vars) -> None:
     """Test custom env file location."""
-    custom_env_file = "/tmp/test_env_file"  # noqa: S108
+    custom_env_file = "/home/dummy/test_env_file"
     with mock.patch.dict(os.environ, {f"{__project_name__.upper()}_ENV_FILE": custom_env_file}):
         settings = AuthenticationSettings.model_config
         assert custom_env_file in settings["env_file"]
@@ -202,7 +202,7 @@ def test_custom_env_file_location(mock_env_vars) -> None:
 
 def test_custom_cache_dir(mock_env_vars) -> None:
     """Test custom cache directory."""
-    custom_cache_dir = "/tmp/test_cache_dir"  # noqa: S108
+    custom_cache_dir = "/home/dummy/test_cache_dir"
     settings = AuthenticationSettings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
