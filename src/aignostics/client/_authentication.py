@@ -114,6 +114,30 @@ def get_token(use_cache: bool = True) -> str:
     return new_token
 
 
+def _authenticate() -> str:
+    """Allows the user to authenticate and obtain an access token.
+
+    Determines the appropriate authentication flow based on whether
+    a browser can be opened, then executes that flow.
+
+    Returns:
+        str: The JWT access token.
+
+    Raises:
+        RuntimeError: If authentication fails.
+        AssertionError: If the returned token doesn't have the expected format.
+    """
+    if refresh_token := authentication_settings().refresh_token:
+        token = _token_from_refresh_token(refresh_token)
+    elif _can_open_browser():
+        token = _perform_authorization_code_with_pkce_flow()
+    else:
+        token = _perform_device_flow()
+    if not token:
+        raise RuntimeError(AUTHENTICATION_FAILED)
+    return token
+
+
 def verify_and_decode_token(token: str) -> dict[str, str]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
@@ -142,35 +166,9 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
             jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=authentication_settings().audience),
         )
     except jwt.exceptions.PyJWKClientError as e:
-        msg = AUTHENTICATION_FAILED
-        raise RuntimeError(msg) from e
+        raise RuntimeError(AUTHENTICATION_FAILED) from e
     except jwt.exceptions.DecodeError as e:
-        msg = AUTHENTICATION_FAILED
-        raise RuntimeError(msg) from e
-
-
-def _authenticate() -> str:
-    """Allows the user to login and obtain an access token.
-
-    Determines the appropriate authentication flow based on whether
-    a browser can be opened, then executes that flow.
-
-    Returns:
-        str: The JWT access token.
-
-    Raises:
-        RuntimeError: If authentication fails.
-        AssertionError: If the returned token doesn't have the expected format.
-    """
-    if refresh_token := authentication_settings().refresh_token:
-        token = _token_from_refresh_token(refresh_token.get_secret_value())
-    elif _can_open_browser():
-        token = _perform_authorization_code_with_pkce_flow()
-    else:
-        token = _perform_device_flow()
-    if not token:
-        raise RuntimeError(AUTHENTICATION_FAILED)
-    return token
+        raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
 def _can_open_browser() -> bool:
@@ -347,7 +345,7 @@ def _perform_device_flow() -> str | None:
         return resp["access_token"]
 
 
-def _token_from_refresh_token(refresh_token: str) -> str | None:
+def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
     """Obtains a new access token using a refresh token.
 
     Args:
@@ -365,8 +363,8 @@ def _token_from_refresh_token(refresh_token: str) -> str | None:
             headers={"Accept": "application/json"},
             data={
                 "grant_type": "refresh_token",
-                "client_id": authentication_settings().client_id_interactive.get_secret_value,
-                "refresh_token": refresh_token,
+                "client_id": authentication_settings().client_id_interactive.get_secret_value(),
+                "refresh_token": refresh_token.get_secret_value(),
             },
             timeout=REQUEST_TIMEOUT_SECONDS,
         ).json()
