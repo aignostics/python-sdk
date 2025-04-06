@@ -45,6 +45,8 @@ class AuthenticationSettings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def scope_elements(self) -> list[str]:
+        if not self.scope:
+            return []
         return [element.strip() for element in self.scope.split(",")]
 
 
