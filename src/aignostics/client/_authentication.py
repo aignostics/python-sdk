@@ -1,4 +1,3 @@
-import os
 import time
 import typing as t
 import webbrowser
@@ -8,70 +7,13 @@ from pathlib import Path
 from urllib import parse
 from urllib.parse import urlparse
 
-import appdirs
 import jwt
 import requests
-from pydantic import SecretStr, computed_field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr
 from requests_oauthlib import OAuth2Session
 
-from .messages import AUTHENTICATION_FAILED
-
-# Constants
-CLIENT_APP_NAME = "python-sdk"
-
-CACHE_DIR = appdirs.user_cache_dir(CLIENT_APP_NAME, "aignostics")
-TOKEN_FILE = Path(CACHE_DIR) / ".token"
-ENV_FILE = os.getenv("AIGNOSTICS_ENV_FILE", Path.home() / ".aignostics/env")
-
-AUTHORIZATION_BACKOFF_SECONDS = 3
-REQUEST_TIMEOUT_SECONDS = 30
-
-
-# Settings
-class AuthenticationSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix="AIGNOSTICS_", env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
-    )
-
-    api_root: str
-    client_id_device: SecretStr
-    client_id_interactive: SecretStr
-    scope: str
-    redirect_uri: str
-    audience: str
-    authorization_base_url: str
-    token_url: str
-    device_url: str
-    jws_json_url: str
-    refresh_token: SecretStr | None = None
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def scope_elements(self) -> list[str]:
-        if not self.scope:
-            return []
-        return [element.strip() for element in self.scope.split(",")]
-
-
-__cached_authentication_settings: AuthenticationSettings | None = None
-
-
-def authentication_settings() -> AuthenticationSettings:
-    """Lazy load authentication settings from the environment or a file.
-
-    * Given we use Pydantic Settings, validation is done automatically.
-    * We only load and validate if we actually need the settings,
-        thereby not killing the client on other actions.
-    * If the settings have already been loaded, return the cached instance.
-
-    Returns:
-        AuthenticationSettings: The loaded authentication settings.
-    """
-    global __cached_authentication_settings  # noqa: PLW0603
-    if __cached_authentication_settings is None:
-        __cached_authentication_settings = AuthenticationSettings()  # pyright: ignore[reportCallIssue]
-    return __cached_authentication_settings
+from ._messages import AUTHENTICATION_FAILED
+from ._settings import authentication_settings
 
 
 def get_token(use_cache: bool = True) -> str:
@@ -87,8 +29,8 @@ def get_token(use_cache: bool = True) -> str:
     Raises:
         RuntimeError: If token retrieval fails.
     """
-    if use_cache and TOKEN_FILE.exists():
-        stored_token = Path(TOKEN_FILE).read_text(encoding="utf-8")
+    if use_cache and authentication_settings().token_file.exists():
+        stored_token = Path(authentication_settings().token_file).read_text(encoding="utf-8")
         # Parse stored string "token:expiry_timestamp"
         parts = stored_token.split(":")
         token, expiry_str = parts
@@ -108,8 +50,8 @@ def get_token(use_cache: bool = True) -> str:
     # Store new token with expiry
     if use_cache:
         timestamp = claims["exp"]
-        TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
-        Path(TOKEN_FILE).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
+        authentication_settings().token_file.parent.mkdir(parents=True, exist_ok=True)
+        Path(authentication_settings().token_file).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
 
     return new_token
 
@@ -318,7 +260,7 @@ def _perform_device_flow() -> str | None:
             "scope": authentication_settings().scope_elements,
             "audience": authentication_settings().audience,
         },
-        timeout=REQUEST_TIMEOUT_SECONDS,
+        timeout=authentication_settings().request_timeout_seconds,
     ).json()
     device_code = resp["device_code"]
     print(f"Please visit: {resp['verification_uri_complete']}")
@@ -334,7 +276,7 @@ def _perform_device_flow() -> str | None:
                 "device_code": device_code,
                 "client_id": authentication_settings().client_id_device.get_secret_value(),
             },
-            timeout=REQUEST_TIMEOUT_SECONDS,
+            timeout=authentication_settings().request_timeout_seconds,
         ).json()
 
         if "error" in resp:
@@ -366,15 +308,16 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
                 "client_id": authentication_settings().client_id_interactive.get_secret_value(),
                 "refresh_token": refresh_token.get_secret_value(),
             },
-            timeout=REQUEST_TIMEOUT_SECONDS,
+            timeout=authentication_settings().request_timeout_seconds,
         ).json()
         if "error" in resp:
             if resp["error"] in {"authorization_pending", "slow_down"}:
-                time.sleep(AUTHORIZATION_BACKOFF_SECONDS)
+                time.sleep(authentication_settings().authorization_backoff_seconds)
                 continue
             raise RuntimeError(resp["error"])
         return t.cast("str", resp["access_token"])
 
 
+# TODO(Andreas): hhva: Can we remove this?
 if __name__ == "__main__":
     print(get_token(use_cache=False))

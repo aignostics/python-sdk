@@ -10,6 +10,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from . import OpenAPISchemaError
+from .client import authentication_settings
 from .constants import __project_name__, __project_path__, __version__
 from .settings import Settings
 from .types import JsonType
@@ -80,18 +81,21 @@ class Platform:
                         "implementation": platform.python_implementation(),
                     },
                 },
-                "settings": self._settings.model_dump_json(),
+                "settings": {
+                    "core": self._settings.model_dump(),
+                    "authentication": authentication_settings().model_dump(),
+                },
             },
             "remote": {
                 "platform": {
                     "dev": {
-                        "url": "https://api.dev.aignostics.com",
+                        "API_ROOT": "https://platform-dev.aignostics.com",
                     },
                     "staging": {
-                        "url": "https://api.staging.aignostics.com",
+                        "API_ROOT": "https://patform-staging.aignostics.com",
                     },
                     "production": {
-                        "url": "https://api.aignostics.com",
+                        "API_ROOT": "https://platform.aignostics.com",
                     },
                 }
             },

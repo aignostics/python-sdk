@@ -6,7 +6,7 @@ from aignostics.client._authentication import get_token
 from aignostics.client.resources.applications import Applications, Versions
 from aignostics.client.resources.runs import Runs
 
-from ._authentication import authentication_settings
+from ._settings import authentication_settings
 
 
 class Client:

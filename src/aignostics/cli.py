@@ -9,7 +9,6 @@ from rich.console import Console
 import aignostics.client
 
 from . import APIVersion, InfoOutputFormat, OpenAPIOutputFormat, Platform, __version__
-from .client import authentication_settings as auth_settings
 from .utils import prepare_cli
 
 _console = Console()
@@ -65,12 +64,6 @@ def info(
             _console.print_json(data=info)
         case InfoOutputFormat.YAML:
             _console.print(yaml.dump(info, default_flow_style=False), end="")
-
-
-@platform_app.command("authentication-settings")
-def authentication_settings() -> None:
-    """Print info about service configuration."""
-    print(auth_settings().model_dump())
 
 
 @platform_app.command("openapi")

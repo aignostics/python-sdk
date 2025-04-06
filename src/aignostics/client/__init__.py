@@ -6,12 +6,13 @@ The primary class in this module is the `Client` class, which serves as the entr
 for all interactions with the Aignostics platform.
 """
 
-from aignostics.client._authentication import authentication_settings
 from aignostics.client._client import Client
-from aignostics.client.messages import AUTHENTICATION_FAILED
+from aignostics.client._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED
+from aignostics.client._settings import authentication_settings
 
 __all__ = [
     "AUTHENTICATION_FAILED",
+    "NOT_YET_IMPLEMENTED",
     "Client",
     "authentication_settings",
 ]

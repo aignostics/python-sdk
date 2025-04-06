@@ -40,7 +40,6 @@ $ aignostics platform [OPTIONS] COMMAND [ARGS]...
 * `install`: Complete and validate installation of the...
 * `health`: Indicate if aignostics platform is healthy.
 * `info`: Print info about service configuration.
-* `authentication-settings`: Print info about service configuration.
 * `openapi`: Dump the OpenAPI specification of to stdout.
 * `bucket`: Transfer bucket provide by platform
 
@@ -87,20 +86,6 @@ $ aignostics platform info [OPTIONS]
 * `--output-format [yaml|json]`: Output format  [default: yaml]
 * `--env / --no-env`: Include environment variables in output  [default: no-env]
 * `--filter-secrets / --no-filter-secrets`: Filter out secret values from environment variables  [default: filter-secrets]
-* `--help`: Show this message and exit.
-
-### `aignostics platform authentication-settings`
-
-Print info about service configuration.
-
-**Usage**:
-
-```console
-$ aignostics platform authentication-settings [OPTIONS]
-```
-
-**Options**:
-
 * `--help`: Show this message and exit.
 
 ### `aignostics platform openapi`

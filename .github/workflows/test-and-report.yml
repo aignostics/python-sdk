@@ -59,18 +59,18 @@ jobs:
             exit 1
             fi
 
-      - name: Set up cloud credentials & environment file
+      - name: Set up cloud credentials
         env:
           CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
         run: |
           echo "$CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
-          echo "$DEV_ENV_FILE" | base64 -d > dev.env
-          echo "AIGNOSTICS_ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
       
       - name: Smoke tests
         env:
+          AIGNOSTICS_API_ROOT: https://platform-dev.aignostics.com
+          AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
+          AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
           AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: |
           uv run --no-dev aignostics platform health
@@ -84,6 +84,9 @@ jobs:
       
       - name: Test
         env:
+          AIGNOSTICS_API_ROOT: https://platform-dev.aignostics.com
+          AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
+          AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
           AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: make test
 
