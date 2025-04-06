@@ -73,7 +73,9 @@ jobs:
             fi
 
       - name: Smoke tests
-        run: uv run --no-dev aignostics platform health
+        run: |
+          uv run --no-dev aignostics platform health
+          uv run --no-dev aignostics platform authentication-settings
 
       - name: Lint
         run: make lint

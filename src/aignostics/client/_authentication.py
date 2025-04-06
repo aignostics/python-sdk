@@ -29,7 +29,7 @@ REQUEST_TIMEOUT_SECONDS = 30
 
 # Settings
 class AuthenticationSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="", env_file=ENV_FILE, env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_prefix="", env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore")
 
     client_id_device: SecretStr
     client_id_interactive: SecretStr
