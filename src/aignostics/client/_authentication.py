@@ -68,9 +68,6 @@ def authentication_settings() -> AuthenticationSettings:
     return __cached_authentication_settings
 
 
-print(authentication_settings().model_dump())
-
-
 def get_token(use_cache: bool = True) -> str:
     """Retrieves an authentication token, either from cache or via login.
 
