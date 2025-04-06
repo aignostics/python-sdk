@@ -4,14 +4,12 @@ from typing import Annotated
 
 import typer
 import yaml
-from rich.console import Console
 
 import aignostics.client
 
 from . import APIVersion, InfoOutputFormat, OpenAPIOutputFormat, Platform, __version__
-from .utils import prepare_cli
+from .utils import console, prepare_cli
 
-_console = Console()
 _platform = Platform()
 cli = typer.Typer(help="Command Line Interface of the aignostics platform")
 
@@ -46,7 +44,7 @@ def install() -> None:
 @platform_app.command("health")
 def health() -> None:
     """Indicate if aignostics platform is healthy."""
-    _console.print(_platform.healthy())
+    console.print(_platform.healthy())
 
 
 @platform_app.command("info")
@@ -61,9 +59,9 @@ def info(
     info = _platform.info(env=env, filter_secrets=filter_secrets)
     match output_format:
         case InfoOutputFormat.JSON:
-            _console.print_json(data=info)
+            console.print_json(data=info)
         case InfoOutputFormat.YAML:
-            _console.print(yaml.dump(info, default_flow_style=False), end="")
+            console.print(yaml.dump(info, default_flow_style=False), end="")
 
 
 @platform_app.command("openapi")
@@ -79,21 +77,21 @@ def openapi(
             schema = Platform.openapi_schema()
     match output_format:
         case OpenAPIOutputFormat.JSON:
-            _console.print_json(data=schema)
+            console.print_json(data=schema)
         case OpenAPIOutputFormat.YAML:
-            _console.print(yaml.dump(schema, default_flow_style=False), end="")
+            console.print(yaml.dump(schema, default_flow_style=False), end="")
 
 
 @bucket_app.command("ls")
 def bucket_ls() -> None:
     """List contents of tranfer bucket."""
-    _console.print("bucket ls")
+    console.print("bucket ls")
 
 
 @bucket_app.command("purge")
 def bucket_purge() -> None:
     """Purge content of transfer bucket."""
-    _console.print("bucket purged.")
+    console.print("bucket purged.")
 
 
 @application_app.command("list")
@@ -101,7 +99,7 @@ def application_list() -> None:
     """List available applications."""
     papi_client = aignostics.client.Client()
     applications = papi_client.applications.list()
-    _console.print(applications)
+    console.print(applications)
 
 
 @application_app.command("describe")
@@ -109,25 +107,25 @@ def application_describe() -> None:
     """Describe application."""
     papi_client = aignostics.client.Client()
     applications = papi_client.applications.list()
-    _console.print(applications)
+    console.print(applications)
 
 
 @datasset_app.command("download")
 def dataset_download() -> None:
     """Download dataset."""
-    _console.print("dataset download")
+    console.print("dataset download")
 
 
 @metadata_app.command("generate")
 def metadata_generate() -> None:
     """Generate metadata."""
-    _console.print("generate metadata")
+    console.print("generate metadata")
 
 
 @run_app.command("submit")
 def run_submit() -> None:
     """Create run."""
-    _console.print("submit run")
+    console.print("submit run")
 
 
 @run_app.command("list")
@@ -135,37 +133,37 @@ def run_list() -> None:
     """List runs."""
     papi_client = aignostics.client.Client()
     runs = papi_client.runs.list()
-    _console.print(runs)
+    console.print(runs)
 
 
 @run_app.command("describe")
 def run_describe() -> None:
     """Describe run."""
-    _console.print("The run")
+    console.print("The run")
 
 
 @run_app.command("cancel")
 def run_cancel() -> None:
     """Cancel run."""
-    _console.print("canceled run")
+    console.print("canceled run")
 
 
 @result_app.command("describe")
 def result_describe() -> None:
     """Describe the result of an application run."""
-    _console.print("describe result")
+    console.print("describe result")
 
 
 @result_app.command("download")
 def result_download() -> None:
     """Download the result of an application run."""
-    _console.print("download result")
+    console.print("download result")
 
 
 @result_app.command("delete")
 def result_delete() -> None:
     """Delete the result of an application run."""
-    _console.print("delete resuilt")
+    console.print("delete resuilt")
 
 
 prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")

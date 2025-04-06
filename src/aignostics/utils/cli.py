@@ -17,8 +17,9 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
     """
     cli.info.epilog = epilog
     cli.info.no_args_is_help = True
-    for command in cli.registered_commands:
-        command.epilog = cli.info.epilog
+    if not any(arg.endswith("typer") for arg in Path(sys.argv[0]).parts):
+        for command in cli.registered_commands:
+            command.epilog = cli.info.epilog
 
     # add epilog for all subcommands
     if not any(arg.endswith("typer") for arg in Path(sys.argv[0]).parts):
