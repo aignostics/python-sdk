@@ -37,4 +37,6 @@ jobs:
           echo "AIGNOSTICS_ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
 
       - name: Run tests marked as scheduled
+        env:
+          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNX_REFRESH_TOKEN }}
         run: make test_scheduled
