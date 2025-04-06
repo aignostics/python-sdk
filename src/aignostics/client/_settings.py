@@ -80,7 +80,6 @@ class AuthenticationSettings(BaseSettings):
         api_root = values.get("api_root", API_ROOT_PRODUCTION)
         match api_root:
             case "https://platform.aignostics.com":
-                # TODO (Andreas): hhva: please fill in
                 values["audience"] = AUDIENCE_PRODUCTION
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_PRODUCTION
                 values["token_url"] = TOKEN_URL_PRODUCTION
