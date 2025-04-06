@@ -1,5 +1,8 @@
 """Command-line interface utilities."""
 
+import sys
+from pathlib import Path
+
 import typer
 
 
@@ -18,7 +21,8 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
         command.epilog = cli.info.epilog
 
     # add epilog for all subcommands
-    _add_epilog_recursively(cli, epilog)
+    if not any(arg.endswith("typer") for arg in Path(sys.argv[0]).parts):
+        _add_epilog_recursively(cli, epilog)
 
     # add no_args_is_help for all subcommands
     _no_args_is_help_recursively(cli)
