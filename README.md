@@ -47,7 +47,7 @@ Python SDK enabling access to aignostics platform.
 
 ## Introduction
 
-TODO (Helmut): Cunctionality and features.
+TODO (Helmut): Functionality and features.
 
 ### Operational Excellence
 
