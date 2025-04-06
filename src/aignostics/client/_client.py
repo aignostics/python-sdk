@@ -1,5 +1,3 @@
-import os
-
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
@@ -8,7 +6,7 @@ from aignostics.client._authentication import get_token
 from aignostics.client.resources.applications import Applications, Versions
 from aignostics.client.resources.runs import Runs
 
-API_ROOT = os.getenv("API_ROOT", "https://platform.aignostics.com")
+from ._authentication import authentication_settings
 
 
 class Client:
@@ -49,7 +47,7 @@ class Client:
         token = get_token(use_cache=cache_token)
         client = ApiClient(
             Configuration(
-                host=API_ROOT,
+                host=authentication_settings().api_root,
             ),
             header_name="Authorization",
             header_value=f"Bearer {token}",

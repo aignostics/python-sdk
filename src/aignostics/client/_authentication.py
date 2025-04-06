@@ -34,6 +34,7 @@ class AuthenticationSettings(BaseSettings):
         env_prefix="AIGNOSTICS_", env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
     )
 
+    api_root: str
     client_id_device: SecretStr
     client_id_interactive: SecretStr
     scope: str
@@ -161,6 +162,7 @@ def _authenticate() -> str:
         RuntimeError: If authentication fails.
         AssertionError: If the returned token doesn't have the expected format.
     """
+    print(authentication_settings().refresh_token)
     if refresh_token := authentication_settings().refresh_token:
         token = _token_from_refresh_token(refresh_token.get_secret_value())
     elif _can_open_browser():
