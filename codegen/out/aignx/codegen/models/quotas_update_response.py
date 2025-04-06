@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -91,5 +90,3 @@ class QuotasUpdateResponse(BaseModel):
             "updated_quotas": [QuotaUpdateResponse.from_dict(_item) for _item in obj["updated_quotas"]] if obj.get("updated_quotas") is not None else None
         })
         return _obj
-
-

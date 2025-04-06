@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -102,5 +101,3 @@ class ItemReadResponse(BaseModel):
             "error": obj.get("error")
         })
         return _obj
-
-

@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -101,5 +100,3 @@ class UserResponse(BaseModel):
             "slide_quota": UserQuota.from_dict(obj["slide_quota"]) if obj.get("slide_quota") is not None else None
         })
         return _obj
-
-

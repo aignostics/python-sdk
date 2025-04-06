@@ -1,3 +1,9 @@
+"""Applications resource module for the Aignostics client.
+
+This module provides classes for interacting with application resources in the Aignostics API.
+It includes functionality for listing applications and managing application versions.
+"""
+
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.models import ApplicationReadResponse, ApplicationVersionReadResponse, VersionReadResponse
 
@@ -8,7 +14,7 @@ class Versions:
     Provides operations to list and retrieve application versions.
     """
 
-    def __init__(self, api: ExternalsApi):
+    def __init__(self, api: ExternalsApi) -> None:
         """Initializes the Versions resource with the API client.
 
         Args:
@@ -33,10 +39,10 @@ class Versions:
             application_id = for_application.application_id
         else:
             application_id = for_application
-        res = self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
+
+        return self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
             application_id=application_id
         )
-        return res
 
     def details(self, for_application_version_id: str) -> VersionReadResponse:
         """Retrieves details for a specific application version.
@@ -61,7 +67,7 @@ class Applications:
     Provides operations to list applications and access version resources.
     """
 
-    def __init__(self, api: ExternalsApi):
+    def __init__(self, api: ExternalsApi) -> None:
         """Initializes the Applications resource with the API client.
 
         Args:
@@ -79,5 +85,4 @@ class Applications:
         Raises:
             Exception: If the API request fails.
         """
-        res = self._api.list_applications_v1_applications_get()
-        return res
+        return self._api.list_applications_v1_applications_get()

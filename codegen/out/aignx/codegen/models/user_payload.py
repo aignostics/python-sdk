@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -115,5 +114,3 @@ class UserPayload(BaseModel):
             "items": [PayloadItem.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None
         })
         return _obj
-
-

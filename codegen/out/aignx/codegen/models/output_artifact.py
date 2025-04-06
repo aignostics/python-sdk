@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -101,5 +100,3 @@ class OutputArtifact(BaseModel):
             "visibility": obj.get("visibility")
         })
         return _obj
-
-

@@ -73,7 +73,8 @@ dependencies = [
     "httpx>=0.28.1",
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
-    "pyjwt>=2.10.1",
+    "pyjwt[crypto]>=2.10.1",
+    "python-dotenv>=1.1.0",        # Can be removed later
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
     "tqdm>=4.67.1",
@@ -191,6 +192,9 @@ ignore = [
     "S404",     # subprocess` module is possibly insecure -> as mentioned by ruff, unstable and preview
     "FIX002",   # line contains todo -> yes, that's what todo's are for?!
     "TD003",    # missing issue link for todo -> not in OSS
+    "PTH123",   # use of open to be replaced with Path.open,
+    "T201",     # Remove `print`
+    "INP001",   # Checks for packages that are missing an __init__.py file.
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -211,7 +215,6 @@ ignore = [
     "ANN002",   # missing type annotation
     "ANN003",   # missing type annotation
     "ANN202",   # missing return type annotation
-    "PTH123",   # use of open to be replaced with Path.open
     "DOC201",   # `return` is not documented in docstring
     "ASYNC230", # async functions should not open files with blocking methods like `open`
     "S104",     # bind to all ports
@@ -250,10 +253,10 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
+testpaths = ["tests", "codegen/out/test"]
+# openapi code generate creates tests with test_*.py
+python_files = ["*_test.py", "test_*.py"]
 addopts = "-v --strict-markers --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
-testpaths = ["tests"]
-python_files = ["*_test.py"]
-pythonpath = [".", "src", "codegen/out"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]

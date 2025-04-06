@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -126,5 +125,3 @@ class ApplicationVersionReadResponse(BaseModel):
             "output_artifacts": [OutputArtifactReadResponse.from_dict(_item) for _item in obj["output_artifacts"]] if obj.get("output_artifacts") is not None else None
         })
         return _obj
-
-

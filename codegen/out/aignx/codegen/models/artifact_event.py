@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -34,5 +33,3 @@ class ArtifactEvent(str, Enum):
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of ArtifactEvent from a JSON string"""
         return cls(json.loads(json_str))
-
-

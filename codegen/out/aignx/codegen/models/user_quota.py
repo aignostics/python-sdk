@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -90,5 +89,3 @@ class UserQuota(BaseModel):
             "used": obj.get("used")
         })
         return _obj
-
-

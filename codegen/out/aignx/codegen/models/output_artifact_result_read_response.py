@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -104,5 +103,3 @@ class OutputArtifactResultReadResponse(BaseModel):
             "download_url": obj.get("download_url")
         })
         return _obj
-
-

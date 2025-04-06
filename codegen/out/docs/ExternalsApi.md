@@ -53,7 +53,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_run_id = 'application_run_id_example' # str | 
+    application_run_id = 'application_run_id_example' # str |
 
     try:
         # Cancel Run
@@ -71,7 +71,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_run_id** | **str**|  | 
+ **application_run_id** | **str**|  |
 
 ### Return type
 
@@ -129,7 +129,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    run_creation_request = aignx.codegen.RunCreationRequest() # RunCreationRequest | 
+    run_creation_request = aignx.codegen.RunCreationRequest() # RunCreationRequest |
 
     try:
         # Create Application Run
@@ -147,7 +147,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **run_creation_request** | [**RunCreationRequest**](RunCreationRequest.md)|  | 
+ **run_creation_request** | [**RunCreationRequest**](RunCreationRequest.md)|  |
 
 ### Return type
 
@@ -205,7 +205,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    user_creation_request = aignx.codegen.UserCreationRequest() # UserCreationRequest | 
+    user_creation_request = aignx.codegen.UserCreationRequest() # UserCreationRequest |
 
     try:
         # Create User
@@ -223,7 +223,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **user_creation_request** | [**UserCreationRequest**](UserCreationRequest.md)|  | 
+ **user_creation_request** | [**UserCreationRequest**](UserCreationRequest.md)|  |
 
 ### Return type
 
@@ -279,7 +279,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_run_id = 'application_run_id_example' # str | 
+    application_run_id = 'application_run_id_example' # str |
 
     try:
         # Delete Run Results
@@ -295,7 +295,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_run_id** | **str**|  | 
+ **application_run_id** | **str**|  |
 
 ### Return type
 
@@ -352,7 +352,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_run_id = 'application_run_id_example' # str | 
+    application_run_id = 'application_run_id_example' # str |
     include = None # List[object] |  (optional)
 
     try:
@@ -371,8 +371,8 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_run_id** | **str**|  | 
- **include** | [**List[object]**](object.md)|  | [optional] 
+ **application_run_id** | **str**|  |
+ **include** | [**List[object]**](object.md)|  | [optional]
 
 ### Return type
 
@@ -429,7 +429,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    user_id = 'user_id_example' # str | 
+    user_id = 'user_id_example' # str |
 
     try:
         # Get User
@@ -447,7 +447,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **user_id** | **str**|  | 
+ **user_id** | **str**|  |
 
 ### Return type
 
@@ -504,7 +504,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_version_id = 'application_version_id_example' # str | 
+    application_version_id = 'application_version_id_example' # str |
     include = None # List[object] |  (optional)
 
     try:
@@ -523,8 +523,8 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_version_id** | **str**|  | 
- **include** | [**List[object]**](object.md)|  | [optional] 
+ **application_version_id** | **str**|  |
+ **include** | [**List[object]**](object.md)|  | [optional]
 
 ### Return type
 
@@ -603,12 +603,12 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_id** | **str**|  | [optional] 
- **application_version_id** | **str**|  | [optional] 
- **include** | [**List[object]**](object.md)|  | [optional] 
+ **application_id** | **str**|  | [optional]
+ **application_version_id** | **str**|  | [optional]
+ **include** | [**List[object]**](object.md)|  | [optional]
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **sort** | [**List[str]**](str.md)|  | [optional] 
+ **sort** | [**List[str]**](str.md)|  | [optional]
 
 ### Return type
 
@@ -687,7 +687,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **sort** | [**List[str]**](str.md)|  | [optional] 
+ **sort** | [**List[str]**](str.md)|  | [optional]
 
 ### Return type
 
@@ -744,7 +744,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_run_id = 'application_run_id_example' # str | 
+    application_run_id = 'application_run_id_example' # str |
     item_id__in = ['item_id__in_example'] # List[Optional[str]] |  (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
@@ -768,13 +768,13 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_run_id** | **str**|  | 
- **item_id__in** | [**List[Optional[str]]**](str.md)|  | [optional] 
+ **application_run_id** | **str**|  |
+ **item_id__in** | [**List[Optional[str]]**](str.md)|  | [optional]
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **reference__in** | [**List[str]**](str.md)|  | [optional] 
- **status__in** | [**List[ItemStatus]**](ItemStatus.md)|  | [optional] 
- **sort** | [**List[str]**](str.md)|  | [optional] 
+ **reference__in** | [**List[str]**](str.md)|  | [optional]
+ **status__in** | [**List[ItemStatus]**](ItemStatus.md)|  | [optional]
+ **sort** | [**List[str]**](str.md)|  | [optional]
 
 ### Return type
 
@@ -831,7 +831,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_id = 'application_id_example' # str | 
+    application_id = 'application_id_example' # str |
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
     version = 'version_example' # str |  (optional)
@@ -854,12 +854,12 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_id** | **str**|  | 
+ **application_id** | **str**|  |
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **version** | **str**|  | [optional] 
- **include** | [**List[object]**](object.md)|  | [optional] 
- **sort** | [**List[str]**](str.md)|  | [optional] 
+ **version** | **str**|  | [optional]
+ **include** | [**List[object]**](object.md)|  | [optional]
+ **sort** | [**List[str]**](str.md)|  | [optional]
 
 ### Return type
 
@@ -915,7 +915,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_slug = 'application_slug_example' # str | 
+    application_slug = 'application_slug_example' # str |
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
     version = 'version_example' # str |  (optional)
@@ -938,12 +938,12 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_slug** | **str**|  | 
+ **application_slug** | **str**|  |
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **version** | **str**|  | [optional] 
- **include** | [**List[object]**](object.md)|  | [optional] 
- **sort** | [**List[str]**](str.md)|  | [optional] 
+ **version** | **str**|  | [optional]
+ **include** | [**List[object]**](object.md)|  | [optional]
+ **sort** | [**List[str]**](str.md)|  | [optional]
 
 ### Return type
 
@@ -999,7 +999,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_id = 'application_id_example' # str | 
+    application_id = 'application_id_example' # str |
 
     try:
         # Read Application By Id
@@ -1017,7 +1017,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_id** | **str**|  | 
+ **application_id** | **str**|  |
 
 ### Return type
 
@@ -1073,7 +1073,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    application_slug = 'application_slug_example' # str | 
+    application_slug = 'application_slug_example' # str |
 
     try:
         # Read Application By Slug
@@ -1091,7 +1091,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **application_slug** | **str**|  | 
+ **application_slug** | **str**|  |
 
 ### Return type
 
@@ -1148,7 +1148,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    version_creation_request = aignx.codegen.VersionCreationRequest() # VersionCreationRequest | 
+    version_creation_request = aignx.codegen.VersionCreationRequest() # VersionCreationRequest |
 
     try:
         # Register Version
@@ -1166,7 +1166,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **version_creation_request** | [**VersionCreationRequest**](VersionCreationRequest.md)|  | 
+ **version_creation_request** | [**VersionCreationRequest**](VersionCreationRequest.md)|  |
 
 ### Return type
 
@@ -1223,8 +1223,8 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.ExternalsApi(api_client)
-    user_id = 'user_id_example' # str | 
-    user_update_request = aignx.codegen.UserUpdateRequest() # UserUpdateRequest | 
+    user_id = 'user_id_example' # str |
+    user_update_request = aignx.codegen.UserUpdateRequest() # UserUpdateRequest |
 
     try:
         # Update User
@@ -1242,8 +1242,8 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **user_id** | **str**|  | 
- **user_update_request** | [**UserUpdateRequest**](UserUpdateRequest.md)|  | 
+ **user_id** | **str**|  |
+ **user_update_request** | [**UserUpdateRequest**](UserUpdateRequest.md)|  |
 
 ### Return type
 
@@ -1267,4 +1267,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

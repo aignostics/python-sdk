@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -95,5 +94,3 @@ class UserUpdateRequest(BaseModel):
             "slide_quota": obj.get("slide_quota")
         })
         return _obj
-
-

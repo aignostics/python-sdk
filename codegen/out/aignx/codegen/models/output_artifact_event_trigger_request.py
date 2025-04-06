@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -93,5 +92,3 @@ class OutputArtifactEventTriggerRequest(BaseModel):
             "error": obj.get("error")
         })
         return _obj
-
-

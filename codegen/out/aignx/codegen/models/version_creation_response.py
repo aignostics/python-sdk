@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -83,5 +82,3 @@ class VersionCreationResponse(BaseModel):
             "application_version_id": obj.get("application_version_id")
         })
         return _obj
-
-

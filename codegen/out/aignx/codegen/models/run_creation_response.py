@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -83,5 +82,3 @@ class RunCreationResponse(BaseModel):
             "application_run_id": obj.get("application_run_id")
         })
         return _obj
-
-

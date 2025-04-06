@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -83,5 +82,3 @@ class ApplicationCreationResponse(BaseModel):
             "application_id": obj.get("application_id")
         })
         return _obj
-
-

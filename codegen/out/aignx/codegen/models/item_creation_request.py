@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -93,5 +92,3 @@ class ItemCreationRequest(BaseModel):
             "input_artifacts": [InputArtifactCreationRequest.from_dict(_item) for _item in obj["input_artifacts"]] if obj.get("input_artifacts") is not None else None
         })
         return _obj
-
-

@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -86,5 +85,3 @@ class QuotaUpdateRequest(BaseModel):
             "quota": obj.get("quota")
         })
         return _obj
-
-

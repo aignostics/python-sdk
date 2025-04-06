@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -88,5 +87,3 @@ class InputArtifactCreationRequest(BaseModel):
             "metadata": obj.get("metadata")
         })
         return _obj
-
-

@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -93,5 +92,3 @@ class OrganizationResponse(BaseModel):
             "batch_size": obj.get("batch_size")
         })
         return _obj
-
-

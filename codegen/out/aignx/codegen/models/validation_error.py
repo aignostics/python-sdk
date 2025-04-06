@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -95,5 +94,3 @@ class ValidationError(BaseModel):
             "type": obj.get("type")
         })
         return _obj
-
-

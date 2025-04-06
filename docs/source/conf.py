@@ -1,4 +1,4 @@
-"""Sphinx configuration."""  # noqa: INP001
+"""Sphinx configuration."""
 
 import re
 from datetime import UTC, datetime

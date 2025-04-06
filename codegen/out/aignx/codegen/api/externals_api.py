@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -1375,9 +1374,9 @@ class ExternalsApi:
             _path_params['application_run_id'] = application_run_id
         # process the query parameters
         if include is not None:
-            
+
             _query_params.append(('include', include))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -1918,9 +1917,9 @@ class ExternalsApi:
             _path_params['application_version_id'] = application_version_id
         # process the query parameters
         if include is not None:
-            
+
             _query_params.append(('include', include))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -2251,29 +2250,29 @@ class ExternalsApi:
         # process the path parameters
         # process the query parameters
         if application_id is not None:
-            
+
             _query_params.append(('application_id', application_id))
-            
+
         if application_version_id is not None:
-            
+
             _query_params.append(('application_version_id', application_version_id))
-            
+
         if include is not None:
-            
+
             _query_params.append(('include', include))
-            
+
         if page is not None:
-            
+
             _query_params.append(('page', page))
-            
+
         if page_size is not None:
-            
+
             _query_params.append(('page_size', page_size))
-            
+
         if sort is not None:
-            
+
             _query_params.append(('sort', sort))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -2561,17 +2560,17 @@ class ExternalsApi:
         # process the path parameters
         # process the query parameters
         if page is not None:
-            
+
             _query_params.append(('page', page))
-            
+
         if page_size is not None:
-            
+
             _query_params.append(('page_size', page_size))
-            
+
         if sort is not None:
-            
+
             _query_params.append(('sort', sort))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -2919,29 +2918,29 @@ class ExternalsApi:
             _path_params['application_run_id'] = application_run_id
         # process the query parameters
         if item_id__in is not None:
-            
+
             _query_params.append(('item_id__in', item_id__in))
-            
+
         if page is not None:
-            
+
             _query_params.append(('page', page))
-            
+
         if page_size is not None:
-            
+
             _query_params.append(('page_size', page_size))
-            
+
         if reference__in is not None:
-            
+
             _query_params.append(('reference__in', reference__in))
-            
+
         if status__in is not None:
-            
+
             _query_params.append(('status__in', status__in))
-            
+
         if sort is not None:
-            
+
             _query_params.append(('sort', sort))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -3271,25 +3270,25 @@ class ExternalsApi:
             _path_params['application_id'] = application_id
         # process the query parameters
         if page is not None:
-            
+
             _query_params.append(('page', page))
-            
+
         if page_size is not None:
-            
+
             _query_params.append(('page_size', page_size))
-            
+
         if version is not None:
-            
+
             _query_params.append(('version', version))
-            
+
         if include is not None:
-            
+
             _query_params.append(('include', include))
-            
+
         if sort is not None:
-            
+
             _query_params.append(('sort', sort))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -3619,25 +3618,25 @@ class ExternalsApi:
             _path_params['application_slug'] = application_slug
         # process the query parameters
         if page is not None:
-            
+
             _query_params.append(('page', page))
-            
+
         if page_size is not None:
-            
+
             _query_params.append(('page_size', page_size))
-            
+
         if version is not None:
-            
+
             _query_params.append(('version', version))
-            
+
         if include is not None:
-            
+
             _query_params.append(('include', include))
-            
+
         if sort is not None:
-            
+
             _query_params.append(('sort', sort))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -4759,5 +4758,3 @@ class ExternalsApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -40,5 +39,3 @@ class QuotaName(str, Enum):
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of QuotaName from a JSON string"""
         return cls(json.loads(json_str))
-
-

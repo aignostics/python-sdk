@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -119,5 +118,3 @@ class VersionReadResponse(BaseModel):
             "created_at": obj.get("created_at")
         })
         return _obj
-
-

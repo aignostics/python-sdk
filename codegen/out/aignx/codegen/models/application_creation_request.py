@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -87,5 +86,3 @@ class ApplicationCreationRequest(BaseModel):
             "regulatory_classes": obj.get("regulatory_classes")
         })
         return _obj
-
-

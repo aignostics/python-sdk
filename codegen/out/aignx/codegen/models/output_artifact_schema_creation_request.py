@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -93,5 +92,3 @@ class OutputArtifactSchemaCreationRequest(BaseModel):
             "metadata_schema": obj.get("metadata_schema")
         })
         return _obj
-
-

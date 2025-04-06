@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  AIGNX_REFRESH_TOKEN: ${{ secrets.AIGNX_REFRESH_TOKEN }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -59,12 +62,15 @@ jobs:
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
 
-      - name: Create .env file
-        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
-        with:
-          envkey_CLIENT_ID_DEVICE: ${{ secrets.CLIENT_ID_DEVICE }}
-          envkey_CLIENT_ID_INTERACTIVE: ${{ secrets.CLIENT_ID_INTERACTIVE }}
-          fail_on_empty: true
+      - name: Set up cloud credentials & environment file
+        env:
+          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
+        run: |
+          echo "$CREDENTIALS" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+          echo "$DEV_ENV_FILE" | base64 -d > dev.env
+          echo "ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
 
       - name: Validate installation
         run: |

@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -92,5 +91,3 @@ class UserCreationRequest(BaseModel):
             "email": obj.get("email")
         })
         return _obj
-
-

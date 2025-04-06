@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -91,5 +90,3 @@ class QuotasReadResponse(BaseModel):
             "quotas": [QuotaReadResponse.from_dict(_item) for _item in obj["quotas"]] if obj.get("quotas") is not None else None
         })
         return _obj
-
-

@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -113,5 +112,3 @@ class PayloadItem(BaseModel):
             else None
         })
         return _obj
-
-

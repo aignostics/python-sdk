@@ -1,7 +1,7 @@
 import os
 import time
 import webbrowser
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
@@ -13,23 +13,20 @@ import requests
 from dotenv import load_dotenv
 from requests_oauthlib import OAuth2Session
 
-# load client ids
-load_dotenv(dotenv_path=Path.home() / ".aignostics/env")
+ENV_FILE = os.getenv("ENV_FILE", Path.home() / ".aignostics/env")
+load_dotenv(dotenv_path=ENV_FILE)
 
 CLIENT_ID_DEVICE = os.getenv("CLIENT_ID_DEVICE")
 CLIENT_ID_INTERACTIVE = os.getenv("CLIENT_ID_INTERACTIVE")
-SCOPE = ["offline_access"]  # include a refresh token as well
-REDIRECT_URI = "http://localhost:8080"  # is configured in Auth0 - do not change
+SCOPE = [scope.strip() for scope in os.getenv("SCOPE").split(",")]
+REDIRECT_URI = os.getenv("REDIRECT_URI")
 
-AUDIENCE = "https://dev-8ouohmmrbuh2h4vu-samia"
-AUTHORIZATION_BASE_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize"
-TOKEN_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"
-DEVICE_URL = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/device/code"
+AUDIENCE = os.getenv("AUDIENCE")
+AUTHORIZATION_BASE_URL = os.getenv("AUTHORIZATION_BASE_URL")
+TOKEN_URL = os.getenv("TOKEN_URL")
+DEVICE_URL = os.getenv("DEVICE_URL")
 
-# AUDIENCE = "https://aignostics-platform-staging-samia"
-# AUTHORIZATION_BASE_URL = "https://aignostics-platform-staging.eu.auth0.com/authorize"
-# TOKEN_URL = "https://aignostics-platform-staging.eu.auth0.com/oauth/token"
-# DEVICE_URL = "https://aignostics-platform-staging.eu.auth0.com/oauth/device/code"
+JWS_JSON_URL = os.getenv("JWS_JSON_URL")
 
 # constants for token caching
 CLIENT_APP_NAME = "python-sdk"
@@ -37,13 +34,14 @@ CACHE_DIR = appdirs.user_cache_dir(CLIENT_APP_NAME, "aignostics")
 TOKEN_FILE = Path(CACHE_DIR) / ".token"
 
 AUTHORIZATION_BACKOFF_SECONDS = 3
+REQUEST_TIMEOUT_SECONDS = 30
 
 
-def get_token(store: bool = True):
+def get_token(use_cache: bool = True) -> str:
     """Retrieves an authentication token, either from cache or via login.
 
     Args:
-        store: Boolean indicating whether to store the token to disk cache.
+        use_cache: Boolean indicating whether to store & use the token from disk cache.
             Defaults to True.
 
     Returns:
@@ -52,41 +50,65 @@ def get_token(store: bool = True):
     Raises:
         RuntimeError: If token retrieval fails.
     """
-    if not store:
-        return _login()
-
-    if TOKEN_FILE.exists():
-        with open(TOKEN_FILE) as f:
-            stored_token = f.read()
+    if use_cache and TOKEN_FILE.exists():
+        stored_token = Path(TOKEN_FILE).read_text(encoding="utf-8")
         # Parse stored string "token:expiry_timestamp"
         parts = stored_token.split(":")
-        if len(parts) == 2:
-            token, expiry_str = parts
-            expiry = datetime.fromtimestamp(int(expiry_str))
+        token, expiry_str = parts
+        expiry = datetime.fromtimestamp(int(expiry_str), tz=UTC)
 
-            # Check if token is still valid (with some buffer time)
-            if datetime.now() + timedelta(minutes=5) < expiry:
-                return token
+        # Check if token is still valid (with some buffer time)
+        if datetime.now(tz=UTC) + timedelta(minutes=5) < expiry:
+            return token
 
-    # If we got here, we need a new token
-    if refresh_token := os.getenv("AIGNX_REFRESH_TOKEN"):
-        new_token = _token_from_refresh_token(refresh_token)
-    else:
-        new_token = _login()
-
-    # we do not need to verify as we just want to obtain the expiry date
-    claims = jwt.decode(new_token.encode("ascii"), options={"verify_signature": False})
-    timestamp = claims["exp"]
+    # If we end up here, we:
+    # 1. Do not want to use the cached token
+    # 2. The cached token is expired
+    # 3. No token was cached yet
+    new_token = _authenticate()
+    claims = verify_and_decode_token(new_token)
 
     # Store new token with expiry
-    TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(TOKEN_FILE, "w") as f:
-        f.write(f"{new_token}:{timestamp}")
+    if use_cache:
+        timestamp = claims["exp"]
+        TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+        Path(TOKEN_FILE).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
 
     return new_token
 
 
-def _login() -> str:
+def verify_and_decode_token(token: str) -> dict[str, str]:
+    """
+    Verifies and decodes the JWT token using the public key from JWS JSON URL.
+
+    Args:
+        token: The JWT token to verify and decode.
+
+    Returns:
+        dict: The decoded token claims.
+
+    Raises:
+        RuntimeError: If token verification or decoding fails.
+    """
+    jwk_client = jwt.PyJWKClient(JWS_JSON_URL)
+    try:
+        # Get the public key from the JWK client
+        key = jwk_client.get_signing_key_from_jwt(token).key
+        # Get the algorithm from the token header
+        binary_token = token.encode("ascii")
+        header_data = jwt.get_unverified_header(binary_token)
+        algorithm = header_data["alg"]
+        # Verify and decode the token using the public key
+        return jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=AUDIENCE)
+    except jwt.exceptions.PyJWKClientError as e:
+        msg = "Authentication failed"
+        raise RuntimeError(msg) from e
+    except jwt.exceptions.DecodeError as e:
+        msg = "Authentication failed"
+        raise RuntimeError(msg) from e
+
+
+def _authenticate() -> str:
     """Allows the user to login and obtain an access token.
 
     Determines the appropriate authentication flow based on whether
@@ -99,12 +121,12 @@ def _login() -> str:
         RuntimeError: If authentication fails.
         AssertionError: If the returned token doesn't have the expected format.
     """
-    flow_type = "browser" if _can_open_browser() else "device"
-    if flow_type == "browser":
+    if refresh_token := os.getenv("AIGNX_REFRESH_TOKEN"):
+        token = _token_from_refresh_token(refresh_token)
+    elif _can_open_browser():
         token = _perform_authorization_code_with_pkce_flow()
     else:
         token = _perform_device_flow()
-    assert token.count(".") == 2
     return token
 
 
@@ -130,7 +152,7 @@ class _OAuthHttpServer(HTTPServer):
     Extends HTTPServer to store the authorization code received during OAuth flow.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initializes the server with storage for the authorization code.
 
         Args:
@@ -147,7 +169,7 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
     Processes the OAuth callback redirect and extracts the authorization code.
     """
 
-    def do_GET(self):
+    def do_GET(self) -> None:  # noqa: N802
         """Handles GET requests containing OAuth response parameters.
 
         Extracts authorization code or error from the URL and updates the server state.
@@ -180,16 +202,16 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
         """
         self.wfile.write(response + status)
 
-    def log_message(self, format, *args):
+    def log_message(self, _format: str, *args) -> None:
         """Suppresses log messages from the HTTP server.
 
         Args:
-            format: The log message format string.
+            _format: The log message format string.
             *args: The arguments to be applied to the format string.
         """
 
 
-def _perform_authorization_code_with_pkce_flow():
+def _perform_authorization_code_with_pkce_flow() -> str:
     """Performs the OAuth 2.0 Authorization Code flow with PKCE.
 
     Opens a browser for user authentication and uses a local redirect
@@ -205,7 +227,7 @@ def _perform_authorization_code_with_pkce_flow():
     with _OAuthHttpServer((parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler) as httpd:
         # initialize flow (generate code_challenge and code_verifier)
         session = OAuth2Session(CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256")
-        authorization_url, state = session.authorization_url(
+        authorization_url, _ = session.authorization_url(
             AUTHORIZATION_BASE_URL, access_type="offline", audience=AUDIENCE
         )
 
@@ -222,7 +244,7 @@ def _perform_authorization_code_with_pkce_flow():
         return token_response["access_token"]
 
 
-def _perform_device_flow():
+def _perform_device_flow() -> str | None:
     """Performs the OAuth 2.0 Device Authorization flow.
 
     Used when a browser cannot be opened. Provides a URL for the user to visit
@@ -234,7 +256,11 @@ def _perform_device_flow():
     Raises:
         RuntimeError: If authentication fails or is denied.
     """
-    resp = requests.post(DEVICE_URL, data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE})
+    resp = requests.post(
+        DEVICE_URL,
+        data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE},
+        timeout=REQUEST_TIMEOUT_SECONDS,
+    )
     device_code = resp.json()["device_code"]
     print(f"Please visit: {resp.json()['verification_uri_complete']}")
 
@@ -248,17 +274,18 @@ def _perform_device_flow():
                 "device_code": device_code,
                 "client_id": CLIENT_ID_DEVICE,
             },
+            timeout=REQUEST_TIMEOUT_SECONDS,
         ).json()
 
         if "error" in resp:
-            if resp["error"] in ("authorization_pending", "slow_down"):
+            if resp["error"] in {"authorization_pending", "slow_down"}:
                 time.sleep(3)
                 continue
             raise RuntimeError(resp["error"])
         return resp["access_token"]
 
 
-def _token_from_refresh_token(refresh_token: str):
+def _token_from_refresh_token(refresh_token: str) -> str | None:
     """Obtains a new access token using a refresh token.
 
     Args:
@@ -279,9 +306,10 @@ def _token_from_refresh_token(refresh_token: str):
                 "client_id": CLIENT_ID_INTERACTIVE,
                 "refresh_token": refresh_token,
             },
+            timeout=REQUEST_TIMEOUT_SECONDS,
         ).json()
         if "error" in resp:
-            if resp["error"] in ("authorization_pending", "slow_down"):
+            if resp["error"] in {"authorization_pending", "slow_down"}:
                 time.sleep(AUTHORIZATION_BACKOFF_SECONDS)
                 continue
             raise RuntimeError(resp["error"])
@@ -289,4 +317,4 @@ def _token_from_refresh_token(refresh_token: str):
 
 
 if __name__ == "__main__":
-    print(get_token())
+    print(get_token(use_cache=False))

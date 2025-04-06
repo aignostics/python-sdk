@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -91,5 +90,3 @@ class ApplicationReadResponse(BaseModel):
             "description": obj.get("description")
         })
         return _obj
-
-

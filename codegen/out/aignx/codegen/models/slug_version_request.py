@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -93,5 +92,3 @@ class SlugVersionRequest(BaseModel):
             "version": obj.get("version")
         })
         return _obj
-
-

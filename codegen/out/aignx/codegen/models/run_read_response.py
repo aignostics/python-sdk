@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
     Aignostics Platform API
@@ -106,5 +105,3 @@ class RunReadResponse(BaseModel):
             "triggered_by": obj.get("triggered_by")
         })
         return _obj
-
-
