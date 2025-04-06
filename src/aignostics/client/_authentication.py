@@ -165,11 +165,6 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
         parsed = parse.urlparse(self.path)
         qs = parse.parse_qs(parsed.query)
 
-        response = b"""
-        <script type="application/javascript">setTimeout(function() { window.close(); }, 1000);</script>
-        {status}
-        """
-
         # see if auth was successful
         # TODO(Andreas): The base server does not have .error or .error_description. Was this tested?
         if "error" in qs:

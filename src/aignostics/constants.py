@@ -7,23 +7,24 @@ __project_name__ = __name__.split(".")[0]
 __project_path__ = str(pathlib.Path(__file__).parent.parent.parent)
 __version__ = importlib.metadata.version(__project_name__)
 
+TODO_URL = "https://todo"
 API_ROOT_PRODUCTION = "https://platform.aignostics.com"
 # TODO (Andreas): hhva: please fill in
-AUDIENCE_PRODUCTION = "https://todo"
-AUTHORIZATION_BASE_URL_PRODUCTION = "https://todo"
-TOKEN_URL_PRODUCTION = "https://todo"  # noqa: S105
-REDIRECT_URI_PRODUCTION = "https://todo"
-DEVICE_URL_PRODUCTION = "https://todo"
-JWS_JSON_URL_PRODUCTION = "https://todo"
+AUDIENCE_PRODUCTION = TODO_URL
+AUTHORIZATION_BASE_URL_PRODUCTION = TODO_URL
+TOKEN_URL_PRODUCTION = TODO_URL
+REDIRECT_URI_PRODUCTION = TODO_URL
+DEVICE_URL_PRODUCTION = TODO_URL
+JWS_JSON_URL_PRODUCTION = TODO_URL
 
 API_ROOT_STAGING = "https://platform-staging.aignostics.com"
 # TODO (Andreas): hhva: please fill in
-AUDIENCE_STAGING = "https://todo"
-AUTHORIZATION_BASE_URL_STAGING = "https://todo"
-TOKEN_URL_STAGING = "https://todo"  # noqa: S105
-REDIRECT_URI_STAGING = "https://todo"
-DEVICE_URL_STAGING = "https://todo"
-JWS_JSON_URL_STAGING = "https://todo"
+AUDIENCE_STAGING = TODO_URL
+AUTHORIZATION_BASE_URL_STAGING = TODO_URL
+TOKEN_URL_STAGING = TODO_URL
+REDIRECT_URI_STAGING = TODO_URL
+DEVICE_URL_STAGING = TODO_URL
+JWS_JSON_URL_STAGING = TODO_URL
 
 API_ROOT_DEV = "https://platform-dev.aignostics.com"
 AUDIENCE_DEV = "https://dev-8ouohmmrbuh2h4vu-samia"

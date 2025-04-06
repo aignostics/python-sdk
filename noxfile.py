@@ -178,48 +178,62 @@ def _generate_attributions(session: nox.Session, licenses_json_path: Path) -> No
     attributions += "This project includes code from the following third-party open source projects:\n\n"
 
     for pkg in licenses_data:
-        name = pkg.get("Name", "Unknown")
-        version = pkg.get("Version", "Unknown")
-        license_name = pkg.get("License", "Unknown")
-        authors = pkg.get("Author", "Unknown")
-        maintainers = pkg.get("Maintainer", "")
-        url = pkg.get("URL", "")
-        description = pkg.get("Description", "")
-
-        attributions += f"## {name} ({version}) - {license_name}\n\n"
-
-        if description:
-            attributions += f"{description}\n\n"
-
-        if url:
-            attributions += f"* URL: {url}\n"
-
-        if authors and authors != "UNKNOWN":
-            attributions += f"* Author(s): {authors}\n"
-
-        if maintainers and maintainers != "UNKNOWN":
-            attributions += f"* Maintainer(s): {maintainers}\n"
-
-        attributions += "\n"
-
-        license_text = pkg.get("LicenseText", "")
-        if license_text and license_text != "UNKNOWN":
-            attributions += "### License Text\n\n"
-            # Sanitize backtick sequences to not escape the code block
-            sanitized_license_text = license_text.replace("```", "~~~")
-            attributions += f"```\n{sanitized_license_text}\n```\n\n"
-
-        notice_text = pkg.get("NoticeText", "")
-        if notice_text and notice_text != "UNKNOWN":
-            attributions += "### Notice\n\n"
-            # Sanitize backtick sequences to not escape the code block
-            sanitized_notice_text = notice_text.replace("```", "~~~")
-            attributions += f"```\n{sanitized_notice_text}\n```\n\n"
+        attributions += _format_package_attribution(pkg)
 
     attributions = attributions.rstrip() + "\n"
     Path("ATTRIBUTIONS.md").write_text(attributions, encoding="utf-8")
 
     session.log("Generated ATTRIBUTIONS.md file")
+
+
+def _format_package_attribution(pkg: dict) -> str:
+    """Format attribution for a single package.
+
+    Args:
+        pkg: Package information dictionary
+
+    Returns:
+        str: Formatted attribution text for the package
+    """
+    name = pkg.get("Name", "Unknown")
+    version = pkg.get("Version", "Unknown")
+    license_name = pkg.get("License", "Unknown")
+    authors = pkg.get("Author", "Unknown")
+    maintainers = pkg.get("Maintainer", "")
+    url = pkg.get("URL", "")
+    description = pkg.get("Description", "")
+
+    attribution = f"## {name} ({version}) - {license_name}\n\n"
+
+    if description:
+        attribution += f"{description}\n\n"
+
+    if url:
+        attribution += f"* URL: {url}\n"
+
+    if authors and authors != "UNKNOWN":
+        attribution += f"* Author(s): {authors}\n"
+
+    if maintainers and maintainers != "UNKNOWN":
+        attribution += f"* Maintainer(s): {maintainers}\n"
+
+    attribution += "\n"
+
+    license_text = pkg.get("LicenseText", "")
+    if license_text and license_text != "UNKNOWN":
+        attribution += "### License Text\n\n"
+        # Sanitize backtick sequences to not escape the code block
+        sanitized_license_text = license_text.replace("```", "~~~")
+        attribution += f"```\n{sanitized_license_text}\n```\n\n"
+
+    notice_text = pkg.get("NoticeText", "")
+    if notice_text and notice_text != "UNKNOWN":
+        attribution += "### Notice\n\n"
+        # Sanitize backtick sequences to not escape the code block
+        sanitized_notice_text = notice_text.replace("```", "~~~")
+        attribution += f"```\n{sanitized_notice_text}\n```\n\n"
+
+    return attribution
 
 
 def _generate_readme(session: nox.Session) -> None:

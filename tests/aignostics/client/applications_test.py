@@ -13,6 +13,8 @@ from aignx.codegen.models.application_read_response import ApplicationReadRespon
 
 from aignostics.client.resources.applications import Applications, Versions
 
+API_ERROR = "API error"
+
 
 @pytest.fixture
 def mock_api() -> Mock:
@@ -87,10 +89,10 @@ def test_applications_list_passes_through_api_exception(applications, mock_api) 
         mock_api: Mock ExternalsApi instance.
     """
     # Arrange
-    mock_api.list_applications_v1_applications_get.side_effect = Exception("API error")
+    mock_api.list_applications_v1_applications_get.side_effect = Exception(API_ERROR)
 
     # Act & Assert
-    with pytest.raises(Exception, match="API error"):
+    with pytest.raises(Exception, match=API_ERROR):
         applications.list()
     mock_api.list_applications_v1_applications_get.assert_called_once()
 
@@ -168,9 +170,9 @@ def test_versions_list_passes_through_api_exception(mock_api) -> None:
     mock_app = Mock(spec=ApplicationReadResponse)
     mock_app.application_id = "test-app-id"
     mock_api.list_versions_by_application_id_v1_applications_application_id_versions_get.side_effect = Exception(
-        "API error"
+        API_ERROR
     )
 
     # Act & Assert
-    with pytest.raises(Exception, match="API error"):
+    with pytest.raises(Exception, match=API_ERROR):
         versions.list(for_application=mock_app)
