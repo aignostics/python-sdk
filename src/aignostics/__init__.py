@@ -8,13 +8,15 @@ from .constants import (
 from .exceptions import OpenAPISchemaError
 from .models import Health, HealthStatus
 from .platform import Platform
-from .types import APIVersion, InfoOutputFormat, OpenAPIOutputFormat
+from .types import APIVersion, InfoOutputFormat, JsonType, JsonValue, OpenAPIOutputFormat
 
 __all__ = [
     "APIVersion",
     "Health",
     "HealthStatus",
     "InfoOutputFormat",
+    "JsonType",
+    "JsonValue",
     "OpenAPIOutputFormat",
     "OpenAPISchemaError",
     "Platform",

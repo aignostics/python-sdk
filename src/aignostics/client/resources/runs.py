@@ -5,6 +5,7 @@ It includes functionality for starting runs, monitoring status, and downloading 
 """
 
 import json
+import typing as t
 from pathlib import Path
 from time import sleep
 
@@ -99,7 +100,10 @@ class ApplicationRun:
             Exception: If the API request fails.
         """
         # TODO(andreas): paging, sorting
-        return self._api.list_run_results_v1_runs_application_run_id_results_get(self.application_run_id)
+        return t.cast(
+            "list[ItemResultReadResponse]",
+            self._api.list_run_results_v1_runs_application_run_id_results_get(self.application_run_id),
+        )
 
     def download_to_folder(self, download_base: Path | str) -> None:
         """Downloads all result artifacts to a folder.

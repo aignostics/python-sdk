@@ -5,12 +5,14 @@ import os
 import platform
 import sys
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
 from . import OpenAPISchemaError
 from .constants import __project_name__, __project_path__, __version__
 from .settings import Settings
+from .types import JsonType
 
 load_dotenv()
 
@@ -34,7 +36,7 @@ class Platform:
         """
         return self.is_healthy
 
-    def info(self, env: bool = True, filter_secrets: bool = True) -> dict:
+    def info(self, env: bool = True, filter_secrets: bool = True) -> dict[str, Any]:
         """
         For diagnostics compile info about user and platform environment.
 
@@ -97,7 +99,7 @@ class Platform:
 
         if env:
             if filter_secrets:
-                info_dict["local"]["execution"]["env"] = {
+                info_dict["local"]["execution"]["env"] = {  # type: ignore[index]
                     k: v
                     for k, v in os.environ.items()
                     if not (
@@ -109,7 +111,7 @@ class Platform:
                     )
                 }
             else:
-                info_dict["local"]["execution"]["env"] = dict(os.environ)
+                info_dict["local"]["execution"]["env"] = dict(os.environ)  # type: ignore[index]
 
         return info_dict
 
@@ -118,12 +120,12 @@ class Platform:
         # TODO (Helmut, Andreas): Build
 
     @staticmethod
-    def openapi_schema() -> dict:
+    def openapi_schema() -> JsonType:
         """
         Get OpenAPI schema of the webservice API provided by the platform.
 
         Returns:
-            dict: OpenAPI schema.
+            dict[str, object]: OpenAPI schema.
 
         Raises:
             OpenAPISchemaError: If the OpenAPI schema file cannot be found or is not valid JSON.
@@ -131,6 +133,6 @@ class Platform:
         schema_path = Path(__file__).parent.parent.parent / "codegen" / "in" / "api.json"
         try:
             with schema_path.open(encoding="utf-8") as f:
-                return json.load(f)
+                return json.load(f)  # type: ignore[no-any-return]
         except (FileNotFoundError, json.JSONDecodeError) as e:
             raise OpenAPISchemaError(e) from e

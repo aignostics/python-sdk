@@ -1,6 +1,10 @@
 """Types of Aignostics Python SDK."""
 
+import typing as t
 from enum import StrEnum
+
+JsonType: t.TypeAlias = list["JsonValue"] | t.Mapping[str, "JsonValue"]
+JsonValue: t.TypeAlias = str | int | float | JsonType | None
 
 
 class APIVersion(StrEnum):

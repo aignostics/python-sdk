@@ -40,7 +40,7 @@ run_app.add_typer(result_app, name="result", help="Results of applications runs"
 @platform_app.command("install")
 def install() -> None:
     """Complete and validate installation of the CLI."""
-    _console.print(_platform.install())
+    _platform.install()
 
 
 @platform_app.command("health")

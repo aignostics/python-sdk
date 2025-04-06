@@ -6,4 +6,8 @@ The primary class in this module is the `Client` class, which serves as the entr
 for all interactions with the Aignostics platform.
 """
 
-from aignostics.client._client import Client  # noqa: F401
+from aignostics.client._client import Client
+
+__all__ = [
+    "Client",
+]

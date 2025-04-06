@@ -13,6 +13,7 @@ import contextlib
 import datetime
 import re
 import tempfile
+import typing as t
 from collections.abc import Generator
 from pathlib import Path
 from typing import IO, Any
@@ -63,7 +64,7 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
         ValueError: If the downloaded file's checksum doesn't match the expected value.
         requests.HTTPError: If the download request fails.
     """
-    checksum = google_crc32c.Checksum()
+    checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
     with requests.get(signed_url, stream=True, timeout=60) as stream:
         stream.raise_for_status()
         with open(file_path, mode="wb") as file:
@@ -72,10 +73,10 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
             for chunk in stream.iter_content(chunk_size=EIGHT_MB):
                 if chunk:
                     file.write(chunk)
-                    checksum.update(chunk)
+                    checksum.update(chunk)  # type: ignore[no-untyped-call]
                     progress_bar.update(len(chunk))
             progress_bar.close()
-    downloaded_file = base64.b64encode(checksum.digest()).decode("ascii")
+    downloaded_file = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
     if downloaded_file != verify_checksum:
         msg = f"Checksum mismatch: {downloaded_file} != {verify_checksum}"
         raise ValueError(msg)
@@ -108,7 +109,7 @@ def _generate_signed_url(fully_qualified_gs_path: str) -> str:
         msg = f"Blob does not exist: {fully_qualified_gs_path}"
         raise ValueError(msg)
 
-    return blob.generate_signed_url(expiration=datetime.timedelta(hours=1), method="GET", version="v4")
+    return t.cast("str", blob.generate_signed_url(expiration=datetime.timedelta(hours=1), method="GET", version="v4"))
 
 
 def calculate_file_crc32c(file: Path) -> str:
@@ -120,11 +121,11 @@ def calculate_file_crc32c(file: Path) -> str:
     Returns:
         str: The CRC32C checksum in base64 encoding.
     """
-    checksum = google_crc32c.Checksum()
+    checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
     with open(file, mode="rb") as f:
-        for _ in checksum.consume(f, EIGHT_MB):
+        for _ in checksum.consume(f, EIGHT_MB):  # type: ignore[no-untyped-call]
             pass
-    return base64.b64encode(checksum.digest()).decode("ascii")
+    return base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
 
 
 @contextlib.contextmanager

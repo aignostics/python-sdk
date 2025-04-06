@@ -150,6 +150,7 @@ dev = [
     "swagger-plugin-for-sphinx>=5.1.0",
     "tomli>=2.1.0",
     "types-pyyaml>=6.0.12.20250402",
+    "types-requests>=2.32.0.20250328",
     "watchdog>=6.0.0",
 ]
 

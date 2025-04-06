@@ -4,6 +4,8 @@ This module provides classes for interacting with application resources in the A
 It includes functionality for listing applications and managing application versions.
 """
 
+import typing as t
+
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.models import ApplicationReadResponse, ApplicationVersionReadResponse, VersionReadResponse
 
@@ -40,8 +42,11 @@ class Versions:
         else:
             application_id = for_application
 
-        return self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
-            application_id=application_id
+        return t.cast(
+            "list[ApplicationVersionReadResponse]",
+            self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
+                application_id=application_id
+            ),
         )
 
     def details(self, for_application_version_id: str) -> VersionReadResponse:
@@ -85,4 +90,4 @@ class Applications:
         Raises:
             Exception: If the API request fails.
         """
-        return self._api.list_applications_v1_applications_get()
+        return t.cast("list[ApplicationReadResponse]", self._api.list_applications_v1_applications_get())
