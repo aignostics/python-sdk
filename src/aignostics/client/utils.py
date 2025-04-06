@@ -99,8 +99,8 @@ def _generate_signed_url(fully_qualified_gs_path: str) -> str:
     if not m:
         msg = "Invalid google storage URI"
         raise ValueError(msg)
-    bucket_name = m.group(1)
-    path = m.group(2)
+    bucket_name = m.group("bucket_name")
+    path = m.group("path")
 
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
