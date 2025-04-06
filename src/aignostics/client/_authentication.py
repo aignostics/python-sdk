@@ -1,5 +1,5 @@
-import os
 import time
+import typing as t
 import webbrowser
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -10,31 +10,65 @@ from urllib.parse import urlparse
 import appdirs
 import jwt
 import requests
-from dotenv import load_dotenv
+from pydantic import computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from requests_oauthlib import OAuth2Session
 
-ENV_FILE = os.getenv("ENV_FILE", Path.home() / ".aignostics/env")
-load_dotenv(dotenv_path=ENV_FILE)
+from .messages import AUTHENTICATION_FAILED
 
-CLIENT_ID_DEVICE = os.getenv("CLIENT_ID_DEVICE")
-CLIENT_ID_INTERACTIVE = os.getenv("CLIENT_ID_INTERACTIVE")
-SCOPE = [scope.strip() for scope in os.getenv("SCOPE", "TODO(Andreas),TODO(Andreas)").split(",")]
-REDIRECT_URI = os.getenv("REDIRECT_URI")
-
-AUDIENCE = os.getenv("AUDIENCE")
-AUTHORIZATION_BASE_URL = os.getenv("AUTHORIZATION_BASE_URL")
-TOKEN_URL = os.getenv("TOKEN_URL")
-DEVICE_URL = os.getenv("DEVICE_URL")
-
-JWS_JSON_URL = os.getenv("JWS_JSON_URL")
-
-# constants for token caching
+# Constants
 CLIENT_APP_NAME = "python-sdk"
+
 CACHE_DIR = appdirs.user_cache_dir(CLIENT_APP_NAME, "aignostics")
 TOKEN_FILE = Path(CACHE_DIR) / ".token"
+ENV_FILE = Path.home() / ".aignostics/env"
 
 AUTHORIZATION_BACKOFF_SECONDS = 3
 REQUEST_TIMEOUT_SECONDS = 30
+
+
+# Settings
+class AuthenticationSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="", env_file=ENV_FILE, env_file_encoding="utf-8")
+
+    client_id_device: str
+    client_id_interactive: str
+    scope: str
+    redirect_uri: str
+    audience: str
+    authorization_base_url: str
+    token_url: str
+    device_url: str
+    jws_json_url: str
+    aignx_refresh_token: str | None = None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def scope_elements(self) -> list[str]:
+        return [element.strip() for element in self.scope.split(",")]
+
+
+__cached_authentication_settings: AuthenticationSettings | None = None
+
+
+def authentication_settings() -> AuthenticationSettings:
+    """Lazy load authentication settings from the environment or a file.
+
+    * Given we use Pydantic Settings, validation is done automatically.
+    * We only load and validate if we actually need the settings,
+        thereby not killing the client on other actions.
+    * If the settings have already been loaded, return the cached instance.
+
+    Returns:
+        AuthenticationSettings: The loaded authentication settings.
+    """
+    global __cached_authentication_settings  # noqa: PLW0603
+    if __cached_authentication_settings is None:
+        __cached_authentication_settings = AuthenticationSettings()  # pyright: ignore[reportCallIssue]
+    return __cached_authentication_settings
+
+
+print(authentication_settings().model_dump())
 
 
 def get_token(use_cache: bool = True) -> str:
@@ -90,7 +124,7 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
-    jwk_client = jwt.PyJWKClient(JWS_JSON_URL)
+    jwk_client = jwt.PyJWKClient(authentication_settings().jws_json_url)
     try:
         # Get the public key from the JWK client
         key = jwk_client.get_signing_key_from_jwt(token).key
@@ -99,12 +133,16 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         header_data = jwt.get_unverified_header(binary_token)
         algorithm = header_data["alg"]
         # Verify and decode the token using the public key
-        return jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=AUDIENCE)
+        return t.cast(
+            # TODO(Andreas): hhva: Are we missing error handilng in case jwt.decode fails given invalid token?
+            "dict[str, str]",
+            jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=authentication_settings().audience),
+        )
     except jwt.exceptions.PyJWKClientError as e:
-        msg = "Authentication failed"
+        msg = AUTHENTICATION_FAILED
         raise RuntimeError(msg) from e
     except jwt.exceptions.DecodeError as e:
-        msg = "Authentication failed"
+        msg = AUTHENTICATION_FAILED
         raise RuntimeError(msg) from e
 
 
@@ -121,12 +159,14 @@ def _authenticate() -> str:
         RuntimeError: If authentication fails.
         AssertionError: If the returned token doesn't have the expected format.
     """
-    if refresh_token := os.getenv("AIGNX_REFRESH_TOKEN"):
+    if refresh_token := authentication_settings().aignx_refresh_token:
         token = _token_from_refresh_token(refresh_token)
     elif _can_open_browser():
         token = _perform_authorization_code_with_pkce_flow()
     else:
         token = _perform_device_flow()
+    if not token:
+        raise RuntimeError(AUTHENTICATION_FAILED)
     return token
 
 
@@ -152,7 +192,8 @@ class _OAuthHttpServer(HTTPServer):
     Extends HTTPServer to store the authorization code received during OAuth flow.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    # TODO(Andreas): hhva: HTTPServer.init expects particular args, guess you want to have them there
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
         """Initializes the server with storage for the authorization code.
 
         Args:
@@ -181,19 +222,20 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
         parsed = parse.urlparse(self.path)
         qs = parse.parse_qs(parsed.query)
 
-        response = """
+        response = b"""
         <script type="application/javascript">setTimeout(function() { window.close(); }, 1000);</script>
         {status}
         """
 
         # see if auth was successful
+        # TODO(Andreas): The base server does not have .error or .error_description. Was this tested?
         if "error" in qs:
-            self.server.error = qs["error"][0]
-            self.server.error_description = qs["error_description"][0]
+            self.server.error = qs["error"][0]  # type: ignore[attr-defined]
+            self.server.error_description = qs["error_description"][0]  # type: ignore[attr-defined]
             status = b"Authentication error"
         else:
-            self.server.error = None
-            self.server.authorization_code = qs["code"][0]
+            self.server.error = None  # type: ignore[attr-defined]
+            self.server.authorization_code = qs["code"][0]  # type: ignore[attr-defined]
             status = b"Authentication successful"
 
         # display status in browser and close tab after 2 seconds
@@ -202,7 +244,8 @@ class _OAuthHttpHandler(BaseHTTPRequestHandler):
         """
         self.wfile.write(response + status)
 
-    def log_message(self, _format: str, *args) -> None:
+    # TODO(Andreas): Implement and fix typing
+    def log_message(self, _format: str, *args) -> None:  # type: ignore[no-untyped-def]
         """Suppresses log messages from the HTTP server.
 
         Args:
@@ -223,12 +266,19 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     Raises:
         RuntimeError: If authentication fails.
     """
-    parsed_redirect = urlparse(REDIRECT_URI)
+    parsed_redirect = urlparse(authentication_settings().redirect_uri)
     with _OAuthHttpServer((parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler) as httpd:
         # initialize flow (generate code_challenge and code_verifier)
-        session = OAuth2Session(CLIENT_ID_INTERACTIVE, scope=SCOPE, redirect_uri=REDIRECT_URI, pkce="S256")
+        session = OAuth2Session(
+            authentication_settings().client_id_interactive,
+            scope=authentication_settings().scope_elements,
+            redirect_uri=authentication_settings().redirect_uri,
+            pkce="S256",
+        )
         authorization_url, _ = session.authorization_url(
-            AUTHORIZATION_BASE_URL, access_type="offline", audience=AUDIENCE
+            authentication_settings().authorization_base_url,
+            access_type="offline",
+            audience=authentication_settings().audience,
         )
 
         # Call Auth0 with challenge and redirect to localhost with code after successful authN
@@ -240,8 +290,11 @@ def _perform_authorization_code_with_pkce_flow() -> str:
         auth_code = httpd.authorization_code
 
         # exchange authorization_code against access token at Auth0 (prove identity with code_verifier)
-        token_response = session.fetch_token(TOKEN_URL, code=auth_code, include_client_id=True)
-        return token_response["access_token"]
+        token_response = session.fetch_token(
+            authentication_settings().token_url, code=auth_code, include_client_id=True
+        )
+        # TODO(Andreas): hhva: Validate response
+        return t.cast("str", token_response["access_token"])
 
 
 def _perform_device_flow() -> str | None:
@@ -256,23 +309,29 @@ def _perform_device_flow() -> str | None:
     Raises:
         RuntimeError: If authentication fails or is denied.
     """
-    resp = requests.post(
-        DEVICE_URL,
-        data={"client_id": CLIENT_ID_DEVICE, "scope": SCOPE, "audience": AUDIENCE},
+    # TODO(Andreas): hhva: Validate response. How about using Pydantic here?
+    resp: dict[str, str] = requests.post(
+        authentication_settings().device_url,
+        data={
+            "client_id": authentication_settings().client_id_device,
+            "scope": authentication_settings().scope_elements,
+            "audience": authentication_settings().audience,
+        },
         timeout=REQUEST_TIMEOUT_SECONDS,
-    )
-    device_code = resp.json()["device_code"]
-    print(f"Please visit: {resp.json()['verification_uri_complete']}")
+    ).json()
+    device_code = resp["device_code"]
+    print(f"Please visit: {resp['verification_uri_complete']}")
 
     # Polling for access token with received device code
     while True:
+        # TODO(Andreas): hhva: Validate response. How about using Pydantic here?
         resp = requests.post(
-            TOKEN_URL,
+            authentication_settings().token_url,
             headers={"Accept": "application/json"},
             data={
                 "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
                 "device_code": device_code,
-                "client_id": CLIENT_ID_DEVICE,
+                "client_id": authentication_settings().client_id_device,
             },
             timeout=REQUEST_TIMEOUT_SECONDS,
         ).json()
@@ -299,11 +358,11 @@ def _token_from_refresh_token(refresh_token: str) -> str | None:
     """
     while True:
         resp = requests.post(
-            TOKEN_URL,
+            authentication_settings().token_url,
             headers={"Accept": "application/json"},
             data={
                 "grant_type": "refresh_token",
-                "client_id": CLIENT_ID_INTERACTIVE,
+                "client_id": authentication_settings().client_id_interactive,
                 "refresh_token": refresh_token,
             },
             timeout=REQUEST_TIMEOUT_SECONDS,
@@ -313,7 +372,7 @@ def _token_from_refresh_token(refresh_token: str) -> str | None:
                 time.sleep(AUTHORIZATION_BACKOFF_SECONDS)
                 continue
             raise RuntimeError(resp["error"])
-        return resp["access_token"]
+        return t.cast("str", resp["access_token"])
 
 
 if __name__ == "__main__":

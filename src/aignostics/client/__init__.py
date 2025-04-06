@@ -7,7 +7,9 @@ for all interactions with the Aignostics platform.
 """
 
 from aignostics.client._client import Client
+from aignostics.client.messages import AUTHENTICATION_FAILED
 
 __all__ = [
+    "AUTHENTICATION_FAILED",
     "Client",
 ]
