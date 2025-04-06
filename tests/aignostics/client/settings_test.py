@@ -37,7 +37,7 @@ from aignostics.client._settings import AuthenticationSettings, authentication_s
 
 
 @pytest.fixture
-def mock_env_vars():
+def mock_env_vars():  # noqa: ANN201
     """Mock environment variables required for settings."""
     with mock.patch.dict(
         os.environ,
@@ -50,7 +50,7 @@ def mock_env_vars():
 
 
 @pytest.fixture
-def reset_cached_settings():
+def reset_cached_settings():  # noqa: ANN201
     """Reset the cached authentication settings."""
     from aignostics.client._settings import __cached_authentication_settings
 
@@ -68,7 +68,7 @@ def reset_cached_settings():
     _settings.__cached_authentication_settings = original
 
 
-def test_authentication_settings_production(mock_env_vars, reset_cached_settings):
+def test_authentication_settings_production(mock_env_vars, reset_cached_settings) -> None:
     """Test authentication settings with production API root."""
     # Create settings with production API root
     settings = AuthenticationSettings(
@@ -95,7 +95,7 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.authorization_backoff_seconds == 3
 
 
-def test_authentication_settings_staging(mock_env_vars):
+def test_authentication_settings_staging(mock_env_vars) -> None:
     """Test authentication settings with staging API root."""
     settings = AuthenticationSettings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -112,7 +112,7 @@ def test_authentication_settings_staging(mock_env_vars):
     assert settings.jws_json_url == JWS_JSON_URL_STAGING
 
 
-def test_authentication_settings_dev(mock_env_vars):
+def test_authentication_settings_dev(mock_env_vars) -> None:
     """Test authentication settings with dev API root."""
     settings = AuthenticationSettings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -129,7 +129,7 @@ def test_authentication_settings_dev(mock_env_vars):
     assert settings.jws_json_url == JWS_JSON_URL_DEV
 
 
-def test_authentication_settings_unknown_api_root(mock_env_vars):
+def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
     """Test authentication settings with unknown API root raises ValueError."""
     with pytest.raises(ValueError, match=UNKNOWN_ENDPOINT_URL):
         AuthenticationSettings(
@@ -139,7 +139,7 @@ def test_authentication_settings_unknown_api_root(mock_env_vars):
         )
 
 
-def test_scope_elements_empty():
+def test_scope_elements_empty() -> None:
     """Test scope_elements property with empty scope."""
     settings = AuthenticationSettings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -150,7 +150,7 @@ def test_scope_elements_empty():
     assert settings.scope_elements == []
 
 
-def test_scope_elements_multiple():
+def test_scope_elements_multiple() -> None:
     """Test scope_elements property with multiple scopes."""
     settings = AuthenticationSettings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -161,7 +161,7 @@ def test_scope_elements_multiple():
     assert settings.scope_elements == ["offline_access", "profile", "email"]
 
 
-def test_authentication_settings_with_refresh_token(mock_env_vars):
+def test_authentication_settings_with_refresh_token(mock_env_vars) -> None:
     """Test authentication settings with refresh token."""
     settings = AuthenticationSettings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -172,7 +172,7 @@ def test_authentication_settings_with_refresh_token(mock_env_vars):
     assert settings.refresh_token == SecretStr("test-refresh-token")
 
 
-def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings):
+def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings) -> None:
     """Test lazy loading of authentication settings."""
     # First call should create the settings
     settings1 = authentication_settings()
@@ -183,7 +183,7 @@ def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings):
     assert settings2 is settings1
 
 
-def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_settings):
+def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_settings) -> None:
     """Test authentication settings from environment variables."""
     settings = authentication_settings()
     assert settings.client_id_device.get_secret_value() == "test-client-id-device"
@@ -192,17 +192,17 @@ def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_setti
 
 # TODO(Helmut): fixme
 @pytest.mark.skip
-def test_custom_env_file_location(mock_env_vars):
+def test_custom_env_file_location(mock_env_vars) -> None:
     """Test custom env file location."""
-    custom_env_file = "/tmp/test_env_file"
+    custom_env_file = "/tmp/test_env_file"  # noqa: S108
     with mock.patch.dict(os.environ, {f"{__project_name__.upper()}_ENV_FILE": custom_env_file}):
         settings = AuthenticationSettings.model_config
         assert custom_env_file in settings["env_file"]
 
 
-def test_custom_cache_dir(mock_env_vars):
+def test_custom_cache_dir(mock_env_vars) -> None:
     """Test custom cache directory."""
-    custom_cache_dir = "/tmp/test_cache_dir"
+    custom_cache_dir = "/tmp/test_cache_dir"  # noqa: S108
     settings = AuthenticationSettings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),

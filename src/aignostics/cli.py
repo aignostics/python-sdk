@@ -170,5 +170,5 @@ def result_delete() -> None:
 
 prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")
 
-if __name__ == "__main__":
-    cli()
+if __name__ == "__main__":  # pragma: no cover
+    cli()  # pragma: no cover
