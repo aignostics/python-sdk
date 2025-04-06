@@ -11,7 +11,14 @@ from dotenv import load_dotenv
 
 from . import OpenAPISchemaError
 from .client import authentication_settings
-from .constants import __project_name__, __project_path__, __version__
+from .constants import (
+    API_ROOT_DEV,
+    API_ROOT_PRODUCTION,
+    API_ROOT_STAGING,
+    __project_name__,
+    __project_path__,
+    __version__,
+)
 from .settings import Settings
 from .types import JsonType
 
@@ -88,14 +95,14 @@ class Platform:
             },
             "remote": {
                 "platform": {
-                    "dev": {
-                        "API_ROOT": "https://platform-dev.aignostics.com",
+                    "production": {
+                        "API_ROOT": API_ROOT_PRODUCTION,
                     },
                     "staging": {
-                        "API_ROOT": "https://patform-staging.aignostics.com",
+                        "API_ROOT": API_ROOT_STAGING,
                     },
-                    "production": {
-                        "API_ROOT": "https://platform.aignostics.com",
+                    "dev": {
+                        "API_ROOT": API_ROOT_DEV,
                     },
                 }
             },

@@ -5,9 +5,30 @@ import appdirs
 from pydantic import SecretStr, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from aignostics import __project_name__
+from aignostics import (
+    API_ROOT_PRODUCTION,
+    AUDIENCE_DEV,
+    AUDIENCE_PRODUCTION,
+    AUDIENCE_STAGING,
+    AUTHORIZATION_BASE_URL_DEV,
+    AUTHORIZATION_BASE_URL_PRODUCTION,
+    AUTHORIZATION_BASE_URL_STAGING,
+    DEVICE_URL_DEV,
+    DEVICE_URL_PRODUCTION,
+    DEVICE_URL_STAGING,
+    JWS_JSON_URL_DEV,
+    JWS_JSON_URL_PRODUCTION,
+    JWS_JSON_URL_STAGING,
+    REDIRECT_URI_DEV,
+    REDIRECT_URI_PRODUCTION,
+    REDIRECT_URI_STAGING,
+    TOKEN_URL_DEV,
+    TOKEN_URL_PRODUCTION,
+    TOKEN_URL_STAGING,
+    __project_name__,
+)
 
-from ._messages import NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
+from ._messages import UNKNOWN_ENDPOINT_URL
 
 
 class AuthenticationSettings(BaseSettings):
@@ -23,7 +44,7 @@ class AuthenticationSettings(BaseSettings):
 
     client_id_device: SecretStr
     client_id_interactive: SecretStr
-    api_root: str = "https://platform.aignostics.com"
+    api_root: str = API_ROOT_PRODUCTION
 
     scope: str = "offline_access"
 
@@ -56,22 +77,30 @@ class AuthenticationSettings(BaseSettings):
     @model_validator(mode="before")
     def pre_init(cls, values):  # type: ignore[no-untyped-def]  # noqa: ANN001, ANN202, N805
         # See https://github.com/pydantic/pydantic/issues/9789
-        api_root = values.get("api_root", "https://platform.aignostics.com")
-        print(api_root)
+        api_root = values.get("api_root", API_ROOT_PRODUCTION)
         match api_root:
             case "https://platform.aignostics.com":
                 # TODO (Andreas): hhva: please fill in
-                raise RuntimeError(NOT_YET_IMPLEMENTED)
-            case "http://platform-staging.aignostics.com":
-                # TODO (Andreas): hhva: please fill in
-                raise RuntimeError(NOT_YET_IMPLEMENTED)
+                values["audience"] = AUDIENCE_PRODUCTION
+                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_PRODUCTION
+                values["token_url"] = TOKEN_URL_PRODUCTION
+                values["redirect_uri"] = REDIRECT_URI_PRODUCTION
+                values["device_url"] = DEVICE_URL_PRODUCTION
+                values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
+            case "https://platform-staging.aignostics.com":
+                values["audience"] = AUDIENCE_STAGING
+                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
+                values["token_url"] = TOKEN_URL_STAGING
+                values["redirect_uri"] = REDIRECT_URI_STAGING
+                values["device_url"] = DEVICE_URL_STAGING
+                values["jws_json_url"] = JWS_JSON_URL_STAGING
             case "https://platform-dev.aignostics.com":
-                values["audience"] = "https://dev-8ouohmmrbuh2h4vu-samia"
-                values["authorization_base_url"] = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize"
-                values["token_url"] = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"  # noqa: S105
-                values["redirect_uri"] = "http://localhost:8080/"
-                values["device_url"] = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/device/code"
-                values["jws_json_url"] = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/.well-known/jwks.json"
+                values["audience"] = AUDIENCE_DEV
+                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_DEV
+                values["token_url"] = TOKEN_URL_DEV
+                values["redirect_uri"] = REDIRECT_URI_DEV
+                values["device_url"] = DEVICE_URL_DEV
+                values["jws_json_url"] = JWS_JSON_URL_DEV
             case _:
                 raise ValueError(UNKNOWN_ENDPOINT_URL)
 
