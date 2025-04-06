@@ -21,17 +21,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up cloud credentials & environment file
-        env:
-          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
-        run: |
-          echo "$CREDENTIALS" | base64 -d > credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
-          echo "$DEV_ENV_FILE" | base64 -d > dev.env
-          echo "AIGNOSTICS_ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
-          env
-
       - name: Install uv
         uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
         with:
@@ -60,10 +49,8 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         run: |
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
-          echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
-
-
-
+          echo "Development build - Current version in pyproject.toml: $TOML_VERSION"  
+  
       - name: Validate installation
         run: |
             OUTPUT=$(uv run --no-dev aignostics --help)
@@ -71,6 +58,16 @@ jobs:
             echo "Output does not contain 'built with love in Berlin'"
             exit 1
             fi
+
+      - name: Set up cloud credentials & environment file
+        env:
+          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
+        run: |
+          echo "$CREDENTIALS" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+          echo "$DEV_ENV_FILE" | base64 -d > dev.env
+          echo "AIGNOSTICS_ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
 
       - name: Smoke tests
         run: |
