@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import appdirs
 import jwt
 import requests
-from pydantic import computed_field
+from pydantic import SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from requests_oauthlib import OAuth2Session
 
@@ -31,8 +31,8 @@ REQUEST_TIMEOUT_SECONDS = 30
 class AuthenticationSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="", env_file=ENV_FILE, env_file_encoding="utf-8")
 
-    client_id_device: str
-    client_id_interactive: str
+    client_id_device: SecretStr
+    client_id_interactive: SecretStr
     scope: str
     redirect_uri: str
     audience: str
@@ -40,7 +40,7 @@ class AuthenticationSettings(BaseSettings):
     token_url: str
     device_url: str
     jws_json_url: str
-    aignx_refresh_token: str | None = None
+    aignx_refresh_token: SecretStr | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -157,7 +157,7 @@ def _authenticate() -> str:
         AssertionError: If the returned token doesn't have the expected format.
     """
     if refresh_token := authentication_settings().aignx_refresh_token:
-        token = _token_from_refresh_token(refresh_token)
+        token = _token_from_refresh_token(refresh_token.get_secret_value())
     elif _can_open_browser():
         token = _perform_authorization_code_with_pkce_flow()
     else:
@@ -267,7 +267,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     with _OAuthHttpServer((parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler) as httpd:
         # initialize flow (generate code_challenge and code_verifier)
         session = OAuth2Session(
-            authentication_settings().client_id_interactive,
+            authentication_settings().client_id_interactive.get_secret_value(),
             scope=authentication_settings().scope_elements,
             redirect_uri=authentication_settings().redirect_uri,
             pkce="S256",
@@ -310,7 +310,7 @@ def _perform_device_flow() -> str | None:
     resp: dict[str, str] = requests.post(
         authentication_settings().device_url,
         data={
-            "client_id": authentication_settings().client_id_device,
+            "client_id": authentication_settings().client_id_device.get_secret_value(),
             "scope": authentication_settings().scope_elements,
             "audience": authentication_settings().audience,
         },
@@ -328,7 +328,7 @@ def _perform_device_flow() -> str | None:
             data={
                 "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
                 "device_code": device_code,
-                "client_id": authentication_settings().client_id_device,
+                "client_id": authentication_settings().client_id_device.get_secret_value(),
             },
             timeout=REQUEST_TIMEOUT_SECONDS,
         ).json()
@@ -359,7 +359,7 @@ def _token_from_refresh_token(refresh_token: str) -> str | None:
             headers={"Accept": "application/json"},
             data={
                 "grant_type": "refresh_token",
-                "client_id": authentication_settings().client_id_interactive,
+                "client_id": authentication_settings().client_id_interactive.get_secret_value,
                 "refresh_token": refresh_token,
             },
             timeout=REQUEST_TIMEOUT_SECONDS,
