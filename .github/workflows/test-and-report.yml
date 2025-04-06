@@ -74,7 +74,7 @@ jobs:
           AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: |
           uv run --no-dev aignostics platform health
-          uv run --no-dev aignostics platform authentication-settings
+          uv run --no-dev aignostics platform info
 
       - name: Lint
         run: make lint
