@@ -1,27 +1,27 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all act audit bump clean codegen dist docs docker_build lint setup setup test test_scheduledupdate_from_template
+.PHONY: all act audit bump clean dist docs docker_build lint setup setup test test_scheduled update_from_template
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
-	uv run nox
+	uv run --all-extras nox
 
 # Nox targets
 
 ## Call nox sessions passing parameters
 nox-cmd = @if [ "$@" = "test" ]; then \
 	if [ -n "$(filter 3.%,$(MAKECMDGOALS))" ]; then \
-		uv run nox -s test -p $(filter 3.%,$(MAKECMDGOALS)); \
+		uv run --all-extras nox -s test -p $(filter 3.%,$(MAKECMDGOALS)); \
 	elif [ -n "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-		uv run nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
+		uv run --all-extras nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
 	else \
-		uv run nox -s $@; \
+		uv run --all-extras nox -s $@; \
 	fi; \
 elif [ -n "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-	uv run nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
+	uv run --all-extras nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
 else \
-	uv run nox -s $@; \
+	uv run --all-extras nox -s $@; \
 fi
 
 ## Individual Nox sessions
@@ -30,9 +30,9 @@ act audit bump dist docs lint setup test update_from_template:
 
 # Standalone targets
 
-## Scheduled tests
+## Run tests marked as scheduled
 test_scheduled:
-	uv run nox -s test -p 3.11 -- -m scheduled
+	uv run --all-extras nox -s test -p 3.11 -- -m scheduled
 
 ## Clean build artifacts and caches
 clean:
@@ -88,7 +88,7 @@ help:
 	@echo "  lint                - Run linting and formatting checks"
 	@echo "  setup               - Setup development environment"
 	@echo "  test [3.11|3.12|3.13] - Run tests (for specific Python version)"
-	@echo "  test_scheduled      - Run scheduled tests (with Python version 3.11)"
+	@echo "  test_scheduled		 - Run tests marked as scheduled with Python 3.11
 	@echo "  update_from_template - Update from template using copier"
 	@echo ""
 	@echo "Built with love in Berlin 🐻"

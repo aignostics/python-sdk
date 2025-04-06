@@ -3211,22 +3211,6 @@ Code coverage measurement for Python
 
 ```
 
-## cryptography (44.0.2) - Apache Software License; BSD License
-
-cryptography is a package which provides cryptographic recipes and primitives to Python developers.
-
-* URL: https://github.com/pyca/cryptography
-* Author(s): The cryptography developers <cryptography-dev@python.org>
-
-### License Text
-
-```
-This software is made available under the terms of *either* of the licenses
-found in LICENSE.APACHE or LICENSE.BSD. Contributions to cryptography are made
-under the terms of *both* these licenses.
-
-```
-
 ## cssutils (2.11.1) - GNU Library or Lesser General Public License (LGPL)
 
 A CSS Cascading Style Sheets library for Python

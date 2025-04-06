@@ -19,12 +19,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
+        with:
+          version: "0.6.3"
+          cache-dependency-glob: uv.lock
+          enable-cache: true
+
       - name: Install dev tools
-        run: |
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install -y curl jq xsltproc gnupg2 trivy
+        shell: bash
+        run: .github/workflows/install_dev_tools.bash
+
+      - name: Docs
+        run: make docs
 
       - name: Generate release notes
         uses: orhun/git-cliff-action@4a4a951bc43fafe41cd2348d181853f52356bee7 # v4.4.2
@@ -39,15 +46,8 @@ jobs:
       - name: Print the release notes
         run: cat "${{ steps.git-cliff.outputs.changelog }}"
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
-        with:
-          version: "0.6.3"
-          cache-dependency-glob: uv.lock
-          enable-cache: true
-
       - name: Build distribution into dist/
-        run: uv build
+        run: make dist
 
 
       - name: Publish distribution to Python Package Index at pypi.org
@@ -55,13 +55,14 @@ jobs:
 
 
       - name: Have audit checks publish to reports/ for auditing
-        run: uv run nox -s audit
+        run: make audit
 
       - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.ref_name }} ./dist/* ./reports/* --notes-file ${{ steps.git-cliff.outputs.changelog }}
+          gh release create ${{ github.ref_name }} ./dist/* ./reports/* \
+            --notes-file ${{ steps.git-cliff.outputs.changelog }}
 
       - name: Allow other workflows to trigger on release
         env:

@@ -24,27 +24,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dev tools
-        run: |
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install -y curl jq xsltproc gnupg2 trivy
-
-      - name: Install project specific dependencies
-        run: |
-          # sudo apt-get install -y YOUR_PROJECT_DEPENDENCIES
-
-      - name: Install uv (python package manager)
+      - name: Install uv
         uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
         with:
           version: "0.6.3"
           enable-cache: true
           cache-dependency-glob: uv.lock
 
+      - name: Install dev tools
+        shell: bash
+        run: .github/workflows/install_dev_tools.bash
+
       - name: Install Python, venv and dependencies
-        run: |
-          uv sync --all-extras --frozen --link-mode=copy
+        run: uv sync --all-extras --frozen --link-mode=copy
 
       - name: Release version check
         if: startsWith(github.ref, 'refs/tags/v')
@@ -81,12 +73,16 @@ jobs:
             fi
 
       - name: Smoke tests
-        run: |
-          uv run --no-dev aignostics system health
+        run: uv run --no-dev aignostics hello-world
 
-      - name: Run unit tests, measure coverage, lint, and check vulnerabilities
-        run: |
-          uv run --all-extras nox
+      - name: Lint
+        run: make lint
+
+      - name: Audit
+        run: make audit
+      
+      - name: Test
+        run: make test
 
       - name: Upload test results
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
@@ -94,12 +90,16 @@ jobs:
         with:
           name: test-results
           path: |
-            junit.xml
-            coverage.xml
-            coverage_html/
-            vulnerabilities.json
-            licenses.json
-            licenses-inverted.json
+            reports/mypy_junit.xml
+            reports/sbom.json
+            reports/sbom.spdx
+            reports/licenses.csv
+            reports/licenses.json
+            reports/licenses_grouped.json
+            reports/vulnerabilities.json
+            reports/junit.xml
+            reports/coverage.xml
+            reports/coverage_html
           retention-days: 30
 
       - name: Upload coverage reports to Codecov

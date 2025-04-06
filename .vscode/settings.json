@@ -3,7 +3,7 @@
         "editor.defaultFormatter": "vscode.json-language-features"
     },
     "files.exclude": {
-        "**/__pycache__ ": true
+        "**/__pycache__ ": true,
     },
     "editor.formatOnSave": true,
     "terminal.integrated.scrollback": 100000,
@@ -32,7 +32,8 @@
         "**/.nox/**",
         "**/.venv/**",
         "**/site-packages/**",
-        "**/dist-packages/**"
+        "**/dist-packages/**",
+        "**/dist_vercel/.vercel/**",
     ],
     "python.analysis.ignore": [
         "**/typing.py"

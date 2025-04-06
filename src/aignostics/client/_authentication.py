@@ -18,7 +18,7 @@ load_dotenv(dotenv_path=ENV_FILE)
 
 CLIENT_ID_DEVICE = os.getenv("CLIENT_ID_DEVICE")
 CLIENT_ID_INTERACTIVE = os.getenv("CLIENT_ID_INTERACTIVE")
-SCOPE = [scope.strip() for scope in os.getenv("SCOPE").split(",")]
+SCOPE = [scope.strip() for scope in os.getenv("SCOPE", "TODO(Andreas),TODO(Andreas)").split(",")]
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 
 AUDIENCE = os.getenv("AUDIENCE")

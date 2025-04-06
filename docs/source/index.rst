@@ -11,25 +11,25 @@
    :maxdepth: 2
 
    main
-   api_v1
-   reference
-   security
-   release-notes
+   api_explorer_v1
+   cli_reference
+   lib_reference
+   api_reference_v1
    contributing
    code-style
+   release-notes
+   security
    license
    attributions
 
 .. sidebar-links::
    :caption: Links
    :github:
-   :pypi: aignostics
-
-   Docker <https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags>
-   SonarQube <https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk>
-   Codecov <https://app.codecov.io/gh/aignostics/python-sdk>
-   ghcr.io <https://github.com/aignostics/python-sdk/pkgs/container/python-sdk>
-   License <https://github.com/aignostics/python-sdk/blob/main/LICENSE>
+   :pypi: {{ pypi_distribution_name }}
+   Docker <https://hub.docker.com/r/{{ docker_io_owner }}/{{ docker_io_image_name }}/tags>
+   ghcr.io <{{ github_repository_url_https }}/pkgs/container/{{ github_repository_name }}>
+   SonarQube <https://sonarcloud.io/summary/new_code?id={{ sonarqube_key }}>
+   Codecov <https://app.codecov.io/gh/{{ github_repository_owner }}/{{ github_repository_name }}>
 
 .. only:: html
 

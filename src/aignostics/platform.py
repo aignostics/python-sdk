@@ -115,7 +115,7 @@ class Platform:
 
     def install(self) -> None:
         """Complete and validate installation of the CLI."""
-        # TODO (Helmut, Andreas)
+        # TODO (Helmut, Andreas): Build
 
     @staticmethod
     def openapi_schema() -> dict:

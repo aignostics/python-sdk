@@ -18,6 +18,9 @@ LICENSES_JSON_PATH = "reports/licenses.json"
 SBOM_CYCLONEDX_PATH = "reports/sbom.json"
 SBOM_SPDX_PATH = "reports/sbom.spdx"
 
+CLI_MODULE = "cli"
+API_VERSIONS = ["v1"]
+
 
 def _setup_venv(session: nox.Session, all_extras: bool = True) -> None:
     """Install dependencies for the given session using uv."""
@@ -42,10 +45,22 @@ def _is_act_environment() -> bool:
     return os.environ.get("GITHUB_WORKFLOW_RUNTIME") == "ACT"
 
 
-@nox.session(python=["3.12"])
+def _format_json_with_jq(session: nox.Session, path: str) -> None:
+    """Format JSON file using jq for better readability.
+
+    Args:
+        session: The nox session instance
+        path: Path to the JSON file to format
+    """
+    with Path(f"{path}.tmp").open("w", encoding="utf-8") as outfile:
+        session.run("jq", ".", path, stdout=outfile, external=True)
+        session.run("mv", f"{path}.tmp", path, stdout=outfile, external=True)
+
+
+@nox.session(python=["3.13"])
 def lint(session: nox.Session) -> None:
     """Run code formatting checks, linting, and static type checking."""
-    _setup_venv(session)
+    _setup_venv(session, True)
     session.run("ruff", "check", ".")
     session.run(
         "ruff",
@@ -63,7 +78,7 @@ def audit(session: nox.Session) -> None:
 
     # pip-audit to check for vulnerabilities
     session.run("pip-audit", "-f", "json", "-o", "reports/vulnerabilities.json")
-    session.run("jq", ".", "reports/vulnerabilities.json", external=True)
+    _format_json_with_jq(session, "reports/vulnerabilities.json")
 
     # pip-licenses to check for compliance
     pip_licenses_base_args = [
@@ -106,7 +121,7 @@ def audit(session: nox.Session) -> None:
     )
 
     # Group by license type
-    session.run("jq", ".", LICENSES_JSON_PATH, external=True)
+    _format_json_with_jq(session, LICENSES_JSON_PATH)
     licenses_data = json.loads(Path(LICENSES_JSON_PATH).read_text(encoding="utf-8"))
     licenses_grouped: dict[str, list[dict[str, str]]] = {}
     licenses_grouped = {}
@@ -120,11 +135,11 @@ def audit(session: nox.Session) -> None:
         json.dumps(licenses_grouped, indent=2),
         encoding="utf-8",
     )
-    session.run("jq", ".", "reports/licenses_grouped.json", external=True)
+    _format_json_with_jq(session, "reports/licenses_grouped.json")
 
     # SBOMs
     session.run("cyclonedx-py", "environment", "-o", SBOM_CYCLONEDX_PATH)
-    session.run("jq", ".", SBOM_CYCLONEDX_PATH, external=True)
+    _format_json_with_jq(session, SBOM_CYCLONEDX_PATH)
 
     # Generates an SPDX SBOM including vulnerability scanning
     session.run(
@@ -207,8 +222,8 @@ def _generate_attributions(session: nox.Session, licenses_json_path: Path) -> No
     session.log("Generated ATTRIBUTIONS.md file")
 
 
-def _compile_readme(session: nox.Session) -> None:
-    """Compile README partial files into a single README.md.
+def _generate_readme(session: nox.Session) -> None:
+    """Generate README.md from partials.
 
     Args:
         session: The nox session instance
@@ -222,8 +237,8 @@ def _compile_readme(session: nox.Session) -> None:
     session.log("Generated README.md file from partials")
 
 
-def _dump_openapi_schemas(session: nox.Session) -> None:
-    """Dump OpenAPI schemas for different API versions in YAML and JSON formats.
+def _generate_openapi_schemas(session: nox.Session) -> None:
+    """Generate OpenAPI schemas for different API versions in YAML and JSON formats.
 
     Args:
         session: The nox session instance
@@ -231,32 +246,103 @@ def _dump_openapi_schemas(session: nox.Session) -> None:
     # Create directory if it doesn't exist
     Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
 
-    try:
-        # Generate API v1 schemas
-        try:
-            with Path("docs/source/_static/openapi_v1.yaml").open("w", encoding="utf-8") as f:
-                session.run("aignostics", "system", "openapi", "--api-version=v1", stdout=f, external=True)
-            with Path("docs/source/_static/openapi_v1.json").open("w", encoding="utf-8") as f:
-                session.run(
+    formats = {
+        "yaml": {"ext": "yaml", "args": []},
+        "json": {"ext": "json", "args": ["--output-format=json"]},
+    }
+
+    for version in API_VERSIONS:
+        for format_name, format_info in formats.items():
+            output_path = Path(f"docs/source/_static/openapi_{version}.{format_info['ext']}")
+            with output_path.open("w", encoding="utf-8") as f:
+                cmd_args = [
                     "aignostics",
-                    "system",
+                    "platform",
                     "openapi",
-                    "--api-version=v1",
-                    "--output-format=json",
-                    stdout=f,
-                    external=True,
-                )
-            session.log("Generated API v1 OpenAPI schemas")
-        except CommandFailed:
-            session.log("Failed to generate API v1 OpenAPI schemas - command may not be supported")
-
-        session.log("OpenAPI schema generation completed")
-    except Exception as e:  # noqa: BLE001
-        session.log(f"Warning: Could not generate OpenAPI schemas: {e}")
+                    f"--api-version={version}",
+                    *format_info["args"],
+                ]
+                session.run(*cmd_args, stdout=f, external=True)
+            session.log(f"Generated API {version} OpenAPI schema in {format_name} format")
 
 
-def _build_pdf_docs(session: nox.Session) -> None:
-    """Build PDF documentation using latexmk.
+def _generate_cli_reference(session: nox.Session) -> None:
+    """Generate CLI_REFERENCE.md.
+
+    Args:
+        session: The nox session instance
+    """
+    if CLI_MODULE:
+        session.run(
+            "typer",
+            f"aignostics.{CLI_MODULE}",
+            "utils",
+            "docs",
+            "--name",
+            "aignostics",
+            "--title",
+            "CLI Reference",
+            "--output",
+            "CLI_REFERENCE.md",
+            external=True,
+        )
+
+
+def _generate_api_reference(session: nox.Session) -> None:
+    """Generate API_REFERENCE_v1.md and API_REFERENCE_v2.md.
+
+    Args:
+        session: The nox session instance
+
+    Raises:
+        FileNotFoundError: If the OpenAPI schema file for a version is not found
+    """
+    for version in API_VERSIONS:
+        openapi_path = Path(f"docs/source/_static/openapi_{version}.yaml")
+
+        if not openapi_path.exists():
+            error_message = f"OpenAPI schema for {version} not found at {openapi_path}"
+            raise FileNotFoundError(error_message)
+
+        output_file = f"API_REFERENCE_{version}.md"
+        session.run(
+            "npx",
+            "widdershins",
+            f"docs/source/_static/openapi_{version}.yaml",
+            "--omitHeader",
+            "--search",
+            "false",
+            "--language_tabs",
+            "python:Python",
+            "javascript:Javascript",
+            "-o",
+            f"API_REFERENCE_{version}.md",
+            external=True,
+        )
+        session.log(f"Generated API_REFERENCE_{version}.md using widdershins")
+
+        content = Path(output_file).read_text(encoding="utf-8")
+        content = re.sub(r"<!--[\s\S]*?-->", "", content)
+        content = re.sub(r"<h1 id=\"[^\"]+\">([\s\S]+?)</h1>", r"# \1", content)
+        content = re.sub(r"<h2 id=\"[^\"]+\">([\s\S]+?)</h2>", r"## \1", content)
+        content = re.sub(r"<h3 id=\"[^\"]+\">([\s\S]+?)</h3>", r"### \1", content)
+        content = re.sub(r"<h4 id=\"[^\"]+\">([\s\S]+?)</h4>", r"#### \1", content)
+        content = re.sub(r"<a href=\"([^\"]+)\">([\s\S]+?)</a>", r"[\2](\1)", content)
+        content = re.sub(r"<a href=\"mailto:([^\"]+)\">([\s\S]+?)</a>", r"\2 (\1)", content)
+        content = re.sub(r"<[^>]*>", "", content)
+        content = re.sub(r"^\s*\n", "", content)
+        Path(output_file).write_text(content, encoding="utf-8")
+        session.log(f"Cleaned HTML from {output_file}")
+
+        content = Path(output_file).read_text(encoding="utf-8")
+        content = re.sub(r"^(#+)", r"\1#", content, flags=re.MULTILINE)
+        content = content.rstrip() + "\n"
+        Path(output_file).write_text(f"# API {version} Reference\n{content}", encoding="utf-8")
+        session.log(f"Shifted headers in {output_file}")
+
+
+def _generate_pdf_docs(session: nox.Session) -> None:
+    """Generate PDF documentation using latexmk.
 
     Args:
         session: The nox session instance
@@ -312,26 +398,28 @@ def docs(session: nox.Session) -> None:
         ValueError: If the installed latexmk version is outdated
         AttributeError: If parsing the latexmk version information fails
     """
-    _setup_venv(session)
+    _setup_venv(session, True)
 
+    _generate_readme(session)
+    _generate_cli_reference(session)
+    _generate_openapi_schemas(session)
+    _generate_api_reference(session)
     _generate_attributions(session, Path(LICENSES_JSON_PATH))
-    _compile_readme(session)
-    _dump_openapi_schemas(session)
 
-    # Build docs
+    # Build HTML docs
     session.run("make", "-C", "docs", "clean", external=True)
     session.run("make", "-C", "docs", "html", external=True)
     session.run("make", "-C", "docs", "singlehtml", external=True)
     session.run("make", "-C", "docs", "latex", external=True)
 
     if "pdf" in session.posargs:
-        _build_pdf_docs(session)
+        _generate_pdf_docs(session)
 
 
 @nox.session(python=["3.13"], default=False)
 def docs_pdf(session: nox.Session) -> None:
     """Setup dev environment post project creation."""  # noqa: DOC501
-    _setup_venv(session)
+    _setup_venv(session, True)
     try:
         out = session.run("latexmk", "--version", external=True, silent=True)
 
@@ -362,14 +450,11 @@ def docs_pdf(session: nox.Session) -> None:
 @nox.session(python=["3.11", "3.12", "3.13"])
 def test(session: nox.Session) -> None:
     """Run tests with pytest."""
-    _setup_venv(session)
+    _setup_venv(session, True)
     pytest_args = ["pytest", "--disable-warnings", "--junitxml=reports/junit.xml", "-n", "auto", "--dist", "loadgroup"]
-
     if _is_act_environment():
         pytest_args.extend(["-k", NOT_SKIP_WITH_ACT])
-
-    pytest_args.extend(session.posargs)
-
+    session.run(*pytest_args)
     session.run(*pytest_args)
 
 

@@ -1,5 +1,5 @@
-Reference
-=========
+Library Reference
+=================
 
 .. automodule:: aignostics
     :members:

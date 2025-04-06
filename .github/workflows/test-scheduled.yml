@@ -2,8 +2,7 @@ name: "CI Scheduled"
 
 on:
   schedule:
-    - cron: '0 7 * * *'
-  workflow_dispatch:
+    - cron: '0 6 * * *'
 
 jobs:
   test-scheduled:
@@ -25,8 +24,7 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Install Python, venv and dependencies
-        run: |
-          uv sync --all-extras --frozen --link-mode=copy
+        run: uv sync --all-extras --frozen --link-mode=copy
 
       - name: Set up cloud credentials & environment file
         env:
@@ -39,7 +37,4 @@ jobs:
           echo "ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
 
       - name: Run tests marked as scheduled
-        env:
-          AIGNX_REFRESH_TOKEN: ${{ secrets.AIGNX_REFRESH_TOKEN }}
-        run: |
-          uv run --all-extras nox -s test -p 3.12 -- -m scheduled
+        run: make test_scheduled

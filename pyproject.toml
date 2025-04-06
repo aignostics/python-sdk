@@ -263,6 +263,7 @@ env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
 markers = [
     # From Template
     "no_extras: tests that do require no extras installed",
+    "scheduled: tests to run on a schedule",
     "sequential: exclude from parallel test execution",
     # Custom
     # Nothing yet
@@ -277,7 +278,7 @@ markers = [
 sigterm = true
 relative_files = true
 source = ["src"]
-omit = ["src/starbridge/instrumentation/*"]
+omit = []
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]
