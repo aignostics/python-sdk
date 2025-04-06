@@ -106,9 +106,7 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
             "dict[str, str]",
             jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=authentication_settings().audience),
         )
-    except jwt.exceptions.PyJWKClientError as e:
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
-    except jwt.exceptions.DecodeError as e:
+    except jwt.exceptions.PyJWTError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
@@ -174,14 +172,11 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 return
 
             auth_code = query["code"][0]
-
             try:
                 # Exchange code for token
                 token = session.fetch_token(authentication_settings().token_url, code=auth_code, include_client_id=True)
-
                 # Store the token
                 authentication_result.token = token["access_token"]
-
                 # Send success response
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
@@ -222,10 +217,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
         # Extract authorization_code from redirected request, see: OAuthCallbackHandler
         server.handle_request()
 
-    if authentication_result.error:
-        msg = f"{AUTHENTICATION_FAILED}: {authentication_result.error}"
-        raise RuntimeError(msg)
-    if not authentication_result.token:
+    if authentication_result.error or not authentication_result.token:
         raise RuntimeError(AUTHENTICATION_FAILED)
 
     return authentication_result.token
@@ -255,9 +247,6 @@ def _perform_device_flow() -> str | None:
     try:
         response.raise_for_status()
         json_response = response.json()
-        if "device_code" not in json_response or "verification_uri_complete" not in json_response:
-            raise RuntimeError(AUTHENTICATION_FAILED)
-
         device_code = json_response["device_code"]
         verification_uri = json_response["verification_uri_complete"]
         user_code = json_response["user_code"]
@@ -272,7 +261,7 @@ def _perform_device_flow() -> str | None:
     # Polling for access token with received device code
     while True:
         try:
-            response = requests.post(
+            json_response = requests.post(
                 authentication_settings().token_url,
                 headers={"Accept": "application/json"},
                 data={
@@ -281,20 +270,17 @@ def _perform_device_flow() -> str | None:
                     "client_id": authentication_settings().client_id_device.get_secret_value(),
                 },
                 timeout=authentication_settings().request_timeout_seconds,
-            )
-            json_response = response.json()
+            ).json()
             if "error" in json_response:
-                error_code = json_response["error"]
-                if error_code in {"authorization_pending", "slow_down"}:
+                if json_response["error"] in {"authorization_pending", "slow_down"}:
                     time.sleep(interval)
                     continue
                 raise RuntimeError(AUTHENTICATION_FAILED)
 
-            if not (token := json_response.get("access_token")):
-                raise RuntimeError(AUTHENTICATION_FAILED)
-
-            return t.cast("str", token)
-
+            return t.cast("str", json_response["access_token"])
+        except requests.exceptions.JSONDecodeError as e:
+            # Handle case where response is not JSON
+            raise RuntimeError(AUTHENTICATION_FAILED) from e
         except HTTPError as e:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
 
@@ -311,8 +297,8 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
     Raises:
         RuntimeError: If token refresh fails.
     """
-    while True:
-        resp = requests.post(
+    try:
+        response = requests.post(
             authentication_settings().token_url,
             headers={"Accept": "application/json"},
             data={
@@ -321,10 +307,8 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
                 "refresh_token": refresh_token.get_secret_value(),
             },
             timeout=authentication_settings().request_timeout_seconds,
-        ).json()
-        if "error" in resp:
-            if resp["error"] in {"authorization_pending", "slow_down"}:
-                time.sleep(authentication_settings().authorization_backoff_seconds)
-                continue
-            raise RuntimeError(resp["error"])
-        return t.cast("str", resp["access_token"])
+        )
+        response.raise_for_status()
+        return t.cast("str", response.json()["access_token"])
+    except HTTPError as e:
+        raise RuntimeError(AUTHENTICATION_FAILED) from e
