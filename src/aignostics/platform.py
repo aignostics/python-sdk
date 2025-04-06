@@ -21,6 +21,7 @@ from .constants import (
 )
 from .settings import Settings
 from .types import JsonType
+from .utils.process import get_process_info
 
 load_dotenv()
 
@@ -73,6 +74,7 @@ class Platform:
                     "interpreter_path": sys.executable,
                     "command_line": " ".join(sys.argv),
                     "entry_point": sys.argv[0] if sys.argv else None,
+                    "process_info": json.loads(get_process_info().model_dump_json()),
                 },
                 "platform": {
                     "os": {
