@@ -72,7 +72,7 @@ def authentication_settings() -> AuthenticationSettings:
     return __cached_authentication_settings
 
 
-print(authentication_settings().scope_elements())
+print(authentication_settings().scope_elements)
 
 
 def get_token(use_cache: bool = True) -> str:
