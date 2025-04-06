@@ -29,7 +29,9 @@ REQUEST_TIMEOUT_SECONDS = 30
 
 # Settings
 class AuthenticationSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="", env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="AIGNOSTICS_", env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
+    )
 
     client_id_device: SecretStr
     client_id_interactive: SecretStr
@@ -40,7 +42,7 @@ class AuthenticationSettings(BaseSettings):
     token_url: str
     device_url: str
     jws_json_url: str
-    aignx_refresh_token: SecretStr | None = None
+    refresh_token: SecretStr | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -161,7 +163,7 @@ def _authenticate() -> str:
         RuntimeError: If authentication fails.
         AssertionError: If the returned token doesn't have the expected format.
     """
-    if refresh_token := authentication_settings().aignx_refresh_token:
+    if refresh_token := authentication_settings().refresh_token:
         token = _token_from_refresh_token(refresh_token.get_secret_value())
     elif _can_open_browser():
         token = _perform_authorization_code_with_pkce_flow()
