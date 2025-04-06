@@ -61,7 +61,7 @@ jobs:
         run: |
           echo "$CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
-          echo "$DEV_ENV_FILE" | base64 -d > dev.env
+          echo "$DEV_ENV_FILE" > dev.env
           echo "ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
 
       - name: Validate installation
