@@ -24,6 +24,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up cloud credentials & environment file
+        env:
+          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
+        run: |
+          echo "$CREDENTIALS" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+          echo "$DEV_ENV_FILE" > dev.env
+          echo "ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
+          env
+
       - name: Install uv
         uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
         with:
@@ -54,16 +65,7 @@ jobs:
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
 
-      - name: Set up cloud credentials & environment file
-        env:
-          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-          DEV_ENV_FILE: ${{ secrets.DEV_ENV_FILE }}
-        run: |
-          echo "$CREDENTIALS" | base64 -d > credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
-          echo "$DEV_ENV_FILE" | base64 -d > dev.env
-          echo "ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
-          env
+
 
       - name: Validate installation
         run: |
