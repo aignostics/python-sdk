@@ -10,17 +10,16 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--install-completion`: Install completion for the current shell.
-- `--show-completion`: Show completion for the current shell, to copy it or
-  customize the installation.
-- `--help`: Show this message and exit.
+* `--install-completion`: Install completion for the current shell.
+* `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
+* `--help`: Show this message and exit.
 
 🔬 Aignostics Python SDK v0.0.10 - built with love in Berlin 🐻
 
 **Commands**:
 
-- `platform`: Platform diagnostics and utilities
-- `application`: aignostics applications
+* `platform`: Platform diagnostics and utilities
+* `application`: aignostics applications
 
 ## `aignostics platform`
 
@@ -34,16 +33,16 @@ $ aignostics platform [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 **Commands**:
 
-- `install`: Complete and validate installation of the...
-- `health`: Indicate if aignostics platform is healthy.
-- `info`: Print info about service configuration.
-- `authentication-settings`: Print info about service configuration.
-- `openapi`: Dump the OpenAPI specification of to stdout.
-- `bucket`: Transfer bucket provide by platform
+* `install`: Complete and validate installation of the...
+* `health`: Indicate if aignostics platform is healthy.
+* `info`: Print info about service configuration.
+* `authentication-settings`: Print info about service configuration.
+* `openapi`: Dump the OpenAPI specification of to stdout.
+* `bucket`: Transfer bucket provide by platform
 
 ### `aignostics platform install`
 
@@ -57,7 +56,7 @@ $ aignostics platform install [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ### `aignostics platform health`
 
@@ -71,7 +70,7 @@ $ aignostics platform health [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ### `aignostics platform info`
 
@@ -85,11 +84,10 @@ $ aignostics platform info [OPTIONS]
 
 **Options**:
 
-- `--output-format [yaml|json]`: Output format [default: yaml]
-- `--env / --no-env`: Include environment variables in output [default: no-env]
-- `--filter-secrets / --no-filter-secrets`: Filter out secret values from
-  environment variables [default: filter-secrets]
-- `--help`: Show this message and exit.
+* `--output-format [yaml|json]`: Output format  [default: yaml]
+* `--env / --no-env`: Include environment variables in output  [default: no-env]
+* `--filter-secrets / --no-filter-secrets`: Filter out secret values from environment variables  [default: filter-secrets]
+* `--help`: Show this message and exit.
 
 ### `aignostics platform authentication-settings`
 
@@ -103,7 +101,7 @@ $ aignostics platform authentication-settings [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ### `aignostics platform openapi`
 
@@ -117,9 +115,9 @@ $ aignostics platform openapi [OPTIONS]
 
 **Options**:
 
-- `--api-version [v1]`: API Version [default: v1]
-- `--output-format [yaml|json]`: Output format [default: yaml]
-- `--help`: Show this message and exit.
+* `--api-version [v1]`: API Version  [default: v1]
+* `--output-format [yaml|json]`: Output format  [default: yaml]
+* `--help`: Show this message and exit.
 
 ### `aignostics platform bucket`
 
@@ -133,12 +131,12 @@ $ aignostics platform bucket [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 **Commands**:
 
-- `ls`: List contents of tranfer bucket.
-- `purge`: Purge content of transfer bucket.
+* `ls`: List contents of tranfer bucket.
+* `purge`: Purge content of transfer bucket.
 
 #### `aignostics platform bucket ls`
 
@@ -152,7 +150,7 @@ $ aignostics platform bucket ls [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 #### `aignostics platform bucket purge`
 
@@ -166,7 +164,7 @@ $ aignostics platform bucket purge [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ## `aignostics application`
 
@@ -180,15 +178,15 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 **Commands**:
 
-- `list`: List available applications.
-- `describe`: Describe application.
-- `dataset`: Datasets for use as input for applications
-- `metadata`: Metadata required as input for applications
-- `run`: Runs of applications
+* `list`: List available applications.
+* `describe`: Describe application.
+* `dataset`: Datasets for use as input for applications
+* `metadata`: Metadata required as input for applications
+* `run`: Runs of applications
 
 ### `aignostics application list`
 
@@ -202,7 +200,7 @@ $ aignostics application list [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ### `aignostics application describe`
 
@@ -216,7 +214,7 @@ $ aignostics application describe [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ### `aignostics application dataset`
 
@@ -230,11 +228,11 @@ $ aignostics application dataset [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 **Commands**:
 
-- `download`: Download dataset.
+* `download`: Download dataset.
 
 #### `aignostics application dataset download`
 
@@ -248,7 +246,7 @@ $ aignostics application dataset download [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ### `aignostics application metadata`
 
@@ -262,11 +260,11 @@ $ aignostics application metadata [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 **Commands**:
 
-- `generate`: Generate metadata.
+* `generate`: Generate metadata.
 
 #### `aignostics application metadata generate`
 
@@ -280,7 +278,7 @@ $ aignostics application metadata generate [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ### `aignostics application run`
 
@@ -294,15 +292,15 @@ $ aignostics application run [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 **Commands**:
 
-- `submit`: Create run.
-- `list`: List runs.
-- `describe`: Describe run.
-- `cancel`: Cancel run.
-- `result`: Results of applications runs
+* `submit`: Create run.
+* `list`: List runs.
+* `describe`: Describe run.
+* `cancel`: Cancel run.
+* `result`: Results of applications runs
 
 #### `aignostics application run submit`
 
@@ -316,7 +314,7 @@ $ aignostics application run submit [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 #### `aignostics application run list`
 
@@ -330,7 +328,7 @@ $ aignostics application run list [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 #### `aignostics application run describe`
 
@@ -344,7 +342,7 @@ $ aignostics application run describe [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 #### `aignostics application run cancel`
 
@@ -358,7 +356,7 @@ $ aignostics application run cancel [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 #### `aignostics application run result`
 
@@ -372,13 +370,13 @@ $ aignostics application run result [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 **Commands**:
 
-- `describe`: Describe the result of an application run.
-- `download`: Download the result of an application run.
-- `delete`: Delete the result of an application run.
+* `describe`: Describe the result of an application run.
+* `download`: Download the result of an application run.
+* `delete`: Delete the result of an application run.
 
 ##### `aignostics application run result describe`
 
@@ -392,7 +390,7 @@ $ aignostics application run result describe [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ##### `aignostics application run result download`
 
@@ -406,7 +404,7 @@ $ aignostics application run result download [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
 
 ##### `aignostics application run result delete`
 
@@ -420,4 +418,4 @@ $ aignostics application run result delete [OPTIONS]
 
 **Options**:
 
-- `--help`: Show this message and exit.
+* `--help`: Show this message and exit.
