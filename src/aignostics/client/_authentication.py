@@ -1,3 +1,4 @@
+import os
 import time
 import typing as t
 import webbrowser
@@ -21,7 +22,7 @@ CLIENT_APP_NAME = "python-sdk"
 
 CACHE_DIR = appdirs.user_cache_dir(CLIENT_APP_NAME, "aignostics")
 TOKEN_FILE = Path(CACHE_DIR) / ".token"
-ENV_FILE = Path.home() / ".aignostics/env"
+ENV_FILE = os.getenv("AIGNOSTICS_ENV_FILE", Path.home() / ".aignostics/env")
 
 AUTHORIZATION_BACKOFF_SECONDS = 3
 REQUEST_TIMEOUT_SECONDS = 30

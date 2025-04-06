@@ -29,7 +29,7 @@ jobs:
           echo "$CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
           echo "$DEV_ENV_FILE" | base64 -d > dev.env
-          echo "ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
+          echo "AIGNOSTICS_ENV_FILE=$(pwd)/dev.env" >> $GITHUB_ENV
           env
 
       - name: Install uv
