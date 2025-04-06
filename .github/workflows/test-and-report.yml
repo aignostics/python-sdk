@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 env:
-  AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNX_REFRESH_TOKEN }}
+  AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
 
 jobs:
   test:

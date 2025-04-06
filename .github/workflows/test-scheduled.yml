@@ -38,5 +38,5 @@ jobs:
 
       - name: Run tests marked as scheduled
         env:
-          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNX_REFRESH_TOKEN }}
+          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: make test_scheduled
