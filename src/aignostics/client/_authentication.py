@@ -12,8 +12,8 @@ import requests
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
-from aignostics.client._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
-from aignostics.client._settings import authentication_settings
+from ._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
+from ._settings import authentication_settings
 
 
 class AuthenticationResult(BaseModel):
@@ -104,13 +104,10 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     try:
         # Get the public key from the JWK client
         key = jwk_client.get_signing_key_from_jwt(token).key
-        # Get the algorithm from the token header
-        header_data = jwt.get_unverified_header(token)
-        algorithm = header_data["alg"]
         # Verify and decode the token using the public key
         return t.cast(
             "dict[str, str]",
-            jwt.decode(token, key=key, algorithms=[algorithm], audience=authentication_settings().audience),
+            jwt.decode(token, key=key, algorithms=["RS256"], audience=authentication_settings().audience),
         )
     except jwt.exceptions.PyJWTError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
