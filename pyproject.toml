@@ -254,7 +254,7 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "codegen/out/test"]
+testpaths = ["tests"]
 # openapi code generate creates tests with test_*.py
 python_files = ["*_test.py", "test_*.py"]
 addopts = "-v --strict-markers --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
