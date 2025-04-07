@@ -26,11 +26,10 @@ jobs:
       - name: Install Python, venv and dependencies
         run: uv sync --all-extras --frozen --link-mode=copy
 
-      - name: Create .env file
-        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
-        with:
-          envkey_ENV_KEY: "ENV_VALUE"
-          fail_on_empty: true
-
       - name: Run scheduled tests
+        env:
+          AIGNOSTICS_API_ROOT: https://platform.aignostics.com
+          AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
+          AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
+          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: make test_scheduled

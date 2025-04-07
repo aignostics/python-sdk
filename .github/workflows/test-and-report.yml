@@ -68,7 +68,7 @@ jobs:
       
       - name: Smoke tests
         env:
-          AIGNOSTICS_API_ROOT: https://platform-dev.aignostics.com
+          AIGNOSTICS_API_ROOT: https://platform.aignostics.com
           AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
           AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
           AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
@@ -84,7 +84,7 @@ jobs:
       
       - name: Test
         env:
-          AIGNOSTICS_API_ROOT: https://platform-dev.aignostics.com
+          AIGNOSTICS_API_ROOT: https://platform.aignostics.com
           AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
           AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
           AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
