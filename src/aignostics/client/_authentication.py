@@ -12,8 +12,15 @@ import requests
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
-from ._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
-from ._settings import authentication_settings
+from aignostics.client._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
+from aignostics.client._settings import authentication_settings
+
+
+class AuthenticationResult(BaseModel):
+    """Represents the result of an OAuth authentication flow."""
+
+    token: str | None = None
+    error: str | None = None
 
 
 def get_token(use_cache: bool = True) -> str:
@@ -98,13 +105,12 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         # Get the public key from the JWK client
         key = jwk_client.get_signing_key_from_jwt(token).key
         # Get the algorithm from the token header
-        binary_token = token.encode("ascii")
-        header_data = jwt.get_unverified_header(binary_token)
+        header_data = jwt.get_unverified_header(token)
         algorithm = header_data["alg"]
         # Verify and decode the token using the public key
         return t.cast(
             "dict[str, str]",
-            jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=authentication_settings().audience),
+            jwt.decode(token, key=key, algorithms=[algorithm], audience=authentication_settings().audience),
         )
     except jwt.exceptions.PyJWTError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
@@ -150,12 +156,6 @@ def _perform_authorization_code_with_pkce_flow() -> str:
         audience=authentication_settings().audience,
     )
 
-    class AuthenticationResult(BaseModel):
-        """Represents the result of an OAuth authentication flow."""
-
-        token: str | None = None
-        error: str | None = None
-
     authentication_result = AuthenticationResult()
 
     class OAuthCallbackHandler(BaseHTTPRequestHandler):
@@ -168,7 +168,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(b"Error: No authorization code received")
-                AuthenticationResult.error = "No authorization code received"
+                authentication_result.error = "No authorization code received"
                 return
 
             auth_code = query["code"][0]
@@ -310,5 +310,5 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
         )
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])
-    except HTTPError as e:
+    except (HTTPError, requests.exceptions.RequestException) as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
