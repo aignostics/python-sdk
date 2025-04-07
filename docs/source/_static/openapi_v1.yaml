@@ -113,7 +113,7 @@ components:
         mime_type:
           examples:
           - image/tiff
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -163,7 +163,7 @@ components:
         mime_type:
           examples:
           - image/tiff
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -263,7 +263,7 @@ components:
         mime_type:
           examples:
           - application/vnd.apache.parquet
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -289,7 +289,7 @@ components:
         mime_type:
           examples:
           - application/vnd.apache.parquet
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -320,7 +320,7 @@ components:
         mime_type:
           examples:
           - application/vnd.apache.parquet
-          pattern: ^\w+/\w+(?:[-+.]|\w)+\w+$
+          pattern: ^{0,126}/{0,126}$
           title: Mime Type
           type: string
         name:
@@ -726,7 +726,8 @@ paths:
       - Externals
   /v1/applications/{application_id}/versions:
     get:
-      operationId: list_versions_by_application_id_v1_applications__application_id__versions_get
+      operationId: 
+list_versions_by_application_id_v1_applications__application_id__versions_get
       parameters:
       - in: path
         name: application_id
@@ -789,7 +790,8 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Id V1 Applications  Application
+                title: Response List Versions By Application Id V1 Applications 
+Application
                   Id  Versions Get
                 type: array
           description: Successful Response
@@ -804,7 +806,8 @@ paths:
       - Externals
   /v1/applications/{application_slug}:
     get:
-      operationId: read_application_by_slug_v1_applications__application_slug__get
+      operationId: 
+read_application_by_slug_v1_applications__application_slug__get
       parameters:
       - in: path
         name: application_slug
@@ -830,7 +833,9 @@ paths:
       - Externals
   /v1/applications/{application_slug}/versions:
     get:
-      operationId: list_versions_by_application_slug_v1_applications__application_slug__versions_get
+      operationId: 
+list_versions_by_application_slug_v1_applications__application_slug__versions_ge
+t
       parameters:
       - in: path
         name: application_slug
@@ -893,7 +898,8 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Slug V1 Applications  Application
+                title: Response List Versions By Application Slug V1 
+Applications  Application
                   Slug  Versions Get
                 type: array
           description: Successful Response
@@ -1085,7 +1091,8 @@ paths:
       - Externals
   /v1/runs/{application_run_id}/results:
     delete:
-      operationId: delete_run_results_v1_runs__application_run_id__results_delete
+      operationId: 
+delete_run_results_v1_runs__application_run_id__results_delete
       parameters:
       - in: path
         name: application_run_id
@@ -1183,7 +1190,8 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/ItemResultReadResponse'
-                title: Response List Run Results V1 Runs  Application Run Id  Results
+                title: Response List Run Results V1 Runs  Application Run Id  
+Results
                   Get
                 type: array
           description: Successful Response

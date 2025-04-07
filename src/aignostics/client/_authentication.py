@@ -5,14 +5,14 @@ from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
-from urllib.parse import urlparse
+from urllib.error import HTTPError
 
 import jwt
 import requests
-from pydantic import SecretStr
+from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
-from ._messages import AUTHENTICATION_FAILED
+from ._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
 from ._settings import authentication_settings
 
 
@@ -103,13 +103,10 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         algorithm = header_data["alg"]
         # Verify and decode the token using the public key
         return t.cast(
-            # TODO(Andreas): hhva: Are we missing error handilng in case jwt.decode fails given invalid token?
             "dict[str, str]",
             jwt.decode(binary_token, key=key, algorithms=[algorithm], audience=authentication_settings().audience),
         )
-    except jwt.exceptions.PyJWKClientError as e:
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
-    except jwt.exceptions.DecodeError as e:
+    except jwt.exceptions.PyJWTError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
@@ -129,69 +126,6 @@ def _can_open_browser() -> bool:
     return launch_browser
 
 
-class _OAuthHttpServer(HTTPServer):
-    """HTTP server for OAuth authorization code flow.
-
-    Extends HTTPServer to store the authorization code received during OAuth flow.
-    """
-
-    # TODO(Andreas): hhva: HTTPServer.init expects particular args, guess you want to have them there
-    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
-        """Initializes the server with storage for the authorization code.
-
-        Args:
-            *args: Variable length argument list passed to parent.
-            **kwargs: Arbitrary keyword arguments passed to parent.
-        """
-        HTTPServer.__init__(self, *args, **kwargs)
-        self.authorization_code = ""
-
-
-class _OAuthHttpHandler(BaseHTTPRequestHandler):
-    """HTTP request handler for OAuth authorization code flow.
-
-    Processes the OAuth callback redirect and extracts the authorization code.
-    """
-
-    def do_GET(self) -> None:  # noqa: N802
-        """Handles GET requests containing OAuth response parameters.
-
-        Extracts authorization code or error from the URL and updates the server state.
-        """
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html")
-        self.end_headers()
-
-        parsed = parse.urlparse(self.path)
-        qs = parse.parse_qs(parsed.query)
-
-        # see if auth was successful
-        # TODO(Andreas): The base server does not have .error or .error_description. Was this tested?
-        if "error" in qs:
-            self.server.error = qs["error"][0]  # type: ignore[attr-defined]
-            self.server.error_description = qs["error_description"][0]  # type: ignore[attr-defined]
-            status = b"Authentication error"
-        else:
-            self.server.error = None  # type: ignore[attr-defined]
-            self.server.authorization_code = qs["code"][0]  # type: ignore[attr-defined]
-            status = b"Authentication successful"
-
-        # display status in browser and close tab after 2 seconds
-        response = b"""
-        <script type="application/javascript">setTimeout(function() { window.close(); }, 1000);</script>
-        """
-        self.wfile.write(response + status)
-
-    # TODO(Andreas): Implement and fix typing
-    def log_message(self, _format: str, *args) -> None:  # type: ignore[no-untyped-def]
-        """Suppresses log messages from the HTTP server.
-
-        Args:
-            _format: The log message format string.
-            *args: The arguments to be applied to the format string.
-        """
-
-
 def _perform_authorization_code_with_pkce_flow() -> str:
     """Performs the OAuth 2.0 Authorization Code flow with PKCE.
 
@@ -204,35 +138,89 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     Raises:
         RuntimeError: If authentication fails.
     """
-    parsed_redirect = urlparse(authentication_settings().redirect_uri)
-    with _OAuthHttpServer((parsed_redirect.hostname, parsed_redirect.port), _OAuthHttpHandler) as httpd:
-        # initialize flow (generate code_challenge and code_verifier)
-        session = OAuth2Session(
-            authentication_settings().client_id_interactive.get_secret_value(),
-            scope=authentication_settings().scope_elements,
-            redirect_uri=authentication_settings().redirect_uri,
-            pkce="S256",
-        )
-        authorization_url, _ = session.authorization_url(
-            authentication_settings().authorization_base_url,
-            access_type="offline",
-            audience=authentication_settings().audience,
-        )
+    session = OAuth2Session(
+        authentication_settings().client_id_interactive.get_secret_value(),
+        scope=authentication_settings().scope_elements,
+        redirect_uri=authentication_settings().redirect_uri,
+        pkce="S256",
+    )
+    authorization_url, _ = session.authorization_url(
+        authentication_settings().authorization_base_url,
+        access_type="offline",
+        audience=authentication_settings().audience,
+    )
 
+    class AuthenticationResult(BaseModel):
+        """Represents the result of an OAuth authentication flow."""
+
+        token: str | None = None
+        error: str | None = None
+
+    authentication_result = AuthenticationResult()
+
+    class OAuthCallbackHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            parsed = parse.urlparse(self.path)
+            query = parse.parse_qs(parsed.query)
+
+            if "code" not in query:
+                self.send_response(400)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(b"Error: No authorization code received")
+                AuthenticationResult.error = "No authorization code received"
+                return
+
+            auth_code = query["code"][0]
+            try:
+                # Exchange code for token
+                token = session.fetch_token(authentication_settings().token_url, code=auth_code, include_client_id=True)
+                # Store the token
+                authentication_result.token = token["access_token"]
+                # Send success response
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(b"""
+                    <html>
+                        <script type="application/javascript">
+                            setTimeout(function() { window.close(); }, 1000);
+                        </script>
+                        <body>
+                            <h1>Authentication Successful!</h1>
+                            <p>You can close this window now.</p>
+                        </body>
+                    </html>
+                """)
+
+            # we want to catch all exceptions here, so we can display them in the browser
+            except Exception as e:  # noqa: BLE001
+                # Display error message in browser
+                self.send_response(500)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(f"Error: {e!s}".encode())
+                authentication_result.error = str(e)
+
+        # Silence server logs
+        def log_message(self, _format: str, *_args) -> None:  # type: ignore[no-untyped-def] # noqa: PLR6301
+            return
+
+    # Create and start the server
+    parsed_redirect = parse.urlparse(authentication_settings().redirect_uri)
+    host, port = parsed_redirect.hostname, parsed_redirect.port
+    if not host or not port:
+        raise RuntimeError(INVALID_REDIRECT_URI)
+    with HTTPServer((host, port), OAuthCallbackHandler) as server:
         # Call Auth0 with challenge and redirect to localhost with code after successful authN
         webbrowser.open_new(authorization_url)
+        # Extract authorization_code from redirected request, see: OAuthCallbackHandler
+        server.handle_request()
 
-        # extract authorization_code from redirected request
-        httpd.handle_request()
+    if authentication_result.error or not authentication_result.token:
+        raise RuntimeError(AUTHENTICATION_FAILED)
 
-        auth_code = httpd.authorization_code
-
-        # exchange authorization_code against access token at Auth0 (prove identity with code_verifier)
-        token_response = session.fetch_token(
-            authentication_settings().token_url, code=auth_code, include_client_id=True
-        )
-        # TODO(Andreas): hhva: Validate response
-        return t.cast("str", token_response["access_token"])
+    return authentication_result.token
 
 
 def _perform_device_flow() -> str | None:
@@ -247,8 +235,7 @@ def _perform_device_flow() -> str | None:
     Raises:
         RuntimeError: If authentication fails or is denied.
     """
-    # TODO(Andreas): hhva: Validate response. How about using Pydantic here?
-    resp: dict[str, str] = requests.post(
+    response = requests.post(
         authentication_settings().device_url,
         data={
             "client_id": authentication_settings().client_id_device.get_secret_value(),
@@ -256,30 +243,46 @@ def _perform_device_flow() -> str | None:
             "audience": authentication_settings().audience,
         },
         timeout=authentication_settings().request_timeout_seconds,
-    ).json()
-    device_code = resp["device_code"]
-    print(f"Please visit: {resp['verification_uri_complete']}")
+    )
+    try:
+        response.raise_for_status()
+        json_response = response.json()
+        device_code = json_response["device_code"]
+        verification_uri = json_response["verification_uri_complete"]
+        user_code = json_response["user_code"]
+        interval = int(json_response["interval"])
+        print(
+            f"Your user code is: {user_code}.\nPlease visit: {verification_uri} and verify the same code is displayed!"
+        )
+
+    except HTTPError as e:
+        raise RuntimeError(AUTHENTICATION_FAILED) from e
 
     # Polling for access token with received device code
     while True:
-        # TODO(Andreas): hhva: Validate response. How about using Pydantic here?
-        resp = requests.post(
-            authentication_settings().token_url,
-            headers={"Accept": "application/json"},
-            data={
-                "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                "device_code": device_code,
-                "client_id": authentication_settings().client_id_device.get_secret_value(),
-            },
-            timeout=authentication_settings().request_timeout_seconds,
-        ).json()
+        try:
+            json_response = requests.post(
+                authentication_settings().token_url,
+                headers={"Accept": "application/json"},
+                data={
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                    "device_code": device_code,
+                    "client_id": authentication_settings().client_id_device.get_secret_value(),
+                },
+                timeout=authentication_settings().request_timeout_seconds,
+            ).json()
+            if "error" in json_response:
+                if json_response["error"] in {"authorization_pending", "slow_down"}:
+                    time.sleep(interval)
+                    continue
+                raise RuntimeError(AUTHENTICATION_FAILED)
 
-        if "error" in resp:
-            if resp["error"] in {"authorization_pending", "slow_down"}:
-                time.sleep(3)
-                continue
-            raise RuntimeError(resp["error"])
-        return resp["access_token"]
+            return t.cast("str", json_response["access_token"])
+        except requests.exceptions.JSONDecodeError as e:
+            # Handle case where response is not JSON
+            raise RuntimeError(AUTHENTICATION_FAILED) from e
+        except HTTPError as e:
+            raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
 def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
@@ -294,8 +297,8 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
     Raises:
         RuntimeError: If token refresh fails.
     """
-    while True:
-        resp = requests.post(
+    try:
+        response = requests.post(
             authentication_settings().token_url,
             headers={"Accept": "application/json"},
             data={
@@ -304,15 +307,8 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
                 "refresh_token": refresh_token.get_secret_value(),
             },
             timeout=authentication_settings().request_timeout_seconds,
-        ).json()
-        if "error" in resp:
-            if resp["error"] in {"authorization_pending", "slow_down"}:
-                time.sleep(authentication_settings().authorization_backoff_seconds)
-                continue
-            raise RuntimeError(resp["error"])
-        return t.cast("str", resp["access_token"])
-
-
-# TODO(Andreas): hhva: Can we remove this?
-if __name__ == "__main__":
-    print(get_token(use_cache=False))
+        )
+        response.raise_for_status()
+        return t.cast("str", response.json()["access_token"])
+    except HTTPError as e:
+        raise RuntimeError(AUTHENTICATION_FAILED) from e

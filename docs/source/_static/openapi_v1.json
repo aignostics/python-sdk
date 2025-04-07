@@ -1131,7 +1131,7 @@
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^\\w+/\\w+(?:[-+.]|\\w)+\\w+$",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
             "title": "Mime Type",
             "examples": [
               "image/tiff"
@@ -1199,7 +1199,7 @@
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^\\w+/\\w+(?:[-+.]|\\w)+\\w+$",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
             "title": "Mime Type",
             "examples": [
               "image/tiff"
@@ -1337,7 +1337,7 @@
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^\\w+/\\w+(?:[-+.]|\\w)+\\w+$",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
             "title": "Mime Type",
             "examples": [
               "application/vnd.apache.parquet"
@@ -1372,7 +1372,7 @@
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^\\w+/\\w+(?:[-+.]|\\w)+\\w+$",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
             "title": "Mime Type",
             "examples": [
               "application/vnd.apache.parquet"
@@ -1408,7 +1408,7 @@
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^\\w+/\\w+(?:[-+.]|\\w)+\\w+$",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
             "title": "Mime Type",
             "examples": [
               "application/vnd.apache.parquet"
