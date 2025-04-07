@@ -9,13 +9,12 @@ __version__ = importlib.metadata.version(__project_name__)
 
 TODO_URL = "https://todo"
 API_ROOT_PRODUCTION = "https://platform.aignostics.com"
-# TODO (Andreas): hhva: please fill in
-AUDIENCE_PRODUCTION = TODO_URL
-AUTHORIZATION_BASE_URL_PRODUCTION = TODO_URL
-TOKEN_URL_PRODUCTION = TODO_URL
-REDIRECT_URI_PRODUCTION = TODO_URL
-DEVICE_URL_PRODUCTION = TODO_URL
-JWS_JSON_URL_PRODUCTION = TODO_URL
+AUDIENCE_PRODUCTION = "https://aignostics-platform-samia"
+AUTHORIZATION_BASE_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/authorize"
+TOKEN_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/oauth/token"  # noqa: S105
+REDIRECT_URI_PRODUCTION = "http://localhost:8080/"
+DEVICE_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/oauth/device/code"
+JWS_JSON_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/.well-known/jwks.json"
 
 API_ROOT_STAGING = "https://platform-staging.aignostics.com"
 # TODO (Andreas): hhva: please fill in
