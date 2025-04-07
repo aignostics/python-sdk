@@ -1,67 +1,74 @@
-Python SDK enabling access to aignostics platform.
-
 ## Introduction
 
-TODO (Helmut): Functionality and features.
+The aignostics Python SDK opens multiple pathways to interact with the
+aignostics platform:
 
-### Operational Excellence
+1. **Run AI applications** such as
+   [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product)
+   directly from your terminal using the **Command Line Interface (CLI)**
+   included in the SDK.
+2. Call applications directly from **Python Noebooks** following the provided
+   examples.
+3. Deeply integrate the platform in your **enterprise systems and workflows**
+   using the Python client provided via the SDK.
 
-TODO (Helmut): Simplify. Focus on earning trust of customers.
+### We take quality and security seriously
 
-The aignostics Python SDK is built with operational excellence, using modern
-Python tooling and practices. This includes:
+We know you take **quality** and **security** as seriously as we do. That's why
+the aignostics Python SDK is built following best practices and with full
+transparency. This includes (1) making the complete
+[source code of the SDK
+available on GitHub](https://github.com/aignostics/python-sdk/), maintaining a
+(2)
+[A-grade code quality](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
+with [high test coverage](https://app.codecov.io/gh/aignostics/python-sdk) in
+all releases, (3) achieving
+[A-grade security](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
+with
+[active scanning of dependencies](https://github.com/aignostics/python-sdk/issues/4),
+and (4) providing
+[extensive documentation](hhttps://aignostics.readthedocs.io/en/latest/). Read
+more about how we achieve
+[quality](https://aignostics.readthedocs.io/en/latest/quality.html) and
+[security](https://aignostics.readthedocs.io/en/latest/security.html).
 
-1. Various examples demonstrating usage: a.
-   [Simple Python script](https://github.com/aignostics/python-sdk/blob/main/examples/script.py)
-   b. [Streamlit web application](https://aignostics.streamlit.app/) deployed on
-   [Streamlit Community Cloud](https://streamlit.io/cloud) c.
-   [Jupyter](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)
-   and
-   [Marimo](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)
-   notebook
-2. [Complete reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html)
-   on Read the Docs
-3. [Transparent test coverage](https://app.codecov.io/gh/aignostics/python-sdk)
-   including unit and E2E tests (reported on Codecov)
-4. Matrix tested with
-   [multiple python versions](https://github.com/aignostics/python-sdk/blob/main/noxfile.py)
-   to ensure compatibility (powered by [Nox](https://nox.thea.codes/en/stable/))
-5. Compliant with modern linting and formatting standards (powered by
-   [Ruff](https://github.com/astral-sh/ruff))
-6. Up-to-date dependencies (monitored by
-   [Renovate](https://github.com/renovatebot/renovate) and
-   [Dependabot](https://github.com/aignostics/python-sdk/security/dependabot))
-7. [A-grade code quality](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-   in security, maintainability, and reliability with low technical debt and
-   codesmell (verified by SonarQube)
-8. Additional code security checks using
-   [CodeQL](https://github.com/aignostics/python-sdk/security/code-scanning)
-9. [Security Policy](SECURITY.md)
-10. [License](LICENSE) compliant with the Open Source Initiative (OSI)
-11. 1-liner for installation and execution of command line interface (CLI) via
-    [uv(x)](https://github.com/astral-sh/uv) or
-    [Docker](https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags)
-12. Setup for developing inside a
-    [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)
-    included (supports VSCode and GitHub Codespaces)
+### Run your first AI workflow in 30 minutes
 
-## Setup
+Go to
+[your personal dashboard on the aignostics platform](https://platform.aignostics.com)
+and scroll to the "Python SDK" section. Copy the personalized install script
+shown in that section, and execute it in your terminal - we support MacOS and
+Linux. This will update or install the [uv package manager](...) and install the
+aignostics Python SDK.
 
-TODO (Helmut): Explain, starting with copy of script on
-https://platform.aignostics.com
+You can now ready to run your first AI workflow directly from your terminal. See
+as follows for a simple example where we download a sample dataset for the Atlas
+H&E-TME application, submit an application run, and download the results.
+
+```shell
+uvx aignostics application dataset download —-app atlas_he_tme —-destination ./my-data/in —-dataset example_1
+uvx aignostics application run submit —-app atlas_he_tme —-source ./my-data/in
+uvx aignostics application run result download –app atlas_he_tme —-run 4711 —-destination ./my-data/out
+```
+
+You will find the output in the `./my-data/out` folder on your local disk, Use
+tools such as [https://qupath.github.io/](https://qupath.github.io/) to inspect
+the analysis results:
+
+1. Open QuPath
+2. TODO (Helmut): Explanation of next steps to come
 
 ## CLI Usage
 
-Executing the command line interface (CLI) in an isolated Python environment is
-just as easy:
+The CLI is installed as part of the SDK. You can run it from your terminal using
+the `uvx` command. See as follows for the primary commands:
 
 ```shell
 uvx aignostics platform health          # checks if CLI and Platform are health
 uvx aignostics platform info            # shows information about the platform
 uvx aignostics application list         # lists AI applications available for the user
+# TODO (Helmut): Explain a bit more.
 ```
-
-Notes:
 
 The CLI provides extensive help:
 
@@ -72,24 +79,23 @@ uvx aignostics application list --help  # help for specific topic
 uvx aignostics serve --help
 ```
 
+Check out our
+[CLI reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html#cli)
+to learn about all commands and options available.
+
 ### Run with Docker
 
-You can as well run the CLI within Docker.
+We recommend to run the CLI natively on your notebook, as explained above. If
+required you can run the CLI as a Docker container:
 
 ```shell
+# TODO (Helmut): Explain about the environment
 docker run helmuthva/aignostics-python-sdk --help
 docker run helmuthva/aignostics-python-sdk platform health
 ```
 
-Execute command:
-
-```shell
-docker run --env THE_VAR=MY_VALUE helmuthva/aignostics-python-sdk platform health
-```
-
-Or use docker compose
-
-The .env is passed through from the host to the Docker container.
+Running via docker compose is supported as well. The .env is passed through from
+the host to the Docker container automatically.
 
 ```shell
 docker compose run aignostics --help
@@ -98,7 +104,7 @@ docker compose run aignostics platform health
 
 ## Library Concepts
 
-Adding Aignostics Python SDK to your project as a dependency is easy. See below
+Adding Aignostics Python SDK to your codebase as a dependency is easy. See below
 for usage examples.
 
 ```shell
@@ -119,6 +125,8 @@ The following examples run from source - clone this repository using
 
 ### Minimal Python Script:
 
+TODO(Andreas): Update the content below, which comes from oe-python-template:
+
 ```python
 """Example script demonstrating the usage of the service provided by Aignostics Python SDK."""
 
@@ -136,9 +144,14 @@ console.print(f"[blue]{message}[/blue]")
 ```
 
 [Show script code](https://github.com/aignostics/python-sdk/blob/main/examples/script.py) -
-[Read the reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html)
+
+Read the
+[client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
+to learn about all classes and methods.
 
 ## Use in Notebooks
+
+TODO(Andreas): Update the content below, which comes from oe-python-template:
 
 ### Jupyter
 
@@ -180,7 +193,3 @@ Install the
 
 Click on `examples/notebook.py` in VSCode and click on the caret next to the Run
 icon above the code (looks like a pencil) > "Start in marimo editor" (edit).
-
-## API Concepts
-
-TODO (Andreas): Explain API concepts, such as authentication, resources etc..

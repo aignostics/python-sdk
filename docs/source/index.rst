@@ -11,16 +11,15 @@
    :maxdepth: 2
 
    main
-   api_explorer_v1
    cli_reference
    lib_reference
+   api_explorer_v1
    api_reference_v1
-   contributing
-   code-style
-   release-notes
+   quality
    security
    license
    attributions
+   release-notes
 
 .. sidebar-links::
    :caption: Links
