@@ -52,7 +52,7 @@ aignostics platform:
    [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product)
    directly from your terminal using the **Command Line Interface (CLI)**
    included in the SDK.
-2. Call applications directly from **Python Noebooks** following the provided
+2. Call applications directly from **Python Notebooks** following the provided
    examples.
 3. Deeply integrate the platform in your **enterprise systems and workflows**
    using the Python client provided via the SDK.
