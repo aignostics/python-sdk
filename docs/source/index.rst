@@ -25,11 +25,12 @@
 .. sidebar-links::
    :caption: Links
    :github:
-   :pypi: {{ pypi_distribution_name }}
-   Docker <https://hub.docker.com/r/{{ docker_io_owner }}/{{ docker_io_image_name }}/tags>
-   ghcr.io <{{ github_repository_url_https }}/pkgs/container/{{ github_repository_name }}>
-   SonarQube <https://sonarcloud.io/summary/new_code?id={{ sonarqube_key }}>
-   Codecov <https://app.codecov.io/gh/{{ github_repository_owner }}/{{ github_repository_name }}>
+   :pypi: aignostics
+
+   Docker <https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags>
+   ghcr.io <https://github.com/aignostics/python-sdk/pkgs/container/python-sdk>
+   SonarQube <https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk>
+   Codecov <https://app.codecov.io/gh/aignostics/python-sdk>
 
 .. only:: html
 

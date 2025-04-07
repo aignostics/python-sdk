@@ -266,13 +266,9 @@ markers = [
     "no_extras: tests that do require no extras installed",
     "scheduled: tests to run on a schedule",
     "sequential: exclude from parallel test execution",
-    "skip_with_act: skip test if act is used",
+    "skip_with_act: don't run with act",
     # Custom
     # Nothing yet
-    "description: textual description what the test does, goes in `description` field in the Jira ticket - optional",
-    "labels: mark test with labels that are attached to the test tickets in Jira - optional; comma-separated",
-    "requirements: mark tests with ids (e.g., PAPI-123, HETA-123) of requirements in Jira. The test will be linked to them - optional; comma-separated",
-    "specifications: mark test with ids (e.g., PAPI-123, HETA-123) of specifications in Jira. The test will be linked to them - optional; comma-separated",
 ]
 
 [tool.coverage.run]

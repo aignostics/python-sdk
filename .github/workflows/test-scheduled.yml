@@ -26,17 +26,11 @@ jobs:
       - name: Install Python, venv and dependencies
         run: uv sync --all-extras --frozen --link-mode=copy
 
-      - name: Set up cloud credentials & environment file
-        env:
-          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-        run: |
-          echo "$CREDENTIALS" | base64 -d > credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+      - name: Create .env file
+        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
+        with:
+          envkey_ENV_KEY: "ENV_VALUE"
+          fail_on_empty: true
 
-      - name: Run tests marked as scheduled
-        env:
-          AIGNOSTICS_API_ROOT: https://platform-dev.aignostics.com
-          AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
-          AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
-          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+      - name: Run scheduled tests
         run: make test_scheduled
