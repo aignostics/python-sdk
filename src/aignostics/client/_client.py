@@ -3,7 +3,7 @@ from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
 
 from aignostics.client._authentication import get_token
-from aignostics.client.resources.applications import Applications, Versions
+from aignostics.client.resources.applications import Applications
 from aignostics.client.resources.runs import Runs
 
 from ._settings import authentication_settings
@@ -27,7 +27,6 @@ class Client:
         """
         self._api = Client.get_api_client(cache_token=cache_token)
         self.applications: Applications = Applications(self._api)
-        self.versions: Versions = Versions(self._api)
         self.runs: Runs = Runs(self._api)
 
     @staticmethod

@@ -82,7 +82,7 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
         raise ValueError(msg)
 
 
-def _generate_signed_url(fully_qualified_gs_path: str) -> str:
+def generate_signed_url(fully_qualified_gs_path: str) -> str:
     """Generates a signed URL for a Google Cloud Storage object.
 
     Args:

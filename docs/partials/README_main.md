@@ -83,6 +83,58 @@ Check out our
 [CLI reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html#cli)
 to learn about all commands and options available.
 
+## Using the Python SDK in your Codebase
+
+The following sections showcase how you can integrate the Python SDK in your codebase.
+
+### Installation
+
+Adding Aignostics Python SDK to your codebase as a dependency is easy. 
+You can directly import add the dependency via your favourite package manager, 
+e.g., [pip](https://pip.pypa.io/en/stable/) or [uv](https://docs.astral.sh/uv/).
+
+**Install via uv** -- If you don't have uv installed follow [these instructions](https://docs.astral.sh/uv/getting-started/installation/).
+```shell
+uv add aignostics                       # add SDK as dependency to your project
+```
+
+**Install via pip**
+```shell
+pip install aignostics                  # add SDK as dependency to your project
+```
+
+### Usage
+
+Read the [client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html) to learn about all classes and methods.
+
+The following snippets showcase the basic code to run an application with the Python SDK. 
+A more detailed example - including comments - is available in the `examples` folder as Python notebooks: 
+[examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb) (IPython) 
+[examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py) (Marimo).
+
+```python
+import aignostics.client
+from aignx.codegen.models import (
+    ApplicationVersion,
+    RunCreationRequest,
+    ItemCreationRequest
+)
+
+# initialize the client
+client = aignostics.client.Client()
+# trigger an application run
+application_run = client.runs.create(
+    RunCreationRequest(
+        application_version=ApplicationVersion("..."),
+        items=[
+           ItemCreationRequest(...)
+        ],
+    )
+)
+# wait for the results and download incrementally as they become available
+application_run.download_to_folder("path/to/download/folder")
+```
+
 ### Run with Docker
 
 We recommend to run the CLI natively on your notebook, as explained above. If
@@ -101,95 +153,3 @@ the host to the Docker container automatically.
 docker compose run aignostics --help
 docker compose run aignostics platform health
 ```
-
-## Library Concepts
-
-Adding Aignostics Python SDK to your codebase as a dependency is easy. See below
-for usage examples.
-
-```shell
-uv add aignostics                       # add SDK as dependency to your project
-```
-
-If you don't have uv installed follow
-[these instructions](https://docs.astral.sh/uv/getting-started/installation/).
-If you still prefer pip over the modern and fast package manager
-[uv](https://github.com/astral-sh/uv), you can install the library like this:
-
-```shell
-pip install aignostics                  # add SDK as dependency to your project
-```
-
-The following examples run from source - clone this repository using
-`git clone git@github.com:aignostics/python-sdk.git`.
-
-### Minimal Python Script:
-
-TODO(Andreas): Update the content below, which comes from oe-python-template:
-
-```python
-"""Example script demonstrating the usage of the service provided by Aignostics Python SDK."""
-
-from dotenv import load_dotenv
-from rich.console import Console
-
-from aignostics import Service
-
-console = Console()
-
-load_dotenv()
-
-message = Service.get_hello_world()
-console.print(f"[blue]{message}[/blue]")
-```
-
-[Show script code](https://github.com/aignostics/python-sdk/blob/main/examples/script.py) -
-
-Read the
-[client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
-to learn about all classes and methods.
-
-## Use in Notebooks
-
-TODO(Andreas): Update the content below, which comes from oe-python-template:
-
-### Jupyter
-
-[Show the Jupyter code](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)
-
-... or run within VSCode
-
-```shell
-uv sync --all-extras                                # Install dependencies required for examples such as Juypyter kernel, see pyproject.toml
-```
-
-Install the
-[Jupyter extension for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
-
-Click on `examples/notebook.ipynb` in VSCode and run it.
-
-### Marimo
-
-[Show the marimo code](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)
-
-Execute the notebook as a WASM based web app
-
-```shell
-uv sync --all-extras                                # Install ipykernel dependency part of the examples extra, see pyproject.toml
-uv run marimo run examples/notebook.py --watch      # Serve on localhost:2718, opens browser
-```
-
-or edit interactively in your browser
-
-```shell
-uv sync --all-extras                                # Install ipykernel dependency part of the examples extra, see pyproject.toml
-uv run marimo edit examples/notebook.py --watch     # Edit on localhost:2718, opens browser
-```
-
-... or edit interactively within VSCode
-
-Install the
-[Marimo extension for VSCode](https://marketplace.visualstudio.com/items?itemName=marimo-team.vscode-marimo)
-
-Click on `examples/notebook.py` in VSCode and click on the caret next to the Run
-icon above the code (looks like a pencil) > "Start in marimo editor" (edit).

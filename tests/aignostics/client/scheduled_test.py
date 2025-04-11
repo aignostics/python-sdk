@@ -19,7 +19,7 @@ from aignx.codegen.models import (
 )
 
 import aignostics.client
-from aignostics.client.utils import _generate_signed_url, calculate_file_crc32c, mime_type_to_file_ending
+from aignostics.client.utils import calculate_file_crc32c, generate_signed_url, mime_type_to_file_ending
 
 
 def three_spots_payload() -> list[ItemCreationRequest]:
@@ -30,7 +30,7 @@ def three_spots_payload() -> list[ItemCreationRequest]:
             input_artifacts=[
                 InputArtifactCreationRequest(
                     name="user_slide",
-                    download_url=_generate_signed_url(
+                    download_url=generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
                     ),
                     metadata={
@@ -47,7 +47,7 @@ def three_spots_payload() -> list[ItemCreationRequest]:
             input_artifacts=[
                 InputArtifactCreationRequest(
                     name="user_slide",
-                    download_url=_generate_signed_url(
+                    download_url=generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
                     ),
                     metadata={
@@ -64,7 +64,7 @@ def three_spots_payload() -> list[ItemCreationRequest]:
             input_artifacts=[
                 InputArtifactCreationRequest(
                     name="user_slide",
-                    download_url=_generate_signed_url(
+                    download_url=generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
                     ),
                     metadata={
