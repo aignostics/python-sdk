@@ -26,6 +26,13 @@ jobs:
       - name: Install Python, venv and dependencies
         run: uv sync --all-extras --frozen --link-mode=copy
 
+      - name: Set up cloud credentials & environment file
+        env:
+          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+        run: |
+          echo "$CREDENTIALS" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+
       - name: Run scheduled tests
         env:
           AIGNOSTICS_API_ROOT: https://platform.aignostics.com
