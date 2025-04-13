@@ -1,5 +1,6 @@
 """Tests for the authentication module of the Aignostics Python SDK."""
 
+import socket
 import time
 import webbrowser
 from datetime import UTC, datetime, timedelta
@@ -14,6 +15,7 @@ from requests_oauthlib import OAuth2Session
 from aignostics.client._authentication import (
     _authenticate,
     _can_open_browser,
+    _ensure_local_port_is_available,
     _perform_authorization_code_with_pkce_flow,
     _perform_device_flow,
     get_token,
@@ -168,7 +170,7 @@ class TestGetToken:
         with patch(
             "aignostics.client._authentication._token_from_refresh_token", return_value="refreshed.token"
         ) as mock_refresh:
-            token = _authenticate()
+            token = _authenticate(use_device_flow=False)
             assert token == "refreshed.token"  # noqa: S105 - Test credential
             mock_refresh.assert_called_once_with(mock_settings.return_value.refresh_token)
 
@@ -184,7 +186,7 @@ class TestGetToken:
                 return_value="browser.token",
             ) as mock_browser,
         ):
-            token = _authenticate()
+            token = _authenticate(use_device_flow=False)
             assert token == "browser.token"  # noqa: S105 - Test credential
             mock_browser.assert_called_once()
 
@@ -197,7 +199,7 @@ class TestGetToken:
             patch("aignostics.client._authentication._can_open_browser", return_value=False),
             patch("aignostics.client._authentication._perform_device_flow", return_value="device.token") as mock_device,
         ):
-            token = _authenticate()
+            token = _authenticate(use_device_flow=True)
             assert token == "device.token"  # noqa: S105 - Test credential
             mock_device.assert_called_once()
 
@@ -211,7 +213,7 @@ class TestGetToken:
             patch("aignostics.client._authentication._perform_device_flow", return_value=None),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED),
         ):
-            _authenticate()
+            _authenticate(use_device_flow=True)
 
 
 class TestVerifyAndDecodeToken:
@@ -430,3 +432,29 @@ class TestDeviceFlow:
             assert mock_post.call_count == 2
             mock_print.assert_called_once()  # Verify we printed instructions
             mock_sleep.assert_not_called()  # We didn't have to poll in our test
+
+
+class TestPortAvailability:
+    """Test cases for checking port availability."""
+
+    @staticmethod
+    def test_port_available() -> None:
+        """Test that _ensure_local_port_is_available returns True when the port is available."""
+        with patch("socket.socket.bind", return_value=None) as mock_bind:
+            assert _ensure_local_port_is_available(8000) is True
+            mock_bind.assert_called_once()
+
+    @staticmethod
+    def test_port_unavailable() -> None:
+        """Test that _ensure_local_port_is_available returns False when the port is unavailable."""
+        with patch("socket.socket.bind", side_effect=socket.error) as mock_bind:
+            assert _ensure_local_port_is_available(8000) is False
+            mock_bind.assert_called()
+
+    @staticmethod
+    def test_port_retries() -> None:
+        """Test that _ensure_local_port_is_available retries the specified number of times."""
+        with patch("socket.socket.bind", side_effect=socket.error) as mock_bind, patch("time.sleep") as mock_sleep:
+            assert _ensure_local_port_is_available(8000, max_retries=3) is False
+            assert mock_bind.call_count == 4  # Initial attempt + 3 retries
+            assert mock_sleep.call_count == 3

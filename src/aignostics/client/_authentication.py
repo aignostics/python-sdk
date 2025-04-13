@@ -1,3 +1,5 @@
+import errno
+import socket
 import time
 import typing as t
 import webbrowser
@@ -12,8 +14,10 @@ import requests
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
-from ._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
-from ._settings import authentication_settings
+from aignostics.client._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
+from aignostics.client._settings import authentication_settings
+
+CALLBACK_PORT_RETRY_COUNT = 5
 
 
 class AuthenticationResult(BaseModel):
@@ -23,12 +27,13 @@ class AuthenticationResult(BaseModel):
     error: str | None = None
 
 
-def get_token(use_cache: bool = True) -> str:
+def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
     """Retrieves an authentication token, either from cache or via login.
 
     Args:
         use_cache: Boolean indicating whether to store & use the token from disk cache.
             Defaults to True.
+        use_device_flow: Boolean indicating whether to force the usage of the device flow for authentication.
 
     Returns:
         str: The JWT access token.
@@ -51,7 +56,7 @@ def get_token(use_cache: bool = True) -> str:
     # 1. Do not want to use the cached token
     # 2. The cached token is expired
     # 3. No token was cached yet
-    new_token = _authenticate()
+    new_token = _authenticate(use_device_flow)
     claims = verify_and_decode_token(new_token)
 
     # Store new token with expiry
@@ -63,11 +68,14 @@ def get_token(use_cache: bool = True) -> str:
     return new_token
 
 
-def _authenticate() -> str:
+def _authenticate(use_device_flow: bool) -> str:
     """Allows the user to authenticate and obtain an access token.
 
     Determines the appropriate authentication flow based on whether
     a browser can be opened, then executes that flow.
+
+    Args:
+        use_device_flow: Boolean indicating whether to force the usage of the device flow for authentication.
 
     Returns:
         str: The JWT access token.
@@ -78,7 +86,7 @@ def _authenticate() -> str:
     """
     if refresh_token := authentication_settings().refresh_token:
         token = _token_from_refresh_token(refresh_token)
-    elif _can_open_browser():
+    elif _can_open_browser() and not use_device_flow:
         token = _perform_authorization_code_with_pkce_flow()
     else:
         token = _perform_device_flow()
@@ -208,11 +216,21 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     host, port = parsed_redirect.hostname, parsed_redirect.port
     if not host or not port:
         raise RuntimeError(INVALID_REDIRECT_URI)
-    with HTTPServer((host, port), OAuthCallbackHandler) as server:
-        # Call Auth0 with challenge and redirect to localhost with code after successful authN
-        webbrowser.open_new(authorization_url)
-        # Extract authorization_code from redirected request, see: OAuthCallbackHandler
-        server.handle_request()
+    # check if port is callback port is available
+    port_unavailable_msg = f"Port {port} is already in use. Free the port, or use the device flow."
+    if not _ensure_local_port_is_available(port):
+        raise RuntimeError(port_unavailable_msg)
+    # start the server
+    try:
+        with HTTPServer((host, port), OAuthCallbackHandler) as server:
+            # Call Auth0 with challenge and redirect to localhost with code after successful authN
+            webbrowser.open_new(authorization_url)
+            # Extract authorization_code from redirected request, see: OAuthCallbackHandler
+            server.handle_request()
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            raise RuntimeError(port_unavailable_msg) from e
+        raise RuntimeError(AUTHENTICATION_FAILED) from e
 
     if authentication_result.error or not authentication_result.token:
         raise RuntimeError(AUTHENTICATION_FAILED)
@@ -309,3 +327,30 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
         return t.cast("str", response.json()["access_token"])
     except (HTTPError, requests.exceptions.RequestException) as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
+
+
+def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_RETRY_COUNT) -> bool:
+    """Check if a port is already in use.
+
+    Args:
+        port: int The port number to check.
+        max_retries: int The maximum number of retries to check the port.
+
+    Returns:
+        bool: True if the port is not in use, False otherwise.
+    """
+
+    def is_port_available() -> bool:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("localhost", port))
+                return True
+            except OSError:
+                return False
+
+    retry_count = 0
+    while not is_port_available() and retry_count < max_retries:
+        time.sleep(1)
+        print("try")
+        retry_count += 1
+    return retry_count < max_retries
