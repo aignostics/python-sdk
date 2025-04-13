@@ -7,7 +7,7 @@ verifying their functionality for listing applications and application versions.
 from unittest.mock import Mock, call
 
 import pytest
-from aignx.codegen.api.externals_api import ExternalsApi
+from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import ApplicationVersionReadResponse
 from aignx.codegen.models.application_read_response import ApplicationReadResponse
 
@@ -24,7 +24,7 @@ def mock_api() -> Mock:
     Returns:
         Mock: A mock instance of ExternalsApi.
     """
-    return Mock(spec=ExternalsApi)
+    return Mock(spec=PublicApi)
 
 
 @pytest.fixture
@@ -89,7 +89,7 @@ def test_versions_list_with_pagination(mock_api) -> None:
     mock_api.list_versions_by_application_id_v1_applications_application_id_versions_get.side_effect = [page1, page2]
 
     # Act
-    result = list(versions.list(for_application=mock_app))
+    result = list(versions.list(application=mock_app))
 
     # Assert
     assert len(result) == PAGE_SIZE + 5
@@ -198,7 +198,7 @@ def test_versions_list_returns_versions_for_application(mock_api) -> None:
     mock_api.list_versions_by_application_id_v1_applications_application_id_versions_get.return_value = [mock_version]
 
     # Act
-    result = list(versions.list(for_application=mock_app))
+    result = list(versions.list(application=mock_app))
 
     # Assert
     assert len(result) == 1
@@ -224,7 +224,7 @@ def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
     mock_api.list_versions_by_application_id_v1_applications_application_id_versions_get.return_value = []
 
     # Act
-    result = list(versions.list(for_application=mock_app))
+    result = list(versions.list(application=mock_app))
 
     # Assert
     assert len(result) == 0
@@ -252,4 +252,4 @@ def test_versions_list_passes_through_api_exception(mock_api) -> None:
 
     # Act & Assert
     with pytest.raises(Exception, match=API_ERROR):
-        list(versions.list(for_application=mock_app))
+        list(versions.list(application=mock_app))

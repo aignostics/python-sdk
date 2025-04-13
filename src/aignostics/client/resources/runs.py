@@ -4,21 +4,22 @@ This module provides classes for creating and managing application runs on the A
 It includes functionality for starting runs, monitoring status, and downloading results.
 """
 
-import json
 import typing as t
+from collections.abc import Generator
 from pathlib import Path
 from time import sleep
+from typing import Any
 
-from aignx.codegen.api.externals_api import ExternalsApi
+from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import (
     ApplicationRunStatus,
+    ItemCreationRequest,
     ItemResultReadResponse,
     ItemStatus,
     RunCreationRequest,
     RunCreationResponse,
     RunReadResponse,
 )
-from jsf import JSF
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
@@ -33,7 +34,7 @@ class ApplicationRun:
     Provides operations to check status, retrieve results, and download artifacts.
     """
 
-    def __init__(self, api: ExternalsApi, application_run_id: str) -> None:
+    def __init__(self, api: PublicApi, application_run_id: str) -> None:
         """Initializes an ApplicationRun instance.
 
         Args:
@@ -89,7 +90,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        self._api.cancel_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
+        self._api.cancel_application_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
 
     def results(self) -> t.Iterator[ItemResultReadResponse]:
         """Retrieves the results of all items in the run.
@@ -214,7 +215,7 @@ class Runs:
     Provides operations to create, list, and retrieve runs.
     """
 
-    def __init__(self, api: ExternalsApi) -> None:
+    def __init__(self, api: PublicApi) -> None:
         """Initializes the Runs resource with the API client.
 
         Args:
@@ -233,11 +234,12 @@ class Runs:
         """
         return ApplicationRun(self._api, application_run_id)
 
-    def create(self, payload: RunCreationRequest) -> ApplicationRun:
+    def create(self, application_version: str, items: list[ItemCreationRequest]) -> ApplicationRun:
         """Creates a new application run.
 
         Args:
-            payload: The run creation request payload.
+            application_version: The ID of the application version.
+            items: The run creation request payload.
 
         Returns:
             ApplicationRun: The created application run.
@@ -246,26 +248,15 @@ class Runs:
             ValueError: If the payload is invalid.
             Exception: If the API request fails.
         """
+        payload = RunCreationRequest(
+            application_version_id=application_version,
+            items=items,
+        )
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
         return ApplicationRun(self._api, res.application_run_id)
 
-    @staticmethod
-    def generate_example_payload(_application_version_id: str) -> None:
-        """Generates an example payload for creating a run.
-
-        Args:
-            _application_version_id: The ID of the application version.
-
-        Raises:
-            Exception: If the API request fails.
-        """
-        schema = RunCreationRequest.model_json_schema()
-        faker = JSF(schema)
-        example = faker.generate()
-        print(json.dumps(example, indent=2))
-
-    def list(self, for_application_version: str | None = None) -> t.Generator[ApplicationRun, t.Any, None]:
+    def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
         """Lists application runs, optionally filtered by application version.
 
         Args:
@@ -297,9 +288,7 @@ class Runs:
             Exception: If the API request fails.
         """
         # validate metadata based on schema of application version
-        app_version = Versions(self._api).details(
-            for_application_version_id=payload.application_version.actual_instance
-        )
+        app_version = Versions(self._api).details(application_version=payload.application_version_id)
         schema_idx = {
             input_artifact.name: input_artifact.metadata_schema for input_artifact in app_version.input_artifacts
         }

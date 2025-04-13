@@ -45,9 +45,6 @@
 ---
 
 
-from aignx.codegen.models import ItemCreationRequestfrom aignx.codegen.models
-import ItemCreationRequestfrom aignx.codegen.models import RunCreationRequest
-
 ## Introduction
 
 The aignostics Python SDK opens multiple pathways to interact with the
@@ -188,23 +185,30 @@ pip install aignostics
 The following snippet shows how to use the Python SDK to trigger an application run:
 
 ```python
-import aignostics.client
-from aignx.codegen.models import (
-    ApplicationVersion,
-    RunCreationRequest,
-    ItemCreationRequest
-)
+import aignostics.client as platform
 
 # initialize the client
-client = aignostics.client.Client()
+client = platform.Client()
 # trigger an application run
 application_run = client.runs.create(
-    RunCreationRequest(
-        application_version=ApplicationVersion("..."),
-        items=[
-           ItemCreationRequest(...)
-        ],
-    )
+     application_version="two-task-dummy:v0.35.0",
+     items=[
+         platform.Item(
+             reference="slide-1",
+             input_artifacts=[
+                 platform.InputArtifact(
+                     name="user_slide",
+                     download_url="<a signed url to download the data>",
+                     metadata={
+                         "checksum_crc32c": "AAAAAA==",
+                         "base_mpp": 0.25,
+                         "width": 1000,
+                         "height": 1000,
+                     },
+                 )
+             ],
+         ),
+     ],
 )
 # wait for the results and download incrementally as they become available
 application_run.download_to_folder("path/to/download/folder")

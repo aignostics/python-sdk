@@ -1,22 +1,29 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "PAPI API Reference",
+    "title": "Aignostics Platform API reference",
+    "description": "\nPagination is done via `page` and `page_size`. Sorting via `sort` query parameter.\nThe `sort` query parameter can be provided multiple times. The sorting direction can be indicated via\n`+` (ascending) or `-` (descending) (e.g. `/v1/applications?sort=+name)`.",
     "version": "1.0.0"
   },
   "servers": [
     {
-      "url": ""
+      "url": "/api"
     }
   ],
   "paths": {
     "/v1/applications": {
       "get": {
         "tags": [
-          "Externals"
+          "Public"
         ],
         "summary": "List Applications",
+        "description": "Returns the list of the applications, available to the caller.\n\nThe application is available if any of the version of the application is assigned to the\nuser organization. To switch between organizations, the user should re-login and choose the\nneeded organization.",
         "operationId": "list_applications_v1_applications_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "page",
@@ -89,577 +96,19 @@
         }
       }
     },
-    "/v1/applications/{application_slug}": {
-      "get": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "Read Application By Slug",
-        "operationId": "read_application_by_slug_v1_applications__application_slug__get",
-        "parameters": [
-          {
-            "name": "application_slug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Application Slug"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApplicationReadResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/runs": {
-      "get": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "List Application Runs",
-        "operationId": "list_application_runs_v1_runs_get",
-        "parameters": [
-          {
-            "name": "application_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Application Id"
-            }
-          },
-          {
-            "name": "application_version_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Application Version Id"
-            }
-          },
-          {
-            "name": "include",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "minItems": 1,
-                  "maxItems": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Include"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 5,
-              "default": 50,
-              "title": "Page Size"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Sort"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RunReadResponse"
-                  },
-                  "title": "Response List Application Runs V1 Runs Get"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Application run not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "Create Application Run",
-        "operationId": "create_application_run_v1_runs_post",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RunCreationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RunCreationResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Application run not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/runs/{application_run_id}": {
-      "get": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "Get Run",
-        "operationId": "get_run_v1_runs__application_run_id__get",
-        "parameters": [
-          {
-            "name": "application_run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Application Run Id"
-            }
-          },
-          {
-            "name": "include",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "minItems": 1,
-                  "maxItems": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Include"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RunReadResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Application run not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/runs/{application_run_id}/cancel": {
-      "post": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "Cancel Run",
-        "operationId": "cancel_run_v1_runs__application_run_id__cancel_post",
-        "parameters": [
-          {
-            "name": "application_run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Application Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "404": {
-            "description": "Application run not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/runs/{application_run_id}/results": {
-      "get": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "List Run Results",
-        "operationId": "list_run_results_v1_runs__application_run_id__results_get",
-        "parameters": [
-          {
-            "name": "application_run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Application Run Id"
-            }
-          },
-          {
-            "name": "item_id__in",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Item Id  In"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 5,
-              "default": 50,
-              "title": "Page Size"
-            }
-          },
-          {
-            "name": "reference__in",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Reference  In"
-            }
-          },
-          {
-            "name": "status__in",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ItemStatus"
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Status  In"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Sort"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ItemResultReadResponse"
-                  },
-                  "title": "Response List Run Results V1 Runs  Application Run Id  Results Get"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Application run not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "Delete Run Results",
-        "operationId": "delete_run_results_v1_runs__application_run_id__results_delete",
-        "parameters": [
-          {
-            "name": "application_run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Application Run Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "404": {
-            "description": "Application run not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/versions": {
-      "post": {
-        "tags": [
-          "Externals"
-        ],
-        "summary": "Register Version",
-        "operationId": "register_version_v1_versions_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VersionCreationRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VersionCreationResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/applications/{application_id}/versions": {
       "get": {
         "tags": [
-          "Externals"
+          "Public"
         ],
         "summary": "List Versions By Application Id",
+        "description": "Returns the list of the application versions for this application, available to the caller.\n\nThe application version is available if it is assigned to the user's organization.\n\nThe application versions are assigned to the organization by the Aignostics admin. To\nassign or unassign a version from your organization, please contact Aignostics support team.",
         "operationId": "list_versions_by_application_id_v1_applications__application_id__versions_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "application_id",
@@ -667,7 +116,6 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
               "title": "Application Id"
             }
           },
@@ -781,23 +229,80 @@
         }
       }
     },
-    "/v1/applications/{application_slug}/versions": {
+    "/v1/runs": {
       "get": {
         "tags": [
-          "Externals"
+          "Public"
         ],
-        "summary": "List Versions By Application Slug",
-        "operationId": "list_versions_by_application_slug_v1_applications__application_slug__versions_get",
+        "summary": "List Application Runs",
+        "description": "The endpoint returns the application runs triggered by the caller. After the application run\nis created by POST /v1/runs, it becomes available for the current endpoint",
+        "operationId": "list_application_runs_v1_runs_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "application_slug",
-            "in": "path",
-            "required": true,
+            "name": "application_id",
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": "string",
-              "pattern": "^[a-z](-?[a-z])*$",
-              "title": "Application Slug"
-            }
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional application ID filter",
+              "title": "Application Id"
+            },
+            "description": "Optional application ID filter"
+          },
+          {
+            "name": "application_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional application version filter",
+              "title": "Application Version"
+            },
+            "description": "Optional application version filter"
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "minItems": 1,
+                  "maxItems": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Request optional output values. Used internally by the platform",
+              "title": "Include"
+            },
+            "description": "Request optional output values. Used internally by the platform"
           },
           {
             "name": "page",
@@ -820,45 +325,6 @@
               "minimum": 5,
               "default": 50,
               "title": "Page Size"
-            }
-          },
-          {
-            "name": "version",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Version"
-            }
-          },
-          {
-            "name": "include",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "minItems": 1,
-                  "maxItems": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Include"
             }
           },
           {
@@ -889,12 +355,63 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ApplicationVersionReadResponse"
+                    "$ref": "#/components/schemas/RunReadResponse"
                   },
-                  "title": "Response List Versions By Application Slug V1 Applications  Application Slug  Versions Get"
+                  "title": "Response List Application Runs V1 Runs Get"
                 }
               }
             }
+          },
+          "404": {
+            "description": "Application run not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Create Application Run",
+        "description": "The endpoint is used to process the input items by the chosen application version. The endpoint\nreturns the `application_run_id`. The processing fo the items is done asynchronously.\n\nTo check the status or cancel the execution, use the /v1/runs/{application_run_id} endpoint.\n\n### Payload\n\nThe payload includes `application_version_id` and `items` base fields.\n\n`application_version_id` is the id used for `/v1/versions/{application_id}` endpoint.\n\n`items` includes the list of the items to process (slides, in case of HETA application).\nEvery item has a set of standard fields defined by the API, plus the metadata, specific to the\nchosen application.\n\nExample payload structure with the comments:\n```\n{\n    application_version_id: \"heta:v1.0.0\",\n    items: [{\n        \"reference\": \"slide_1\"  <-- Input ID to connect the input and the output artifact\n        \"input_artifacts\": [{\n            \"name\": \"input_slide\"  <-- Name of the artifact defined by the application (For HETA it is\"input_slide\")\n            \"download_url\": \"https://...\" <-- signed URL to the input file in the S3 or GCS. Should be valid for more than 6 days\n            \"metadata\": { <-- The metadata fields defined by the application. (The example fields set for a slide files are provided)\n                \"checksum_crc32c\": \"abc12==\",\n                \"mime_type\": \"image/tiff\",\n                \"height\": 100,\n                \"weight\": 500,\n                \"mpp\": 0.543\n            }\n        }]\n    }]\n}\n```\n\n### Response\n\nThe endpoint returns the application run UUID. After that the job is scheduled for the\nexecution in the background.\n\nTo check the status of the run call `v1/runs/{application_run_id}`.\n\n### Rejection\n\nApart from the authentication, authorization and malformed input error, the request can be\nrejected when the quota limit is exceeded. More details on quotas is described in the\ndocumentation",
+        "operationId": "create_application_run_v1_runs_post",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCreationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunCreationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Application run not found"
           },
           "422": {
             "description": "Validation Error",
@@ -909,23 +426,31 @@
         }
       }
     },
-    "/v1/versions/{application_version_id}": {
+    "/v1/runs/{application_run_id}": {
       "get": {
         "tags": [
-          "Externals"
+          "Public"
         ],
-        "summary": "Get Version",
-        "operationId": "get_version_v1_versions__application_version_id__get",
+        "summary": "Get Run",
+        "description": "Returns the details of the application run. The application run is available as soon as it is\ncreated via `POST /runs/` endpoint. To download the items results, call\n`/runs/{application_run_id}/results`.\n\nThe application is only available to the user who triggered it, regardless of the role.",
+        "operationId": "get_run_v1_runs__application_run_id__get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "application_version_id",
+            "name": "application_run_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Application Version Id"
-            }
+              "description": "Application run id, returned by `POST /runs/` endpoint",
+              "title": "Application Run Id"
+            },
+            "description": "Application run id, returned by `POST /runs/` endpoint"
           },
           {
             "name": "include",
@@ -957,10 +482,274 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VersionReadResponse"
+                  "$ref": "#/components/schemas/RunReadResponse"
                 }
               }
             }
+          },
+          "404": {
+            "description": "Application run not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{application_run_id}/cancel": {
+      "post": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Cancel Application Run",
+        "description": "The application run can be canceled by the user who created the application run.\n\nThe execution can be canceled any time while the application is not in a final state. The\npending items will not be processed and will not add to the cost.\n\nWhen the application is canceled, the already completed items stay available for download.",
+        "operationId": "cancel_application_run_v1_runs__application_run_id__cancel_post",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Application run id, returned by `POST /runs/` endpoint",
+              "title": "Application Run Id"
+            },
+            "description": "Application run id, returned by `POST /runs/` endpoint"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Application run not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{application_run_id}/results": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "List Run Results",
+        "description": "Get the list of the results for the run items",
+        "operationId": "list_run_results_v1_runs__application_run_id__results_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Application run id, returned by `POST /runs/` endpoint",
+              "title": "Application Run Id"
+            },
+            "description": "Application run id, returned by `POST /runs/` endpoint"
+          },
+          {
+            "name": "item_id__in",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for items ids",
+              "title": "Item Id  In"
+            },
+            "description": "Filter for items ids"
+          },
+          {
+            "name": "reference__in",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for items by their reference from the input payload",
+              "title": "Reference  In"
+            },
+            "description": "Filter for items by their reference from the input payload"
+          },
+          {
+            "name": "status__in",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemStatus"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter for items in certain statuses",
+              "title": "Status  In"
+            },
+            "description": "Filter for items in certain statuses"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 5,
+              "default": 50,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sort"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemResultReadResponse"
+                  },
+                  "title": "Response List Run Results V1 Runs  Application Run Id  Results Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Application run not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Delete Application Run Results",
+        "description": "Delete the application run results. It can only be called when the application is in a final\nstate (meaning it's not in `received` or `pending` states). To delete the results of the running\nartifacts, first call `POST /v1/runs/{application_run_id}/cancel` to cancel the application run.\n\nThe output results are deleted automatically 30 days after the application run is finished.",
+        "operationId": "delete_application_run_results_v1_runs__application_run_id__results_delete",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Application run id, returned by `POST /runs/` endpoint",
+              "title": "Application Run Id"
+            },
+            "description": "Application run id, returned by `POST /runs/` endpoint"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Application run not found"
           },
           "422": {
             "description": "Validation Error",
@@ -982,21 +771,18 @@
         "properties": {
           "application_id": {
             "type": "string",
-            "format": "uuid",
-            "title": "Application Id"
+            "title": "Application Id",
+            "description": "Application ID",
+            "examples": [
+              "h-e-tme"
+            ]
           },
           "name": {
             "type": "string",
             "title": "Name",
+            "description": "Application display name",
             "examples": [
               "HETA"
-            ]
-          },
-          "slug": {
-            "type": "string",
-            "title": "Slug",
-            "examples": [
-              "heta"
             ]
           },
           "regulatory_classes": {
@@ -1005,6 +791,7 @@
             },
             "type": "array",
             "title": "Regulatory Classes",
+            "description": "Regulatory class, to which the applications compliance",
             "examples": [
               [
                 "RuO"
@@ -1014,16 +801,13 @@
           "description": {
             "type": "string",
             "title": "Description",
-            "examples": [
-              "Aignostics H&E TME application"
-            ]
+            "description": "Application documentations"
           }
         },
         "type": "object",
         "required": [
           "application_id",
           "name",
-          "slug",
           "regulatory_classes",
           "description"
         ],
@@ -1047,25 +831,21 @@
         "properties": {
           "application_version_id": {
             "type": "string",
-            "format": "uuid",
-            "title": "Application Version Id"
-          },
-          "application_version_slug": {
-            "type": "string",
-            "pattern": "^[a-z](?:[a-z]|-[a-z])*:v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
-            "title": "Application Version Slug",
+            "title": "Application Version Id",
+            "description": "Application version ID",
             "examples": [
-              "tissue-segmentation-qc:v0.0.1"
+              "h-e-tme:v0.0.1"
             ]
           },
           "version": {
             "type": "string",
-            "title": "Version"
+            "title": "Version",
+            "description": "Semantic version of the application"
           },
           "application_id": {
             "type": "string",
-            "format": "uuid",
-            "title": "Application Id"
+            "title": "Application Id",
+            "description": "Application ID"
           },
           "flow_id": {
             "anyOf": [
@@ -1077,31 +857,34 @@
                 "type": "null"
               }
             ],
-            "title": "Flow Id"
+            "title": "Flow Id",
+            "description": "Flow ID, used internally by the platform"
           },
           "changelog": {
             "type": "string",
-            "title": "Changelog"
+            "title": "Changelog",
+            "description": "Description of the changes relative to the previous version"
           },
           "input_artifacts": {
             "items": {
               "$ref": "#/components/schemas/InputArtifactReadResponse"
             },
             "type": "array",
-            "title": "Input Artifacts"
+            "title": "Input Artifacts",
+            "description": "List of the input fields, provided by the User"
           },
           "output_artifacts": {
             "items": {
               "$ref": "#/components/schemas/OutputArtifactReadResponse"
             },
             "type": "array",
-            "title": "Output Artifacts"
+            "title": "Output Artifacts",
+            "description": "List of the output fields, generated by the application"
           }
         },
         "type": "object",
         "required": [
           "application_version_id",
-          "application_version_slug",
           "version",
           "application_id",
           "changelog",
@@ -1123,38 +906,12 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "InputArtifact": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "mime_type": {
-            "type": "string",
-            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
-            "title": "Mime Type",
-            "examples": [
-              "image/tiff"
-            ]
-          },
-          "metadata_schema": {
-            "type": "object",
-            "title": "Metadata Schema"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "mime_type",
-          "metadata_schema"
-        ],
-        "title": "InputArtifact"
-      },
       "InputArtifactCreationRequest": {
         "properties": {
           "name": {
             "type": "string",
             "title": "Name",
+            "description": "The artifact name according to the application version. List of required artifacts is returned by `/v1/versions/{application_version_id}`. The artifact names are located in the `input_artifacts.[].name` value",
             "examples": [
               "slide"
             ]
@@ -1165,6 +922,7 @@
             "minLength": 1,
             "format": "uri",
             "title": "Download Url",
+            "description": "[Signed URL](https://cloud.google.com/cdn/docs/using-signed-urls) to the input artifact file. The URL should be valid for at least 6 days from the payload submission time.",
             "examples": [
               "https://example.com/case-no-1-slide.tiff"
             ]
@@ -1172,6 +930,7 @@
           "metadata": {
             "type": "object",
             "title": "Metadata",
+            "description": "The metadata of the artifact, required by the application version. The JSON schema of the metadata can be requested by `/v1/versions/{application_version_id}`. The schema is located in `input_artifacts.[].metadata_schema`",
             "examples": [
               {
                 "checksum_crc32c": "752f9554",
@@ -1199,7 +958,7 @@
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
+            "pattern": "^\\w+\\/\\w+[-+.|\\w+]+\\w+$",
             "title": "Mime Type",
             "examples": [
               "image/tiff"
@@ -1218,37 +977,12 @@
         ],
         "title": "InputArtifactReadResponse"
       },
-      "InputArtifactSchemaCreationRequest": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "mime_type": {
-            "type": "string",
-            "title": "Mime Type",
-            "examples": [
-              "application/vnd.apache.parquet"
-            ]
-          },
-          "metadata_schema": {
-            "type": "object",
-            "title": "Metadata Schema"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "mime_type",
-          "metadata_schema"
-        ],
-        "title": "InputArtifactSchemaCreationRequest"
-      },
       "ItemCreationRequest": {
         "properties": {
           "reference": {
             "type": "string",
             "title": "Reference",
+            "description": "The ID of the slide provided by the caller. The reference should be unique across all items of the application run",
             "examples": [
               "case-no-1"
             ]
@@ -1258,7 +992,8 @@
               "$ref": "#/components/schemas/InputArtifactCreationRequest"
             },
             "type": "array",
-            "title": "Input Artifacts"
+            "title": "Input Artifacts",
+            "description": "All the input files of the item, required by the application version"
           }
         },
         "type": "object",
@@ -1273,19 +1008,23 @@
           "item_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Item Id"
+            "title": "Item Id",
+            "description": "Item UUID generated by the Platform"
           },
           "application_run_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Application Run Id"
+            "title": "Application Run Id",
+            "description": "Application run UUID to which the item belongs"
           },
           "reference": {
             "type": "string",
-            "title": "Reference"
+            "title": "Reference",
+            "description": "The reference of the item from the user payload"
           },
           "status": {
-            "$ref": "#/components/schemas/ItemStatus"
+            "$ref": "#/components/schemas/ItemStatus",
+            "description": "\nWhen the item is not processed yet, the status is set to `pending`.\n\nWhen the item is successfully finished, status is set to `succeeded`, and the processing results\nbecome available for download in `output_artifacts` field.\n\nWhen the item processing is failed because the provided item is invalid, the status is set to\n`error_user`. When the item processing failed because of the error in the model or platform,\nthe status is set to `error_system`. When the application_run is canceled, the status of all\npending items is set to either `cancelled_user` or `cancelled_system`.\n    "
           },
           "error": {
             "anyOf": [
@@ -1296,14 +1035,16 @@
                 "type": "null"
               }
             ],
-            "title": "Error"
+            "title": "Error",
+            "description": "\nThe error message in case the item is in `error_system` or `error_user` state\n    "
           },
           "output_artifacts": {
             "items": {
               "$ref": "#/components/schemas/OutputArtifactResultReadResponse"
             },
             "type": "array",
-            "title": "Output Artifacts"
+            "title": "Output Artifacts",
+            "description": "\nThe list of the results generated by the application algorithm. The number of files and their\ntypes depend on the particular application version, call `/v1/versions/{version_id}` to get\nthe details.\n    "
           }
         },
         "type": "object",
@@ -1329,41 +1070,6 @@
         ],
         "title": "ItemStatus"
       },
-      "OutputArtifact": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "mime_type": {
-            "type": "string",
-            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
-            "title": "Mime Type",
-            "examples": [
-              "application/vnd.apache.parquet"
-            ]
-          },
-          "metadata_schema": {
-            "type": "object",
-            "title": "Metadata Schema"
-          },
-          "scope": {
-            "$ref": "#/components/schemas/OutputArtifactScope"
-          },
-          "visibility": {
-            "$ref": "#/components/schemas/OutputArtifactVisibility"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "mime_type",
-          "metadata_schema",
-          "scope",
-          "visibility"
-        ],
-        "title": "OutputArtifact"
-      },
       "OutputArtifactReadResponse": {
         "properties": {
           "name": {
@@ -1372,7 +1078,7 @@
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
+            "pattern": "^\\w+\\/\\w+[-+.|\\w+]+\\w+$",
             "title": "Mime Type",
             "examples": [
               "application/vnd.apache.parquet"
@@ -1400,23 +1106,27 @@
           "output_artifact_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Output Artifact Id"
+            "title": "Output Artifact Id",
+            "description": "The Id of the artifact. Used internally"
           },
           "name": {
             "type": "string",
-            "title": "Name"
+            "title": "Name",
+            "description": "\nName of the output from the output schema from the `/v1/versions/{version_id}` endpoint.\n    "
           },
           "mime_type": {
             "type": "string",
-            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&^_.-]{0,126}/[a-zA-Z0-9][a-zA-Z0-9!#$&^_+.-]{0,126}$",
+            "pattern": "^\\w+\\/\\w+[-+.|\\w+]+\\w+$",
             "title": "Mime Type",
+            "description": "The mime type of the output file",
             "examples": [
               "application/vnd.apache.parquet"
             ]
           },
           "metadata": {
             "type": "object",
-            "title": "Metadata"
+            "title": "Metadata",
+            "description": "The metadata of the output artifact, provided by the application"
           },
           "download_url": {
             "anyOf": [
@@ -1430,7 +1140,8 @@
                 "type": "null"
               }
             ],
-            "title": "Download Url"
+            "title": "Download Url",
+            "description": "\nThe download URL to the output file. The URL is valid for 1 hour after the endpoint is called.\nA new URL is generated every time the endpoint is called.\n    "
           }
         },
         "type": "object",
@@ -1443,40 +1154,6 @@
         ],
         "title": "OutputArtifactResultReadResponse"
       },
-      "OutputArtifactSchemaCreationRequest": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "mime_type": {
-            "type": "string",
-            "title": "Mime Type",
-            "examples": [
-              "application/vnd.apache.parquet"
-            ]
-          },
-          "scope": {
-            "$ref": "#/components/schemas/OutputArtifactScope"
-          },
-          "visibility": {
-            "$ref": "#/components/schemas/OutputArtifactVisibility"
-          },
-          "metadata_schema": {
-            "type": "object",
-            "title": "Metadata Schema"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "mime_type",
-          "scope",
-          "visibility",
-          "metadata_schema"
-        ],
-        "title": "OutputArtifactSchemaCreationRequest"
-      },
       "OutputArtifactScope": {
         "type": "string",
         "enum": [
@@ -1484,14 +1161,6 @@
           "global"
         ],
         "title": "OutputArtifactScope"
-      },
-      "OutputArtifactVisibility": {
-        "type": "string",
-        "enum": [
-          "internal",
-          "external"
-        ],
-        "title": "OutputArtifactVisibility"
       },
       "PayloadInputArtifact": {
         "properties": {
@@ -1572,19 +1241,12 @@
       },
       "RunCreationRequest": {
         "properties": {
-          "application_version": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "$ref": "#/components/schemas/SlugVersionRequest"
-              }
-            ],
-            "title": "Application Version",
+          "application_version_id": {
+            "type": "string",
+            "title": "Application Version Id",
+            "description": "Application version ID",
             "examples": [
-              "efbf9822-a1e5-4045-a283-dbf26e8064a9"
+              "h-e-tme:v1.2.3"
             ]
           },
           "items": {
@@ -1592,28 +1254,28 @@
               "$ref": "#/components/schemas/ItemCreationRequest"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "List of the items to process by the application"
           }
         },
         "type": "object",
         "required": [
-          "application_version",
+          "application_version_id",
           "items"
         ],
-        "title": "RunCreationRequest"
+        "title": "RunCreationRequest",
+        "description": "Application run payload. It describes which application version is chosen, and which user data\nshould be processed."
       },
       "RunCreationResponse": {
         "properties": {
           "application_run_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Application Run Id"
+            "title": "Application Run Id",
+            "default": "Application run id"
           }
         },
         "type": "object",
-        "required": [
-          "application_run_id"
-        ],
         "title": "RunCreationResponse"
       },
       "RunReadResponse": {
@@ -1621,16 +1283,18 @@
           "application_run_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Application Run Id"
+            "title": "Application Run Id",
+            "description": "UUID of the application"
           },
           "application_version_id": {
             "type": "string",
-            "format": "uuid",
-            "title": "Application Version Id"
+            "title": "Application Version Id",
+            "description": "ID of the application version"
           },
           "organization_id": {
             "type": "string",
-            "title": "Organization Id"
+            "title": "Organization Id",
+            "description": "Organization of the owner of the application run"
           },
           "user_payload": {
             "anyOf": [
@@ -1640,19 +1304,23 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Field used internally by the Platform"
           },
           "status": {
-            "$ref": "#/components/schemas/ApplicationRunStatus"
+            "$ref": "#/components/schemas/ApplicationRunStatus",
+            "description": "\nWhen the application run request is received by the Platform, the `status` of it is set to\n`received`. Then it is transitioned to `scheduled`, when it is scheduled for the processing.\nWhen the application run is scheduled, it will process the input items and generate the result\nincrementally. As soon as the first result is generated, the state is changed to `running`.\nThe results can be downloaded via `/v1/runs/{run_id}/results` endpoint.\nWhen all items are processed and all results are generated, the application status is set to\n`completed`. If the processing is done, but some items fail, the status is set to\n`completed_with_error`.\n\nWhen the application run request is rejected by the Platform before scheduling, it is transferred\nto `rejected`. When the application run reaches the threshold of number of failed items, the whole\napplication run is set to `canceled_system` and the remaining pending items are not processed.\nWhen the application run fails, the finished item results are available for download.\n\nIf the application run is canceled by calling `POST /v1/runs/{run_id}/cancel` endpoint, the\nprocessing of the items is stopped, and the application status is set to `cancelled_user`\n    "
           },
           "triggered_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Triggered At"
+            "title": "Triggered At",
+            "description": "Timestamp showing when the application run was triggered"
           },
           "triggered_by": {
             "type": "string",
-            "title": "Triggered By"
+            "title": "Triggered By",
+            "description": "Id of the user who triggered the application run"
           }
         },
         "type": "object",
@@ -1665,25 +1333,6 @@
           "triggered_by"
         ],
         "title": "RunReadResponse"
-      },
-      "SlugVersionRequest": {
-        "properties": {
-          "application_slug": {
-            "type": "string",
-            "pattern": "^[a-z](-?[a-z])*$",
-            "title": "Application Slug"
-          },
-          "version": {
-            "type": "string",
-            "title": "Version"
-          }
-        },
-        "type": "object",
-        "required": [
-          "application_slug",
-          "version"
-        ],
-        "title": "SlugVersionRequest"
       },
       "TransferUrls": {
         "properties": {
@@ -1711,7 +1360,6 @@
         "properties": {
           "application_id": {
             "type": "string",
-            "format": "uuid",
             "title": "Application Id"
           },
           "application_run_id": {
@@ -1782,130 +1430,18 @@
           "type"
         ],
         "title": "ValidationError"
-      },
-      "VersionCreationRequest": {
-        "properties": {
-          "version": {
-            "type": "string",
-            "title": "Version"
-          },
-          "application_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Application Id"
-          },
-          "flow_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Flow Id"
-          },
-          "changelog": {
-            "type": "string",
-            "title": "Changelog"
-          },
-          "input_artifacts": {
-            "items": {
-              "$ref": "#/components/schemas/InputArtifactSchemaCreationRequest"
-            },
-            "type": "array",
-            "title": "Input Artifacts"
-          },
-          "output_artifacts": {
-            "items": {
-              "$ref": "#/components/schemas/OutputArtifactSchemaCreationRequest"
-            },
-            "type": "array",
-            "title": "Output Artifacts"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2AuthorizationCodeBearer": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "scopes": {},
+            "authorizationUrl": "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize",
+            "tokenUrl": "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"
           }
-        },
-        "type": "object",
-        "required": [
-          "version",
-          "application_id",
-          "flow_id",
-          "changelog",
-          "input_artifacts",
-          "output_artifacts"
-        ],
-        "title": "VersionCreationRequest"
-      },
-      "VersionCreationResponse": {
-        "properties": {
-          "application_version_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Application Version Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "application_version_id"
-        ],
-        "title": "VersionCreationResponse"
-      },
-      "VersionReadResponse": {
-        "properties": {
-          "application_version_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Application Version Id"
-          },
-          "version": {
-            "type": "string",
-            "title": "Version"
-          },
-          "application_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Application Id"
-          },
-          "flow_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Flow Id"
-          },
-          "changelog": {
-            "type": "string",
-            "title": "Changelog"
-          },
-          "input_artifacts": {
-            "items": {
-              "$ref": "#/components/schemas/InputArtifact"
-            },
-            "type": "array",
-            "title": "Input Artifacts"
-          },
-          "output_artifacts": {
-            "items": {
-              "$ref": "#/components/schemas/OutputArtifact"
-            },
-            "type": "array",
-            "title": "Output Artifacts"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "application_version_id",
-          "version",
-          "application_id",
-          "changelog",
-          "input_artifacts",
-          "output_artifacts",
-          "created_at"
-        ],
-        "title": "VersionReadResponse"
+        }
       }
     }
   }

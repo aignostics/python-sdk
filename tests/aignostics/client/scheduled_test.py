@@ -11,11 +11,9 @@ from pathlib import Path
 import pytest
 from aignx.codegen.models import (
     ApplicationRunStatus,
-    ApplicationVersion,
     InputArtifactCreationRequest,
     ItemCreationRequest,
     ItemStatus,
-    RunCreationRequest,
 )
 
 import aignostics.client
@@ -91,11 +89,9 @@ def test_two_task_dummy_app() -> None:
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    application_version = "60e7b441-307a-4b41-8a97-5b02e7bc73a4"
+    application_version = "two-task-dummy:v0.35.0"
     platform = aignostics.client.Client(cache_token=False)
-    application_run = platform.runs.create(
-        RunCreationRequest(application_version=ApplicationVersion(application_version), items=three_spots_payload())
-    )
+    application_run = platform.runs.create(application_version, items=three_spots_payload())
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)

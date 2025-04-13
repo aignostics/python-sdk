@@ -4,10 +4,11 @@ This module provides classes for interacting with application resources in the A
 It includes functionality for listing applications and managing application versions.
 """
 
+import re
 import typing as t
 
-from aignx.codegen.api.externals_api import ExternalsApi
-from aignx.codegen.models import ApplicationReadResponse, ApplicationVersionReadResponse, VersionReadResponse
+from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.models import ApplicationReadResponse, ApplicationVersionReadResponse
 
 from aignostics.client.resources.utils import paginate
 
@@ -18,7 +19,9 @@ class Versions:
     Provides operations to list and retrieve application versions.
     """
 
-    def __init__(self, api: ExternalsApi) -> None:
+    APPLICATION_VERSION_REGEX = re.compile(r"(?P<application_id>[^:]+):v?(?P<version>[^:]+)")
+
+    def __init__(self, api: PublicApi) -> None:
         """Initializes the Versions resource with the API client.
 
         Args:
@@ -26,11 +29,11 @@ class Versions:
         """
         self._api = api
 
-    def list(self, for_application: ApplicationReadResponse | str) -> t.Iterator[ApplicationVersionReadResponse]:
+    def list(self, application: ApplicationReadResponse | str) -> t.Iterator[ApplicationVersionReadResponse]:
         """Lists all versions for a specific application.
 
         Args:
-            for_application: Either an ApplicationReadResponse object or
+            application: Either an ApplicationReadResponse object or
                 an application ID string.
 
         Returns:
@@ -39,31 +42,47 @@ class Versions:
         Raises:
             Exception: If the API request fails.
         """
-        if isinstance(for_application, ApplicationReadResponse):
-            application_id = for_application.application_id
-        else:
-            application_id = for_application
+        application_id = application.application_id if isinstance(application, ApplicationReadResponse) else application
 
         return paginate(
             self._api.list_versions_by_application_id_v1_applications_application_id_versions_get,
             application_id=application_id,
         )
 
-    def details(self, for_application_version_id: str) -> VersionReadResponse:
+    def details(self, application_version: ApplicationVersionReadResponse | str) -> ApplicationVersionReadResponse:
         """Retrieves details for a specific application version.
 
         Args:
-            for_application_version_id: The ID of the application version.
+            application_version: The ID of the application version.
 
         Returns:
             VersionReadResponse: The version details.
 
         Raises:
+            RuntimeError: If the application version ID is invalid or if the API request fails.
             Exception: If the API request fails.
         """
-        return self._api.get_version_v1_versions_application_version_id_get(
-            application_version_id=for_application_version_id
+        if isinstance(application_version, ApplicationVersionReadResponse):
+            application_id = application_version.application_id
+            version = application_version.version
+        else:
+            # split by colon
+            m = Versions.APPLICATION_VERSION_REGEX.match(application_version)
+            if not m:
+                msg = f"Invalid application_version_id: {application_version}"
+                raise RuntimeError(msg)
+            application_id = m.group("application_id")
+            version = m.group("version")
+
+        application_versions = self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
+            application_id=application_id,
+            version=version,
         )
+        if len(application_versions) != 1:
+            # this invariance is enforced by the system. If that error occurs, we have an internal error
+            msg = "Internal server error. Please contact Aignostics support."
+            raise RuntimeError(msg)
+        return application_versions[0]
 
 
 class Applications:
@@ -72,7 +91,7 @@ class Applications:
     Provides operations to list applications and access version resources.
     """
 
-    def __init__(self, api: ExternalsApi) -> None:
+    def __init__(self, api: PublicApi) -> None:
         """Initializes the Applications resource with the API client.
 
         Args:

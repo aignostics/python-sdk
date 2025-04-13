@@ -3,7 +3,7 @@
     "models": "",
     "modelTests": false,
     "modelDocs": false,
-    "apis": "Externals",
+    "apis": "Public",
     "apiTests": false,
     "apiDocs": true,
     "supportingFiles": "configuration.py,rest.py,api_client.py,exceptions.py,api_response.py"

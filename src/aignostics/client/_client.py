@@ -1,4 +1,4 @@
-from aignx.codegen.api.externals_api import ExternalsApi
+from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
 
@@ -31,7 +31,7 @@ class Client:
         self.runs: Runs = Runs(self._api)
 
     @staticmethod
-    def get_api_client(cache_token: bool = True) -> ExternalsApi:
+    def get_api_client(cache_token: bool = True) -> PublicApi:
         """Creates and configures an authenticated API client.
 
         Args:
@@ -52,7 +52,7 @@ class Client:
             header_name="Authorization",
             header_value=f"Bearer {token}",
         )
-        return ExternalsApi(client)
+        return PublicApi(client)
 
     @staticmethod
     def get_info() -> dict[str, dict]:  # type: ignore[type-arg]

@@ -7,8 +7,14 @@ verifying their functionality for listing, creating, and managing application ru
 from unittest.mock import Mock, call
 
 import pytest
-from aignx.codegen.api.externals_api import ExternalsApi
-from aignx.codegen.models import ItemResultReadResponse, RunCreationResponse, RunReadResponse
+from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.models import (
+    InputArtifactCreationRequest,
+    ItemCreationRequest,
+    ItemResultReadResponse,
+    RunCreationResponse,
+    RunReadResponse,
+)
 
 from aignostics.client.resources.runs import ApplicationRun, Runs
 from aignostics.client.resources.utils import PAGE_SIZE
@@ -21,7 +27,7 @@ def mock_api() -> Mock:
     Returns:
         Mock: A mock instance of ExternalsApi.
     """
-    return Mock(spec=ExternalsApi)
+    return Mock(spec=PublicApi)
 
 
 @pytest.fixture
@@ -159,16 +165,27 @@ def test_runs_create_returns_application_run(runs, mock_api) -> None:
     """
     # Arrange
     run_id = "new-run-id"
-    mock_payload = Mock()
+    mock_items = [
+        ItemCreationRequest(
+            reference="item-1",
+            input_artifacts=[
+                InputArtifactCreationRequest(name="artifact-1", download_url="url", metadata={"key": "value"})
+            ],
+        )
+    ]
     mock_api.create_application_run_v1_runs_post.return_value = RunCreationResponse(application_run_id=run_id)
 
     # Mock the validation method to prevent it from making actual API calls
     runs._validate_input_items = Mock()
 
     # Act
-    app_run = runs.create(mock_payload)
+    app_run = runs.create(application_version="mock", items=mock_items)
 
     # Assert
     assert isinstance(app_run, ApplicationRun)
     assert app_run.application_run_id == run_id
-    mock_api.create_application_run_v1_runs_post.assert_called_once_with(mock_payload)
+    mock_api.create_application_run_v1_runs_post.assert_called_once()
+    # Check that a RunCreationRequest was passed to the API call
+    call_args = mock_api.create_application_run_v1_runs_post.call_args[0][0]
+    assert call_args.application_version_id == "mock"
+    assert call_args.items == mock_items

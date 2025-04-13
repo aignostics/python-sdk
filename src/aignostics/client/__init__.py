@@ -6,6 +6,15 @@ The primary class in this module is the `Client` class, which serves as the entr
 for all interactions with the Aignostics platform.
 """
 
+from aignx.codegen.models import (
+    InputArtifactCreationRequest as InputArtifact,
+)
+from aignx.codegen.models import (
+    ItemCreationRequest as Item,
+)
+
+from aignostics.client._utils import generate_signed_url
+
 from ._client import Client
 from ._constants import (
     API_ROOT_DEV,
@@ -61,9 +70,12 @@ __all__ = [
     "TOKEN_URL_STAGING",
     "UNKNOWN_ENDPOINT_URL",
     "Client",
+    "InputArtifact",
+    "Item",
     "Settings",
     "calculate_file_crc32c",
     "download_file",
+    "generate_signed_url",
     "mime_type_to_file_ending",
     "settings",
 ]

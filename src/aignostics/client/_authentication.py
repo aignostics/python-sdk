@@ -1,3 +1,4 @@
+import errno
 import socket
 import time
 import typing as t
@@ -215,13 +216,21 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     host, port = parsed_redirect.hostname, parsed_redirect.port
     if not host or not port:
         raise RuntimeError(INVALID_REDIRECT_URI)
-    # TODO(Andreas): This fails if the application runs multiple times in parallel, which is quite an issue.
-    # At least we must fail with better info for the user, and actually block another run
-    with HTTPServer((host, port), OAuthCallbackHandler) as server:
-        # Call Auth0 with challenge and redirect to localhost with code after successful authN
-        webbrowser.open_new(authorization_url)
-        # Extract authorization_code from redirected request, see: OAuthCallbackHandler
-        server.handle_request()
+    # check if port is callback port is available
+    port_unavailable_msg = f"Port {port} is already in use. Free the port, or use the device flow."
+    if not _ensure_local_port_is_available(port):
+        raise RuntimeError(port_unavailable_msg)
+    # start the server
+    try:
+        with HTTPServer((host, port), OAuthCallbackHandler) as server:
+            # Call Auth0 with challenge and redirect to localhost with code after successful authN
+            webbrowser.open_new(authorization_url)
+            # Extract authorization_code from redirected request, see: OAuthCallbackHandler
+            server.handle_request()
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            raise RuntimeError(port_unavailable_msg) from e
+        raise RuntimeError(AUTHENTICATION_FAILED) from e
 
     if authentication_result.error or not authentication_result.token:
         raise RuntimeError(AUTHENTICATION_FAILED)

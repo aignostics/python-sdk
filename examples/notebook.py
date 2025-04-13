@@ -23,7 +23,9 @@ def _(mo):
         **NOTE:** By default, the client caches the access token in your operation systems application cache folder. If you do not want to store the access token, please initialize the client like this:
 
         ```python
-        client = aignostics.client.Client(cache_token=False)
+        import aignostics.client as platform
+        # initialize the client
+        client = platform.Client(cache_token=False)
         ```
         """
     )
@@ -32,7 +34,6 @@ def _(mo):
 
 @app.cell
 def _():
-    import aignostics.client
     import pandas as pd
     from pydantic import BaseModel
 
@@ -43,14 +44,15 @@ def _():
         else:
             items = (a.model_dump() for a in models)
         return pd.DataFrame(items)
-    return BaseModel, aignostics, pd, show
+    return BaseModel, pd, show
 
 
 @app.cell
-def _(aignostics):
+def _():
+    import aignostics.client as platform
     # initialize the client
-    client = aignostics.client.Client()
-    return (client,)
+    client = platform.Client(cache_token=False)
+    return client, platform
 
 
 @app.cell
@@ -87,7 +89,7 @@ def _(mo):
 
 @app.cell
 def _(client, show):
-    application_versions = client.applications.versions.list(for_application="ee5566d2-d3cb-4303-9e23-8a5ab3e5b8ed")
+    application_versions = client.applications.versions.list(application="two-task-dummy")
     # visualize
     show(application_versions)
     return (application_versions,)
@@ -107,7 +109,7 @@ def _(mo):
 
 @app.cell
 def _(client):
-    two_task_app = client.applications.versions.details(for_application_version_id="60e7b441-307a-4b41-8a97-5b02e7bc73a4")
+    two_task_app = client.applications.versions.details(application_version="two-task-dummy:v0.35.0")
 
     # view the `input_artifacts` to get insights in the required fields of the application version payload
     two_task_app.input_artifacts[0].to_json()
@@ -120,9 +122,9 @@ def _(mo):
         r"""
         # Trigger an application run
 
-        Now, let's trigger an application run for the `TwoTask Dummy Application`. We will use the `application_version_id` that we retrieved in the previous step. To create an application run, we need to provide a payload that consists of 1 or more `Items`. We provide the Pydantic model `ItemCreationRequest` an item and the data that comes with it:
+        Now, let's trigger an application run for the `TwoTask Dummy Application`. We will use the `application_version_id` that we retrieved in the previous step. To create an application run, we need to provide a payload that consists of 1 or more items. We provide the Pydantic model `Item` an item and the data that comes with it:
         ```python
-        ItemCreationRequest(
+        Item(
             reference="<a unique reference associate outputs to this input item>",
             input_artifacts=[InputArtifactCreationRequest]
         )
@@ -130,7 +132,7 @@ def _(mo):
         The `InputArtifactCreationRequest` defines the actual data that you provide aka. in this case the image that you want to be processed. The expected values are defined by the application version and have to align with the `input_artifacts` schema of the application version. In the case of the two task dummy application, we only require a single artifact per item, which is the image to process on. The artifact name is defined as `user_slide`. The `download_url` is a signed URL that allows the Aignostics Platform to download the image data later during processing. In addition to the image data itself, you have to provide the metadata defined in the input artifact schema, i.e., `checksum_crc32c`, `base_mpp`, `width`, and `height`. The metadata is used to validate the input data and is required for the processing of the image. The following example shows how to create an item with a single input artifact:
 
         ```python
-        InputArtifactCreationRequest(
+        InputArtifact(
             name="user_slide", # as defined by the application version input_artifact schema
             download_url="<a signed url to download the data>",
             metadata={
@@ -147,51 +149,31 @@ def _(mo):
 
 
 @app.cell
-def _(client):
-    from aignostics.client._utils import generate_signed_url # noqa: PLC2701
-    from aignx.codegen.models import (
-        ApplicationVersion,
-        RunCreationRequest,
-        ItemCreationRequest,
-        InputArtifactCreationRequest
-    )
-
-    payload = [
-        ItemCreationRequest(
-            reference="1",
-            input_artifacts=[
-                InputArtifactCreationRequest(
-                    name="user_slide",
-                    download_url=generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
-                    ),
-                    metadata={
-                        "checksum_crc32c": "N+LWCg==",
-                        "base_mpp": 0.46499982,
-                        "width": 3728,
-                        "height": 3640,
-                    },
-                )
-            ],
-        ),
-    ]
-
+def _(client, platform):
     application_run = client.runs.create(
-        RunCreationRequest(
-            application_version=ApplicationVersion("60e7b441-307a-4b41-8a97-5b02e7bc73a4"),
-            items=payload,
-        )
+        application_version="two-task-dummy:v0.0.5",
+        items=[
+            platform.Item(
+                reference="wsi-1",
+                input_artifacts=[
+                    platform.InputArtifact(
+                        name="user_slide",
+                        download_url=platform.generate_signed_url(
+                            "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+                        ),
+                        metadata={
+                            "checksum_crc32c": "N+LWCg==",
+                            "base_mpp": 0.46499982,
+                            "width": 3728,
+                            "height": 3640,
+                        },
+                    )
+                ],
+            ),
+        ],
     )
     print(application_run)
-    return (
-        ApplicationVersion,
-        InputArtifactCreationRequest,
-        ItemCreationRequest,
-        RunCreationRequest,
-        application_run,
-        generate_signed_url,
-        payload,
-    )
+    return (application_run,)
 
 
 @app.cell
@@ -200,7 +182,7 @@ def _(mo):
         r"""
         # Observe the status of the application run and download
 
-        While you can observe the status of an application run directly via the `status()` method and also retrieve the results via the `results()` method, you can also download the results directly to a folder of your choice. The `download_to_folder()` method will download all the results to the specified folder. The method will automatically create a sub-folder in the specified folder with the name of the application run. The results for each individual input item will be stored in a separate folder named after the `reference` you defined in the `ItemCreationRequest`.
+        While you can observe the status of an application run directly via the `status()` method and also retrieve the results via the `results()` method, you can also download the results directly to a folder of your choice. The `download_to_folder()` method will download all the results to the specified folder. The method will automatically create a sub-folder in the specified folder with the name of the application run. The results for each individual input item will be stored in a separate folder named after the `reference` you defined in the `Item`.
 
         The method downloads the results for a slide as soon as they are available. There is no need to keep the method running until all results are available. The method will automatically check for the status of the application run and download the results as soon as they are available. If you invoke the method on a run you already downloaded some results before, it will only download the missing artifacts.
         """
