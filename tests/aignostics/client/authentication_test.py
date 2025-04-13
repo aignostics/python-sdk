@@ -38,7 +38,7 @@ def mock_settings() -> MagicMock:
         settings.client_id_interactive = SecretStr("test-interactive-client-id")
         settings.client_id_device = SecretStr("test-device-client-id")
         settings.scope_elements = "openid profile"
-        settings.redirect_uri = "http://localhost:8000/callback"
+        settings.redirect_uri = "http://localhost:8989/callback"
         settings.authorization_base_url = "https://test.auth/authorize"
         settings.token_url = "https://test.auth/token"  # noqa: S105 - Test credential
         settings.device_url = "https://test.auth/device"

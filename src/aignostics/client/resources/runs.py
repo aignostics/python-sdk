@@ -23,6 +23,7 @@ from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
 from aignostics.client.resources.applications import Versions
+from aignostics.client.resources.utils import paginate
 from aignostics.client.utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
 
 
@@ -90,7 +91,7 @@ class ApplicationRun:
         """
         self._api.cancel_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
 
-    def results(self) -> list[ItemResultReadResponse]:
+    def results(self) -> t.Iterator[ItemResultReadResponse]:
         """Retrieves the results of all items in the run.
 
         Returns:
@@ -99,10 +100,9 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        # TODO(andreas): paging, sorting
-        return t.cast(
-            "list[ItemResultReadResponse]",
-            self._api.list_run_results_v1_runs_application_run_id_results_get(self.application_run_id),
+        return paginate(
+            self._api.list_run_results_v1_runs_application_run_id_results_get,
+            application_run_id=self.application_run_id,
         )
 
     def download_to_folder(self, download_base: Path | str) -> None:
@@ -265,7 +265,7 @@ class Runs:
         example = faker.generate()
         print(json.dumps(example, indent=2))
 
-    def list(self, for_application_version: str | None = None) -> list[ApplicationRun]:
+    def list(self, for_application_version: str | None = None) -> t.Generator[ApplicationRun, t.Any, None]:
         """Lists application runs, optionally filtered by application version.
 
         Args:
@@ -277,12 +277,11 @@ class Runs:
         Raises:
             Exception: If the API request fails.
         """
-        # TODO(andreas): pagination
         if not for_application_version:
-            res = self._api.list_application_runs_v1_runs_get()
+            res = paginate(self._api.list_application_runs_v1_runs_get)
         else:
-            res = self._api.list_application_runs_v1_runs_get_with_http_info(for_application_version)
-        return [ApplicationRun(self._api, response.application_run_id) for response in res]
+            res = paginate(self._api.list_application_runs_v1_runs_get, application_version_id=for_application_version)
+        return (ApplicationRun(self._api, response.application_run_id) for response in res)
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.

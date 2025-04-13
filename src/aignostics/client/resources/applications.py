@@ -9,6 +9,8 @@ import typing as t
 from aignx.codegen.api.externals_api import ExternalsApi
 from aignx.codegen.models import ApplicationReadResponse, ApplicationVersionReadResponse, VersionReadResponse
 
+from aignostics.client.resources.utils import paginate
+
 
 class Versions:
     """Resource class for managing application versions.
@@ -24,7 +26,7 @@ class Versions:
         """
         self._api = api
 
-    def list(self, for_application: ApplicationReadResponse | str) -> list[ApplicationVersionReadResponse]:
+    def list(self, for_application: ApplicationReadResponse | str) -> t.Iterator[ApplicationVersionReadResponse]:
         """Lists all versions for a specific application.
 
         Args:
@@ -32,7 +34,7 @@ class Versions:
                 an application ID string.
 
         Returns:
-            list[ApplicationVersionReadResponse]: A list of application versions.
+            Iterator[ApplicationVersionReadResponse]: A Iterator over the available application versions.
 
         Raises:
             Exception: If the API request fails.
@@ -42,11 +44,9 @@ class Versions:
         else:
             application_id = for_application
 
-        return t.cast(
-            "list[ApplicationVersionReadResponse]",
-            self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
-                application_id=application_id
-            ),
+        return paginate(
+            self._api.list_versions_by_application_id_v1_applications_application_id_versions_get,
+            application_id=application_id,
         )
 
     def details(self, for_application_version_id: str) -> VersionReadResponse:
@@ -81,13 +81,13 @@ class Applications:
         self._api = api
         self.versions: Versions = Versions(self._api)
 
-    def list(self) -> list[ApplicationReadResponse]:
+    def list(self) -> t.Iterator[ApplicationReadResponse]:
         """Lists all available applications.
 
         Returns:
-            list[ApplicationReadResponse]: A list of applications.
+            Iterator[ApplicationReadResponse]: A Iterator over the available applications.
 
         Raises:
             Exception: If the API request fails.
         """
-        return t.cast("list[ApplicationReadResponse]", self._api.list_applications_v1_applications_get())
+        return paginate(self._api.list_applications_v1_applications_get)

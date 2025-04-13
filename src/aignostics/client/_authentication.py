@@ -351,6 +351,5 @@ def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_
     retry_count = 0
     while not is_port_available() and retry_count < max_retries:
         time.sleep(1)
-        print("try")
         retry_count += 1
     return retry_count < max_retries
