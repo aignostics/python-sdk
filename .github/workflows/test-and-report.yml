@@ -49,8 +49,22 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         run: |
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
-          echo "Development build - Current version in pyproject.toml: $TOML_VERSION"  
-  
+          echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
+
+      - name: Create .env file
+        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
+        with:
+          envkey_ENV: "TEST"
+          envkey_AIGNOSTICS_LOGFIRE_TOKEN: "${{ secrets.AIGNOSTICS_LOGFIRE_TOKEN }}"
+          envkey_AIGNOSTICS_SENTRY_DSN: "${{ secrets.AIGNOSTICS_SENTRY_DSN }}"
+          envkey_AIGNOSTICS_LOG_LEVEL: "DEBUG"
+          envkey_AIGNOSTICS_LOG_FILE_ENABLED: 1
+          envkey_AIGNOSTICS_API_ROOT: https://platform.aignostics.com
+          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
+          envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
+          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+          fail_on_empty: false
+
       - name: Validate installation
         run: |
             OUTPUT=$(uv run --no-dev aignostics --help)
@@ -59,22 +73,15 @@ jobs:
             exit 1
             fi
 
-      - name: Set up cloud credentials
-        env:
-          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      - name: Set up GCP credentials for bucket access
         run: |
-          echo "$CREDENTIALS" | base64 -d > credentials.json
+          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
       
       - name: Smoke tests
-        env:
-          AIGNOSTICS_API_ROOT: https://platform.aignostics.com
-          AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
-          AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
-          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: |
-          uv run --no-dev aignostics platform health
-          uv run --no-dev aignostics platform info
+          uv run --no-dev aignostics system health
+          uv run --no-dev aignostics system info
 
       - name: Lint
         run: make lint
@@ -83,11 +90,6 @@ jobs:
         run: make audit
       
       - name: Test
-        env:
-          AIGNOSTICS_API_ROOT: https://platform.aignostics.com
-          AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_DEVICE_ID }}
-          AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
-          AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
         run: make test
 
       - name: Upload test results
@@ -106,6 +108,7 @@ jobs:
             reports/junit.xml
             reports/coverage.xml
             reports/coverage_html
+            aignostics.log
           retention-days: 30
 
       - name: Upload coverage reports to Codecov

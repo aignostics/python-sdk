@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -100,3 +101,5 @@ class OutputArtifact(BaseModel):
             "visibility": obj.get("visibility")
         })
         return _obj
+
+

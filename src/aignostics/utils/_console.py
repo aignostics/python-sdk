@@ -1,4 +1,4 @@
-"""Define styling for typer, overriding defaults."""
+"""Themed rich console."""
 
 from rich.console import Console
 from rich.theme import Theme

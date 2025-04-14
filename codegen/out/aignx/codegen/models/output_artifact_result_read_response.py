@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -103,3 +104,5 @@ class OutputArtifactResultReadResponse(BaseModel):
             "download_url": obj.get("download_url")
         })
         return _obj
+
+

@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -90,3 +91,5 @@ class ApplicationReadResponse(BaseModel):
             "description": obj.get("description")
         })
         return _obj
+
+

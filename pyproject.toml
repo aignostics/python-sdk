@@ -63,9 +63,22 @@ requires-python = ">=3.11, <4.0"
 
 dependencies = [
     # From Template
-    "pydantic>=2.11.1",
+    "fastapi[standard,all]>=0.115.12",
+    "logfire[system-metrics]>=3.13.1",
+    "opentelemetry-instrumentation-fastapi>=0.53b0",
+    "opentelemetry-instrumentation-httpx>=0.53b0",
+    "opentelemetry-instrumentation-jinja2>=0.53b0",
+    "opentelemetry-instrumentation-requests>=0.53b0",
+    "opentelemetry-instrumentation-sqlite3>=0.53b0",
+    "opentelemetry-instrumentation-tornado>=0.53b0",
+    "opentelemetry-instrumentation-urllib>=0.53b0",
+    "opentelemetry-instrumentation-urllib3>=0.53b0",
+    "psutil>=7.0.0",
+    "pydantic>=2.11.3",
     "pydantic-settings>=2.8.1",
+    "sentry-sdk>=2.25.1",
     "typer>=0.15.1",
+    "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
     "google-cloud-storage>=3.1.0",
@@ -74,7 +87,8 @@ dependencies = [
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
     "pyjwt[crypto]>=2.10.1",
-    "python-dotenv>=1.1.0",        # Can be removed later
+    "python-dateutil>=2.9.0.post0",
+    "pyyaml>=6.0",
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
     "tqdm>=4.67.1",
@@ -105,12 +119,12 @@ packages = ["src/aignostics", "codegen/out/aignx"]
 [project.optional-dependencies]
 examples = [
     "streamlit>=1.44.1",
-    "marimo>=0.12.2",
+    "marimo>=0.12.8",
     "jupyter>=1.1.1",
     "jinja2>=3.1.6",
 ]
-# formats = ["openslide-python>=1.4.1", "openslide-bin>=4.0.0.6"]
 aws = ["boto3>=1.37.27"]
+# formats = ["openslide-python>=1.4.1", "openslide-bin>=4.0.0.6"]
 
 [dependency-groups]
 dev = [
@@ -124,20 +138,20 @@ dev = [
     "matplotlib>=3.10.1",
     "mypy>=1.5.0",
     "nox[uv]>=2025.2.9",
-    "pip-audit>=2.8.0",
+    "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
-    "pyright>=1.1.398",
+    "pyright>=1.1.399",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
-    "pytest-cov>=6.1.0",
-    "pytest-docker>=3.2.0",
+    "pytest-cov>=6.1.1",
+    "pytest-docker>=3.2.1",
     "pytest-env>=1.1.5",
     "pytest-regressions>=2.7.0",
     "pytest-subprocess>=1.5.3",
     "pytest-timeout>=2.3.1",
     "pytest-xdist[psutil]>=3.6.1",
-    "ruff>=0.11.2",
+    "ruff>=0.11.5",
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
@@ -168,8 +182,9 @@ line-length = 120
 extend-exclude = [
     ".fixme",
     "notebook.py",
-    "playbook.py", # TODO (Helmut): refactor that code and reenable
-    "codegen",     # TODO (Helmut): check if codegen can be tweaked to generate better code
+    "template/*.py",
+    "playbook.py",   # TODO (Andreas): refactor and reenable,
+    "codegen",
 ]
 
 [tool.ruff.lint]
@@ -199,7 +214,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [
+"**/tests/**/*.py" = [
     # we are more relaxed in tests, while sill applying hundreds of rules
     "S101",     # asserts allowed in tests...
     "ARG",      # unused function args -> fixtures nevertheless are functionally relevant...
@@ -263,10 +278,12 @@ asyncio_default_fixture_loop_scope = "function"
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
 markers = [
     # From Template
-    "no_extras: tests that do require no extras installed",
-    "scheduled: tests to run on a schedule",
-    "sequential: exclude from parallel test execution",
-    "skip_with_act: don't run with act",
+    "no_extras: Tests that do require no extras installed.",
+    "scheduled: Tests to run on a schedule. They will still be part on non-scheduled test executions.",
+    "sequential: Exclude from parallel test execution.",
+    "skip_with_act: Don't run with act.",
+    "docker: tests That require Docker.",
+    "long_running: Tests that take a long time to run. Tests marked as long runing excluded from execution by default. Enable by passing any -m your_marker that matches a marker of the test.",
     # Custom
     # Nothing yet
 ]

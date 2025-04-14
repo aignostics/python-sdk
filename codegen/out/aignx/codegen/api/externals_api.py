@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -3649,3 +3650,5 @@ class ExternalsApi:
             _host=_host,
             _request_auth=_request_auth
         )
+
+

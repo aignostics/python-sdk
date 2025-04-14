@@ -1,4 +1,3 @@
-import errno
 import socket
 import time
 import typing as t
@@ -14,8 +13,8 @@ import requests
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
-from aignostics.client._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
-from aignostics.client._settings import authentication_settings
+from ._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
+from ._settings import settings
 
 CALLBACK_PORT_RETRY_COUNT = 5
 
@@ -41,8 +40,8 @@ def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
     Raises:
         RuntimeError: If token retrieval fails.
     """
-    if use_cache and authentication_settings().token_file.exists():
-        stored_token = Path(authentication_settings().token_file).read_text(encoding="utf-8")
+    if use_cache and settings().token_file.exists():
+        stored_token = Path(settings().token_file).read_text(encoding="utf-8")
         # Parse stored string "token:expiry_timestamp"
         parts = stored_token.split(":")
         token, expiry_str = parts
@@ -62,8 +61,8 @@ def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
     # Store new token with expiry
     if use_cache:
         timestamp = claims["exp"]
-        authentication_settings().token_file.parent.mkdir(parents=True, exist_ok=True)
-        Path(authentication_settings().token_file).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
+        settings().token_file.parent.mkdir(parents=True, exist_ok=True)
+        Path(settings().token_file).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
 
     return new_token
 
@@ -84,7 +83,7 @@ def _authenticate(use_device_flow: bool) -> str:
         RuntimeError: If authentication fails.
         AssertionError: If the returned token doesn't have the expected format.
     """
-    if refresh_token := authentication_settings().refresh_token:
+    if refresh_token := settings().refresh_token:
         token = _token_from_refresh_token(refresh_token)
     elif _can_open_browser() and not use_device_flow:
         token = _perform_authorization_code_with_pkce_flow()
@@ -108,14 +107,14 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
-    jwk_client = jwt.PyJWKClient(authentication_settings().jws_json_url)
+    jwk_client = jwt.PyJWKClient(settings().jws_json_url)
     try:
         # Get the public key from the JWK client
         key = jwk_client.get_signing_key_from_jwt(token).key
         # Verify and decode the token using the public key
         return t.cast(
             "dict[str, str]",
-            jwt.decode(token, key=key, algorithms=["RS256"], audience=authentication_settings().audience),
+            jwt.decode(token, key=key, algorithms=["RS256"], audience=settings().audience),
         )
     except jwt.exceptions.PyJWTError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
@@ -150,15 +149,15 @@ def _perform_authorization_code_with_pkce_flow() -> str:
         RuntimeError: If authentication fails.
     """
     session = OAuth2Session(
-        authentication_settings().client_id_interactive.get_secret_value(),
-        scope=authentication_settings().scope_elements,
-        redirect_uri=authentication_settings().redirect_uri,
+        settings().client_id_interactive.get_secret_value(),
+        scope=settings().scope_elements,
+        redirect_uri=settings().redirect_uri,
         pkce="S256",
     )
     authorization_url, _ = session.authorization_url(
-        authentication_settings().authorization_base_url,
+        settings().authorization_base_url,
         access_type="offline",
-        audience=authentication_settings().audience,
+        audience=settings().audience,
     )
 
     authentication_result = AuthenticationResult()
@@ -179,7 +178,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
             auth_code = query["code"][0]
             try:
                 # Exchange code for token
-                token = session.fetch_token(authentication_settings().token_url, code=auth_code, include_client_id=True)
+                token = session.fetch_token(settings().token_url, code=auth_code, include_client_id=True)
                 # Store the token
                 authentication_result.token = token["access_token"]
                 # Send success response
@@ -212,25 +211,17 @@ def _perform_authorization_code_with_pkce_flow() -> str:
             return
 
     # Create and start the server
-    parsed_redirect = parse.urlparse(authentication_settings().redirect_uri)
+    parsed_redirect = parse.urlparse(settings().redirect_uri)
     host, port = parsed_redirect.hostname, parsed_redirect.port
     if not host or not port:
         raise RuntimeError(INVALID_REDIRECT_URI)
-    # check if port is callback port is available
-    port_unavailable_msg = f"Port {port} is already in use. Free the port, or use the device flow."
-    if not _ensure_local_port_is_available(port):
-        raise RuntimeError(port_unavailable_msg)
-    # start the server
-    try:
-        with HTTPServer((host, port), OAuthCallbackHandler) as server:
-            # Call Auth0 with challenge and redirect to localhost with code after successful authN
-            webbrowser.open_new(authorization_url)
-            # Extract authorization_code from redirected request, see: OAuthCallbackHandler
-            server.handle_request()
-    except OSError as e:
-        if e.errno == errno.EADDRINUSE:
-            raise RuntimeError(port_unavailable_msg) from e
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
+    # TODO(Andreas): This fails if the application runs multiple times in parallel, which is quite an issue.
+    # At least we must fail with better info for the user, and actually block another run
+    with HTTPServer((host, port), OAuthCallbackHandler) as server:
+        # Call Auth0 with challenge and redirect to localhost with code after successful authN
+        webbrowser.open_new(authorization_url)
+        # Extract authorization_code from redirected request, see: OAuthCallbackHandler
+        server.handle_request()
 
     if authentication_result.error or not authentication_result.token:
         raise RuntimeError(AUTHENTICATION_FAILED)
@@ -251,13 +242,13 @@ def _perform_device_flow() -> str | None:
         RuntimeError: If authentication fails or is denied.
     """
     response = requests.post(
-        authentication_settings().device_url,
+        settings().device_url,
         data={
-            "client_id": authentication_settings().client_id_device.get_secret_value(),
-            "scope": authentication_settings().scope_elements,
-            "audience": authentication_settings().audience,
+            "client_id": settings().client_id_device.get_secret_value(),
+            "scope": settings().scope_elements,
+            "audience": settings().audience,
         },
-        timeout=authentication_settings().request_timeout_seconds,
+        timeout=settings().request_timeout_seconds,
     )
     try:
         response.raise_for_status()
@@ -277,14 +268,14 @@ def _perform_device_flow() -> str | None:
     while True:
         try:
             json_response = requests.post(
-                authentication_settings().token_url,
+                settings().token_url,
                 headers={"Accept": "application/json"},
                 data={
                     "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
                     "device_code": device_code,
-                    "client_id": authentication_settings().client_id_device.get_secret_value(),
+                    "client_id": settings().client_id_device.get_secret_value(),
                 },
-                timeout=authentication_settings().request_timeout_seconds,
+                timeout=settings().request_timeout_seconds,
             ).json()
             if "error" in json_response:
                 if json_response["error"] in {"authorization_pending", "slow_down"}:
@@ -314,14 +305,14 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
     """
     try:
         response = requests.post(
-            authentication_settings().token_url,
+            settings().token_url,
             headers={"Accept": "application/json"},
             data={
                 "grant_type": "refresh_token",
-                "client_id": authentication_settings().client_id_interactive.get_secret_value(),
+                "client_id": settings().client_id_interactive.get_secret_value(),
                 "refresh_token": refresh_token.get_secret_value(),
             },
-            timeout=authentication_settings().request_timeout_seconds,
+            timeout=settings().request_timeout_seconds,
         )
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])

@@ -2,7 +2,7 @@
 
 import pytest
 
-from aignostics.client.utils import mime_type_to_file_ending
+from aignostics.client import mime_type_to_file_ending
 
 
 class TestMimeTypeToFileEnding:

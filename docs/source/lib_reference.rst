@@ -1,11 +1,17 @@
 Library Reference
 =================
 
-.. automodule:: aignostics
-    :members:
-
 .. automodule:: aignostics.client
-    :members:
+:members:
 
-.. automodule:: aignx.codegen.api.externals_api
-    :members:
+.. automodule:: aignostics.application
+:members:
+
+.. automodule:: aignostics.system
+:members:
+
+.. automodule:: aignostics.utils
+:members:
+
+.. automodule:: aignostics
+:members:

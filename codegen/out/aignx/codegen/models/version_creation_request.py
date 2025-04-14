@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -108,3 +109,5 @@ class VersionCreationRequest(BaseModel):
             "output_artifacts": [OutputArtifactSchemaCreationRequest.from_dict(_item) for _item in obj["output_artifacts"]] if obj.get("output_artifacts") is not None else None
         })
         return _obj
+
+

@@ -75,6 +75,82 @@
 4. Enable Dependabot security updates
 5. CodeQL analyis will be automatically set up via a GitHub action
 
+
+## Error monitoring and profiling with Sentry
+
+1. Goto https://sentry.io/ and sign-in - it's free for solo devs
+2. Follow the instructions to create a new project and get the DSN. Copy the
+   value of the token into your clipboard.
+3. For your local environment: Open your local `.env` file and set the
+   `AIGNOSTICS_SENTRY_DSN` variable to the value of the token from your
+   clipboard. You can check `.env.example` for the correct format.
+4. For the test, preview and production stage: Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `AIGNOSTICS_SENTRY_DSN`,
+   pasting from your clipboard.
+
+## Logging and metrics with Logfire
+
+1. Goto https://pydantic.dev/logfire and sign-in - it's free for up to 10
+   million spans/metrics per month.
+2. Follow the instructions to create a new project and get the write token. Copy
+   the value of the token into your clipboard.
+3. For your local environment: Open your local `.env` file and set the
+   `AIGNOSTICS_LOGFIRE_TOKEN` variable to the value of the token from
+   your clipboard. You can check `.env.example` for the correct format.
+4. For the test, preview and production stage: Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `AIGNOSTICS_SENTRY_DSN`,
+   pasting from your clipboard.
+
+## Uptime monitoring with betterstack
+
+1. Goto https://betterstack.com/ and sign-in - it's free for up to 10 monitors
+   and one status page
+2. Create a monitor pointing to the `/api/v1/healthz` endpoint of your API on
+   your production environment. 
+3. Create a status page in betterstack and add the monitor you created
+4. Goto Advanced Settings / Github badge for your monitor on Betterstack and
+   copy the badge for yaml
+5. Run copier update and paste the snippet when asked for it
+
+## Deploying webservice to Vercel as serverless function (optional)
+
+1. Ensure you enabled Vercel deployment when creating or updating the project.
+   If not, enable with `copier update`
+2. Goto https://vercel.com/ and sign-in - it's free for solo devs and open
+   source projects
+3. Execute `pnpm i -g vercel@latest` to install or update the Vercel CLI, see
+   https://vercel.com/docs/cli.
+4. Execute `vercel login` to login to your Vercel account
+5. In Vercel create a new project
+6. Execute `vercel link` and link your repository to the newly created project
+7. Execute `cat .vercel/project.json` to show the orgId and projectId
+8. Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `VERCEL_ORG_ID`, copy and pasting
+   from the output of step 6.
+9. Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `VERCEL_PROJECT_ID`, copy and
+   pasting from the output of step 6
+10. Goto `https://vercel.com/account/tokens` and create a new token called
+   `oe-python-template`. Copy the value of the token into your clipboard.
+11. Goto
+    https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+    and create a new repository secret called `VERCEL_TOKEN`, pasting from your
+    clipboard.
+12. In your Vercel project go to Settings > Deployment Protection, enable
+    Protection Bypass for Automation, and copy the token it your clipboard.
+13. Goto
+    https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+    and create a new repository secret called `VERCEL_AUTOMATION_BYPASS_SECRET`, pasting from your
+    clipboard. This is so the smoke test post deploy via GitHub Action can validate
+    the deployment was successful.
+14. Optional: In your Vercel project go to Settings > Environment Variables > Environments, and
+      add environment variables with key 'AIGNOSTICS_LOGFIRE_TOKEN' 
+      and 'AIGNOSTICS_SENTRY_DSN' - check your `.env` file for the values
+
 ## Polishing GitHub repository
 
 1. Goto https://github.com/aignostics/python-sdk

@@ -1,6 +1,6 @@
 # CLI Reference
 
-Command Line Interface of the aignostics platform
+Command Line Interface of
 
 **Usage**:
 
@@ -14,146 +14,16 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.0.10 - built with love in Berlin 🐻
+🧠 Aignostics Python SDK v0.0.10 - built with love in Berlin 🐻
 
 **Commands**:
 
-* `platform`: Platform diagnostics and utilities
-* `application`: aignostics applications
-
-## `aignostics platform`
-
-Platform diagnostics and utilities
-
-**Usage**:
-
-```console
-$ aignostics platform [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `install`: Complete and validate installation of the...
-* `health`: Indicate if aignostics platform is healthy.
-* `info`: Print info about service configuration.
-* `openapi`: Dump the OpenAPI specification of to stdout.
-* `bucket`: Transfer bucket provide by platform
-
-### `aignostics platform install`
-
-Complete and validate installation of the CLI.
-
-**Usage**:
-
-```console
-$ aignostics platform install [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-### `aignostics platform health`
-
-Indicate if aignostics platform is healthy.
-
-**Usage**:
-
-```console
-$ aignostics platform health [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-### `aignostics platform info`
-
-Print info about service configuration.
-
-**Usage**:
-
-```console
-$ aignostics platform info [OPTIONS]
-```
-
-**Options**:
-
-* `--output-format [yaml|json]`: Output format  [default: yaml]
-* `--env / --no-env`: Include environment variables in output  [default: no-env]
-* `--filter-secrets / --no-filter-secrets`: Filter out secret values from environment variables  [default: filter-secrets]
-* `--help`: Show this message and exit.
-
-### `aignostics platform openapi`
-
-Dump the OpenAPI specification of to stdout.
-
-**Usage**:
-
-```console
-$ aignostics platform openapi [OPTIONS]
-```
-
-**Options**:
-
-* `--api-version [v1]`: API Version  [default: v1]
-* `--output-format [yaml|json]`: Output format  [default: yaml]
-* `--help`: Show this message and exit.
-
-### `aignostics platform bucket`
-
-Transfer bucket provide by platform
-
-**Usage**:
-
-```console
-$ aignostics platform bucket [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `ls`: List contents of tranfer bucket.
-* `purge`: Purge content of transfer bucket.
-
-#### `aignostics platform bucket ls`
-
-List contents of tranfer bucket.
-
-**Usage**:
-
-```console
-$ aignostics platform bucket ls [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-#### `aignostics platform bucket purge`
-
-Purge content of transfer bucket.
-
-**Usage**:
-
-```console
-$ aignostics platform bucket purge [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
+* `application`: Application commands
+* `system`: System commands
 
 ## `aignostics application`
 
-aignostics applications
+Application commands
 
 **Usage**:
 
@@ -169,6 +39,7 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 
 * `list`: List available applications.
 * `describe`: Describe application.
+* `bucket`: Transfer bucket provide by platform
 * `dataset`: Datasets for use as input for applications
 * `metadata`: Metadata required as input for applications
 * `run`: Runs of applications
@@ -195,6 +66,53 @@ Describe application.
 
 ```console
 $ aignostics application describe [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics application bucket`
+
+Transfer bucket provide by platform
+
+**Usage**:
+
+```console
+$ aignostics application bucket [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `ls`: List contents of tranfer bucket.
+* `purge`: Purge content of transfer bucket.
+
+#### `aignostics application bucket ls`
+
+List contents of tranfer bucket.
+
+**Usage**:
+
+```console
+$ aignostics application bucket ls [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+#### `aignostics application bucket purge`
+
+Purge content of transfer bucket.
+
+**Usage**:
+
+```console
+$ aignostics application bucket purge [OPTIONS]
 ```
 
 **Options**:
@@ -399,6 +317,119 @@ Delete the result of an application run.
 
 ```console
 $ aignostics application run result delete [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+## `aignostics system`
+
+System commands
+
+**Usage**:
+
+```console
+$ aignostics system [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `health`: Determine and print system health.
+* `info`: Determine and print system info.
+* `openapi`: Dump the OpenAPI specification.
+* `install`: Complete installation.
+* `whoami`: Print user info.
+
+### `aignostics system health`
+
+Determine and print system health.
+
+Args:
+    output_format (OutputFormat): Output format (JSON or YAML).
+
+**Usage**:
+
+```console
+$ aignostics system health [OPTIONS]
+```
+
+**Options**:
+
+* `--output-format [yaml|json]`: Output format  [default: json]
+* `--help`: Show this message and exit.
+
+### `aignostics system info`
+
+Determine and print system info.
+
+Args:
+    include_environ (bool): Include environment variables.
+    filter_secrets (bool): Filter secrets from the output.
+    output_format (OutputFormat): Output format (JSON or YAML).
+
+**Usage**:
+
+```console
+$ aignostics system info [OPTIONS]
+```
+
+**Options**:
+
+* `--include-environ / --no-include-environ`: Include environment variables  [default: no-include-environ]
+* `--filter-secrets / --no-filter-secrets`: Filter secrets  [default: filter-secrets]
+* `--output-format [yaml|json]`: Output format  [default: json]
+* `--help`: Show this message and exit.
+
+### `aignostics system openapi`
+
+Dump the OpenAPI specification.
+
+Args:
+    api_version (str): API version to dump.
+    output_format (OutputFormat): Output format (JSON or YAML).
+
+Raises:
+    typer.Exit: If an invalid API version is provided.
+
+**Usage**:
+
+```console
+$ aignostics system openapi [OPTIONS]
+```
+
+**Options**:
+
+* `--api-version TEXT`: API Version. Available: v1  [default: v1]
+* `--output-format [yaml|json]`: Output format  [default: json]
+* `--help`: Show this message and exit.
+
+### `aignostics system install`
+
+Complete installation.
+
+**Usage**:
+
+```console
+$ aignostics system install [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics system whoami`
+
+Print user info.
+
+**Usage**:
+
+```console
+$ aignostics system whoami [OPTIONS]
 ```
 
 **Options**:

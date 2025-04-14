@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -87,3 +88,5 @@ class PayloadInputArtifact(BaseModel):
             "download_url": obj.get("download_url")
         })
         return _obj
+
+
