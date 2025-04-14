@@ -6,7 +6,8 @@ from aignostics.client._authentication import get_token
 from aignostics.client.resources.applications import Applications, Versions
 from aignostics.client.resources.runs import Runs
 
-from ._settings import authentication_settings
+from ._constants import API_ROOT_DEV, API_ROOT_PRODUCTION, API_ROOT_STAGING
+from ._settings import settings
 
 
 class Client:
@@ -47,9 +48,30 @@ class Client:
         token = get_token(use_cache=cache_token)
         client = ApiClient(
             Configuration(
-                host=authentication_settings().api_root,
+                host=settings().api_root,
             ),
             header_name="Authorization",
             header_value=f"Bearer {token}",
         )
         return ExternalsApi(client)
+
+    @staticmethod
+    def get_info() -> dict[str, dict]:  # type: ignore[type-arg]
+        """Retrieves process information.
+
+        Returns:
+            dict[str, dict]: Process information including platform API roots.
+        """
+        return {
+            "platform": {
+                "production": {
+                    "API_ROOT": API_ROOT_PRODUCTION,
+                },
+                "staging": {
+                    "API_ROOT": API_ROOT_STAGING,
+                },
+                "dev": {
+                    "API_ROOT": API_ROOT_DEV,
+                },
+            }
+        }

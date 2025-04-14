@@ -1,1 +1,1 @@
-"""Test suite for Aignostics Python SDK."""
+"""Test suite of Aignostics Python SDK."""

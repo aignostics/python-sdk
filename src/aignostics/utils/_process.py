@@ -27,7 +27,6 @@ def get_process_info() -> ProcessInfo:
 
     Returns:
         ProcessInfo: Object containing process information.
-
     """
     current_process = psutil.Process()
     parent = current_process.parent()

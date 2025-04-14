@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -105,3 +106,5 @@ class RunReadResponse(BaseModel):
             "triggered_by": obj.get("triggered_by")
         })
         return _obj
+
+

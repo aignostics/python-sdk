@@ -19,7 +19,7 @@ from aignx.codegen.models import (
 )
 
 import aignostics.client
-from aignostics.client.utils import _generate_signed_url, calculate_file_crc32c, mime_type_to_file_ending
+from aignostics.client._utils import _generate_signed_url, calculate_file_crc32c, mime_type_to_file_ending
 
 
 def three_spots_payload() -> list[ItemCreationRequest]:

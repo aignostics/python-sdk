@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -96,3 +97,5 @@ class RunCreationRequest(BaseModel):
             "items": [ItemCreationRequest.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None
         })
         return _obj
+
+

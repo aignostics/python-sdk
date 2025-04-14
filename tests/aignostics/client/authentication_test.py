@@ -29,7 +29,7 @@ def mock_settings() -> MagicMock:
     Yields:
         MagicMock: A mock of the authentication settings.
     """
-    with patch("aignostics.client._authentication.authentication_settings") as mock_settings:
+    with patch("aignostics.client._authentication.settings") as mock_settings:
         settings = MagicMock()
         # Using tmp_path in a controlled test environment is acceptable for testing
         settings.token_file = Path("mock_token_path")  # Avoid hardcoded /tmp path

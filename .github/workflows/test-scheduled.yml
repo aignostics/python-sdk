@@ -2,7 +2,7 @@ name: "CI Scheduled"
 
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '0 * * * *'
 
 jobs:
   test-scheduled:
@@ -29,8 +29,16 @@ jobs:
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
-          envkey_ENV_KEY: "ENV_VALUE"
-          fail_on_empty: true
+          envkey_ENV: "TEST"
+          envkey_AIGNOSTICS_LOGFIRE_TOKEN: "${{ secrets.AIGNOSTICS_LOGFIRE_TOKEN }}"
+          envkey_AIGNOSTICS_SENTRY_DSN: "${{ secrets.AIGNOSTICS_SENTRY_DSN }}"
+          envkey_AIGNOSTICS_LOG_LEVEL: "DEBUG"
+          envkey_AIGNOSTICS_LOG_FILE_ENABLED: 1
+          envkey_AIGNOSTICS_API_ROOT: https://platform.aignostics.com
+          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
+          envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
+          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+          fail_on_empty: false
 
       - name: Run scheduled tests
         run: make test_scheduled

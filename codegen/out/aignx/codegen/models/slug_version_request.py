@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -92,3 +93,5 @@ class SlugVersionRequest(BaseModel):
             "version": obj.get("version")
         })
         return _obj
+
+

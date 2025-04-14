@@ -8,7 +8,7 @@ import appdirs
 import pytest
 from pydantic import SecretStr
 
-from aignostics import (
+from aignostics.client import (
     API_ROOT_DEV,
     API_ROOT_PRODUCTION,
     API_ROOT_STAGING,
@@ -30,10 +30,11 @@ from aignostics import (
     TOKEN_URL_DEV,
     TOKEN_URL_PRODUCTION,
     TOKEN_URL_STAGING,
-    __project_name__,
+    UNKNOWN_ENDPOINT_URL,
+    Settings,
+    settings,
 )
-from aignostics.client._messages import UNKNOWN_ENDPOINT_URL
-from aignostics.client._settings import AuthenticationSettings, authentication_settings
+from aignostics.utils import __project_name__
 
 
 @pytest.fixture
@@ -52,26 +53,23 @@ def mock_env_vars():  # noqa: ANN201
 @pytest.fixture
 def reset_cached_settings():  # noqa: ANN201
     """Reset the cached authentication settings."""
-    from aignostics.client._settings import __cached_authentication_settings
+    from aignostics.client._settings import __cached_settings
 
     # Store original
-    original = __cached_authentication_settings
+    original = __cached_settings
 
-    # Reset for test
-    from aignostics.client import _settings
-
-    _settings.__cached_authentication_settings = None
+    settings.__cached_settings = None
 
     yield
 
     # Restore original
-    _settings.__cached_authentication_settings = original
+    settings.__cached_settings = original
 
 
 def test_authentication_settings_production(mock_env_vars, reset_cached_settings) -> None:
     """Test authentication settings with production API root."""
     # Create settings with production API root
-    settings = AuthenticationSettings(
+    settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_PRODUCTION,
@@ -97,7 +95,7 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
 
 def test_authentication_settings_staging(mock_env_vars) -> None:
     """Test authentication settings with staging API root."""
-    settings = AuthenticationSettings(
+    settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_STAGING,
@@ -114,7 +112,7 @@ def test_authentication_settings_staging(mock_env_vars) -> None:
 
 def test_authentication_settings_dev(mock_env_vars) -> None:
     """Test authentication settings with dev API root."""
-    settings = AuthenticationSettings(
+    settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_DEV,
@@ -132,7 +130,7 @@ def test_authentication_settings_dev(mock_env_vars) -> None:
 def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
     """Test authentication settings with unknown API root raises ValueError."""
     with pytest.raises(ValueError, match=UNKNOWN_ENDPOINT_URL):
-        AuthenticationSettings(
+        Settings(
             client_id_device=SecretStr("test-client-id-device"),
             client_id_interactive=SecretStr("test-client-id-interactive"),
             api_root="https://unknown.example.com",
@@ -141,7 +139,7 @@ def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
 
 def test_scope_elements_empty() -> None:
     """Test scope_elements property with empty scope."""
-    settings = AuthenticationSettings(
+    settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         scope="",
@@ -152,7 +150,7 @@ def test_scope_elements_empty() -> None:
 
 def test_scope_elements_multiple() -> None:
     """Test scope_elements property with multiple scopes."""
-    settings = AuthenticationSettings(
+    settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         scope="offline_access, profile, email",
@@ -163,7 +161,7 @@ def test_scope_elements_multiple() -> None:
 
 def test_authentication_settings_with_refresh_token(mock_env_vars) -> None:
     """Test authentication settings with refresh token."""
-    settings = AuthenticationSettings(
+    settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         refresh_token=SecretStr("test-refresh-token"),
@@ -175,19 +173,20 @@ def test_authentication_settings_with_refresh_token(mock_env_vars) -> None:
 def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings) -> None:
     """Test lazy loading of authentication settings."""
     # First call should create the settings
-    settings1 = authentication_settings()
+    settings1 = settings()
     assert settings1 is not None
 
     # Second call should return the same instance
-    settings2 = authentication_settings()
+    settings2 = settings()
     assert settings2 is settings1
 
 
+@pytest.mark.sequential
 def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_settings) -> None:
     """Test authentication settings from environment variables."""
-    settings = authentication_settings()
-    assert settings.client_id_device.get_secret_value() == "test-client-id-device"
-    assert settings.client_id_interactive.get_secret_value() == "test-client-id-interactive"
+    settings1 = settings()
+    assert settings1.client_id_device.get_secret_value() == "test-client-id-device"
+    assert settings1.client_id_interactive.get_secret_value() == "test-client-id-interactive"
 
 
 # TODO(Helmut): fixme
@@ -196,14 +195,14 @@ def test_custom_env_file_location(mock_env_vars) -> None:
     """Test custom env file location."""
     custom_env_file = "/home/dummy/test_env_file"
     with mock.patch.dict(os.environ, {f"{__project_name__.upper()}_ENV_FILE": custom_env_file}):
-        settings = AuthenticationSettings.model_config
+        settings = Settings.model_config
         assert custom_env_file in settings["env_file"]
 
 
 def test_custom_cache_dir(mock_env_vars) -> None:
     """Test custom cache directory."""
     custom_cache_dir = "/home/dummy/test_cache_dir"
-    settings = AuthenticationSettings(
+    settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         cache_dir=custom_cache_dir,

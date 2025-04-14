@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -94,3 +95,5 @@ class ValidationError(BaseModel):
             "type": obj.get("type")
         })
         return _obj
+
+

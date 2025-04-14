@@ -6,7 +6,7 @@ app = marimo.App()
 
 @app.cell
 def _():
-    from aignostics import Service
+    from aignostics.hello import Service
 
     service = Service()
     message = service.get_hello_world()

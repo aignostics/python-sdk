@@ -22,8 +22,8 @@ from jsf import JSF
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
+from aignostics.client._utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
 from aignostics.client.resources.applications import Versions
-from aignostics.client.utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
 
 
 class ApplicationRun:

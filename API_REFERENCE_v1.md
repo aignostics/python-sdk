@@ -1,12 +1,14 @@
 # API v1 Reference
 ---
-title: - url: ''
+title: https://logfire-eu.pydantic.dev:443 "POST /v1/metrics HTTP/1.1" 200 2
 language_tabs:
 toc_footers: []
 includes: []
 search: true
 highlight_theme: darkula
 ---
+
+
 
 
 
@@ -736,8 +738,7 @@ paths:
       - Externals
   /v1/applications/{application_id}/versions:
     get:
-      operationId: 
-list_versions_by_application_id_v1_applications__application_id__versions_get
+      operationId: list_versions_by_application_id_v1_applications__application_id__versions_get
       parameters:
       - in: path
         name: application_id
@@ -800,8 +801,7 @@ list_versions_by_application_id_v1_applications__application_id__versions_get
               schema:
                 items:
                   $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Id V1 Applications 
-Application
+                title: Response List Versions By Application Id V1 Applications  Application
                   Id  Versions Get
                 type: array
           description: Successful Response
@@ -816,8 +816,7 @@ Application
       - Externals
   /v1/applications/{application_slug}:
     get:
-      operationId: 
-read_application_by_slug_v1_applications__application_slug__get
+      operationId: read_application_by_slug_v1_applications__application_slug__get
       parameters:
       - in: path
         name: application_slug
@@ -843,9 +842,7 @@ read_application_by_slug_v1_applications__application_slug__get
       - Externals
   /v1/applications/{application_slug}/versions:
     get:
-      operationId: 
-list_versions_by_application_slug_v1_applications__application_slug__versions_ge
-t
+      operationId: list_versions_by_application_slug_v1_applications__application_slug__versions_get
       parameters:
       - in: path
         name: application_slug
@@ -908,8 +905,7 @@ t
               schema:
                 items:
                   $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Slug V1 
-Applications  Application
+                title: Response List Versions By Application Slug V1 Applications  Application
                   Slug  Versions Get
                 type: array
           description: Successful Response
@@ -1101,8 +1097,7 @@ Applications  Application
       - Externals
   /v1/runs/{application_run_id}/results:
     delete:
-      operationId: 
-delete_run_results_v1_runs__application_run_id__results_delete
+      operationId: delete_run_results_v1_runs__application_run_id__results_delete
       parameters:
       - in: path
         name: application_run_id
@@ -1200,8 +1195,7 @@ delete_run_results_v1_runs__application_run_id__results_delete
               schema:
                 items:
                   $ref: '#/components/schemas/ItemResultReadResponse'
-                title: Response List Run Results V1 Runs  Application Run Id  
-Results
+                title: Response List Run Results V1 Runs  Application Run Id  Results
                   Get
                 type: array
           description: Successful Response
@@ -1282,6 +1276,14 @@ Results
       - Externals
 servers:
 - url: ''
+Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
+Starting new HTTPS connection (2): logfire-eu.pydantic.dev:443
+https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
+https://logfire-eu.pydantic.dev:443 "POST /v1/metrics HTTP/1.1" 200 2
+
+> Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
+
+> https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
 
 > components:
 

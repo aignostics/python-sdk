@@ -3,7 +3,7 @@
 from dotenv import load_dotenv
 from rich.console import Console
 
-from aignostics import Service
+from aignostics.hello import Service
 
 console = Console()
 

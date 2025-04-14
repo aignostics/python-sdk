@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -82,3 +83,5 @@ class VersionCreationResponse(BaseModel):
             "application_version_id": obj.get("application_version_id")
         })
         return _obj
+
+

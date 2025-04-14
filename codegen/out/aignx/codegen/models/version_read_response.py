@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -118,3 +119,5 @@ class VersionReadResponse(BaseModel):
             "created_at": obj.get("created_at")
         })
         return _obj
+
+

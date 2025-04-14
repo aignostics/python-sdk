@@ -1,4 +1,4 @@
-"""Exceptions of Aignostics Python SDK."""
+"""Exceptions of system module."""
 
 
 class OpenAPISchemaError(ValueError):

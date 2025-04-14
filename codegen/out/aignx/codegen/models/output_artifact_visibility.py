@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -32,3 +33,5 @@ class OutputArtifactVisibility(str, Enum):
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of OutputArtifactVisibility from a JSON string"""
         return cls(json.loads(json_str))
+
+

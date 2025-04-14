@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     PAPI API Reference
@@ -94,3 +95,5 @@ class InputArtifact(BaseModel):
             "metadata_schema": obj.get("metadata_schema")
         })
         return _obj
+
+
