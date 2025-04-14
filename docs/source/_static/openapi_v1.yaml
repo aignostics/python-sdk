@@ -1,5 +1,3 @@
-Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
-https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
 components:
   schemas:
     ApplicationReadResponse:
@@ -1266,7 +1264,3 @@ paths:
       - Externals
 servers:
 - url: ''
-Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
-Starting new HTTPS connection (2): logfire-eu.pydantic.dev:443
-https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
-https://logfire-eu.pydantic.dev:443 "POST /v1/metrics HTTP/1.1" 200 2

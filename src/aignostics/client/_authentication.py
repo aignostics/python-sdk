@@ -16,6 +16,8 @@ from requests_oauthlib import OAuth2Session
 from ._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
 from ._settings import settings
 
+CALLBACK_PORT_RETRY_COUNT = 5
+
 
 class AuthenticationResult(BaseModel):
     """Represents the result of an OAuth authentication flow."""

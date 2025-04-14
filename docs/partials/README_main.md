@@ -1,4 +1,5 @@
-from aignx.codegen.models import ItemCreationRequestfrom aignx.codegen.models import ItemCreationRequestfrom aignx.codegen.models import RunCreationRequest
+from aignx.codegen.models import ItemCreationRequestfrom aignx.codegen.models
+import ItemCreationRequestfrom aignx.codegen.models import RunCreationRequest
 
 ## Introduction
 
@@ -66,19 +67,19 @@ The CLI is installed as part of the SDK. You can run it from your terminal using
 the `uvx` command. See as follows for the primary commands:
 
 ```shell
-uvx aignostics platform health          # checks if CLI and Platform are health
-uvx aignostics platform info            # shows information about the platform
-uvx aignostics application list         # lists AI applications available for the user
+uvx aignostics system health          # checks if the Python SDK and the aignostics platform are healthy
+uvx aignostics system info            # shows information about the configuration and runtime of the system
+uvx aignostics application list       # lists AI applications available for you
 # TODO (Helmut): Explain a bit more.
 ```
 
 The CLI provides extensive help:
 
 ```shell
-uvx aignostics --help                   # all CLI commands
-uvx aignostics application --help       # help for specific topic
-uvx aignostics application list --help  # help for specific topic
-uvx aignostics serve --help
+uvx aignostics --help                   # all subcommands
+uvx aignostics application --help       # list subcommands in the application space
+uvx aignostics application list --help  # help for specific command
+uvx aignostics application run --help.  # list subcommands in the application run space
 ```
 
 Check out our
@@ -87,32 +88,41 @@ to learn about all commands and options available.
 
 ## Using the Python SDK in your Codebase
 
-The following sections showcase how you can integrate the Python SDK in your codebase.
+The following sections showcase how you can integrate the Python SDK in your
+codebase.
 
 ### Installation
 
-Adding Aignostics Python SDK to your codebase as a dependency is easy. 
-You can directly import add the dependency via your favourite package manager, 
-e.g., [pip](https://pip.pypa.io/en/stable/) or [uv](https://docs.astral.sh/uv/).
+Adding Aignostics Python SDK to your codebase as a dependency is easy. You can
+directly import add the dependency via your favourite package manager, e.g.,
+[pip](https://pip.pypa.io/en/stable/) or [uv](https://docs.astral.sh/uv/).
 
-**Install with uv** -- If you don't have uv installed follow [these instructions](https://docs.astral.sh/uv/getting-started/installation/).
+**Install with uv** -- If you don't have uv installed follow
+[these instructions](https://docs.astral.sh/uv/getting-started/installation/).
+
 ```shell
 uv add aignostics                       # add SDK as dependency to your project
 ```
 
 **Install with pip**
+
 ```shell
 pip install aignostics                  # add SDK as dependency to your project
 ```
 
 ### Usage
 
-Read the [client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html) to learn about all classes and methods.
+Read the
+[client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
+to learn about all classes and methods.
 
-The following snippets showcase the basic code to run an application with the Python SDK. 
-A more detailed example - including comments - is available in the `examples` folder as Python notebooks: 
-[examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb) (IPython) 
-[examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py) (Marimo).
+The following snippets showcase the basic code to run an application with the
+Python SDK. A more detailed example - including comments - is available in the
+`examples` folder as Python notebooks:
+[examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)
+(IPython)
+[examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)
+(Marimo).
 
 ```python
 import aignostics.client
@@ -138,13 +148,18 @@ application_run.download_to_folder("path/to/download/folder")
 ```
 
 ### Authentication Setup
-The SDK uses the [OAuth2](https://oauth.net/2/) protocol for authentication. 
-Please visit [your personal dashboard on the aignostics platform](https://platform.aignostics.com) and scroll to the "Python SDK" section
-to find your personalized setup instructions.
+
+The SDK uses the [OAuth2](https://oauth.net/2/) protocol for authentication.
+Please visit
+[your personal dashboard on the aignostics platform](https://platform.aignostics.com)
+and scroll to the "Python SDK" section to find your personalized setup
+instructions.
 
 ### Application Run Payloads
 
-The payload expected to trigger an application run is specified by the `RunCreationRequest` pydantic model:
+The payload expected to trigger an application run is specified by the
+`RunCreationRequest` pydantic model:
+
 ```python
 RunCreationRequest(
    application_version=...,
@@ -154,8 +169,10 @@ RunCreationRequest(
    ]
 )
 ```
-Next to the application version of the application you want to run, 
-it defines the items you want to be processed as `ItemCreationRequest` objects:
+
+Next to the application version of the application you want to run, it defines
+the items you want to be processed as `ItemCreationRequest` objects:
+
 ```python
 ItemCreationRequest(
     reference="1",
@@ -173,20 +190,29 @@ ItemCreationRequest(
     ],
 ),
 ```
-For each item you want to process, you need to provide a unique `reference` string. 
-This is used to identify the item in the results later on. 
-The `input_artifacts` field is a list of `InputArtifactCreationRequest` objects, which defines what data & metadata you need to provide for each item.
-The required artifacts depend on the application version you want to run - in the case of test application, there is only one artifact required, which is the image to process on.
-The artifact name is defined as `user_slide`. 
 
-The `download_url` is a signed URL that allows the Aignostics Platform to download the image data later during processing.
+For each item you want to process, you need to provide a unique `reference`
+string. This is used to identify the item in the results later on. The
+`input_artifacts` field is a list of `InputArtifactCreationRequest` objects,
+which defines what data & metadata you need to provide for each item. The
+required artifacts depend on the application version you want to run - in the
+case of test application, there is only one artifact required, which is the
+image to process on. The artifact name is defined as `user_slide`.
+
+The `download_url` is a signed URL that allows the Aignostics Platform to
+download the image data later during processing.
 
 #### Self-signed URLs for large files
 
-To make the images you want to process available to the Aignostics Platform, you need to provide a signed URL that allows the platform to download the data.
-Self-signed URLs for files in google storage buckets can be generated using the `generate_signed_url` ([code](https://github.com/aignostics/python-sdk/blob/407e74f7ae89289b70efd86cbda59ec7414050d5/src/aignostics/client/utils.py#L85)).
+To make the images you want to process available to the Aignostics Platform, you
+need to provide a signed URL that allows the platform to download the data.
+Self-signed URLs for files in google storage buckets can be generated using the
+`generate_signed_url`
+([code](https://github.com/aignostics/python-sdk/blob/407e74f7ae89289b70efd86cbda59ec7414050d5/src/aignostics/client/utils.py#L85)).
 
-**We expect that you provide the [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials) for the Google Storage Bucket**
+**We expect that you provide the
+[required credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
+for the Google Storage Bucket**
 
 ## Run with Docker
 
@@ -196,7 +222,7 @@ required you can run the CLI as a Docker container:
 ```shell
 # TODO (Helmut): Explain about the environment
 docker run helmuthva/aignostics-python-sdk --help
-docker run helmuthva/aignostics-python-sdk platform health
+docker run helmuthva/aignostics-python-sdk system health
 ```
 
 Running via docker compose is supported as well. The .env is passed through from
@@ -204,5 +230,5 @@ the host to the Docker container automatically.
 
 ```shell
 docker compose run aignostics --help
-docker compose run aignostics platform health
+docker compose run aignostics system health
 ```
