@@ -73,12 +73,9 @@ jobs:
             exit 1
             fi
 
-      - name: Set up cloud credentials
-        env:
-          AIGNOSTICS_API_ROOT: https://platform.aignostics.com
-          CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      - name: Set up GCP credentials for bucket access
         run: |
-          echo "$CREDENTIALS" | base64 -d > credentials.json
+          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
       
       - name: Smoke tests
