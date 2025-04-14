@@ -133,43 +133,59 @@ Check out our
 [CLI reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html#cli)
 to learn about all commands and options available.
 
+## Use in Python Notebooks
+
+We provided example notebooks to help you get started with the Python SDK.
+Before you can start, you need to setup your authentication information:
+
+**Authentication:**
+The SDK uses the [OAuth2](https://oauth.net/2/) protocol for authentication.
+Please visit
+[your personal dashboard on the aignostics platform](https://platform.aignostics.com/getting-started/quick-start)
+and look at the `Enterprise Integration` section to obtain your personal client information.
+
+**Examples:** The notebooks showcase the interaction with the Aignostics platform using our test application.
+To run one them, please follow the steps shown below to (i) clone this repository and start either the [Jupyter](https://docs.jupyter.org/en/latest/index.html) ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)) or 
+[Marimo](https://marimo.io/) ([examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)) notebook:
+
+```shell
+# clone the `python-sdk` repository
+git clone https://github.com/aignostics/python-sdk.git
+# within the cloned repository, install the SDK and all dependencies
+uv sync --all-extras
+# show jupyter example notebook in the browser
+uv run jupyter notebook examples/notebook.ipynb
+# show marimo example notebook in the browser
+uv run marimo edit examples/notebook.py
+```
+
 ## Using the Python SDK in your Codebase
 
-The following sections showcase how you can integrate the Python SDK in your
-codebase.
+Next to using the CLI and notebooks, you can also use the Python SDK in your
+codebase. The following sections outline how to install the SDK and interact with it.
 
 ### Installation
-
 Adding Aignostics Python SDK to your codebase as a dependency is easy. You can
-directly import add the dependency via your favourite package manager, e.g.,
-[pip](https://pip.pypa.io/en/stable/) or [uv](https://docs.astral.sh/uv/).
+directly add the dependency via your favourite package manager:
 
-**Install with uv** -- If you don't have uv installed follow
+**Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv installed follow
 [these instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```shell
-uv add aignostics                       # add SDK as dependency to your project
+# add SDK as dependency to your project
+uv add aignostics
 ```
 
-**Install with pip**
+**Install with [pip](https://pip.pypa.io/en/stable/)**
 
 ```shell
-pip install aignostics                  # add SDK as dependency to your project
+# add SDK as dependency to your project
+pip install aignostics
 ```
 
 ### Usage
 
-Read the
-[client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
-to learn about all classes and methods.
-
-The following snippets showcase the basic code to run an application with the
-Python SDK. A more detailed example - including comments - is available in the
-`examples` folder as Python notebooks:
-[examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)
-(IPython)
-[examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)
-(Marimo).
+The following snippet shows how to use the Python SDK to trigger an application run:
 
 ```python
 import aignostics.client
@@ -194,15 +210,11 @@ application_run = client.runs.create(
 application_run.download_to_folder("path/to/download/folder")
 ```
 
-### Authentication Setup
+Please look at the notebooks in the `example` folder for a more detailed example and read the
+[client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
+to learn about all classes and methods.
 
-The SDK uses the [OAuth2](https://oauth.net/2/) protocol for authentication.
-Please visit
-[your personal dashboard on the aignostics platform](https://platform.aignostics.com)
-and scroll to the "Python SDK" section to find your personalized setup
-instructions.
-
-### Application Run Payloads
+#### Application Run Payloads
 
 The payload expected to trigger an application run is specified by the
 `RunCreationRequest` pydantic model:

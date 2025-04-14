@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.12.4"
+__generated_with = "0.12.8"
 app = marimo.App(width="medium")
 
 
@@ -148,7 +148,7 @@ def _(mo):
 
 @app.cell
 def _(client):
-    from aignostics.client.utils import generate_signed_url
+    from aignostics.client._utils import generate_signed_url # noqa: PLC2701
     from aignx.codegen.models import (
         ApplicationVersion,
         RunCreationRequest,
@@ -189,6 +189,7 @@ def _(client):
         ItemCreationRequest,
         RunCreationRequest,
         application_run,
+        generate_signed_url,
         payload,
     )
 

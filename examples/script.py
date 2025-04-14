@@ -10,7 +10,7 @@ from aignx.codegen.models import (
 )
 
 import aignostics.client
-from aignostics.client.utils import generate_signed_url
+from aignostics.client._utils import generate_signed_url  # noqa: PLC2701
 
 # please look at the IPython or Marimo notebooks for a detailed explanation of the payload
 payload = [
