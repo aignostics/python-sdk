@@ -1,24 +1,13 @@
 # API v1 Reference
+
 ---
-title: https://logfire-eu.pydantic.dev:443 "POST /v1/metrics HTTP/1.1" 200 2
+title: - url: ''
 language_tabs:
 toc_footers: []
 includes: []
 search: true
 highlight_theme: darkula
 ---
-
-
-
-
-
-
-
-
-
-
-
-
 
           - Aignostics H&E TME application
           title: Description
@@ -681,626 +670,174 @@ highlight_theme: darkula
       - created_at
       title: VersionReadResponse
       type: object
-info:
-  title: PAPI API Reference
-  version: 1.0.0
-openapi: 3.1.0
-paths:
-  /v1/applications:
-    get:
-      operationId: list_applications_v1_applications_get
-      parameters:
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ApplicationReadResponse'
-                title: Response List Applications V1 Applications Get
-                type: array
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: List Applications
-      tags:
-      - Externals
-  /v1/applications/{application_id}/versions:
-    get:
-      operationId: list_versions_by_application_id_v1_applications__application_id__versions_get
-      parameters:
-      - in: path
-        name: application_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Id
-          type: string
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: version
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Version
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Id V1 Applications  Application
-                  Id  Versions Get
-                type: array
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: List Versions By Application Id
-      tags:
-      - Externals
-  /v1/applications/{application_slug}:
-    get:
-      operationId: read_application_by_slug_v1_applications__application_slug__get
-      parameters:
-      - in: path
-        name: application_slug
-        required: true
-        schema:
-          title: Application Slug
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationReadResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+
+info: title: PAPI API Reference version: 1.0.0 openapi: 3.1.0 paths:
+/v1/applications: get: operationId: list_applications_v1_applications_get
+parameters: - in: query name: page required: false schema: default: 1 minimum: 1
+title: Page type: integer - in: query name: page_size required: false schema:
+default: 50 maximum: 100 minimum: 5 title: Page Size type: integer - in: query
+name: sort required: false schema: anyOf: - items: type: string type: array -
+type: 'null' title: Sort responses: '200': content: application/json: schema:
+items: $ref: '#/components/schemas/ApplicationReadResponse' title: Response List
+Applications V1 Applications Get type: array description: Successful Response
+'422': content: application/json: schema: $ref:
+'#/components/schemas/HTTPValidationError' description: Validation Error
+summary: List Applications tags: - Externals
+/v1/applications/{application_id}/versions: get: operationId:
+list_versions_by_application_id_v1_applications__application_id__versions_get
+parameters: - in: path name: application_id required: true schema: format: uuid
+title: Application Id type: string - in: query name: page required: false
+schema: default: 1 minimum: 1 title: Page type: integer - in: query name:
+page_size required: false schema: default: 50 maximum: 100 minimum: 5 title:
+Page Size type: integer - in: query name: version required: false schema: anyOf:
+- type: string - type: 'null' title: Version - in: query name: include required:
+false schema: anyOf: - maxItems: 1 minItems: 1 prefixItems: - type: string type:
+array - type: 'null' title: Include - in: query name: sort required: false
+schema: anyOf: - items: type: string type: array - type: 'null' title: Sort
+responses: '200': content: application/json: schema: items: $ref:
+'#/components/schemas/ApplicationVersionReadResponse' title: Response List
+Versions By Application Id V1 Applications Application Id Versions Get type:
+array description: Successful Response '422': content: application/json: schema:
+$ref: '#/components/schemas/HTTPValidationError' description: Validation Error
+summary: List Versions By Application Id tags: - Externals
+/v1/applications/{application_slug}: get: operationId:
+read_application_by_slug_v1_applications__application_slug__get parameters: -
+in: path name: application_slug required: true schema: title: Application Slug
+type: string responses: '200': content: application/json: schema: $ref:
+'#/components/schemas/ApplicationReadResponse' description: Successful Response
+'422': content: application/json: schema:
+$ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Read Application By Slug
       tags:
       - Externals
   /v1/applications/{application_slug}/versions:
     get:
-      operationId: list_versions_by_application_slug_v1_applications__application_slug__versions_get
+      operationId:
+list_versions_by_application_slug_v1_applications__application_slug__versions_ge
+t
       parameters:
       - in: path
         name: application_slug
         required: true
         schema:
-          pattern: ^(-?)*$
-          title: Application Slug
-          type: string
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: version
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Version
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ApplicationVersionReadResponse'
-                title: Response List Versions By Application Slug V1 Applications  Application
-                  Slug  Versions Get
-                type: array
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: List Versions By Application Slug
-      tags:
-      - Externals
-  /v1/runs:
-    get:
-      operationId: list_application_runs_v1_runs_get
-      parameters:
-      - in: query
-        name: application_id
-        required: false
-        schema:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Application Id
-      - in: query
-        name: application_version_id
-        required: false
-        schema:
-          anyOf:
-          - format: uuid
-            type: string
-          - type: 'null'
-          title: Application Version Id
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/RunReadResponse'
-                title: Response List Application Runs V1 Runs Get
-                type: array
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: List Application Runs
-      tags:
-      - Externals
-    post:
-      operationId: create_application_run_v1_runs_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RunCreationRequest'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunCreationResponse'
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Create Application Run
-      tags:
-      - Externals
-  /v1/runs/{application_run_id}:
-    get:
-      operationId: get_run_v1_runs__application_run_id__get
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunReadResponse'
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Get Run
-      tags:
-      - Externals
-  /v1/runs/{application_run_id}/cancel:
-    post:
-      operationId: cancel_run_v1_runs__application_run_id__cancel_post
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      responses:
-        '202':
-          content:
-            application/json:
-              schema: {}
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Cancel Run
-      tags:
-      - Externals
-  /v1/runs/{application_run_id}/results:
-    delete:
-      operationId: delete_run_results_v1_runs__application_run_id__results_delete
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      responses:
-        '204':
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Delete Run Results
-      tags:
-      - Externals
-    get:
-      operationId: list_run_results_v1_runs__application_run_id__results_get
-      parameters:
-      - in: path
-        name: application_run_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Run Id
-          type: string
-      - in: query
-        name: item_id__in
-        required: false
-        schema:
-          anyOf:
-          - items:
-              format: uuid
-              type: string
-            type: array
-          - type: 'null'
-          title: Item Id  In
-      - in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          title: Page
-          type: integer
-      - in: query
-        name: page_size
-        required: false
-        schema:
-          default: 50
-          maximum: 100
-          minimum: 5
-          title: Page Size
-          type: integer
-      - in: query
-        name: reference__in
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Reference  In
-      - in: query
-        name: status__in
-        required: false
-        schema:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/ItemStatus'
-            type: array
-          - type: 'null'
-          title: Status  In
-      - in: query
-        name: sort
-        required: false
-        schema:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Sort
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/ItemResultReadResponse'
-                title: Response List Run Results V1 Runs  Application Run Id  Results
-                  Get
-                type: array
-          description: Successful Response
-        '404':
-          description: Application run not found
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: List Run Results
-      tags:
-      - Externals
-  /v1/versions:
-    post:
-      operationId: register_version_v1_versions_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VersionCreationRequest'
-        required: true
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VersionCreationResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Register Version
-      tags:
-      - Externals
-  /v1/versions/{application_version_id}:
-    get:
-      operationId: get_version_v1_versions__application_version_id__get
-      parameters:
-      - in: path
-        name: application_version_id
-        required: true
-        schema:
-          format: uuid
-          title: Application Version Id
-          type: string
-      - in: query
-        name: include
-        required: false
-        schema:
-          anyOf:
-          - maxItems: 1
-            minItems: 1
-            prefixItems:
-            - type: string
-            type: array
-          - type: 'null'
-          title: Include
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VersionReadResponse'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Get Version
-      tags:
-      - Externals
-servers:
+          pattern: ^(-?)*$ title: Application Slug type: string - in: query
+name: page required: false schema: default: 1 minimum: 1 title: Page type:
+integer - in: query name: page_size required: false schema: default: 50 maximum:
+100 minimum: 5 title: Page Size type: integer - in: query name: version
+required: false schema: anyOf: - type: string - type: 'null' title: Version -
+in: query name: include required: false schema: anyOf: - maxItems: 1 minItems: 1
+prefixItems: - type: string type: array - type: 'null' title: Include - in:
+query name: sort required: false schema: anyOf: - items: type: string type:
+array - type: 'null' title: Sort responses: '200': content: application/json:
+schema: items: $ref: '#/components/schemas/ApplicationVersionReadResponse'
+title: Response List Versions By Application Slug V1 Applications Application
+Slug Versions Get type: array description: Successful Response '422': content:
+application/json: schema: $ref: '#/components/schemas/HTTPValidationError'
+description: Validation Error summary: List Versions By Application Slug tags: -
+Externals /v1/runs: get: operationId: list_application_runs_v1_runs_get
+parameters: - in: query name: application_id required: false schema: anyOf: -
+format: uuid type: string - type: 'null' title: Application Id - in: query name:
+application_version_id required: false schema: anyOf: - format: uuid type:
+string - type: 'null' title: Application Version Id - in: query name: include
+required: false schema: anyOf: - maxItems: 1 minItems: 1 prefixItems: - type:
+string type: array - type: 'null' title: Include - in: query name: page
+required: false schema: default: 1 minimum: 1 title: Page type: integer - in:
+query name: page_size required: false schema: default: 50 maximum: 100 minimum:
+5 title: Page Size type: integer - in: query name: sort required: false schema:
+anyOf: - items: type: string type: array - type: 'null' title: Sort responses:
+'200': content: application/json: schema: items: $ref:
+'#/components/schemas/RunReadResponse' title: Response List Application Runs V1
+Runs Get type: array description: Successful Response '404': description:
+Application run not found '422': content: application/json: schema: $ref:
+'#/components/schemas/HTTPValidationError' description: Validation Error
+summary: List Application Runs tags: - Externals post: operationId:
+create_application_run_v1_runs_post requestBody: content: application/json:
+schema: $ref: '#/components/schemas/RunCreationRequest' required: true
+responses: '201': content: application/json: schema: $ref:
+'#/components/schemas/RunCreationResponse' description: Successful Response
+'404': description: Application run not found '422': content: application/json:
+schema: $ref: '#/components/schemas/HTTPValidationError' description: Validation
+Error summary: Create Application Run tags: - Externals
+/v1/runs/{application_run_id}: get: operationId:
+get_run_v1_runs__application_run_id__get parameters: - in: path name:
+application_run_id required: true schema: format: uuid title: Application Run Id
+type: string - in: query name: include required: false schema: anyOf: -
+maxItems: 1 minItems: 1 prefixItems: - type: string type: array - type: 'null'
+title: Include responses: '200': content: application/json: schema: $ref:
+'#/components/schemas/RunReadResponse' description: Successful Response '404':
+description: Application run not found '422': content: application/json: schema:
+$ref: '#/components/schemas/HTTPValidationError' description: Validation Error
+summary: Get Run tags: - Externals /v1/runs/{application_run_id}/cancel: post:
+operationId: cancel_run_v1_runs__application_run_id__cancel_post parameters: -
+in: path name: application_run_id required: true schema: format: uuid title:
+Application Run Id type: string responses: '202': content: application/json:
+schema: {} description: Successful Response '404': description: Application run
+not found '422': content: application/json: schema: $ref:
+'#/components/schemas/HTTPValidationError' description: Validation Error
+summary: Cancel Run tags: - Externals /v1/runs/{application_run_id}/results:
+delete: operationId:
+delete_run_results_v1_runs__application_run_id__results_delete parameters: - in:
+path name: application_run_id required: true schema: format: uuid title:
+Application Run Id type: string responses: '204': description: Successful
+Response '404': description: Application run not found '422': content:
+application/json: schema: $ref: '#/components/schemas/HTTPValidationError'
+description: Validation Error summary: Delete Run Results tags: - Externals get:
+operationId: list_run_results_v1_runs__application_run_id__results_get
+parameters: - in: path name: application_run_id required: true schema: format:
+uuid title: Application Run Id type: string - in: query name: item_id__in
+required: false schema: anyOf: - items: format: uuid type: string type: array -
+type: 'null' title: Item Id In - in: query name: page required: false schema:
+default: 1 minimum: 1 title: Page type: integer - in: query name: page_size
+required: false schema: default: 50 maximum: 100 minimum: 5 title: Page Size
+type: integer - in: query name: reference__in required: false schema: anyOf: -
+items: type: string type: array - type: 'null' title: Reference In - in: query
+name: status__in required: false schema: anyOf: - items: $ref:
+'#/components/schemas/ItemStatus' type: array - type: 'null' title: Status In -
+in: query name: sort required: false schema: anyOf: - items: type: string type:
+array - type: 'null' title: Sort responses: '200': content: application/json:
+schema: items: $ref: '#/components/schemas/ItemResultReadResponse' title:
+Response List Run Results V1 Runs Application Run Id\
+Results Get type: array description: Successful Response '404': description:
+Application run not found '422': content: application/json: schema: $ref:
+'#/components/schemas/HTTPValidationError' description: Validation Error
+summary: List Run Results tags: - Externals /v1/versions: post: operationId:
+register_version_v1_versions_post requestBody: content: application/json:
+schema: $ref: '#/components/schemas/VersionCreationRequest' required: true
+responses: '201': content: application/json: schema: $ref:
+'#/components/schemas/VersionCreationResponse' description: Successful Response
+'422': content: application/json: schema: $ref:
+'#/components/schemas/HTTPValidationError' description: Validation Error
+summary: Register Version tags: - Externals
+/v1/versions/{application_version_id}: get: operationId:
+get_version_v1_versions__application_version_id__get parameters: - in: path
+name: application_version_id required: true schema: format: uuid title:
+Application Version Id type: string - in: query name: include required: false
+schema: anyOf: - maxItems: 1 minItems: 1 prefixItems: - type: string type: array
+- type: 'null' title: Include responses: '200': content: application/json:
+schema: $ref: '#/components/schemas/VersionReadResponse' description: Successful
+Response '422': content: application/json: schema: $ref:
+'#/components/schemas/HTTPValidationError' description: Validation Error
+summary: Get Version tags: - Externals servers:
+
 - url: ''
-Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
-Starting new HTTPS connection (2): logfire-eu.pydantic.dev:443
-https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
-https://logfire-eu.pydantic.dev:443 "POST /v1/metrics HTTP/1.1" 200 2
-
-> Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
-
-> https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
 
 > components:
 
->   schemas:
+> schemas:
 
 >     ApplicationReadResponse:
 
->       properties:
+>     properties:
 
->         application_id:
+>     application_id:
 
->           format: uuid
+>     format: uuid
 
->           title: Application Id
+>     title: Application Id
 
->           type: string
+>     type: string
 
->         description:
+>     description:
 
->           examples:
+>     examples:
