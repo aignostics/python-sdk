@@ -19,6 +19,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `application`: Application commands
+* `idc`: Commands to query and download...
 * `system`: System commands
 
 ## `aignostics application`
@@ -321,6 +322,103 @@ $ aignostics application run result delete [OPTIONS]
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+## `aignostics idc`
+
+Commands to query and download collections, cases, studies and series of Image Data Commons (IDC) Portal of the National Institute of Cancer (NIC)
+
+**Usage**:
+
+```console
+$ aignostics idc [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `browse`: Open browser to explore IDC portal.
+* `columns`: List available columns in IDC index.
+* `query`: Query IDC index.
+* `download`: Download from manifest file, identifier,...
+
+### `aignostics idc browse`
+
+Open browser to explore IDC portal.
+
+**Usage**:
+
+```console
+$ aignostics idc browse [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics idc columns`
+
+List available columns in IDC index.
+
+**Usage**:
+
+```console
+$ aignostics idc columns [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics idc query`
+
+Query IDC index. For example queries see https://github.com/ImagingDataCommons/IDC-Tutorials/blob/master/notebooks/labs/idc_rsna2023.ipynb.
+
+**Usage**:
+
+```console
+$ aignostics idc query [OPTIONS] [QUERY]
+```
+
+**Arguments**:
+
+* `[QUERY]`: SQL Query  [default: SELECT
+  SeriesInstanceUID
+FROM
+  index
+WHERE
+  Modality = &#x27;MR&#x27;
+]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics idc download`
+
+Download from manifest file, identifier, or comma-separate set of identifiers.
+
+Raises:
+    typer.Exit: If the target directory does not exist.
+
+**Usage**:
+
+```console
+$ aignostics idc download [OPTIONS] SOURCE [TARGET]
+```
+
+**Arguments**:
+
+* `SOURCE`: Filename of manifest, identifier, or comma-separate set of identifiers  [required]
+* `[TARGET]`: target directory for download  [default: /Users/helmut/Code/python-sdk]
+
+**Options**:
+
+* `--target-layout TEXT`: layout of the target directory. See default for available elements for use  [default: %collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID]
+* `--dry-run / --no-dry-run`: dry run  [default: no-dry-run]
 * `--help`: Show this message and exit.
 
 ## `aignostics system`

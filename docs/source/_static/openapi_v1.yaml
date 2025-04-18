@@ -1,3 +1,4 @@
+2025-04-18 19:45:46 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.0.10 (project root /Users/helmut/Code/python-sdk, pid 85671), parent 'python3.11' (pid 85642)                                                         boot.py:78
 components:
   schemas:
     ApplicationReadResponse:

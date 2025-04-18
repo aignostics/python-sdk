@@ -124,6 +124,7 @@ examples = [
     "jinja2>=3.1.6",
 ]
 aws = ["boto3>=1.37.27"]
+idc = ["idc-index>=0.8.6"]
 # formats = ["openslide-python>=1.4.1", "openslide-bin>=4.0.0.6"]
 
 [dependency-groups]
