@@ -71,7 +71,8 @@
     "github.copilot.chat.scopeSelection": true,
     "github.copilot.chat.search.semanticTextResults": true,
     "sonarlint.connectedMode.project": {
-        "connectionId": "aignostics-gmbh",
+        "connectionId": "aignostics",
         "projectKey": "aignostics_python-sdk"
-    }
+    },
+    "makefile.configureOnOpen": false
 }
