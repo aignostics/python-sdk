@@ -33,6 +33,8 @@ def columns() -> None:
 
     client = IDCClient.client()
     console.print(list(client.index.columns))
+    client.fetch_index("sm_instance_index")
+    console.print(list(client.index.columns))
 
 
 @cli.command()
@@ -71,8 +73,10 @@ def download(
     from idc_index.index import IDCClient  # noqa: PLC0415
 
     client = IDCClient.client()
+    logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
 
-    logger.info("Downloading from IDC %s index", client.get_idc_version())  # type: ignore[no-untyped-call]
+    client.fetch_index("sm_instance_index")
+    logger.info("Downloaded instance index")
 
     target_directory = Path(target)
     if not target_directory.is_dir():

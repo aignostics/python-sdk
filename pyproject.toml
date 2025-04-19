@@ -119,12 +119,15 @@ packages = ["src/aignostics", "codegen/out/aignx"]
 [project.optional-dependencies]
 examples = [
     "streamlit>=1.44.1",
-    "marimo>=0.12.8",
+    "marimo>=0.13.0",
     "jupyter>=1.1.1",
     "jinja2>=3.1.6",
+    "shapely>=2.1.0",
 ]
 aws = ["boto3>=1.37.27"]
 idc = ["idc-index>=0.8.6"]
+dicom = ["highdicom>=0.25.1", "wsidicom>=0.26.0"]
+gui = ["nicegui>=2.15.0", "pywebview>=5.4"]
 # formats = ["openslide-python>=1.4.1", "openslide-bin>=4.0.0.6"]
 
 [dependency-groups]
@@ -142,6 +145,7 @@ dev = [
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
+    "pyinstaller>=6.13.0",
     "pyright>=1.1.399",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
@@ -180,13 +184,7 @@ target-version = "py311"
 preview = true
 fix = true
 line-length = 120
-extend-exclude = [
-    ".fixme",
-    "notebook.py",
-    "template/*.py",
-    "playbook.py",   # TODO (Andreas): refactor and reenable,
-    "codegen",
-]
+extend-exclude = [".fixme", "examples/*.py", "template/*.py", "codegen"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -236,12 +234,6 @@ ignore = [
     "ASYNC230", # async functions should not open files with blocking methods like `open`
     "S104",     # bind to all ports
     "S607",     # subprocess with partial path
-]
-
-[tool.ruff.lint.extend-per-file-ignores]
-"examples/notebook.py" = [
-    # we are more relaxed in notebooks, while sill applying hundreds of rules
-    "B018", # notebooks surface variable without print
 ]
 
 [tool.ruff.format]

@@ -1,6 +1,8 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
 import sys
+from importlib.util import find_spec
+from typing import Annotated
 
 import typer
 
@@ -12,6 +14,18 @@ logger = get_logger(__name__)
 
 cli = typer.Typer(help="Command Line Interface of ")
 prepare_cli(cli, f"🧠 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")
+
+
+if find_spec("nicegui"):
+    from aignostics.gui import run
+
+    @cli.command(name="gui", help="Start GUI")
+    def gui(
+        in_browser: Annotated[bool, typer.Option(help="Run the GUI in a web browser")] = False,
+    ) -> None:
+        """Start GUI."""
+        run(in_browser=in_browser, watch=False)
+
 
 if __name__ == "__main__":  # pragma: no cover
     try:
