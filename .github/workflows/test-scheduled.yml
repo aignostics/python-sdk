@@ -44,4 +44,14 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Run scheduled tests
-        run: make test_scheduled
+        id: scheduled_tests
+        run: |
+          make test_scheduled
+          # Provide heartbeat to bettertack for monitoring/alerting
+          exit_code=$?
+          if [ $exit_code -eq 0 ]; then
+            curl -s https://uptime.betterstack.com/api/v1/heartbeat/${{ secrets.BETTERUPTIME_HEARTBEAT_PYTHONSDK_SCHEDULED_E2E_TEST_ON_GITHUB_ID }}
+          else
+            curl -s https://uptime.betterstack.com/api/v1/heartbeat/${{ secrets.BETTERUPTIME_HEARTBEAT_PYTHONSDK_SCHEDULED_E2E_TEST_ON_GITHUB_ID }}/$exit_code
+          fi
+          exit $exit_code
