@@ -1,9 +1,15 @@
 Library Reference
 =================
 
-.. automodule:: aignostics.hello
+.. automodule:: aignostics.client
+    :members:
+
+.. automodule:: aignostics.application
     :members:
     
+.. automodule:: aignostics.idc
+    :members:
+
 .. automodule:: aignostics.system
     :members:
 
