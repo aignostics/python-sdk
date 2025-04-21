@@ -58,3 +58,17 @@ __all__ = [
     "prepare_cli",
     "strip_to_none_before_validator",
 ]
+
+from importlib.util import find_spec
+
+if find_spec("nicegui"):
+    from ._gui import BasePageBuilder, GUILocalFilePicker, gui_register_pages, gui_run
+
+    __all__ += ["BasePageBuilder", "GUILocalFilePicker", "gui_register_pages", "gui_run"]
+
+if find_spec("marimo"):
+    from ._notebook import create_marimo_app
+
+    __all__ += [
+        "create_marimo_app",
+    ]

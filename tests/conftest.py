@@ -1,9 +1,14 @@
 """Common test fixtures and configuration."""
 
 import os
+from importlib.util import find_spec
 from pathlib import Path
 
 import pytest
+
+# See https://nicegui.io/documentation/section_testing#project_structure
+if find_spec("nicegui"):
+    pytest_plugins = ("nicegui.testing.plugin",)
 
 
 def pytest_collection_modifyitems(config, items) -> None:
@@ -57,7 +62,7 @@ def docker_compose_project_name() -> str:
     """
     # You can consider to override this with a project name to reuse the stack
     # across test executions.
-    return f"pytest{os.getpid()}"
+    return f"aignostics-pytest-{os.getpid()}"
 
 
 def pytest_sessionfinish(session, exitstatus) -> None:

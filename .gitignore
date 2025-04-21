@@ -17,6 +17,10 @@ env/
 .secrets.json
 .act-env-secret
 
+# More secrets
+.ssh
+.aws
+
 # Python virtual environment
 venv/
 .venv/
@@ -69,11 +73,13 @@ tmp/
 # Node temps
 node_modules/
 
+
 # AI workflow
 .fixme
 
 # Copier
 *.rej
+
 
 
 

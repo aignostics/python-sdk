@@ -65,6 +65,7 @@ dependencies = [
     # From Template
     "fastapi[standard,all]>=0.115.12",
     "logfire[system-metrics]>=3.13.1",
+    "nicegui[native]>=2.15.0",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
     "opentelemetry-instrumentation-jinja2>=0.53b0",
@@ -74,9 +75,8 @@ dependencies = [
     "opentelemetry-instrumentation-urllib>=0.53b0",
     "opentelemetry-instrumentation-urllib3>=0.53b0",
     "psutil>=7.0.0",
-    "pydantic>=2.11.3",
-    "pydantic-settings>=2.8.1",
-    "sentry-sdk>=2.25.1",
+    "pydantic-settings>=2.9.1",
+    "sentry-sdk>=2.26.1",
     "typer>=0.15.1",
     "uptime>=3.0.1",
     # Custom
@@ -95,31 +95,11 @@ dependencies = [
     "urllib3>=2.2.3",
 ]
 
-[project.scripts]
-aignostics = "aignostics.cli:cli"
-
-[project.urls]
-Homepage = "https://aignostics.readthedocs.io/en/latest/"
-Documentation = "https://aignostics.readthedocs.io/en/latest/"
-Source = "https://github.com/aignostics/python-sdk"
-Changelog = "https://github.com/aignostics/python-sdk/releases"
-Issues = "https://github.com/aignostics/python-sdk/issues"
-
-[build-system]
-requires = ["hatchling==1.27.0"]
-build-backend = "hatchling.build"
-
-
-[tool.hatch.build]
-include = ["src/*", "codegen/out/*"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/aignostics", "codegen/out/aignx"]
-
 [project.optional-dependencies]
 examples = [
     "streamlit>=1.44.1",
     "marimo>=0.13.0",
+    "matplotlib>=3.10.1",
     "jupyter>=1.1.1",
     "jinja2>=3.1.6",
     "shapely>=2.1.0",
@@ -133,10 +113,10 @@ gui = ["nicegui>=2.15.0", "pywebview>=5.4"]
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",
-    "bump-my-version>=1.1.1",
+    "bump-my-version>=1.1.2",
     "cyclonedx-py>=1.0.1",
     "detect-secrets>=1.5.0",
-    "enum-tools>=0.12.0",
+    "enum-tools>=0.13.0",
     "furo>=2024.8.6",
     "git-cliff>=2.8.0",
     "matplotlib>=3.10.1",
@@ -153,10 +133,12 @@ dev = [
     "pytest-docker>=3.2.1",
     "pytest-env>=1.1.5",
     "pytest-regressions>=2.7.0",
+    "pytest-selenium>=4.1.0",
     "pytest-subprocess>=1.5.3",
     "pytest-timeout>=2.3.1",
+    "pytest-watcher>=0.4.3",
     "pytest-xdist[psutil]>=3.6.1",
-    "ruff>=0.11.5",
+    "ruff>=0.11.6",
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-copybutton>=0.5.2",
@@ -173,18 +155,44 @@ dev = [
     "watchdog>=6.0.0",
 ]
 
+[project.scripts]
+aignostics = "aignostics.cli:cli"
+
+[project.urls]
+Homepage = "https://aignostics.readthedocs.io/en/latest/"
+Documentation = "https://aignostics.readthedocs.io/en/latest/"
+Source = "https://github.com/aignostics/python-sdk"
+Changelog = "https://github.com/aignostics/python-sdk/releases"
+Issues = "https://github.com/aignostics/python-sdk/issues"
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["src/*", "codegen/out/*"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aignostics", "codegen/out/aignx"]
+
 [tool.uv]
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "rfc3987; sys_platform == 'never'", # GPLv3
 ]
-
 
 [tool.ruff]
 target-version = "py311"
 preview = true
 fix = true
 line-length = 120
-extend-exclude = [".fixme", "examples/*.py", "template/*.py", "codegen"]
+extend-exclude = [
+    ".fixme",
+    "notebook.py",
+    "template/*.py",
+    "bottle.py",
+    "examples/*.py",
+    "codegen",
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -243,6 +251,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
+exclude = ["bottle.py"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -332,6 +341,9 @@ filename = "sonar-project.properties"
 
 [[tool.bumpversion.files]]
 filename = "docs/source/conf.py"
+
+[[tool.bumpversion.files]]
+filename = "examples/notebook.py"
 
 [tool.git-cliff.remote.github]
 owner = "aignostics"

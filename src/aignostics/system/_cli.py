@@ -2,6 +2,7 @@
 
 import json
 from enum import StrEnum
+from importlib.util import find_spec
 from typing import Annotated
 
 import typer
@@ -77,6 +78,26 @@ def info(
             console.print_json(data=info)
         case OutputFormat.YAML:
             console.print(yaml.dump(info, width=80, default_flow_style=False), end="")
+
+
+if find_spec("nicegui"):
+    from ..utils import gui_run  # noqa: TID252
+
+    @cli.command()
+    def serve(  # type: ignore
+        host: Annotated[str, typer.Option(help="Host to bind the server to")] = "127.0.0.1",
+        port: Annotated[int, typer.Option(help="Port to bind the server to")] = 8000,
+        open_browser: Annotated[bool, typer.Option(help="Open app in browser after starting the server")] = False,
+    ) -> None:
+        """Start the web server, hosting the graphical web application and/or webservice API.
+
+        Args:
+            host (str): Host to bind the server to.
+            port (int): Port to bind the server to.
+            open_browser (bool): Open app in browser after starting the server.
+        """
+        console.print(f"Starting web application server at http://{host}:{port}")
+        gui_run(native=False, host=host, port=port, with_api=False, show=open_browser)
 
 
 @cli.command()

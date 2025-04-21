@@ -19,7 +19,9 @@ BREW_TOOLS=(
     "trivy;trivy;https://trivy.dev/latest/"
     "pnpm;pnpm;https://pnpm.io/"
     "magick;imagemagick;https://imagemagick.org/"
+    "nixpacks;nixpacks;https://nixpacks.com/"
     "openapi-generator;openapi-generator;https://github.com/OpenAPITools/openapi-generator"
+
 )
 
 MAC_BREW_TOOLS=(

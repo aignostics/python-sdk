@@ -7,8 +7,9 @@ on:
 
 
 env:
-  REGISTRY: docker.io
-  IMAGE_NAME: helmuthva/aignostics-python-sdk
+  DOCKER_IO_REGISTRY: docker.io
+  DOCKER_IO_IMAGE_NAME_ALL: helmuthva/aignostics-python-sdk
+  DOCKER_IO_IMAGE_NAME_SLIM: helmuthva/aignostics-python-sdk-slim
 
 
 jobs:
@@ -52,14 +53,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
+      - name: "(all target): Extract metadata (tags, labels) for Docker"
+        id: meta-all
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
 
 
           images: |
-            ${{ env.IMAGE_NAME }}
+            ${{ env.DOCKER_IO_IMAGE_NAME_ALL }}
             ghcr.io/${{ github.repository }}
 
 
@@ -73,14 +74,57 @@ jobs:
             type=semver,pattern={{major}}
 
 
+      - name: "(slim target): Extract metadata (tags, labels) for Docker"
+        id: meta-slim
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
+        with:
 
-      - name: Build and push Docker image
-        id: push
+
+          images: |
+            ${{ env.DOCKER_IO_IMAGE_NAME_SLIM }}
+            ghcr.io/${{ github.repository }}-slim
+
+
+
+          tags: |
+            # set latest tag for releases
+            type=raw,value=latest
+            # set semver tags from git tags (v1.2.3 -> 1.2.3, 1.2, 1)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+
+
+      - name: "(all target): Build and push Docker image"
+        id: build-and-push-all
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         with:
           context: .
           file: ./Dockerfile
+          target: all
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-all.outputs.tags }}
+          labels: ${{ steps.meta-all.outputs.labels }}
+
+
+
+      - name: "(slim target): Build and push Docker image"
+        id: build-and-push-slim
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: .
+          file: ./Dockerfile
+          target: slim
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-slim.outputs.tags }}
+          labels: ${{ steps.meta-slim.outputs.labels }}
+
+
+
+
+
+
+

@@ -45,256 +45,386 @@
 ---
 
 
-## Introduction
+Python SDK providing access to Aignostics AI services.
 
-The aignostics Python SDK opens multiple pathways to interact with the
-aignostics platform:
+### Scaffolding
 
-1. **Run AI applications** such as
-   [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product)
-   directly from your terminal using the **Command Line Interface (CLI)**
-   included in the SDK.
-2. Call applications directly from **Python Notebooks** following the provided
-   examples.
-3. Deeply integrate the platform in your **enterprise systems and workflows**
-   using the Python client provided via the SDK.
+This [Copier](https://copier.readthedocs.io/en/stable/) template enables you to quickly generate (scaffold) a Python package with fully functioning build and test automation:
 
-### We take quality and security seriously
+1. Projects generated from this template can be [easily updated](https://copier.readthedocs.io/en/stable/updating/) to benefit from improvements and new features of the template.
+2. During project generation, you can flexibly configure naming of the Python distribution, import package, main author, GitHub repository, organization, and many other aspects to match your specific requirements (see [copier.yml](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template/blob/main/copier.yml) for all available options).
 
-We know you take **quality** and **security** as seriously as we do. That's why
-the aignostics Python SDK is built following best practices and with full
-transparency. This includes (1) making the complete
-[source code of the SDK
-available on GitHub](https://github.com/aignostics/python-sdk/), maintaining a
-(2)
-[A-grade code quality](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-with [high test coverage](https://app.codecov.io/gh/aignostics/python-sdk) in
-all releases, (3) achieving
-[A-grade security](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-with
-[active scanning of dependencies](https://github.com/aignostics/python-sdk/issues/4),
-and (4) providing
-[extensive documentation](hhttps://aignostics.readthedocs.io/en/latest/). Read
-more about how we achieve
-[quality](https://aignostics.readthedocs.io/en/latest/quality.html) and
-[security](https://aignostics.readthedocs.io/en/latest/security.html).
+### Development Infrastructure
 
-### Run your first AI workflow in 30 minutes
+Projects generated with this template come with a comprehensive development toolchain and quality assurance framework that supports the entire software development lifecycle - from coding and testing to documentation, release management, and compliance auditing. This infrastructure automates routine tasks, enforces code quality standards, and streamlines the path to production:
 
-Go to
-[your personal dashboard on the aignostics platform](https://platform.aignostics.com)
-and scroll to the "Python SDK" section. Copy the personalized install script
-shown in that section, and execute it in your terminal - we support MacOS and
-Linux. This will update or install the [uv package manager](...) and install the
-aignostics Python SDK.
+1. Linting with [Ruff](https://github.com/astral-sh/ruff)
+2. Static type checking with [mypy](https://mypy.readthedocs.io/en/stable/)
+3. Complete set of [pre-commit](https://pre-commit.com/) hooks including [detect-secrets](https://github.com/Yelp/detect-secrets) and [pygrep](https://github.com/pre-commit/pygrep-hooks)
+4. Unit and E2E testing with [pytest](https://docs.pytest.org/en/stable/) including parallel test execution
+5. Matrix testing in multiple environments with [nox](https://nox.thea.codes/en/stable/)
+6. Test coverage reported with [Codecov](https://codecov.io/) and published as release artifact
+7. CI/CD pipeline automated with [GitHub Actions](https://github.com/features/actions)
+8. CI/CD pipeline can be run locally with [act](https://github.com/nektos/act)
+9. Code quality and security checks with [SonarQube](https://www.sonarsource.com/products/sonarcloud) and [GitHub CodeQL](https://codeql.github.com/)
+10. Dependency monitoring and vulnerability scanning with [pip-audit](https://pypi.org/project/pip-audit/), [trivy](https://trivy.dev/latest/), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+11. Error monitoring and profiling with [Sentry](https://sentry.io/)  (optional)
+12. Logging and metrics with [Logfire](https://logfire.dev/) (optional)
+13. Prepared for uptime monitoring with [betterstack](https://betterstack.com/) or alternatives
+13. Licenses of dependencies extracted with [pip-licenses](https://pypi.org/project/pip-licenses/), matched with allow list, and published as release artifacts in CSV and JSON format for further compliance checks
+14. Generation of attributions from extracted licenses
+15. Software Bill of Materials (SBOM) generated in [CycloneDX](https://cyclonedx.org/) and [SPDX](https://spdx.dev/) formats with [cyclonedx-python](https://github.com/CycloneDX/cyclonedx-python) resp. [trivy](https://trivy.dev/latest/), published as release artifacts
+16. Version and release management with [bump-my-version](https://callowayproject.github.io/bump-my-version/)
+17. Changelog and release notes generated with [git-cliff](https://git-cliff.org/)
+18. Documentation generated with [Sphinx](https://www.sphinx-doc.org/en/master/) including reference documentation for the library, CLI, and API
+19. Documentation published to [Read The Docs](https://readthedocs.org/) including generation of PDF and single page HTML versions
+20. Documentation including dynamic badges, setup instructions, contribution guide and security policy
+21. Interactive OpenAPI specification with [Swagger](https://swagger.io/)
+22. Python package published to [PyPI](https://pypi.org/)
+23. Multi-stage build of fat (all extras) and slim (no extras) multi-arch (arm64 and amd64) Docker images, running non-root within immutable container
+24. Docker images published to [Docker.io](https://hub.docker.com/) and [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) with [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
+25. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
+26. Settings for use with [VSCode](https://code.visualstudio.com/)
+27. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+28. API deployed as serverless function to [Vercel](https://vercel.com/) (optional)
 
-You can now ready to run your first AI workflow directly from your terminal. See
-as follows for a simple example where we download a sample dataset for the Atlas
-H&E-TME application, submit an application run, and download the results.
+### Multi-head Application Features
 
+Beyond development tooling, projects generated with this template include the code, documentation, and configuration of a fully functioning service and multi-head application. This reference implementation serves as a starting point for your own business logic with modern patterns and enterprise practices already in place:
+
+1. Usable as library with "Hello" module exposing a simple service that can say "Hello, world!" and echo utterances.
+2. Comfortable command-line interface (CLI) with [Typer](https://typer.tiangolo.com/)
+3. Versioned webservice API with [FastAPI](https://fastapi.tiangolo.com/)
+4. Cross-platform Graphical User Interface (GUI) with
+   [NiceGUI](https://nicegui.io/) running in a browser or native window
+5. [Interactive Jupyter notebook](https://jupyter.org/) and [reactive Marimo notebook](https://marimo.io/)
+6. Simple Web UI with [Streamlit](https://streamlit.io/)
+7. Modular architecture auto-discovers and registers services, CLI commands, API routes and GUI pages exposed by domain modules
+8. Validation and settings management with [pydantic](https://docs.pydantic.dev/)
+9. System module providing aggregate health and info to the runtime, compiled settings, and further info provided by domain modules
+10. Health and Info available via command, webservice API (info passsword protected) and GUI
+11. Flexible logging and instrumentation, including support for [Sentry](https://sentry.io/) and [Logfire](https://logfire.dev/) 
+12. Hello service demonstrates use of custom real time metrics collected via Logfire
+13. Configuration to run the CLI and API in a Docker container including setup for [Docker Compose](https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-docker-compose/)
+
+Explore [here](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template-example) for what's generated out of the box. While this template comes with multiple application interfaces ("heads") - Library, CLI, API, GUI, notebooks, and Streamlit; running native and within Docker - they're included to demonstrate capabilities and provide implementation patterns. You're expected to use this as a foundation, keeping only the interfaces relevant to your project's requirements. The modular architecture makes it easy to:
+
+1. Remove unnecessary interfaces to simplify your codebase
+2. Adapt existing interfaces to your specific use cases 
+3. Focus on your core business logic without reimplementing infrastructure
+4. Add new interfaces while leveraging the existing patterns
+
+
+## Generate a new project
+
+To generate, build and release a fully functioning project in a few minutes, follow these 5 steps:
+
+**Step 1**: Execute the following command to install or update tooling.
 ```shell
-uvx aignostics application dataset download —-app atlas_he_tme —-destination ./my-data/in —-dataset example_1
-uvx aignostics application run submit —-app atlas_he_tme —-source ./my-data/in
-uvx aignostics application run result download –app atlas_he_tme —-run 4711 —-destination ./my-data/out
+# Install Homebrew, uv package manager, copier and further dev tools
+curl -LsSf https://raw.githubusercontent.com/helmut-hoffer-von-ankershoffen/oe-python-template/HEAD/install.sh | sh
 ```
 
-You will find the output in the `./my-data/out` folder on your local disk, Use
-tools such as [https://qupath.github.io/](https://qupath.github.io/) to inspect
-the analysis results:
+**Step 2**: [Create a repository on GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository), clone to your local machine, and change into it's directory.
 
-1. Open QuPath
-2. TODO (Helmut): Explanation of next steps to come
+**Step 3**: Execute the following command to generate a new project based on this template.
+```shell
+# Ensure to stand in your freshly created git repository before executing this command
+copier copy --trust gh:helmut-hoffer-von-ankershoffen/oe-python-template .
+```
 
-## CLI Usage
+**Step 4**: Execute the following commands to push your initial commit to GitHub.
+```shell
+git add .
+git commit -m "chore: Initial commit"
+git push
+```
 
-The CLI is installed as part of the SDK. You can run it from your terminal using
-the `uvx` command. See as follows for the primary commands:
+Check the [Actions tab](https://github.com/aignostics/python-sdk/actions) of your GitHub repository: The CI/CD workflow of your project is already running!
+
+The workflow will fail at the SonarQube step, as this external service is not yet configured for our new repository. We will configure SonarQube and other services in the next step!
+
+Notes:
+1. Check out [this manual](https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key) on how to set up signed commits
+
+**Step 5**: Follow the [instructions](SERVICE_CONNECTIONS.md) to wire up
+external services such as CloudCov, SonarQube Cloud, Read The Docs, Docker.io, and Streamlit Community Cloud.
+
+**Step 6**: Release the first version of your project
+```shell
+make bump
+```
+Notes:
+1. You can remove the above sections - from "Scaffolding" to this notes - post having successfully generated your project.
+2. The following sections refer to the dummy application and service generated into the `tests` and `src` folder by this template.
+   Use the documentation and code as inspiration, adapt to your business logic, or remove and start documenting and coding from scratch.
+
+
+## Overview
+
+Adding Aignostics Python SDK to your project as a dependency is easy. See below for usage examples.
 
 ```shell
-uvx aignostics system health          # checks if the Python SDK and the aignostics platform are healthy
-uvx aignostics system info            # shows information about the configuration and runtime of the system
-uvx aignostics application list       # lists AI applications available for you
-# TODO (Helmut): Explain a bit more.
+uv add aignostics             # add dependency to your project
 ```
+
+If you don't have uv installed follow [these instructions](https://docs.astral.sh/uv/getting-started/installation/). If you still prefer pip over the modern and fast package manager [uv](https://github.com/astral-sh/uv), you can install the library like this:
+
+
+```shell
+pip install aignostics        # add dependency to your project
+```
+
+Executing the command line interface (CLI) in an isolated Python environment is just as easy:
+
+```shell
+uvx aignostics hello world               # prints "Hello, world! [..]"
+uvx aignostics hello echo "Lorem Ipsum"  # echos "Lorem Ipsum"
+uvx aignostics gui                       # opens the graphical user interface (GUI)
+uvx --with "aignostics[examples]" aignostics gui  # opens the graphical user interface (GUI) with support for scientific computing
+uvx aignostics system serve              # serves web API
+uvx aignostics system serve --port=4711  # serves web API on port 4711
+uvx aignostics system openapi            # serves web API on port 4711
+```
+
+Notes:
+1. The API is versioned, mounted at `/api/v1` resp. `/api/v2`
+2. While serving the web API go to [http://127.0.0.1:8000/api/v1/hello-world](http://127.0.0.1:8000/api/v1/hello-world) to see the respons of the `hello-world` operation.
+3. Interactive documentation is provided at [http://127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs)
+
 
 The CLI provides extensive help:
 
 ```shell
-uvx aignostics --help                   # all subcommands
-uvx aignostics application --help       # list subcommands in the application space
-uvx aignostics application list --help  # help for specific command
-uvx aignostics application run --help.  # list subcommands in the application run space
+uvx aignostics --help                # all CLI commands
+uvx aignostics hello world --help    # help for specific command
+uvx aignostics hello echo --help
+uvx aignostics gui --help
+uvx aignostics system serve --help
+uvx aignostics system openapi --help
 ```
 
-Check out our
-[CLI reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html#cli)
-to learn about all commands and options available.
 
-## Use in Python Notebooks
+## Operational Excellence
 
-We provided example notebooks to help you get started with the Python SDK.
-Before you can start, you need to setup your authentication information:
+This project is designed with operational excellence in mind, using modern Python tooling and practices. It includes:
 
-**Authentication:**
-The SDK uses the [OAuth2](https://oauth.net/2/) protocol for authentication.
-Please visit
-[your personal dashboard on the aignostics platform](https://platform.aignostics.com/getting-started/quick-start)
-and look at the `Enterprise Integration` section to obtain your personal client information.
+1. Various examples demonstrating usage:
+  a. [Simple Python script](https://github.com/aignostics/python-sdk/blob/main/examples/script.py)
+  b. [Streamlit web application](https://aignostics.streamlit.app/) deployed on [Streamlit Community Cloud](https://streamlit.io/cloud)
+  c. [Jupyter](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb) and [Marimo](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py) notebook
+2. Complete reference documentation [for the library](https://aignostics.readthedocs.io/en/latest/lib_reference.html), [for the CLI](https://aignostics.readthedocs.io/en/latest/cli_reference.html) and [for the API](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html) on Read the Docs
+3. [Transparent test coverage](https://app.codecov.io/gh/aignostics/python-sdk) including unit and E2E tests (reported on Codecov)
+4. Matrix tested with [multiple python versions](https://github.com/aignostics/python-sdk/blob/main/noxfile.py) to ensure compatibility (powered by [Nox](https://nox.thea.codes/en/stable/))
+5. Compliant with modern linting and formatting standards (powered by [Ruff](https://github.com/astral-sh/ruff))
+6. Up-to-date dependencies (monitored by [Renovate](https://github.com/renovatebot/renovate) and [Dependabot](https://github.com/aignostics/python-sdk/security/dependabot))
+7. [A-grade code quality](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk) in security, maintainability, and reliability with low technical debt and codesmell (verified by SonarQube)
+8. Additional code security checks using [CodeQL](https://github.com/aignostics/python-sdk/security/code-scanning)
+9. [Security Policy](SECURITY.md)
+10. [License](LICENSE) compliant with the Open Source Initiative (OSI)
+11. 1-liner for installation and execution of command line interface (CLI) via [uv(x)](https://github.com/astral-sh/uv) or [Docker](https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags)
+12. Setup for developing inside a [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers) included (supports VSCode and GitHub Codespaces)
 
-**Examples:** The notebooks showcase the interaction with the Aignostics platform using our test application.
-To run one them, please follow the steps shown below to (i) clone this repository and start either the [Jupyter](https://docs.jupyter.org/en/latest/index.html) ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)) or 
-[Marimo](https://marimo.io/) ([examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)) notebook:
 
-```shell
-# clone the `python-sdk` repository
-git clone https://github.com/aignostics/python-sdk.git
-# within the cloned repository, install the SDK and all dependencies
-uv sync --all-extras
-# show jupyter example notebook in the browser
-uv run jupyter notebook examples/notebook.ipynb
-# show marimo example notebook in the browser
-uv run marimo edit examples/notebook.py
-```
+## Usage Examples
 
-## Using the Python SDK in your Codebase
+The following examples run from source - clone this repository using
+`git clone git@github.com:aignostics/python-sdk.git`.
 
-Next to using the CLI and notebooks, you can also use the Python SDK in your
-codebase. The following sections outline how to install the SDK and interact with it.
-
-### Installation
-Adding Aignostics Python SDK to your codebase as a dependency is easy. You can
-directly add the dependency via your favourite package manager:
-
-**Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv installed follow
-[these instructions](https://docs.astral.sh/uv/getting-started/installation/).
-
-```shell
-# add SDK as dependency to your project
-uv add aignostics
-```
-
-**Install with [pip](https://pip.pypa.io/en/stable/)**
-
-```shell
-# add SDK as dependency to your project
-pip install aignostics
-```
-
-### Usage
-
-The following snippet shows how to use the Python SDK to trigger an application run:
+### Minimal Python Script:
 
 ```python
-import aignostics.client as platform
+"""Example script demonstrating the usage of the service provided by Aignostics Python SDK."""
 
-# initialize the client
-client = platform.Client()
-# trigger an application run
-application_run = client.runs.create(
-     application_version="two-task-dummy:v0.35.0",
-     items=[
-         platform.Item(
-             reference="slide-1",
-             input_artifacts=[
-                 platform.InputArtifact(
-                     name="user_slide",
-                     download_url="<a signed url to download the data>",
-                     metadata={
-                         "checksum_crc32c": "AAAAAA==",
-                         "base_mpp": 0.25,
-                         "width": 1000,
-                         "height": 1000,
-                     },
-                 )
-             ],
-         ),
-     ],
-)
-# wait for the results and download incrementally as they become available
-application_run.download_to_folder("path/to/download/folder")
+from rich.console import Console
+
+from aignostics.hello import Service
+
+console = Console()
+
+message = Service.get_hello_world()
+console.print(f"[blue]{message}[/blue]")
 ```
 
-Please look at the notebooks in the `example` folder for a more detailed example and read the
-[client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
-to learn about all classes and methods.
+[Show script code](https://github.com/aignostics/python-sdk/blob/main/examples/script.py) - [Read the reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 
-#### Application Run Payloads
 
-The payload expected to trigger an application run is specified by the
-`RunCreationRequest` pydantic model:
+### Streamlit App
 
-```python
-RunCreationRequest(
-   application_version=...,
-   items=[
-      ItemCreationRequest(...),
-      ItemCreationRequest(...)
-   ]
-)
+Serve the functionality provided by Aignostics Python SDK in the web by easily integrating the service into a Streamlit application.
+
+[Try it out!](https://aignostics.streamlit.app) - [Show the code](https://github.com/aignostics/python-sdk/blob/main/examples/streamlit.py)
+
+... or serve the app locally
+```shell
+uv sync --all-extras                                # Install streamlit dependency part of the examples extra, see pyproject.toml
+uv run streamlit run examples/streamlit.py          # Serve on localhost:8501, opens browser
 ```
 
-Next to the application version of the application you want to run, it defines
-the items you want to be processed as `ItemCreationRequest` objects:
 
-```python
-ItemCreationRequest(
-    reference="1",
-    input_artifacts=[
-        InputArtifactCreationRequest(
-            name="user_slide", # defined by the application version input_artifact schema
-            download_url="<a signed url to download the data>",
-            metadata={ # defined by the application version input_artifact schema
-                "checksum_crc32c": "N+LWCg==",
-                "base_mpp": 0.46499982,
-                "width": 3728,
-                "height": 3640,
-            },
-        )
-    ],
-),
-```
+## Notebooks
 
-For each item you want to process, you need to provide a unique `reference`
-string. This is used to identify the item in the results later on. The
-`input_artifacts` field is a list of `InputArtifactCreationRequest` objects,
-which defines what data & metadata you need to provide for each item. The
-required artifacts depend on the application version you want to run - in the
-case of test application, there is only one artifact required, which is the
-image to process on. The artifact name is defined as `user_slide`.
+### Jupyter
 
-The `download_url` is a signed URL that allows the Aignostics Platform to
-download the image data later during processing.
+[Show the Jupyter code](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)
 
-#### Self-signed URLs for large files
-
-To make the images you want to process available to the Aignostics Platform, you
-need to provide a signed URL that allows the platform to download the data.
-Self-signed URLs for files in google storage buckets can be generated using the
-`generate_signed_url`
-([code](https://github.com/aignostics/python-sdk/blob/407e74f7ae89289b70efd86cbda59ec7414050d5/src/aignostics/client/utils.py#L85)).
-
-**We expect that you provide the
-[required credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
-for the Google Storage Bucket**
-
-## Run with Docker
-
-We recommend to run the CLI natively on your notebook, as explained above. If
-required you can run the CLI as a Docker container:
+... or run within VSCode
 
 ```shell
-# TODO (Helmut): Explain about the environment
+uv sync --all-extras                                # Install dependencies required for examples such as Juypyter kernel, see pyproject.toml
+```
+Install the [Jupyter extension for VSCode](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
+
+Click on `examples/notebook.ipynb` in VSCode and run it.
+
+### Marimo
+
+[Show the marimo code](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)
+
+Execute the notebook as a WASM based web app
+
+```shell
+uv sync --all-extras                                # Install ipykernel dependency part of the examples extra, see pyproject.toml
+uv run marimo run examples/notebook.py --watch      # Serve on localhost:2718, opens browser
+```
+
+or edit interactively in your browser
+
+```shell
+uv sync --all-extras                                # Install ipykernel dependency part of the examples extra, see pyproject.toml
+uv run marimo edit examples/notebook.py --watch     # Edit on localhost:2718, opens browser
+```
+
+... or edit interactively within VSCode
+
+Install the [Marimo extension for VSCode](https://marketplace.visualstudio.com/items?itemName=marimo-team.vscode-marimo)
+
+Click on `examples/notebook.py` in VSCode and click on the caret next to the Run icon above the code (looks like a pencil) > "Start in marimo editor" (edit).
+
+... or without prior cloning of the repository
+
+```shell
+uvx marimo run https://raw.githubusercontent.com/aignostics/python-sdk/refs/heads/main/examples/notebook.py
+```
+
+## Command Line Interface (CLI)
+
+### Run with [uvx](https://docs.astral.sh/uv/guides/tools/)
+
+Show available commands:
+
+```shell
+uvx aignostics --help
+```
+
+Execute commands:
+
+```shell
+uvx aignostics hello world
+uvx aignostics hello echo --help
+uvx aignostics hello echo "Lorem"
+uvx aignostics hello echo "Lorem" --json
+uvx aignostics gui
+uvx --with "aignostics[examples]" aignostics gui  # opens the graphical user interface (GUI) with support for scientific computing
+uvx aignostics system info
+uvx aignostics system health
+uvx aignostics system openapi
+uvx aignostics system openapi --output-format=json
+uvx aignostics system serve
+```
+
+See the [reference documentation of the CLI](https://aignostics.readthedocs.io/en/latest/cli_reference.html) for detailed documentation of all CLI commands and options.
+
+
+### Environment
+
+The service loads environment variables including support for .env files.
+
+```shell
+cp .env.example .env              # copy example file
+echo "THE_VAR=MY_VALUE" > .env    # overwrite with your values
+```
+
+Now run the usage examples again.
+
+### Run with Docker
+
+You can as well run the CLI within Docker.
+
+```shell
 docker run helmuthva/aignostics-python-sdk --help
+docker run helmuthva/aignostics-python-sdk hello world
+docker run helmuthva/aignostics-python-sdk hello echo --help
+docker run helmuthva/aignostics-python-sdk hello echo "Lorem"
+docker run helmuthva/aignostics-python-sdk hello echo "Lorem" --json
+docker run helmuthva/aignostics-python-sdk system info
 docker run helmuthva/aignostics-python-sdk system health
+docker run helmuthva/aignostics-python-sdk system openapi
+docker run helmuthva/aignostics-python-sdk system openapi --output-format=json
+docker run helmuthva/aignostics-python-sdk system serve
 ```
 
-Running via docker compose is supported as well. The .env is passed through from
-the host to the Docker container automatically.
+The default Docker image includes all extras. Additionally a slim image is provided, with no extras. Run as follows
 
 ```shell
-docker compose run aignostics --help
-docker compose run aignostics system health
+docker run helmuthva/aignostics-python-sdk-slim --help
+docker run helmuthva/aignostics-python-sdk-slim hello world
 ```
+
+You can pass environment variables as parameters:
+
+```shell
+docker run --env AIGNOSTICS_PYTHON_SDK_HELLO_LANGUAGE=de_DE helmuthva/aignostics-python-sdk hello world
+docker run --env AIGNOSTICS_PYTHON_SDK_HELLO_LANGUAGE=en_US helmuthva/aignostics-python-sdk hello world
+```
+
+A docker compose stack is provided. Clone this repository using
+`git clone git@github.com:aignostics/python-sdk.git` and enter the repository folder.
+
+The .env is passed through from the host to the Docker container.
+
+```shell
+docker compose run --remove-orphans aignostics --help
+docker compose run --remove-orphans aignostics hello world
+docker compose run --remove-orphans aignostics hello echo --help
+docker compose run --remove-orphans aignostics hello echo "Lorem"
+docker compose run --remove-orphans aignostics hello echo "Lorem" --json
+docker compose run --remove-orphans aignostics system info
+docker compose run --remove-orphans aignostics system health
+docker compose run --remove-orphans aignostics system openapi
+docker compose run --remove-orphans aignostics system openapi --output-format=json
+echo "Running Aignostics Python SDK's API container as a daemon ..."
+docker compose up -d
+echo "Waiting for the API server to start ..."
+sleep 5
+echo "Checking health of v1 API ..."
+curl http://127.0.0.1:8000/api/v1/healthz
+echo ""
+echo "Saying hello world with v1 API ..."
+curl http://127.0.0.1:8000/api/v1/hello/world
+echo ""
+echo "Swagger docs of v1 API ..."
+curl http://127.0.0.1:8000/api/v1/docs
+echo ""
+echo "Checking health of v2 API ..."
+curl http://127.0.0.1:8000/api/v2/healthz
+echo ""
+echo "Saying hello world with v1 API ..."
+curl http://127.0.0.1:8000/api/v2/hello/world
+echo ""
+echo "Swagger docs of v2 API ..."
+curl http://127.0.0.1:8000/api/v2/docs
+echo ""
+echo "Shutting down the API container ..."
+docker compose down
+```
+
+* See the [reference documentation of the API](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html) for detailed documentation of all API operations and parameters.
+
+
+## Extra: Lorem Ipsum
+
+Dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris. Maecenas congue ligula ac quam.
 
 
 ## API Concepts
@@ -392,27 +522,13 @@ When the application run is cancelled, either by the system or by the user, only
 
 ## Further Reading
 
-- Inspect our
-  [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
-  with detailed documentation of checks, tools and principles.
-- Check out the
-  [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html)
-  with detailed documentation of all CLI commands and options.
-- Check out the
-  [library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
-  with detailed documentation of public classes and functions.
-- Check out the
-  [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)
-  with detailed documentation of all API operations and parameters.
-- Our
-  [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html)
-  provide a complete log of recent improvements and changes.
-- In case you want to help us improve 🔬 Aignostics Python SDK: The
-  [contribution guidelines](https://aignostics.readthedocs.io/en/latest/contributing.html)
-  explain how to setup your development environment and create pull requests.
-- We gratefully acknowledge the
-  [open source projects](https://aignostics.readthedocs.io/en/latest/attributions.html)
-  that this project builds upon. Thank you to all these wonderful contributors!
+* Inspect our [security policy](https://aignostics.readthedocs.io/en/latest/security.html) with detailed documentation of checks, tools and principles.
+* Check out the [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html) with detailed documentation of all CLI commands and options.
+* Check out the [library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html) with detailed documentation of public classes and functions.
+* Check out the [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html) with detailed documentation of all API operations and parameters.
+* Our [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html) provide a complete log of recent improvements and changes.
+* In case you want to help us improve 🔬 Aignostics Python SDK: The [contribution guidelines](https://aignostics.readthedocs.io/en/latest/contributing.html) explain how to setup your development environment and create pull requests.
+* We gratefully acknowledge the [open source projects](https://aignostics.readthedocs.io/en/latest/attributions.html) that this project builds upon. Thank you to all these wonderful contributors!
 
 ## Star History
 

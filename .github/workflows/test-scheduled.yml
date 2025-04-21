@@ -32,8 +32,6 @@ jobs:
           envkey_ENV: "TEST"
           envkey_AIGNOSTICS_LOGFIRE_TOKEN: "${{ secrets.AIGNOSTICS_LOGFIRE_TOKEN }}"
           envkey_AIGNOSTICS_SENTRY_DSN: "${{ secrets.AIGNOSTICS_SENTRY_DSN }}"
-          envkey_AIGNOSTICS_LOG_LEVEL: "DEBUG"
-          envkey_AIGNOSTICS_LOG_FILE_ENABLED: 1
           envkey_AIGNOSTICS_API_ROOT: https://platform.aignostics.com
           envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
           envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}

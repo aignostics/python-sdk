@@ -1,7 +1,18 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo",
+#     "aignostics==0.0.10",
+# ]
+# ///
+
+
 import marimo
+from aignostics.utils import __version__
 
 __generated_with = "0.12.8"
-app = marimo.App(width="medium")
+app = marimo.App(app_title=f"🔬 Aignostics Python SDK v{__version__}")
+
 
 
 @app.cell

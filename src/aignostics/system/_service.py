@@ -113,6 +113,7 @@ class Service(BaseService):
                     "version": platform.python_version(),
                     "compiler": platform.python_compiler(),
                     "implementation": platform.python_implementation(),
+                    "sys.path": sys.path,
                 },
                 "interpreter_path": sys.executable,
                 "command_line": " ".join(sys.argv),
