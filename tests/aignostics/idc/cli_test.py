@@ -38,13 +38,13 @@ def test_cli_query(runner: CliRunner) -> None:
     assert num_rows > 100000, f"Expected more than 100000 rows, but got {num_rows}"
 
 
-@pytest.mark.scheduled
-def test_cli_download(runner: CliRunner, caplog) -> None:
+# @pytest.mark.scheduled
+def test_cli_download(runner: CliRunner, caplog, tmp_path) -> None:
     """Check download functionality with dry-run option."""
     caplog.set_level(logging.INFO)
     result = runner.invoke(
         cli,
-        ["idc", "download", "1.3.6.1.4.1.5962.99.1.1042652702.25371455.1637425225246.2.0", "tmp", "--dry-run"],
+        ["idc", "download", "1.3.6.1.4.1.5962.99.1.1042652702.25371455.1637425225246.2.0", str(tmp_path), "--dry-run"],
     )
     assert result.exit_code == 0
     for record in caplog.records:
