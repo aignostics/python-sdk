@@ -125,7 +125,6 @@ dev = [
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
-    "pyinstaller>=6.13.0",
     "pyright>=1.1.399",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
