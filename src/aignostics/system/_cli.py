@@ -84,7 +84,7 @@ if find_spec("nicegui"):
     from ..utils import gui_run  # noqa: TID252
 
     @cli.command()
-    def serve(  # type: ignore
+    def serve(
         host: Annotated[str, typer.Option(help="Host to bind the server to")] = "127.0.0.1",
         port: Annotated[int, typer.Option(help="Port to bind the server to")] = 8000,
         open_browser: Annotated[bool, typer.Option(help="Open app in browser after starting the server")] = False,

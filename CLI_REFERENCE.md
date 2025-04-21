@@ -1,6 +1,6 @@
 # CLI Reference
 
-Command Line Interface of
+Command Line Interface of Aignostics Python SDK
 
 **Usage**:
 
@@ -14,13 +14,45 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🧠 Aignostics Python SDK v0.0.10 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.0.10 - built with love in Berlin 🐻
 
 **Commands**:
 
+* `gui`: Start graphical user interface (GUI) in...
+* `notebook`: Start notebook in web browser.
 * `application`: Application commands
 * `idc`: Commands to query and download...
 * `system`: System commands
+
+## `aignostics gui`
+
+Start graphical user interface (GUI) in native window.
+
+**Usage**:
+
+```console
+$ aignostics gui [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+## `aignostics notebook`
+
+Start notebook in web browser.
+
+**Usage**:
+
+```console
+$ aignostics notebook [OPTIONS]
+```
+
+**Options**:
+
+* `--host TEXT`: Host to bind the server to  [default: 127.0.0.1]
+* `--port INTEGER`: Port to bind the server to  [default: 8001]
+* `--help`: Show this message and exit.
 
 ## `aignostics application`
 
@@ -439,6 +471,7 @@ $ aignostics system [OPTIONS] COMMAND [ARGS]...
 
 * `health`: Determine and print system health.
 * `info`: Determine and print system info.
+* `serve`: Start the web server, hosting the...
 * `openapi`: Dump the OpenAPI specification.
 * `install`: Complete installation.
 * `whoami`: Print user info.
@@ -481,6 +514,28 @@ $ aignostics system info [OPTIONS]
 * `--include-environ / --no-include-environ`: Include environment variables  [default: no-include-environ]
 * `--filter-secrets / --no-filter-secrets`: Filter secrets  [default: filter-secrets]
 * `--output-format [yaml|json]`: Output format  [default: json]
+* `--help`: Show this message and exit.
+
+### `aignostics system serve`
+
+Start the web server, hosting the graphical web application and/or webservice API.
+
+Args:
+    host (str): Host to bind the server to.
+    port (int): Port to bind the server to.
+    open_browser (bool): Open app in browser after starting the server.
+
+**Usage**:
+
+```console
+$ aignostics system serve [OPTIONS]
+```
+
+**Options**:
+
+* `--host TEXT`: Host to bind the server to  [default: 127.0.0.1]
+* `--port INTEGER`: Port to bind the server to  [default: 8000]
+* `--open-browser / --no-open-browser`: Open app in browser after starting the server  [default: no-open-browser]
 * `--help`: Show this message and exit.
 
 ### `aignostics system openapi`

@@ -72,7 +72,7 @@ COPY tests /app/tests
 COPY examples /app/examples
 
 # Install project specifics
-# Nothing yet
+COPY codegen/out/aignx /app/codegen/out/aignx
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --all-extras --no-dev --no-editable

@@ -386,7 +386,7 @@ highlight_theme: darkula
       description: 'Application run payload. It describes which application version
         is chosen, and which user data
 
-> 2025-04-18 19:45:46 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.0.10 (project root /Users/helmut/Code/python-sdk, pid 85671), parent 'python3.11' (pid 85642)                                                         boot.py:78
+> 2025-04-21 17:29:15 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.0.10 (project root /Users/helmut/Code/python-sdk, pid 99928), parent 'python3.13' (pid 99893)                                                         boot.py:84
 
 > components:
 

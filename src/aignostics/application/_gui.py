@@ -6,8 +6,6 @@ from nicegui import ui
 
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker
 
-from ._service import Service
-
 
 async def pick_file() -> None:
     """Open a file picker dialog and show notifier when closed again."""
@@ -21,13 +19,9 @@ class PageBuilder(BasePageBuilder):
         @ui.page("/")
         def page_index() -> None:
             """Homepage of GUI."""
-            service = Service()
-
             ui.button("Choose file", on_click=pick_file, icon="folder").mark("BUTTON_CHOOSE_FILE")
 
-            ui.button("Click me", on_click=lambda: ui.notify(service.get_hello_world()), icon="check").mark(
-                "BUTTON_CLICK_ME"
-            )
+            ui.button("Click me", on_click=lambda: ui.notify("Hello, world!"), icon="check").mark("BUTTON_CLICK_ME")
 
             from importlib.util import find_spec  # noqa: PLC0415
 
