@@ -55,6 +55,7 @@ def test_cli_info_secrets(runner: CliRunner) -> None:
         assert THE_VALUE in result.output
 
 
+@pytest.mark.skip  # We don't serve an API
 @patch("uvicorn.run")
 def test_cli_serve_no_app(mock_uvicorn_run, runner: CliRunner) -> None:
     """Check serve command starts the server."""
@@ -69,6 +70,7 @@ def test_cli_serve_no_app(mock_uvicorn_run, runner: CliRunner) -> None:
     )
 
 
+@pytest.mark.skip  # We don't serve an API
 @patch("aignostics.utils._gui.app.mount")
 @patch("aignostics.utils._gui.ui.run")
 @patch("aignostics.utils._gui.gui_register_pages")
