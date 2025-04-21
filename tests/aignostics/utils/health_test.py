@@ -4,6 +4,8 @@ import pytest
 
 from aignostics.utils._health import Health
 
+DB_FAILURE = "DB failure"
+
 
 def test_health_default_status() -> None:
     """Test that health can be initialized with default UP status."""
@@ -45,7 +47,7 @@ def test_compute_health_from_components_already_down() -> None:
     """Test that health status remains DOWN with original reason when already DOWN."""
     health = Health(status=Health.Code.DOWN, reason="Original failure")
     health.components = {
-        "database": Health(status=Health.Code.DOWN, reason="DB failure"),
+        "database": Health(status=Health.Code.DOWN, reason=DB_FAILURE),
         "cache": Health(status=Health.Code.UP),
     }
 
@@ -60,7 +62,7 @@ def test_compute_health_from_components_single_down() -> None:
     """Test that health status is DOWN when a single component is DOWN."""
     health = Health(status=Health.Code.UP)
     health.components = {
-        "database": Health(status=Health.Code.DOWN, reason="DB failure"),
+        "database": Health(status=Health.Code.DOWN, reason=DB_FAILURE),
         "cache": Health(status=Health.Code.UP),
     }
 
@@ -75,7 +77,7 @@ def test_compute_health_from_components_multiple_down() -> None:
     """Test that health status is DOWN with correct reason when multiple components are DOWN."""
     health = Health(status=Health.Code.UP)
     health.components = {
-        "database": Health(status=Health.Code.DOWN, reason="DB failure"),
+        "database": Health(status=Health.Code.DOWN, reason=DB_FAILURE),
         "cache": Health(status=Health.Code.DOWN, reason="Cache failure"),
         "api": Health(status=Health.Code.UP),
     }
@@ -170,4 +172,4 @@ def test_health_manually_set_components_validated() -> None:
             "bad_component": Health(status=Health.Code.DOWN),  # Missing reason
         }
         # Accessing any attribute triggers validation
-        str(health)
+        assert str(health)
