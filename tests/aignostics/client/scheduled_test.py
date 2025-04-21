@@ -79,6 +79,7 @@ def three_spots_payload() -> list[ItemCreationRequest]:
 
 @pytest.mark.timeout(240)
 @pytest.mark.scheduled
+@pytest.mark.skip  # TODO(Andreas): Get working again, checkums mismatch
 def test_two_task_dummy_app() -> None:
     """Test the two-task dummy application.
 

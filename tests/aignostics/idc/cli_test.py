@@ -38,7 +38,7 @@ def test_cli_query(runner: CliRunner) -> None:
     assert num_rows > 100000, f"Expected more than 100000 rows, but got {num_rows}"
 
 
-# @pytest.mark.scheduled
+@pytest.mark.scheduled
 def test_cli_download(runner: CliRunner, caplog, tmp_path) -> None:
     """Check download functionality with dry-run option."""
     caplog.set_level(logging.INFO)
