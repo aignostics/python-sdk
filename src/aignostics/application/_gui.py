@@ -43,13 +43,14 @@ class PageBuilder(BasePageBuilder):
             if find_spec("matplotlib") and find_spec("wsidicom"):
                 from wsidicom import WsiDicom  # noqa: PLC0415
 
-                slide = WsiDicom.open(service.get_data_directory() / SERIES_INSTANCE_ID)
+                if (service.get_data_directory() / SERIES_INSTANCE_ID).exists():
+                    slide = WsiDicom.open(service.get_data_directory() / SERIES_INSTANCE_ID)
 
-                with ui.card().tight().mark("DICOM_PLOT"):  # noqa: SIM117
-                    with ui.matplotlib(figsize=(4, 3)).figure as fig:
-                        ax = fig.gca()
-                        thumbnail = slide.read_thumbnail()
-                        ax.imshow(thumbnail)
-                        ax.axis("off")
+                    with ui.card().tight().mark("DICOM_PLOT"):  # noqa: SIM117
+                        with ui.matplotlib(figsize=(4, 3)).figure as fig:
+                            ax = fig.gca()
+                            thumbnail = slide.read_thumbnail()
+                            ax.imshow(thumbnail)
+                            ax.axis("off")
 
             ui.link("Info", "/info").mark("LINK_INFO")
