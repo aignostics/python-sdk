@@ -50,21 +50,16 @@ dependencies = [
 aws = [
     { name = "boto3" },
 ]
-dicom = [
-    { name = "highdicom" },
-    { name = "wsidicom" },
-]
 examples = [
+    { name = "cloudpathlib" },
+    { name = "highdicom" },
     { name = "jinja2" },
     { name = "jupyter" },
     { name = "marimo" },
     { name = "matplotlib" },
     { name = "shapely" },
     { name = "streamlit" },
-]
-gui = [
-    { name = "nicegui" },
-    { name = "pywebview" },
+    { name = "wsidicom" },
 ]
 idc = [
     { name = "idc-index" },
@@ -118,10 +113,11 @@ dev = [
 requires-dist = [
     { name = "appdirs", specifier = ">=1.4.4" },
     { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.37.27" },
+    { name = "cloudpathlib", marker = "extra == 'examples'", specifier = ">=0.21.0" },
     { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.115.12" },
     { name = "google-cloud-storage", specifier = ">=3.1.0" },
     { name = "google-crc32c", specifier = ">=1.7.1" },
-    { name = "highdicom", marker = "extra == 'dicom'", specifier = ">=0.25.1" },
+    { name = "highdicom", marker = "extra == 'examples'", specifier = ">=0.25.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "idc-index", marker = "extra == 'idc'", specifier = ">=0.8.6" },
     { name = "jinja2", marker = "extra == 'examples'", specifier = ">=3.1.6" },
@@ -131,7 +127,6 @@ requires-dist = [
     { name = "logfire", extras = ["system-metrics"], specifier = ">=3.13.1" },
     { name = "marimo", marker = "extra == 'examples'", specifier = ">=0.13.0" },
     { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.10.1" },
-    { name = "nicegui", marker = "extra == 'gui'", specifier = ">=2.15.0" },
     { name = "nicegui", extras = ["native"], specifier = ">=2.15.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.53b0" },
     { name = "opentelemetry-instrumentation-httpx", specifier = ">=0.53b0" },
@@ -145,7 +140,6 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10.1" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
-    { name = "pywebview", marker = "extra == 'gui'", specifier = ">=5.4" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "requests-oauthlib", specifier = ">=2.0.0" },
@@ -156,9 +150,9 @@ requires-dist = [
     { name = "typer", specifier = ">=0.15.1" },
     { name = "uptime", specifier = ">=3.0.1" },
     { name = "urllib3", specifier = ">=2.2.3" },
-    { name = "wsidicom", marker = "extra == 'dicom'", specifier = ">=0.26.0" },
+    { name = "wsidicom", marker = "extra == 'examples'", specifier = ">=0.26.0" },
 ]
-provides-extras = ["examples", "aws", "idc", "dicom", "gui"]
+provides-extras = ["examples", "aws", "idc"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -798,6 +792,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a", size = 226593 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/d4/7ebdbd03970677812aac39c869717059dbb71a4cfc033ca6e5221787892c/click-8.1.8-py3-none-any.whl", hash = "sha256:63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2", size = 98188 },
+]
+
+[[package]]
+name = "cloudpathlib"
+version = "0.21.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/54/71e828c2e415024783f92ee942d3223f6f94cf3fe2e48689b0f3bbb5b608/cloudpathlib-0.21.0.tar.gz", hash = "sha256:fb8f6b890a3d37b35f0eabff86721bb8d35dfc6a6be98c1f4d34b19e989c6641", size = 45271 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/0f/b1a9b09a84ef98b9fc38d50c6b2815cb2256b804a78e7d838ddfbdc035c7/cloudpathlib-0.21.0-py3-none-any.whl", hash = "sha256:657e95ecd2663f1123b6daa95d49aca4b4bc8a9fa90c07930bdba2c5e295e5ef", size = 52744 },
 ]
 
 [[package]]

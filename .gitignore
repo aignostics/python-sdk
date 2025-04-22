@@ -87,3 +87,6 @@ node_modules/
 tests/reports/**/*
 **/__marimo__
 **/.ipynb_checkpoints
+
+data/*
+!data/.gitkeep

@@ -97,17 +97,18 @@ dependencies = [
 
 [project.optional-dependencies]
 examples = [
+    "cloudpathlib>=0.21.0",
+    "highdicom>=0.25.1",
     "marimo>=0.13.0",
     "matplotlib>=3.10.1",
     "jinja2>=3.1.6",
     "jupyter>=1.1.1",
     "shapely>=2.1.0",
     "streamlit>=1.44.1",
+    "wsidicom>=0.26.0",
 ]
 aws = ["boto3>=1.37.27"]
 idc = ["idc-index>=0.8.6"]
-dicom = ["highdicom>=0.25.1", "wsidicom>=0.26.0"]
-gui = ["nicegui>=2.15.0", "pywebview>=5.4"]
 # formats = ["openslide-python>=1.4.1", "openslide-bin>=4.0.0.6"]
 
 [dependency-groups]
