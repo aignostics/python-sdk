@@ -20,6 +20,7 @@ SBOM_SPDX_PATH = "reports/sbom.spdx"
 JUNIT_XML = "--junitxml=reports/junit.xml"
 CLI_MODULE = "cli"
 API_VERSIONS = ["v1"]
+UTF8 = "utf-8"
 
 
 def _setup_venv(session: nox.Session, all_extras: bool = True) -> None:

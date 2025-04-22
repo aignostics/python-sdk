@@ -17,6 +17,10 @@ env/
 .secrets.json
 .act-env-secret
 
+# More secrets
+.ssh
+.aws
+
 # Python virtual environment
 venv/
 .venv/
@@ -69,6 +73,7 @@ tmp/
 # Node temps
 node_modules/
 
+
 # AI workflow
 .fixme
 
@@ -77,7 +82,11 @@ node_modules/
 
 
 
+
 # Application specific
 tests/reports/**/*
 **/__marimo__
 **/.ipynb_checkpoints
+
+data/*
+!data/.gitkeep

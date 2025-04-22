@@ -32,8 +32,6 @@ jobs:
           envkey_ENV: "TEST"
           envkey_AIGNOSTICS_LOGFIRE_TOKEN: "${{ secrets.AIGNOSTICS_LOGFIRE_TOKEN }}"
           envkey_AIGNOSTICS_SENTRY_DSN: "${{ secrets.AIGNOSTICS_SENTRY_DSN }}"
-          envkey_AIGNOSTICS_LOG_LEVEL: "DEBUG"
-          envkey_AIGNOSTICS_LOG_FILE_ENABLED: 1
           envkey_AIGNOSTICS_API_ROOT: https://platform.aignostics.com
           envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
           envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
@@ -46,4 +44,14 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Run scheduled tests
-        run: make test_scheduled
+        id: scheduled_tests
+        run: |
+          make test_scheduled
+          # Provide heartbeat to bettertack for monitoring/alerting
+          exit_code=$?
+          if [ $exit_code -eq 0 ]; then
+            curl -s https://uptime.betterstack.com/api/v1/heartbeat/${{ secrets.BETTERUPTIME_HEARTBEAT_PYTHONSDK_SCHEDULED_E2E_TEST_ON_GITHUB_ID }}
+          else
+            curl -s https://uptime.betterstack.com/api/v1/heartbeat/${{ secrets.BETTERUPTIME_HEARTBEAT_PYTHONSDK_SCHEDULED_E2E_TEST_ON_GITHUB_ID }}/$exit_code
+          fi
+          exit $exit_code

@@ -1,7 +1,7 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all act audit bump clean codegen dist docs docker_build lint setup setup test test_scheduled test_long_running update_from_template
+.PHONY: all act audit bump clean codegen dist docs docker_build install lint pre_commit_run_all setup setup test test_scheduled test_long_running update_from_template watch_gui
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
@@ -30,6 +30,11 @@ act audit bump dist docs lint setup test update_from_template:
 
 # Standalone targets
 
+## Install development dependencies and pre-commit hooks
+install:
+	sh install.sh
+	uv run pre-commit install
+
 ## Run tests marked as scheduled
 test_scheduled:
 	uv run --all-extras nox -s test -p 3.11 -- -m scheduled
@@ -52,7 +57,14 @@ clean:
 
 ## Build Docker image
 docker_build:
-	docker build -t aignostics .
+	docker build -t aignostics --target all .
+	docker build -t aignostics --target slim .
+
+pre_commit_run_all:
+	uv run pre-commit run --all-files
+
+watch_gui:
+	uv run watch_gui.py
 
 # Project specific targets
 ## codegen
@@ -69,6 +81,7 @@ codegen:
 	# create __init__.py files
 	find codegen/out/aignx/codegen/models/ -name "[a-z]*.py" -type f | sed 's|.*/\(.*\)\.py|\1|' | xargs -I{} echo "from .{} import *" > codegen/out/aignx/codegen/models/__init__.py
 	# ls codegen/out/aignx/codegen/models/ | awk -F . '/[a-z].py/ {print "from ."$1" import *"}' > codegen/out/aignx/codegen/models/__init__.py
+
 
 # Special rule to catch any arguments (like patch, minor, major, pdf, Python versions, or x.y.z)
 # This prevents "No rule to make target" errors when passing arguments to make commands
@@ -90,11 +103,14 @@ help:
 
 	@echo "  docs [pdf]            - Build documentation (add pdf for PDF format)"
 	@echo "  docker_build          - Build Docker image aignostics"
+	@echo "  install               - Install or update development dependencies inc. pre-commit hooks"
 	@echo "  lint                  - Run linting and formatting checks"
+	@echo "  pre_commit_run_all    - Run pre-commit hooks on all files"
 	@echo "  setup                 - Setup development environment"
 	@echo "  test [3.11|3.12|3.13] - Run tests (for specific Python version)"
 	@echo "  test_scheduled        - Run tests marked as scheduled with Python 3.11"
 	@echo "  test_long_running     - Run tests marked as long running with Python 3.11"
 	@echo "  update_from_template  - Update from template using copier"
+	@echo "  watch_gui             - Open GUI in browser and watch for changes"
 	@echo ""
 	@echo "Built with love in Berlin 🐻"

@@ -14,7 +14,21 @@ __project_path__ = str(Path(__file__).parent.parent.parent)
 __version__ = metadata.version(__project_name__)
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
 __is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
-__env__ = os.getenv("ENV", os.getenv("VERCEL_ENV", "local"))
+
+# Determine environment we are deployed on
+ENV_VAR_MAPPINGS = {
+    "ENV": lambda env: env,
+    "VERCEL_ENV": lambda env: env,  # See https://vercel.com/docs/environment-variables/system-environment-variables
+    "RAILWAY_ENVIRONMENT": lambda env: env,  # See https://docs.railway.com/reference/variables#railway-provided-variables
+}
+__env__ = "local"  # Default
+for env_var, mapper in ENV_VAR_MAPPINGS.items():
+    env_value = os.getenv(env_var)
+    if env_value:
+        __env__ = mapper(env_value)  # type: ignore[no-untyped-call]
+        break
+
+# Define environment file paths
 __env_file__ = [
     Path.home() / f".{__project_name__}" / ".env",
     Path.home() / f".{__project_name__}" / f".env.{__env__}",
@@ -25,12 +39,18 @@ env_file_path = os.getenv(f"{__project_name__.upper()}_ENV_FILE")
 if env_file_path:
     __env_file__.insert(2, Path(env_file_path))
 
-vercel_base_url = os.getenv("VERCEL_URL", None)
-if vercel_base_url:
-    vercel_base_url = "https://" + vercel_base_url
-__base__url__ = os.getenv(__project_name__.upper() + "_BASE_URL", None)
-if not __base__url__ and vercel_base_url:
-    __base__url__ = vercel_base_url
+# Determine __base_url__
+PLATFORM_URL_MAPPINGS = {
+    "VERCEL_URL": lambda url: f"https://{url}",  # See https://vercel.com/docs/environment-variables/system-environment-variables
+    "RAILWAY_PUBLIC_DOMAIN": lambda url: f"https://{url}",  # See https://docs.railway.com/reference/variables#railway-provided-variables
+}
+__base__url__ = os.getenv(f"{__project_name__.upper()}_BASE_URL")
+if not __base__url__:
+    for env_var, mappers in PLATFORM_URL_MAPPINGS.items():
+        env_value = os.getenv(env_var)
+        if env_value:
+            __base__url__ = mappers(env_value)  # type: ignore[no-untyped-call]
+            break
 
 
 def get_project_url_by_label(prefix: str) -> str:
@@ -47,7 +67,6 @@ def get_project_url_by_label(prefix: str) -> str:
     for url_entry in metadata.metadata(__project_name__).get_all("Project-URL", []):
         if url_entry.startswith(prefix):
             return str(url_entry.split(", ", 1)[1])
-
     return ""
 
 

@@ -2,20 +2,16 @@
 
 Thank you for considering contributing to Aignostics Python SDK!
 
-
 ## Setup
-
-Install or update tools required for development:
-
-```shell
-# Install Homebrew, uv package manager, copier and further dev tools
-curl -LsSf https://raw.githubusercontent.com/aignostics/python-sdk/HEAD/install.sh | sh
-```
 
 [Create a fork](https://github.com/aignostics/python-sdk/fork) and clone your fork using ```git clone URL_OF_YOUR_CLONE```. Then change into the directory of your local Aignostics Python SDK repository with ```cd python-sdk```.
 
 If you are one of the committers of https://github.com/aignostics/python-sdk you can directly clone via ```git clone git@github.com:aignostics/python-sdk.git``` and ```cd python-sdk```.
 
+Install or update development dependencies using 
+```shell
+make install
+```
 
 ## Directory Layout
 
@@ -129,6 +125,14 @@ Notes:
 
 ## Advanced usage
 
+### Developing the GUI
+
+To run the GUI in the browser with hot reloading, use the following command:
+
+```shell
+make watch_gui
+```
+
 ### Running GitHub CI Workflow locally
 
 ```shell
@@ -145,9 +149,11 @@ Build and run the Docker image with plain Docker
 
 ```shell
 # Build from Dockerimage
-make docker_build
+make docker_build # builds targets all and slim
+
 # Run the CLI
-docker run --env THE_VAR=THE_VALUE aignostics --help
+docker run --env THE_VAR=THE_VALUE -t aignostics --target all --help    # target with all extras
+docker run --env THE_VAR=THE_VALUE -t aignostics --target slim --help   # slim flavor, no extras
 ```
 
 Build and run the Docker image with docker compose:
@@ -180,6 +186,10 @@ echo ""
 echo "Shutting down the API container ..."
 docker compose down
 ```
+
+Notes:
+1. The API service is run based on the slim Docker image. Change in compose.yaml if you need the API service to run on the fat image.
+
 
 ### Pinning GitHub Actions
 

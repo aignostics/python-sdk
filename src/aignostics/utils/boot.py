@@ -2,12 +2,18 @@
 
 import os
 import sys
+from pathlib import Path
 
 from ._log import logging_initialize
 from ._logfire import logfire_initialize
 from ._sentry import sentry_initialize
 
 _boot_called = False
+
+# Import vendored dependencies
+vendored_dir = Path(__file__).parent.absolute() / ".vendored"
+if vendored_dir.is_dir() and str(vendored_dir) not in sys.path:
+    sys.path.insert(0, str(vendored_dir))
 
 
 def boot(modules_to_instrument: list[str]) -> None:
