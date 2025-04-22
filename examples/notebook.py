@@ -11,7 +11,7 @@ import marimo
 from aignostics.utils import __version__
 
 __generated_with = "0.12.8"
-app = marimo.App(app_title=f"🔬 Aignostics Python SDK v{__version__}")
+app = marimo.App(app_title=f"🔬 Aignostics Python SDK v{__version__}", width="full")
 
 
 

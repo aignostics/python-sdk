@@ -1,7 +1,15 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo",
+#     "aignostics",
+# ]
+# ///
+
 import marimo
 
 __generated_with = "0.12.8"
-app = marimo.App(width="full", app_title="E2E on DICOM")
+app = marimo.App(app_title=f"🔬 Aignostics Python SDK v{__version__} - E2E", width="full")
 
 
 @app.cell
