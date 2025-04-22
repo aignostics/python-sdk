@@ -2,9 +2,12 @@
 
 import pytest
 
+from aignostics.utils import get_logger
 from aignostics.utils._health import Health
 
 DB_FAILURE = "DB failure"
+
+log = get_logger(__name__)
 
 
 def test_health_default_status() -> None:
@@ -113,6 +116,7 @@ def test_compute_health_recursive() -> None:
     assert result.reason is not None
     assert "Component 'mid' is DOWN" in result.reason
     assert health.components["mid"].status == Health.Code.DOWN
+    assert health.components["mid"].reason is not None  # First ensure reason is not None
     assert "Component 'deep' is DOWN" in health.components["mid"].reason
     assert health.components["other"].status == Health.Code.UP
 
@@ -172,4 +176,4 @@ def test_health_manually_set_components_validated() -> None:
             "bad_component": Health(status=Health.Code.DOWN),  # Missing reason
         }
         # Accessing any attribute triggers validation
-        assert str(health)
+        log.info(str(health))
