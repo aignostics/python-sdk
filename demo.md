@@ -1,4 +1,6 @@
 ```shell
+open https://colab.research.google.com/github/ImagingDataCommons/IDC-Tutorials/blob/master/notebooks/pathomics/microscopy_dicom_ann_intro.ipynb#scrollTo=PHwHpMxyPq0W
+
 marimo edit examples/e2e.py
 
 # from CLI with GUI
