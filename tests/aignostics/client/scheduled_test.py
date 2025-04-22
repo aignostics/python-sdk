@@ -79,7 +79,6 @@ def three_spots_payload() -> list[ItemCreationRequest]:
 
 @pytest.mark.timeout(240)
 @pytest.mark.scheduled
-@pytest.mark.skip  # TODO(Andreas): This test fails in some checksum validation within download_file
 def test_two_task_dummy_app() -> None:
     """Test the two-task dummy application.
 
