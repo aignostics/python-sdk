@@ -473,9 +473,30 @@ def test(session: nox.Session) -> None:
     pytest_args = ["pytest", "--disable-warnings", JUNIT_XML, "-n", "auto", "--dist", "loadgroup"]
     if _is_act_environment():
         pytest_args.extend(["-k", NOT_SKIP_WITH_ACT])
-    pytest_args.extend(["-m", "not sequential"])
-    pytest_args.extend(session.posargs)
 
+    # Extract custom markers from posargs if present
+    custom_marker = None
+    new_posargs = []
+    skip_next = False
+
+    for i, arg in enumerate(session.posargs):
+        if skip_next:
+            skip_next = False
+            continue
+
+        if arg == "-m" and i + 1 < len(session.posargs):
+            custom_marker = session.posargs[i + 1]
+            skip_next = True
+        elif arg != "-m" or i == 0 or session.posargs[i - 1] != "-m":
+            new_posargs.append(arg)
+
+    # Apply the appropriate marker for non-sequential tests
+    if custom_marker:
+        pytest_args.extend(["-m", f"not sequential and ({custom_marker})"])
+    else:
+        pytest_args.extend(["-m", "not sequential"])
+
+    pytest_args.extend(new_posargs)
     session.run(*pytest_args)
 
     # Sequential tests
@@ -491,9 +512,14 @@ def test(session: nox.Session) -> None:
     ]
     if _is_act_environment():
         sequential_args.extend(["-k", NOT_SKIP_WITH_ACT])
-    sequential_args.extend(["-m", "sequential"])
-    sequential_args.extend(session.posargs)
 
+    # Apply the appropriate marker for sequential tests
+    if custom_marker:
+        sequential_args.extend(["-m", f"sequential and ({custom_marker})"])
+    else:
+        sequential_args.extend(["-m", "sequential"])
+
+    sequential_args.extend(new_posargs)
     session.run(*sequential_args)
 
     session.run(

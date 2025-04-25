@@ -23,6 +23,11 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "long_running" in item.keywords:
                 item.add_marker(skip_me)
+    elif config.getoption("-m") == "not sequential":
+        skip_me = pytest.mark.skip(reason="skipped as only not sequential marker given on execution using '-m'")
+        for item in items:
+            if "long_running" in item.keywords:
+                item.add_marker(skip_me)
 
 
 @pytest.fixture(scope="session")
