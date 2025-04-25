@@ -543,10 +543,10 @@ def update_from_template(session: nox.Session) -> None:
         # In this case the template has been generated from a template
         session.run("copier", "update", "--trust", "--skip-answered", "--skip-tasks", external=True)
 
-    # Schedule the lint session to run after this session completes
-    session.notify("audit")
-    session.notify("docs")
-    session.notify("lint")
+        # Schedule the lint session to run after this session completes
+        session.notify("audit")
+        session.notify("docs")
+        session.notify("lint")
 
 
 @nox.session(default=False)

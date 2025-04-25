@@ -1,1 +1,1 @@
-"""Test suite for package {{ import_package_name }}."""
+"""Test suite for package aignostics."""

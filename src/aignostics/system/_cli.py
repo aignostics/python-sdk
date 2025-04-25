@@ -14,7 +14,7 @@ from ._service import Service
 
 logger = get_logger(__name__)
 
-cli = typer.Typer(name="system", help="System commands")
+cli = typer.Typer(name="system", help="Determine health, info and further utillities.")
 
 _service = Service()
 
@@ -94,6 +94,7 @@ if find_spec("nicegui"):
         Args:
             host (str): Host to bind the server to.
             port (int): Port to bind the server to.
+            watch (bool): Enable auto-reload on changes of source code.
             open_browser (bool): Open app in browser after starting the server.
         """
         console.print(f"Starting web application server at http://{host}:{port}")

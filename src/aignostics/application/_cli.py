@@ -7,7 +7,7 @@ from aignostics.utils import console, get_logger
 
 logger = get_logger(__name__)
 
-cli = typer.Typer(name="application", help="Application commands")
+cli = typer.Typer(name="application", help="Run applications on Aignostics platform.")
 
 bucket_app = typer.Typer()
 cli.add_typer(bucket_app, name="bucket", help="Transfer bucket provide by platform")

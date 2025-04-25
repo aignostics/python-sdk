@@ -1,12 +1,11 @@
-"""Constants for the Aignostics Python SDK."""
+"""Static configuration of Aignostics Python SDK."""
 
 from pathlib import Path
 
-MODULES_TO_INSTRUMENT = ["aignostics.client", "aignostics.application"]
-
-API_VERSIONS = {
-    "v1": "1.0.0",
-}
-
+# Configuration required by oe-python-template
+API_VERSIONS: dict[str, str] = {"v1": "1.0.0"}
+MODULES_TO_INSTRUMENT: list[str] = ["aignostics.client", "aignostics.application"]
 NOTEBOOK_FOLDER = Path(__file__).parent.parent.parent / "examples"
 NOTEBOOK_APP = Path(__file__).parent.parent.parent / "examples" / "notebook.py"
+
+# Project specific configuration

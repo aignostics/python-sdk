@@ -11,6 +11,12 @@ _implementation_cache: dict[Any, list[Any]] = {}
 _subclass_cache: dict[Any, list[Any]] = {}
 
 
+def load_modules() -> None:
+    package = importlib.import_module(__project_name__)
+    for _, name, _ in pkgutil.iter_modules(package.__path__):
+        importlib.import_module(f"{__project_name__}.{name}")
+
+
 def locate_implementations(_class: type[Any]) -> list[Any]:
     """
     Dynamically discover all instances of some class.

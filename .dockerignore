@@ -86,9 +86,11 @@ docker-compose.yml
 # Copier
 **/*.rej
 
-
 # Vercel
 **/.vercel
 
+# Scalene
+profile.json
+profile.html
 
 # Application specific

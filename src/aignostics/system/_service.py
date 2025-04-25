@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from pydantic_settings import BaseSettings
-from uptime import boottime, uptime
 
 from ..utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
@@ -99,6 +98,8 @@ class Service(BaseService):
         Returns:
             dict[str, Any]: Service configuration.
         """
+        from uptime import boottime, uptime  # noqa: PLC0415
+
         bootdatetime = boottime()
         rtn = {
             "package": {

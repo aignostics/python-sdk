@@ -130,7 +130,7 @@ Notes:
 To run the GUI in the browser with hot reloading, use the following command:
 
 ```shell
-make watch_gui
+make gui_watch
 ```
 
 ### Running GitHub CI Workflow locally

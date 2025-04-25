@@ -105,14 +105,24 @@
 
 ## Uptime monitoring with betterstack
 
+### Monitoring your API and display uptime on status page and in GitHub
 1. Goto https://betterstack.com/ and sign-in - it's free for up to 10 monitors
    and one status page
-2. Create a monitor pointing to the `/api/v1/healthz` endpoint of your API on
-   your production environment. 
-3. Create a status page in betterstack and add the monitor you created
-4. Goto Advanced Settings / Github badge for your monitor on Betterstack and
-   copy the badge for yaml
-5. Run copier update and paste the snippet when asked for it
+2. Go to Uptime > Monitors and create a monitor, pointing to the `/api/v1/healthz` endpoint of your API on
+   your production environment: (a) . Copy the URL into the "URL to monitor" field. (b) Set "Alert us when" to "URL returns HTTP status other then",
+   (c) )select "200" from drop down "Expected HTTP status codes". (d) Click "Create monitor" at the bottom of the page.
+3. Go to Uptime > Status pages and create a status page for your project. Add the monitor you created in step #2 to the page.
+4. Go to Uptime > Monitors, select the monitor you created in step #2. (a) Click "Configure", and scroll down to "Advanced Settings" / "Github badge".
+   Click "Copy to clipboard" for a badge of your liking, (b) `copier update --trust` and paste the snippet when asked for it
+
+### Monitoring your scheduled tests
+1. Go to https://betterstack.com/ and sign-in.
+2. Goto Uptime > Heartbeat and hit "Create heartbeat".
+3. Set "What service will this heartbeat track? to "Aignostics Python SDK / Scheduled tests"
+4. Change "Expect a heartbeat every" in case you changed cron setting in your `.github/workflows/test-scheduled.yml`. If you did not change, the efault of 1 day is fine.
+5. Click "Create heartbeat" at the bottom of the page.
+6. Click "Copy to clipboard' next to "Make a HEAD, GET, or a POST request to the following URL".
+7. Goto https://github.com/aignostics/python-sdk/settings/secrets/actions/new and create a new repository secret called `BETTERSTACK_HEARTBEAT_TEST_SCHEDULED_URL`, pasting the URL from your clipboard as value.
 
 ## Deploying webservice to Vercel as serverless function (optional)
 
