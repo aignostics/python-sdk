@@ -16,8 +16,8 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
-from aignostics.client.resources.runs import ApplicationRun, Runs
-from aignostics.client.resources.utils import PAGE_SIZE
+from aignostics.platform.resources.runs import ApplicationRun, Runs
+from aignostics.platform.resources.utils import PAGE_SIZE
 
 
 @pytest.fixture

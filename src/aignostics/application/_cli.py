@@ -2,7 +2,7 @@
 
 import typer
 
-import aignostics.client
+import aignostics.platform
 from aignostics.utils import console, get_logger
 
 logger = get_logger(__name__)
@@ -40,7 +40,7 @@ def bucket_purge() -> None:
 @cli.command("list")
 def application_list() -> None:
     """List available applications."""
-    client = aignostics.client.Client()
+    client = aignostics.platform.Client()
     applications = client.applications.list()
     console.print(applications)
 
@@ -72,7 +72,7 @@ def run_submit() -> None:
 @run_app.command("list")
 def run_list() -> None:
     """List runs."""
-    client = aignostics.client.Client()
+    client = aignostics.platform.Client()
     runs = client.runs.list()
     console.print(runs)
 

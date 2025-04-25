@@ -10,10 +10,10 @@ from aignx.codegen.models import (
     InputArtifactCreationRequest as InputArtifact,
 )
 from aignx.codegen.models import (
-    ItemCreationRequest as Item,
+    ItemCreationRequest as InputItem,
 )
 
-from aignostics.client._utils import generate_signed_url
+from aignostics.platform._utils import generate_signed_url
 
 from ._client import Client
 from ._constants import (
@@ -71,7 +71,7 @@ __all__ = [
     "UNKNOWN_ENDPOINT_URL",
     "Client",
     "InputArtifact",
-    "Item",
+    "InputItem",
     "Settings",
     "calculate_file_crc32c",
     "download_file",

@@ -1,8 +1,8 @@
-"""Tests for the client utility functions."""
+"""Tests for the platform utility functions."""
 
 import pytest
 
-from aignostics.client import mime_type_to_file_ending
+from aignostics.platform import mime_type_to_file_ending
 
 
 class TestMimeTypeToFileEnding:

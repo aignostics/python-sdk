@@ -1,4 +1,4 @@
-"""Applications resource module for the Aignostics client.
+"""Applications resource module for the Aignostics platform.
 
 This module provides classes for interacting with application resources in the Aignostics API.
 It includes functionality for listing applications and managing application versions.
@@ -10,7 +10,7 @@ import typing as t
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import ApplicationReadResponse, ApplicationVersionReadResponse
 
-from aignostics.client.resources.utils import paginate
+from aignostics.platform.resources.utils import paginate
 
 
 class Versions:
@@ -22,10 +22,10 @@ class Versions:
     APPLICATION_VERSION_REGEX = re.compile(r"(?P<application_id>[^:]+):v?(?P<version>[^:]+)")
 
     def __init__(self, api: PublicApi) -> None:
-        """Initializes the Versions resource with the API client.
+        """Initializes the Versions resource with the API platform.
 
         Args:
-            api: The configured API client.
+            api: The configured API platform.
         """
         self._api = api
 
@@ -92,10 +92,10 @@ class Applications:
     """
 
     def __init__(self, api: PublicApi) -> None:
-        """Initializes the Applications resource with the API client.
+        """Initializes the Applications resource with the API platform.
 
         Args:
-            api: The configured API client.
+            api: The configured API platform.
         """
         self._api = api
         self.versions: Versions = Versions(self._api)

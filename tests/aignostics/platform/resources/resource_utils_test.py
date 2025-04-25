@@ -6,7 +6,7 @@ on pagination functionality that is used across resource modules.
 
 from unittest.mock import Mock
 
-from aignostics.client.resources.utils import PAGE_SIZE, paginate
+from aignostics.platform.resources.utils import PAGE_SIZE, paginate
 
 
 def test_paginate_stops_when_results_less_than_page_size() -> None:

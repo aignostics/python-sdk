@@ -1,46 +1,20 @@
 
 [//]: # (README.md generated from docs/partials/README_*.md)
 
-# 🔬 Aignostics Python SDK
+# 🔬Aignostics Python SDK
 
 [![License](https://img.shields.io/github/license/aignostics/python-sdk?logo=opensourceinitiative&logoColor=3DA639&labelColor=414042&color=A41831)](https://github.com/aignostics/python-sdk/blob/main/LICENSE)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aignostics.svg?logo=python&color=204361&labelColor=1E2933)](https://github.com/aignostics/python-sdk/blob/main/noxfile.py)
 [![CI](https://github.com/aignostics/python-sdk/actions/workflows/test-and-report.yml/badge.svg)](https://github.com/aignostics/python-sdk/actions/workflows/test-and-report.yml)
-[![Read the Docs](https://img.shields.io/readthedocs/aignostics)](https://aignostics.readthedocs.io/en/latest/)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
 [![Security](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
 [![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-[![Dependabot](https://img.shields.io/badge/dependabot-active-brightgreen?style=flat-square&logo=dependabot)](https://github.com/aignostics/python-sdk/security/dependabot)
-[![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://github.com/aignostics/python-sdk/issues?q=is%3Aissue%20state%3Aopen%20Dependency%20Dashboard)
 [![Coverage](https://codecov.io/gh/aignostics/python-sdk/graph/badge.svg?token=SX34YRP30E)](https://codecov.io/gh/aignostics/python-sdk)
-[![Ruff](https://img.shields.io/badge/style-Ruff-blue?color=D6FF65)](https://github.com/aignostics/python-sdk/blob/main/noxfile.py)
-[![MyPy](https://img.shields.io/badge/mypy-checked-blue)](https://github.com/aignostics/python-sdk/blob/main/noxfile.py)
-[![GitHub - Version](https://img.shields.io/github/v/release/aignostics/python-sdk?label=GitHub&style=flat&labelColor=1C2C2E&color=blue&logo=GitHub&logoColor=white)](https://github.com/aignostics/python-sdk/releases)
-[![GitHub - Commits](https://img.shields.io/github/commit-activity/m/aignostics/python-sdk/main?label=commits&style=flat&labelColor=1C2C2E&color=blue&logo=GitHub&logoColor=white)](https://github.com/aignostics/python-sdk/commits/main/)
-[![PyPI - Version](https://img.shields.io/pypi/v/aignostics.svg?label=PyPI&logo=pypi&logoColor=%23FFD243&labelColor=%230073B7&color=FDFDFD)](https://pypi.python.org/pypi/aignostics)
-[![PyPI - Status](https://img.shields.io/pypi/status/aignostics?logo=pypi&logoColor=%23FFD243&labelColor=%230073B7&color=FDFDFD)](https://pypi.python.org/pypi/aignostics)
-[![Docker - Version](https://img.shields.io/docker/v/helmuthva/aignostics-python-sdk?sort=semver&label=Docker&logo=docker&logoColor=white&labelColor=1354D4&color=10151B)](https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags)
-[![Docker - Size](https://img.shields.io/docker/image-size/helmuthva/aignostics-python-sdk?sort=semver&arch=arm64&label=image&logo=docker&logoColor=white&labelColor=1354D4&color=10151B)](https://hub.docker.com/r/helmuthva/aignostics-python-sdk/)
-[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template)
-[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTE3IDE2VjdsLTYgNU0yIDlWOGwxLTFoMWw0IDMgOC04aDFsNCAyIDEgMXYxNGwtMSAxLTQgMmgtMWwtOC04LTQgM0gzbC0xLTF2LTFsMy0zIi8+PC9zdmc+)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/aignostics/python-sdk)
-[![Open in GitHub Codespaces](https://img.shields.io/static/v1?label=GitHub%20Codespaces&message=Open&color=blue&logo=github)](https://github.com/codespaces/new/aignostics/python-sdk)
-[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/1vtu1.svg)](https://aignostics.betteruptime.com/)
 
 <!---
 [![ghcr.io - Version](https://ghcr-badge.egpl.dev/aignostics/python-sdk/tags?color=%2344cc11&ignore=0.0%2C0%2Clatest&n=3&label=ghcr.io&trim=)](https://github.com/aignostics/python-sdk/pkgs/container/python-sdk)
 [![ghcr.io - Sze](https://ghcr-badge.egpl.dev/aignostics/python-sdk/size?color=%2344cc11&tag=latest&label=size&trim=)](https://github.com/aignostics/python-sdk/pkgs/container/python-sdk)
 -->
-
-> [!TIP]
-> 📚 [Online documentation](https://aignostics.readthedocs.io/en/latest/) - 📖
-> [PDF Manual](https://aignostics.readthedocs.io/_/downloads/en/latest/pdf/)
-
-> [!NOTE]
-> 🧠 This project was scaffolded using the template
-> [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template)
-> with [copier](https://copier.readthedocs.io/).
 
 ---
 
@@ -132,17 +106,15 @@ to learn about all commands and options available.
 
 ## Use in Python Notebooks
 
-We provided example notebooks to help you get started with the Python SDK.
-Before you can start, you need to setup your authentication information:
-
-**Authentication:**
-The SDK uses the [OAuth2](https://oauth.net/2/) protocol for authentication.
+> [!IMPORTANT]  
+> Before you get started, you need to set up your authentication credentials if you did not yet do so!
 Please visit
-[your personal dashboard on the aignostics platform](https://platform.aignostics.com/getting-started/quick-start)
-and look at the `Enterprise Integration` section to obtain your personal client information.
+[your personal dashboard on the aignostics platform website](https://platform.aignostics.com/getting-started/quick-start)
+and follow the steps outlined in the `Use in Python Notebooks` section.
 
-**Examples:** The notebooks showcase the interaction with the Aignostics platform using our test application.
-To run one them, please follow the steps shown below to (i) clone this repository and start either the [Jupyter](https://docs.jupyter.org/en/latest/index.html) ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)) or 
+We provide Jupyter and Marimo notebooks to help you get started with the SDK.
+The notebooks showcase the interaction with the Aignostics platform using our test application.
+To run one them, please follow the steps outlined in the snippet below to clone this repository and start either the [Jupyter](https://docs.jupyter.org/en/latest/index.html) ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)) or 
 [Marimo](https://marimo.io/) ([examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)) notebook:
 
 ```shell
@@ -157,6 +129,12 @@ uv run marimo edit examples/notebook.py
 ```
 
 ## Using the Python SDK in your Codebase
+
+> [!IMPORTANT]  
+> Before you get started, you need to set up your authentication credentials if you did not yet do so!
+Please visit
+[your personal dashboard on the aignostics platform website](https://platform.aignostics.com/getting-started/quick-start)
+and follow the steps outlined in the `Enterprise Integration` section.
 
 Next to using the CLI and notebooks, you can also use the Python SDK in your
 codebase. The following sections outline how to install the SDK and interact with it.
@@ -185,30 +163,30 @@ pip install aignostics
 The following snippet shows how to use the Python SDK to trigger an application run:
 
 ```python
-import aignostics.client as platform
+from aignostics import platform
 
 # initialize the client
 client = platform.Client()
 # trigger an application run
 application_run = client.runs.create(
-     application_version="two-task-dummy:v0.35.0",
-     items=[
-         platform.Item(
-             reference="slide-1",
-             input_artifacts=[
-                 platform.InputArtifact(
-                     name="user_slide",
-                     download_url="<a signed url to download the data>",
-                     metadata={
-                         "checksum_crc32c": "AAAAAA==",
-                         "base_mpp": 0.25,
-                         "width": 1000,
-                         "height": 1000,
-                     },
-                 )
-             ],
-         ),
-     ],
+   application_version="two-task-dummy:v0.35.0",
+   items=[
+      platform.InputItem(
+         reference="slide-1",
+         input_artifacts=[
+            platform.InputArtifact(
+               name="user_slide",
+               download_url="<a signed url to download the data>",
+               metadata={
+                  "checksum_crc32c": "AAAAAA==",
+                  "base_mpp": 0.25,
+                  "width": 1000,
+                  "height": 1000,
+               },
+            )
+         ],
+      ),
+   ],
 )
 # wait for the results and download incrementally as they become available
 application_run.download_to_folder("path/to/download/folder")
@@ -218,29 +196,16 @@ Please look at the notebooks in the `example` folder for a more detailed example
 [client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 to learn about all classes and methods.
 
-#### Application Run Payloads
+#### Defining the input for an application run
 
-The payload expected to trigger an application run is specified by the
-`RunCreationRequest` pydantic model:
-
-```python
-RunCreationRequest(
-   application_version=...,
-   items=[
-      ItemCreationRequest(...),
-      ItemCreationRequest(...)
-   ]
-)
-```
-
-Next to the application version of the application you want to run, it defines
-the items you want to be processed as `ItemCreationRequest` objects:
+Next to the `application_version` of the application you want to run, you have to define
+the input items you want to process in the run. The input items are defined as follows:
 
 ```python
-ItemCreationRequest(
+platform.InputItem(
     reference="1",
     input_artifacts=[
-        InputArtifactCreationRequest(
+        platform.InputArtifact(
             name="user_slide", # defined by the application version input_artifact schema
             download_url="<a signed url to download the data>",
             metadata={ # defined by the application version input_artifact schema
@@ -256,7 +221,7 @@ ItemCreationRequest(
 
 For each item you want to process, you need to provide a unique `reference`
 string. This is used to identify the item in the results later on. The
-`input_artifacts` field is a list of `InputArtifactCreationRequest` objects,
+`input_artifacts` field is a list of `InputArtifact` objects,
 which defines what data & metadata you need to provide for each item. The
 required artifacts depend on the application version you want to run - in the
 case of test application, there is only one artifact required, which is the
@@ -276,25 +241,6 @@ Self-signed URLs for files in google storage buckets can be generated using the
 **We expect that you provide the
 [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
 for the Google Storage Bucket**
-
-## Run with Docker
-
-We recommend to run the CLI natively on your notebook, as explained above. If
-required you can run the CLI as a Docker container:
-
-```shell
-# TODO (Helmut): Explain about the environment
-docker run helmuthva/aignostics-python-sdk --help
-docker run helmuthva/aignostics-python-sdk system health
-```
-
-Running via docker compose is supported as well. The .env is passed through from
-the host to the Docker container automatically.
-
-```shell
-docker compose run aignostics --help
-docker compose run aignostics system health
-```
 
 
 ## API Concepts
@@ -407,19 +353,6 @@ When the application run is cancelled, either by the system or by the user, only
 - Our
   [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html)
   provide a complete log of recent improvements and changes.
-- In case you want to help us improve 🔬 Aignostics Python SDK: The
-  [contribution guidelines](https://aignostics.readthedocs.io/en/latest/contributing.html)
-  explain how to setup your development environment and create pull requests.
 - We gratefully acknowledge the
   [open source projects](https://aignostics.readthedocs.io/en/latest/attributions.html)
   that this project builds upon. Thank you to all these wonderful contributors!
-
-## Star History
-
-<a href="https://star-history.com/#aignostics/python-sdk">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=aignostics/python-sdk&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=aignostics/python-sdk&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=aignostics/python-sdk&type=Date" />
- </picture>
-</a>

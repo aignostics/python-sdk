@@ -11,36 +11,30 @@ from typing import Any
 
 import pytest
 from _pytest.fixtures import FixtureRequest
-from aignx.codegen.models import (
-    ApplicationRunStatus,
-    InputArtifactCreationRequest,
-    ItemCreationRequest,
-    ItemStatus,
-)
+from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 
-import aignostics.client
-from aignostics.client._utils import calculate_file_crc32c, generate_signed_url, mime_type_to_file_ending
-from aignostics.client.resources.runs import ApplicationRun
+from aignostics import platform
+from aignostics.platform.resources.runs import ApplicationRun
 
 
 def _decorate_with_metadata(
-    item: ItemCreationRequest, artifact_name_to_metadata: dict[str, dict[str, Any]]
-) -> ItemCreationRequest:
+    item: platform.InputItem, artifact_name_to_metadata: dict[str, dict[str, Any]]
+) -> platform.InputItem:
     for input_artifact in item.input_artifacts:
         if input_artifact.name in artifact_name_to_metadata:
             input_artifact.metadata.update(artifact_name_to_metadata[input_artifact.name])
     return item
 
 
-def single_spot_payload() -> list[ItemCreationRequest]:
+def single_spot_payload() -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
-        ItemCreationRequest(
+        platform.InputItem(
             reference="1",
             input_artifacts=[
-                InputArtifactCreationRequest(
+                platform.InputArtifact(
                     name="user_slide",
-                    download_url=generate_signed_url(
+                    download_url=platform.generate_signed_url(
                         "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
                     ),
                     metadata={
@@ -55,15 +49,15 @@ def single_spot_payload() -> list[ItemCreationRequest]:
     ]
 
 
-def three_spots_payload() -> list[ItemCreationRequest]:
+def three_spots_payload() -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
-        ItemCreationRequest(
+        platform.InputItem(
             reference="1",
             input_artifacts=[
-                InputArtifactCreationRequest(
+                platform.InputArtifact(
                     name="user_slide",
-                    download_url=generate_signed_url(
+                    download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
                     ),
                     metadata={
@@ -75,12 +69,12 @@ def three_spots_payload() -> list[ItemCreationRequest]:
                 )
             ],
         ),
-        ItemCreationRequest(
+        platform.InputItem(
             reference="2",
             input_artifacts=[
-                InputArtifactCreationRequest(
+                platform.InputArtifact(
                     name="user_slide",
-                    download_url=generate_signed_url(
+                    download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
                     ),
                     metadata={
@@ -92,12 +86,12 @@ def three_spots_payload() -> list[ItemCreationRequest]:
                 )
             ],
         ),
-        ItemCreationRequest(
+        platform.InputItem(
             reference="3",
             input_artifacts=[
-                InputArtifactCreationRequest(
+                platform.InputArtifact(
                     name="user_slide",
-                    download_url=generate_signed_url(
+                    download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
                     ),
                     metadata={
@@ -135,7 +129,7 @@ def three_spots_payload() -> list[ItemCreationRequest]:
     ],
 )
 def test_application_runs(
-    timeout: int, application_version_id: str, payload: list[ItemCreationRequest], request: FixtureRequest
+    timeout: int, application_version_id: str, payload: list[platform.InputItem], request: FixtureRequest
 ) -> None:
     """Test the two-task dummy application.
 
@@ -154,8 +148,8 @@ def test_application_runs(
     """
     request.node.add_marker(pytest.mark.timeout(timeout))
 
-    platform = aignostics.client.Client(cache_token=False)
-    application_run = platform.runs.create(application_version_id, items=payload)
+    client = platform.Client(cache_token=False)
+    application_run = client.runs.create(application_version_id, items=payload)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         application_run.download_to_folder(temp_dir)
@@ -189,9 +183,9 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
         assert item_dir.exists(), f"Result folder for item {item.reference} does not exist"
         for artifact in item.output_artifacts:
             assert artifact.download_url is not None, f"{artifact} should provide an download url"
-            file_ending = mime_type_to_file_ending(artifact.mime_type)
+            file_ending = platform.mime_type_to_file_ending(artifact.mime_type)
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), f"Artifact {artifact} was not downloaded"
             checksum = artifact.metadata["checksum_crc32c"]
-            file_checksum = calculate_file_crc32c(file_path)
+            file_checksum = platform.calculate_file_crc32c(file_path)
             assert file_checksum == checksum, f"Metadata checksum != file checksum {checksum} <> {file_checksum}"

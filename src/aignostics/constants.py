@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-MODULES_TO_INSTRUMENT = ["aignostics.client", "aignostics.application"]
+MODULES_TO_INSTRUMENT = ["aignostics.platform", "aignostics.application"]
 
 API_VERSIONS = {
     "v1": "1.0.0",
