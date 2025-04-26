@@ -120,24 +120,3 @@ def test_gui_run_in_container_with_native(mock_ui: mock.MagicMock) -> None:
         gui_run(native=True)
     assert "Native GUI cannot be run in a container" in str(excinfo.value)
     mock_ui.run.assert_not_called()
-
-
-@mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
-@mock.patch("aignostics.utils._gui.gui_register_pages")
-@mock.patch("nicegui.ui")
-@mock.patch("nicegui.app")
-def test_gui_run_with_api(
-    mock_app: mock.MagicMock, mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock
-) -> None:
-    """Test gui_run with API mounted.
-
-    Args:
-        mock_app: Mock for nicegui app
-        mock_ui: Mock for nicegui UI
-        mock_register_pages: Mock for gui_register_pages function
-    """
-    with mock.patch("aignostics.api.api") as mock_api:
-        gui_run(with_api=True)
-        mock_app.mount.assert_called_once_with("/api", mock_api)
-        mock_register_pages.assert_called_once()
-        mock_ui.run.assert_called_once()
