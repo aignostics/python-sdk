@@ -563,19 +563,7 @@ def _run_pytest(
     is_sequential = test_type == "sequential"
 
     # Build base pytest arguments
-    pytest_args = [
-        "pytest",
-        "--disable-warnings",
-        JUNIT_XML,
-        "-n",
-        "auto",
-        "--dist",
-        "loadgroup",
-    ]
-
-    # Add coverage append for sequential tests
-    if is_sequential:
-        pytest_args.extend(["--cov-append"])
+    pytest_args = ["pytest", "--disable-warnings", JUNIT_XML, "-n", "auto", "--dist", "loadgroup", "--cov-append"]
 
     # Add act environment filter if needed
     if _is_act_environment():
