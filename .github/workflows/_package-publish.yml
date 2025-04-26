@@ -1,12 +1,11 @@
-name: "Build package, publish to PyPI, create GitHub release"
+name: "Publish Package"
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_call:
+    # No inputs needed at this time
 
 jobs:
-  package_build_publish_release:
+  package_publish:
     environment: release
     runs-on: ubuntu-latest
     permissions:
@@ -27,7 +26,7 @@ jobs:
 
       - name: Install dev tools
         shell: bash
-        run: .github/workflows/install_dev_tools.bash
+        run: .github/workflows/_install_dev_tools.bash
 
       - name: Docs
         run: make docs
@@ -62,7 +61,7 @@ jobs:
         run: |
           gh release create ${{ github.ref_name }} ./dist/* ./reports/* \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
-
+            
       - name: Allow other workflows to trigger on release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

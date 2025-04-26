@@ -64,7 +64,7 @@ def test_opaque_settings_serialize_sensitive_info_without_unhide() -> None:
 
 def test_opaque_settings_serialize_sensitive_info_empty() -> None:
     """Test that None is returned when the SecretStr is empty."""
-    secret = None
+    secret = SecretStr("")
     context = {}
 
     result = OpaqueSettings.serialize_sensitive_info(secret, type("FieldSerializationInfo", (), {"context": context}))

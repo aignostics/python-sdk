@@ -41,7 +41,7 @@ test_scheduled:
 
 ## Run tests marked as long_running
 test_long_running:
-	uv run --all-extras nox -s test -p 3.13 -- -m long_running
+	uv run --all-extras nox -s test -p 3.13 -- -m long_running --keep-coverage
 
 ## Clean build artifacts and caches
 clean:

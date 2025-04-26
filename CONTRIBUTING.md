@@ -141,7 +141,7 @@ make act
 
 Notes:
 1. Workflow defined in `.github/workflows/*.yml`
-2. test-and-report.yml calls all build steps defined in noxfile.py
+2. ci-cd.yml calls all build steps defined in noxfile.py
 
 ### Docker
 

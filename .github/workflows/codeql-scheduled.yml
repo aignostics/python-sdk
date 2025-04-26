@@ -1,0 +1,15 @@
+name: "Scheduled CodeQL"
+
+on:
+  schedule:
+    - cron: "22 3 * * 2"  # Every Tuesday at 3:22 AM
+
+jobs:
+  codeql:
+    uses: ./.github/workflows/_codeql.yml
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+      security-events: write
+    secrets: inherit

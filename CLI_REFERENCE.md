@@ -70,12 +70,27 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
+* `e2e`: E2E test.
 * `list`: List available applications.
 * `describe`: Describe application.
 * `bucket`: Transfer bucket provide by platform
 * `dataset`: Datasets for use as input for applications
 * `metadata`: Metadata required as input for applications
 * `run`: Runs of applications
+
+### `aignostics application e2e`
+
+E2E test.
+
+**Usage**:
+
+```console
+$ aignostics application e2e [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
 
 ### `aignostics application list`
 
