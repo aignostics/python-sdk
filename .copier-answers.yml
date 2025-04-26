@@ -1,4 +1,4 @@
-_commit: v0.15.25
+_commit: v0.16.0
 _src_path: gh:helmut-hoffer-von-ankershoffen/oe-python-template
 attestations_enabled: false
 author_email: helmut@aignostics.com
@@ -27,3 +27,4 @@ streamlit_project_key: aignostics
 uptime_badge_snippet: '[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/1vtu1.svg)](https://aignostics.betteruptime.com/)'
 vercel_badge_snippet: ''
 vercel_function_enabled: false
+

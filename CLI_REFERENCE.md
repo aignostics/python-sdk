@@ -573,7 +573,7 @@ $ aignostics system openapi [OPTIONS]
 
 **Options**:
 
-* `--api-version TEXT`: API Version. Available: v1, v2  [default: v1]
+* `--api-version TEXT`: API Version. Available: v1  [default: v1]
 * `--output-format [yaml|json]`: Output format  [default: json]
 * `--help`: Show this message and exit.
 

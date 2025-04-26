@@ -6,7 +6,6 @@ on:
 
 jobs:
   package_publish:
-    environment: release
     runs-on: ubuntu-latest
     permissions:
       contents: write
