@@ -55,10 +55,11 @@ clean:
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
 	rm -rf .venv
-	rm -rf dist
+	rm -rf dist && mkdir -p dist && touch dist/.keep
+	rm -rf dist_vercel/wheels && mkdir -p dist_vercel/wheels && touch dist_vercel/wheels/.keep
 	rm -rf .coverage
-	make -C docs clean
 	rm -rf reports && mkdir -p reports && touch reports/.keep
+	uv run make -C docs clean
 
 ## Build Docker image
 docker_build:

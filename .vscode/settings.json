@@ -36,6 +36,9 @@
         "**/dist_vercel/.vercel/**",
     ],
     "python.analysis.ignore": [
+        "dist/**",
+        "dist_vercel/**",
+        "template/**",
         "**/typing.py",
         "**/bottle.py",
         "tests/**",
@@ -57,8 +60,8 @@
     },
     "github.copilot.advanced": {},
     "github.copilot.chat.editor.temporalContext.enabled": true,
-    "github.copilot.chat.edits.codesearch.enabled": true,
     "github.copilot.chat.edits.temporalContext.enabled": true,
+    "github.copilot.chat.codesearch.enabled": true,
     "github.copilot.chat.codeGeneration.instructions": [
         {
             "file": "CODE_STYLE.md"

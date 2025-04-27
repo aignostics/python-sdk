@@ -33,8 +33,8 @@ from ._settings import Settings
 
 log = get_logger(__name__)
 
-JsonType: t.TypeAlias = list["JsonValue"] | t.Mapping[str, "JsonValue"]
-JsonValue: t.TypeAlias = str | int | float | JsonType | None
+JsonValue: t.TypeAlias = str | int | float | list["JsonValue"] | t.Mapping[str, "JsonValue"] | None
+JsonType: t.TypeAlias = list[JsonValue] | t.Mapping[str, JsonValue]
 
 # Note: There is multiple measurements and network calls
 MEASURE_INTERVAL_SECONDS = 5

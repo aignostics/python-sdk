@@ -163,7 +163,7 @@ class GUILocalFilePicker:
                     self.drives_toggle = ui.toggle(drives, value=drives[0], on_change=self.update_drive)
 
             def update_drive(self) -> None:
-                self.path = Path(self.drives_toggle.value).expanduser()
+                self.path = Path(str(self.drives_toggle.value)).expanduser()
                 self.update_grid()
 
             def update_grid(self) -> None:
