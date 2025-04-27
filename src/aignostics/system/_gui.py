@@ -7,14 +7,20 @@ from ._service import Service
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
-        from nicegui import ui  # noqa: PLC0415
+        from nicegui import run, ui  # noqa: PLC0415
 
         @ui.page("/info")
-        def page_info() -> None:
+        async def page_info() -> None:
             """Homepage of GUI."""
             ui.label(f"{__project_name__} v{__version__}").mark("LABEL_VERSION")
-            ui.json_editor({
-                "content": {"json": Service().info(True, True)},
+            spinner = ui.spinner("dots", size="lg", color="red")
+            properties = {
+                "content": {"json": "Loading ..."},
                 "readOnly": True,
-            }).mark("JSON_EDITOR_INFO")
+            }
+            editor = ui.json_editor(properties).mark("JSON_EDITOR_INFO")
             ui.link("Home", "/").mark("LINK_HOME")
+            info = await run.cpu_bound(Service().info, True, True)
+            properties["content"] = {"json": info}
+            editor.update()
+            spinner.delete()

@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import psutil
 from pydantic import BaseModel
 
 
@@ -28,6 +27,8 @@ def get_process_info() -> ProcessInfo:
     Returns:
         ProcessInfo: Object containing process information.
     """
+    import psutil  # noqa: PLC0415
+
     current_process = psutil.Process()
     parent = current_process.parent()
 
