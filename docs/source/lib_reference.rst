@@ -1,7 +1,7 @@
 Library Reference
 =================
 
-.. automodule:: aignostics.client
+.. automodule:: aignostics.platform
     :members:
 
 .. automodule:: aignostics.application

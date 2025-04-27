@@ -2,9 +2,9 @@ from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
 
-from aignostics.client._authentication import get_token
-from aignostics.client.resources.applications import Applications
-from aignostics.client.resources.runs import Runs
+from aignostics.platform._authentication import get_token
+from aignostics.platform.resources.applications import Applications
+from aignostics.platform.resources.runs import Runs
 
 from ._constants import API_ROOT_DEV, API_ROOT_PRODUCTION, API_ROOT_STAGING
 from ._settings import settings

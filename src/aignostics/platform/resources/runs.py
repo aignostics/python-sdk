@@ -23,9 +23,9 @@ from aignx.codegen.models import (
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
-from aignostics.client._utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
-from aignostics.client.resources.applications import Versions
-from aignostics.client.resources.utils import paginate
+from aignostics.platform._utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
+from aignostics.platform.resources.applications import Versions
+from aignostics.platform.resources.utils import paginate
 
 
 class ApplicationRun:
@@ -54,7 +54,7 @@ class ApplicationRun:
         Returns:
             ApplicationRun: The initialized ApplicationRun instance.
         """
-        from aignostics.client import Client  # noqa: PLC0415
+        from aignostics.platform import Client  # noqa: PLC0415
 
         return cls(Client.get_api_client(cache_token=False), application_run_id)
 

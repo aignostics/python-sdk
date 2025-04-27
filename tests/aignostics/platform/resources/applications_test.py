@@ -11,8 +11,8 @@ from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import ApplicationVersionReadResponse
 from aignx.codegen.models.application_read_response import ApplicationReadResponse
 
-from aignostics.client.resources.applications import Applications, Versions
-from aignostics.client.resources.utils import PAGE_SIZE
+from aignostics.platform.resources.applications import Applications, Versions
+from aignostics.platform.resources.utils import PAGE_SIZE
 
 API_ERROR = "API error"
 

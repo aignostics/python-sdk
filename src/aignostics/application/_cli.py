@@ -2,7 +2,7 @@
 
 import typer
 
-import aignostics.client
+import aignostics.platform
 from aignostics.utils import console, get_logger
 
 logger = get_logger(__name__)
@@ -28,7 +28,7 @@ run_app.add_typer(result_app, name="result", help="Results of applications runs"
 @cli.command("e2e")
 def application_e2e() -> None:
     """E2E test."""
-    client = aignostics.client.Client()
+    client = aignostics.platform.Client()
     applications = client.applications.list()
     console.print(list(applications))
 
@@ -36,7 +36,7 @@ def application_e2e() -> None:
 @cli.command("list")
 def application_list() -> None:
     """List available applications."""
-    client = aignostics.client.Client()
+    client = aignostics.platform.Client()
     applications = client.applications.list()
     console.print(list(applications))
 
@@ -80,7 +80,7 @@ def run_submit() -> None:
 @run_app.command("list")
 def run_list() -> None:
     """List runs."""
-    client = aignostics.client.Client()
+    client = aignostics.platform.Client()
     runs = client.runs.list()
     console.print(runs)
 

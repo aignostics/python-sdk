@@ -8,7 +8,7 @@ import appdirs
 import pytest
 from pydantic import SecretStr
 
-from aignostics.client import (
+from aignostics.platform import (
     API_ROOT_DEV,
     API_ROOT_PRODUCTION,
     API_ROOT_STAGING,
@@ -53,7 +53,7 @@ def mock_env_vars():  # noqa: ANN201
 @pytest.fixture
 def reset_cached_settings():  # noqa: ANN201
     """Reset the cached authentication settings."""
-    from aignostics.client._settings import __cached_settings
+    from aignostics.platform._settings import __cached_settings
 
     # Store original
     original = __cached_settings

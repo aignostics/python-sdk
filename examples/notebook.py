@@ -6,13 +6,10 @@
 # ]
 # ///
 
-
 import marimo
-from aignostics.utils import __version__
 
-__generated_with = "0.12.8"
-app = marimo.App(app_title=f"🔬 Aignostics Python SDK v{__version__}", width="full")
-
+__generated_with = "0.13.0"
+app = marimo.App(width="full")
 
 
 @app.cell
@@ -55,12 +52,12 @@ def _():
         else:
             items = (a.model_dump() for a in models)
         return pd.DataFrame(items)
-    return BaseModel, pd, show
+    return (show,)
 
 
 @app.cell
 def _():
-    import aignostics.client as platform
+    from aignostics import platform
     # initialize the client
     client = platform.Client(cache_token=False)
     return client, platform
@@ -83,7 +80,7 @@ def _(client, show):
     applications = client.applications.list()
     # visualize
     show(applications)
-    return (applications,)
+    return
 
 
 @app.cell
@@ -92,7 +89,7 @@ def _(mo):
         r"""
         # List all available versions of an application
 
-        Now that we know the applications that are available, we can list all the versions of a specific application. In this case, we will use the `TwoTask Dummy Application` as an example, which has the `application_id`: `ee5566d2-d3cb-4303-9e23-8a5ab3e5b8ed`. Using the `application_id`, we can list all the versions of the application:
+        Now that we know the applications that are available, we can list all the versions of a specific application. In this case, we will use the `TwoTask Dummy Application` as an example, which has the `application_id`: `two-task-dummy`. Using the `application_id`, we can list all the versions of the application:
         """
     )
     return
@@ -103,7 +100,7 @@ def _(client, show):
     application_versions = client.applications.versions.list(application="two-task-dummy")
     # visualize
     show(application_versions)
-    return (application_versions,)
+    return
 
 
 @app.cell
@@ -112,7 +109,7 @@ def _(mo):
         r"""
         # Inspect the application version details
 
-        Now that we have the list of versions, we can inspect the details of a specific version. While we could directly use the list of application version returned by the `list` method, we want to directly query details for a specific application version. In this case, we will use version `0.0.3`, which has the `application_version_id`: `60e7b441-307a-4b41-8a97-5b02e7bc73a4`. We use the `application_version_id` to retrieve further details about the application version:
+        Now that we have the list of versions, we can inspect the details of a specific version. While we could directly use the list of application version returned by the `list` method, we want to directly query details for a specific application version. In this case, we will use version `0.35.0`, which has the `application_version_id`: `two-task-dummy:v0.35.0`. We use the `application_version_id` to retrieve further details about the application version:
         """
     )
     return
@@ -124,7 +121,7 @@ def _(client):
 
     # view the `input_artifacts` to get insights in the required fields of the application version payload
     two_task_app.input_artifacts[0].to_json()
-    return (two_task_app,)
+    return
 
 
 @app.cell
@@ -133,17 +130,17 @@ def _(mo):
         r"""
         # Trigger an application run
 
-        Now, let's trigger an application run for the `TwoTask Dummy Application`. We will use the `application_version_id` that we retrieved in the previous step. To create an application run, we need to provide a payload that consists of 1 or more items. We provide the Pydantic model `Item` an item and the data that comes with it:
+        Now, let's trigger an application run for the `Test Application`. We will use the `application_version_id` that we retrieved in the previous step. To create an application run, we need to provide a payload that consists of 1 or more items. We provide the Pydantic model `InputItem` an item and the data that comes with it:
         ```python
-        Item(
+        platform.InputItem(
             reference="<a unique reference associate outputs to this input item>",
-            input_artifacts=[InputArtifactCreationRequest]
+            input_artifacts=[platform.InputArtifact]
         )
         ```
-        The `InputArtifactCreationRequest` defines the actual data that you provide aka. in this case the image that you want to be processed. The expected values are defined by the application version and have to align with the `input_artifacts` schema of the application version. In the case of the two task dummy application, we only require a single artifact per item, which is the image to process on. The artifact name is defined as `user_slide`. The `download_url` is a signed URL that allows the Aignostics Platform to download the image data later during processing. In addition to the image data itself, you have to provide the metadata defined in the input artifact schema, i.e., `checksum_crc32c`, `base_mpp`, `width`, and `height`. The metadata is used to validate the input data and is required for the processing of the image. The following example shows how to create an item with a single input artifact:
+        The `InputArtifact` defines the actual data that you provide aka. in this case the image that you want to be processed. The expected values are defined by the application version and have to align with the `input_artifacts` schema of the application version. In the case of the two task dummy application, we only require a single artifact per item, which is the image to process on. The artifact name is defined as `user_slide`. The `download_url` is a signed URL that allows the Aignostics Platform to download the image data later during processing. In addition to the image data itself, you have to provide the metadata defined in the input artifact schema, i.e., `checksum_crc32c`, `base_mpp`, `width`, and `height`. The metadata is used to validate the input data and is required for the processing of the image. The following example shows how to create an item with a single input artifact:
 
         ```python
-        InputArtifact(
+        platform.InputArtifact(
             name="user_slide", # as defined by the application version input_artifact schema
             download_url="<a signed url to download the data>",
             metadata={
@@ -164,19 +161,17 @@ def _(client, platform):
     application_run = client.runs.create(
         application_version="two-task-dummy:v0.0.5",
         items=[
-            platform.Item(
+            platform.InputItem(
                 reference="wsi-1",
                 input_artifacts=[
                     platform.InputArtifact(
                         name="user_slide",
-                        download_url=platform.generate_signed_url(
-                            "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
-                        ),
+                        download_url=platform.generate_signed_url("<signed-url>"),
                         metadata={
-                            "checksum_crc32c": "N+LWCg==",
-                            "base_mpp": 0.46499982,
-                            "width": 3728,
-                            "height": 3640,
+                            "checksum_crc32c": "AAAAAA==",
+                            "base_mpp": 0.25,
+                            "width": 10000,
+                            "height": 10000,
                         },
                     )
                 ],
@@ -205,7 +200,7 @@ def _(mo):
 def _(application_run):
     download_folder = "/tmp/"
     application_run.download_to_folder(download_folder)
-    return (download_folder,)
+    return
 
 
 @app.cell
@@ -226,7 +221,7 @@ def _(client):
     application_runs = client.runs.list()
     for run in application_runs:
         print(run)
-    return application_runs, run
+    return
 
 
 @app.cell

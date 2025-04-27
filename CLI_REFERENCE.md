@@ -460,7 +460,7 @@ $ aignostics idc download [OPTIONS] SOURCE [TARGET]
 **Arguments**:
 
 * `SOURCE`: Filename of manifest, identifier, or comma-separate set of identifiers  [required]
-* `[TARGET]`: target directory for download  [default: /Users/helmut/Code/python-sdk]
+* `[TARGET]`: target directory for download  [default: /Users/akunft/dev/python-sdk]
 
 **Options**:
 

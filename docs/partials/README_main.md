@@ -85,17 +85,15 @@ to learn about all commands and options available.
 
 ## Use in Python Notebooks
 
-We provided example notebooks to help you get started with the Python SDK.
-Before you can start, you need to setup your authentication information:
-
-**Authentication:**
-The SDK uses the [OAuth2](https://oauth.net/2/) protocol for authentication.
+> [!IMPORTANT]  
+> Before you get started, you need to set up your authentication credentials if you did not yet do so!
 Please visit
-[your personal dashboard on the aignostics platform](https://platform.aignostics.com/getting-started/quick-start)
-and look at the `Enterprise Integration` section to obtain your personal client information.
+[your personal dashboard on the aignostics platform website](https://platform.aignostics.com/getting-started/quick-start)
+and follow the steps outlined in the `Use in Python Notebooks` section.
 
-**Examples:** The notebooks showcase the interaction with the Aignostics platform using our test application.
-To run one them, please follow the steps shown below to (i) clone this repository and start either the [Jupyter](https://docs.jupyter.org/en/latest/index.html) ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)) or 
+We provide Jupyter and Marimo notebooks to help you get started with the SDK.
+The notebooks showcase the interaction with the Aignostics platform using our test application.
+To run one them, please follow the steps outlined in the snippet below to clone this repository and start either the [Jupyter](https://docs.jupyter.org/en/latest/index.html) ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)) or 
 [Marimo](https://marimo.io/) ([examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)) notebook:
 
 ```shell
@@ -110,6 +108,12 @@ uv run marimo edit examples/notebook.py
 ```
 
 ## Using the Python SDK in your Codebase
+
+> [!IMPORTANT]  
+> Before you get started, you need to set up your authentication credentials if you did not yet do so!
+Please visit
+[your personal dashboard on the aignostics platform website](https://platform.aignostics.com/getting-started/quick-start)
+and follow the steps outlined in the `Enterprise Integration` section.
 
 Next to using the CLI and notebooks, you can also use the Python SDK in your
 codebase. The following sections outline how to install the SDK and interact with it.
@@ -138,30 +142,30 @@ pip install aignostics
 The following snippet shows how to use the Python SDK to trigger an application run:
 
 ```python
-import aignostics.client as platform
+from aignostics import platform
 
 # initialize the client
 client = platform.Client()
 # trigger an application run
 application_run = client.runs.create(
-     application_version="two-task-dummy:v0.35.0",
-     items=[
-         platform.Item(
-             reference="slide-1",
-             input_artifacts=[
-                 platform.InputArtifact(
-                     name="user_slide",
-                     download_url="<a signed url to download the data>",
-                     metadata={
-                         "checksum_crc32c": "AAAAAA==",
-                         "base_mpp": 0.25,
-                         "width": 1000,
-                         "height": 1000,
-                     },
-                 )
-             ],
-         ),
-     ],
+   application_version="two-task-dummy:v0.35.0",
+   items=[
+      platform.InputItem(
+         reference="slide-1",
+         input_artifacts=[
+            platform.InputArtifact(
+               name="user_slide",
+               download_url="<a signed url to download the data>",
+               metadata={
+                  "checksum_crc32c": "AAAAAA==",
+                  "base_mpp": 0.25,
+                  "width": 1000,
+                  "height": 1000,
+               },
+            )
+         ],
+      ),
+   ],
 )
 # wait for the results and download incrementally as they become available
 application_run.download_to_folder("path/to/download/folder")
@@ -171,29 +175,16 @@ Please look at the notebooks in the `example` folder for a more detailed example
 [client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 to learn about all classes and methods.
 
-#### Application Run Payloads
+#### Defining the input for an application run
 
-The payload expected to trigger an application run is specified by the
-`RunCreationRequest` pydantic model:
-
-```python
-RunCreationRequest(
-   application_version=...,
-   items=[
-      ItemCreationRequest(...),
-      ItemCreationRequest(...)
-   ]
-)
-```
-
-Next to the application version of the application you want to run, it defines
-the items you want to be processed as `ItemCreationRequest` objects:
+Next to the `application_version` of the application you want to run, you have to define
+the input items you want to process in the run. The input items are defined as follows:
 
 ```python
-ItemCreationRequest(
+platform.InputItem(
     reference="1",
     input_artifacts=[
-        InputArtifactCreationRequest(
+        platform.InputArtifact(
             name="user_slide", # defined by the application version input_artifact schema
             download_url="<a signed url to download the data>",
             metadata={ # defined by the application version input_artifact schema
@@ -209,7 +200,7 @@ ItemCreationRequest(
 
 For each item you want to process, you need to provide a unique `reference`
 string. This is used to identify the item in the results later on. The
-`input_artifacts` field is a list of `InputArtifactCreationRequest` objects,
+`input_artifacts` field is a list of `InputArtifact` objects,
 which defines what data & metadata you need to provide for each item. The
 required artifacts depend on the application version you want to run - in the
 case of test application, there is only one artifact required, which is the
@@ -229,22 +220,3 @@ Self-signed URLs for files in google storage buckets can be generated using the
 **We expect that you provide the
 [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
 for the Google Storage Bucket**
-
-## Run with Docker
-
-We recommend to run the CLI natively on your notebook, as explained above. If
-required you can run the CLI as a Docker container:
-
-```shell
-# TODO (Helmut): Explain about the environment
-docker run helmuthva/aignostics-python-sdk --help
-docker run helmuthva/aignostics-python-sdk system health
-```
-
-Running via docker compose is supported as well. The .env is passed through from
-the host to the Docker container automatically.
-
-```shell
-docker compose run aignostics --help
-docker compose run aignostics system health
-```

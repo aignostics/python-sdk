@@ -14,10 +14,10 @@ import requests
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
-from ._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
-from ._settings import settings
+from aignostics.platform._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
+from aignostics.platform._settings import settings
 
-CALLBACK_PORT_RETRY_COUNT = 5
+CALLBACK_PORT_RETRY_COUNT = 10
 
 
 class AuthenticationResult(BaseModel):

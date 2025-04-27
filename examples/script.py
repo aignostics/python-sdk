@@ -2,7 +2,7 @@
 
 import tempfile
 
-import aignostics.client as platform
+from aignostics import platform
 
 # initialize the client
 client = platform.Client()
@@ -11,7 +11,7 @@ client = platform.Client()
 application_run = client.runs.create(
     application_version="two-task-dummy:v0.35.0",
     items=[
-        platform.Item(
+        platform.InputItem(
             reference="1",
             input_artifacts=[
                 platform.InputArtifact(
