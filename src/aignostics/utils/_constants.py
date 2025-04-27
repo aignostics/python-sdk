@@ -1,4 +1,4 @@
-"""Constants used throughout."""
+"""Constants generated from the environment at runtime used throughout the project."""
 
 import os
 import sys
@@ -14,6 +14,14 @@ __project_path__ = str(Path(__file__).parent.parent.parent)
 __version__ = metadata.version(__project_name__)
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
 __is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
+
+# Determine if we're running in a read-only runtime environment
+READ_ONLY_ENV_INDICATORS = [
+    f"{__project_name__.upper()}_RUNNING_IN_CONTAINER",
+    "VERCEL_ENV",
+    "RAILWAY_ENVIRONMENT",
+]
+__is_running_in_read_only_environment__ = any(os.getenv(env_var) is not None for env_var in READ_ONLY_ENV_INDICATORS)
 
 # Determine environment we are deployed on
 ENV_VAR_MAPPINGS = {

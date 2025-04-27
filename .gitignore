@@ -3,10 +3,10 @@
 # Environment
 .env
 .env.*
+!.env.example
+.envrc
 ENV/
 env/
-.envrc
-!.env.example
 
 ## secrets
 .secret
@@ -80,13 +80,11 @@ node_modules/
 # Copier
 *.rej
 
+# Scalene
+profile.json
+profile.html
+
 
 
 
 # Application specific
-tests/reports/**/*
-**/__marimo__
-**/.ipynb_checkpoints
-
-data/*
-!data/.gitkeep

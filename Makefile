@@ -1,7 +1,7 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all act audit bump clean codegen dist docs docker_build install lint pre_commit_run_all setup setup test test_scheduled test_long_running update_from_template watch_gui
+.PHONY: all act audit bump clean dist docs docker_build install lint pre_commit_run_all profile setup setup test test_scheduled test_long_running test_coverage_reset update_from_template gui_watch
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
@@ -37,11 +37,16 @@ install:
 
 ## Run tests marked as scheduled
 test_scheduled:
-	uv run --all-extras nox -s test -p 3.11 -- -m scheduled
+	uv run --all-extras nox -s test -p 3.13 -- -m scheduled
 
 ## Run tests marked as long_running
 test_long_running:
-	uv run --all-extras nox -s test -p 3.11 -- -m long_running
+	uv run --all-extras nox -s test -p 3.13 -- -m long_running --cov-append
+
+## Run tests marked as scheduled
+test_coverage_reset:
+	rm -rf .coverage
+	rm -rf reports/coverage*
 
 ## Clean build artifacts and caches
 clean:
@@ -63,8 +68,11 @@ docker_build:
 pre_commit_run_all:
 	uv run pre-commit run --all-files
 
-watch_gui:
-	uv run watch_gui.py
+gui_watch:
+	uv run runner/gui_watch.py
+
+profile:
+	uv run --all-extras python -m scalene runner/scalene.py
 
 # Project specific targets
 ## codegen
@@ -100,17 +108,18 @@ help:
 	@echo "  clean                 - Clean build artifacts and caches"
 	@echo "  codegen               - Generate API code"
 	@echo "  dist                  - Build wheel and sdist into dist/"
-
 	@echo "  docs [pdf]            - Build documentation (add pdf for PDF format)"
 	@echo "  docker_build          - Build Docker image aignostics"
+	@echo "  gui_watch             - Open GUI in browser and update on changes in source code"
 	@echo "  install               - Install or update development dependencies inc. pre-commit hooks"
 	@echo "  lint                  - Run linting and formatting checks"
 	@echo "  pre_commit_run_all    - Run pre-commit hooks on all files"
+	@echo "  profile               - Profile with Scalene"
 	@echo "  setup                 - Setup development environment"
 	@echo "  test [3.11|3.12|3.13] - Run tests (for specific Python version)"
 	@echo "  test_scheduled        - Run tests marked as scheduled with Python 3.11"
 	@echo "  test_long_running     - Run tests marked as long running with Python 3.11"
+	@echo "  test_coverage_reset   - Reset test coverage data"
 	@echo "  update_from_template  - Update from template using copier"
-	@echo "  watch_gui             - Open GUI in browser and watch for changes"
 	@echo ""
 	@echo "Built with love in Berlin 🐻"

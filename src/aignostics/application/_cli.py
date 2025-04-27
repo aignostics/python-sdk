@@ -7,7 +7,7 @@ from aignostics.utils import console, get_logger
 
 logger = get_logger(__name__)
 
-cli = typer.Typer(name="application", help="Application commands")
+cli = typer.Typer(name="application", help="Run applications on Aignostics platform.")
 
 bucket_app = typer.Typer()
 cli.add_typer(bucket_app, name="bucket", help="Transfer bucket provide by platform")
@@ -25,6 +25,28 @@ result_app = typer.Typer()
 run_app.add_typer(result_app, name="result", help="Results of applications runs")
 
 
+@cli.command("e2e")
+def application_e2e() -> None:
+    """E2E test."""
+    client = aignostics.platform.Client()
+    applications = client.applications.list()
+    console.print(list(applications))
+
+
+@cli.command("list")
+def application_list() -> None:
+    """List available applications."""
+    client = aignostics.platform.Client()
+    applications = client.applications.list()
+    console.print(list(applications))
+
+
+@cli.command("describe")
+def application_describe() -> None:
+    """Describe application."""
+    console.print("describe application")
+
+
 @bucket_app.command("ls")
 def bucket_ls() -> None:
     """List contents of tranfer bucket."""
@@ -35,20 +57,6 @@ def bucket_ls() -> None:
 def bucket_purge() -> None:
     """Purge content of transfer bucket."""
     console.print("bucket purged.")
-
-
-@cli.command("list")
-def application_list() -> None:
-    """List available applications."""
-    client = aignostics.platform.Client()
-    applications = client.applications.list()
-    console.print(applications)
-
-
-@cli.command("describe")
-def application_describe() -> None:
-    """Describe application."""
-    console.print("describe application")
 
 
 @datasset_app.command("download")

@@ -107,6 +107,7 @@ def three_spots_payload() -> list[platform.InputItem]:
 
 
 @pytest.mark.scheduled
+@pytest.mark.long_running
 @pytest.mark.parametrize(
     ("timeout", "application_version_id", "payload"),
     [

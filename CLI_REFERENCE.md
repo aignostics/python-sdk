@@ -18,15 +18,15 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `gui`: Start graphical user interface (GUI) in...
-* `notebook`: Start notebook in web browser.
-* `application`: Application commands
-* `idc`: Commands to query and download...
-* `system`: System commands
+* `gui`: Open graphical user interface (GUI).
+* `notebook`: Run notebook server.
+* `application`: Run applications on Aignostics platform.
+* `idc`: Download datasets from Image Data Commons...
+* `system`: Determine health, info and further...
 
 ## `aignostics gui`
 
-Start graphical user interface (GUI) in native window.
+Open graphical user interface (GUI).
 
 **Usage**:
 
@@ -40,7 +40,7 @@ $ aignostics gui [OPTIONS]
 
 ## `aignostics notebook`
 
-Start notebook in web browser.
+Run notebook server.
 
 **Usage**:
 
@@ -56,7 +56,7 @@ $ aignostics notebook [OPTIONS]
 
 ## `aignostics application`
 
-Application commands
+Run applications on Aignostics platform.
 
 **Usage**:
 
@@ -70,12 +70,27 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
+* `e2e`: E2E test.
 * `list`: List available applications.
 * `describe`: Describe application.
 * `bucket`: Transfer bucket provide by platform
 * `dataset`: Datasets for use as input for applications
 * `metadata`: Metadata required as input for applications
 * `run`: Runs of applications
+
+### `aignostics application e2e`
+
+E2E test.
+
+**Usage**:
+
+```console
+$ aignostics application e2e [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
 
 ### `aignostics application list`
 
@@ -358,7 +373,7 @@ $ aignostics application run result delete [OPTIONS]
 
 ## `aignostics idc`
 
-Commands to query and download collections, cases, studies and series of Image Data Commons (IDC) Portal of the National Institute of Cancer (NIC)
+Download datasets from Image Data Commons (IDC) Portal of National Institute of Cancer (NIC).
 
 **Usage**:
 
@@ -445,7 +460,7 @@ $ aignostics idc download [OPTIONS] SOURCE [TARGET]
 **Arguments**:
 
 * `SOURCE`: Filename of manifest, identifier, or comma-separate set of identifiers  [required]
-* `[TARGET]`: target directory for download  [default: /Users/akunft/dev/python-sdk]
+* `[TARGET]`: target directory for download  [default: /Users/helmut/Code/python-sdk]
 
 **Options**:
 
@@ -455,7 +470,7 @@ $ aignostics idc download [OPTIONS] SOURCE [TARGET]
 
 ## `aignostics system`
 
-System commands
+Determine health, info and further utillities.
 
 **Usage**:
 
@@ -523,6 +538,7 @@ Start the web server, hosting the graphical web application and/or webservice AP
 Args:
     host (str): Host to bind the server to.
     port (int): Port to bind the server to.
+    watch (bool): Enable auto-reload on changes of source code.
     open_browser (bool): Open app in browser after starting the server.
 
 **Usage**:

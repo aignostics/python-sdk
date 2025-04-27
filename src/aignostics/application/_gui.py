@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-from nicegui import ui
-
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker
 
 from ._service import Service
@@ -13,13 +11,17 @@ SERIES_INSTANCE_ID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.
 
 async def pick_file() -> None:
     """Open a file picker dialog and show notifier when closed again."""
-    result = await GUILocalFilePicker(str(Path.cwd() / "examples"), multiple=True)
+    from nicegui import ui  # noqa: PLC0415
+
+    result = await GUILocalFilePicker(str(Path.cwd() / "examples"), multiple=True)  # type: ignore
     ui.notify(f"You chose {result}")
 
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
+        from nicegui import ui  # noqa: PLC0415
+
         @ui.page("/")
         def page_index() -> None:
             """Homepage of GUI."""

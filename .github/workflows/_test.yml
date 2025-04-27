@@ -1,20 +1,17 @@
-name: "CI"
+name: "Test"
 
 on:
-  push:
-    branches:
-      - "**"
-  pull_request:
-    branches: [main]
-    
+  workflow_call:
+    # No inputs needed at this time
+
 jobs:
   test:
     runs-on: ubuntu-latest
     permissions:
-      packages: write
-      contents: read
       attestations: write
+      contents: read
       id-token: write
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -30,7 +27,7 @@ jobs:
 
       - name: Install dev tools
         shell: bash
-        run: .github/workflows/install_dev_tools.bash
+        run: .github/workflows/_install_dev_tools.bash
 
       - name: Install Python, venv and dependencies
         run: uv sync --all-extras --frozen --link-mode=copy
@@ -54,7 +51,6 @@ jobs:
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
-          envkey_ENV: "TEST"
           envkey_AIGNOSTICS_LOGFIRE_TOKEN: "${{ secrets.AIGNOSTICS_LOGFIRE_TOKEN }}"
           envkey_AIGNOSTICS_SENTRY_DSN: "${{ secrets.AIGNOSTICS_SENTRY_DSN }}"
           envkey_AIGNOSTICS_API_ROOT: https://platform.aignostics.com
@@ -62,6 +58,11 @@ jobs:
           envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
           envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
           fail_on_empty: false
+
+      - name: Set up GCP credentials for bucket access
+        run: |
+          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Validate installation
         run: |
@@ -71,25 +72,68 @@ jobs:
             exit 1
             fi
 
-      - name: Set up GCP credentials for bucket access
-        run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
-      
       - name: Smoke tests
         run: |
-          uv run --no-dev aignostics system health
-          uv run --no-dev aignostics system info
-
-      - name: Lint
-        run: make lint
-
-      - name: Audit
-        run: make audit
+          uv run --no-dev aignostics --help
+          uv run --all-extras aignostics system info
+          uv run --all-extras aignostics system health
       
-      - name: Test
-        run: make test
+      - name: Test / regular
+        run: |
+          set +e
+          make test
+          EXIT_CODE=$?
+          # Show test execution in GitHub Job summary
+          found_files=0
+          for file in reports/pytest_*.md; do
+          if [ -f "$file" ]; then
+            cat "$file" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            found_files=1
+          fi
+          done
+          if [ $found_files -eq 0 ]; then
+            echo "# All regular tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          # Show test coverage in GitHub Job summary
+          if [ -f "reports/coverage.md" ]; then
+            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          exit $EXIT_CODE
 
+      - name: Test / long running
+        run: |
+          set +e
+          make test_long_running
+          EXIT_CODE=$?
+          # Show test execution in GitHub Job summary
+          found_files=0
+          for file in reports/pytest_*.md; do
+          if [ -f "$file" ]; then
+            cat "$file" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            found_files=1
+          fi
+          done
+          if [ $found_files -eq 0 ]; then
+            echo "# All long running tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          # Show test coverage in GitHub Job summary
+          if [ -f "reports/coverage.md" ]; then
+            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          exit $EXIT_CODE
+      
       - name: Upload test results
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
@@ -97,14 +141,9 @@ jobs:
           name: test-results
           path: |
             reports/mypy_junit.xml
-            reports/sbom.json
-            reports/sbom.spdx
-            reports/licenses.csv
-            reports/licenses.json
-            reports/licenses_grouped.json
-            reports/vulnerabilities.json
             reports/junit.xml
             reports/coverage.xml
+            reports/coverage.md
             reports/coverage_html
             aignostics.log
           retention-days: 30

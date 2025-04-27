@@ -30,6 +30,41 @@ limitations under the License.
 
 ```
 
+## DataProperty (1.1.0) - MIT License
+
+Python library for extract property from data.
+
+* URL: https://github.com/thombashi/DataProperty
+* Author(s): Tsuyoshi Hombashi
+* Maintainer(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+The MIT License (MIT)
+
+Copyright (c) 2016-2024 Tsuyoshi Hombashi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
 ## Deprecated (1.2.18) - MIT License
 
 Python @deprecated decorator to deprecate old python classes, functions or methods.
@@ -178,7 +213,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## Markdown (3.7) - BSD License
+## Markdown (3.8) - UNKNOWN
 
 Python implementation of John Gruber's Markdown.
 
@@ -1020,7 +1055,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ```
 
-## aiohttp (3.11.16) - Apache Software License
+## aiohttp (3.11.18) - Apache Software License
 
 Async http client/server framework (asyncio)
 
@@ -2790,7 +2825,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## beautifulsoup4 (4.13.3) - MIT License
+## beautifulsoup4 (4.13.4) - MIT License
 
 Screen-scraping library
 
@@ -3319,7 +3354,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.37.28) - Apache Software License
+## boto3 (1.38.3) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3517,7 +3552,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.37.28) - Apache Software License
+## botocore (1.38.3) - Apache Software License
 
 Low-level, data-driven core of boto 3.
 
@@ -3773,7 +3808,7 @@ one at http://mozilla.org/MPL/2.0/.
 
 ```
 
-## bottle (0.13.2) - MIT License
+## bottle (0.13.3) - MIT License
 
 Fast and simple WSGI-framework for small web-applications.
 
@@ -3906,7 +3941,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## certifi (2025.1.31) - Mozilla Public License 2.0 (MPL 2.0)
+## certifi (2025.4.26) - Mozilla Public License 2.0 (MPL 2.0)
 
 Python package for providing Mozilla's CA Bundle.
 
@@ -4636,6 +4671,13 @@ SOFTWARE.
 
 ```
 
+## cloudpickle (3.1.1) - BSD License
+
+Pickler class to extend the standard pickle.Pickler functionality
+
+* URL: https://github.com/cloudpipe/cloudpickle
+* Author(s): The cloudpickle developer team
+
 ## colorama (0.4.6) - BSD License
 
 Cross-platform colored terminal text.
@@ -4751,7 +4793,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## contourpy (1.3.1) - BSD License
+## contourpy (1.3.2) - BSD License
 
 Python library for calculating contours of 2D quadrilateral grids
 
@@ -4763,7 +4805,7 @@ Python library for calculating contours of 2D quadrilateral grids
 ```
 BSD 3-Clause License
 
-Copyright (c) 2021-2024, ContourPy Developers.
+Copyright (c) 2021-2025, ContourPy Developers.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -5217,7 +5259,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-## cyclonedx-bom (5.3.0) - Apache Software License
+## cyclonedx-bom (6.0.0) - Apache Software License
 
 CycloneDX Software Bill of Materials (SBOM) generator for Python projects and environments
 
@@ -5449,7 +5491,7 @@ Alias for package 'cyclonedx-bom'
 
 * URL: https://github.com/CycloneDX/cyclonedx-python/#package_aliases/cyclonedx-py
 
-## cyclonedx-python-lib (8.9.0) - Apache Software License
+## cyclonedx-python-lib (9.1.0) - Apache Software License
 
 Python library for CycloneDX
 
@@ -5675,7 +5717,7 @@ CycloneDX community (https://cyclonedx.org/).
 
 ```
 
-## debugpy (1.8.13) - MIT License
+## debugpy (1.8.14) - MIT License
 
 An implementation of the Debug Adapter Protocol for Python
 
@@ -8340,7 +8382,7 @@ Google API client core library
 
 ```
 
-## google-auth (2.38.0) - Apache Software License
+## google-auth (2.39.0) - Apache Software License
 
 Google Authentication Library
 
@@ -9414,7 +9456,7 @@ Utilities for Google Media Downloads and Resumable Uploads
 
 ```
 
-## googleapis-common-protos (1.69.2) - Apache Software License
+## googleapis-common-protos (1.70.0) - Apache Software License
 
 Common protobufs used in Google APIs
 
@@ -9718,7 +9760,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## httpcore (1.0.7) - BSD License
+## httpcore (1.0.9) - BSD License
 
 A minimal low-level HTTP client.
 
@@ -9883,7 +9925,7 @@ SOFTWARE.
 
 ```
 
-## identify (2.6.9) - MIT License
+## identify (2.6.10) - MIT
 
 File identification library for Python
 
@@ -10317,7 +10359,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## ipython (9.0.2) - BSD License
+## ipython (9.2.0) - BSD License
 
 IPython: Productive Interactive Computing
 
@@ -10414,7 +10456,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## ipywidgets (8.1.5) - BSD License
+## ipywidgets (8.1.6) - BSD License
 
 Jupyter interactive widgets
 
@@ -10992,7 +11034,7 @@ THE SOFTWARE.
 
 ```
 
-## jsonschema-specifications (2024.10.1) - MIT License
+## jsonschema-specifications (2025.4.1) - UNKNOWN
 
 The JSON Schema meta-schemas and vocabularies, exposed as a Registry
 
@@ -11368,7 +11410,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## jupyterlab (4.3.6) - BSD License
+## jupyterlab (4.4.1) - BSD License
 
 JupyterLab computational environment
 
@@ -11378,7 +11420,7 @@ JupyterLab computational environment
 ### License Text
 
 ```
-Copyright (c) 2015-2024 Project Jupyter Contributors
+Copyright (c) 2015-2025 Project Jupyter Contributors
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -11494,7 +11536,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## jupyterlab_widgets (3.0.13) - BSD License
+## jupyterlab_widgets (3.0.14) - BSD License
 
 Jupyter interactive widgets for JupyterLab
 
@@ -11934,7 +11976,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (3.13.1) - MIT License
+## logfire (3.14.1) - MIT License
 
 The best Python observability tool! 🪵🔥
 
@@ -11968,7 +12010,7 @@ SOFTWARE.
 
 ```
 
-## lxml (5.3.2) - BSD License
+## lxml (5.4.0) - BSD License
 
 Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 
@@ -12011,7 +12053,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## marimo (0.13.0) - Apache Software License
+## marimo (0.13.2) - Apache Software License
 
 A library for making reactive notebooks and apps
 
@@ -12518,6 +12560,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
+## mbstrdecoder (1.1.4) - MIT License
+
+mbstrdecoder is a Python library for multi-byte character string decoder
+
+* URL: https://github.com/thombashi/mbstrdecoder
+* Author(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2016 Tsuyoshi Hombashi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
 ## mdurl (0.1.2) - MIT License
 
 Markdown URL utilities
@@ -12604,7 +12680,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ```
 
-## more-itertools (10.6.0) - MIT License
+## more-itertools (10.7.0) - MIT License
 
 More routines for operating on iterables, beyond itertools
 
@@ -12931,12 +13007,12 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ```
 
-## mypy-extensions (1.0.0) - MIT License
+## mypy_extensions (1.1.0) - UNKNOWN
 
 Type system extensions for programs checked with the mypy type checker.
 
 * URL: https://github.com/python/mypy_extensions
-* Author(s): The mypy developers
+* Author(s): The mypy developers <jukka.lehtosalo@iki.fi>
 
 ### License Text
 
@@ -12971,7 +13047,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## narwhals (1.33.0) - MIT License
+## narwhals (1.36.0) - MIT License
 
 Extremely lightweight compatibility layer between dataframe libraries
 
@@ -13285,7 +13361,7 @@ DAMAGE.
 
 ```
 
-## notebook (7.3.3) - BSD License
+## notebook (7.4.1) - BSD License
 
 Jupyter Notebook - A web-based notebook environment for interactive computing
 
@@ -13585,7 +13661,7 @@ Flexible test automation.
 
 ```
 
-## numpy (2.2.4) - BSD License
+## numpy (2.2.5) - BSD License
 
 Fundamental package for array computing in Python
 
@@ -14610,7 +14686,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## opentelemetry-api (1.32.0) - Apache Software License
+## opentelemetry-api (1.32.1) - Apache Software License
 
 OpenTelemetry Python API
 
@@ -14824,7 +14900,7 @@ OpenTelemetry Python API
 
 ```
 
-## opentelemetry-exporter-otlp-proto-common (1.32.0) - Apache Software License
+## opentelemetry-exporter-otlp-proto-common (1.32.1) - Apache Software License
 
 OpenTelemetry Protobuf encoding
 
@@ -15038,7 +15114,7 @@ OpenTelemetry Protobuf encoding
 
 ```
 
-## opentelemetry-exporter-otlp-proto-http (1.32.0) - Apache Software License
+## opentelemetry-exporter-otlp-proto-http (1.32.1) - Apache Software License
 
 OpenTelemetry Collector Protobuf over HTTP Exporter
 
@@ -15252,7 +15328,7 @@ OpenTelemetry Collector Protobuf over HTTP Exporter
 
 ```
 
-## opentelemetry-instrumentation (0.53b0) - Apache Software License
+## opentelemetry-instrumentation (0.53b1) - Apache Software License
 
 Instrumentation Tools & Auto Instrumentation for OpenTelemetry Python
 
@@ -15466,7 +15542,7 @@ Instrumentation Tools & Auto Instrumentation for OpenTelemetry Python
 
 ```
 
-## opentelemetry-instrumentation-asgi (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-asgi (0.53b1) - Apache Software License
 
 ASGI instrumentation for OpenTelemetry
 
@@ -15680,7 +15756,7 @@ ASGI instrumentation for OpenTelemetry
 
 ```
 
-## opentelemetry-instrumentation-dbapi (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-dbapi (0.53b1) - Apache Software License
 
 OpenTelemetry Database API instrumentation
 
@@ -15894,7 +15970,7 @@ OpenTelemetry Database API instrumentation
 
 ```
 
-## opentelemetry-instrumentation-fastapi (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-fastapi (0.53b1) - Apache Software License
 
 OpenTelemetry FastAPI Instrumentation
 
@@ -16108,7 +16184,7 @@ OpenTelemetry FastAPI Instrumentation
 
 ```
 
-## opentelemetry-instrumentation-httpx (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-httpx (0.53b1) - Apache Software License
 
 OpenTelemetry HTTPX Instrumentation
 
@@ -16322,7 +16398,7 @@ OpenTelemetry HTTPX Instrumentation
 
 ```
 
-## opentelemetry-instrumentation-jinja2 (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-jinja2 (0.53b1) - Apache Software License
 
 OpenTelemetry jinja2 instrumentation
 
@@ -16536,7 +16612,7 @@ OpenTelemetry jinja2 instrumentation
 
 ```
 
-## opentelemetry-instrumentation-requests (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-requests (0.53b1) - Apache Software License
 
 OpenTelemetry requests instrumentation
 
@@ -16750,7 +16826,7 @@ OpenTelemetry requests instrumentation
 
 ```
 
-## opentelemetry-instrumentation-sqlite3 (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-sqlite3 (0.53b1) - Apache Software License
 
 OpenTelemetry SQLite3 instrumentation
 
@@ -16964,7 +17040,7 @@ OpenTelemetry SQLite3 instrumentation
 
 ```
 
-## opentelemetry-instrumentation-system-metrics (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-system-metrics (0.53b1) - Apache Software License
 
 OpenTelemetry System Metrics Instrumentation
 
@@ -17178,7 +17254,7 @@ OpenTelemetry System Metrics Instrumentation
 
 ```
 
-## opentelemetry-instrumentation-tornado (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-tornado (0.53b1) - Apache Software License
 
 Tornado instrumentation for OpenTelemetry
 
@@ -17392,7 +17468,7 @@ Tornado instrumentation for OpenTelemetry
 
 ```
 
-## opentelemetry-instrumentation-urllib (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-urllib (0.53b1) - Apache Software License
 
 OpenTelemetry urllib instrumentation
 
@@ -17606,7 +17682,7 @@ OpenTelemetry urllib instrumentation
 
 ```
 
-## opentelemetry-instrumentation-urllib3 (0.53b0) - Apache Software License
+## opentelemetry-instrumentation-urllib3 (0.53b1) - Apache Software License
 
 OpenTelemetry urllib3 instrumentation
 
@@ -17820,7 +17896,7 @@ OpenTelemetry urllib3 instrumentation
 
 ```
 
-## opentelemetry-proto (1.32.0) - Apache Software License
+## opentelemetry-proto (1.32.1) - Apache Software License
 
 OpenTelemetry Python Proto
 
@@ -18034,7 +18110,7 @@ OpenTelemetry Python Proto
 
 ```
 
-## opentelemetry-sdk (1.32.0) - Apache Software License
+## opentelemetry-sdk (1.32.1) - Apache Software License
 
 OpenTelemetry Python SDK
 
@@ -18248,7 +18324,7 @@ OpenTelemetry Python SDK
 
 ```
 
-## opentelemetry-semantic-conventions (0.53b0) - Apache Software License
+## opentelemetry-semantic-conventions (0.53b1) - Apache Software License
 
 OpenTelemetry Semantic Conventions
 
@@ -18462,7 +18538,7 @@ OpenTelemetry Semantic Conventions
 
 ```
 
-## opentelemetry-util-http (0.53b0) - Apache Software License
+## opentelemetry-util-http (0.53b1) - Apache Software License
 
 Web util for OpenTelemetry
 
@@ -20339,6 +20415,40 @@ Agreement.
 
 ```
 
+## pathvalidate (3.2.3) - MIT License
+
+pathvalidate is a Python library to sanitize/validate a string such as filenames/file-paths/etc.
+
+* URL: https://github.com/thombashi/pathvalidate
+* Author(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+The MIT License (MIT)
+
+Copyright (c) 2016-2025 Tsuyoshi Hombashi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
 ## pexpect (4.9.0) - ISC License (ISCL)
 
 Pexpect allows easy control of interactive console applications.
@@ -20372,7 +20482,7 @@ ISC LICENSE
 
 ```
 
-## pillow (11.1.0) - CMU License (MIT-CMU)
+## pillow (11.2.1) - UNKNOWN
 
 Python Imaging Library (Fork)
 
@@ -20703,351 +20813,6 @@ Legal Terms
 
 
 --- end of FTL.TXT ---
-
---------------------------------------------------------------------------
-
-            GNU GENERAL PUBLIC LICENSE
-               Version 2, June 1991
-
- Copyright (C) 1989, 1991 Free Software Foundation, Inc.
-     51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.
-
-                Preamble
-
-  The licenses for most software are designed to take away your
-freedom to share and change it.  By contrast, the GNU General Public
-License is intended to guarantee your freedom to share and change free
-software--to make sure the software is free for all its users.  This
-General Public License applies to most of the Free Software
-Foundation's software and to any other program whose authors commit to
-using it.  (Some other Free Software Foundation software is covered by
-the GNU Library General Public License instead.)  You can apply it to
-your programs, too.
-
-  When we speak of free software, we are referring to freedom, not
-price.  Our General Public Licenses are designed to make sure that you
-have the freedom to distribute copies of free software (and charge for
-this service if you wish), that you receive source code or can get it
-if you want it, that you can change the software or use pieces of it
-in new free programs; and that you know you can do these things.
-
-  To protect your rights, we need to make restrictions that forbid
-anyone to deny you these rights or to ask you to surrender the rights.
-These restrictions translate to certain responsibilities for you if you
-distribute copies of the software, or if you modify it.
-
-  For example, if you distribute copies of such a program, whether
-gratis or for a fee, you must give the recipients all the rights that
-you have.  You must make sure that they, too, receive or can get the
-source code.  And you must show them these terms so they know their
-rights.
-
-  We protect your rights with two steps: (1) copyright the software, and
-(2) offer you this license which gives you legal permission to copy,
-distribute and/or modify the software.
-
-  Also, for each author's protection and ours, we want to make certain
-that everyone understands that there is no warranty for this free
-software.  If the software is modified by someone else and passed on, we
-want its recipients to know that what they have is not the original, so
-that any problems introduced by others will not reflect on the original
-authors' reputations.
-
-  Finally, any free program is threatened constantly by software
-patents.  We wish to avoid the danger that redistributors of a free
-program will individually obtain patent licenses, in effect making the
-program proprietary.  To prevent this, we have made it clear that any
-patent must be licensed for everyone's free use or not licensed at all.
-
-  The precise terms and conditions for copying, distribution and
-modification follow.
-
-            GNU GENERAL PUBLIC LICENSE
-   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
-  0. This License applies to any program or other work which contains
-a notice placed by the copyright holder saying it may be distributed
-under the terms of this General Public License.  The "Program", below,
-refers to any such program or work, and a "work based on the Program"
-means either the Program or any derivative work under copyright law:
-that is to say, a work containing the Program or a portion of it,
-either verbatim or with modifications and/or translated into another
-language.  (Hereinafter, translation is included without limitation in
-the term "modification".)  Each licensee is addressed as "you".
-
-Activities other than copying, distribution and modification are not
-covered by this License; they are outside its scope.  The act of
-running the Program is not restricted, and the output from the Program
-is covered only if its contents constitute a work based on the
-Program (independent of having been made by running the Program).
-Whether that is true depends on what the Program does.
-
-  1. You may copy and distribute verbatim copies of the Program's
-source code as you receive it, in any medium, provided that you
-conspicuously and appropriately publish on each copy an appropriate
-copyright notice and disclaimer of warranty; keep intact all the
-notices that refer to this License and to the absence of any warranty;
-and give any other recipients of the Program a copy of this License
-along with the Program.
-
-You may charge a fee for the physical act of transferring a copy, and
-you may at your option offer warranty protection in exchange for a fee.
-
-  2. You may modify your copy or copies of the Program or any portion
-of it, thus forming a work based on the Program, and copy and
-distribute such modifications or work under the terms of Section 1
-above, provided that you also meet all of these conditions:
-
-    a) You must cause the modified files to carry prominent notices
-    stating that you changed the files and the date of any change.
-
-    b) You must cause any work that you distribute or publish, that in
-    whole or in part contains or is derived from the Program or any
-    part thereof, to be licensed as a whole at no charge to all third
-    parties under the terms of this License.
-
-    c) If the modified program normally reads commands interactively
-    when run, you must cause it, when started running for such
-    interactive use in the most ordinary way, to print or display an
-    announcement including an appropriate copyright notice and a
-    notice that there is no warranty (or else, saying that you provide
-    a warranty) and that users may redistribute the program under
-    these conditions, and telling the user how to view a copy of this
-    License.  (Exception: if the Program itself is interactive but
-    does not normally print such an announcement, your work based on
-    the Program is not required to print an announcement.)
-
-These requirements apply to the modified work as a whole.  If
-identifiable sections of that work are not derived from the Program,
-and can be reasonably considered independent and separate works in
-themselves, then this License, and its terms, do not apply to those
-sections when you distribute them as separate works.  But when you
-distribute the same sections as part of a whole which is a work based
-on the Program, the distribution of the whole must be on the terms of
-this License, whose permissions for other licensees extend to the
-entire whole, and thus to each and every part regardless of who wrote it.
-
-Thus, it is not the intent of this section to claim rights or contest
-your rights to work written entirely by you; rather, the intent is to
-exercise the right to control the distribution of derivative or
-collective works based on the Program.
-
-In addition, mere aggregation of another work not based on the Program
-with the Program (or with a work based on the Program) on a volume of
-a storage or distribution medium does not bring the other work under
-the scope of this License.
-
-  3. You may copy and distribute the Program (or a work based on it,
-under Section 2) in object code or executable form under the terms of
-Sections 1 and 2 above provided that you also do one of the following:
-
-    a) Accompany it with the complete corresponding machine-readable
-    source code, which must be distributed under the terms of Sections
-    1 and 2 above on a medium customarily used for software interchange; or,
-
-    b) Accompany it with a written offer, valid for at least three
-    years, to give any third party, for a charge no more than your
-    cost of physically performing source distribution, a complete
-    machine-readable copy of the corresponding source code, to be
-    distributed under the terms of Sections 1 and 2 above on a medium
-    customarily used for software interchange; or,
-
-    c) Accompany it with the information you received as to the offer
-    to distribute corresponding source code.  (This alternative is
-    allowed only for noncommercial distribution and only if you
-    received the program in object code or executable form with such
-    an offer, in accord with Subsection b above.)
-
-The source code for a work means the preferred form of the work for
-making modifications to it.  For an executable work, complete source
-code means all the source code for all modules it contains, plus any
-associated interface definition files, plus the scripts used to
-control compilation and installation of the executable.  However, as a
-special exception, the source code distributed need not include
-anything that is normally distributed (in either source or binary
-form) with the major components (compiler, kernel, and so on) of the
-operating system on which the executable runs, unless that component
-itself accompanies the executable.
-
-If distribution of executable or object code is made by offering
-access to copy from a designated place, then offering equivalent
-access to copy the source code from the same place counts as
-distribution of the source code, even though third parties are not
-compelled to copy the source along with the object code.
-
-  4. You may not copy, modify, sublicense, or distribute the Program
-except as expressly provided under this License.  Any attempt
-otherwise to copy, modify, sublicense or distribute the Program is
-void, and will automatically terminate your rights under this License.
-However, parties who have received copies, or rights, from you under
-this License will not have their licenses terminated so long as such
-parties remain in full compliance.
-
-  5. You are not required to accept this License, since you have not
-signed it.  However, nothing else grants you permission to modify or
-distribute the Program or its derivative works.  These actions are
-prohibited by law if you do not accept this License.  Therefore, by
-modifying or distributing the Program (or any work based on the
-Program), you indicate your acceptance of this License to do so, and
-all its terms and conditions for copying, distributing or modifying
-the Program or works based on it.
-
-  6. Each time you redistribute the Program (or any work based on the
-Program), the recipient automatically receives a license from the
-original licensor to copy, distribute or modify the Program subject to
-these terms and conditions.  You may not impose any further
-restrictions on the recipients' exercise of the rights granted herein.
-You are not responsible for enforcing compliance by third parties to
-this License.
-
-  7. If, as a consequence of a court judgment or allegation of patent
-infringement or for any other reason (not limited to patent issues),
-conditions are imposed on you (whether by court order, agreement or
-otherwise) that contradict the conditions of this License, they do not
-excuse you from the conditions of this License.  If you cannot
-distribute so as to satisfy simultaneously your obligations under this
-License and any other pertinent obligations, then as a consequence you
-may not distribute the Program at all.  For example, if a patent
-license would not permit royalty-free redistribution of the Program by
-all those who receive copies directly or indirectly through you, then
-the only way you could satisfy both it and this License would be to
-refrain entirely from distribution of the Program.
-
-If any portion of this section is held invalid or unenforceable under
-any particular circumstance, the balance of the section is intended to
-apply and the section as a whole is intended to apply in other
-circumstances.
-
-It is not the purpose of this section to induce you to infringe any
-patents or other property right claims or to contest validity of any
-such claims; this section has the sole purpose of protecting the
-integrity of the free software distribution system, which is
-implemented by public license practices.  Many people have made
-generous contributions to the wide range of software distributed
-through that system in reliance on consistent application of that
-system; it is up to the author/donor to decide if he or she is willing
-to distribute software through any other system and a licensee cannot
-impose that choice.
-
-This section is intended to make thoroughly clear what is believed to
-be a consequence of the rest of this License.
-
-  8. If the distribution and/or use of the Program is restricted in
-certain countries either by patents or by copyrighted interfaces, the
-original copyright holder who places the Program under this License
-may add an explicit geographical distribution limitation excluding
-those countries, so that distribution is permitted only in or among
-countries not thus excluded.  In such case, this License incorporates
-the limitation as if written in the body of this License.
-
-  9. The Free Software Foundation may publish revised and/or new versions
-of the General Public License from time to time.  Such new versions will
-be similar in spirit to the present version, but may differ in detail to
-address new problems or concerns.
-
-Each version is given a distinguishing version number.  If the Program
-specifies a version number of this License which applies to it and "any
-later version", you have the option of following the terms and conditions
-either of that version or of any later version published by the Free
-Software Foundation.  If the Program does not specify a version number of
-this License, you may choose any version ever published by the Free Software
-Foundation.
-
-  10. If you wish to incorporate parts of the Program into other free
-programs whose distribution conditions are different, write to the author
-to ask for permission.  For software which is copyrighted by the Free
-Software Foundation, write to the Free Software Foundation; we sometimes
-make exceptions for this.  Our decision will be guided by the two goals
-of preserving the free status of all derivatives of our free software and
-of promoting the sharing and reuse of software generally.
-
-                NO WARRANTY
-
-  11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
-OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
-TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
-PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
-REPAIR OR CORRECTION.
-
-  12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
-INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
-OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
-TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
-YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
-PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGES.
-
-             END OF TERMS AND CONDITIONS
-
-        How to Apply These Terms to Your New Programs
-
-  If you develop a new program, and you want it to be of the greatest
-possible use to the public, the best way to achieve this is to make it
-free software which everyone can redistribute and change under these terms.
-
-  To do so, attach the following notices to the program.  It is safest
-to attach them to the start of each source file to most effectively
-convey the exclusion of warranty; and each file should have at least
-the "copyright" line and a pointer to where the full notice is found.
-
-    <one line to give the program's name and a brief idea of what it does.>
-    Copyright (C) <year>  <name of author>
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-
-Also add information on how to contact you by electronic and paper mail.
-
-If the program is interactive, make it output a short notice like this
-when it starts in an interactive mode:
-
-    Gnomovision version 69, Copyright (C) year  name of author
-    Gnomovision comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
-    This is free software, and you are welcome to redistribute it
-    under certain conditions; type `show c' for details.
-
-The hypothetical commands `show w' and `show c' should show the appropriate
-parts of the General Public License.  Of course, the commands you use may
-be called something other than `show w' and `show c'; they could even be
-mouse-clicks or menu items--whatever suits your program.
-
-You should also get your employer (if you work as a programmer) or your
-school, if any, to sign a "copyright disclaimer" for the program, if
-necessary.  Here is a sample; alter the names:
-
-  Yoyodyne, Inc., hereby disclaims all copyright interest in the program
-  `Gnomovision' (which makes passes at compilers) written by James Hacker.
-
-  <signature of Ty Coon>, 1 April 1989
-  Ty Coon, President of Vice
-
-This General Public License does not permit incorporating your program into
-proprietary programs.  If your program is a subroutine library, you may
-consider it more useful to permit linking proprietary applications with the
-library.  If this is what you want to do, use the GNU Library General
-Public License instead of this License.
-
---------------------------------------------------------------------------
 
 The following license details are part of `src/bdf/README`:
 
@@ -21728,7 +21493,7 @@ the FAQ for more information on the distribution of modified source versions.
 
 ```
 
-## pip (25.0.1) - MIT License
+## pip (25.1) - MIT License
 
 The PyPA recommended tool for installing Python packages.
 
@@ -22548,11 +22313,11 @@ license. For details, see prometheus_client/decorator.py.
 
 ```
 
-## prompt_toolkit (3.0.50) - BSD License
+## prompt_toolkit (3.0.51) - BSD License
 
 Library for building powerful interactive command lines in Python
 
-* URL: https://github.com/prompt-toolkit/python-prompt-toolkit
+* URL: UNKNOWN
 * Author(s): Jonathan Slenders
 
 ### License Text
@@ -23232,7 +22997,7 @@ SOFTWARE.
 
 ```
 
-## py-serializable (1.1.2) - Apache Software License
+## py-serializable (2.0.0) - Apache Software License
 
 Library for serializing and deserializing Python Objects to and from JSON and XML.
 
@@ -26444,7 +26209,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## pyright (1.1.399) - MIT
+## pyright (1.1.400) - MIT
 
 Command line wrapper for pyright
 
@@ -26458,6 +26223,40 @@ Command line wrapper for pyright
 MIT License
 
 Copyright (c) 2021 Robert Craigie
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
+## pytablewriter (1.2.1) - MIT License
+
+pytablewriter is a Python library to write a table in various formats: AsciiDoc / CSV / Elasticsearch / HTML / JavaScript / JSON / LaTeX / LDJSON / LTSV / Markdown / MediaWiki / NumPy / Excel / Pandas / Python / reStructuredText / SQLite / TOML / TSV / YAML.
+
+* URL: https://github.com/thombashi/pytablewriter
+* Author(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+The MIT License (MIT)
+
+Copyright (c) 2016-2025 Tsuyoshi Hombashi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26888,6 +26687,40 @@ pytest plugin for generating HTML reports
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+```
+
+## pytest-md-report (0.6.3) - MIT License
+
+A pytest plugin to generate test outcomes reports with markdown table format.
+
+* URL: https://github.com/thombashi/pytest-md-report
+* Author(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2020-2025 Tsuyoshi Hombashi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ```
 
@@ -28174,7 +28007,7 @@ SOFTWARE.
 
 ```
 
-## rich-toolkit (0.14.1) - MIT License
+## rich-toolkit (0.14.3) - MIT License
 
 Rich toolkit for building command-line applications
 
@@ -28398,7 +28231,7 @@ THE SOFTWARE.
 
 ```
 
-## rsa (4.9) - Apache Software License
+## rsa (4.9.1) - Apache Software License
 
 Pure-Python RSA implementation
 
@@ -28499,7 +28332,7 @@ ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of com
 
 ```
 
-## ruff (0.11.6) - MIT License
+## ruff (0.11.7) - MIT License
 
 An extremely fast Python linter and code formatter, written in Rust.
 
@@ -29910,7 +29743,7 @@ are:
 
 ```
 
-## s3transfer (0.11.4) - Apache Software License
+## s3transfer (0.12.0) - Apache Software License
 
 An Amazon S3 Transfer Manager
 
@@ -30165,6 +29998,221 @@ SOFTWARE.
 
 ```
 
+## scalene (1.5.51) - Apache Software License
+
+Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Python with AI-powered optimization suggestions
+
+* URL: https://github.com/plasma-umass/scalene
+* Author(s): Emery Berger <emery@cs.umass.edu>, Sam Stern <jstern@umass.edu>, Juan Altmayer Pizzorno <juan@altmayer.com>
+
+### License Text
+
+```
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+```
+
 ## selenium (4.31.0) - Apache Software License
 
 Official Python bindings for Selenium WebDriver
@@ -30379,7 +30427,7 @@ Official Python bindings for Selenium WebDriver
 
 ```
 
-## sentry-sdk (2.26.1) - BSD License
+## sentry-sdk (2.27.0) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -30413,7 +30461,7 @@ SOFTWARE.
 
 ```
 
-## setuptools (78.1.0) - MIT License
+## setuptools (79.0.1) - UNKNOWN
 
 Easily download, build, install, upgrade, and uninstall Python packages
 
@@ -30756,7 +30804,7 @@ limitations under the License.
 
 ```
 
-## soupsieve (2.6) - MIT License
+## soupsieve (2.7) - MIT License
 
 A modern CSS selector implementation for Beautiful Soup.
 
@@ -30768,7 +30816,7 @@ A modern CSS selector implementation for Beautiful Soup.
 ```
 MIT License
 
-Copyright (c) 2018 - 2024 Isaac Muse <isaacmuse@gmail.com>
+Copyright (c) 2018 - 2025 Isaac Muse <isaacmuse@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30826,7 +30874,7 @@ THE SOFTWARE.
 
 ```
 
-## sphinx-autodoc-typehints (3.1.0) - MIT License
+## sphinx-autodoc-typehints (3.2.0) - MIT License
 
 Type hints (PEP 484) support for the Sphinx autodoc extension
 
@@ -31455,7 +31503,7 @@ license:
 
 ```
 
-## starlette (0.46.1) - BSD License
+## starlette (0.46.2) - BSD License
 
 The little ASGI library that shines.
 
@@ -31716,6 +31764,40 @@ Sphinx plugin which renders a OpenAPI specification with Swagger
 
 ```
 
+## tabledata (1.3.4) - MIT License
+
+tabledata is a Python library to represent tabular data. Used for pytablewriter/pytablereader/SimpleSQLite/etc.
+
+* URL: https://github.com/thombashi/tabledata
+* Author(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2017-2024 Tsuyoshi Hombashi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
 ## tabulate (0.9.0) - MIT License
 
 Pretty-print tabular data
@@ -31746,6 +31828,40 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+```
+
+## tcolorpy (0.1.7) - MIT License
+
+tcolopy is a Python library to apply true color for terminal text.
+
+* URL: https://github.com/thombashi/tcolorpy
+* Author(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2020-2024 Tsuyoshi Hombashi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ```
 
@@ -32519,6 +32635,40 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+```
+
+## typepy (1.3.4) - MIT License
+
+typepy is a Python library for variable type checker/validator/converter at a run time.
+
+* URL: https://github.com/thombashi/typepy
+* Author(s): Tsuyoshi Hombashi
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2017-2024 Tsuyoshi Hombashi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ```
 
@@ -33337,7 +33487,7 @@ SOFTWARE.
 
 ```
 
-## typing_extensions (4.13.1) - UNKNOWN
+## typing_extensions (4.13.2) - UNKNOWN
 
 Backported and Experimental Type Hints for Python 3.8+
 
@@ -33888,7 +34038,7 @@ SOFTWARE.
 
 ```
 
-## urllib3 (2.3.0) - MIT License
+## urllib3 (2.4.0) - UNKNOWN
 
 HTTP library with thread-safe connection pooling, file post, and more.
 
@@ -33923,7 +34073,7 @@ SOFTWARE.
 
 ```
 
-## uv (0.6.12) - Apache Software License; MIT License
+## uv (0.6.17) - Apache Software License; MIT License
 
 An extremely fast Python package and project manager, written in Rust.
 
@@ -34137,7 +34287,7 @@ An extremely fast Python package and project manager, written in Rust.
 
 ```
 
-## uvicorn (0.34.0) - BSD License
+## uvicorn (0.34.2) - BSD License
 
 The lightning-fast ASGI server.
 
@@ -34489,7 +34639,7 @@ limitations under the License.
 
 ```
 
-## watchfiles (1.0.4) - MIT License
+## watchfiles (1.0.5) - MIT License
 
 Simple, modern and high performance file watching and code reload in python.
 
@@ -34899,7 +35049,42 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## widgetsnbextension (4.0.13) - BSD License
+## wheel (0.45.1) - MIT License
+
+A built-package format for Python
+
+* URL: https://github.com/pypa/wheel
+* Author(s): Daniel Holth <dholth@fastmail.fm>
+* Maintainer(s): Alex Grönholm <alex.gronholm@nextday.fi>
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2012 Daniel Holth <dholth@fastmail.fm> and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+```
+
+## widgetsnbextension (4.0.14) - BSD License
 
 Jupyter interactive widgets for Jupyter Notebook
 
@@ -34976,7 +35161,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## wsidicom (0.26.0) - Apache Software License
+## wsidicom (0.27.0) - Apache Software License
 
 Tools for handling DICOM based whole scan images
 

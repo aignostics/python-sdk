@@ -15,8 +15,7 @@ TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%
 
 cli = typer.Typer(
     name="idc",
-    help="Commands to query and download collections, cases, studies and series "
-    "of Image Data Commons (IDC) Portal of the National Institute of Cancer (NIC)",
+    help="Download datasets from Image Data Commons (IDC) Portal of National Institute of Cancer (NIC).",
 )
 
 

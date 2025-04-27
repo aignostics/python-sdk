@@ -81,7 +81,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Base of our build targets
 FROM base AS target
 
-ENV AIGNOSTICS_PYTHON_SDK_RUNNING_IN_CONTAINER=1
+ENV AIGNOSTICS_RUNNING_IN_CONTAINER=1
 
 # We don't want to run the app as root
 RUN <<EOT
@@ -105,6 +105,8 @@ HEALTHCHECK NONE
 # Default entrypoint is our CLI
 ENTRYPOINT ["aignostics"]
 
+# See https://matplotlib.org/stable/install/environment_variables_faq.html
+ENV MPLCONFIGDIR=/tmp/matplotlib
 
 # Target slim
 FROM target AS slim

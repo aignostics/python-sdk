@@ -1,7 +1,5 @@
 """Homepage (index) of GUI."""
 
-from nicegui import ui
-
 from ..utils import BasePageBuilder, __project_name__, __version__  # noqa: TID252
 from ._service import Service
 
@@ -9,6 +7,8 @@ from ._service import Service
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
+        from nicegui import ui  # noqa: PLC0415
+
         @ui.page("/info")
         def page_info() -> None:
             """Homepage of GUI."""

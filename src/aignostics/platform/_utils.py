@@ -20,7 +20,6 @@ from typing import IO, Any
 
 import google_crc32c
 import requests
-from google.cloud import storage
 from tqdm.auto import tqdm
 
 EIGHT_MB = 8_388_608
@@ -94,6 +93,8 @@ def generate_signed_url(fully_qualified_gs_path: str) -> str:
     Raises:
         ValueError: If the GS path is invalid or the blob doesn't exist.
     """
+    from google.cloud import storage  # noqa: PLC0415, lazy loading for performance
+
     pattern = r"gs://(?P<bucket_name>[^/]+)/(?P<path>.*)"
     m = re.fullmatch(pattern, fully_qualified_gs_path)
     if not m:

@@ -174,7 +174,7 @@ if find_spec("nicegui"):
         assert mock_ui_run_args["show"] is False, "show parameter should be False"
 
 
-if find_spec("marimo"):
+if find_spec("marimo") and find_spec("fastapi"):
     from fastapi import FastAPI
 
     def test_cli_notebook_help(runner: CliRunner) -> None:

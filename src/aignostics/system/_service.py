@@ -7,10 +7,12 @@ import pwd
 import sys
 import typing as t
 from pathlib import Path
-from typing import Any
+from socket import AF_INET, SOCK_DGRAM, socket
+from typing import Any, NotRequired, TypedDict, cast
+from urllib.error import HTTPError
 
 from pydantic_settings import BaseSettings
-from uptime import boottime, uptime
+from requests import get
 
 from ..utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
@@ -29,10 +31,30 @@ from ..utils import (  # noqa: TID252
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
 
-logger = get_logger(__name__)
+log = get_logger(__name__)
 
 JsonType: t.TypeAlias = list["JsonValue"] | t.Mapping[str, "JsonValue"]
 JsonValue: t.TypeAlias = str | int | float | JsonType | None
+
+
+class RuntimeDict(TypedDict, total=False):
+    """Type for runtime information dictionary."""
+
+    environment: str
+    username: str
+    process: dict[str, Any]
+    host: dict[str, Any]
+    python: dict[str, Any]
+    environ: dict[str, str]
+
+
+class InfoDict(TypedDict, total=False):
+    """Type for the info dictionary."""
+
+    package: dict[str, Any]
+    runtime: RuntimeDict
+    settings: dict[str, Any]
+    __extra__: NotRequired[dict[str, Any]]
 
 
 class Service(BaseService):
@@ -79,11 +101,46 @@ class Service(BaseService):
         Returns:
             bool: True if the token is valid, False otherwise.
         """
-        logger.info(token)
+        log.info(token)
         if not self._settings.token:
-            logger.warning("Token is not set in settings.")
+            log.warning("Token is not set in settings.")
             return False
         return token == self._settings.token.get_secret_value()
+
+    @staticmethod
+    def _get_public_ipv4(timeout: int = 5) -> str | None:
+        """Get the public IPv4 address of the system.
+
+        Args:
+            timeout (int): Timeout for the request in seconds.
+
+        Returns:
+            str: The public IPv4 address.
+        """
+        try:
+            response = get(url="https://api.ipify.org", timeout=timeout)
+            response.raise_for_status()
+            return response.text
+        except HTTPError as e:
+            message = f"Failed to get public IP: {e}"
+            log.exception(message)
+            return None
+
+    @staticmethod
+    def _get_local_ipv4() -> str | None:
+        """Get the local IPv4 address of the system.
+
+        Returns:
+            str: The local IPv4 address.
+        """
+        try:
+            with socket(AF_INET, SOCK_DGRAM) as connection:
+                connection.connect((".".join(str(1) for _ in range(4)), 53))
+                return str(connection.getsockname()[0])
+        except Exception as e:
+            message = f"Failed to get local IP: {e}"
+            log.exception(message)
+            return None
 
     @staticmethod
     def info(include_environ: bool = False, filter_secrets: bool = True) -> dict[str, Any]:
@@ -99,8 +156,16 @@ class Service(BaseService):
         Returns:
             dict[str, Any]: Service configuration.
         """
+        import psutil  # noqa: PLC0415
+        from uptime import boottime, uptime  # noqa: PLC0415
+
         bootdatetime = boottime()
-        rtn = {
+        vmem = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        cpu_percent = psutil.cpu_percent(interval=5)
+        cpu_times_percent = psutil.cpu_times_percent(interval=5)
+
+        rtn: InfoDict = {
             "package": {
                 "version": __version__,
                 "name": __project_name__,
@@ -109,35 +174,73 @@ class Service(BaseService):
             },
             "runtime": {
                 "environment": __env__,
+                "username": pwd.getpwuid(os.getuid())[0],
+                "process": {
+                    "command_line": " ".join(sys.argv),
+                    "entry_point": sys.argv[0] if sys.argv else None,
+                    "process_info": json.loads(get_process_info().model_dump_json()),
+                },
+                "host": {
+                    "os": {
+                        "platform": platform.platform(),
+                        "system": platform.system(),
+                        "release": platform.release(),
+                        "version": platform.version(),
+                    },
+                    "machine": {
+                        "cpu": {
+                            "percent": cpu_percent,
+                            "load_avg": psutil.getloadavg(),
+                            "user": cpu_times_percent.user,
+                            "system": cpu_times_percent.system,
+                            "idle": cpu_times_percent.idle,
+                            "arch": platform.machine(),
+                            "processor": platform.processor(),
+                            "count": os.cpu_count(),
+                            "frequency": psutil.cpu_freq(),
+                        },
+                        "memory": {
+                            "percent": vmem.percent,
+                            "total": vmem.total,
+                            "available": vmem.available,
+                            "used": vmem.used,
+                            "free": vmem.free,
+                            "active": vmem.active,
+                            "inactive": vmem.inactive,
+                            "wired": vmem.wired,
+                        },
+                        "swap": {
+                            "percent": swap.percent,
+                            "total": swap.total,
+                            "used": swap.used,
+                            "free": swap.free,
+                        },
+                    },
+                    "network": {
+                        "hostname": platform.node(),
+                        "local_ipv4": Service._get_local_ipv4(),
+                        "public_ipv4": Service._get_public_ipv4(),
+                    },
+                    "uptime": {
+                        "seconds": uptime(),
+                        "boottime": bootdatetime.isoformat() if bootdatetime else None,
+                    },
+                },
                 "python": {
                     "version": platform.python_version(),
                     "compiler": platform.python_compiler(),
                     "implementation": platform.python_implementation(),
                     "sys.path": sys.path,
-                },
-                "interpreter_path": sys.executable,
-                "command_line": " ".join(sys.argv),
-                "entry_point": sys.argv[0] if sys.argv else None,
-                "process_info": json.loads(get_process_info().model_dump_json()),
-                "username": pwd.getpwuid(os.getuid())[0],
-                "host": {
-                    "system": platform.system(),
-                    "release": platform.release(),
-                    "version": platform.version(),
-                    "machine": platform.machine(),
-                    "processor": platform.processor(),
-                    "hostname": platform.node(),
-                    "ip_address": platform.uname().node,
-                    "cpu_count": os.cpu_count(),
-                    "uptime": uptime(),
-                    "boottime": bootdatetime.isoformat() if bootdatetime else None,
+                    "interpreter_path": sys.executable,
                 },
             },
+            "settings": {},
         }
 
+        runtime = cast("RuntimeDict", rtn["runtime"])
         if include_environ:
             if filter_secrets:
-                rtn["runtime"]["environ"] = {
+                runtime["environ"] = {
                     k: v
                     for k, v in os.environ.items()
                     if not (
@@ -149,9 +252,9 @@ class Service(BaseService):
                     )
                 }
             else:
-                rtn["runtime"]["environ"] = dict(os.environ)
+                runtime["environ"] = dict(os.environ)
 
-        settings = {}
+        settings: dict[str, Any] = {}
         for settings_class in locate_subclasses(BaseSettings):
             settings_instance = load_settings(settings_class)
             env_prefix = settings_instance.model_config.get("env_prefix", "")
@@ -163,12 +266,16 @@ class Service(BaseService):
                 settings[flat_key] = value
         rtn["settings"] = settings
 
+        # Convert the TypedDict to a regular dict before adding dynamic service keys
+        result_dict: dict[str, Any] = dict(rtn)
+
         for service_class in locate_subclasses(BaseService):
             if service_class is not Service:
                 service = service_class()
-                rtn[service.key()] = service.info()
+                result_dict[service.key()] = service.info()
 
-        return rtn
+        log.info("Service info: %s", result_dict)
+        return result_dict
 
     @staticmethod
     def openapi_schema() -> JsonType:

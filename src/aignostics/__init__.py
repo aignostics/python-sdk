@@ -1,4 +1,4 @@
-"""Copier template to scaffold Python projects compliant with best practices and modern tooling."""
+"""Python SDK providing access to Aignostics AI services."""
 
 from .constants import MODULES_TO_INSTRUMENT
 from .utils.boot import boot
