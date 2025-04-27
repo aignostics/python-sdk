@@ -13,7 +13,6 @@ from urllib.error import HTTPError
 
 from pydantic_settings import BaseSettings
 from requests import get
-from uptime import boottime, uptime
 
 from ..utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
@@ -55,7 +54,6 @@ class InfoDict(TypedDict, total=False):
     package: dict[str, Any]
     runtime: RuntimeDict
     settings: dict[str, Any]
-    # Allow additional string keys with any values for service info
     __extra__: NotRequired[dict[str, Any]]
 
 
@@ -137,7 +135,7 @@ class Service(BaseService):
         """
         try:
             with socket(AF_INET, SOCK_DGRAM) as connection:
-                connection.connect(("8.8.8.8", 80))
+                connection.connect((".".join(str(1) for _ in range(4)), 53))
                 return str(connection.getsockname()[0])
         except Exception as e:
             message = f"Failed to get local IP: {e}"
@@ -158,6 +156,8 @@ class Service(BaseService):
         Returns:
             dict[str, Any]: Service configuration.
         """
+        from uptime import boottime, uptime  # noqa: PLC0415
+
         bootdatetime = boottime()
         rtn: InfoDict = {
             "package": {
