@@ -75,8 +75,8 @@ jobs:
       - name: Smoke tests
         run: |
           uv run --no-dev aignostics --help
-          uv run --no-dev aignostics system health
-          uv run --no-dev aignostics system info
+          uv run --all-extras aignostics system info
+          uv run --all-extras aignostics system health
       
       - name: Test / regular
         run: |
