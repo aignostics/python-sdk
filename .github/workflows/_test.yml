@@ -96,6 +96,14 @@ jobs:
             echo "# All regular tests passed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
+          # Show test coverage in GitHub Job summary
+          if [ -f "reports/coverage.md" ]; then
+            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
           exit $EXIT_CODE
 
       - name: Test / long running
@@ -117,12 +125,13 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           # Show test coverage in GitHub Job summary
-          for file in reports/coverage_*.md; do
-            if [ -f "$file" ]; then
-              cat "$file" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
+          if [ -f "reports/coverage.md" ]; then
+            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
           exit $EXIT_CODE
       
       - name: Upload test results
@@ -134,6 +143,7 @@ jobs:
             reports/mypy_junit.xml
             reports/junit.xml
             reports/coverage.xml
+            reports/coverage.md
             reports/coverage_html
             aignostics.log
           retention-days: 30

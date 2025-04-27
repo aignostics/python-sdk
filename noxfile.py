@@ -471,7 +471,7 @@ def _prepare_coverage(session: nox.Session) -> None:
     Args:
         session: The nox session
     """
-    if "--keep-coverage" not in session.posargs:
+    if "--cov-append" not in session.posargs:
         session.run("rm", "-rf", ".coverage", external=True)
 
 
@@ -528,24 +528,23 @@ def _get_report_type(session: nox.Session, custom_marker: str | None) -> str:
     return f"{python_version}_{report_type}"
 
 
-def _inject_header(preamble: str, report_type: str, report_file_name: str) -> None:
-    """Prepend report file with header indicating the report type.
+def _inject_headline(headline: str, file_name: str) -> None:
+    """Inject headline into file.
 
     - Checks if report file actually exists
-    - If so, injects header indicating the report type
+    - If so, injects headline
     - If not, does nothing
 
     Args:
-        preamble: Preamble text to inject
-        report_type: Type of the report
-        report_file_name: Name of the report file
+        headline: Headline to inject as first line
+        file_name: Name of the report file
     """
-    report_file = Path(report_file_name)
-    if report_file.is_file():
-        header = f"# {preamble}{report_type}\n\n"
-        content = report_file.read_text(encoding=UTF8)
+    file = Path(file_name)
+    if file.is_file():
+        header = f"{headline}\n"
+        content = file.read_text(encoding=UTF8)
         content = header + content
-        report_file.write_text(content, encoding=UTF8)
+        file.write_text(content, encoding=UTF8)
 
 
 def _run_pytest(
@@ -563,7 +562,7 @@ def _run_pytest(
     is_sequential = test_type == "sequential"
 
     # Build base pytest arguments
-    pytest_args = ["pytest", "--disable-warnings", JUNIT_XML, "-n", "auto", "--dist", "loadgroup", "--cov-append"]
+    pytest_args = ["pytest", "--disable-warnings", JUNIT_XML, "-n", "auto", "--dist", "loadgroup"]
 
     # Add act environment filter if needed
     if _is_act_environment():
@@ -575,11 +574,8 @@ def _run_pytest(
         marker_value += f" and ({custom_marker})"
     pytest_args.extend(["-m", marker_value])
 
-    # Add additional arguments and report output
-    # Add any additional posargs except for --keep-coverage
-    for arg in posargs:
-        if arg != "--keep-coverage":
-            pytest_args.extend([arg])
+    # Add additional arguments
+    pytest_args.extend(posargs)
 
     # Report output as markdown for GitHub step summaries
     report_file_name = f"reports/pytest_{report_type}_{'sequential' if is_sequential else 'parallel'}.md"
@@ -594,21 +590,20 @@ def _run_pytest(
     # Run pytest with the constructed arguments
     session.run(*pytest_args)
 
-    # Inject header into the report file indicating the report type
-    _inject_header("Failing tests with for test execution with ", report_type, report_file_name)
+    # Inject headline into the report file indicating the report type
+    _inject_headline(f"# Failing tests with for test execution with {report_type}\n", report_file_name)
 
 
-def _generate_coverage_report(session: nox.Session, report_type: str) -> None:
+def _generate_coverage_report(session: nox.Session) -> None:
     """Generate coverage report in markdown format.
 
     Args:
         session: The nox session
-        report_type: Report type string for output files
     """
-    coverage_report_file_name = f"reports/coverage_{report_type}.md"
+    coverage_report_file_name = "reports/coverage.md"
     with Path(coverage_report_file_name).open("w", encoding=UTF8) as outfile:
         session.run("coverage", "report", "--format=markdown", stdout=outfile)
-        _inject_header("Coverage report for ", report_type, coverage_report_file_name)
+        _inject_headline("# Coverage report", coverage_report_file_name)
 
 
 def _cleanup_test_execution(session: nox.Session) -> None:
@@ -636,6 +631,7 @@ def test(session: nox.Session) -> None:
     _setup_venv(session)
 
     # Conditionally clean coverage data
+    # Will remove .coverage file if --cov-append is not specified
     _prepare_coverage(session)
 
     # Extract custom markers from posargs if present
@@ -648,10 +644,12 @@ def test(session: nox.Session) -> None:
     _run_pytest(session, "not sequential", custom_marker, filtered_posargs, report_type)
 
     # Run sequential tests
+    if "--cov-append" not in filtered_posargs:
+        filtered_posargs.extend(["--cov-append"])
     _run_pytest(session, "sequential", custom_marker, filtered_posargs, report_type)
 
     # Generate coverage report in markdown
-    _generate_coverage_report(session, report_type)
+    _generate_coverage_report(session)
 
     # Clean up post test execution
     _cleanup_test_execution(session)
