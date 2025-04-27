@@ -36,7 +36,10 @@
         "**/dist_vercel/.vercel/**",
     ],
     "python.analysis.ignore": [
-        "**/typing.py"
+        "**/typing.py",
+        "**/bottle.py",
+        "tests/**",
+        "codegen/**",
     ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.testing.unittestEnabled": false,

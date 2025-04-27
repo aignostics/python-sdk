@@ -7,6 +7,7 @@
 # ///
 
 import marimo
+from aignostics.utils import __version__
 
 __generated_with = "0.12.8"
 app = marimo.App(app_title=f"🔬 Aignostics Python SDK v{__version__} - E2E", width="full")
@@ -66,7 +67,7 @@ def _():
         ]
     )
 
-    mo.vstack([mo.ui.file_browser(GSPath("gs://aignx-storage-service-dev/sample_data_formatted"), filetypes=[".dcm", ".tif", ".tiff", ".svs", ".json"], multiple=True, restrict_navigation=True)])
+    mo.vstack([mo.ui.file_browser(GSPath("gs://aignx-storage-service-dev/sample_data_formatted"), filetypes=[".dcm", ".tif", ".tiff", ".svs", ".json"], multiple=True, restrict_navigation=True)]) # type: ignore
 
     return (
         GSPath,

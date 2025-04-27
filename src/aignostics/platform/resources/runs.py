@@ -178,7 +178,7 @@ class ApplicationRun:
                     print(f"> Download for {artifact.name} to {file_path}")
 
                 # if file is not there at all or only partially downloaded yet
-                download_file(artifact.download_url, file_path, checksum)
+                download_file(artifact.download_url, str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
             print(f"Downloaded results for item: {item.reference} to {item_dir}")
@@ -254,6 +254,7 @@ class Runs:
         )
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
+        # TODO (Andreas): application_run_id - ensure this is correctly handled
         return ApplicationRun(self._api, res.application_run_id)
 
     def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:

@@ -55,16 +55,16 @@ def gui_run(  # noqa: PLR0913, PLR0917
         ValueError: If with_notebook is True but notebook_path is None,
             or trying to run native within container.
     """
-    from nicegui import app, ui  # noqa: PLC0415
     from nicegui import native as native_app  # noqa: PLC0415
+    from nicegui import ui  # noqa: PLC0415
 
     if __is_running_in_container__ and native:
         message = "Native GUI cannot be run in a container. Please run with uvx or in browser."
         raise ValueError(message)
-    if with_api:
-        from ..api import api  # noqa: PLC0415, TID252
 
-        app.mount("/api", api)
+    if with_api:
+        message = "with_api is not supported in this project."
+        raise ValueError(message)
 
     gui_register_pages()
     ui.run(
