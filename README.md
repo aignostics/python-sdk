@@ -4,14 +4,14 @@
 # 🔬Aignostics Python SDK
 
 [![License](https://img.shields.io/github/license/aignostics/python-sdk?logo=opensourceinitiative&logoColor=3DA639&labelColor=414042&color=A41831)](https://github.com/aignostics/python-sdk/blob/main/LICENSE)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aignostics.svg?logo=python&color=204361&labelColor=1E2933)](https://github.com/aignostics/python-sdk/blob/main/noxfile.py)
-[![CI](https://github.com/aignostics/python-sdk/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/aignostics/python-sdk/actions/workflows/ci-cd.yml)
-[![Uptime](https://uptime.betterstack.com/status-badges/v2/monitor/1wbqa.svg)](https://aignostics.betteruptime.com)
+[![Python Version](https://img.shields.io/pypi/pyversions/aignostics.svg?logo=python&color=204361&labelColor=1E2933)](https://pypi.org/project/aignostics/)
+[![CI/CD](https://github.com/aignostics/python-sdk/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/aignostics/python-sdk/actions/workflows/ci-cd.yml)
+[![Docs](https://img.shields.io/readthedocs/aignostics)](https://aignostics.readthedocs.io/en/latest/)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
 [![Security](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
 [![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=aignostics_python-sdk&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
 [![Coverage](https://codecov.io/gh/aignostics/python-sdk/graph/badge.svg?token=SX34YRP30E)](https://codecov.io/gh/aignostics/python-sdk)
+[![Uptime](https://uptime.betterstack.com/status-badges/v2/monitor/1wbqa.svg)](https://aignostics.betteruptime.com)
 
 ---
 
@@ -53,7 +53,7 @@ more about how we achieve
 ### Run your first AI workflow in 30 minutes
 
 Go to
-[your personal dashboard on the aignostics platform](https://platform.aignostics.com)
+[your personal dashboard on the Aignostics Platform](https://platform.aignostics.com)
 and scroll to the "Python SDK" section. Copy the personalized install script
 shown in that section, and execute it in your terminal - we support MacOS and
 Linux. This will update or install the [uv package manager](...) and install the
@@ -103,16 +103,21 @@ to learn about all commands and options available.
 
 ## Use in Python Notebooks
 
-> [!IMPORTANT]  
-> Before you get started, you need to set up your authentication credentials if you did not yet do so!
-Please visit
-[your personal dashboard on the aignostics platform website](https://platform.aignostics.com/getting-started/quick-start)
-and follow the steps outlined in the `Use in Python Notebooks` section.
+> [!IMPORTANT]\
+> Before you get started, you need to set up your authentication credentials if
+> you did not yet do so! Please visit
+> [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
+> and follow the steps outlined in the `Use in Python Notebooks` section.
 
 We provide Jupyter and Marimo notebooks to help you get started with the SDK.
-The notebooks showcase the interaction with the Aignostics platform using our test application.
-To run one them, please follow the steps outlined in the snippet below to clone this repository and start either the [Jupyter](https://docs.jupyter.org/en/latest/index.html) ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb)) or 
-[Marimo](https://marimo.io/) ([examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py)) notebook:
+The notebooks showcase the interaction with the Aignostics Platform using our
+test application. To run one them, please follow the steps outlined in the
+snippet below to clone this repository and start either the
+[Jupyter](https://docs.jupyter.org/en/latest/index.html)
+([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb))
+or [Marimo](https://marimo.io/)
+([examples/notebook.py](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.py))
+notebook:
 
 ```shell
 # clone the `python-sdk` repository
@@ -127,20 +132,23 @@ uv run marimo edit examples/notebook.py
 
 ## Using the Python SDK in your Codebase
 
-> [!IMPORTANT]  
-> Before you get started, you need to set up your authentication credentials if you did not yet do so!
-Please visit
-[your personal dashboard on the aignostics platform website](https://platform.aignostics.com/getting-started/quick-start)
-and follow the steps outlined in the `Enterprise Integration` section.
+> [!IMPORTANT]\
+> Before you get started, you need to set up your authentication credentials if
+> you did not yet do so! Please visit
+> [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
+> and follow the steps outlined in the `Enterprise Integration` section.
 
 Next to using the CLI and notebooks, you can also use the Python SDK in your
-codebase. The following sections outline how to install the SDK and interact with it.
+codebase. The following sections outline how to install the SDK and interact
+with it.
 
 ### Installation
+
 Adding Aignostics Python SDK to your codebase as a dependency is easy. You can
 directly add the dependency via your favourite package manager:
 
-**Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv installed follow
+**Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv
+installed follow
 [these instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```shell
@@ -157,7 +165,8 @@ pip install aignostics
 
 ### Usage
 
-The following snippet shows how to use the Python SDK to trigger an application run:
+The following snippet shows how to use the Python SDK to trigger an application
+run:
 
 ```python
 from aignostics import platform
@@ -189,14 +198,16 @@ application_run = client.runs.create(
 application_run.download_to_folder("path/to/download/folder")
 ```
 
-Please look at the notebooks in the `example` folder for a more detailed example and read the
+Please look at the notebooks in the `example` folder for a more detailed example
+and read the
 [client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 to learn about all classes and methods.
 
 #### Defining the input for an application run
 
-Next to the `application_version` of the application you want to run, you have to define
-the input items you want to process in the run. The input items are defined as follows:
+Next to the `application_version` of the application you want to run, you have
+to define the input items you want to process in the run. The input items are
+defined as follows:
 
 ```python
 platform.InputItem(
@@ -218,11 +229,11 @@ platform.InputItem(
 
 For each item you want to process, you need to provide a unique `reference`
 string. This is used to identify the item in the results later on. The
-`input_artifacts` field is a list of `InputArtifact` objects,
-which defines what data & metadata you need to provide for each item. The
-required artifacts depend on the application version you want to run - in the
-case of test application, there is only one artifact required, which is the
-image to process on. The artifact name is defined as `user_slide`.
+`input_artifacts` field is a list of `InputArtifact` objects, which defines what
+data & metadata you need to provide for each item. The required artifacts depend
+on the application version you want to run - in the case of test application,
+there is only one artifact required, which is the image to process on. The
+artifact name is defined as `user_slide`.
 
 The `download_url` is a signed URL that allows the Aignostics Platform to
 download the image data later during processing.
@@ -335,21 +346,21 @@ When the application run is cancelled, either by the system or by the user, only
 
 ## Further Reading
 
-- Inspect our
-  [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
-  with detailed documentation of checks, tools and principles.
-- Check out the
-  [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html)
-  with detailed documentation of all CLI commands and options.
-- Check out the
-  [library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
-  with detailed documentation of public classes and functions.
-- Check out the
-  [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)
-  with detailed documentation of all API operations and parameters.
-- Our
-  [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html)
-  provide a complete log of recent improvements and changes.
-- We gratefully acknowledge the
-  [open source projects](https://aignostics.readthedocs.io/en/latest/attributions.html)
-  that this project builds upon. Thank you to all these wonderful contributors!
+1. Inspect our
+   [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
+   with detailed documentation of checks, tools and principles.
+2. Check out the
+   [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html)
+   with detailed documentation of all CLI commands and options.
+3. Check out the
+   [library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
+   with detailed documentation of public classes and functions.
+4. Check out the
+   [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)
+   with detailed documentation of all API operations and parameters.
+5. Our
+   [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html)
+   provide a complete log of recent improvements and changes.
+6. We gratefully acknowledge the
+   [open source projects](https://aignostics.readthedocs.io/en/latest/attributions.html)
+   that this project builds upon. Thank you to all these wonderful contributors!
