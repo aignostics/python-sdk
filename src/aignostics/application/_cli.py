@@ -9,14 +9,13 @@ from aignostics.platform import Client
 from aignostics.utils import console, get_logger
 
 from ._utils import (
-    _decorate_with_metadata,
-    _retrieve_and_print_run_details,
-    _single_spot_payload,
+    construct_input_items,
     find_latest_version,
     find_run_by_id,
     get_client,
     print_runs_non_verbose,
     print_runs_verbose,
+    retrieve_and_print_run_details,
 )
 
 log = get_logger(__name__)
@@ -37,27 +36,6 @@ cli.add_typer(run_app, name="run", help="Runs of applications")
 
 result_app = typer.Typer()
 run_app.add_typer(result_app, name="result", help="Results of applications runs")
-
-
-@cli.command("e2e")
-def application_e2e() -> None:
-    """E2E test."""
-    client = Client(cache_token=False)
-    payload = [
-        _decorate_with_metadata(
-            item,
-            {
-                "user_slide": {
-                    "cancer": {"type": "lung", "tissue": "lung"},
-                }
-            },
-        )
-        for item in _single_spot_payload()
-    ]
-    application_run = client.runs.create("h-e-tme:v0.36.0", items=payload)
-    destination_dir = Path("data/out")
-    destination_dir.mkdir(parents=True, exist_ok=True)
-    application_run.download_to_folder(destination_dir)
 
 
 @cli.command("list")
@@ -100,12 +78,12 @@ def application_list(
 
             console.print("-" * 80)
     else:
-        console.print("[bold]Available Applications:[/bold]")
+        console.print("[bold]Available Aignostics Applications:[/bold]")
         for app in applications:
             app_count += 1
             # Get latest version info for this application
             latest_version = find_latest_version(app, client)
-            console.print(f"- [bold]{app.application_id}[/bold] - latest: {latest_version}")
+            console.print(f"- [bold]{app.application_id}[/bold] - latest application version id: `{latest_version}`")
 
     if app_count == 0:
         console.print("No applications available.")
@@ -113,7 +91,7 @@ def application_list(
 
 @cli.command("describe")
 def application_describe(
-    application_id: Annotated[str, typer.Option(help="Id of the application to desfribe")],
+    application_id: Annotated[str, typer.Option(help="Id of the application to describe")],
 ) -> None:
     """Describe application."""
     client = Client()
@@ -189,9 +167,39 @@ def metadata_generate() -> None:
 
 
 @run_app.command("submit")
-def run_submit() -> None:
-    """Create run."""
-    console.print("submit run")
+def run_submit(
+    application_version_id: Annotated[str, typer.Option(help="Id of the application version to submit run for")],
+    source: Annotated[
+        str,
+        typer.Option(
+            help="Source of the run. If not starting with 's3://' or 'gs://', "
+            "it is assumed to be a local file path pointing to a .csv file"
+        ),
+    ],
+) -> bool:
+    """Create run.
+
+    Args:
+        application_version_id (str): The ID of the application version to submit a run for
+        source (str): The source of the run. If not starting with 's3://' or 'gs://',
+            it is assumed to be a local file path pointing to a .csv file
+
+    Returns:
+        bool: Success status of the operation
+    """
+    client = get_client()
+    if not client:
+        return False
+
+    source_csv = Path(source)
+    if not source_csv.is_file():
+        log.warning("Source file '%s' does not exist.", source)
+        console.print(f"[bold red]Error:[/bold red] Source file '{source}' does not exist.")
+        return False
+    payload = construct_input_items(source_csv)
+    application_run = client.runs.create(application_version=application_version_id, items=payload)
+    console.print(f"submitted run with id '{application_run}'")
+    return True
 
 
 @run_app.command("list")
@@ -253,7 +261,7 @@ def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desf
     if run:
         log.debug("Found run with ID '%s'", run_id)
         try:
-            _retrieve_and_print_run_details(run, run_id)
+            retrieve_and_print_run_details(run, run_id)
         except Exception as e:
             log.exception("Failed to retrieve and print run details for ID '%s'", run_id)
             console.print(f"[bold red]Error:[/bold red] Failed to retrieve run details for ID '{run_id}': {e}")

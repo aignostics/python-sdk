@@ -1,8 +1,10 @@
 """Utility functions to ease using the platform client."""
 
+import csv
 from enum import StrEnum
 from operator import itemgetter
-from typing import Any, Literal
+from pathlib import Path
+from typing import Literal
 
 from aignostics.platform import (
     Application,
@@ -52,38 +54,47 @@ def get_client() -> Client | None:
     return None
 
 
-def _decorate_with_metadata(item: InputItem, artifact_name_to_metadata: dict[str, dict[str, Any]]) -> InputItem:
-    for input_artifact in item.input_artifacts:
-        if input_artifact.name in artifact_name_to_metadata:
-            input_artifact.metadata.update(artifact_name_to_metadata[input_artifact.name])
-    return item
+def construct_input_items(source_csv: Path) -> list[InputItem]:
+    """Construct payload from CSV file.
 
-
-def _single_spot_payload() -> list[InputItem]:
-    """Generates a payload using a single spot.
+    Args:
+        source_csv (Path): Path to the CSV file
 
     Returns:
-        A list containing a single InputItem representing one spot with its associated artifacts.
+        list: List of payload items
     """
-    return [
-        InputItem(
-            reference="1",
-            input_artifacts=[
-                InputArtifact(
-                    name="user_slide",
-                    download_url=generate_signed_url(
-                        "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
-                    ),
-                    metadata={
-                        "checksum_crc32c": "5onqtA==",
-                        "base_mpp": 0.26268186053789266,
-                        "width": 7447,
-                        "height": 7196,
-                    },
+    payload = []
+    log.debug("Constructing payload from CSV file: %s", source_csv)
+    with open(str(source_csv), newline="", encoding="utf-8") as csvfile:
+        reader = csv.reader(csvfile, delimiter=";", quotechar='"')
+        pos = 0
+        for row in reader:
+            # TODO(Helmut): Introspect to generate the below
+            if pos == 0:
+                pos += 1
+                continue
+            payload.append(
+                InputItem(
+                    reference=str(pos),
+                    input_artifacts=[
+                        InputArtifact(
+                            name="user_slide",
+                            download_url=generate_signed_url(row[0]),
+                            metadata={
+                                "checksum_crc32c": row[1],
+                                "base_mpp": float(row[2]),
+                                "width": int(row[3]),
+                                "height": int(row[4]),
+                                "cancer": {
+                                    "type": row[5],
+                                    "tissue": row[6],
+                                },
+                            },
+                        )
+                    ],
                 )
-            ],
-        ),
-    ]
+            )
+    return payload
 
 
 def find_latest_version(app: Application, client: Client) -> str:
@@ -146,7 +157,7 @@ def find_run_by_id(run_id: str, client: Client) -> ApplicationRun | None:
     return None
 
 
-def _retrieve_and_print_run_details(run: ApplicationRun, run_id: str) -> None:
+def retrieve_and_print_run_details(run: ApplicationRun, run_id: str) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:

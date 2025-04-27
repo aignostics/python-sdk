@@ -1,0 +1,61 @@
+# Runbook for Python SDK / CLI Spike:
+
+1. Install the Python SDK by copy&pasting the script shown on
+   https://platform.aignostics.com to your terminal. You should see
+   "Installation complete"
+2. Copy the `aignx-gcp-credentials.json` you get from Andreas to your Downloads
+   folder
+3. Copy the `user_slide.csv` you get from Helmut to your Downloads folder
+4. Move the files from step 2 and 3 into the right places
+
+```shell
+mv ~/Downloads/aignx-gcp-credentials.json ~/.aignostics/aignx-gcp-credentials.json
+mkdir ~/Downloads/heta
+mv ~/Downloads/user_slide.csv ~/Downloads/heta/user_slide.csv
+```
+
+5. Check the metadata by opening `~/Downloads/user_slide.csv` in Excel or
+   another program
+
+6. Run the following commands in your terminal, step by step:
+
+```shell
+# The folder we created in step 4
+cd ~/Downloads/heta
+
+# List all available applications, abbreviated form
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application list 
+
+# List all available applications, more details
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application list --verbose
+
+# Describe the details of the HETA application
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application describe --application-id h-e-tme
+
+# Submit a run given the meta in user_slide.csv
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run submit --application-version-id h-e-tme:v0.36.0 --source user_slide.csv
+
+# List all runs you triggered, abbreviated form - should be one entry now
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run list 
+
+# List all runs you triggered, more details - should still be one entry only
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run list --verbose
+
+# Show details of the run. You will have to replace <output of previous command> with the application run id output when submitting the run or listing runs submitted.
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run describe --run-id <output of previous command> 
+
+# Let's cancel the run - replace the <output of previous command> with the application run id output when submitting the run before.
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally application run cancel --run-id <output of previous command>
+
+# List all runs you triggered again. The run should be marked as canceled now.
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run list 
+
+# Submit a run given the meta in user_slide.csv again
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run submit --application-version-id h-e-tme:v0.36.0 --source user_slide.csv
+
+# Download the results. This waits for the processing to complete, which takes half an hour or so. Replace the <output of previous command> with the application run id output when submitting the run before.
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run result download --run-id <output of previous command> --destination .
+
+# List all runs you triggered, abbreviated form - one rone should be marked as canceled, the other as completed
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics application run list
+```

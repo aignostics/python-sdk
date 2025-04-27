@@ -138,7 +138,7 @@ def openapi(
 @cli.command()
 def install() -> None:
     """Complete installation."""
-    console.print("Installation complete.")
+    console.print("Installation complete!")
 
 
 @cli.command("whoami")
