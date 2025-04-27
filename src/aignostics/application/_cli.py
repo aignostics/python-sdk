@@ -1,11 +1,25 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
+from pathlib import Path
+from typing import Annotated
+
 import typer
 
-import aignostics.platform
+from aignostics.platform import Client
 from aignostics.utils import console, get_logger
 
-logger = get_logger(__name__)
+from ._utils import (
+    _decorate_with_metadata,
+    _retrieve_and_print_run_details,
+    _single_spot_payload,
+    find_latest_version,
+    find_run_by_id,
+    get_client,
+    print_runs_non_verbose,
+    print_runs_verbose,
+)
+
+log = get_logger(__name__)
 
 cli = typer.Typer(name="application", help="Run applications on Aignostics platform.")
 
@@ -28,23 +42,126 @@ run_app.add_typer(result_app, name="result", help="Results of applications runs"
 @cli.command("e2e")
 def application_e2e() -> None:
     """E2E test."""
-    client = aignostics.platform.Client()
-    applications = client.applications.list()
-    console.print(list(applications))
+    client = Client(cache_token=False)
+    payload = [
+        _decorate_with_metadata(
+            item,
+            {
+                "user_slide": {
+                    "cancer": {"type": "lung", "tissue": "lung"},
+                }
+            },
+        )
+        for item in _single_spot_payload()
+    ]
+    application_run = client.runs.create("h-e-tme:v0.36.0", items=payload)
+    destination_dir = Path("data/out")
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    application_run.download_to_folder(destination_dir)
 
 
 @cli.command("list")
-def application_list() -> None:
+def application_list(
+    verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+) -> None:
     """List available applications."""
-    client = aignostics.platform.Client()
+    client = Client()
     applications = client.applications.list()
-    console.print(list(applications))
+
+    app_count = 0
+
+    if verbose:
+        console.print("[bold]Available Applications:[/bold]")
+        console.print("=" * 80)
+
+        for app in applications:
+            app_count += 1
+            console.print(f"[bold]Application ID:[/bold] {app.application_id}")
+            console.print(f"[bold]Name:[/bold] {app.name}")
+            console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
+
+            # Display available versions
+            versions = list(client.applications.versions.list(app))
+            if versions:
+                console.print("[bold]Available Versions:[/bold]")
+                for version in versions:
+                    console.print(f"  - {version.version} ({version.application_version_id})")
+                    console.print(f"    Changelog: {version.changelog}")
+
+                    # Count input and output artifacts
+                    num_inputs = len(version.input_artifacts)
+                    num_outputs = len(version.output_artifacts)
+                    console.print(f"    Artifacts: {num_inputs} input(s), {num_outputs} output(s)")
+
+            # Display description with proper wrapping
+            console.print("[bold]Description:[/bold]")
+            for line in app.description.strip().split("\n"):
+                console.print(f"  {line}")
+
+            console.print("-" * 80)
+    else:
+        console.print("[bold]Available Applications:[/bold]")
+        for app in applications:
+            app_count += 1
+            # Get latest version info for this application
+            latest_version = find_latest_version(app, client)
+            console.print(f"- [bold]{app.application_id}[/bold] - latest: {latest_version}")
+
+    if app_count == 0:
+        console.print("No applications available.")
 
 
 @cli.command("describe")
-def application_describe() -> None:
+def application_describe(
+    application_id: Annotated[str, typer.Option(help="Id of the application to desfribe")],
+) -> None:
     """Describe application."""
-    console.print("describe application")
+    client = Client()
+    found = False
+
+    for app in client.applications.list():
+        if app.application_id == application_id:
+            found = True
+            console.print(f"[bold]Application Details for {app.application_id}[/bold]")
+            console.print("=" * 80)
+            console.print(f"[bold]Name:[/bold] {app.name}")
+            console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
+
+            # Display description with proper wrapping
+            console.print("[bold]Description:[/bold]")
+            for line in app.description.strip().split("\n"):
+                console.print(f"  {line}")
+
+            # Display available versions
+            versions = list(client.applications.versions.list(app))
+            if versions:
+                console.print()
+                console.print("[bold]Available Versions:[/bold]")
+                for version in versions:
+                    console.print(f"  [bold]Version ID:[/bold] {version.application_version_id}")
+                    console.print(f"  [bold]Version:[/bold] {version.version}")
+                    console.print(f"  [bold]Changelog:[/bold] {version.changelog}")
+
+                    # Display input artifacts
+                    console.print("  [bold]Input Artifacts:[/bold]")
+                    for artifact in version.input_artifacts:
+                        console.print(f"    - Name: {artifact.name}")
+                        console.print(f"      MIME Type: {artifact.mime_type}")
+                        console.print(f"      Schema: {artifact.metadata_schema}")
+
+                    # Display output artifacts
+                    console.print("  [bold]Output Artifacts:[/bold]")
+                    for artifact in version.output_artifacts:
+                        console.print(f"    - Name: {artifact.name}")
+                        console.print(f"      MIME Type: {artifact.mime_type}")
+                        console.print(f"      Scope: {artifact.scope}")
+                        console.print(f"      Schema: {artifact.metadata_schema}")
+
+                    console.print()
+            break
+
+    if not found:
+        console.print(f"[bold red]Error:[/bold red] Application with ID '{application_id}' not found.")
 
 
 @bucket_app.command("ls")
@@ -78,38 +195,178 @@ def run_submit() -> None:
 
 
 @run_app.command("list")
-def run_list() -> None:
-    """List runs."""
-    client = aignostics.platform.Client()
-    runs = client.runs.list()
-    console.print(runs)
+def run_list(
+    verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+) -> bool:
+    """List runs.
+
+    Args:
+        verbose (bool): If True, show detailed information about each run
+
+    Returns:
+        bool: Success status of the operation
+    """
+    client = get_client()
+    if not client:
+        return False
+
+    try:
+        # List all runs and convert generator to list
+        runs = list(client.runs.list())
+    except Exception as e:
+        log.exception("Failed to list runs")
+        console.print(f"[bold red]Error:[/bold red] Failed to list runs: {e}")
+        return False
+
+    # Use different display functions based on verbose flag
+    run_count = print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
+
+    if run_count == 0:
+        console.print("No application runs found.")
+
+    return True
 
 
 @run_app.command("describe")
-def run_describe() -> None:
-    """Describe run."""
-    console.print("The run")
+def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desfribe")]) -> bool:
+    """Describe run.
+
+    Args:
+        run_id (str): The ID of the run to describe
+
+    Returns:
+        bool: Success status of the operation
+    """
+    log.debug("Describing run with ID '%s'", run_id)
+
+    client = get_client()
+    if not client:
+        return False
+
+    try:
+        run = find_run_by_id(run_id, client)
+    except Exception as e:
+        log.exception("Failed to find run with ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
+        return False
+
+    if run:
+        log.debug("Found run with ID '%s'", run_id)
+        try:
+            _retrieve_and_print_run_details(run, run_id)
+        except Exception as e:
+            log.exception("Failed to retrieve and print run details for ID '%s'", run_id)
+            console.print(f"[bold red]Error:[/bold red] Failed to retrieve run details for ID '{run_id}': {e}")
+            return False
+        log.info("Described run with ID '%s'", run_id)
+        return True
+
+    log.warning("Run with ID '%s' not found.", run_id)
+    console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
+    return False
 
 
 @run_app.command("cancel")
-def run_cancel() -> None:
-    """Cancel run."""
-    console.print("canceled run")
+def run_cancel(
+    run_id: Annotated[str, typer.Option(..., help="Id of the run to cancel")],
+) -> bool:
+    """Cancel run.
+
+    Args:
+        run_id(str): The ID of the run to cancel
+
+    Returns:
+        bool: True if the run was canceled successfully, False otherwise
+    """
+    log.debug("Canceling run with ID '%s'", run_id)
+
+    client = get_client()
+    if not client:
+        return False
+
+    try:
+        run = find_run_by_id(run_id, client)
+    except Exception as e:
+        log.exception("Failed to find run with ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
+        return False
+
+    if run:
+        try:
+            run.cancel()
+        except Exception as e:
+            log.exception("Failed to cancel run with ID '%s'", run_id)
+            console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
+            return False
+        log.info("Canceled run with ID '%s'.", run)
+        console.print(f"Run with ID '{run_id}' has been canceled.")
+        return True
+
+    log.warning("Run with ID '%s' not found.", run_id)
+    console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
+    return False
 
 
 @result_app.command("describe")
 def result_describe() -> None:
     """Describe the result of an application run."""
-    console.print("describe result")
+    console.print("NOT YET IMPLEMENTED")
 
 
 @result_app.command("download")
-def result_download() -> None:
-    """Download the result of an application run."""
-    console.print("download result")
+def result_download(
+    run_id: Annotated[str, typer.Option(..., help="Id of the run to download results for")],
+    destination: Annotated[str, typer.Option(help="Destination directory to download results to")],
+) -> bool:
+    """Download the result of an application run.
+
+    Args:
+        run_id (str): The ID of the run to download results for
+        destination (str): The destination directory to download results to
+
+    Returns:
+        bool: True if the download was successful, False otherwise
+    """
+    log.debug("Downloading results for run with ID '%s' to '%s'", run_id, destination)
+
+    destination_dir = Path(destination)
+    try:
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        log.debug("Created destination directory '%s'", destination_dir)
+    except OSError as e:
+        log.exception("Failed to create destination directory '%s'", destination)
+        console.log(f"[bold red]Error:[/bold red] Failed to create destination directory '{destination}': {e}")
+        return False
+
+    client = get_client()
+    if not client:
+        return False
+
+    try:
+        run = find_run_by_id(run_id, client)
+    except Exception as e:
+        log.exception("Failed to find run with ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
+        return False
+
+    if run:
+        log.debug("Found run with ID '%s'", run_id)
+        try:
+            run.download_to_folder(destination_dir)
+        except Exception as e:
+            log.exception("Failed to download results for run with ID '%s'", run_id)
+            console.print(f"[bold red]Error:[/bold red] Failed to download results for run with ID '{run_id}': {e}")
+            return False
+        log.info("Downloaded results for run with ID '%s' to '%s'", run_id, destination_dir)
+        console.print("downloaded result")
+        return True
+
+    log.warning("Run with ID '%s' not found.", run_id)
+    console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
+    return False
 
 
 @result_app.command("delete")
 def result_delete() -> None:
     """Delete the result of an application run."""
-    console.print("delete resuilt")
+    console.print("NOT YET IMPLEMENTED")

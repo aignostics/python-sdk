@@ -88,3 +88,5 @@ profile.html
 
 
 # Application specific
+data/**
+!data/.keep */
