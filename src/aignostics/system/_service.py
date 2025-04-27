@@ -156,9 +156,15 @@ class Service(BaseService):
         Returns:
             dict[str, Any]: Service configuration.
         """
+        import psutil  # noqa: PLC0415
         from uptime import boottime, uptime  # noqa: PLC0415
 
         bootdatetime = boottime()
+        vmem = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        cpu_percent = psutil.cpu_percent(interval=5)
+        cpu_times_percent = psutil.cpu_times_percent(interval=5)
+
         rtn: InfoDict = {
             "package": {
                 "version": __version__,
@@ -182,9 +188,33 @@ class Service(BaseService):
                         "version": platform.version(),
                     },
                     "machine": {
-                        "arch": platform.machine(),
-                        "processor": platform.processor(),
-                        "cpu_count": os.cpu_count(),
+                        "cpu": {
+                            "percent": cpu_percent,
+                            "load_avg": psutil.getloadavg(),
+                            "user": cpu_times_percent.user,
+                            "system": cpu_times_percent.system,
+                            "idle": cpu_times_percent.idle,
+                            "arch": platform.machine(),
+                            "processor": platform.processor(),
+                            "count": os.cpu_count(),
+                            "frequency": psutil.cpu_freq(),
+                        },
+                        "memory": {
+                            "percent": vmem.percent,
+                            "total": vmem.total,
+                            "available": vmem.available,
+                            "used": vmem.used,
+                            "free": vmem.free,
+                            "active": vmem.active,
+                            "inactive": vmem.inactive,
+                            "wired": vmem.wired,
+                        },
+                        "swap": {
+                            "percent": swap.percent,
+                            "total": swap.total,
+                            "used": swap.used,
+                            "free": swap.free,
+                        },
                     },
                     "network": {
                         "hostname": platform.node(),
