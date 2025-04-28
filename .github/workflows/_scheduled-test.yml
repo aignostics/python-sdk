@@ -50,6 +50,8 @@ jobs:
         run: make audit
 
       - name: Test / scheduled
+        env:
+          BETTERSTACK_HEARTBEAT_URL: "${{ secrets.BETTERSTACK_HEARTBEAT_URL }}"
         run: |
           set +e
           make test_scheduled

@@ -3,7 +3,6 @@
 import json
 import os
 import platform
-import pwd
 import sys
 import typing as t
 from pathlib import Path
@@ -178,7 +177,7 @@ class Service(BaseService):
             },
             "runtime": {
                 "environment": __env__,
-                "username": pwd.getpwuid(os.getuid())[0],
+                "username": psutil.Process().username(),
                 "process": {
                     "command_line": " ".join(sys.argv),
                     "entry_point": sys.argv[0] if sys.argv else None,
