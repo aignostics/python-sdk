@@ -50,6 +50,8 @@ jobs:
         run: make audit
 
       - name: Test / scheduled
+        env:
+          BETTERSTACK_HEARTBEAT_URL: "${{ secrets.BETTERSTACK_HEARTBEAT_URL }}"
         run: |
           set +e
           make test_scheduled
@@ -75,7 +77,7 @@ jobs:
             echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-          # Provide heartbeat to betterstack for monitoring/alerting if heartbeat url is configured as secret
+          # Provide heartbeat to bettersqtack for monitoring/alerting if heartbeat url is configured as secret
           if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
             if [ $EXIT_CODE -eq 0 ]; then
               curl -s $BETTERSTACK_HEARTBEAT_URL
