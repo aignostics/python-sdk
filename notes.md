@@ -3,25 +3,24 @@
 1. Install the Python SDK by copy&pasting the script shown on
    https://platform.aignostics.com to your terminal. You should see
    "Installation complete"
-2. Copy the `aignx-gcp-credentials.json` you get from Andreas to your Downloads
-   folder
-3. Copy the `user_slide.csv` you get from Helmut to your Downloads folder
-4. Move the files from step 2 and 3 into the right places
+2. Download the `aignx-gcp-credentials.json` into your Downloads folder. Then
+   execute
+   `mv ~/Downloads/aignx-gcp-credentials.json ~/.aignostics/aignx-gcp-credentials.json`
+3. Execute
 
 ```shell
-mv ~/Downloads/aignx-gcp-credentials.json ~/.aignostics/aignx-gcp-credentials.json
-mkdir ~/Downloads/heta
-mv ~/Downloads/user_slide.csv ~/Downloads/heta/user_slide.csv
+mkdir ~/heta
+curl https://raw.githubusercontent.com/aignostics/python-sdk/.../user_slide.csv ...
 ```
 
-5. Check the metadata by opening `~/Downloads/user_slide.csv` in Excel or
-   another program
+4. Check the metadata by opening `~/heta/user_slide.csv` in Excel or another
+   program
 
-6. Run the following commands in your terminal, step by step:
+5. Run the following commands in your terminal, step by step:
 
 ```shell
 # Goto folder we created in step 4
-cd ~/Downloads/heta
+cd ~/heta
 
 # Should print installation complete
 uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system install 
