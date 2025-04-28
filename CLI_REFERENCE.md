@@ -70,27 +70,12 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `e2e`: E2E test.
 * `list`: List available applications.
 * `describe`: Describe application.
 * `bucket`: Transfer bucket provide by platform
 * `dataset`: Datasets for use as input for applications
 * `metadata`: Metadata required as input for applications
 * `run`: Runs of applications
-
-### `aignostics application e2e`
-
-E2E test.
-
-**Usage**:
-
-```console
-$ aignostics application e2e [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
 
 ### `aignostics application list`
 
@@ -104,6 +89,7 @@ $ aignostics application list [OPTIONS]
 
 **Options**:
 
+* `--verbose / --no-verbose`: Show application details  [default: no-verbose]
 * `--help`: Show this message and exit.
 
 ### `aignostics application describe`
@@ -118,6 +104,7 @@ $ aignostics application describe [OPTIONS]
 
 **Options**:
 
+* `--application-id TEXT`: Id of the application to describe  [required]
 * `--help`: Show this message and exit.
 
 ### `aignostics application bucket`
@@ -257,6 +244,14 @@ $ aignostics application run [OPTIONS] COMMAND [ARGS]...
 
 Create run.
 
+Args:
+    application_version_id (str): The ID of the application version to submit a run for
+    source (str): The source of the run. If not starting with &#x27;s3://&#x27; or &#x27;gs://&#x27;,
+        it is assumed to be a local file path pointing to a .csv file
+
+Returns:
+    bool: Success status of the operation
+
 **Usage**:
 
 ```console
@@ -265,11 +260,19 @@ $ aignostics application run submit [OPTIONS]
 
 **Options**:
 
+* `--application-version-id TEXT`: Id of the application version to submit run for  [required]
+* `--source TEXT`: Source of the run. If not starting with &#x27;s3://&#x27; or &#x27;gs://&#x27;, it is assumed to be a local file path pointing to a .csv file  [required]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`
 
 List runs.
+
+Args:
+    verbose (bool): If True, show detailed information about each run
+
+Returns:
+    bool: Success status of the operation
 
 **Usage**:
 
@@ -279,11 +282,18 @@ $ aignostics application run list [OPTIONS]
 
 **Options**:
 
+* `--verbose / --no-verbose`: Show application details  [default: no-verbose]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run describe`
 
 Describe run.
+
+Args:
+    run_id (str): The ID of the run to describe
+
+Returns:
+    bool: Success status of the operation
 
 **Usage**:
 
@@ -293,11 +303,18 @@ $ aignostics application run describe [OPTIONS]
 
 **Options**:
 
+* `--run-id TEXT`: Id of the run to desfribe  [required]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run cancel`
 
 Cancel run.
+
+Args:
+    run_id(str): The ID of the run to cancel
+
+Returns:
+    bool: True if the run was canceled successfully, False otherwise
 
 **Usage**:
 
@@ -307,6 +324,7 @@ $ aignostics application run cancel [OPTIONS]
 
 **Options**:
 
+* `--run-id TEXT`: Id of the run to cancel  [required]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run result`
@@ -347,6 +365,13 @@ $ aignostics application run result describe [OPTIONS]
 
 Download the result of an application run.
 
+Args:
+    run_id (str): The ID of the run to download results for
+    destination (str): The destination directory to download results to
+
+Returns:
+    bool: True if the download was successful, False otherwise
+
 **Usage**:
 
 ```console
@@ -355,6 +380,8 @@ $ aignostics application run result download [OPTIONS]
 
 **Options**:
 
+* `--run-id TEXT`: Id of the run to download results for  [required]
+* `--destination TEXT`: Destination directory to download results to  [required]
 * `--help`: Show this message and exit.
 
 ##### `aignostics application run result delete`
