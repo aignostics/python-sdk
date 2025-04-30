@@ -75,12 +75,12 @@ class PageBuilder(BasePageBuilder):
                 with ui.carousel_slide().classes("p-0"):
                     # ui.image("/assets/home-card-1.png").classes("w-[768px]")
                     ui.image(
-                        "https://raw.githubusercontent.com/aignostics/python-sdk/d2b951d97b2152bdbe39c249a82023ae03ec9c99/gui_assets/home-card-1.png?token=GHSAT0AAAAAACZ3KNX5LF7KIPJ6KEGU5MMC2ASCG5Q"
+                        "https://github.com/aignostics/python-sdk/blob/d2b951d97b2152bdbe39c249a82023ae03ec9c99/gui_assets/home-card-1.png?raw=true"
                     ).classes("w-[768px]")
                 with ui.carousel_slide().classes("p-0"):
                     # ui.image("/assets/home-card-2.png").classes("w-[768px]")
                     ui.image(
-                        "https://raw.githubusercontent.com/aignostics/python-sdk/d2b951d97b2152bdbe39c249a82023ae03ec9c99/gui_assets/home-card-2.png?token=GHSAT0AAAAAACZ3KNX4ZT2YAVUF2C7Y3DDA2ASCH2A"
+                        "https://github.com/aignostics/python-sdk/blob/d2b951d97b2152bdbe39c249a82023ae03ec9c99/gui_assets/home-card-2.png?raw=true"
                     ).classes("w-[768px]")
 
         @ui.page("/application/{application_id}")
