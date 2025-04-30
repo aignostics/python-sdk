@@ -15,7 +15,7 @@ async def pick_file(multiple: bool = True) -> None:
     """Open a file picker dialog and show notifier when closed again."""
     from nicegui import ui  # noqa: PLC0415
 
-    result = await GUILocalFilePicker(str(Path.cwd() / "examples"), multiple=multiple)  # type: ignore
+    result = await GUILocalFilePicker(str(Path.home()), multiple=multiple)  # type: ignore
     ui.notify(f"You chose {result}")
 
 
