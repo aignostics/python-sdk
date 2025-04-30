@@ -73,15 +73,9 @@ class PageBuilder(BasePageBuilder):
 
             with ui.carousel(animated=True, arrows=True, navigation=True).props("height=312px"):
                 with ui.carousel_slide().classes("p-0"):
-                    # ui.image("/assets/home-card-1.png").classes("w-[768px]")
-                    ui.image(
-                        "https://github.com/aignostics/python-sdk/blob/d2b951d97b2152bdbe39c249a82023ae03ec9c99/gui_assets/home-card-1.png?raw=true"
-                    ).classes("w-[768px]")
+                    ui.image("assets/home-card-1.png").classes("w-[768px]")
                 with ui.carousel_slide().classes("p-0"):
-                    # ui.image("/assets/home-card-2.png").classes("w-[768px]")
-                    ui.image(
-                        "https://github.com/aignostics/python-sdk/blob/d2b951d97b2152bdbe39c249a82023ae03ec9c99/gui_assets/home-card-2.png?raw=true"
-                    ).classes("w-[768px]")
+                    ui.image("assets/home-card-2.png").classes("w-[768px]")
 
         @ui.page("/application/{application_id}")
         async def page_application_describe(application_id: str) -> None:
