@@ -21,4 +21,4 @@ class PageBuilder(BasePageBuilder):
         """)
 
         assets = Path("gui_assets")
-        app.add_media_files("/assets", assets)
+        app.add_static_files("/assets", assets)
