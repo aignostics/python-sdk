@@ -68,19 +68,8 @@ uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aig
 uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics gui
 ```
 
-# Installing Google Cloud CLI (wip)
+# HMAC
 
-1. Install homebrew by executing
-   `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-   in your terminal. You will have to enter your password and do what's
-   otherwise asked for. This will take a while ...
-2. Install Google Cloud CLI by executing `brew install --cask google-cloud-sdk`
-   in your terminal.
-3. Run `gcloud init` in your terminal. This will open a browser window and ask
-   you to log in. You will have to select the project you want to use. This
-   should be `aignx-development` for the time being. You can also select a
-   default region and zone, but this is not necessary.
-4. Run `gcloud auth application-default login` in your terminal. This will open
-   a browser window and ask you to log in. This will create a file
-   `~/.config/gcloud/application_default_credentials.json` which is used by the
-   Python SDK to authenticate with Google Cloud.
+```
+uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff
+```

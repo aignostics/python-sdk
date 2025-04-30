@@ -1,18 +1,25 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
+import os
+import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Annotated
 
+import requests
 import typer
+from tqdm.rich import tqdm
 
-from aignostics.platform import Client
+from aignostics.platform import generate_signed_url
 from aignostics.utils import console, get_logger
 
 from ._utils import (
     construct_input_items,
-    find_latest_version,
+    create_signed_upload_url,
+    find_application_by_id,
+    find_latest_application_version,
     find_run_by_id,
-    get_client,
+    get_platform_client,
     print_runs_non_verbose,
     print_runs_verbose,
     retrieve_and_print_run_details,
@@ -38,13 +45,111 @@ result_app = typer.Typer()
 run_app.add_typer(result_app, name="result", help="Results of applications runs")
 
 
-@cli.command("list")
-def application_list(
-    verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+@cli.command("download")
+def download(
+    source_url: Annotated[str, typer.Option(help="URL to download")],
+    destination_directory: Annotated[str, typer.Option(help="Destination directory to download to")],
 ) -> None:
-    """List available applications."""
-    client = Client()
-    applications = client.applications.list()
+    """Download from bucket to folder via a signed URL."""
+    source_url_signed = generate_signed_url(source_url)
+    console.print("Generated signed URL:")
+    console.print(source_url_signed)
+    destination_directory_path = Path(destination_directory)
+    if not destination_directory_path.is_dir():
+        console.print(f"[bold red]Error:[/bold red] Destination directory '{destination_directory}' does not exist.")
+        return
+    # Extract filename from the URL
+    filename = source_url_signed.split("/")[-1].split("?")[0]
+
+    output_path = Path(destination_directory) / filename
+
+    # Download the file
+    response = requests.get(source_url_signed, stream=True, timeout=60)
+    response.raise_for_status()  # Raise an exception for HTTP errors
+
+    # Get total file size for progress bar
+    total_size = int(response.headers.get("content-length", 0))
+
+    with (
+        open(output_path, "wb") as f,
+        tqdm(total=total_size, unit="B", unit_scale=True, unit_divisor=1024, desc=filename, miniters=1) as progress_bar,
+    ):
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+                progress_bar.update(len(chunk))
+
+    print(f"File successfully downloaded to {output_path}")
+
+
+@cli.command("upload")
+def upload(
+    source_file: Annotated[str, typer.Option(help="Source file to upload")],
+) -> None:
+    """Upload a filew to a transfer bucket via a signed URL, authenticating with hmac."""
+    source_file_path = Path(source_file)
+    if not source_file_path.is_file():
+        log.warning("Source file '%s' does not exist.", source_file)
+        console.print(f"[bold red]Error:[/bold red] Source file '{source_file}' does not exist.")
+        return
+
+    # Generate signed URL
+    bucket_name = str(os.environ.get("AIGNOSTICS_PLATFORM_BUCKET_NAME"))
+    timestamp_millis = int(time.time() * 1000)
+    object_key = f"helmut/heta/{timestamp_millis}_{source_file_path.name}"
+    url = create_signed_upload_url(bucket_name, object_key)
+
+    log.debug("Generated signed upload URL: %s", url)
+
+    file_size = source_file_path.stat().st_size
+    with (
+        open(source_file_path, "rb") as f,
+        tqdm(
+            total=file_size, unit="B", unit_scale=True, unit_divisor=1024, desc=source_file_path.name, miniters=1
+        ) as progress_bar,
+    ):
+
+        def read_in_chunks() -> Generator[bytes, None, None]:
+            while True:
+                chunk = f.read(8192)  # 8KB chunks
+                if not chunk:
+                    break
+                progress_bar.update(len(chunk))
+                yield chunk
+
+        response = requests.put(
+            url, data=read_in_chunks(), headers={"Content-Type": "application/octet-stream"}, timeout=60
+        )
+
+        response.raise_for_status()
+
+    console.print(
+        f"[bold green]Success:[/bold green] File '{source_file_path.name}' uploaded successfully to 'gs://{bucket_name}/{object_key}'."
+    )
+
+
+@cli.command("list")
+def application_list(  # noqa: C901
+    verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+) -> bool:
+    """List available applications.
+
+    Args:
+        verbose (bool): If True, show detailed information about each application
+
+    Returns:
+        bool: Success status of the operation
+    """
+    platform_client = get_platform_client()
+    if not platform_client:
+        return False
+
+    try:
+        applications = platform_client.applications.list()
+    except Exception as e:
+        log.exception("Failed to list applications")
+        console.print(f"[bold red]Error:[/bold red] Failed to list applications: {e}")
+        return False
 
     app_count = 0
 
@@ -59,7 +164,14 @@ def application_list(
             console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
 
             # Display available versions
-            versions = list(client.applications.versions.list(app))
+            try:
+                versions = list(platform_client.applications.versions.list(app))
+            except Exception as e:
+                log.exception("Failed to list versions for application '%s'", app.application_id)
+                console.print(
+                    f"[bold red]Error:[/bold red] Failed to list versions for application '{app.application_id}': {e}"
+                )
+                continue
             if versions:
                 console.print("[bold]Available Versions:[/bold]")
                 for version in versions:
@@ -82,64 +194,82 @@ def application_list(
         for app in applications:
             app_count += 1
             # Get latest version info for this application
-            latest_version = find_latest_version(app, client)
+            latest_version = find_latest_application_version(app, platform_client)
             console.print(f"- [bold]{app.application_id}[/bold] - latest application version id: `{latest_version}`")
 
     if app_count == 0:
+        log.warning("No applications available.")
         console.print("No applications available.")
+
+    return True
 
 
 @cli.command("describe")
 def application_describe(
     application_id: Annotated[str, typer.Option(help="Id of the application to describe")],
-) -> None:
-    """Describe application."""
-    client = Client()
-    found = False
+) -> bool:
+    """Describe application.
 
-    for app in client.applications.list():
-        if app.application_id == application_id:
-            found = True
-            console.print(f"[bold]Application Details for {app.application_id}[/bold]")
-            console.print("=" * 80)
-            console.print(f"[bold]Name:[/bold] {app.name}")
-            console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
+    Args:
+        application_id (str): The ID of the application to describe
 
-            # Display description with proper wrapping
-            console.print("[bold]Description:[/bold]")
-            for line in app.description.strip().split("\n"):
-                console.print(f"  {line}")
+    Returns:
+        bool: Success status of the operation
+    """
+    platform_client = get_platform_client()
+    if not platform_client:
+        return False
 
-            # Display available versions
-            versions = list(client.applications.versions.list(app))
-            if versions:
-                console.print()
-                console.print("[bold]Available Versions:[/bold]")
-                for version in versions:
-                    console.print(f"  [bold]Version ID:[/bold] {version.application_version_id}")
-                    console.print(f"  [bold]Version:[/bold] {version.version}")
-                    console.print(f"  [bold]Changelog:[/bold] {version.changelog}")
+    try:
+        application = find_application_by_id(application_id, platform_client)
+    except Exception as e:
+        log.exception("Failed to find application with ID '%s'", application_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to find application: {e}")
+        return False
 
-                    # Display input artifacts
-                    console.print("  [bold]Input Artifacts:[/bold]")
-                    for artifact in version.input_artifacts:
-                        console.print(f"    - Name: {artifact.name}")
-                        console.print(f"      MIME Type: {artifact.mime_type}")
-                        console.print(f"      Schema: {artifact.metadata_schema}")
+    if not application:
+        log.warning("Application with ID '%s' not found.", application_id)
+        console.print(f"[bold red]Warning:[/bold red] Application with ID '{application_id}' not found.")
+        return False
 
-                    # Display output artifacts
-                    console.print("  [bold]Output Artifacts:[/bold]")
-                    for artifact in version.output_artifacts:
-                        console.print(f"    - Name: {artifact.name}")
-                        console.print(f"      MIME Type: {artifact.mime_type}")
-                        console.print(f"      Scope: {artifact.scope}")
-                        console.print(f"      Schema: {artifact.metadata_schema}")
+    console.print(f"[bold]Application Details for {application.application_id}[/bold]")
+    console.print("=" * 80)
+    console.print(f"[bold]Name:[/bold] {application.name}")
+    console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(application.regulatory_classes)}")
 
-                    console.print()
-            break
+    # Display description with proper wrapping
+    console.print("[bold]Description:[/bold]")
+    for line in application.description.strip().split("\n"):
+        console.print(f"  {line}")
 
-    if not found:
-        console.print(f"[bold red]Error:[/bold red] Application with ID '{application_id}' not found.")
+    # Display available versions
+    versions = list(platform_client.applications.versions.list(application))
+    if versions:
+        console.print()
+        console.print("[bold]Available Versions:[/bold]")
+        for version in versions:
+            console.print(f"  [bold]Version ID:[/bold] {version.application_version_id}")
+            console.print(f"  [bold]Version:[/bold] {version.version}")
+            console.print(f"  [bold]Changelog:[/bold] {version.changelog}")
+
+            # Display input artifacts
+            console.print("  [bold]Input Artifacts:[/bold]")
+            for artifact in version.input_artifacts:
+                console.print(f"    - Name: {artifact.name}")
+                console.print(f"      MIME Type: {artifact.mime_type}")
+                console.print(f"      Schema: {artifact.metadata_schema}")
+
+            # Display output artifacts
+            console.print("  [bold]Output Artifacts:[/bold]")
+            for artifact in version.output_artifacts:
+                console.print(f"    - Name: {artifact.name}")
+                console.print(f"      MIME Type: {artifact.mime_type}")
+                console.print(f"      Scope: {artifact.scope}")
+                console.print(f"      Schema: {artifact.metadata_schema}")
+
+            console.print()
+
+    return True
 
 
 @bucket_app.command("ls")
@@ -187,8 +317,8 @@ def run_submit(
     Returns:
         bool: Success status of the operation
     """
-    client = get_client()
-    if not client:
+    platform_client = get_platform_client()
+    if not platform_client:
         return False
 
     source_csv = Path(source)
@@ -197,7 +327,16 @@ def run_submit(
         console.print(f"[bold red]Error:[/bold red] Source file '{source}' does not exist.")
         return False
     payload = construct_input_items(source_csv)
-    application_run = client.runs.create(application_version=application_version_id, items=payload)
+
+    try:
+        application_run = platform_client.runs.create(application_version=application_version_id, items=payload)
+    except Exception as e:
+        log.exception("Failed to create run for application version '%s'", application_version_id)
+        console.print(
+            f"[bold red]Error:[/bold red] Failed to create run for application version '{application_version_id}': {e}"
+        )
+        return False
+
     console.print(f"submitted run with id '{application_run}'")
     return True
 
@@ -214,13 +353,13 @@ def run_list(
     Returns:
         bool: Success status of the operation
     """
-    client = get_client()
-    if not client:
+    platform_client = get_platform_client()
+    if not platform_client:
         return False
 
     try:
         # List all runs and convert generator to list
-        runs = list(client.runs.list())
+        runs = list(platform_client.runs.list())
     except Exception as e:
         log.exception("Failed to list runs")
         console.print(f"[bold red]Error:[/bold red] Failed to list runs: {e}")
@@ -230,6 +369,7 @@ def run_list(
     run_count = print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
 
     if run_count == 0:
+        log.warning("No application runs found.")
         console.print("No application runs found.")
 
     return True
@@ -247,12 +387,12 @@ def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desf
     """
     log.debug("Describing run with ID '%s'", run_id)
 
-    client = get_client()
-    if not client:
+    platform_client = get_platform_client()
+    if not platform_client:
         return False
 
     try:
-        run = find_run_by_id(run_id, client)
+        run = find_run_by_id(run_id, platform_client)
     except Exception as e:
         log.exception("Failed to find run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
@@ -288,12 +428,12 @@ def run_cancel(
     """
     log.debug("Canceling run with ID '%s'", run_id)
 
-    client = get_client()
-    if not client:
+    platform_client = get_platform_client()
+    if not platform_client:
         return False
 
     try:
-        run = find_run_by_id(run_id, client)
+        run = find_run_by_id(run_id, platform_client)
     except Exception as e:
         log.exception("Failed to find run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
@@ -346,12 +486,12 @@ def result_download(
         console.log(f"[bold red]Error:[/bold red] Failed to create destination directory '{destination}': {e}")
         return False
 
-    client = get_client()
-    if not client:
+    platform_client = get_platform_client()
+    if not platform_client:
         return False
 
     try:
-        run = find_run_by_id(run_id, client)
+        run = find_run_by_id(run_id, platform_client)
     except Exception as e:
         log.exception("Failed to find run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")

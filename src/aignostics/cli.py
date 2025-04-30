@@ -1,9 +1,11 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
 import sys
+import warnings
 from importlib.util import find_spec
 
 import typer
+from tqdm import TqdmExperimentalWarning
 
 from .constants import MODULES_TO_INSTRUMENT
 from .utils import __is_running_in_container__, __version__, boot, console, get_logger, prepare_cli
@@ -13,6 +15,7 @@ logger = get_logger(__name__)
 
 cli = typer.Typer(help="Command Line Interface of Aignostics Python SDK")
 
+warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 
 if find_spec("nicegui") and find_spec("webview") and not __is_running_in_container__:
 
@@ -21,7 +24,7 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
         """Open graphical user interface (GUI)."""
         from .utils import gui_run  # noqa: PLC0415
 
-        gui_run(native=True, with_api=False, title="Aignostics Python SDK", icon="🔬")
+        gui_run(native=True, with_api=False, title="Aignostics Platform Launcher", icon="🔬")
 
 
 if find_spec("marimo"):

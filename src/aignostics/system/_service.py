@@ -246,7 +246,7 @@ class Service(BaseService):
             if filter_secrets:
                 runtime["environ"] = {
                     k: v
-                    for k, v in os.environ.items()
+                    for k, v in sorted(os.environ.items())
                     if not (
                         "token" in k.lower()
                         or "key" in k.lower()
@@ -256,7 +256,7 @@ class Service(BaseService):
                     )
                 }
             else:
-                runtime["environ"] = dict(os.environ)
+                runtime["environ"] = dict(sorted(os.environ.items()))
 
         settings: dict[str, Any] = {}
         for settings_class in locate_subclasses(BaseSettings):
@@ -268,7 +268,7 @@ class Service(BaseService):
             for key, value in settings_dict.items():
                 flat_key = f"{env_prefix}{key}".upper()
                 settings[flat_key] = value
-        rtn["settings"] = settings
+        rtn["settings"] = {k: settings[k] for k in sorted(settings)}
 
         # Convert the TypedDict to a regular dict before adding dynamic service keys
         result_dict: dict[str, Any] = dict(rtn)

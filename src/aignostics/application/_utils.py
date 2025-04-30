@@ -1,10 +1,14 @@
 """Utility functions to ease using the platform client."""
 
 import csv
+import os
 from enum import StrEnum
 from operator import itemgetter
 from pathlib import Path
 from typing import Literal
+
+from boto3.session import Session
+from botocore.client import Config
 
 from aignostics.platform import (
     Application,
@@ -13,7 +17,6 @@ from aignostics.platform import (
     Client,
     InputArtifact,
     InputItem,
-    generate_signed_url,
 )
 from aignostics.utils import console, get_logger
 
@@ -31,13 +34,14 @@ class OutputFormat(StrEnum):
     Usage:
         format = OutputFormat.YAML
         print(f"Using {format} format")
+    https://nicegui.io/documentation/html
     """
 
     TEXT = "text"
     JSON = "json"
 
 
-def get_client() -> Client | None:
+def get_platform_client() -> Client | None:
     """Get a client instance.
 
     Returns:
@@ -52,6 +56,54 @@ def get_client() -> Client | None:
         log.exception("Failed to create authenticated client.")
         console.print(f"[bold red]Error:[/bold red] Failed to connect to Aignostics Platform: {e}")
     return None
+
+
+def _get_s3_client(endpoint_url: str = "https://storage.googleapis.com"):  # noqa: ANN202
+    """Get a client instance for S3.
+
+    Returns:
+        botocore.client.S3: A Boto3 S3 client instance.
+    """
+    # https://www.kmp.tw/post/accessgcsusepythonboto3/
+    hmac_access_key_id = os.environ.get("AIGNOSTICS_PLATFORM_HMAC_ACCESS_KEY_ID")
+    hmac_secret_access_key = os.environ.get("AIGNOSTICS_PLATFORM_HMAC_SECRET_ACCESS_KEY")
+
+    region_name = "EUROPE-WEST3"
+
+    session = Session(
+        aws_access_key_id=hmac_access_key_id, aws_secret_access_key=hmac_secret_access_key, region_name=region_name
+    )
+    return session.client("s3", endpoint_url=endpoint_url, config=Config(signature_version="s3v4"))
+
+
+def create_signed_upload_url(bucket_name: str, object_key: str) -> str:
+    """Generates a signed URL to upload a Google Cloud Storage object.
+
+    Args:
+        bucket_name (str): The name of the bucket to generate a signed URL for.
+        object_key (str): The key of the object to generate a signed URL for.
+
+    Returns:
+        str: A signed URL that can be used to upload to the bucket and key.
+    """
+    return _get_s3_client().generate_presigned_url(
+        ClientMethod="put_object", Params={"Bucket": bucket_name, "Key": object_key}, ExpiresIn=3600
+    )
+
+
+def create_signed_download_url(bucket_name: str, object_key: str) -> str:
+    """Generates a signed URL to download a Google Cloud Storage object.
+
+    Args:
+        bucket_name (str): The name of the bucket to generate a signed URL for.
+        object_key (str): The key of the object to generate a signed URL for.
+
+    Returns:
+        str: A signed URL that can be used to download from the bucket and key.
+    """
+    return _get_s3_client().generate_presigned_url(
+        ClientMethod="get_object", Params={"Bucket": bucket_name, "Key": object_key}, ExpiresIn=3600
+    )
 
 
 def construct_input_items(source_csv: Path) -> list[InputItem]:
@@ -73,13 +125,29 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
             if pos == 0:
                 pos += 1
                 continue
+            # Parse the GCS URL (gs://bucketname/path)
+            if row[0].startswith("gs://"):
+                # Remove 'gs://' prefix and split into bucket name and object key
+                url_parts = row[0][5:].split("/", 1)
+                if len(url_parts) == 2:
+                    bucket_name = url_parts[0]
+                    object_key = url_parts[1]
+                    download_url = create_signed_download_url(bucket_name, object_key)
+                    log.debug("Constructed signed download URL: %s", download_url)
+                else:
+                    log.warning("Invalid GCS URL format: %s", row[0])
+                    continue
+            else:
+                log.warning("URL '%s' is not a valid GCS URL (should start with 'gs://')", row[0])
+                continue
+
             payload.append(
                 InputItem(
                     reference=str(pos),
                     input_artifacts=[
                         InputArtifact(
                             name="user_slide",
-                            download_url=generate_signed_url(row[0]),
+                            download_url=download_url,
                             metadata={
                                 "checksum_crc32c": row[1],
                                 "base_mpp": float(row[2]),
@@ -94,10 +162,11 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
                     ],
                 )
             )
+            pos += 1
     return payload
 
 
-def find_latest_version(app: Application, client: Client) -> str:
+def find_latest_application_version(app: Application, client: Client) -> str:
     """Find the latest version of an application.
 
     Args:
@@ -135,6 +204,23 @@ def find_latest_version(app: Application, client: Client) -> str:
 
     # If we couldn't parse any versions, return the first one
     return str(versions[0].application_version_id)
+
+
+def find_application_by_id(application_id: str, client: Client) -> Application | None:
+    """Find an application by its ID.
+
+    Args:
+        application_id(str): The ID of the application to find
+        client(Client): The Client instance to use
+
+    Returns:
+        Application | None: The Application object if found, None otherwise
+    """
+    applications = client.applications.list()
+    for application in applications:
+        if application.application_id == application_id:
+            return application
+    return None
 
 
 def find_run_by_id(run_id: str, client: Client) -> ApplicationRun | None:
@@ -289,7 +375,7 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
 
 
 def print_runs_verbose(runs: list[ApplicationRun]) -> int:
-    """Print detailed information about runs.
+    """Print detailed information about runs, sorted by triggered_at in descending order.
 
     Args:
         runs: List of runs
@@ -301,11 +387,29 @@ def print_runs_verbose(runs: list[ApplicationRun]) -> int:
     console.print("=" * 80)
 
     run_count = 0
+
+    # First collect all valid run status objects with their data
+    runs_with_status = []
     for run in runs:
-        run_count, run_status = _retrieve_and_print_run_status(run, run_count)
-        if not run_status:
+        try:
+            _, run_status = _retrieve_and_print_run_status(run, 0)  # Use 0 as we'll count later
+            if run_status:
+                runs_with_status.append((run, run_status))
+            else:
+                run_count += 1  # Count failed runs
+        except Exception as e:
+            log.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+            console.print(
+                f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
+            )
+            run_count += 1
             continue
 
+    # Sort runs by triggered_at in descending order (newest first)
+    sorted_runs = sorted(runs_with_status, key=lambda x: x[1].triggered_at, reverse=True)
+
+    # Display the sorted runs
+    for run, run_status in sorted_runs:
         console.print(f"[bold]Run ID:[/bold] {run_status.application_run_id}")
         console.print(f"[bold]App Version:[/bold] {run_status.application_version_id}")
         console.print(f"[bold]Status:[/bold] {run_status.status.value}")
@@ -324,12 +428,13 @@ def print_runs_verbose(runs: list[ApplicationRun]) -> int:
             )
             continue
         console.print("-" * 80)
+        run_count += 1
 
     return run_count
 
 
 def print_runs_non_verbose(runs: list[ApplicationRun]) -> int:
-    """Print simplified information about runs.
+    """Print simplified information about runs, sorted by triggered_at in descending order.
 
     Args:
         runs: List of runs
@@ -340,24 +445,34 @@ def print_runs_non_verbose(runs: list[ApplicationRun]) -> int:
     console.print("[bold]Application Run IDs:[/bold]")
     run_count = 0
 
+    # First collect all valid run status objects with their data
+    runs_with_status = []
     for run in runs:
         try:
-            run_count, run_status = _retrieve_and_print_run_status(run, run_count)
+            _, run_status = _retrieve_and_print_run_status(run, 0)  # Use 0 as we'll count later
+            if run_status:
+                runs_with_status.append(run_status)
+            else:
+                run_count += 1  # Count failed runs
         except Exception as e:
             log.exception("Failed to get status for run with ID '%s'", run.application_run_id)
             console.print(
                 f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
             )
+            run_count += 1
             continue
 
-        if not run_status:
-            continue
+    # Sort runs by triggered_at in descending order (newest first)
+    sorted_runs = sorted(runs_with_status, key=lambda x: x.triggered_at, reverse=True)
 
+    # Display the sorted runs
+    for run_status in sorted_runs:
         console.print(
             f"- [bold]{run_status.application_run_id}[/bold] of "
             f"[bold]{run_status.application_version_id}[/bold] "
             f"(triggered: {run_status.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
             f"status: {run_status.status.value})"
         )
+        run_count += 1
 
     return run_count

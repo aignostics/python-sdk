@@ -19,10 +19,12 @@ version = "0.0.10"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
+    { name = "boto3" },
     { name = "fastapi", extra = ["all", "standard"] },
     { name = "google-cloud-storage" },
     { name = "google-crc32c" },
     { name = "httpx" },
+    { name = "idc-index" },
     { name = "jsf" },
     { name = "jsonschema" },
     { name = "logfire", extra = ["system-metrics"] },
@@ -43,6 +45,7 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "requests-oauthlib" },
+    { name = "s5cmd" },
     { name = "sentry-sdk" },
     { name = "tqdm" },
     { name = "typer" },
@@ -51,9 +54,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-aws = [
-    { name = "boto3" },
-]
 examples = [
     { name = "cloudpathlib" },
     { name = "highdicom" },
@@ -64,9 +64,6 @@ examples = [
     { name = "shapely" },
     { name = "streamlit" },
     { name = "wsidicom" },
-]
-idc = [
-    { name = "idc-index" },
 ]
 
 [package.dev-dependencies]
@@ -118,14 +115,14 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = ">=1.4.4" },
-    { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.37.27" },
+    { name = "boto3", specifier = ">=1.37.27" },
     { name = "cloudpathlib", marker = "extra == 'examples'", specifier = ">=0.21.0" },
     { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.115.12" },
     { name = "google-cloud-storage", specifier = ">=3.1.0" },
     { name = "google-crc32c", specifier = ">=1.7.1" },
     { name = "highdicom", marker = "extra == 'examples'", specifier = ">=0.25.1" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "idc-index", marker = "extra == 'idc'", specifier = ">=0.8.6" },
+    { name = "idc-index", specifier = ">=0.8.6" },
     { name = "jinja2", marker = "extra == 'examples'", specifier = ">=3.1.6" },
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", specifier = ">=4.23.0" },
@@ -150,6 +147,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "requests-oauthlib", specifier = ">=2.0.0" },
+    { name = "s5cmd", specifier = ">=0.2.0" },
     { name = "sentry-sdk", specifier = ">=2.27.0" },
     { name = "shapely", marker = "extra == 'examples'", specifier = ">=2.1.0" },
     { name = "streamlit", marker = "extra == 'examples'", specifier = ">=1.44.1" },
@@ -159,7 +157,7 @@ requires-dist = [
     { name = "urllib3", specifier = ">=2.2.3" },
     { name = "wsidicom", marker = "extra == 'examples'", specifier = ">=0.26.0" },
 ]
-provides-extras = ["examples", "aws", "idc"]
+provides-extras = ["examples"]
 
 [package.metadata.requires-dev]
 dev = [

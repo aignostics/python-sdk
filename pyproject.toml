@@ -63,6 +63,8 @@ requires-python = ">=3.11, <4.0"
 
 dependencies = [
     # From Template
+    "boto3>=1.37.27",
+    "idc-index>=0.8.6",
     "fastapi[standard,all]>=0.115.12",
     "logfire[system-metrics]>=3.14.1",
     "nicegui[native]>=2.15.0",
@@ -92,6 +94,7 @@ dependencies = [
     "pyyaml>=6.0",
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
+    "s5cmd>=0.2.0",
     "tqdm>=4.67.1",
     "urllib3>=2.2.3",
 ]
@@ -108,9 +111,6 @@ examples = [
     "streamlit>=1.44.1",
     "wsidicom>=0.26.0",
 ]
-aws = ["boto3>=1.37.27"]
-idc = ["idc-index>=0.8.6"]
-# formats = ["openslide-python>=1.4.1", "openslide-bin>=4.0.0.6"]
 
 [dependency-groups]
 dev = [
@@ -173,14 +173,14 @@ requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["src/*", "codegen/out/*"]
+include = ["src/*", "codegen/out/*", "gui_assets", "examples"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aignostics", "codegen/out/aignx"]
+packages = ["src/aignostics", "codegen/out/aignx", "gui_assets", "examples"]
 
 [tool.uv]
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
-    "h11>=0.16.0", # vulnerability
+    "h11>=0.16.0",                      # vulnerability
     "rfc3987; sys_platform == 'never'", # GPLv3
 ]
 

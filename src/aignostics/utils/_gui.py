@@ -38,6 +38,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
     icon: str = "",
     watch: bool = False,
     with_api: bool = False,
+    dark_mode: bool = False,
 ) -> None:
     """Start the GUI.
 
@@ -50,6 +51,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         icon: Icon for the GUI.
         watch: Whether to watch for changes and reload the GUI.
         with_api: Whether to mount the API.
+        dark_mode: Whether to use dark mode.
 
     Raises:
         ValueError: If with_notebook is True but notebook_path is None,
@@ -72,12 +74,13 @@ def gui_run(  # noqa: PLR0913, PLR0917
         favicon=icon,
         native=native,
         reload=watch,
-        dark=False,
+        dark=dark_mode,
         host=host,
         port=port or native_app.find_open_port(),
         frameless=False,
         show_welcome_message=True,
         show=show,
+        window_size=(1024, 768) if native else None,
     )
 
 
