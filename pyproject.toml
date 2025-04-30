@@ -173,10 +173,10 @@ requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["src/*", "codegen/out/*", "gui_assets", "examples"]
+include = ["src/*", "codegen/out/*", "examples"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aignostics", "codegen/out/aignx", "gui_assets", "examples"]
+packages = ["src/aignostics", "codegen/out/aignx", "examples"]
 
 [tool.uv]
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422

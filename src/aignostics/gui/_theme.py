@@ -20,5 +20,5 @@ class PageBuilder(BasePageBuilder):
             </style>
         """)
 
-        assets = Path("gui_assets")
+        assets = Path(__file__).parent / "assets"
         app.add_static_files("/assets", assets)
