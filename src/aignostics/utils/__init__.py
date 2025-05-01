@@ -1,6 +1,6 @@
 """Utilities module."""
 
-from ._cli import prepare_cli
+from ._cli import prepare_cli, path_autocomplete
 from ._console import console
 from ._constants import (
     __author_email__,
@@ -58,6 +58,7 @@ __all__ = [
     "load_settings",
     "locate_implementations",
     "locate_subclasses",
+    "path_autocomplete",
     "prepare_cli",
     "strip_to_none_before_validator",
 ]

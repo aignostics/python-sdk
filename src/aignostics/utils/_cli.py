@@ -2,6 +2,9 @@
 
 import sys
 from pathlib import Path
+import os
+import re
+from collections.abc import Callable
 
 import typer
 
@@ -66,3 +69,43 @@ def _no_args_is_help_recursively(cli: typer.Typer) -> None:
             typer_instance = group.typer_instance
             if (typer_instance is not cli) and typer_instance:
                 _no_args_is_help_recursively(typer_instance)
+
+def path_autocomplete(
+    file_okay: bool = True,
+    dir_okay: bool = True,
+    writable: bool = False,
+    readable: bool = True,
+    allow_dash: bool = False,
+    match_wildcard: str | None = None,
+) -> Callable[[str], list[str]]:
+    def wildcard_match(string: str, pattern: str) -> bool:
+        regex = re.escape(pattern).replace(r"\?", ".").replace(r"\*", ".*")
+        return re.fullmatch(regex, string) is not None
+
+    def completer(incomplete: str) -> list[str]:
+        items = os.listdir()
+        completions = []
+        for item in items:
+            if not file_okay and os.path.isfile(item):
+                continue
+            elif not dir_okay and os.path.isdir(item):
+                continue
+
+            if readable and not os.access(item, os.R_OK):
+                continue
+            if writable and not os.access(item, os.W_OK):
+                continue
+
+            completions.append(item)
+
+        if allow_dash:
+            completions.append("-")
+
+        if match_wildcard is not None:
+            completions = filter(
+                lambda i: wildcard_match(i, match_wildcard), completions
+            )
+
+        return [i for i in completions if i.startswith(incomplete)]
+
+    return completer
