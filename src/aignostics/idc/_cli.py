@@ -25,7 +25,7 @@ def browse() -> None:
     webbrowser.open("https://portal.imaging.datacommons.cancer.gov/explore/")
 
 
-@cli.command("columns")
+@cli.command()
 def columns() -> None:
     """List available columns in IDC index."""
     from idc_index.index import IDCClient  # noqa: PLC0415

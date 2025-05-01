@@ -80,7 +80,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         frameless=False,
         show_welcome_message=True,
         show=show,
-        window_size=(1024, 768) if native else None,
+        window_size=(1200, 768) if native else None,
     )
 
 

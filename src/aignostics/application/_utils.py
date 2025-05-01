@@ -5,6 +5,7 @@ import os
 from enum import StrEnum
 from operator import itemgetter
 from pathlib import Path
+from sys import version
 from typing import Literal
 
 from boto3.session import Session
@@ -12,6 +13,7 @@ from botocore.client import Config
 
 from aignostics.platform import (
     Application,
+    ApplicationVersion,
     ApplicationRun,
     ApplicationRunStatus,
     Client,
@@ -20,7 +22,7 @@ from aignostics.platform import (
 )
 from aignostics.utils import console, get_logger
 
-log = get_logger(__name__)
+logger = get_logger(__name__)
 
 
 class OutputFormat(StrEnum):
@@ -48,12 +50,12 @@ def get_platform_client() -> Client | None:
         Client | None: A Client instance if successful, None otherwise.
     """
     try:
-        log.debug("Creating authenticated client.")
+        logger.debug("Creating authenticated client.")
         client = Client()
-        log.debug("Authenticated client created.")
+        logger.debug("Authenticated client created.")
         return client
     except Exception as e:
-        log.exception("Failed to create authenticated client.")
+        logger.exception("Failed to create authenticated client.")
         console.print(f"[bold red]Error:[/bold red] Failed to connect to Aignostics Platform: {e}")
     return None
 
@@ -116,7 +118,7 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
         list: List of payload items
     """
     payload = []
-    log.debug("Constructing payload from CSV file: %s", source_csv)
+    logger.debug("Constructing payload from CSV file: %s", source_csv)
     with open(str(source_csv), newline="", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile, delimiter=";", quotechar='"')
         pos = 0
@@ -133,12 +135,12 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
                     bucket_name = url_parts[0]
                     object_key = url_parts[1]
                     download_url = create_signed_download_url(bucket_name, object_key)
-                    log.debug("Constructed signed download URL: %s", download_url)
+                    logger.debug("Constructed signed download URL: %s", download_url)
                 else:
-                    log.warning("Invalid GCS URL format: %s", row[0])
+                    logger.warning("Invalid GCS URL format: %s", row[0])
                     continue
             else:
-                log.warning("URL '%s' is not a valid GCS URL (should start with 'gs://')", row[0])
+                logger.warning("URL '%s' is not a valid GCS URL (should start with 'gs://')", row[0])
                 continue
 
             payload.append(
@@ -165,8 +167,45 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
             pos += 1
     return payload
 
+def application_versions_sorted_by_semver(app: Application, client: Client) -> list[ApplicationVersion]:
+    """Get application versions sorted by semver, latest first.
 
-def find_latest_application_version(app: Application, client: Client) -> str:
+    Args:
+        app(Application): The application to find versions for
+        client(Client): The Client instance to use
+
+    Returns:
+        list: List of version objects sorted by semantic versioning (latest first),
+            or empty list if no versions are found
+    """
+    # Get versions for this application
+    versions = list(client.applications.versions.list(app))
+
+    # If no versions available
+    if not versions:
+        return []
+
+    # Extract semantic versions from the version property
+    versions_with_semver = []
+    for v in versions:
+        try:
+            # Split into major, minor, patch components for proper comparison
+            version_parts = [int(x) for x in v.version.split(".")]
+            versions_with_semver.append((v, version_parts))
+        except (ValueError, AttributeError):
+            # If we can't parse the version or version attribute doesn't exist, skip it
+            continue
+
+    # Sort by semantic version (major, minor, patch)
+    if versions_with_semver:
+        versions_with_semver.sort(key=itemgetter(1), reverse=True)
+        # Return just the version objects, not the tuples
+        return [item[0] for item in versions_with_semver]
+
+    # If we couldn't parse any versions, return all versions as is
+    return versions
+
+def find_latest_application_version_id(app: Application, client: Client) -> str | None:
     """Find the latest version of an application.
 
     Args:
@@ -176,34 +215,15 @@ def find_latest_application_version(app: Application, client: Client) -> str:
     Returns:
         str: The application_version_id of the latest version, or "No versions" if no versions are found
     """
-    # Get versions for this application
-    versions = list(client.applications.versions.list(app))
+    # Get sorted versions using the existing utility function
+    sorted_versions = application_versions_sorted_by_semver(app, client)
 
     # If no versions available
-    if not versions:
-        return "No versions"
+    if not sorted_versions:
+        return None
 
-    # Extract semantic versions from application_version_id (format: name:vX.Y.Z)
-    versions_with_semver = []
-    for v in versions:
-        parts = v.application_version_id.split(":")
-        if len(parts) > 1 and parts[1].startswith("v"):
-            semver = parts[1][1:]  # Remove 'v' prefix
-            try:
-                # Split into major, minor, patch components for proper comparison
-                version_parts = [int(x) for x in semver.split(".")]
-                versions_with_semver.append((v, version_parts))
-            except ValueError:
-                # If we can't parse the version, skip it
-                continue
-
-    # Sort by semantic version (major, minor, patch)
-    if versions_with_semver:
-        versions_with_semver.sort(key=itemgetter(1), reverse=True)
-        return str(versions_with_semver[0][0].application_version_id)
-
-    # If we couldn't parse any versions, return the first one
-    return str(versions[0].application_version_id)
+    # The first item is the latest version
+    return str(sorted_versions[0].application_version_id)
 
 
 def find_application_by_id(application_id: str, client: Client) -> Application | None:
@@ -333,7 +353,7 @@ def _retrieve_and_print_run_status(run: ApplicationRun, run_count: int) -> tuple
     try:
         run_status = run.status()
     except Exception as e:
-        log.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+        logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
         console.print(
             f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
         )
@@ -354,7 +374,7 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
     try:
         item_statuses = run.item_status()
     except Exception as e:
-        log.exception("Failed to get item statuses for run with ID '%s'", run.application_run_id)
+        logger.exception("Failed to get item statuses for run with ID '%s'", run.application_run_id)
         console.print(
             f"[bold red]Error:[/bold red] Failed to get item statuses for run with ID '{run.application_run_id}': {e}"
         )
@@ -398,7 +418,7 @@ def print_runs_verbose(runs: list[ApplicationRun]) -> int:
             else:
                 run_count += 1  # Count failed runs
         except Exception as e:
-            log.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+            logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
             console.print(
                 f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
             )
@@ -421,7 +441,7 @@ def print_runs_verbose(runs: list[ApplicationRun]) -> int:
         try:
             _retrieve_and_print_item_status_counts(run)
         except Exception as e:
-            log.exception("Failed to retrieve item status counts for run with ID '%s'", run.application_run_id)
+            logger.exception("Failed to retrieve item status counts for run with ID '%s'", run.application_run_id)
             console.print(
                 f"[bold red]Error:[/bold red] Failed to retrieve item status counts for run with ID "
                 f"'{run.application_run_id}': {e}"
@@ -455,7 +475,7 @@ def print_runs_non_verbose(runs: list[ApplicationRun]) -> int:
             else:
                 run_count += 1  # Count failed runs
         except Exception as e:
-            log.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+            logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
             console.print(
                 f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
             )

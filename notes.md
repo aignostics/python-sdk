@@ -73,3 +73,15 @@ uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aig
 ```
 uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff
 ```
+
+### Bugs detected
+
+- Pagination of runs fails when there is 40 runs
+- There is a large number of runs running but not progressing, and not
+  cancelable (exception NotCancelleable when trying to cancel.)
+
+## Feature requests
+
+- whoami call, indicating user id, organisation id, user full name, organisation
+  full name
+- possiblity to delete runs

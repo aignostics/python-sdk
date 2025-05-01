@@ -4,7 +4,7 @@ from importlib.util import find_spec
 
 __all__ = []
 
-# advertise PageBuuilder to enable auto-discovery
+# advertise PageBuilder to enable auto-discovery
 if find_spec("nicegui"):
     from ._frame import frame
     from ._theme import PageBuilder

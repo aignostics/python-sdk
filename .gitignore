@@ -90,3 +90,4 @@ profile.html
 # Application specific
 data/**
 !data/.keep */
+dist_vercel

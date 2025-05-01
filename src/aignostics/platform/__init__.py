@@ -8,6 +8,7 @@ for all interactions with the Aignostics platform.
 
 from aignx.codegen.models import (
     ApplicationReadResponse as Application,
+    ApplicationVersionReadResponse as ApplicationVersion,
 )
 from aignx.codegen.models import (
     InputArtifactCreationRequest as InputArtifact,
@@ -71,6 +72,7 @@ __all__ = [
     "TOKEN_URL_STAGING",
     "UNKNOWN_ENDPOINT_URL",
     "Application",
+    "ApplicationVersion",
     "ApplicationRun",
     "ApplicationRunStatus",
     "Client",

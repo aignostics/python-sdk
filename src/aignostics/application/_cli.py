@@ -17,7 +17,7 @@ from ._utils import (
     construct_input_items,
     create_signed_upload_url,
     find_application_by_id,
-    find_latest_application_version,
+    find_latest_application_version_id,
     find_run_by_id,
     get_platform_client,
     print_runs_non_verbose,
@@ -25,7 +25,7 @@ from ._utils import (
     retrieve_and_print_run_details,
 )
 
-log = get_logger(__name__)
+logger = get_logger(__name__)
 
 cli = typer.Typer(name="application", help="Run applications on Aignostics platform.")
 
@@ -89,7 +89,7 @@ def upload(
     """Upload a filew to a transfer bucket via a signed URL, authenticating with hmac."""
     source_file_path = Path(source_file)
     if not source_file_path.is_file():
-        log.warning("Source file '%s' does not exist.", source_file)
+        logger.warning("Source file '%s' does not exist.", source_file)
         console.print(f"[bold red]Error:[/bold red] Source file '{source_file}' does not exist.")
         return
 
@@ -99,7 +99,7 @@ def upload(
     object_key = f"helmut/heta/{timestamp_millis}_{source_file_path.name}"
     url = create_signed_upload_url(bucket_name, object_key)
 
-    log.debug("Generated signed upload URL: %s", url)
+    logger.debug("Generated signed upload URL: %s", url)
 
     file_size = source_file_path.stat().st_size
     with (
@@ -147,7 +147,7 @@ def application_list(  # noqa: C901
     try:
         applications = platform_client.applications.list()
     except Exception as e:
-        log.exception("Failed to list applications")
+        logger.exception("Failed to list applications")
         console.print(f"[bold red]Error:[/bold red] Failed to list applications: {e}")
         return False
 
@@ -167,7 +167,7 @@ def application_list(  # noqa: C901
             try:
                 versions = list(platform_client.applications.versions.list(app))
             except Exception as e:
-                log.exception("Failed to list versions for application '%s'", app.application_id)
+                logger.exception("Failed to list versions for application '%s'", app.application_id)
                 console.print(
                     f"[bold red]Error:[/bold red] Failed to list versions for application '{app.application_id}': {e}"
                 )
@@ -194,11 +194,11 @@ def application_list(  # noqa: C901
         for app in applications:
             app_count += 1
             # Get latest version info for this application
-            latest_version = find_latest_application_version(app, platform_client)
+            latest_version = find_latest_application_version_id(app, platform_client)
             console.print(f"- [bold]{app.application_id}[/bold] - latest application version id: `{latest_version}`")
 
     if app_count == 0:
-        log.warning("No applications available.")
+        logger.warning("No applications available.")
         console.print("No applications available.")
 
     return True
@@ -223,12 +223,12 @@ def application_describe(
     try:
         application = find_application_by_id(application_id, platform_client)
     except Exception as e:
-        log.exception("Failed to find application with ID '%s'", application_id)
+        logger.exception("Failed to find application with ID '%s'", application_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find application: {e}")
         return False
 
     if not application:
-        log.warning("Application with ID '%s' not found.", application_id)
+        logger.warning("Application with ID '%s' not found.", application_id)
         console.print(f"[bold red]Warning:[/bold red] Application with ID '{application_id}' not found.")
         return False
 
@@ -323,7 +323,7 @@ def run_submit(
 
     source_csv = Path(source)
     if not source_csv.is_file():
-        log.warning("Source file '%s' does not exist.", source)
+        logger.warning("Source file '%s' does not exist.", source)
         console.print(f"[bold red]Error:[/bold red] Source file '{source}' does not exist.")
         return False
     payload = construct_input_items(source_csv)
@@ -331,7 +331,7 @@ def run_submit(
     try:
         application_run = platform_client.runs.create(application_version=application_version_id, items=payload)
     except Exception as e:
-        log.exception("Failed to create run for application version '%s'", application_version_id)
+        logger.exception("Failed to create run for application version '%s'", application_version_id)
         console.print(
             f"[bold red]Error:[/bold red] Failed to create run for application version '{application_version_id}': {e}"
         )
@@ -361,7 +361,7 @@ def run_list(
         # List all runs and convert generator to list
         runs = list(platform_client.runs.list())
     except Exception as e:
-        log.exception("Failed to list runs")
+        logger.exception("Failed to list runs")
         console.print(f"[bold red]Error:[/bold red] Failed to list runs: {e}")
         return False
 
@@ -369,7 +369,7 @@ def run_list(
     run_count = print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
 
     if run_count == 0:
-        log.warning("No application runs found.")
+        logger.warning("No application runs found.")
         console.print("No application runs found.")
 
     return True
@@ -385,7 +385,7 @@ def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desf
     Returns:
         bool: Success status of the operation
     """
-    log.debug("Describing run with ID '%s'", run_id)
+    logger.debug("Describing run with ID '%s'", run_id)
 
     platform_client = get_platform_client()
     if not platform_client:
@@ -394,22 +394,22 @@ def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desf
     try:
         run = find_run_by_id(run_id, platform_client)
     except Exception as e:
-        log.exception("Failed to find run with ID '%s'", run_id)
+        logger.exception("Failed to find run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
         return False
 
     if run:
-        log.debug("Found run with ID '%s'", run_id)
+        logger.debug("Found run with ID '%s'", run_id)
         try:
             retrieve_and_print_run_details(run, run_id)
         except Exception as e:
-            log.exception("Failed to retrieve and print run details for ID '%s'", run_id)
+            logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
             console.print(f"[bold red]Error:[/bold red] Failed to retrieve run details for ID '{run_id}': {e}")
             return False
-        log.info("Described run with ID '%s'", run_id)
+        logger.info("Described run with ID '%s'", run_id)
         return True
 
-    log.warning("Run with ID '%s' not found.", run_id)
+    logger.warning("Run with ID '%s' not found.", run_id)
     console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
     return False
 
@@ -426,7 +426,7 @@ def run_cancel(
     Returns:
         bool: True if the run was canceled successfully, False otherwise
     """
-    log.debug("Canceling run with ID '%s'", run_id)
+    logger.debug("Canceling run with ID '%s'", run_id)
 
     platform_client = get_platform_client()
     if not platform_client:
@@ -435,7 +435,7 @@ def run_cancel(
     try:
         run = find_run_by_id(run_id, platform_client)
     except Exception as e:
-        log.exception("Failed to find run with ID '%s'", run_id)
+        logger.exception("Failed to find run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
         return False
 
@@ -443,14 +443,14 @@ def run_cancel(
         try:
             run.cancel()
         except Exception as e:
-            log.exception("Failed to cancel run with ID '%s'", run_id)
+            logger.exception("Failed to cancel run with ID '%s'", run_id)
             console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
             return False
-        log.info("Canceled run with ID '%s'.", run)
+        logger.info("Canceled run with ID '%s'.", run)
         console.print(f"Run with ID '{run_id}' has been canceled.")
         return True
 
-    log.warning("Run with ID '%s' not found.", run_id)
+    logger.warning("Run with ID '%s' not found.", run_id)
     console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
     return False
 
@@ -475,14 +475,14 @@ def result_download(
     Returns:
         bool: True if the download was successful, False otherwise
     """
-    log.debug("Downloading results for run with ID '%s' to '%s'", run_id, destination)
+    logger.debug("Downloading results for run with ID '%s' to '%s'", run_id, destination)
 
     destination_dir = Path(destination)
     try:
         destination_dir.mkdir(parents=True, exist_ok=True)
-        log.debug("Created destination directory '%s'", destination_dir)
+        logger.debug("Created destination directory '%s'", destination_dir)
     except OSError as e:
-        log.exception("Failed to create destination directory '%s'", destination)
+        logger.exception("Failed to create destination directory '%s'", destination)
         console.log(f"[bold red]Error:[/bold red] Failed to create destination directory '{destination}': {e}")
         return False
 
@@ -493,23 +493,23 @@ def result_download(
     try:
         run = find_run_by_id(run_id, platform_client)
     except Exception as e:
-        log.exception("Failed to find run with ID '%s'", run_id)
+        logger.exception("Failed to find run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
         return False
 
     if run:
-        log.debug("Found run with ID '%s'", run_id)
+        logger.debug("Found run with ID '%s'", run_id)
         try:
             run.download_to_folder(destination_dir)
         except Exception as e:
-            log.exception("Failed to download results for run with ID '%s'", run_id)
+            logger.exception("Failed to download results for run with ID '%s'", run_id)
             console.print(f"[bold red]Error:[/bold red] Failed to download results for run with ID '{run_id}': {e}")
             return False
-        log.info("Downloaded results for run with ID '%s' to '%s'", run_id, destination_dir)
+        logger.info("Downloaded results for run with ID '%s' to '%s'", run_id, destination_dir)
         console.print("downloaded result")
         return True
 
-    log.warning("Run with ID '%s' not found.", run_id)
+    logger.warning("Run with ID '%s' not found.", run_id)
     console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
     return False
 

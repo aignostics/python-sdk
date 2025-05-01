@@ -97,6 +97,8 @@ dependencies = [
     "s5cmd>=0.2.0",
     "tqdm>=4.67.1",
     "urllib3>=2.2.3",
+    "show-in-file-manager>=1.1.5",
+    "openslide-python>=1.4.2",
 ]
 
 [project.optional-dependencies]

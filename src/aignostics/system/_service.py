@@ -30,13 +30,13 @@ from ..utils import (  # noqa: TID252
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
 
-log = get_logger(__name__)
+logger = get_logger(__name__)
 
 JsonValue: t.TypeAlias = str | int | float | list["JsonValue"] | t.Mapping[str, "JsonValue"] | None
 JsonType: t.TypeAlias = list[JsonValue] | t.Mapping[str, JsonValue]
 
 # Note: There is multiple measurements and network calls
-MEASURE_INTERVAL_SECONDS = 5
+MEASURE_INTERVAL_SECONDS = 2
 NETWORK_TIMEOUT = 5
 
 
@@ -104,9 +104,9 @@ class Service(BaseService):
         Returns:
             bool: True if the token is valid, False otherwise.
         """
-        log.info(token)
+        logger.info(token)
         if not self._settings.token:
-            log.warning("Token is not set in settings.")
+            logger.warning("Token is not set in settings.")
             return False
         return token == self._settings.token.get_secret_value()
 
@@ -126,7 +126,7 @@ class Service(BaseService):
             return response.text
         except HTTPError as e:
             message = f"Failed to get public IP: {e}"
-            log.exception(message)
+            logger.exception(message)
             return None
 
     @staticmethod
@@ -142,7 +142,7 @@ class Service(BaseService):
                 return str(connection.getsockname()[0])
         except Exception as e:
             message = f"Failed to get local IP: {e}"
-            log.exception(message)
+            logger.exception(message)
             return None
 
     @staticmethod
@@ -278,7 +278,7 @@ class Service(BaseService):
                 service = service_class()
                 result_dict[service.key()] = service.info()
 
-        log.info("Service info: %s", result_dict)
+        logger.info("Service info: %s", result_dict)
         return result_dict
 
     @staticmethod
