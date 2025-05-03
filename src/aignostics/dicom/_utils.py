@@ -1,7 +1,7 @@
-import functools
 from pathlib import Path
 
 from aignostics.utils import console
+
 
 def format_file_size(size_bytes: int) -> str:
     """
@@ -57,9 +57,7 @@ def print_file_info(file_info: dict, indent: int = 0):
     if "instance_uid" in file_info:
         console.print(f"{prefix}[key]Instance UID:[/key] {file_info['instance_uid']}")
 
-    console.print(
-        f"{prefix}[key]Frame of reference UID:[/key] {file_info['frame_of_reference_uid']}"
-    )
+    console.print(f"{prefix}[key]Frame of reference UID:[/key] {file_info['frame_of_reference_uid']}")
 
     # Add WSI/pyramidal specific information
 
@@ -67,26 +65,16 @@ def print_file_info(file_info: dict, indent: int = 0):
         console.print(f"{prefix}[key]Image Type:[/key] Pyramidal WSI")
         console.print(f"{prefix}[key]Number of Frames:[/key] {file_info['num_frames']}")
         if file_info.get("optical_paths"):
-            console.print(
-                f"{prefix}[key]Optical Paths:[/key] {file_info['optical_paths']}"
-            )
+            console.print(f"{prefix}[key]Optical Paths:[/key] {file_info['optical_paths']}")
         if file_info.get("focal_planes"):
-            console.print(
-                f"{prefix}[key]Focal Planes:[/key] {file_info['focal_planes']}"
-            )
+            console.print(f"{prefix}[key]Focal Planes:[/key] {file_info['focal_planes']}")
         if file_info.get("total_pixel_matrix"):
             matrix = file_info["total_pixel_matrix"]
-            console.print(
-                f"{prefix}[key]Total Pixel Matrix:[/key] {matrix[0]} x {matrix[1]}"
-            )
+            console.print(f"{prefix}[key]Total Pixel Matrix:[/key] {matrix[0]} x {matrix[1]}")
 
     if file_info.get("modality") == "ANN":
-        console.print(
-            f"{prefix}[key]Coordinate type:[/key] {file_info['coordinate_type']}"
-        )
-        console.print(
-            f"{prefix}[key]Annotation Groups:[/key] {len(file_info['annotation_groups'])}"
-        )
+        console.print(f"{prefix}[key]Coordinate type:[/key] {file_info['coordinate_type']}")
+        console.print(f"{prefix}[key]Annotation Groups:[/key] {len(file_info['annotation_groups'])}")
         prefix = "  " + prefix
         for group in file_info["annotation_groups"]:
             console.print("")
@@ -113,31 +101,23 @@ def print_file_info(file_info: dict, indent: int = 0):
         console.print(f"{prefix}[key]Dimensions:[/key] {dim_str}")
 
         if "photometric_interpretation" in file_info:
-            console.print(
-                f"{prefix}[key]Color Space:[/key] {file_info['photometric_interpretation']}"
-            )
+            console.print(f"{prefix}[key]Color Space:[/key] {file_info['photometric_interpretation']}")
 
         if "bits_allocated" in file_info and "bits_stored" in file_info:
             bits_str = f"{file_info['bits_allocated']} allocated, {file_info['bits_stored']} stored"
             console.print(f"{prefix}[key]Bits:[/key] {bits_str}")
 
         if "samples_per_pixel" in file_info:
-            console.print(
-                f"{prefix}[key]Samples per Pixel:[/key] {file_info['samples_per_pixel']}"
-            )
+            console.print(f"{prefix}[key]Samples per Pixel:[/key] {file_info['samples_per_pixel']}")
 
         if "image_type" in file_info:
-            console.print(
-                f"{prefix}[key]DICOM Image Type:[/key] {' / '.join(file_info['image_type'])}"
-            )
+            console.print(f"{prefix}[key]DICOM Image Type:[/key] {' / '.join(file_info['image_type'])}")
 
     if file_info.get("pyramid_info"):
         console.print(f"\n{prefix}[key]Pyramid Structure:[/key]")
         for level in file_info["pyramid_info"]:
             frame_size = f"{level['frame_size'][0]} x {level['frame_size'][1]}"
-            console.print(
-                f"{prefix}  Level {level['level']}: {level['frame_count']} frames @ {frame_size} pixels"
-            )
+            console.print(f"{prefix}  Level {level['level']}: {level['frame_count']} frames @ {frame_size} pixels")
 
 
 def print_series_info(series_data: dict, indent: int = 0):
@@ -162,42 +142,24 @@ def print_study_info(study_data: dict, indent: int = 0):
     console.print(f"{prefix} [header]('Patient:')[/header]")
     console.print(f"{prefix}  [key]ID:[/key] {study_data['patient_info']['id']}")
     console.print(f"{prefix}  [key]Name:[/key] {study_data['patient_info']['name']}")
-    console.print(
-        f"{prefix}  [key]Gender:[/key] {study_data['patient_info']['gender']}"
-    )
-    console.print(
-        f"{prefix}  [key]Birth Date:[/key] {study_data['patient_info']['birth_date']}"
-    )
+    console.print(f"{prefix}  [key]Gender:[/key] {study_data['patient_info']['gender']}")
+    console.print(f"{prefix}  [key]Birth Date:[/key] {study_data['patient_info']['birth_date']}")
 
     # Study Section
     console.print(f"\n{prefix}[header]('Study:')[/header]")
-    console.print(
-        f"{prefix}  [key]Accession #:[/key] {study_data['study_info']['accession_number']}"
-    )
+    console.print(f"{prefix}  [key]Accession #:[/key] {study_data['study_info']['accession_number']}")
     console.print(f"{prefix}  [key]ID:[/key] {study_data['study_info']['study_id']}")
-    console.print(
-        f"{prefix}  [key]Date:[/key] {study_data['study_info']['study_date']}"
-    )
-    console.print(
-        f"{prefix}  [key]Time:[/key] {format_dicom_time(study_data['study_info']['study_time'])}"
-    )
+    console.print(f"{prefix}  [key]Date:[/key] {study_data['study_info']['study_date']}")
+    console.print(f"{prefix}  [key]Time:[/key] {format_dicom_time(study_data['study_info']['study_time'])}")
     console.print(f"{prefix}  [key]UID:[/key] {study_data['study_info']['study_uid']}")
 
     # Clinical Trial Section
     if any(study_data["clinical_trial"].values()):  # Only show if any values exist
         console.print(f"\n{prefix}[header]('Clinical Trial:')[/header]")
-        console.print(
-            f"{prefix}  [key]Sponsor:[/key] {study_data['clinical_trial']['sponsor_name']}"
-        )
-        console.print(
-            f"{prefix}  [key]Protocol ID:[/key] {study_data['clinical_trial']['protocol_id']}"
-        )
-        console.print(
-            f"{prefix}  [key]Protocol Name:[/key] {study_data['clinical_trial']['protocol_name']}"
-        )
-        console.print(
-            f"{prefix}  [key]Site Name:[/key] {study_data['clinical_trial']['site_name']}"
-        )
+        console.print(f"{prefix}  [key]Sponsor:[/key] {study_data['clinical_trial']['sponsor_name']}")
+        console.print(f"{prefix}  [key]Protocol ID:[/key] {study_data['clinical_trial']['protocol_id']}")
+        console.print(f"{prefix}  [key]Protocol Name:[/key] {study_data['clinical_trial']['protocol_name']}")
+        console.print(f"{prefix}  [key]Site Name:[/key] {study_data['clinical_trial']['site_name']}")
 
 
 def print_slide_info(slide_data: dict, indent: int = 0, verbose: bool = False):
@@ -206,40 +168,22 @@ def print_slide_info(slide_data: dict, indent: int = 0, verbose: bool = False):
 
     # Specimen Section
     console.print(f"{prefix}[header]('Specimen:')[/header]")
-    console.print(
-        f"{prefix}  [key]Description:[/key] {slide_data['specimen_info']['description']}"
-    )
-    console.print(
-        f"{prefix}  [key]Anatomical Structure:[/key] {slide_data['specimen_info']['anatomical_structure']}"
-    )
-    console.print(
-        f"{prefix}  [key]Collection Method:[/key] {slide_data['specimen_info']['collection_method']}"
-    )
+    console.print(f"{prefix}  [key]Description:[/key] {slide_data['specimen_info']['description']}")
+    console.print(f"{prefix}  [key]Anatomical Structure:[/key] {slide_data['specimen_info']['anatomical_structure']}")
+    console.print(f"{prefix}  [key]Collection Method:[/key] {slide_data['specimen_info']['collection_method']}")
     if slide_data["specimen_info"]["parent_specimens"]:
         console.print(
             f"{prefix}  [key]Parent Specimens:[/key] {', '.join(slide_data['specimen_info']['parent_specimens'])}"
         )
-    console.print(
-        f"{prefix}  [key]Embedding Medium:[/key] {slide_data['specimen_info']['embedding_medium']}"
-    )
+    console.print(f"{prefix}  [key]Embedding Medium:[/key] {slide_data['specimen_info']['embedding_medium']}")
 
     # Equipment Section
     console.print(f"\n{prefix}[header]('Equipment:')[/header]")
-    console.print(
-        f"{prefix}  [key]Manufacturer:[/key] {slide_data['equipment_info']['manufacturer']}"
-    )
-    console.print(
-        f"{prefix}  [key]Model Name:[/key] {slide_data['equipment_info']['model_name']}"
-    )
-    console.print(
-        f"{prefix}  [key]Serial Number:[/key] {slide_data['equipment_info']['device_serial_number']}"
-    )
-    console.print(
-        f"{prefix}  [key]Software Version:[/key] {slide_data['equipment_info']['software_version']}"
-    )
-    console.print(
-        f"{prefix}  [key]Institution:[/key] {slide_data['equipment_info']['institution_name']}"
-    )
+    console.print(f"{prefix}  [key]Manufacturer:[/key] {slide_data['equipment_info']['manufacturer']}")
+    console.print(f"{prefix}  [key]Model Name:[/key] {slide_data['equipment_info']['model_name']}")
+    console.print(f"{prefix}  [key]Serial Number:[/key] {slide_data['equipment_info']['device_serial_number']}")
+    console.print(f"{prefix}  [key]Software Version:[/key] {slide_data['equipment_info']['software_version']}")
+    console.print(f"{prefix}  [key]Institution:[/key] {slide_data['equipment_info']['institution_name']}")
 
     # Series Section
     console.print(f"\n{prefix}[header]('Series:')[/header]")
@@ -250,9 +194,7 @@ def print_slide_info(slide_data: dict, indent: int = 0, verbose: bool = False):
     # Individual Series with their files
     for series_uid, series_data in slide_data["series"].items():
         console.print(f"\n{prefix}  [key]Series UID:[/key] {series_uid}")
-        console.print(
-            f"{prefix}    [key]Description:[/key] {series_data['description']}"
-        )
+        console.print(f"{prefix}    [key]Description:[/key] {series_data['description']}")
         console.print(f"{prefix}    [key]Modality:[/key] {series_data['modality']}")
         console.print(f"{prefix}    [key]Files:[/key] {len(series_data['files'])}")
 

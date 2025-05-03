@@ -9,7 +9,4 @@ if find_spec("nicegui"):
     from ._frame import frame
     from ._theme import PageBuilder
 
-    __all__ += [
-        "PageBuilder",
-        "frame",
-    ]
+    __all__ += ["PageBuilder", "frame"]

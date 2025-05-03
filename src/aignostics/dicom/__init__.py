@@ -1,4 +1,6 @@
-# DICOM Module
-from ._cli import cli
+"""DICOM Module."""
 
-__all__ = ["cli"]
+from ._cli import cli
+from ._service import Service
+
+__all__ = ["Service", "cli"]

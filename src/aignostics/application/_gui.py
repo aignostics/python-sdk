@@ -5,6 +5,8 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 
+from nicegui import app
+
 from aignostics.gui import frame
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker, get_logger
 
@@ -28,9 +30,12 @@ class PageBuilder(BasePageBuilder):
             source: Path | None = None
             wsi_step_label: ui.label | None = None
             wsi_next_button: ui.button | None = None
+            wsi_spinner: ui.spinner | None = None
             metadata: list[dict[str, Any]] | None = None
             metadata_grid: ui.aggrid | None = None
+            metadata_exclude_button: ui.button | None = None
             metadata_next_button: ui.button | None = None
+            submission_upload_button: ui.button | None = None
             submission_submit_button: ui.button | None = None
 
         submit_form = SubmitForm()
@@ -68,12 +73,60 @@ class PageBuilder(BasePageBuilder):
                     return "pending"
                 case "running":
                     return "directions_run"
-                case "canceled_system":
-                    return "sync_problem"
                 case "canceled_user":
                     return "cancel"
+                case "canceled_system":
+                    return "sync_problem"
                 case "completed":
                     return "done_all"
+                case _:
+                    return "bug_report"
+
+        def _run_item_status_to_icon(run_status: str) -> str:  # noqa: PLR0911
+            """Convert run item status to icon.
+
+            Args:
+                run_status (str): The run item status.
+
+            Returns:
+                str: The icon name.
+            """
+            match run_status:
+                case "pending":
+                    return "pending"
+                case "canceled_user":
+                    return "cancel"
+                case "canceled_system":
+                    return "sync_problem"
+                case "error_user":
+                    return "report"
+                case "error_system":
+                    return "error"
+                case "succeeded":
+                    return "check"
+                case _:
+                    return "bug_report"
+
+        def _mime_type_to_icon(mime_type: str) -> str:
+            """Convert mime type to icon.
+
+            Args:
+                mime_type (str): The mime type.
+
+            Returns:
+                str: The icon name.
+            """
+            match mime_type:
+                case "image/tiff":
+                    return "image"
+                case "application/dicom":
+                    return "image"
+                case "text/csv":
+                    return "table_rows"
+                case "application/geo+json":
+                    return "place"
+                case "application/json":
+                    return "data_object"
                 case _:
                     return "bug_report"
 
@@ -87,68 +140,77 @@ class PageBuilder(BasePageBuilder):
                 args = {}
             service = Service()
             with frame(navigation_title=navigation_title, navigation_icon=navigation_icon, left_sidebar=left_sidebar):  # noqa: PLR1702
-                ui.label("Applications").classes("text-h6")
                 try:
-                    for application in service.applications():
-                        with ui.row():
-                            ui.icon(_application_id_to_icon(application.application_id))
-                            ui.link(f"{application.name}", f"/application/{application.application_id}").mark(
-                                "LABEL_APPLICATION"
-                            ).tailwind.font_weight(
-                                "bold"
-                                if context.client.page.path == "/application/{application_id}"
-                                and args.get("application_id") == application.application_id
-                                else "normal"
-                            )
+                    with ui.list().props("bordered separator").classes("full-width"):
+                        ui.item_label("Applications").props("header")
+                        ui.separator()
+                        for application in service.applications():
+                            with ui.item().props("clickable"):
+                                with ui.item_section().props("avatar"):
+                                    ui.icon(_application_id_to_icon(application.application_id))
+                                with ui.item_section():
+                                    ui.link(f"{application.name}", f"/application/{application.application_id}").mark(
+                                        "LABEL_APPLICATION"
+                                    ).tailwind.font_weight(
+                                        "bold"
+                                        if context.client.page.path == "/application/{application_id}"
+                                        and args.get("application_id") == application.application_id
+                                        else "normal"
+                                    )
                 except Exception:  # noqa: BLE001
                     ui.label("Failed to list applications.").mark("LABEL_ERROR")
 
-                ui.label("Runs").classes("text-h6")
                 try:
-                    for run, run_status in service.application_runs_with_status():
-                        with ui.row():
-                            ui.icon(_run_status_to_icon(run_status.status.value))
-                            with ui.column():
-                                with ui.link(target=f"/application/run/{run.application_run_id}"):
+                    with ui.list().props("bordered separator").classes("full-width"):
+                        ui.item_label("Runs").props("header")
+                        ui.separator()
+                        for run, run_status in service.application_runs_with_status():
+                            with ui.item().props("clickable"):
+                                with ui.item_section().props("avatar"):
+                                    ui.icon(_run_status_to_icon(run_status.status.value))
+                                with ui.item_section():
+                                    with ui.link(target=f"/application/run/{run.application_run_id}"):
+                                        ui.label(
+                                            f"{run_status.application_version_id}",
+                                        ).tailwind.font_weight(
+                                            "bold"
+                                            if context.client.page.path == "/application/run/{application_run_id}"
+                                            and args.get("application_run_id") == run.application_run_id
+                                            else "normal"
+                                        )
                                     ui.label(
-                                        f"{run_status.application_version_id}",
-                                    ).tailwind.font_weight(
-                                        "bold"
-                                        if context.client.page.path == "/application/run/{application_run_id}"
-                                        and args.get("application_run_id") == run.application_run_id
-                                        else "normal"
+                                        f"triggered on {run_status.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
                                     )
-                                ui.label(f"triggered on {run_status.triggered_at.astimezone().strftime('%m-%d %H:%M')}")
                 except Exception:  # noqa: BLE001
                     ui.label("Failed to list application runs.").mark("LABEL_ERROR")
 
         @ui.page("/")
         def page_index() -> None:
             """Homepage of Applications."""
-            _frame("Aignostics Applications", left_sidebar=True)
+            _frame("Run our AI Applications on your Whole Slide Images", left_sidebar=True)
 
             ui.markdown(
                 """
                     ## Welcome to the Aignostics Platform Launcher!
-                    1. Analyze your whole slide images with our AI.
-                        Select an application from the left sidebar and use our wizard to submit a run.
-                    2. Select a run to monitor progress and inspect results, or cancel a pending run.
-                        Our integration with QuPath enables to visualize results with one click.
-                    3. You first want to try out with public data?
-                        Our integration
-                        with Image Data Commons (IDC) by National Cancer Institute (NCI)
-                        makes downloading DICOM datasets easy.
+                    1. Select an application from the left sidebar and use our wizard to analyze your whole slide images.
+                    2. Select a run to monitor progress, inspect results, or cancel a pending run.
+                        Visualize in QuPath with one click.
+                    3. Try out with public data? Open **☰** Menu and download datasets from
+                        Image Data Commons (IDC) by National Cancer Institute (NCI).
                 """
             )
 
-            with ui.carousel(animated=True, arrows=True, navigation=True).props("height=312px"):
+            with (
+                ui.row(align_items="center").classes("justify-center w-full"),
+                ui.carousel(animated=True, arrows=True, navigation=True).props("height=312px"),
+            ):
                 with ui.carousel_slide().classes("p-0"):
-                    ui.image("assets/home-card-1.png").classes("w-[768px]")
+                    ui.image("/assets/home-card-1.png").classes("w-[768px]")
                 with ui.carousel_slide().classes("p-0"):
-                    ui.image("assets/home-card-2.png").classes("w-[768px]")
+                    ui.image("/assets/home-card-2.png").classes("w-[768px]")
 
         @ui.page("/application/{application_id}")
-        def page_application_describe(application_id: str) -> None:
+        def page_application_describe(application_id: str) -> None:  # noqa: C901, PLR0915
             """Describe Application."""
             service = Service()
             application = service.application(application_id)
@@ -173,39 +235,46 @@ class PageBuilder(BasePageBuilder):
             application_versions = service.application_versions(application)
             latest_application_version = application_versions[0]
             latest_application_version_id = latest_application_version.application_version_id
-            latest_application_version_name = latest_application_version.version
             submit_form.application_version_id = latest_application_version_id
 
-            with ui.dialog() as release_notes_dialog, ui.card():
-                ui.label(f'Release notes of {application.name}')
-                for application_version in application_versions:
-                    ui.label(f"Version {application_version.version}")
+            with ui.dialog() as release_notes_dialog, ui.card().style("width: 1200px; max-width: none"):
+                ui.label(f"Release notes of {application.name}").classes("text-h5")
+                with ui.scroll_area().classes("w-full h-100"):
+                    for application_version in application_versions:
+                        ui.label(f"Version {application_version.version}").classes("text-h6")
+                        ui.markdown(
+                            f"""
+                                > {application_version.changelog}
+                            """
+                        )
+                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=release_notes_dialog.close)
+
+            with ui.row(align_items="start").classes("justify-center w-full"):
+                with ui.column(), ui.expansion(application.name, icon="info").classes("full-width") as application_info:
                     ui.markdown(
                         f"""
-                            > {application_version.changelog}
-                        """
+                                > {application.description}
+                            """
                     )
-                ui.button('Close', on_click=release_notes_dialog.close)
-
-            with ui.row(align_items="center").classes("justify-center w-full"):
-                ui.markdown(
-                    f"""
-                        > {application.description}
-                    """
-                )
                 ui.space()
-                with ui.column(align_items="left"):
+                with ui.row(align_items="center"):
+                    ui.button("Release Notes", icon="change_history", on_click=release_notes_dialog.open)
                     for regulatory_class in application.regulatory_classes:
-                        ui.label(f"Regulatory Class: {regulatory_class}")
-                        if (regulatory_class == "RUO"):
-                            with ui.row(align_items="center").classes("justify-center w-full"):
-                                ui.image("assets/ruo.svg")
+                        if regulatory_class == "RUO":
+                            with ui.link(
+                                target="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/distribution-in-vitro-diagnostic-products-labeled-research-use-only-or-investigational-use-only",
+                                new_tab=True,
+                            ):
+                                ui.image("/assets/ruo.png").style("width: 45px; height: 36px")
+                        else:
+                            ui.label(f"{regulatory_class}")
                     if not application.regulatory_classes:
-                        ui.label(f"Regulatory Class: Missing")
-                        with ui.row(align_items="center").classes("justify-center w-full"):
-                            ui.icon("bug_report", color="red")
-                    ui.label(f"Latest version: {latest_application_version_name}")
-                    ui.button("Release Notes",icon="change_history",on_click=release_notes_dialog.open)
+                        with ui.link(
+                            target="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/distribution-in-vitro-diagnostic-products-labeled-research-use-only-or-investigational-use-only",
+                            new_tab=True,
+                        ):
+                            ui.image("/assets/ruo.png").style("width: 45px; height: 36px")
 
             async def _select_source() -> None:
                 """Open a file picker dialog and show notifier when closed again."""
@@ -218,21 +287,25 @@ class PageBuilder(BasePageBuilder):
                         submit_form.source = None
                         submit_form.wsi_step_label.set_text(
                             "Select a folder with whole slide images you want to analyze"
-                        )
-                        submit_form.wsi_next_button.disable()
+                        ) if submit_form.wsi_step_label else None
+                        submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
                         ui.notify("The selected path is not a directory. Please select a valid directory.")
                     else:
                         submit_form.source = path
-                        submit_form.wsi_step_label.set_text(f"Selected folder {submit_form.source} to analyze")
-                        submit_form.wsi_next_button.enable()
+                        submit_form.wsi_step_label.set_text(
+                            f"Selected folder {submit_form.source} to analyze"
+                        ) if submit_form.wsi_step_label else None
+                        submit_form.wsi_next_button.enable() if submit_form.wsi_next_button else None
                         ui.notify(f"You chose directory {submit_form.source}.")
                 else:
                     submit_form.source = None
-                    submit_form.wsi_step_label.set_text("Select a folder with whole slide images you want to analyze")
-                    submit_form.wsi_next_button.disable()
+                    submit_form.wsi_step_label.set_text(
+                        "Select a folder with whole slide images you want to analyze"
+                    ) if submit_form.wsi_step_label else None
+                    submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
                     ui.notify("You did not make a selection. You must choose a source directory to upload from.")
 
-            def _on_wsi_next_click() -> None:
+            async def _on_wsi_next_click() -> None:
                 """Handle the 'Next' button click in WSI step.
 
                 This function:
@@ -240,12 +313,25 @@ class PageBuilder(BasePageBuilder):
                 2. Updates the metadata grid with the generated data
                 3. Moves to the next step
                 """
-                if submit_form.source:
+                if (
+                    submit_form.source
+                    and submit_form.metadata_grid
+                    and submit_form.wsi_spinner
+                    and submit_form.wsi_next_button
+                ):
                     try:
                         ui.notify(f"Finding WSIs and generating metadata for {submit_form.source}...")
-                        submit_form.metadata_grid.options["rowData"] = service.generate_metadata_from_source_directory(
-                            submit_form.source
+                        if submit_form.metadata_grid is None:
+                            logger.error("Metadata grid is not initialized.")
+                            return
+                        submit_form.wsi_spinner.set_visibility(True)
+                        submit_form.wsi_next_button.set_visibility(False)
+                        submit_form.metadata_grid.options["rowData"] = await run.cpu_bound(
+                            Service.generate_metadata_from_source_directory,
+                            submit_form.source,
                         )
+                        submit_form.wsi_next_button.set_visibility(True)
+                        submit_form.wsi_spinner.set_visibility(False)
                         submit_form.metadata_grid.update()
                         ui.notify(f"Found {len(submit_form.metadata_grid.options['rowData'])} slides for analysis.")
                         stepper.next()
@@ -255,21 +341,68 @@ class PageBuilder(BasePageBuilder):
                 else:
                     ui.notify("No source directory selected", color="negative")
 
+            with ui.dialog() as info_dialog, ui.card().style("width: 1200px; max-width: none; height: 1000px"):  # noqa: PLR1702
+                if submit_form.application_version_id is None:
+                    return
+                with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
+                    for application_version in application_versions:
+                        if application_version.application_version_id == submit_form.application_version_id:
+                            ui.label(f"Latest changes in v{application_version.version}").classes("text-h5")
+                            ui.markdown(
+                                f"""
+                                > {application_version.changelog}
+                                """
+                            )
+                            ui.label("Expected Input Artifacts:").classes("text-h5")
+                            for artifact in application_version.input_artifacts:
+                                with ui.expansion(artifact.name, icon=_mime_type_to_icon(artifact.mime_type)).classes(
+                                    "w-full"
+                                ):
+                                    ui.label("Metadata")
+                                    ui.json_editor({
+                                        "content": {"json": artifact.metadata_schema},
+                                        "mode": "tree",
+                                        "readOnly": True,
+                                        "mainMenuBar": False,
+                                        "navigationBar": True,
+                                        "statusBar": False,
+                                    }).style("width: 100%")
+                            ui.label("Generated output artifacts:").classes("text-h5")
+                            for artifact in application_version.output_artifacts:
+                                with ui.expansion(artifact.name, icon=_mime_type_to_icon(artifact.mime_type)).classes(
+                                    "w-full"
+                                ):
+                                    ui.label(f"Scope: {artifact.scope}")
+                                    ui.label(f"Mime Type: {artifact.mime_type}")
+                                    ui.label("Metadata")
+                                    ui.json_editor({
+                                        "content": {"json": artifact.metadata_schema},
+                                        "mode": "tree",
+                                        "readOnly": True,
+                                        "mainMenuBar": False,
+                                        "navigationBar": True,
+                                        "statusBar": False,
+                                    }).style("width: 100%")
+                            break
+                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=info_dialog.close)
 
-            with ui.stepper().props("vertical").classes("w-full") as stepper:
+            with ui.stepper().props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
                 with ui.step("Application Version"):
-                    ui.label(f"Select the version of {application.name} you want to run.")
-                    ui.select(
-                        {
-                            version.application_version_id: version.version
-                            for version in application_versions
-                        },
-                        value=latest_application_version_id
-                    ).bind_value(
-                        submit_form, "application_version_id"
-                    )
+                    with ui.row().classes("w-full justify-center"):
+                        with ui.column():
+                            ui.label(f"Select the version of {application.name} you want to run.")
+                            ui.select(
+                                {version.application_version_id: version.version for version in application_versions},
+                                value=latest_application_version_id,
+                            ).bind_value(submit_form, "application_version_id")
+                        ui.space()
+                        with ui.column():
+                            ui.button(icon="info", on_click=info_dialog.open)
                     with ui.stepper_navigation():
-                        ui.button("Next", on_click=stepper.next).mark("BUTTON_APPLICATION_VERSION_NEXT")
+                        ui.button("Next", on_click=lambda: [application_info.close(), stepper.next()]).mark(
+                            "BUTTON_APPLICATION_VERSION_NEXT"
+                        )
 
                 with ui.step("Whole Slide Images"):
                     submit_form.wsi_step_label = ui.label(
@@ -279,18 +412,30 @@ class PageBuilder(BasePageBuilder):
                         ui.button("Select", on_click=_select_source, icon="folder").mark("BUTTON_WSI_SELECT")
                         submit_form.wsi_next_button = ui.button("Next", on_click=_on_wsi_next_click)
                         submit_form.wsi_next_button.mark("BUTTON_WSI_NEXT").disable()
+                        submit_form.wsi_spinner = ui.spinner(size="lg")
+                        submit_form.wsi_spinner.set_visibility(False)
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
                 with ui.step("Metadata"):
-                    ui.label("Check the metadata extracted from the images, and provide additional information.")
+                    ui.markdown(
+                        """
+                        1. Check extracted and provide missing metadata.
+                            Double click red cells to edit - you are done when all turned green.
+                        2. You can exclude slides from the analysis by selecting them and clicking "Exclude slides".
+                        3. You can revert to the original list by clicking the Back button.
+                        """
+                    )
 
                     async def _validate() -> None:
+                        if submit_form.metadata_grid is None:
+                            logger.error("Metadata grid is not initialized.")
+                            return
                         rows = await submit_form.metadata_grid.get_client_data()
                         valid = True
                         for row in rows:
                             if (
                                 row["tissue_type"]
-                                not in [
+                                not in {
                                     "adrenal gland",
                                     "bladder",
                                     "bone",
@@ -300,89 +445,203 @@ class PageBuilder(BasePageBuilder):
                                     "liver",
                                     "lung",
                                     "lymph node",
-                                ]
-                            ) or (row["disease"] not in ["lung", "liver", "breast", "bladder", "colorectal"]):
+                                }
+                            ) or (row["disease"] not in {"lung", "liver", "breast", "bladder", "colorectal"}):
                                 valid = False
                                 break
+                        if submit_form.metadata_next_button is None:
+                            logger.error("Metadata next button is not initialized.")
+                            return
                         if not valid:
                             submit_form.metadata_next_button.disable()
                         else:
                             ui.notify("Your metadata is now valid. Feel free to continue to the next step.")
                             submit_form.metadata_next_button.enable()
+                        submit_form.metadata_grid.run_grid_method("autoSizeAllColumns")
 
                     async def _metadata_next() -> None:
+                        if submit_form.metadata_grid is None or submit_form.submission_upload_button is None:
+                            logger.error("Metadata grid is not initialized.")
+                            return
                         submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                         _upload_ui.refresh(submit_form.metadata)
+                        submit_form.submission_upload_button.enable()
                         ui.notify("Prepared upload ui")
                         stepper.next()
 
+                    async def _delete_selected() -> None:
+                        if submit_form.metadata_grid is None or submit_form.metadata_exclude_button is None:
+                            logger.error("Metadata grid is not initialized.")
+                            return
+                        selected_rows = await submit_form.metadata_grid.get_selected_rows()
+                        if (selected_rows is None) or (len(selected_rows) == 0):
+                            return
+                        submit_form.metadata = await submit_form.metadata_grid.get_client_data()
+                        submit_form.metadata[:] = [row for row in submit_form.metadata if row not in selected_rows]
+                        submit_form.metadata_grid.options["rowData"] = submit_form.metadata
+                        submit_form.metadata_grid.update()
+                        submit_form.metadata_exclude_button.set_text("Exclude")
+                        submit_form.metadata_exclude_button.disable()
+
+                    async def _handle_grid_selection_changed() -> None:
+                        if submit_form.metadata_grid is None or submit_form.metadata_exclude_button is None:
+                            logger.error("Metadata grid or button is not initialized.")
+                            return
+                        rows = await submit_form.metadata_grid.get_selected_rows()
+                        if rows:
+                            submit_form.metadata_exclude_button.set_text(f"Exclude {len(rows)} slides")
+                            submit_form.metadata_exclude_button.enable()
+                        else:
+                            submit_form.metadata_exclude_button.set_text("Exclude")
+                            submit_form.metadata_exclude_button.disable()
+
+                    thumbnail_renderer_js = """
+                        class ThumbnailRenderer {
+                            init(params) {
+                                this.eGui = document.createElement('img');
+                                this.eGui.setAttribute('src', `/thumbnail?source=${encodeURIComponent(params.data.source)}`);
+                                this.eGui.setAttribute('style', 'height:70px; width: 70px');
+                                this.eGui.setAttribute('alt', `${params.data.reference}`);
+                            }
+                            getGui() {
+                                return this.eGui;
+                            }
+                        }
+                    """
+
                     submit_form.metadata_grid = (
                         ui.aggrid({
-                            "autoSizeStrategy": {
-                                "type": "fitCellContents",
-                                "defaultMinWidth": 10,
-                                "columnLimits": [{"colId": "source", "minWidth": 150}],
-                            },
                             "columnDefs": [
-                                {"headerName": "Reference", "field": "reference"},
+                                {"headerName": "Reference", "field": "reference", "checkboxSelection": True},
+                                {
+                                    "headerName": "Thumbnail",
+                                    "field": "thumbnail",
+                                    ":cellRenderer": thumbnail_renderer_js,
+                                    "autoHeight": True,
+                                },
                                 {
                                     "headerName": "Tissue Type",
                                     "field": "tissue_type",
                                     "editable": True,
+                                    "cellEditor": "agSelectCellEditor",
+                                    "cellEditorParams": {
+                                        "values": [
+                                            "adrenal gland",
+                                            "bladder",
+                                            "bone",
+                                            "brain",
+                                            "breast",
+                                            "colon",
+                                            "liver",
+                                            "lung",
+                                            "lymph node",
+                                        ],
+                                        "valueListGap": 10,
+                                    },
                                     "cellClassRules": {
-                                        "bg-red-300": "!['adrenal gland', 'bladder', 'bone', 'brain', 'breast', 'colon', 'liver', 'lung', 'lymph node'].includes(x)",
-                                        "bg-green-300": "['adrenal gland', 'bladder', 'bone', 'brain', 'breast', 'colon', 'liver', 'lung', 'lymph node'].includes(x)",
+                                        "bg-red-300": "!new Set(['adrenal gland', 'bladder', 'bone', 'brain',"
+                                        "'breast', 'colon', 'liver', 'lung', 'lymph node']).has(x)",
+                                        "bg-green-300": "new Set(['adrenal gland', 'bladder', 'bone', 'brain',"
+                                        "'breast', 'colon', 'liver', 'lung', 'lymph node']).has(x)",
                                     },
                                 },
                                 {
                                     "headerName": "Disease",
                                     "field": "disease",
                                     "editable": True,
+                                    "cellEditor": "agSelectCellEditor",
+                                    "cellEditorParams": {
+                                        "values": ["lung", "liver", "breast", "bladder", "colorectal"],
+                                        "valueListGap": 10,
+                                    },
                                     "cellClassRules": {
-                                        "bg-red-300": "!['lung', 'liver', 'breast', 'bladder', 'colorectal'].includes(x)",
-                                        "bg-green-300": "['lung', 'liver', 'breast', 'bladder', 'colorectal'].includes(x)",
+                                        "bg-red-300": "!new Set(['lung', 'liver', 'breast', 'bladder',"
+                                        " 'colorectal']).has(x)",
+                                        "bg-green-300": "new Set(['lung', 'liver', 'breast', 'bladder',"
+                                        " 'colorectal']).has(x)",
                                     },
                                 },
-                                {"headerName": "Source", "field": "source"},
-                                {"headerName": "Checksum", "field": "checksum_crc32c"},
+                                {"headerName": "File size", "field": "file_size_human"},
                                 {"headerName": "MPP", "field": "mpp"},
                                 {"headerName": "Width", "field": "width"},
                                 {"headerName": "Height", "field": "height"},
                                 {"headerName": "Staining", "field": "staining"},
-                                {"headerName": "File size", "field": "file_size_human", "initialHide": True},
+                                {"headerName": "Source", "field": "source"},
+                                {"headerName": "Checksum", "field": "checksum_crc32c"},
                                 {"headerName": "Upload progress", "field": "file_upload_progress", "initialHide": True},
-                                {"headerName": "Platform Bucket URL", "field": "platform_bucket_url", "initialHide": True},
+                                {
+                                    "headerName": "Platform Bucket URL",
+                                    "field": "platform_bucket_url",
+                                    "initialHide": True,
+                                },
                             ],
                             "rowData": [],
                             "rowSelection": "multiple",
+                            "stopEditingWhenCellsLoseFocus": True,
+                            "autoSizeStrategy": {
+                                "type": "fitCellContents",
+                                "defaultMinWidth": 10,
+                                "columnLimits": [{"colId": "source", "minWidth": 150}],
+                            },
+                            "domLayout": "normal",
                         })
+                        .style("height: 210px")
+                        .classes(
+                            "ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham"
+                        )
                         .on("cellValueChanged", lambda _: _validate())
-                        .classes("max-h-160")
+                        .on("selectionChanged", _handle_grid_selection_changed)
                         .mark("GRID_METADATA")
                     )
-
+                    # .style("height: auto; width: 1000px")
+                    # use ui timer to update the grid class depending on dark mode, with a frequency of once per second
+                    ui.timer(
+                        interval=1,
+                        callback=lambda: submit_form.metadata_grid.classes(
+                            add="ag-theme-balham-dark"
+                            if app.storage.general.get("dark_mode", False)
+                            else "ag-theme-balham",
+                            remove="ag-theme-balham"
+                            if app.storage.general.get("dark_mode", False)
+                            else "ag-theme-balham-dark",
+                        )
+                        if submit_form.metadata_grid
+                        else None,
+                    )
                     with ui.stepper_navigation():
+                        submit_form.metadata_exclude_button = ui.button(
+                            "Exclude selected", on_click=_delete_selected
+                        ).mark("BUTTON_DELETE_SELECTED")
+                        submit_form.metadata_exclude_button.set_text("Exclude")
+                        submit_form.metadata_exclude_button.disable()
                         submit_form.metadata_next_button = ui.button("Next", on_click=lambda _: _metadata_next())
                         submit_form.metadata_next_button.mark("BUTTON_METADATA_NEXT").disable()
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
                 async def _upload() -> None:
                     """Upload prepared slides."""
+                    if submit_form.submission_submit_button is None or submit_form.submission_upload_button is None:
+                        logger.error("Submission submit button is not initialized.")
+                        return
                     ui.notify("Uploading slides to Aignostics Platform ...")
+                    if upload_message_queue is None:
+                        logger.error("Upload message queue is not initialized.")
+                        return
                     await run.cpu_bound(
                         Service.upload_with_queue,
                         str(time.time() * 1000),
-                        submit_form.application_version_id,
-                        submit_form.metadata,
+                        str(submit_form.application_version_id),
+                        submit_form.metadata or [],
                         upload_message_queue,
                     )
                     ui.notify("Upload to Aignostics Platform completed.")
                     submit_form.submission_submit_button.enable()
+                    submit_form.submission_upload_button.disable()
 
                 @ui.refreshable
                 def _upload_ui(metadata: list[dict[str, Any]]) -> None:
                     """Upload UI."""
-                    with ui.column(align_items="left"):
+                    with ui.column(align_items="start"):
                         ui.label(f"1. Upload {len(metadata)} slides you prepared to the Aignostics Platform.")
                         upload_complete = True
                         for row in metadata or []:
@@ -390,12 +649,16 @@ class PageBuilder(BasePageBuilder):
                             with ui.row(align_items="center"):
                                 with ui.circular_progress(value=row["file_upload_progress"], show_value=False):
                                     ui.button(icon="cloud_upload").props("flat round").disable()
-                                ui.label(f"{row['source']} ({row['file_size_human']})")
+                                ui.label(f"{row['source']} ({row['file_size_human']})").classes("w-4/5")
                         if upload_complete:
-                            ui.label(f"2. All uploads completed successfully. Click submit to run { submit_form.application_version_id } on {len(metadata) } slides.")
+                            ui.label(
+                                f"2. All uploads completed successfully. Click submit to run {submit_form.application_version_id} on {len(metadata)} slides."
+                            )
 
                 def _update_upload_progress() -> None:
                     """Update the upload progress for each file."""
+                    if submit_form.metadata is None:
+                        return
                     if not upload_message_queue.empty():
                         message = upload_message_queue.get()
                         if message and isinstance(message, dict) and "reference" in message:
@@ -404,19 +667,23 @@ class PageBuilder(BasePageBuilder):
                                     if "file_upload_progress" in message:
                                         row["file_upload_progress"] = message["file_upload_progress"]
                                         break
-                                    elif "platform_bucket_url" in message:
+                                    if "platform_bucket_url" in message:
                                         row["platform_bucket_url"] = message["platform_bucket_url"]
                                         break
                         _upload_ui.refresh(submit_form.metadata)
 
                 def _submit() -> None:
                     """Submit the application run."""
-                    ui.notify("Application Run Submitted!")
-                    run = service.application_run_submit_from_metadata(
-                        submit_form.application_version_id,
-                        submit_form.metadata,
-                    )
-                    ui.notify(f"Application run created with id '{run.application_run_id}'.")
+                    ui.notify("Submitting application run ...")
+                    try:
+                        run = service.application_run_submit_from_metadata(
+                            str(submit_form.application_version_id),
+                            submit_form.metadata or [],
+                        )
+                    except Exception as e:  # noqa: BLE001
+                        ui.notify(f"Failed to submit application run: {e}.")
+                        return
+                    ui.notify(f"Application run submitted with id '{run.application_run_id}'.")
                     ui.navigate.to(f"/application/run/{run.application_run_id}")
 
                 with ui.step("Submission"):
@@ -425,7 +692,7 @@ class PageBuilder(BasePageBuilder):
                     ui.timer(0.1, callback=_update_upload_progress)
 
                     with ui.stepper_navigation():
-                        ui.button(
+                        submit_form.submission_upload_button = ui.button(
                             "Upload",
                             on_click=lambda _: _upload(),
                             icon="check",
@@ -480,9 +747,19 @@ class PageBuilder(BasePageBuilder):
                         return True
                     ui.notify("Application Run can not be cancelled!")
                     return False
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     ui.notify(f"Failed to cancel application run: {e}.")
                     return False
+
+            with ui.dialog() as download_run_dialog:
+                ui.button("Select download folder")
+                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=download_run_dialog.close)
+
+            with ui.dialog() as qupath_project_create_dialog:
+                ui.button("Select QuPath folder")
+                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=download_run_dialog.close)
 
             if run_status.status.value == "running":
                 with ui.row().classes("w-full justify-end"):
@@ -493,38 +770,61 @@ class PageBuilder(BasePageBuilder):
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-            ui.markdown(
-                f"""
-                Status: {run_status.status.value}
-                Triggered at: {run_status.triggered_at.astimezone().strftime("%m-%d %H:%M")}
-                """
-            )
+            if run_status.status.value == "completed":
+                with ui.row().classes("w-full justify-end"):
+                    ui.button("Download Analysis", icon="cloud_download", on_click=download_run_dialog.open)
+                    ui.button("Open in QuPath", icon="zoom_in", on_click=qupath_project_create_dialog.open)
 
-            from importlib.util import find_spec  # noqa: PLC0415
+            with ui.card():
+                ui.markdown(
+                    f"""
+                    * Application Version: {run_status.application_version_id}
+                    * Status: {run_status.status.value}
+                    * Triggered at: {run_status.triggered_at.astimezone().strftime("%m-%d %H:%M")}
+                    * Organization: {run_status.organization_id}
+                    * Triggered by: {run_status.triggered_by}
+                    """
+                )
 
-            service = Service()
+            with ui.list().props("bordered separator").classes("full-width"):  # noqa: PLR1702
+                for item in run.results():
+                    with ui.item().props("clickable"):
+                        with ui.item_section().props("avatar"):
+                            ui.icon(_run_item_status_to_icon(item.status.value))
+                        with ui.item_section().classes("w-1/5"):
+                            with ui.card():
+                                ui.label(f"Item ID: {item.item_id}")
+                                ui.label(f"Reference: {item.reference}")
+                                ui.label(f"Status: {item.status.value}")
+                                if item.error:
+                                    ui.label(f"Error: {item.error!s}")
+                            if item.output_artifacts:
+                                with ui.expansion("Analysis", icon="description").classes("w-full"):
+                                    for artifact in item.output_artifacts:
+                                        with ui.expansion(
+                                            str(artifact.name), icon=_mime_type_to_icon(artifact.mime_type)
+                                        ).classes("w-full"):
+                                            if artifact.download_url:
+                                                with ui.row():
+                                                    if artifact.mime_type == "image/tiff":
+                                                        ui.button(
+                                                            "view", icon=_mime_type_to_icon(artifact.mime_type)
+                                                        ).on_click(lambda: ui.notify("Not yet implemented"))
+                                                    if artifact.mime_type == "text/csv":
+                                                        ui.button(
+                                                            "view", icon=_mime_type_to_icon(artifact.mime_type)
+                                                        ).on_click(lambda: ui.notify("Not yet implemented"))
 
-            if find_spec("matplotlib") and find_spec("numpy"):
-                import numpy as np  # noqa: PLC0415
-
-                with ui.card().tight().mark("CARD_PLOT"):  # noqa: SIM117
-                    with ui.matplotlib(figsize=(4, 3)).figure as fig:
-                        x = np.linspace(0.0, 5.0)
-                        y = np.cos(2 * np.pi * x) * np.exp(-x)
-                        ax = fig.gca()
-                        ax.plot(x, y, "-")
-
-            [ui.label(f"Line {i}") for i in range(100)]
-
-            if find_spec("matplotlib") and find_spec("wsidicom"):
-                from wsidicom import WsiDicom  # noqa: PLC0415
-
-                if (service.get_data_directory() / SERIES_INSTANCE_ID).exists():
-                    slide = WsiDicom.open(service.get_data_directory() / SERIES_INSTANCE_ID)
-
-                    with ui.card().tight().mark("DICOM_PLOT"):  # noqa: SIM117
-                        with ui.matplotlib(figsize=(4, 3)).figure as fig:
-                            ax = fig.gca()
-                            thumbnail = slide.read_thumbnail()
-                            ax.imshow(thumbnail)
-                            ax.axis("off")
+                                                    with ui.link(target=artifact.download_url, new_tab=True):
+                                                        ui.button(text="Download", icon="cloud_download")
+                                            if artifact.metadata:
+                                                ui.label("Metadata")
+                                                ui.json_editor({
+                                                    "content": {"json": artifact.metadata},
+                                                    "mode": "tree",
+                                                    "readOnly": True,
+                                                    "mainMenuBar": False,
+                                                    "navigationBar": True,
+                                                    "statusBar": False,
+                                                }).style("width: 100%")
+                                            ui.label(f"ID: {artifact.output_artifact_id!s}")

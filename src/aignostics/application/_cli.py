@@ -94,7 +94,7 @@ def upload(
         return
 
     # Generate signed URL
-    bucket_name = str(os.environ.get("AIGNOSTICS_PLATFORM_BUCKET_NAME"))
+    bucket_name = str(os.environ.get("AIGNOSTICS_BUCKET_NAME"))
     timestamp_millis = int(time.time() * 1000)
     object_key = f"helmut/heta/{timestamp_millis}_{source_file_path.name}"
     url = create_signed_upload_url(bucket_name, object_key)

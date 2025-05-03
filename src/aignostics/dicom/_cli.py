@@ -1,18 +1,13 @@
-"""
-This module provides a command-line interface (CLI) for performing various operations on DICOM files using the Typer library.
-It includes commands for inspecting, validating, and converting DICOM files, as well as importing GeoJSON annotations into DICOM ANN instances.
-Additionally, it supports DICOMWeb operations such as searching, deleting, and storing studies, series, and instances.
-The CLI is organized into multiple subcommands, each with specific options and arguments to customize the behavior of the operations.
-"""
+"""CLI for operations on pyramidal DICOM files."""
 
-import json
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from aignostics.utils import console, path_autocomplete
-from ._utils import print_study_info, print_slide_info
+
+from ._utils import print_slide_info, print_study_info
 
 cli = typer.Typer(name="dicom", help="Operations on DICOM datasets.")
 
@@ -20,24 +15,25 @@ cli = typer.Typer(name="dicom", help="Operations on DICOM datasets.")
 @cli.command()
 def inspect(
     path: Annotated[
-        Path, typer.Argument(..., help="Path of file or directory to inspect", exists=True, autocompletion=path_autocomplete(file_okay=True, dir_okay=True, readable=True)),
+        Path,
+        typer.Argument(
+            ...,
+            help="Path of file or directory to inspect",
+            exists=True,
+            autocompletion=path_autocomplete(file_okay=True, dir_okay=True, readable=True),
+        ),
     ],
-    verbose: Annotated[
-        bool, typer.Option(help="Verbose output")
-    ] = False,
-    summary: Annotated[
-        bool, typer.Option(help="Show only summary information")
-    ] = False,
-):  # pylint: disable=W0613
-    """Inspect DICOM files at any hierarchy level"""
-    from ._handler import DicomHandler
+    verbose: Annotated[bool, typer.Option(help="Verbose output")] = False,
+    summary: Annotated[bool, typer.Option(help="Show only summary information")] = False,
+) -> None:  # pylint: disable=W0613
+    """Inspect DICOM files at any hierarchy level."""
+    from ._handler import DicomHandler  # noqa: PLC0415
+
     with DicomHandler.from_file(str(path)) as handler:
         metadata = handler.get_metadata(verbose)
 
         if metadata["type"] == "empty":
-            console.print(
-                "[bold red]No DICOM files found in the specified path.[/bold red]"
-            )
+            console.print("[bold red]No DICOM files found in the specified path.[/bold red]")
             return
 
         # Print hierarchy
@@ -47,15 +43,12 @@ def inspect(
 
             if not summary:
                 for container_id, slide_data in study_data["slides"].items():
-                    console.print(
-                        f"\n[bold]Slide (Container ID):[/bold] {container_id}"
-                    )
+                    console.print(f"\n[bold]Slide (Container ID):[/bold] {container_id}")
                     print_slide_info(slide_data, indent=1, verbose=verbose)
 
 
 @cli.command(name="validate")
-def dicom_validate(
-    ctx: typer.Context,
+def dicom_validate(  # noqa: PLR0913, PLR0917
     verbose: bool = False,
     dicom_path: Path = typer.Argument(..., exists=True),
     standard_path: Path = typer.Option(
@@ -70,9 +63,7 @@ def dicom_validate(
         "-r",
         help='Standard revision (e.g. "2014c"), year of revision, "current" or "local" (latest locally installed)',
     ),
-    force_read: bool = typer.Option(
-        False, "--force-read", help="Force-read DICOM files without DICOM header"
-    ),
+    force_read: bool = typer.Option(False, "--force-read", help="Force-read DICOM files without DICOM header"),
     recreate_json: bool = typer.Option(
         False,
         "--recreate-json",
@@ -84,9 +75,10 @@ def dicom_validate(
         "-svr",
         help="Suppress warnings for values not matching value representation (VR)",
     ),
-):  # pylint: disable=W0613
+) -> None:  # pylint: disable=W0613
     """Validate DICOM files."""
-    from ._handler import DicomHandler
+    from ._handler import DicomHandler  # noqa: PLC0415
+
     error_nr = DicomHandler.validate(
         dicom_path=dicom_path,
         standard_path=standard_path,
@@ -105,22 +97,19 @@ cli.add_typer(cli_geojson, name="geojson")
 
 
 @cli_geojson.callback()
-def geojson(ctx: typer.Context, verbose: bool = False):  # pylint: disable=W0613
-    """Operations on GeoJSON files"""
+def geojson() -> None:  # pylint: disable=W0613
+    """Operations on GeoJSON files."""
 
 
 @cli_geojson.command(name="import")
 def dicom_geojson_import(
-    ctx: typer.Context,
-    verbose: bool = False,
     dicom_path: Path = typer.Argument(..., exists=True),
     geojson_path: Path = typer.Argument(..., exists=True),
-):  # pylint: disable=W0613
-    """Import GeoJSON annotations into DICOM ANN instance"""
-    from ._handler import DicomHandler
-    console.print(
-        "\nImporting GeoJSON annotations into DICOM ANN instance...", style="blue"
-    )
+) -> None:  # pylint: disable=W0613
+    """Import GeoJSON annotations into DICOM ANN instance."""
+    from ._handler import DicomHandler  # noqa: PLC0415
+
+    console.print("\nImporting GeoJSON annotations into DICOM ANN instance...", style="blue")
     DicomHandler.geojson_import(dicom_path, geojson_path)
 
 
@@ -129,20 +118,18 @@ cli.add_typer(cli_wsi, name="wsi")
 
 
 @cli_wsi.callback()
-def wsi(ctx: typer.Context, verbose: bool = False):  # pylint: disable=W0613
-    """Operations on WSI files"""
+def wsi(ctx: typer.Context, verbose: bool = False) -> None:  # pylint: disable=W0613
+    """Operations on WSI files."""
 
 
 @cli_wsi.command(name="convert")
 def dicom_wsi_convert(
-    ctx: typer.Context,
-    verbose: bool = False,
     wsi_path: Path = typer.Argument(..., exists=True),
     dicom_path: Path = typer.Argument(..., exists=True),
     id_base: int = typer.Option(1, "--id-base", "-i", help="Base for ID generation"),
-):  # pylint: disable=W0613
-    """Convert a WSI to DICOM SM instances"""
-    from ._handler import DicomHandler
+) -> None:  # pylint: disable=W0613
+    """Convert a WSI to DICOM SM instances."""
+    from ._handler import DicomHandler  # noqa: PLC0415
+
     console.print("\nConverting WSI to DICOM SM instances...", style="blue")
     DicomHandler.wsi_convert(wsi_path, dicom_path, id_base)
-

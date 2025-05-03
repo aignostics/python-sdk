@@ -63,11 +63,9 @@ requires-python = ">=3.11, <4.0"
 
 dependencies = [
     # From Template
-    "boto3>=1.37.27",
-    "idc-index>=0.8.6",
     "fastapi[standard,all]>=0.115.12",
     "logfire[system-metrics]>=3.14.1",
-    "nicegui[native]>=2.15.0",
+    "nicegui[native]>=2.16.0",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
     "opentelemetry-instrumentation-jinja2>=0.53b0",
@@ -90,6 +88,7 @@ dependencies = [
     "google-crc32c>=1.7.1",
     "highdicom>=0.25.1",
     "httpx>=0.28.1",
+    "idc-index>=0.8.6",
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
     "openslide-bin>=4.0.0.8",
@@ -103,8 +102,8 @@ dependencies = [
     "show-in-file-manager>=1.1.5",
     "tqdm>=4.67.1",
     "urllib3>=2.2.3",
-    "wsidicomizer[openslide,bioformats]>=0.15.0",
     "shapely>=2.1.0",
+    "s3fs>=2025.3.2",
 ]
 
 [project.optional-dependencies]
@@ -117,7 +116,6 @@ examples = [
     "matplotlib>=3.10.1",
     "shapely>=2.1.0",
     "streamlit>=1.44.1",
-    "wsidicom>=0.26.0",
 ]
 
 [dependency-groups]

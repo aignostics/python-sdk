@@ -1,4 +1,5 @@
-# src/orion/tiff/__init__.py
+"""Module for handling (pyramidal) TIFF files."""
+
 from ._cli import cli
 from ._service import Service
 

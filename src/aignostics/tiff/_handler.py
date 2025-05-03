@@ -1,31 +1,36 @@
-# src/orion/tiff/handler.py
-import xml.etree.ElementTree as ET
+"""Handler for TIFF files using OpenSlide."""
+
+import xml.etree.ElementTree as ET  # noqa: S405
 from pathlib import Path
 from typing import Any
 
 import openslide
+from PIL.Image import Image
 
 
 class TiffHandler:
     """Handler for TIFF files using OpenSlide."""
 
-    def __init__(self, path: str):
+    def __init__(self, path: str) -> None:
         self.path = Path(path)
         self.slide = openslide.OpenSlide(str(path))
 
     @classmethod
-    def from_file(cls, path: str) -> "TiffHandler":
-        return cls(path)
+    def from_file(cls, path: str | Path) -> "TiffHandler":
+        return cls(str(path))
 
-    def _detect_format(self) -> str:
-        """Enhanced format detection"""
+    def _detect_format(self) -> str | None:
+        """Enhanced format detection.
+
+        Returns:
+            str: The detected format of the TIFF file.
+        """
         props = dict(self.slide.properties)
-        # print(props)
 
         # Check for libvips signature in XML metadata
         if "tiff.ImageDescription" in props:
             try:
-                root = ET.fromstring(props["tiff.ImageDescription"])
+                root = ET.fromstring(props["tiff.ImageDescription"])  # noqa: S314
                 if root.get("xmlns") == "http://www.vips.ecs.soton.ac.uk//dzsave":
                     return "pyramidal-tiff (libvips)"
             except ET.ParseError:
@@ -43,10 +48,25 @@ class TiffHandler:
 
         return base_format
 
-    def _parse_xml_image_description(self, xml_string: str) -> dict[str, Any]:
-        """Parse the XML image description."""
+    def get_thumbnail(self) -> Image:
+        """Get thumbnail of the slide.
+
+        Returns:
+            Image: Thumbnail image of the slide.
+        """
+        return self.slide.get_thumbnail((256, 256))
+
+    def _parse_xml_image_description(self, xml_string: str) -> dict[str, Any]:  # noqa: PLR6301
+        """Parse the XML image description.
+
+        Args:
+            xml_string: XML string containing image description.
+
+        Returns:
+            dict[str, Any]: Parsed image description as a dictionary with metadata properties.
+        """
         try:
-            root = ET.fromstring(xml_string)
+            root = ET.fromstring(xml_string)  # noqa: S314
             namespace = {"ns": "http://www.vips.ecs.soton.ac.uk//dzsave"}
             image_desc = {
                 "date": root.get("date"),
@@ -56,7 +76,11 @@ class TiffHandler:
             for prop in root.findall(".//ns:property", namespace):
                 name = prop.find("ns:name", namespace).text
                 value_elem = prop.find("ns:value", namespace)
+                if value_elem is None:
+                    continue
                 value = value_elem.text
+                if value is None:
+                    continue
                 value_type = value_elem.get("type", "")
 
                 if value_type == "gint":
@@ -77,7 +101,12 @@ class TiffHandler:
             return {}
 
     def _get_level_info(self) -> list[dict[str, Any]]:
-        """Get detailed information for each level"""
+        """Get detailed information for each level.
+
+        Returns:
+            list[dict[str, Any]]: A list of dictionaries containing detailed information for each level
+                of the pyramidal TIFF image.
+        """
         levels = []
         props = dict(self.slide.properties)
         base_mpp_x = float(props.get(openslide.PROPERTY_NAME_MPP_X, 0))
@@ -118,7 +147,12 @@ class TiffHandler:
         return levels
 
     def get_metadata(self) -> dict[str, Any]:
-        """Get comprehensive slide metadata"""
+        """Get comprehensive slide metadata.
+
+        Returns:
+            dict[str, Any]: A dictionary containing detailed metadata about the TIFF image,
+                including format, file information, dimensions, resolution, levels, and other properties.
+        """
         props = dict(self.slide.properties)
         file_size = self.path.stat().st_size
         base_width, base_height = self.slide.dimensions
@@ -171,12 +205,12 @@ class TiffHandler:
 
         return metadata
 
-    def close(self):
-        """Close the OpenSlide object"""
+    def close(self) -> None:
+        """Close the OpenSlide object."""
         self.slide.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "TiffHandler":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001
         self.close()

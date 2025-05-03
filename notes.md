@@ -79,6 +79,14 @@ uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a9
 - Pagination of runs fails when there is 40 runs
 - There is a large number of runs running but not progressing, and not
   cancelable (exception NotCancelleable when trying to cancel.)
+- Regulatory class missing in H&E App
+- Input artifact mime type should be a list, e.g. to indicate image/tiff and
+  application/dicom support
+
+### Requests to improve
+
+- Message of ValueError "X is greater then Y supported" does not indicate the
+  attribute this refers to - in this case mpp
 
 ## Feature requests
 

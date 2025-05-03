@@ -16,10 +16,8 @@ PATH_LENFTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID"
 
 
-# Services derived from BaseService and exported by modules via their __init__.py are automatically registered
-# with the system module, enabling for dynamic discovery of health, info and further functionality.
 class Service(BaseService):
-    """Service of the application module."""
+    """Service of the IDC module."""
 
     def info(self) -> dict[str, Any]:  # noqa: PLR6301
         """Determine info of this service.
@@ -29,7 +27,7 @@ class Service(BaseService):
         """
         return {}
 
-    def health(self) -> Health:
+    def health(self) -> Health:  # noqa: PLR6301
         """Determine health of hello service.
 
         Returns:
@@ -41,7 +39,7 @@ class Service(BaseService):
         )
 
     @staticmethod
-    def _capture_progress_output(process: subprocess.Popen, queue: Queue, base_progress: float = 0.04) -> None:
+    def _capture_progress_output(process: subprocess.Popen, queue: Queue, base_progress: float = 0.04) -> None:  # noqa: C901
         """Capture output from the download process and update progress queue.
 
         Args:

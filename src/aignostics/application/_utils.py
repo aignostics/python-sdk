@@ -5,7 +5,6 @@ import os
 from enum import StrEnum
 from operator import itemgetter
 from pathlib import Path
-from sys import version
 from typing import Literal
 
 from boto3.session import Session
@@ -13,9 +12,9 @@ from botocore.client import Config
 
 from aignostics.platform import (
     Application,
-    ApplicationVersion,
     ApplicationRun,
     ApplicationRunStatus,
+    ApplicationVersion,
     Client,
     InputArtifact,
     InputItem,
@@ -67,8 +66,8 @@ def _get_s3_client(endpoint_url: str = "https://storage.googleapis.com"):  # noq
         botocore.client.S3: A Boto3 S3 client instance.
     """
     # https://www.kmp.tw/post/accessgcsusepythonboto3/
-    hmac_access_key_id = os.environ.get("AIGNOSTICS_PLATFORM_HMAC_ACCESS_KEY_ID")
-    hmac_secret_access_key = os.environ.get("AIGNOSTICS_PLATFORM_HMAC_SECRET_ACCESS_KEY")
+    hmac_access_key_id = os.environ.get("AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID")
+    hmac_secret_access_key = os.environ.get("AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY")
 
     region_name = "EUROPE-WEST3"
 
@@ -167,6 +166,7 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
             pos += 1
     return payload
 
+
 def application_versions_sorted_by_semver(app: Application, client: Client) -> list[ApplicationVersion]:
     """Get application versions sorted by semver, latest first.
 
@@ -204,6 +204,7 @@ def application_versions_sorted_by_semver(app: Application, client: Client) -> l
 
     # If we couldn't parse any versions, return all versions as is
     return versions
+
 
 def find_latest_application_version_id(app: Application, client: Client) -> str | None:
     """Find the latest version of an application.

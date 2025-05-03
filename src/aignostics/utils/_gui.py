@@ -106,7 +106,7 @@ class GUILocalFilePicker:
         Returns:
             An instance of the dialog with lazy-loaded dependencies.
         """
-        from nicegui import events, ui  # noqa: PLC0415
+        from nicegui import app, events, ui  # noqa: PLC0415
         # Lazy import ui only when actually creating an instance
 
         # Define the actual implementation class with the imports available
@@ -151,6 +151,9 @@ class GUILocalFilePicker:
                             html_columns=[0],
                         )
                         .classes("w-96")
+                        .classes(
+                            "ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham"
+                        )
                         .on("cellDoubleClicked", self.handle_double_click)
                     )
                     with ui.row().classes("w-full justify-end"):

@@ -1,19 +1,13 @@
 import datetime
 import json
-import logging
-import sys
-import time
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 import highdicom as hd
-import jwt
 import numpy as np
 import pydicom
 import pydicom.errors
-import requests
-import typer
 import wsidicom
 import wsidicom.conceptcode
 import wsidicom.file
@@ -22,48 +16,60 @@ from dicom_validator.spec_reader.edition_reader import EditionReader
 from dicom_validator.validator.dicom_file_validator import DicomFileValidator
 from pydicom.sr.codedict import codes
 from pydicom.sr.coding import Code
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from shapely.geometry import Polygon
 from wsidicomizer.metadata import WsiDicomizerMetadata
 from wsidicomizer.wsidicomizer import WsiDicomizer
 
-from aignostics.utils import console
+from aignostics.utils import console, get_logger
+
+logger = get_logger(__name__)
+
 
 class DicomHandler:
-
-    def __init__(self, path: Path):
+    def __init__(self, path: Path) -> None:
         self.path = Path(path)
 
-
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: str | Path) -> "DicomHandler":
+        """Create a DicomHandler instance from a file or directory path.
+
+        Args:
+            path (str | Path): Path to the DICOM file or directory.
+
+        Returns:
+            DicomHandler: An instance of DicomHandler.
+        """
         return cls(Path(path))
 
     def get_metadata(self, verbose: bool = False) -> dict[str, Any]:
         files = self._scan_files(verbose)
         return self._organize_by_hierarchy(files)
 
-    def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:
+    def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0915
         dicom_files = []
 
-        for file_path in self.path.rglob("*"):
+        for file_path in self.path.rglob("*"):  # noqa: PLR1702
             if not file_path.is_file():
                 continue
 
             try:
+                print(file_path)
                 ds = pydicom.dcmread(str(file_path), stop_before_pixels=True)
+                print(ds)
+                continue
+                # print(ds["Modality"].value)
+                # print(getattr(ds, "Modality", "unknown"))
+                # sys.exit()
 
                 # Basic required DICOM fields
-                file_info = {
+                file_info: dict[str, Any] = {
                     "path": str(file_path),
                     "study_uid": str(getattr(ds, "StudyInstanceUID", "unknown")),
                     "container_id": str(getattr(ds, "ContainerIdentifier", "unknown")),
                     "series_uid": str(getattr(ds, "SeriesInstanceUID", "unknown")),
                     "modality": str(getattr(ds, "Modality", "unknown")),
                     "type": "unknown",
-                    "frame_of_reference_uid": str(
-                        getattr(ds, "FrameOfReferenceUID", "unknown")
-                    ),
+                    "frame_of_reference_uid": str(getattr(ds, "FrameOfReferenceUID", "unknown")),
                 }
 
                 # Try to determine file type using highdicom
@@ -72,11 +78,11 @@ class DicomHandler:
                         file_info["type"] = "annotation"
                     elif hd.sr.is_microscopy_measurement(ds):
                         file_info["type"] = "measurement"
-                    elif getattr(ds, "Modality", "") in ["SM", "WSI"]:
+                    elif getattr(ds, "Modality", "") in {"SM", "WSI"}:
                         file_info["type"] = "image"
                 except Exception:
+                    logger.exception("Failed to analyze DICOM file with highdicom")
                     # If highdicom analysis fails, keep 'unknown' type
-                    pass
 
                 # Add size and basic metadata
                 file_info["size"] = file_path.stat().st_size
@@ -87,7 +93,7 @@ class DicomHandler:
                 }
 
                 # Add to file_info dictionary after basic metadata
-                if getattr(ds, "Modality", "") in ["SM", "WSI"]:
+                if getattr(ds, "Modality", "") in {"SM", "WSI"}:
                     file_info.update({
                         "modality": getattr(ds, "Modality", ""),
                         "is_pyramidal": True,
@@ -106,19 +112,13 @@ class DicomHandler:
                     groups = ann.get_annotation_groups()
                     for group in groups:
                         # Calculate min/max coordinates for all points
-                        col_min = row_min = float(
-                            "inf"
-                        )  # Initialize to positive infinity
-                        col_max = row_max = float(
-                            "-inf"
-                        )  # Initialize to negative infinity
+                        col_min = row_min = float("inf")  # Initialize to positive infinity
+                        col_max = row_max = float("-inf")  # Initialize to negative infinity
                         graphic_data_len = float("-inf")
                         first = None
 
                         if verbose:
-                            graphic_data = group.get_graphic_data(
-                                ann.annotation_coordinate_type
-                            )
+                            graphic_data = group.get_graphic_data(ann.annotation_coordinate_type)
                             graphic_data_len = len(graphic_data)
                             first = graphic_data[0]
                             if graphic_data:
@@ -230,9 +230,7 @@ class DicomHandler:
                             "software_version": "",
                             "institution_name": "",
                         },
-                        "series": defaultdict(
-                            lambda: {"description": "", "modality": "", "files": []}
-                        ),
+                        "series": defaultdict(lambda: {"description": "", "modality": "", "files": []}),
                     }
                 ),
             }
@@ -291,14 +289,10 @@ class DicomHandler:
             # Add generic image dimensions for any image type
             if hasattr(ds, "Rows") and hasattr(ds, "Columns"):
                 file_specific["dimensions"] = (int(ds.Rows), int(ds.Columns))
-                file_specific["photometric_interpretation"] = str(
-                    getattr(ds, "PhotometricInterpretation", "")
-                )
+                file_specific["photometric_interpretation"] = str(getattr(ds, "PhotometricInterpretation", ""))
                 file_specific["bits_allocated"] = int(getattr(ds, "BitsAllocated", 0))
                 file_specific["bits_stored"] = int(getattr(ds, "BitsStored", 0))
-                file_specific["samples_per_pixel"] = int(
-                    getattr(ds, "SamplesPerPixel", 0)
-                )
+                file_specific["samples_per_pixel"] = int(getattr(ds, "SamplesPerPixel", 0))
                 file_specific["image_type"] = getattr(ds, "ImageType", [])
 
             # Copy pyramidal information if present
@@ -318,14 +312,10 @@ class DicomHandler:
             series["files"].append(file_specific)
 
             # Update the specimen and equipment info when processing files
-            if not studies[study_uid]["slides"][container_id]["specimen_info"][
-                "description"
-            ]:
+            if not studies[study_uid]["slides"][container_id]["specimen_info"]["description"]:
                 studies[study_uid]["slides"][container_id]["specimen_info"].update({
                     "description": str(
-                        getattr(ds, "SpecimenDescriptionSequence", [""])[0].get(
-                            "SpecimenShortDescription", ""
-                        )
+                        getattr(ds, "SpecimenDescriptionSequence", [""])[0].get("SpecimenShortDescription", "")
                         if getattr(ds, "SpecimenDescriptionSequence", [])
                         else ""
                     ),
@@ -349,9 +339,7 @@ class DicomHandler:
                         if x.get("SpecimenIdentifier")
                     ],
                     "embedding_medium": str(
-                        getattr(ds, "SpecimenDescriptionSequence", [""])[0].get(
-                            "SpecimenEmbeddingMethod", ""
-                        )
+                        getattr(ds, "SpecimenDescriptionSequence", [""])[0].get("SpecimenEmbeddingMethod", "")
                         if getattr(ds, "SpecimenDescriptionSequence", [])
                         else ""
                     ),
@@ -367,14 +355,21 @@ class DicomHandler:
 
         return {"type": "root", "studies": studies}
 
-    def __enter__(self):
+    def __enter__(self) -> "DicomHandler":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         pass  # No cleanup needed for now
 
     def _get_specimen_info(self, ds) -> dict:
-        """Extract specimen information from DICOM dataset"""
+        """Extract specimen information from DICOM dataset.
+
+        Args:
+            ds: The DICOM dataset from which to extract specimen information.
+
+        Returns:
+            dict: A dictionary containing specimen information
+        """
         specimen_info = {
             "description": "",
             "anatomical_structure": "",
@@ -394,32 +389,22 @@ class DicomHandler:
                 if hasattr(item, "ParentSpecimenSequence"):
                     for parent in item.ParentSpecimenSequence:
                         parent_id = str(getattr(parent, "SpecimenIdentifier", ""))
-                        if (
-                            parent_id
-                            and parent_id not in specimen_info["parent_specimens"]
-                        ):
+                        if parent_id and parent_id not in specimen_info["parent_specimens"]:
                             specimen_info["parent_specimens"].append(parent_id)
 
                 # Get first non-empty values for other fields
                 if not specimen_info["anatomical_structure"]:
-                    specimen_info["anatomical_structure"] = str(
-                        getattr(item, "PrimaryAnatomicStructure", "")
-                    )
+                    specimen_info["anatomical_structure"] = str(getattr(item, "PrimaryAnatomicStructure", ""))
                 if not specimen_info["collection_method"]:
-                    specimen_info["collection_method"] = str(
-                        getattr(item, "SamplingMethodDescription", "")
-                    )
+                    specimen_info["collection_method"] = str(getattr(item, "SamplingMethodDescription", ""))
                 if not specimen_info["embedding_medium"]:
-                    specimen_info["embedding_medium"] = str(
-                        getattr(item, "FixationMethod", "")
-                    )
+                    specimen_info["embedding_medium"] = str(getattr(item, "FixationMethod", ""))
 
         return specimen_info
 
     @staticmethod
     def geojson_import(dicom_path: Path, geojson_path: Path) -> bool:
         """Convert GeoJSON to DICOM ANN instance"""
-
         try:
             with open(geojson_path, encoding="utf-8") as f:
                 geojson_data = json.load(f)
@@ -461,24 +446,16 @@ class DicomHandler:
                     geometry = feature["geometry"]
 
                     if geometry["type"] == "Point":
-                        coordinates = np.array(
-                            geometry["coordinates"], dtype=np.float32
-                        )
-                        if not (
-                            0 <= coordinates[0] < columns and 0 <= coordinates[1] < rows
-                        ):
-                            console.print(
-                                f"Point coordinates {coordinates} out of bounds"
-                            )
+                        coordinates = np.array(geometry["coordinates"], dtype=np.float32)
+                        if not (0 <= coordinates[0] < columns and 0 <= coordinates[1] < rows):
+                            console.print(f"Point coordinates {coordinates} out of bounds")
                             continue
                         graphic_data.append(coordinates)
                         graphic_types.append(hd.ann.GraphicTypeValues.POINT)
 
                     elif geometry["type"] == "Polygon":
                         # DICOM does only contain simple polygons, without holes
-                        coordinates = np.array(
-                            geometry["coordinates"][0], dtype=np.float32
-                        )
+                        coordinates = np.array(geometry["coordinates"][0], dtype=np.float32)
                         # Remove last point if it's identical to first (closed polygon)
                         if np.array_equal(coordinates[0], coordinates[-1]):
                             coordinates = coordinates[:-1]
@@ -537,11 +514,7 @@ class DicomHandler:
                         source="Aignostics GmbH (https://www.aignostics.com)",
                         parameters={"runtime": "PAPI"},
                     ),
-                    graphic_type=(
-                        graphic_types[0]
-                        if graphic_types
-                        else hd.ann.GraphicTypeValues.POINT
-                    ),
+                    graphic_type=(graphic_types[0] if graphic_types else hd.ann.GraphicTypeValues.POINT),
                     graphic_data=graphic_data,
                     measurements=[area_measurement],
                 )
@@ -605,24 +578,18 @@ class DicomHandler:
             extraction_step=wsidicom.metadata.Collection(
                 method=wsidicom.conceptcode.SpecimenCollectionProcedureCode("Excision")
             ),
-            type=wsidicom.conceptcode.AnatomicPathologySpecimenTypesCode(
-                "Gross specimen"
-            ),
+            type=wsidicom.conceptcode.AnatomicPathologySpecimenTypesCode("Gross specimen"),
             container=wsidicom.conceptcode.ContainerTypeCode("Specimen container"),
             steps=[
                 wsidicom.metadata.Fixation(
-                    fixative=wsidicom.conceptcode.SpecimenFixativesCode(
-                        "Neutral Buffered Formalin"
-                    )
+                    fixative=wsidicom.conceptcode.SpecimenFixativesCode("Neutral Buffered Formalin")
                 )
             ],
         )
         optical_path = wsidicom.metadata.OpticalPath(
             identifier=f"opt {no}",
             description="Optical path description",
-            illumination_types=[
-                wsidicom.conceptcode.IlluminationCode("Brightfield illumination")
-            ],
+            illumination_types=[wsidicom.conceptcode.IlluminationCode("Brightfield illumination")],
             illumination=wsidicom.conceptcode.IlluminationColorCode("Full spectrum"),
             # light_path_filter=wsidicom.metadata.LightPathFilter(
             #   filters=[wsidicom.conceptcode.LightPathFilterCode("Hoffman modulator")],
@@ -637,9 +604,7 @@ class DicomHandler:
             #    high_pass=3
             # ),
             objective=wsidicom.metadata.Objectives(
-                lenses=[
-                    wsidicom.conceptcode.LenseCode("High power non-immersion lens")
-                ],
+                lenses=[wsidicom.conceptcode.LenseCode("High power non-immersion lens")],
                 condenser_power=2525,
                 objective_power=4711,
                 objective_numerical_aperture=1.0,
@@ -647,32 +612,14 @@ class DicomHandler:
         )
         block = wsidicom.metadata.Sample(
             identifier=f"block/sample {no}",
-            sampled_from=[
-                specimen.sample(
-                    method=wsidicom.conceptcode.SpecimenSamplingProcedureCode(
-                        "Dissection"
-                    )
-                )
-            ],
-            type=wsidicom.conceptcode.AnatomicPathologySpecimenTypesCode(
-                "tissue specimen"
-            ),
+            sampled_from=[specimen.sample(method=wsidicom.conceptcode.SpecimenSamplingProcedureCode("Dissection"))],
+            type=wsidicom.conceptcode.AnatomicPathologySpecimenTypesCode("tissue specimen"),
             container=wsidicom.conceptcode.ContainerTypeCode("Tissue cassette"),
-            steps=[
-                wsidicom.metadata.Embedding(
-                    medium=wsidicom.conceptcode.SpecimenEmbeddingMediaCode(
-                        "Paraffin wax"
-                    )
-                )
-            ],
+            steps=[wsidicom.metadata.Embedding(medium=wsidicom.conceptcode.SpecimenEmbeddingMediaCode("Paraffin wax"))],
         )
         slide_sample = wsidicom.metadata.SlideSample(
             identifier=f"Sample {no}",
-            sampled_from=block.sample(
-                method=wsidicom.conceptcode.SpecimenSamplingProcedureCode(
-                    "Block sectioning"
-                )
-            ),
+            sampled_from=block.sample(method=wsidicom.conceptcode.SpecimenSamplingProcedureCode("Block sectioning")),
         )
         slide = wsidicom.metadata.Slide(
             identifier=f"Slide {no}",
@@ -680,9 +627,7 @@ class DicomHandler:
                 wsidicom.metadata.Staining(
                     substances=[
                         wsidicom.conceptcode.SpecimenStainsCode("hematoxylin stain"),
-                        wsidicom.conceptcode.SpecimenStainsCode(
-                            "water soluble eosin stain"
-                        ),
+                        wsidicom.conceptcode.SpecimenStainsCode("water soluble eosin stain"),
                     ]
                 )
             ],
@@ -701,7 +646,16 @@ class DicomHandler:
 
     @staticmethod
     def wsi_convert(wsi_path: Path, dicom_path: Path, id_base: int) -> bool:
-        """Convert whole slide image to DICOM SM series"""
+        """Convert whole slide image to DICOM SM series.
+
+        Args:
+            wsi_path (Path): Path to the WSI file.
+            dicom_path (Path): Path to save the DICOM file.
+            id_base (int): Base ID for generating unique identifiers.
+
+        Returns:
+            bool: True if conversion was successful, False otherwise.
+        """
         try:
             console.print(wsi_path)
             console.print(dicom_path)
@@ -724,8 +678,8 @@ class DicomHandler:
             console.print(created_files)
             return True
 
-        except Exception as e:
-            logging.error(f"Error converting WSI to DICOM: {str(e)}")
+        except Exception:
+            logger.exception("Error converting WSI to DICOM")
             return False
 
     @staticmethod
@@ -747,9 +701,7 @@ class DicomHandler:
                 if full:
                     dataset = pydicom.dcmread(file_path)
                 else:
-                    dataset = pydicom.dcmread(
-                        file_path, defer_size=True, stop_before_pixels=True
-                    )
+                    dataset = pydicom.dcmread(file_path, defer_size=True, stop_before_pixels=True)
                 datasets.append(dataset)
             except pydicom.errors.InvalidDicomError:
                 console.print(f"Skipping non-DICOM file: {file_path}")
@@ -782,8 +734,6 @@ class DicomHandler:
         """
         if standard_path is None:
             standard_path = Path.home() / "dicom-validator"
-
-        logger = logging.getLogger(__name__)
 
         try:
             # Setup validator
@@ -836,15 +786,13 @@ class DicomHandler:
             if total_files == 0:
                 logger.warning("No DICOM files found matching pattern: %s", dicom_path)
             else:
-                logger.info(
-                    "Validated %d files with %d total errors", total_files, total_errors
-                )
+                logger.info("Validated %d files with %d total errors", total_files, total_errors)
 
             return total_errors
 
-        except ValueError as e:
-            logger.error("Validation failed: %s", str(e))
+        except ValueError:
+            logger.exception("Validation failed")
             return 1
-        except OSError as e:
-            logger.error("File system error: %s", str(e))
+        except OSError:
+            logger.exception("File system error")
             return 1

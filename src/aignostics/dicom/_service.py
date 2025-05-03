@@ -1,4 +1,4 @@
-"""Service module for handling TIFF files."""
+"""Service module for handling DICOM files."""
 
 from pathlib import Path
 from typing import Any
@@ -8,10 +8,8 @@ from PIL.Image import Image
 from aignostics.utils import BaseService, Health
 
 
-# Services derived from BaseService and exported by modules via their __init__.py are automatically registered
-# with the system module, enabling for dynamic discovery of health, info and further functionality.
 class Service(BaseService):
-    """Service of the TIFF module."""
+    """Service of the application module."""
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
@@ -33,29 +31,29 @@ class Service(BaseService):
         return {}
 
     def get_metadata(self, path: Path) -> dict[str, Any]:  # noqa: PLR6301
-        """Get metadata from a TIFF file.
+        """Get metadata from a DICOM dataset.
 
         Args:
-            path (Path): Path to the TIFF file.
+            path (Path): Path to the DICOM dataset.
 
         Returns:
-            dict[str, Any]: Metadata of the TIFF file.
+            dict[str, Any]: Metadata of the DICOM dataset.
         """
-        from ._handler import TiffHandler  # noqa: PLC0415
+        from aignostics.tiff import Service as TiffService  # noqa: PLC0415
 
-        handler = TiffHandler.from_file(path)
-        return handler.get_metadata()
+        #        handler = DicomHandler.from_file(path)
+        #        return handler.get_metadata()
+        return TiffService().get_metadata(path)
 
     def get_thumbnail(self, path: Path) -> Image:  # noqa: PLR6301
-        """Get thumbnail of a TIFF file.
+        """Get thumbnail of a DICOM image.
 
         Args:
-            path (Path): Path to the TIFF file.
+            path (Path): Path to the DICOM image.
 
         Returns:
-            Any: Thumbnail of the TIFF file.
+            Any: Thumbnail of the image.
         """
-        from ._handler import TiffHandler  # noqa: PLC0415
+        from aignostics.tiff import Service as TiffService  # noqa: PLC0415
 
-        handler = TiffHandler.from_file(path)
-        return handler.get_thumbnail()
+        return TiffService().get_thumbnail(path)

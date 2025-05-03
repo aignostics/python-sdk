@@ -9,14 +9,22 @@ from typing import Any
 
 import requests
 
-from aignostics.platform import Application, ApplicationVersion, ApplicationRun, ApplicationRunStatus, Client, InputItem, InputArtifact
-from aignostics.tiff import Service as TIFFService
+from aignostics.dicom import Service as DicomService
+from aignostics.platform import (
+    Application,
+    ApplicationRun,
+    ApplicationRunStatus,
+    ApplicationVersion,
+    Client,
+    InputArtifact,
+    InputItem,
+)
+from aignostics.tiff import Service as TiffService
 from aignostics.utils import BaseService, Health, get_logger
 
 from ._settings import Settings
-from ._utils import create_signed_upload_url
+from ._utils import application_versions_sorted_by_semver, create_signed_download_url, create_signed_upload_url
 from ._utils import find_latest_application_version_id as util_find_latest_application_version_id
-from ._utils import application_versions_sorted_by_semver, create_signed_download_url
 
 logger = get_logger(__name__)
 
@@ -41,7 +49,7 @@ class Service(BaseService):
         return {}
 
     def health(self) -> Health:
-        """Determine health of hello service.
+        """Determine health of this service.
 
         Returns:
             Health: The health of the service.
@@ -166,14 +174,15 @@ class Service(BaseService):
         """
         platform_client = self._get_platform_client()
         try:
-            return util_find_latest_application_version_id(application, platform_client)
+            return str(util_find_latest_application_version_id(application, platform_client))
         except Exception:
             logger.exception(
                 "Failed to retrieve latest application for application id '%s'.", application.application_id
             )
             raise
 
-    def generate_metadata_from_source_directory(self, source_directory: Path) -> list[dict[str, Any]]:
+    @staticmethod
+    def generate_metadata_from_source_directory(source_directory: Path) -> list[dict[str, Any]]:
         """Generate metadata from the source directory.
 
         - Recursively files ending with .tiff, .tif and .dcm in the source directory
@@ -219,7 +228,13 @@ class Service(BaseService):
                         file_content = f.read()
                         checksum = format(binascii.crc32(file_content) & 0xFFFFFFFF, "08x")
                     if file_path.suffix in {".tiff", ".tif"}:
-                        image_metadata = TIFFService().get_metadata(file_path)
+                        image_metadata = TiffService().get_metadata(file_path)
+                        width = image_metadata["dimensions"]["width"]
+                        height = image_metadata["dimensions"]["height"]
+                        mpp = image_metadata["resolution"]["mpp_x"]
+                        file_size_human = image_metadata["file"]["size_human"]
+                    elif file_path.suffix == ".dcm":
+                        image_metadata = DicomService().get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
                         height = image_metadata["dimensions"]["height"]
                         mpp = image_metadata["resolution"]["mpp_x"]
@@ -265,7 +280,7 @@ class Service(BaseService):
             upload_id (str): The ID of the upload.
             application_version_id (str): The ID of the application version.
             metadata (list[dict[str, Any]]): The metadata to upload.
-            upload_progress_queue (Queue): The queue to use for progress updates.
+            upload_progress_queue (Queue[Any]): The queue to use for progress updates.
 
         Returns:
             bool: True if the upload was successful, False otherwise.
@@ -279,8 +294,8 @@ class Service(BaseService):
                 return False
 
             # Generate signed URL
-            bucket_protocol = str(os.environ.get("AIGNOSTICS_PLATFORM_BUCKET_PROTOCOL"))
-            bucket_name = str(os.environ.get("AIGNOSTICS_PLATFORM_BUCKET_NAME"))
+            bucket_protocol = str(os.environ.get("AIGNOSTICS_BUCKET_PROTOCOL"))
+            bucket_name = str(os.environ.get("AIGNOSTICS_BUCKET_NAME"))
             object_key = f"helmut/{upload_id}/{application_version_id}/{source_file_path.name}"
             platform_bucket_url = f"{bucket_protocol}://{bucket_name}/{object_key}"
             signed_upload_url = create_signed_upload_url(bucket_name, object_key)
@@ -291,7 +306,13 @@ class Service(BaseService):
             })
             # Upload file and posting progress to message queue
             file_size = source_file_path.stat().st_size
-            logger.debug("Uploading file '%s' with size %d bytes to '%s' via '%s'", source_file_path, file_size, platform_bucket_url, signed_upload_url)
+            logger.debug(
+                "Uploading file '%s' with size %d bytes to '%s' via '%s'",
+                source_file_path,
+                file_size,
+                platform_bucket_url,
+                signed_upload_url,
+            )
             with (
                 open(source_file_path, "rb") as f,
             ):
@@ -375,7 +396,9 @@ class Service(BaseService):
 
         return None
 
-    def application_run_submit_from_metadata(self, application_version_id: str, metadata: list[dict[str,Any]]) -> ApplicationRun:
+    def application_run_submit_from_metadata(
+        self, application_version_id: str, metadata: list[dict[str, Any]]
+    ) -> ApplicationRun:
         """Submit a run for the given application.
 
         Args:
