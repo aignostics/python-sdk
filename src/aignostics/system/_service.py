@@ -10,6 +10,7 @@ from socket import AF_INET, SOCK_DGRAM, socket
 from typing import Any, NotRequired, TypedDict, cast
 from urllib.error import HTTPError
 
+import urllib3
 from pydantic_settings import BaseSettings
 from requests import get
 
@@ -38,6 +39,8 @@ JsonType: t.TypeAlias = list[JsonValue] | t.Mapping[str, JsonValue]
 # Note: There is multiple measurements and network calls
 MEASURE_INTERVAL_SECONDS = 2
 NETWORK_TIMEOUT = 5
+IPIFY_URL = "https://api.ipify.org"
+HTTP_OK = 200
 
 
 class RuntimeDict(TypedDict, total=False):
@@ -78,6 +81,34 @@ class Service(BaseService):
         """
         return True
 
+    @staticmethod
+    def _determine_network_health() -> Health:
+        """Determine we can reach a well known and secure endpoint.
+
+        - Checks if health endpoint is reachable and returns 200 OK
+        - Uses urllib3 for a direct connection check without authentication
+
+        Returns:
+            Health: The healthiness of the Aignostics Platform API via basic unauthenticated request.
+        """
+        try:
+            http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5.0, read=10.0))
+            response = http.request(
+                method="GET",
+                url=IPIFY_URL,
+                headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
+            )
+
+            if response.status != HTTP_OK:
+                logger.error("'%s' returned '%s'", IPIFY_URL, response.status)
+                return Health(status=Health.Code.DOWN, reason=f"'{IPIFY_URL}' returned status '{response.status}'")
+        except Exception as e:
+            message = f"Issue reaching {IPIFY_URL}: {e}"
+            logger.exception(message)
+            return Health(status=Health.Code.DOWN, reason=message)
+
+        return Health(status=Health.Code.UP)
+
     def health(self) -> Health:
         """Determine aggregate health of the system.
 
@@ -92,6 +123,7 @@ class Service(BaseService):
         for service_class in locate_subclasses(BaseService):
             if service_class is not Service:
                 components[f"{service_class.__module__}.{service_class.__name__}"] = service_class().health()
+        components["network"] = self._determine_network_health()
 
         # Set the system health status based on is_healthy attribute
         status = Health.Code.UP if self._is_healthy() else Health.Code.DOWN
@@ -121,7 +153,7 @@ class Service(BaseService):
             str: The public IPv4 address.
         """
         try:
-            response = get(url="https://api.ipify.org", timeout=timeout)
+            response = get(url=IPIFY_URL, timeout=timeout)
             response.raise_for_status()
             return response.text
         except HTTPError as e:
