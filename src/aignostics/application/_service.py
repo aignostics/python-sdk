@@ -48,7 +48,7 @@ class Service(BaseService):
         """
         return {}
 
-    def health(self) -> Health:
+    def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
 
         Returns:
@@ -56,9 +56,6 @@ class Service(BaseService):
         """
         return Health(
             status=Health.Code.UP,
-            components={
-                "data_storage": self._determine_data_storage_health(),
-            },
         )
 
     def get_data_directory(self) -> Path:
@@ -513,16 +510,3 @@ class Service(BaseService):
             logger.exception("Failed to cancel application run '%s'.", run_id)
             raise
         return True
-
-    def _determine_data_storage_health(self) -> Health:
-        """Determine healthiness of data storage.
-
-        - Checks if configured data directory is a directory
-
-        Returns:
-            Health: The healthiness of data storage.
-        """
-        data_directory = Path(self._settings.data_directory)
-        if data_directory.is_dir():
-            return Health(status=Health.Code.UP)
-        return Health(status=Health.Code.DOWN, reason=f"Data directory {data_directory} is not accessible")
