@@ -706,7 +706,7 @@ class PageBuilder(BasePageBuilder):
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
         @ui.page("/application/run/{application_run_id}")
-        def page_application_run_describe(application_run_id: str) -> None:
+        def page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
             """Describe Application."""
             service = Service()
             run, run_status = service.application_run(application_run_id)
@@ -772,8 +772,13 @@ class PageBuilder(BasePageBuilder):
 
             if run_status.status.value == "completed":
                 with ui.row().classes("w-full justify-end"):
-                    ui.button("Download Analysis", icon="cloud_download", on_click=download_run_dialog.open)
                     ui.button("Open in QuPath", icon="zoom_in", on_click=qupath_project_create_dialog.open)
+                    ui.button(
+                        "Open in Notebook",
+                        icon="analytics",
+                        on_click=lambda: ui.navigate.to(f"/application/run/marimo/{run.application_run_id}"),
+                    )
+                    ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
 
             with ui.card():
                 ui.markdown(
@@ -828,3 +833,25 @@ class PageBuilder(BasePageBuilder):
                                                     "statusBar": False,
                                                 }).style("width: 100%")
                                             ui.label(f"ID: {artifact.output_artifact_id!s}")
+
+        @ui.page("/application/run/marimo/{application_run_id}")
+        def page_application_run_marimo(application_run_id: str) -> None:
+            """Inspect Application Run in Marimo."""
+            service = Service()
+            run, run_status = service.application_run(application_run_id)
+
+            if run and run_status:
+                frame(navigation_title="Marimo", navigation_icon="analytics", left_sidebar=False)
+            else:
+                frame(navigation_title="Bug", navigation_icon="bug_report", left_sidebar=False)
+
+            if run is None:
+                ui.label(f"Failed to get run '{application_run_id}'").mark("LABEL_ERROR")
+                return
+
+            with ui.row().classes("w-full justify-end"):
+                ui.button("Overview", icon="arrow_back", on_click=ui.navigate.back)
+
+            ui.html(
+                f'<iframe src="http://localhost:2718?run_id={application_run_id}" width="100%" height="100%"></iframe>'
+            ).classes("w-full h-[calc(100vh-5rem)]")

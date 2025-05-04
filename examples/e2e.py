@@ -7,10 +7,16 @@
 # ///
 
 import marimo
-from aignostics.utils import __version__
 
-__generated_with = "0.12.8"
-app = marimo.App(app_title=f"🔬 Aignostics Python SDK v{__version__} - E2E", width="full")
+__generated_with = "0.13.2"
+app = marimo.App(width="full")
+
+
+@app.cell
+def _(mo):
+    query_params = mo.query_params()
+    print(query_params)
+    return
 
 
 @app.cell
@@ -21,6 +27,7 @@ def _():
     - See https://colab.research.google.com/github/ImagingDataCommons/IDC-Tutorials/blob/master/notebooks/pathomics/microscopy_dicom_ann_intro.ipynb#scrollTo=fMRsnFlzinO5
 
     """
+
     import os
     import random
     import subprocess
@@ -46,59 +53,47 @@ def _():
 
     os.environ
 
-    print(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
+    print(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS2", "bla"))
 
     print(Path.cwd())
 
-    mo.sidebar(
-        [
-            mo.md("# aignostics"),
-            mo.nav_menu(
-                {
-                    "#/home": f"{mo.icon('lucide:home')} Home",
-                    "#/about": f"{mo.icon('lucide:user')} Help",
-                    "Links": {
-                        "https://platform.aignostics.com": "Platform",
-                        "https://github.com/aignotics/python-sdk": "GitHub",
-                    },
+    mo.sidebar([
+        mo.md("# aignostics"),
+        mo.nav_menu(
+            {
+                "#/home": f"{mo.icon('lucide:home')} Home",
+                "#/about": f"{mo.icon('lucide:user')} Help",
+                "Links": {
+                    "https://platform.aignostics.com": "Platform",
+                    "https://github.com/aignotics/python-sdk": "GitHub",
                 },
-                orientation="vertical",
-            ),
-        ]
-    )
+            },
+            orientation="vertical",
+        ),
+    ])
 
-    mo.vstack([mo.ui.file_browser(GSPath("gs://aignx-storage-service-dev/sample_data_formatted"), filetypes=[".dcm", ".tif", ".tiff", ".svs", ".json"], multiple=True, restrict_navigation=True)]) # type: ignore
-
-    return (
-        GSPath,
-        Image,
-        ImageDraw,
-        list,
-        Path,
-        Polygon,
-        STRtree,
-        tuple,
-        Union,
-        WsiDicom,
-        box,
-        hd,
-        index,
-        load_dotenv,
-        mo,
-        np,
-        os,
-        pd,
-        plt,
-        random,
-        shapely,
-        subprocess,
-        translate,
-    )
+    mo.vstack([
+        mo.ui.file_browser(
+            GSPath("gs://aignx-storage-service-dev/sample_data_formatted"),
+            filetypes=[".dcm", ".tif", ".tiff", ".svs", ".json"],
+            multiple=True,
+            restrict_navigation=True,
+        )
+    ])  # type: ignore
+    return Path, WsiDicom, index, mo, plt
 
 
 @app.cell
 def _(Path, mo):
-    mo.vstack([mo.ui.file_browser(Path("tmp"), filetypes=[".dcm", ".tif", ".tiff", ".svs"], multiple=True, restrict_navigation=True)])
+    mo.vstack([
+        mo.ui.file_browser(
+            Path("tmp"),
+            filetypes=[".dcm", ".tif", ".tiff", ".svs"],
+            multiple=True,
+            restrict_navigation=True,
+        )
+    ])
+    return
 
 
 @app.cell
@@ -125,22 +120,30 @@ def _(idc_client):
     LIMIT 1
     """
     pan_ann = idc_client.sql_query(query_sr)
-    return pan_ann, query_sr
+    return (pan_ann,)
 
 
 @app.cell
 def _(idc_client, pan_ann):
     study_instance_id = pan_ann["StudyInstanceUID"].iloc[0]
-    viewer_url = idc_client.get_viewer_URL(studyInstanceUID=study_instance_id, viewer_selector="slim")
+    viewer_url = idc_client.get_viewer_URL(
+        studyInstanceUID=study_instance_id, viewer_selector="slim"
+    )
     from IPython.display import IFrame
+
     IFrame(viewer_url, width=1260, height=900)
-    return IFrame, study_instance_id, viewer_url
+    return
 
 
 @app.cell
 def _(Path, WsiDicom, idc_client, plt):
     series_instance_uid = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"  # copied from slimviewer info box
-    idc_client.download_from_selection(seriesInstanceUID=series_instance_uid, downloadDir="tmp/", dirTemplate="%SeriesInstanceUID", use_s5cmd_sync=True)
+    idc_client.download_from_selection(
+        seriesInstanceUID=series_instance_uid,
+        downloadDir="tmp/",
+        dirTemplate="%SeriesInstanceUID",
+        use_s5cmd_sync=True,
+    )
     print(Path(f"tmp/{series_instance_uid}").exists())
     slide = WsiDicom.open(f"tmp/{series_instance_uid}")
 
@@ -150,7 +153,7 @@ def _(Path, WsiDicom, idc_client, plt):
     axes.imshow(thumbnail)
     axes.axis("off")
     plt.show()
-    return axes, fig, series_instance_uid, slide, thumbnail
+    return
 
 
 @app.cell

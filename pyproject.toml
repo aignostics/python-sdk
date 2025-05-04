@@ -82,6 +82,7 @@ dependencies = [
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
+    "boto3>=1.37.3",
     "dicom-validator>=0.6.2",
     "dicomweb-client[gcp]>=0.59.3",
     "google-cloud-storage>=3.1.0",
