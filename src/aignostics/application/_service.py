@@ -415,7 +415,7 @@ class Service(BaseService):
                         object_key = url_parts[1]
                         download_url = create_signed_download_url(bucket_name, object_key)
                     else:
-                        logger.error("Invalid GCS URL format: %s", row[0])
+                        logger.error("Invalid GCS URL format: %s", row["platform_bucket_url"])
                         continue
                 else:
                     logger.error("Unsupported platform bucket URL protocol: %s", platform_bucket_url)

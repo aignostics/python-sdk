@@ -1,0 +1,199 @@
+"""Marimo Service."""
+
+import sys
+from pathlib import Path
+from subprocess import PIPE, Popen
+from threading import Thread
+from typing import Any
+
+from aignostics.utils import BaseService, Health, get_logger
+
+logger = get_logger(__name__)
+
+
+class _Runner:
+    """Runner class of the Marimo module."""
+
+    _marimo_server: Popen | None = None
+    _monitor_thread: Thread | None = None
+    _stdout: str = ""
+    _stderr: str = ""
+
+    def health(self) -> Health:
+        """Determine health of hello service.
+
+        Returns:
+            Health: The health of the service.
+        """
+        return Health(
+            status=Health.Code.UP,
+            components={
+                "marimo_server": Health(
+                    status=Health.Code.UP if self.is_marimo_server_running() else Health.Code.DOWN,
+                    reason=None if self.is_marimo_server_running() else "Marimo server is not running",
+                ),
+                "monitor_thread": Health(
+                    status=Health.Code.UP if self.is_monitor_thread_alive() else Health.Code.DOWN,
+                    reason=None if self.is_monitor_thread_alive() else "Monitor thread is not running",
+                ),
+            },
+        )
+
+    def start(self) -> None:
+        """Start the Marimo server.
+
+        Raises:
+            RuntimeError: If the Marimo server fails to start.
+        """
+        if self.is_marimo_server_running():
+            logger.warning("Marimo server is already running")
+            return
+
+        notebook_path = Path(__file__).parent / "_notebook.py"
+        if not notebook_path.is_file():
+            message = f"Notebook file not found at '{notebook_path.absolute()}'"
+            logger.error(message)
+            raise RuntimeError(message)
+
+        self._marimo_server = Popen(  # noqa: S603
+            [
+                sys.executable,
+                "-m",
+                "marimo",
+                "edit",
+                "--headless",
+                "--skip-update-check",
+                "--no-sandbox",
+                "--no-token",
+                notebook_path.absolute(),
+            ],
+            stdout=PIPE,
+            stderr=PIPE,
+            text=True,
+            bufsize=1,
+        )
+
+        if self._marimo_server is None:
+            message = "Failed to start Marimo server"
+            logger.error(message)
+            raise RuntimeError(message)
+
+        # Start a thread to monitor the subprocess output
+        self._monitor_thread = Thread(target=_Runner._capture_stdout, args=(self._marimo_server), daemon=True)
+
+    @staticmethod
+    def _capture_stdout(process: Popen) -> None:
+        """Capture stdout of the subprocess.
+
+        Args:
+            process (Popen): The subprocess to capture stdout from.
+        """
+        captured = ""
+        if process.stdout is None:
+            logger.warning("Cannot capture stdout")
+            return
+        # Read one character at a time to handle carriage returns
+        while process.poll() is None:
+            char = process.stdout.read(1)
+            if not char:  # End of stream
+                break
+            captured += char
+            logger.debug(char)
+
+        logger.debug("Process completed")
+
+    def is_marimo_server_running(self) -> bool:
+        """Check if the marimo server is running.
+
+        Returns:
+            bool: True if the server is running, False otherwise.
+        """
+        return self._marimo_server is not None and self._marimo_server.poll() is None
+
+    def is_monitor_thread_alive(self) -> bool:
+        """Check if the monitor thread is running.
+
+        Returns:
+            bool: True if the thread is running, False otherwise.
+        """
+        return self._monitor_thread is not None and self._monitor_thread.is_alive()
+
+    def stop(self) -> None:
+        """Stop the Marimo server."""
+        if self._marimo_server is not None:
+            self._marimo_server.terminate()
+            self._marimo_server.wait()
+            self._marimo_server = None
+            logger.info("Marimo server stopped")
+        else:
+            logger.warning("Marimo server is not running")
+        if self._monitor_thread is not None:
+            self._monitor_thread.join()
+            self._monitor_thread = None
+            logger.info("Monitor thread stopped")
+        else:
+            logger.warning("Monitor thread is not running")
+        logger.info("Service stopped")
+
+
+runner: _Runner | None = None
+
+
+def _get_runner() -> _Runner:
+    """Get the singleton runner.
+
+    Returns:
+        Service: The service instance.
+    """
+    global runner  # noqa: PLW0603
+    if runner is None:
+        runner = _Runner()
+    return runner
+
+
+class Service(BaseService):
+    """Service of the Marimo module."""
+
+    def info(self) -> dict[str, Any]:  # noqa: PLR6301
+        """Determine info of this service.
+
+        Returns:
+            dict[str,Any]: The info of this service.
+        """
+        return {}
+
+    def health(self) -> Health:  # noqa: PLR6301
+        """Determine health of hello service.
+
+        Returns:
+            Health: The health of the service.
+        """
+        return _get_runner().health()
+
+    def start(self) -> None:  # noqa: PLR6301
+        """Start the Marimo server.
+
+        Raises:
+            RuntimeError: If the Marimo server fails to start.
+        """
+        return _get_runner().start()
+
+    def is_marimo_server_running(self) -> bool:  # noqa: PLR6301
+        """Check if the marimo server is running.
+
+        Returns:
+            bool: True if the server is running, False otherwise.
+        """
+        return _get_runner().is_marimo_server_running()
+
+    def is_monitor_thread_alive(self) -> bool:  # noqa: PLR6301
+        """Check if the monitor thread is running.
+
+        Returns:
+            bool: True if the thread is running, False otherwise.
+        """
+        return _get_runner().is_monitor_thread_alive()
+
+    def stop(self) -> None:  # noqa: PLR6301
+        """Stop the Marimo server."""
+        return _get_runner().stop()

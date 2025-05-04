@@ -190,10 +190,10 @@ class PageBuilder(BasePageBuilder):
             ui.markdown(
                 """
                     ## Welcome to the Aignostics Platform Launcher!
-                    1. Select an application from the left sidebar and use our wizard to analyze your whole slide images.
-                    2. Select a run to monitor progress, inspect results, or cancel a pending run.
-                        Visualize in QuPath with one click.
-                    3. Trial with public data? Open **☰** Menu and download datasets from
+                    1. Select an application from the left sidebar and use our wizard to submit a run on your whole slide images.
+                    2. Select a run to monitor progress, cancel while pending, or download results.
+                    3. For analysis and visualisation of results launch Marimo Notebook or QuPath Microscopy viewer with one click.
+                    4. Trial with public data? Open **☰** Menu and download datasets from
                         Image Data Commons (IDC) by National Cancer Institute (NCI).
                 """
             )
@@ -780,11 +780,13 @@ class PageBuilder(BasePageBuilder):
 
             if run_status.status.value == "completed":
                 with ui.row().classes("w-full justify-end"):
-                    ui.button("Open in QuPath", icon="zoom_in", on_click=qupath_project_create_dialog.open)
                     ui.button(
-                        "Open in Notebook",
+                        "Open in QuPath Microscopy Viewer", icon="zoom_in", on_click=qupath_project_create_dialog.open
+                    )
+                    ui.button(
+                        "Open in Marimo Notebook",
                         icon="analytics",
-                        on_click=lambda: ui.navigate.to(f"/application/run/marimo/{run.application_run_id}"),
+                        on_click=lambda: ui.navigate.to(f"/marimo/{run.application_run_id}"),
                     )
                     ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
 
@@ -845,25 +847,3 @@ class PageBuilder(BasePageBuilder):
                                                     "statusBar": False,
                                                 }).style("width: 100%")
                                             ui.label(f"ID: {artifact.output_artifact_id!s}")
-
-        @ui.page("/application/run/marimo/{application_run_id}")
-        def page_application_run_marimo(application_run_id: str) -> None:
-            """Inspect Application Run in Marimo."""
-            service = Service()
-            run, run_status = service.application_run(application_run_id)
-
-            if run and run_status:
-                frame(navigation_title="Marimo", navigation_icon="analytics", left_sidebar=False)
-            else:
-                frame(navigation_title="Bug", navigation_icon="bug_report", left_sidebar=False)
-
-            if run is None:
-                ui.label(f"Failed to get run '{application_run_id}'").mark("LABEL_ERROR")
-                return
-
-            with ui.row().classes("w-full justify-end"):
-                ui.button("Overview", icon="arrow_back", on_click=ui.navigate.back)
-
-            ui.html(
-                f'<iframe src="http://localhost:2718?run_id={application_run_id}" width="100%" height="100%"></iframe>'
-            ).classes("w-full h-[calc(100vh-5rem)]")
