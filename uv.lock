@@ -22,7 +22,6 @@ dependencies = [
     { name = "boto3" },
     { name = "dicom-validator" },
     { name = "dicomweb-client", extra = ["gcp"] },
-    { name = "duckdb" },
     { name = "fastapi", extra = ["all", "standard"] },
     { name = "google-cloud-storage" },
     { name = "google-crc32c" },
@@ -32,7 +31,6 @@ dependencies = [
     { name = "jsf" },
     { name = "jsonschema" },
     { name = "logfire", extra = ["system-metrics"] },
-    { name = "msvc-runtime", marker = "sys_platform == 'win32'" },
     { name = "nicegui", extra = ["native"] },
     { name = "openslide-bin" },
     { name = "openslide-python" },
@@ -128,7 +126,6 @@ requires-dist = [
     { name = "cloudpathlib", marker = "extra == 'examples'", specifier = ">=0.21.0" },
     { name = "dicom-validator", specifier = ">=0.6.2" },
     { name = "dicomweb-client", extras = ["gcp"], specifier = ">=0.59.3" },
-    { name = "duckdb", specifier = ">=1.2.1" },
     { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.115.12" },
     { name = "google-cloud-storage", specifier = ">=3.1.0" },
     { name = "google-crc32c", specifier = ">=1.7.1" },
@@ -143,7 +140,6 @@ requires-dist = [
     { name = "logfire", extras = ["system-metrics"], specifier = ">=3.14.1" },
     { name = "marimo", marker = "extra == 'examples'", specifier = ">=0.13.0" },
     { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.10.1" },
-    { name = "msvc-runtime", marker = "sys_platform == 'win32'", specifier = ">=14.42.34433" },
     { name = "nicegui", extras = ["native"], specifier = ">=2.16.0" },
     { name = "openslide-bin", specifier = ">=4.0.0.8" },
     { name = "openslide-python", specifier = ">=1.4.2" },
@@ -2756,22 +2752,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7a/40/631c238f1f338eb09f4acb0f34ab5862c4e9d7eda11c1b685471a4c5ea37/msgpack-1.1.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:b4c01941fd2ff87c2a934ee6055bda4ed353a7846b8d4f341c428109e9fcde8c", size = 399082, upload_time = "2024-09-10T04:25:18.398Z" },
     { url = "https://files.pythonhosted.org/packages/e9/1b/fa8a952be252a1555ed39f97c06778e3aeb9123aa4cccc0fd2acd0b4e315/msgpack-1.1.0-cp313-cp313-win32.whl", hash = "sha256:7c9a35ce2c2573bada929e0b7b3576de647b0defbd25f5139dcdaba0ae35a4cc", size = 69037, upload_time = "2024-09-10T04:24:52.798Z" },
     { url = "https://files.pythonhosted.org/packages/b6/bc/8bd826dd03e022153bfa1766dcdec4976d6c818865ed54223d71f07862b3/msgpack-1.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:bce7d9e614a04d0883af0b3d4d501171fbfca038f12c77fa838d9f198147a23f", size = 75140, upload_time = "2024-09-10T04:24:31.288Z" },
-]
-
-[[package]]
-name = "msvc-runtime"
-version = "14.42.34433"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/51/3db0c1bd082c485f7afcd05bed03e6b32c3d0dd151387ebcb88d173ad362/msvc_runtime-14.42.34433-cp311-cp311-win32.whl", hash = "sha256:a54c001e058ca22d88c30dc348d06fa704708ca9369464e52ed80b130bb47b4e", size = 1926966, upload_time = "2024-11-15T01:08:18.32Z" },
-    { url = "https://files.pythonhosted.org/packages/b7/24/fea02dd6b533a12b905d08679cfeee8779cce0dee0d1384ec4d937bf50fe/msvc_runtime-14.42.34433-cp311-cp311-win_amd64.whl", hash = "sha256:60ab9e5ca8ef3e230ead1a3db66340628aafc25f0c10d0195ced8f5a2e24883f", size = 1927397, upload_time = "2024-11-15T01:08:19.646Z" },
-    { url = "https://files.pythonhosted.org/packages/34/72/e4df93173859f37369aeb9cf420a9fb8eb0d6f4e4f880c65de29278ee12f/msvc_runtime-14.42.34433-cp311-cp311-win_arm64.whl", hash = "sha256:3a339f6dd8c8830743ef250a46683cb77b40633aaf1e5cf4032753f2c46f5afd", size = 3228433, upload_time = "2024-11-15T01:08:21.73Z" },
-    { url = "https://files.pythonhosted.org/packages/20/b7/de5f972a84a0f1d39b8a75b2ec859670d70db74d62cb9084a9612be1c565/msvc_runtime-14.42.34433-cp312-cp312-win32.whl", hash = "sha256:791f60e9d8479065c6e9c6b1ae1d31555a6bb41a2e649f705bd96566a79bd1df", size = 1926964, upload_time = "2024-11-15T01:08:23.631Z" },
-    { url = "https://files.pythonhosted.org/packages/e9/7f/9cd962f15a050dafc6ad3cb42196410eb4291272af1dbb615a2607d1266e/msvc_runtime-14.42.34433-cp312-cp312-win_amd64.whl", hash = "sha256:0f1c2733bf16fee37ab5f48a4c1cdf8f8bd26a945679a111e4219396e89a9049", size = 1927399, upload_time = "2024-11-15T01:08:25.607Z" },
-    { url = "https://files.pythonhosted.org/packages/08/63/02e3285f5043e4c85cc8e6b8bc5df31a99452f64e8fd22cc6c48e4e31a2a/msvc_runtime-14.42.34433-cp312-cp312-win_arm64.whl", hash = "sha256:f4ffbb6bdde4870f4995234423a46ac650cc2535c7812605bd457d064a77345e", size = 3228384, upload_time = "2024-11-15T01:08:26.947Z" },
-    { url = "https://files.pythonhosted.org/packages/43/52/2d347af538cc267d14649520388c9c509f285e56ddb8dccb3bb2f0f3c76b/msvc_runtime-14.42.34433-cp313-cp313-win32.whl", hash = "sha256:7d1fc5675c3d9769b3f05b9a57156211a053415f0dab938493c2d490c84187a4", size = 1926963, upload_time = "2024-11-15T01:08:29.854Z" },
-    { url = "https://files.pythonhosted.org/packages/d4/9e/4ec666284e1b1f38384534780c59e506b20b5e8f05bad473712b48b61d26/msvc_runtime-14.42.34433-cp313-cp313-win_amd64.whl", hash = "sha256:087e2a7906b953970d93f37ea740605688eff616fa7ad42cc46e15137797e7e6", size = 1927398, upload_time = "2024-11-15T01:08:31.848Z" },
-    { url = "https://files.pythonhosted.org/packages/ad/51/ab96fbd60ab68e07d11b456a18436120f0caf7146091f6ac39bbf99a7903/msvc_runtime-14.42.34433-cp313-cp313-win_arm64.whl", hash = "sha256:0d873db88d3027e3a9b2abf8b2104af96199a317f940802bce2d234dd4aa915c", size = 3228386, upload_time = "2024-11-15T01:08:33.868Z" },
 ]
 
 [[package]]

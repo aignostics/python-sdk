@@ -191,3 +191,6 @@ uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aig
           "reason": "Issue with Aignostics Platform API: 'Authentication failed. Please check your credentials.'",
           "components": {}
         }
+
+https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+https://aka.ms/vs/17/release/vc_redist.x64.exe Uninstall-VcRedist

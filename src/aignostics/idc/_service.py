@@ -145,37 +145,26 @@ class Service(BaseService):
             message = f"Target directory does not exist: {target_directory}"
             raise ValueError(message)
 
-        if len(source) < PATH_LENFTH_MAX and Path(source).is_file():
-            # Parse the input parameters and pass them to IDC
-            logger.info("Detected manifest file, downloading from manifest.")
-            client.download_from_manifest(source, downloadDir=target, dirTemplate=target_layout)
-        # this is not a file manifest
-        else:
-            # Split the input string and filter out any empty values
-            item_ids = [item for item in source.split(",") if item]
+        item_ids = [item.strip() for item in source.split(",") if item.strip()]
 
-            if not item_ids:
-                logger.error("No valid IDs provided.")
+        if not item_ids:
+            logger.error("No IDs provided.")
 
-            index_df = client.index
+        index_df = client.index
 
-            def check_and_download(
-                column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str
-            ) -> bool:
-                matches = index_df[column_name].isin(item_ids)
-                matched_ids = index_df[column_name][matches].unique().tolist()
-                if not matched_ids:
-                    return False
-                unmatched_ids = list(set(item_ids) - set(matched_ids))
-                if unmatched_ids:
-                    logger.debug(
-                        "Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids
-                    )
-                logger.info("Identified matching %s: %s", column_name, matched_ids)
-                queue.put_nowait(0.04)
+        def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
+            matches = index_df[column_name].isin(item_ids)
+            matched_ids = index_df[column_name][matches].unique().tolist()
+            if not matched_ids:
+                return False
+            unmatched_ids = list(set(item_ids) - set(matched_ids))
+            if unmatched_ids:
+                logger.debug("Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids)
+            logger.info("Identified matching %s: %s", column_name, matched_ids)
+            queue.put_nowait(0.04)
 
-                # Create command for the subprocess
-                script_content = f"""
+            # Create command for the subprocess
+            script_content = f"""
 import sys
 from idc_index.index import IDCClient
 
@@ -192,43 +181,43 @@ client.download_from_selection(
 )
 """
 
-                # Run the download in a subprocess
-                logger.debug("Starting download subprocess")
-                process = subprocess.Popen(
-                    [sys.executable, "-c", script_content],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=False,
-                    bufsize=1,  # Line buffered
-                )
+            # Run the download in a subprocess
+            logger.debug("Starting download subprocess with script content:\n%s", script_content)
+            process = subprocess.Popen(
+                [sys.executable, "-c", script_content],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=False,
+                bufsize=1,  # Line buffered
+            )
 
-                # Start a thread to monitor the subprocess output
-                monitor_thread = threading.Thread(
-                    target=Service._capture_progress_output, args=(process, queue, 0.5), daemon=True
-                )
-                monitor_thread.start()
+            # Start a thread to monitor the subprocess output
+            monitor_thread = threading.Thread(
+                target=Service._capture_progress_output, args=(process, queue, 0.5), daemon=True
+            )
+            monitor_thread.start()
 
-                # Wait for the subprocess to complete
-                return_code = process.wait()
-                monitor_thread.join()
+            # Wait for the subprocess to complete
+            return_code = process.wait()
+            monitor_thread.join()
 
-                if return_code != 0:
-                    stderr_output = process.stderr.read().decode("utf-8") if process.stderr else "No stderr output"
-                    logger.error("Download subprocess failed with code %d: %s", return_code, stderr_output)
-                    return False
+            if return_code != 0:
+                stderr_output = process.stderr.read().decode("utf-8") if process.stderr else "No stderr output"
+                logger.error("Download subprocess failed with code %d: %s", return_code, stderr_output)
+                return False
 
-                logger.info("Download completed successfully")
-                queue.put_nowait(1.0)
-                return True
+            logger.info("Download completed successfully")
+            queue.put_nowait(1.0)
+            return True
 
-            matches_found = 0
-            matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")
-            matches_found += check_and_download("PatientID", item_ids, target_directory, "patientId")
-            matches_found += check_and_download("StudyInstanceUID", item_ids, target_directory, "studyInstanceUID")
-            matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
-            matches_found += check_and_download("crdc_series_uuid", item_ids, target_directory, "crdc_series_uuid")
-            if not matches_found:
-                logger.error(
-                    "None of the values passed matched any of the identifiers: "
-                    "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, crdc_series_uuid."
-                )
+        matches_found = 0
+        matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")
+        matches_found += check_and_download("PatientID", item_ids, target_directory, "patientId")
+        matches_found += check_and_download("StudyInstanceUID", item_ids, target_directory, "studyInstanceUID")
+        matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
+        matches_found += check_and_download("crdc_series_uuid", item_ids, target_directory, "crdc_series_uuid")
+        if not matches_found:
+            logger.error(
+                "None of the values passed matched any of the identifiers: "
+                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, crdc_series_uuid."
+            )
