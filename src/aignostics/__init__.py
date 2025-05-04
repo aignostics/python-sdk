@@ -2,6 +2,7 @@
 
 # TODO (Andreas): Fix CERTIFICATE_VERIFY_FAILED : unable to get local issuer certificate
 # HACK START to workaround
+import os
 import ssl
 
 import pip_system_certs.wrapt_requests  # noqa: F401
@@ -13,6 +14,8 @@ myssl = ssl.create_default_context()
 myssl.check_hostname = False
 myssl.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
+os.environ["REQUESTS_CA_BUNDLE"] = ""
+
 # HACK END
 
 
