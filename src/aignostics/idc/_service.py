@@ -1,9 +1,11 @@
 """Service of the IDC module."""
 
+import atexit
 import re
 import subprocess
 import sys
 import threading
+import time
 from multiprocessing import Queue
 from pathlib import Path
 from typing import Any
@@ -12,8 +14,37 @@ from aignostics.utils import BaseService, Health, get_logger
 
 logger = get_logger(__name__)
 
-PATH_LENFTH_MAX = 260
+PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID"
+
+# Global registry of active processes for cleanup
+_active_processes: list[subprocess.Popen] = []
+
+
+def _cleanup_processes() -> None:
+    """Terminate any active subprocesses on exit."""
+    for process in _active_processes[:]:
+        if process.poll() is None:  # Process is still running
+            try:
+                logger.warning("Terminating orphaned subprocess with PID %d", process.pid)
+                process.terminate()
+                # Give it a moment to terminate gracefully
+                for _ in range(5):
+                    if process.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                # If still running, force kill
+                if process.poll() is None:
+                    logger.warning("Forcefully killing subprocess with PID %d", process.pid)
+                    process.kill()
+            except Exception:
+                message = f"Error terminating subprocess with PID {process.pid}"
+                logger.exception(message)
+            _active_processes.remove(process)
+
+
+# Register the cleanup function
+atexit.register(_cleanup_processes)
 
 
 class Service(BaseService):
@@ -61,7 +92,6 @@ class Service(BaseService):
             if not char:  # End of stream
                 break
 
-            # char_str = char.decode("utf-8", errors="replace")
             char_str = char
             # Handle carriage return (line overwrite)
             if char_str == "\r":
@@ -109,7 +139,7 @@ class Service(BaseService):
         logger.debug("Process completed, setting progress to 100%")
 
     @staticmethod
-    def download_with_queue(
+    def download_with_queue(  # noqa: PLR0915
         queue: Queue,
         source: str,
         target: str = str(Path.cwd()),
@@ -188,7 +218,7 @@ client.download_from_selection(
             logger.debug(
                 "Starting download subprocess with executable '%s' and script:\n%s", sys.executable, script_content
             )
-            process = subprocess.Popen(
+            process = subprocess.Popen(  # noqa: S603
                 [sys.executable, "-c", script_content],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -196,30 +226,38 @@ client.download_from_selection(
                 bufsize=1,
             )
 
+            # Register process for cleanup
+            _active_processes.append(process)
+
             # Start a thread to monitor the subprocess output
             monitor_thread = threading.Thread(
                 target=Service._capture_progress_output, args=(process, queue, 0.5), daemon=True
             )
             monitor_thread.start()
 
-            # Wait for the subprocess to complete
-            return_code = process.wait()
-            monitor_thread.join()
+            try:
+                # Wait for the subprocess to complete
+                return_code = process.wait()
+                monitor_thread.join()
 
-            if return_code != 0:
-                stdout_output = process.stdout.read() if process.stdout else "No stdout output"
-                stderr_output = process.stderr.read() if process.stderr else "No stderr output"
-                logger.error(
-                    "Download subprocess failed with code '%d'\n\nstdout:\n\n%sstdin:\n\n%s\n\n",
-                    return_code,
-                    stdout_output,
-                    stderr_output,
-                )
-                return False
+                if return_code != 0:
+                    stdout_output = process.stdout.read() if process.stdout else "No stdout output"
+                    stderr_output = process.stderr.read() if process.stderr else "No stderr output"
+                    logger.error(
+                        "Download subprocess failed with code '%d'\n\nstdout:\n\n%sstdin:\n\n%s\n\n",
+                        return_code,
+                        stdout_output,
+                        stderr_output,
+                    )
+                    return False
 
-            logger.info("Download completed successfully")
-            queue.put_nowait(1.0)
-            return True
+                logger.info("Download completed successfully")
+                queue.put_nowait(1.0)
+                return True
+            finally:
+                # Clean up process reference
+                if process in _active_processes:
+                    _active_processes.remove(process)
 
         matches_found = 0
         matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")

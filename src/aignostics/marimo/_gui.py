@@ -2,6 +2,7 @@
 
 import time
 
+from aignostics.gui import theme
 from aignostics.utils import BasePageBuilder, get_logger
 
 logger = get_logger(__name__)
@@ -17,6 +18,8 @@ class PageBuilder(BasePageBuilder):
         @ui.page("/marimo/{application_run_id}")
         def page_application_run_marimo(application_run_id: str) -> None:
             """Inspect Application Run in Marimo."""
+            theme()
+
             with ui.row().classes("w-full justify-end"):
                 ui.button("Overview", icon="arrow_back", on_click=ui.navigate.back)
 

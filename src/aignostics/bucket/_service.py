@@ -66,14 +66,65 @@ class Service(BaseService):
         return self._settings.name
 
     def ls(self, detail: bool = False) -> list[str | dict[str, Any]]:
-        """List objects.
+        """List objects directly in the bucket (non-recursive).
+
+        Args:
+            detail (bool): If True, return detailed information including object type, else return only paths.
 
         Returns:
-            detail (bool): If True, return detailed information, else return only names.
-            list[str]: List of objects in the bucket.
+            list[str | dict[str, Any]]: List of objects directly in the bucket with optional detail.
         """
         s3c = self._get_s3_client()
-        return s3c.list_objects_v2(Bucket=self._settings.name, Prefix="", Delimiter="/").get("Contents", [])
+        response = s3c.list_objects_v2(Bucket=self._settings.name, Prefix="", Delimiter="/")
+
+        result = []
+        contents = response.get("Contents", [])
+        common_prefixes = response.get("CommonPrefixes", [])
+
+        if detail:
+            # Process directories (common prefixes)
+            for prefix in common_prefixes:
+                if prefix.get("Prefix") not in {None, ""}:
+                    prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
+                    result.append({
+                        "key": prefix_path,
+                        "size": 0,
+                        "last_modified": None,
+                        "etag": "",
+                        "storage_class": "",
+                        "type": "directory",
+                    })
+
+            # Process files
+            for item in contents:
+                if item.get("Key") not in {None, ""}:
+                    # Determine if this item is a "directory" (ends with /)
+                    item_key = item["Key"]
+                    item_type = "directory" if item_key.endswith("/") else "file"
+                    item_path = f"{self._settings.name}/{item_key}"
+
+                    result.append({
+                        "key": item_path,
+                        "size": item.get("Size", 0),
+                        "last_modified": item.get("LastModified"),
+                        "etag": item.get("ETag", "").strip('"'),
+                        "storage_class": item.get("StorageClass", ""),
+                        "type": item_type,
+                    })
+        else:
+            # Process directories (common prefixes) for non-detailed view
+            for prefix in common_prefixes:
+                if prefix.get("Prefix") not in {None, ""}:
+                    prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
+                    result.append(prefix_path)
+
+            # Process files for non-detailed view
+            for item in contents:
+                if item.get("Key") not in {None, ""}:
+                    item_path = f"{self._settings.name}/{item['Key']}"
+                    result.append(item_path)
+
+        return result
 
     def find(self, detail: bool = False) -> list[str | dict[str, Any]]:  # noqa: C901
         """List objects recursively in the bucket.

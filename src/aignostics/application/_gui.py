@@ -143,13 +143,15 @@ class PageBuilder(BasePageBuilder):
                         ui.item_label("Applications").props("header")
                         ui.separator()
                         for application in service.applications():
-                            with ui.item().props("clickable"):
+                            with ui.item(
+                                on_click=lambda app_id=application.application_id: ui.navigate.to(
+                                    f"/application/{app_id}"
+                                )
+                            ).props("clickable"):
                                 with ui.item_section().props("avatar"):
                                     ui.icon(_application_id_to_icon(application.application_id))
                                 with ui.item_section():
-                                    ui.link(f"{application.name}", f"/application/{application.application_id}").mark(
-                                        "LABEL_APPLICATION"
-                                    ).tailwind.font_weight(
+                                    ui.label(f"{application.name}").mark("LABEL_APPLICATION").tailwind.font_weight(
                                         "bold"
                                         if context.client.page.path == "/application/{application_id}"
                                         and args.get("application_id") == application.application_id
@@ -163,19 +165,20 @@ class PageBuilder(BasePageBuilder):
                         ui.item_label("Runs").props("header")
                         ui.separator()
                         for run, run_status in service.application_runs_with_status():
-                            with ui.item().props("clickable"):
+                            with ui.item(
+                                on_click=lambda _: ui.navigate.to(f"/application/run/{run.application_run_id}")
+                            ).props("clickable"):
                                 with ui.item_section().props("avatar"):
                                     ui.icon(_run_status_to_icon(run_status.status.value))
                                 with ui.item_section():
-                                    with ui.link(target=f"/application/run/{run.application_run_id}"):
-                                        ui.label(
-                                            f"{run_status.application_version_id}",
-                                        ).tailwind.font_weight(
-                                            "bold"
-                                            if context.client.page.path == "/application/run/{application_run_id}"
-                                            and args.get("application_run_id") == run.application_run_id
-                                            else "normal"
-                                        )
+                                    ui.label(
+                                        f"{run_status.application_version_id}",
+                                    ).tailwind.font_weight(
+                                        "bold"
+                                        if context.client.page.path == "/application/run/{application_run_id}"
+                                        and args.get("application_run_id") == run.application_run_id
+                                        else "normal"
+                                    )
                                     ui.label(
                                         f"triggered on {run_status.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
                                     )

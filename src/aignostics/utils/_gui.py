@@ -77,8 +77,8 @@ def gui_run(  # noqa: PLR0913, PLR0917
         dark=dark_mode,
         host=host,
         port=port or native_app.find_open_port(),
-        frameless=False,
-        show_welcome_message=True,
+        frameless=native,
+        show_welcome_message=native is False,
         show=show,
         window_size=(1200, 768) if native else None,
     )

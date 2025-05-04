@@ -1,5 +1,6 @@
 """Marimo Service."""
 
+import atexit
 import sys
 from pathlib import Path
 from subprocess import PIPE, Popen
@@ -18,6 +19,9 @@ class _Runner:
     _monitor_thread: Thread | None = None
     _stdout: str = ""
     _stderr: str = ""
+
+    def __init__(self) -> None:
+        atexit.register(self.stop)
 
     def health(self) -> Health:
         """Determine health of hello service.
@@ -121,8 +125,12 @@ class _Runner:
     def stop(self) -> None:
         """Stop the Marimo server."""
         if self._marimo_server is not None:
+            logger.debug("Stopping Marimo server")
             self._marimo_server.terminate()
-            self._marimo_server.wait()
+            self._marimo_server.wait(1)
+            if self._marimo_server.returncode is None:
+                logger.warning("Marimo server did not terminate in time, killing it")
+                self._marimo_server.kill()
             self._marimo_server = None
             logger.info("Marimo server stopped")
         else:

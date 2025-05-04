@@ -2,32 +2,15 @@ from contextlib import contextmanager
 
 from aignostics.utils import __version__
 
+from ._theme import theme
+
 
 @contextmanager
 def frame(navigation_title: str, navigation_icon: str | None = None, left_sidebar: bool = False):  # noqa: ANN202, PLR0915
     """Custom page frame to share the same styling and behavior across all pages."""
     from nicegui import app, context, ui  # noqa: PLC0415
 
-    ui.colors(primary="#433D6B", secondary="#B9B1DF", accent="#111B1E", positive="#B0CCDA", negative="#EBB8C7")
-
-    ui.add_head_html("""
-        <style type="text/tailwindcss">
-            @layer components {
-                .blue-box {
-                    @apply bg-blue-500 p-12 text-center shadow-lg rounded-lg text-white;
-                }
-            }
-            ::-webkit-scrollbar {
-                display: none;
-            }
-            .bg-red-300 {
-                background-color: #E9B9C7 !important;
-            }
-            .bg-green-300 {
-                background-color: #B3CCD9 !important;
-            }
-        </style>
-    """)
+    theme()
 
     with ui.header(elevated=True).classes("items-center justify-between"):
         ui.image("/assets/logo.png").style("width: 110px")
@@ -60,67 +43,72 @@ def frame(navigation_title: str, navigation_icon: str | None = None, left_sideba
     else:
         yield
 
-    with ui.right_drawer(fixed=True).style("background-color: #EDEDE9") as right_drawer:  # noqa: SIM117
+    with ui.right_drawer(fixed=True) as right_drawer:  # noqa: SIM117
         with ui.column(align_items="stretch").classes("h-full"):
             with ui.list():
-                with ui.item().props("clickable"):
+                with ui.item(on_click=lambda _: ui.navigate.to("/")).props("clickable"):
                     with ui.item_section().props("avatar"):
                         ui.icon("biotech", color="#433D6B")
                     with ui.item_section():
-                        ui.link("Run Applications", "/").mark("LINK_APPLICATIONS").tailwind.font_weight(
+                        ui.label("Run Applications").tailwind.font_weight(
                             "bold" if context.client.page.path == "/" else "normal"
                         )
-                with ui.item().props("clickable"):
+                with ui.item(on_click=lambda _: ui.navigate.to("/bucket")).props("clickable"):
                     with ui.item_section().props("avatar"):
                         ui.icon("cloud", color="#4185F4")
                     with ui.item_section():
-                        ui.link("Manage Cloud Bucket", "/bucket").mark("LINK_BUCKET").tailwind.font_weight(
+                        ui.label("Manage Cloud Bucket").tailwind.font_weight(
                             "bold" if context.client.page.path == "/bucket" else "normal"
                         )
-                with ui.item().props("clickable"):
+                with ui.item(on_click=lambda _: ui.navigate.to("/idc")).props("clickable"):
                     with ui.item_section().props("avatar"):
                         ui.icon("image", color="#BA1F40")
                     with ui.item_section():
-                        ui.link("Download Datasets", "/idc").mark("LINK_IDC").tailwind.font_weight(
+                        ui.label("Download Datasets").tailwind.font_weight(
                             "bold" if context.client.page.path == "/idc" else "normal"
                         )
             ui.space()
             with ui.list():
-                with ui.item().props("clickable"):
+                with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                     with ui.item_section().props("avatar"):
-                        ui.icon("settings", color="black")
+                        ui.icon("settings", color="positive")
                     with ui.item_section():
-                        ui.link("Diagnose System", "/system").mark("LINK_SYSTEM").tailwind.font_weight(
+                        ui.label("Diagnose System").tailwind.font_weight(
                             "bold" if context.client.page.path == "/system" else "normal"
                         )
                 with ui.item().props("clickable"):
                     with ui.item_section().props("avatar"):
-                        ui.icon("domain", color="black")
+                        ui.icon("domain")
                     with ui.item_section():
                         ui.link("Go to Management UI", "https://platform.aignostics.com", new_tab=True).mark(
                             "LINK_PLATFORM"
                         )
                 with ui.item().props("clickable"):
                     with ui.item_section().props("avatar"):
-                        ui.icon("local_library", color="black")
+                        ui.icon("local_library")
                     with ui.item_section():
                         ui.link("Read The Docs", "https://aignostics.readthedocs.org/", new_tab=True).mark(
                             "LINK_DOCUMENTATION"
                         )
                 with ui.item().props("clickable"):
                     with ui.item_section().props("avatar"):
-                        ui.icon("help", color="black")
+                        ui.icon("help")
                     with ui.item_section():
                         ui.link("Get Support", "https://platform.aignostics.com/support", new_tab=True).mark(
                             "LINK_DOCUMENTATION"
                         )
                 with ui.item().props("clickable"):
                     with ui.item_section().props("avatar"):
-                        ui.icon("check_circle", color="black")
+                        ui.icon("check_circle")
                     with ui.item_section():
                         ui.link("Platform Status", "https://status.aignostics.com", new_tab=True).mark(
                             "LINK_DOCUMENTATION"
                         )
+                with ui.item(on_click=app.shutdown).props("clickable"):
+                    with ui.item_section().props("avatar"):
+                        ui.icon("logout", color="negative")
+                    with ui.item_section():
+                        ui.label("Quit Launcher")
 
     with (
         ui.footer().style("background-color: #EDEDE9").style("padding-top:0px; height: 30px;"),
@@ -140,4 +128,3 @@ def frame(navigation_title: str, navigation_icon: str | None = None, left_sideba
         ).style("color: black")
     # Boot
     right_drawer.hide()
-    ui.dark_mode(app.storage.general.get("dark_mode", False))
