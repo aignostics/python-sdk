@@ -163,6 +163,9 @@ class Service(BaseService):
             logger.info("Identified matching %s: %s", column_name, matched_ids)
             queue.put_nowait(0.04)
 
+            # Properly handle Windows paths - convert to raw string format
+            safe_target_dir = str(target_directory).replace("\\", "\\\\")
+
             # Create command for the subprocess
             script_content = f"""
 import sys
@@ -172,7 +175,7 @@ client = IDCClient.client()
 client.fetch_index("sm_instance_index")
 client.download_from_selection(
     {kwarg_name}={matched_ids!r},
-    downloadDir="{target_directory}",
+    downloadDir="{safe_target_dir}",
     dirTemplate="{target_layout}",
     quiet=False,
     show_progress_bar=True,
