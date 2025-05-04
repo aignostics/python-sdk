@@ -182,7 +182,9 @@ client.download_from_selection(
 """
 
             # Run the download in a subprocess
-            logger.debug("Starting download subprocess with script content:\n%s", script_content)
+            logger.debug(
+                "Starting download subprocess with executable '%s' and script:\n%s", sys.executable, script_content
+            )
             process = subprocess.Popen(
                 [sys.executable, "-c", script_content],
                 stdout=subprocess.PIPE,
@@ -202,8 +204,14 @@ client.download_from_selection(
             monitor_thread.join()
 
             if return_code != 0:
+                stdout_output = process.stdout.read().decode("utf-8") if process.stdout else "No stdout output"
                 stderr_output = process.stderr.read().decode("utf-8") if process.stderr else "No stderr output"
-                logger.error("Download subprocess failed with code %d: %s", return_code, stderr_output)
+                logger.error(
+                    "Download subprocess failed with code '%d', stdout:\n\n%sstdin:\n\n%s\n\n",
+                    return_code,
+                    stdout_output,
+                    stderr_output,
+                )
                 return False
 
             logger.info("Download completed successfully")
