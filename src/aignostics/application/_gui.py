@@ -5,6 +5,10 @@ from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote as urlencode
+
+import pandas as pd
+from nicegui import app
 
 from aignostics.gui import frame
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker, get_logger
@@ -19,7 +23,7 @@ SERIES_INSTANCE_ID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915
-        from nicegui import app, binding, context, run, ui  # noq  # noqa: PLC0415
+        from nicegui import binding, context, run, ui  # noq  # noqa: PLC0415
 
         @binding.bindable_dataclass
         class SubmitForm:
@@ -777,15 +781,58 @@ class PageBuilder(BasePageBuilder):
                     ui.notify(f"Failed to cancel application run: {e}.", type="warning")
                     return False
 
-            with ui.dialog() as download_run_dialog:
+            with ui.dialog() as download_run_dialog, ui.card().style("width: 1200px; max-width: none"):
                 ui.button("Select download folder")
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=download_run_dialog.close)
 
-            with ui.dialog() as qupath_project_create_dialog:
+            with ui.dialog() as qupath_project_create_dialog, ui.card().style("width: 1200px; max-width: none"):
                 ui.button("Select QuPath folder")
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=download_run_dialog.close)
+
+            @ui.refreshable
+            def csv_view_dialog_content(title: str | None, url: str | None) -> None:
+                if title:
+                    ui.label(title).classes("text-h5")
+                if url:
+                    try:
+                        csv_df = pd.read_csv(url, comment="#")
+                    except Exception as e:
+                        ui.notify(f"Failed to load CSV: {e!s}", type="negative")
+                        csv_df = pd.DataFrame()  # Empty dataframe as fallback
+                    ui.aggrid.from_pandas(csv_df)
+
+            with ui.dialog() as csv_view_dialog, ui.card().style("width: 1200px; max-width: none"):
+                csv_view_dialog_content(title=None, url=None)
+                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=csv_view_dialog.close)
+
+            def csv_dialog_open(title: str, url: str) -> None:
+                """Open the CSV dialog."""
+                csv_view_dialog_content.refresh(title=title, url=url)
+                csv_view_dialog.open()
+
+            @ui.refreshable
+            def tiff_view_dialog_content(title: str | None, url: str | None) -> None:
+                if title:
+                    ui.label(title).classes("text-h5")
+                if url:
+                    try:
+                        with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
+                            ui.image("/tiff?url=" + urlencode(url))
+                    except Exception as e:
+                        ui.notify(f"Failed to load CSV: {e!s}", type="negative")
+
+            with ui.dialog() as tiff_view_dialog, ui.card().style("width: 1200px; max-width: none"):
+                tiff_view_dialog_content(title=None, url=None)
+                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=tiff_view_dialog.close)
+
+            def tiff_dialog_open(title: str, url: str) -> None:
+                """Open the TIFF dialog."""
+                tiff_view_dialog_content.refresh(title=title, url=url)
+                tiff_view_dialog.open()
 
             if run_status.status.value == "running":
                 with ui.row().classes("w-full justify-end"):
@@ -842,30 +889,32 @@ class PageBuilder(BasePageBuilder):
                                             str(artifact.name), icon=_mime_type_to_icon(artifact.mime_type)
                                         ).classes("w-full"):
                                             if artifact.download_url:
+                                                url = artifact.download_url
+                                                title = artifact.name
                                                 with ui.row():
                                                     if artifact.mime_type == "image/tiff":
                                                         ui.button(
-                                                            "view", icon=_mime_type_to_icon(artifact.mime_type)
-                                                        ).on_click(
-                                                            lambda: ui.notify("Not yet implemented", type="warning")
+                                                            "Preview",
+                                                            icon=_mime_type_to_icon(artifact.mime_type),
+                                                            on_click=lambda _, url=url: tiff_dialog_open(title, url),
                                                         )
                                                     if artifact.mime_type == "text/csv":
                                                         ui.button(
-                                                            "view", icon=_mime_type_to_icon(artifact.mime_type)
-                                                        ).on_click(
-                                                            lambda: ui.notify("Not yet implemented", type="warning")
+                                                            "Preview",
+                                                            icon=_mime_type_to_icon(artifact.mime_type),
+                                                            on_click=lambda _, url=url: csv_dialog_open(title, url),
                                                         )
 
                                                     with ui.link(target=artifact.download_url, new_tab=True):
                                                         ui.button(text="Download", icon="cloud_download")
                                             if artifact.metadata:
-                                                ui.label("Metadata")
-                                                ui.json_editor({
-                                                    "content": {"json": artifact.metadata},
-                                                    "mode": "tree",
-                                                    "readOnly": True,
-                                                    "mainMenuBar": False,
-                                                    "navigationBar": True,
-                                                    "statusBar": False,
-                                                }).style("width: 100%")
+                                                with ui.expansion("Schema", icon="schema").classes("w-full"):
+                                                    ui.json_editor({
+                                                        "content": {"json": artifact.metadata},
+                                                        "mode": "tree",
+                                                        "readOnly": True,
+                                                        "mainMenuBar": False,
+                                                        "navigationBar": True,
+                                                        "statusBar": False,
+                                                    }).style("width: 100%")
                                             ui.label(f"ID: {artifact.output_artifact_id!s}")

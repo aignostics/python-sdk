@@ -1,10 +1,12 @@
 """Service of the thumbnail module."""
 
 import io
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
-from PIL.Image import Image
+from PIL import Image
 
 from aignostics.utils import BaseService, Health, get_logger
 
@@ -32,14 +34,14 @@ class Service(BaseService):
             status=Health.Code.UP,
         )
 
-    def get_thumbnail_image(self, path: Path) -> Image:  # noqa: PLR6301
+    def get_thumbnail_image(self, path: Path) -> Image.Image:  # noqa: PLR6301
         """Get thumbnail of a image as PIL image.
 
         Args:
             path (Path): Path to the image.
 
         Returns:
-            Any: Thumbnail of the image.
+            Image.Image: Thumbnail of the image.
 
         Raises:
             ValueError: If the file type is not supported (.dcm, .tiff, or .tif).
@@ -74,3 +76,55 @@ class Service(BaseService):
         buffer = io.BytesIO()
         thumbnail_image.save(buffer, format="PNG")
         return buffer.getvalue()
+
+    def get_tiff_as_jpg(self, url: str) -> bytes:  # noqa: PLR6301
+        """Get a TIFF image from a URL and convert it to JPG format.
+
+        Args:
+            url (str): URL to the TIFF image.
+
+        Returns:
+            bytes: The TIFF image converted to JPG format as bytes.
+
+        Raises:
+            ValueError: If the URL does not point to a TIFF image or if the conversion fails.
+            HTTPError: If the request to the URL fails.
+        """
+        # Validate URL
+        if not url.startswith(("http:", "https:")):
+            error_msg = "URL must start with 'http:' or 'https:'"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        try:
+            # Open the URL and read the content into a bytes object
+            with urllib.request.urlopen(url) as response:
+                tiff_data = response.read()
+
+            # Create a BytesIO object from the image data
+            tiff_buffer = io.BytesIO(tiff_data)
+
+            # Open the image using PIL
+            with Image.open(tiff_buffer) as img:
+                # Convert to RGB if needed (in case it's a RGBA or other format)
+                rgb_img = img.convert("RGB") if img.mode != "RGB" else img.copy()
+
+                # Save the image as JPG to a BytesIO buffer
+                jpg_buffer = io.BytesIO()
+                rgb_img.save(jpg_buffer, format="JPEG", quality=90)
+
+                # Get the bytes from the buffer
+                return jpg_buffer.getvalue()
+
+        except urllib.error.HTTPError as e:
+            error_msg = f"HTTP error while fetching TIFF from URL: {e}"
+            logger.exception(error_msg)
+            raise
+        except urllib.error.URLError as e:
+            error_msg = f"URL error while fetching TIFF from URL: {e}"
+            logger.exception(error_msg)
+            raise ValueError(error_msg) from e
+        except Exception as e:
+            error_msg = f"Error converting TIFF to JPG: {e}"
+            logger.exception(error_msg)
+            raise ValueError(error_msg) from e
