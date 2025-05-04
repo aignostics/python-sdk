@@ -50,7 +50,6 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "requests-oauthlib" },
-    { name = "s3fs" },
     { name = "s5cmd" },
     { name = "sentry-sdk" },
     { name = "shapely" },
@@ -160,7 +159,6 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "requests-oauthlib", specifier = ">=2.0.0" },
-    { name = "s3fs", specifier = ">=2025.3.2" },
     { name = "s5cmd", specifier = ">=0.2.0" },
     { name = "sentry-sdk", specifier = ">=2.27.0" },
     { name = "shapely", specifier = ">=2.1.0" },
@@ -171,7 +169,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.15.1" },
     { name = "uptime", specifier = ">=3.0.1" },
     { name = "urllib3", specifier = ">=2.2.3" },
-    { name = "wsidicom", specifier = ">=0.19.1" },
+    { name = "wsidicom", specifier = ">=0.27.0" },
 ]
 provides-extras = ["examples"]
 
@@ -219,24 +217,6 @@ dev = [
     { name = "types-pyyaml", specifier = ">=6.0.12.20250402" },
     { name = "types-requests", specifier = ">=2.32.0.20250328" },
     { name = "watchdog", specifier = ">=6.0.0" },
-]
-
-[[package]]
-name = "aiobotocore"
-version = "2.22.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "aioitertools" },
-    { name = "botocore" },
-    { name = "jmespath" },
-    { name = "multidict" },
-    { name = "python-dateutil" },
-    { name = "wrapt" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/4c/113c4f5611103bba8e5252805fbee7944f5d9541addba9a96b091c0c4308/aiobotocore-2.22.0.tar.gz", hash = "sha256:11091477266b75c2b5d28421c1f2bc9a87d175d0b8619cb830805e7a113a170b", size = 110322, upload_time = "2025-05-01T16:45:45.484Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/8e/ffa5840cb7de19ada85bda1fae1ae22671a18992e9373f2e2df9db5389b5/aiobotocore-2.22.0-py3-none-any.whl", hash = "sha256:b4e6306f79df9d81daff1f9d63189a2dbee4b77ce3ab937304834e35eaaeeccf", size = 78930, upload_time = "2025-05-01T16:45:43.508Z" },
 ]
 
 [[package]]
@@ -320,15 +300,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f6/0b/b5524b3bb4b01e91bc4323aad0c2fcaebdf2f1b4d2eb22743948ba364958/aiohttp-3.11.18-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:9d4df95ad522c53f2b9ebc07f12ccd2cb15550941e11a5bbc5ddca2ca56316d7", size = 1666614, upload_time = "2025-04-21T09:42:25.764Z" },
     { url = "https://files.pythonhosted.org/packages/c7/b7/3d7b036d5a4ed5a4c704e0754afe2eef24a824dfab08e6efbffb0f6dd36a/aiohttp-3.11.18-cp313-cp313-win32.whl", hash = "sha256:cdd1bbaf1e61f0d94aced116d6e95fe25942f7a5f42382195fd9501089db5d78", size = 411358, upload_time = "2025-04-21T09:42:27.558Z" },
     { url = "https://files.pythonhosted.org/packages/1e/3c/143831b32cd23b5263a995b2a1794e10aa42f8a895aae5074c20fda36c07/aiohttp-3.11.18-cp313-cp313-win_amd64.whl", hash = "sha256:bdd619c27e44382cf642223f11cfd4d795161362a5a1fc1fa3940397bc89db01", size = 437658, upload_time = "2025-04-21T09:42:29.209Z" },
-]
-
-[[package]]
-name = "aioitertools"
-version = "0.12.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/06/de/38491a84ab323b47c7f86e94d2830e748780525f7a10c8600b67ead7e9ea/aioitertools-0.12.0.tar.gz", hash = "sha256:c2a9055b4fbb7705f561b9d86053e8af5d10cc845d22c32008c43490b2d8dd6b", size = 19369, upload_time = "2024-09-02T03:33:40.349Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/13/58b70a580de00893223d61de8fea167877a3aed97d4a5e1405c9159ef925/aioitertools-0.12.0-py3-none-any.whl", hash = "sha256:fc1f5fac3d737354de8831cbba3eb04f79dd649d8f3afb4c5b114925e662a796", size = 24345, upload_time = "2024-09-02T03:34:59.454Z" },
 ]
 
 [[package]]
@@ -1585,11 +1556,11 @@ wheels = [
 
 [[package]]
 name = "fsspec"
-version = "2025.3.2"
+version = "2024.12.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/45/d8/8425e6ba5fcec61a1d16e41b1b71d2bf9344f1fe48012c2b48b9620feae5/fsspec-2025.3.2.tar.gz", hash = "sha256:e52c77ef398680bbd6a98c0e628fbc469491282981209907bbc8aea76a04fdc6", size = 299281, upload_time = "2025-03-31T15:27:08.524Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/11/de70dee31455c546fbc88301971ec03c328f3d1138cfba14263f651e9551/fsspec-2024.12.0.tar.gz", hash = "sha256:670700c977ed2fb51e0d9f9253177ed20cbde4a3e5c0283cc5385b5870c8533f", size = 291600, upload_time = "2024-12-19T19:57:30.333Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/4b/e0cfc1a6f17e990f3e64b7d941ddc4acdc7b19d6edd51abf495f32b1a9e4/fsspec-2025.3.2-py3-none-any.whl", hash = "sha256:2daf8dc3d1dfa65b6aa37748d112773a7a08416f6c70d96b264c96476ecaf711", size = 194435, upload_time = "2025-03-31T15:27:07.028Z" },
+    { url = "https://files.pythonhosted.org/packages/de/86/5486b0188d08aa643e127774a99bac51ffa6cf343e3deb0583956dca5b22/fsspec-2024.12.0-py3-none-any.whl", hash = "sha256:b520aed47ad9804237ff878b504267a3b0b441e97508bd6d2d8774e3db85cee2", size = 183862, upload_time = "2024-12-19T19:57:28.258Z" },
 ]
 
 [[package]]
@@ -5109,20 +5080,6 @@ wheels = [
 ]
 
 [[package]]
-name = "s3fs"
-version = "2025.3.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiobotocore" },
-    { name = "aiohttp" },
-    { name = "fsspec" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/72/df/559dc6d796c38f1b8a09a5f6dcf62a467a84f3c87a837ee07c59f60a26ad/s3fs-2025.3.2.tar.gz", hash = "sha256:6798f896ec76dd3bfd8beb89f0bb7c5263cb2760e038bae0978505cd172a307c", size = 77280, upload_time = "2025-03-31T15:35:18.881Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/e1/4db0388df5655de92ce5f9b60d2bef220a58dde130e0453e5433c579986e/s3fs-2025.3.2-py3-none-any.whl", hash = "sha256:81eae3f37b4b04bcc08845d7bcc607c6ca45878813ef7e6a28d77b2688417130", size = 30485, upload_time = "2025-03-31T15:35:17.384Z" },
-]
-
-[[package]]
 name = "s3transfer"
 version = "0.11.3"
 source = { registry = "https://pypi.org/simple" }
@@ -6077,6 +6034,18 @@ wheels = [
 ]
 
 [[package]]
+name = "universal-pathlib"
+version = "0.2.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fsspec" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/eb/21/dd871495af3933e585261adce42678dcdf1168c9d6fa0a8f7b6565e54472/universal_pathlib-0.2.6.tar.gz", hash = "sha256:50817aaeaa9f4163cb1e76f5bdf84207fa05ce728b23fd779479b3462e5430ac", size = 175427, upload_time = "2024-12-13T00:58:27.514Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/4d/2e577f6db7aa0f932d19f799c18f604b2b302c65f733419b900ec07dbade/universal_pathlib-0.2.6-py3-none-any.whl", hash = "sha256:700dec2b58ef34b87998513de6d2ae153b22f083197dfafb8544744edabd1b18", size = 50087, upload_time = "2024-12-13T00:58:24.582Z" },
+]
+
+[[package]]
 name = "uptime"
 version = "3.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -6451,18 +6420,20 @@ wheels = [
 
 [[package]]
 name = "wsidicom"
-version = "0.19.1"
+version = "0.27.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dicomweb-client" },
+    { name = "fsspec" },
     { name = "marshmallow" },
     { name = "numpy" },
     { name = "pillow" },
     { name = "pydicom" },
+    { name = "universal-pathlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/45/da/503780983de4c164ebd9c48dc6c03ca75bfb41edd0858e4cb5873305c9dd/wsidicom-0.19.1.tar.gz", hash = "sha256:393ef4e99c0b727d6120c2928af0ed2b5ee5bb3213d89fb509e52df0887d3907", size = 147618, upload_time = "2024-02-14T13:05:38.868Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ae/8c/44af929e04c96b7fd7a6327ea6354d52cd7a11a0ec5db3fdbc35ab6a664c/wsidicom-0.27.0.tar.gz", hash = "sha256:185043ec8058b09b59bfd4a8d50339fe8a83c0d4a68a0e412694ab26fa11901e", size = 155866, upload_time = "2025-04-25T14:00:09.534Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/a8/4249fbdb4582569f5a9fe08b1ae12749546c697cfa98b3a2d010bb1a2e62/wsidicom-0.19.1-py3-none-any.whl", hash = "sha256:ae05b83d43baba6b7261d0a6ad551cda75bb304a048b1a9d5a8813a5490d71db", size = 219834, upload_time = "2024-02-14T13:05:35.993Z" },
+    { url = "https://files.pythonhosted.org/packages/57/f7/54e4656572aec4a57618f80743cbfdb01ab7229b49c3ab2e4f97b5383a07/wsidicom-0.27.0-py3-none-any.whl", hash = "sha256:58b4a8e1e5dc48f1fb99ef7fe1c1dc7f7b258140ba427a863bff5b74f35d7590", size = 231280, upload_time = "2025-04-25T14:00:07.773Z" },
 ]
 
 [[package]]

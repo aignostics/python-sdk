@@ -2,7 +2,6 @@
 
 from typing import Any
 
-import s3fs
 from boto3 import Session
 from botocore.client import Config
 
@@ -58,20 +57,6 @@ class Service(BaseService):
         )
         return session.client("s3", endpoint_url=endpoint_url, config=Config(signature_version=SIGNATURE_VERSION))
 
-    def s3fs(self, endpoint_url: str = ENDPOINT_URL_DEFAULT) -> s3fs.S3FileSystem:
-        """Get a file system instance for cloud bucket on Aignostics Platform.
-
-        Returns:
-            s3fs.S3FileSystem: A Boto3 S3 file system instance.
-        """
-        return s3fs.S3FileSystem(
-            key=self._settings.hmac_access_key_id.get_secret_value(),
-            secret=self._settings.hmac_secret_access_key.get_secret_value(),
-            endpoint_url=endpoint_url,
-            client_kwargs={"region_name": self._settings.region_name},
-            config_kwargs={"signature_version": SIGNATURE_VERSION},
-        )
-
     def get_bucket_name(self) -> str:
         """Get the bucket name.
 
@@ -87,22 +72,71 @@ class Service(BaseService):
             detail (bool): If True, return detailed information, else return only names.
             list[str]: List of objects in the bucket.
         """
-        s3fs = self.s3fs()
-        return s3fs.ls(self._settings.name, detail=detail)
+        s3c = self._get_s3_client()
+        return s3c.list_objects_v2(Bucket=self._settings.name, Prefix="", Delimiter="/").get("Contents", [])
 
-    def find(self, detail: bool = False) -> list[str | dict[str, Any]]:
-        """List objects.
+    def find(self, detail: bool = False) -> list[str | dict[str, Any]]:  # noqa: C901
+        """List objects recursively in the bucket.
+
+        Args:
+            detail (bool): If True, return detailed information including object type, else return only paths.
 
         Returns:
-            detail (bool): If True, return detailed information, else return only names.
-            list[str]: List of objects in the bucket.
+            list[str | dict[str, Any]]: List of objects in the bucket with optional detail.
         """
-        s3fs = self.s3fs()
-        result = s3fs.find(self._settings.name, withdirs=True, detail=detail)
-        if detail:
-            # Filter out entries with empty or None key
-            return [item for item in result.values() if item.get("Key") not in (None, "")]  # type: ignore
-        return result  # type: ignore
+        s3c = self._get_s3_client()
+        paginator = s3c.get_paginator("list_objects_v2")
+        pages = paginator.paginate(Bucket=self._settings.name)
+
+        result = []
+        for page in pages:
+            contents = page.get("Contents", [])
+            common_prefixes = page.get("CommonPrefixes", [])
+
+            if detail:
+                # Process directories (common prefixes)
+                for prefix in common_prefixes:
+                    if prefix.get("Prefix") not in {None, ""}:
+                        prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
+                        result.append({
+                            "key": prefix_path,
+                            "size": 0,
+                            "last_modified": None,
+                            "etag": "",
+                            "storage_class": "",
+                            "type": "directory",
+                        })
+
+                # Process files
+                for item in contents:
+                    if item.get("Key") not in {None, ""}:
+                        # Determine if this item is a "directory" (ends with /)
+                        item_key = item["Key"]
+                        item_type = "directory" if item_key.endswith("/") else "file"
+                        item_path = f"{self._settings.name}/{item_key}"
+
+                        result.append({
+                            "key": item_path,
+                            "size": item.get("Size", 0),
+                            "last_modified": item.get("LastModified"),
+                            "etag": item.get("ETag", "").strip('"'),
+                            "storage_class": item.get("StorageClass", ""),
+                            "type": item_type,
+                        })
+            else:
+                # Process directories (common prefixes) for non-detailed view
+                for prefix in common_prefixes:
+                    if prefix.get("Prefix") not in {None, ""}:
+                        prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
+                        result.append(prefix_path)
+
+                # Process files for non-detailed view
+                for item in contents:
+                    if item.get("Key") not in {None, ""}:
+                        item_path = f"{self._settings.name}/{item['Key']}"
+                        result.append(item_path)
+
+        return result
 
     def delete_objects(self, keys: list[str]) -> bool:
         """Delete  objects.

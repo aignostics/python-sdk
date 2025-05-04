@@ -43,7 +43,7 @@ class PageBuilder(BasePageBuilder):
                 objs = Service().find(detail=True)
                 return [
                     {
-                        "key": obj["Key"],  # type: ignore
+                        "key": obj["key"],  # type: ignore
                         "type": obj["type"],  # type: ignore
                         "size": f"{obj['size'] / (1024 * 1024 * 1024):.2f} GB",  # type: ignore
                     }
