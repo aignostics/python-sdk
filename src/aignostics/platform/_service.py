@@ -2,12 +2,16 @@
 
 from typing import Any
 
+import urllib3
+
 from aignostics.platform import Client
-from aignostics.utils import BaseService, Health, get_logger
+from aignostics.utils import BaseService, Health, __version__, get_logger
 
 from ._settings import Settings
 
 logger = get_logger(__name__)
+
+HTTP_OK = 200
 
 
 # Services derived from BaseService and exported by modules via their __init__.py are automatically registered
@@ -29,13 +33,41 @@ class Service(BaseService):
         """
         return {}
 
-    def _determine_api_health(self) -> Health:
+    def _determine_api_public_health(self) -> Health:
         """Determine healthiness and reachability of Aignostics Platform API.
+
+        - Checks if health endpoint is reachable and returns 200 OK
+        - Uses urllib3 for a direct connection check without authentication
+
+        Returns:
+            Health: The healthiness of the Aignostics Platform API via basic unauthenticated request.
+        """
+        try:
+            http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5.0, read=10.0))
+            response = http.request(
+                method="GET",
+                url=f"{self._settings.api_root}/api/v1/health",
+                headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
+            )
+
+            if response.status != HTTP_OK:
+                logger.error("Aignostics Platform API (public) returned '%s'", response.status)
+                return Health(
+                    status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status}'"
+                )
+        except Exception as e:
+            logger.exception("Issue with Aignostics Platform API")
+            return Health(status=Health.Code.DOWN, reason=f"Issue with Aignostics Platform API: '{e}'")
+
+        return Health(status=Health.Code.UP)
+
+    def _determine_api_authenticated_health(self) -> Health:
+        """Determine healthiness and reachability of Aignostics Platform API via authenticated API client.
 
         - Checks if health endpoint is reachable and returns 200 OK
 
         Returns:
-            Health: The healthiness of the Aignostics Platform API.
+            Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated API client.
         """
         try:
             client = Client()
@@ -44,7 +76,8 @@ class Service(BaseService):
                 url=self._settings.api_root + "/api/v1/health",
                 method="GET",
             )
-            if response.status != 200:
+            if response.status != HTTP_OK:
+                logger.error("Aignostics Platform API (authenticated) returned '%s'", response.status)
                 return Health(status=Health.Code.DOWN, reason=f"Aignostics Platform API returned '{response.status}'")
         except Exception as e:
             logger.exception("Issue with Aignostics Platform API")
@@ -60,6 +93,7 @@ class Service(BaseService):
         return Health(
             status=Health.Code.UP,
             components={
-                "api": self._determine_api_health(),
+                "api_public": self._determine_api_public_health(),
+                "api_authenticated": self._determine_api_authenticated_health(),
             },
         )
