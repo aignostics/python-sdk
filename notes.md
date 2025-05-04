@@ -93,3 +93,82 @@ uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a9
 - whoami call, indicating user id, organisation id, user full name, organisation
   full name
 - possiblity to delete runs
+
+## Windows PowerShell Instructions
+
+```powershell
+# Create Aignostics directory if it doesn't exist
+New-Item -ItemType Directory -Path "$env:USERPROFILE\.aignostics" -Force
+
+# Create the .env file with required environment variables
+@"
+# Aignostics Python SDK Environment Variables. Don't remove this line
+AIGNOSTICS_CLIENT_ID_DEVICE=YOUR_SECRET
+AIGNOSTICS_CLIENT_ID_INTERACTIVE=YOUR_SECRET
+AIGNOSTICS_SENTRY_DSN=https://5e2b6e59746a3cb502589d8c2f0e3b64@o443095.ingest.us.sentry.io/4509130454466560
+AIGNOSTICS_LOGFIRE_TOKEN=pylf_v1_eu_CwtB1kc64d42qClGkVHLgZ65X4yFCSwPS6lv8ydw35Wm
+AIGNOSTICS_BUCKET_PROTOCOL=gs
+AIGNOSTICS_BUCKET_NAME=aignostics-platform-ext-a4f7e9
+AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID=YOUR_SECRET
+AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY=YOUR_SECRET
+"@ | Out-File -FilePath "$env:USERPROFILE\.aignostics\.env" -Encoding utf8
+
+# Install the uv package manager
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Install the Aignostics Python SDK
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system install
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics bucket ls
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system info
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system health
+```
+
+# 
+
+                                                                         │
+                             │ C:\Users\helmut\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64- │
+                             │ none\Lib\urllib\request.py:1322 in do_open                               │
+                             │                                                                          │
+                             │   1319 │   │   │   │   h.request(req.get_method(), req.selector, req.dat │
+                             │   1320 │   │   │   │   │   │     encode_chunked=req.has_header('Transfer │
+                             │   1321 │   │   │   except OSError as err: # timeout error                │
+                             │ ❱ 1322 │   │   │   │   raise URLError(err)                               │
+                             │   1323 │   │   │   r = h.getresponse()                                   │
+                             │   1324 │   │   except:                                                   │
+                             │   1325 │   │   │   h.close()                                             │
+                             ╰──────────────────────────────────────────────────────────────────────────╯
+                             URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify
+                             failed: unable to get local issuer certificate (_ssl.c:1028)>
+
+                             The above exception was the direct cause of the following exception:
+
+                             ╭─────────────────── Traceback (most recent call last) ────────────────────╮
+                             │ C:\Users\helmut\AppData\Local\uv\cache\archive-v0\McrATamrJ1LIUCorgomc_\ │
+                             │ Lib\site-packages\aignostics\platform\_authentication.py:114 in          │
+                             │ verify_and_decode_token                                                  │
+                             │                                                                          │
+                             │   111 │   jwk_client = jwt.PyJWKClient(settings().jws_json_url)          │
+                             │   112 │   try:                                                           │
+                             │   113 │   │   # Get the public key from the JWK client                   │
+                             │ ❱ 114 │   │   key = jwk_client.get_signing_key_from_jwt(token).key       │
+                             │   115 │   │   # Verify and decode the token using the public key         │
+                             │   116 │   │   return t.cast(                                             │
+                             │   117 │   │   │   "dict[str, str]",                                      │
+                             │                                                                          │
+                             │ C:\Users\helmut\AppData\Local\uv\cache\archive-v0\McrATamrJ1LIUCorgomc_\ │
+                             │ Lib\site-packages\jwt\jwks_client.py:115 in get_signing_key_from_jwt     │
+                             │                                                                          │
+                             │   112 │   def get_signing_key_from_jwt(self, token: str) -> PyJWK:       │
+                             │   113 │   │   unverified = decode_token(token, options={"verify_signatur │
+                             │   114 │   │   header = unverified["header"]                              │
+                             │ ❱ 115 │   │   return self.get_signing_key(header.get("kid"))             │
+                             │   116 │                                                                  │
+                             │   117 │   @staticmethod                                                  │
+                             │   118 │   def match_kid(signing_keys: List[PyJWK], kid: str) -> Optional │
+                             │                                                                          │
+                             │ C:\Users\helmut\AppData\Local\uv\cache\archive-v0\McrATamrJ1LIUCorgomc_\ │
+                             │ Lib\site-packages\jwt\jwks_client.py:97 in get_signing_key               │
+                             │                                                                          │
+                             │    94 │   │   return signing_keys                                        │
+                             │    95 │                                                                  │
+                             │    96 │   def get_signing_key(self, kid: str) -> PyJWK:                  │

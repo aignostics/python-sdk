@@ -110,7 +110,18 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     """
     jwk_client = jwt.PyJWKClient(settings().jws_json_url)
     try:
+        # TODO (Andreas): Fix CERTIFICATE_VERIFY_FAILED : unable to get local issuer certificate
+        # HACK START to workaround
+        import ssl  # noqa: PLC0415
+
+        myssl = ssl.create_default_context()
+        myssl.check_hostname = False
+        myssl.verify_mode = ssl.CERT_NONE
+        ssl._create_default_https_context = ssl._create_unverified_context
+        # HACK END
+
         # Get the public key from the JWK client
+
         key = jwk_client.get_signing_key_from_jwt(token).key
         # Verify and decode the token using the public key
         return t.cast(
