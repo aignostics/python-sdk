@@ -1,6 +1,7 @@
 """Homepage (index) of GUI."""
 
 import time
+from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
@@ -193,10 +194,24 @@ class PageBuilder(BasePageBuilder):
             ui.markdown(
                 """
                     ## Welcome to the Aignostics Platform Launcher!
-                    1. Select an application from the left sidebar and use our wizard to submit a run on your whole slide images.
+                    1. Select an application from the left sidebar and use our wizard to submit a run on your whole slide
+                    images.
                     2. Select a run to monitor progress, cancel while pending, or download results.
-                    3. For analysis and visualisation of results launch Marimo Notebook or QuPath Microscopy viewer with one click.
-                    4. Trial with public data? Open **☰** Menu and download datasets from
+                """  # noqa: S608
+                + (
+                    """
+                    3. For analysis and visualization of results, launch """
+                    + ("Marimo Notebook" if find_spec("marimo") else "")
+                    + (" and " if find_spec("marimo") and find_spec("paquo") else "")
+                    + ("QuPath Microscopy viewer" if find_spec("paquo") else "")
+                    + " with one click."
+                    if find_spec("marimo") or find_spec("paquo")
+                    else ""
+                )
+                + """
+                    """
+                + ("4" if find_spec("marimo") or find_spec("paquo") else "3")
+                + """. Trial with public data? Open **☰** Menu and download datasets from
                         Image Data Commons (IDC) by National Cancer Institute (NCI).
                 """
             )
@@ -783,14 +798,18 @@ class PageBuilder(BasePageBuilder):
 
             if run_status.status.value == "completed":
                 with ui.row().classes("w-full justify-end"):
-                    ui.button(
-                        "Open in QuPath Microscopy Viewer", icon="zoom_in", on_click=qupath_project_create_dialog.open
-                    )
-                    ui.button(
-                        "Open in Marimo Notebook",
-                        icon="analytics",
-                        on_click=lambda: ui.navigate.to(f"/marimo/{run.application_run_id}"),
-                    )
+                    if find_spec("paquo"):
+                        ui.button(
+                            "Open in QuPath Microscopy Viewer",
+                            icon="zoom_in",
+                            on_click=qupath_project_create_dialog.open,
+                        )
+                    if find_spec("marimo"):
+                        ui.button(
+                            "Open in Marimo Notebook",
+                            icon="analytics",
+                            on_click=lambda: ui.navigate.to(f"/marimo/{run.application_run_id}"),
+                        )
                     ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
 
             with ui.card():

@@ -1,10 +1,11 @@
 """Marimo Service."""
 
 import atexit
+import re
 import sys
 from pathlib import Path
-from subprocess import PIPE, Popen
-from threading import Thread
+from subprocess import PIPE, STDOUT, Popen
+from threading import Event, Thread
 from typing import Any
 
 from aignostics.utils import BaseService, Health, get_logger
@@ -17,8 +18,9 @@ class _Runner:
 
     _marimo_server: Popen | None = None
     _monitor_thread: Thread | None = None
-    _stdout: str = ""
-    _stderr: str = ""
+    _output: str = ""
+    _server_url: str | None = None
+    _server_ready: Event = Event()
 
     def __init__(self) -> None:
         atexit.register(self.stop)
@@ -43,21 +45,33 @@ class _Runner:
             },
         )
 
-    def start(self) -> None:
+    def start(self) -> str:
         """Start the Marimo server.
 
+        Returns:
+            str: The URL of the started Marimo server.
+
         Raises:
-            RuntimeError: If the Marimo server fails to start.
+            RuntimeError: If the Marimo server fails to start or if the URL isn't detected within 10 seconds.
         """
         if self.is_marimo_server_running():
             logger.warning("Marimo server is already running")
-            return
+            if self._server_url is not None:
+                return self._server_url
+
+            message = "Server is running but URL is not set - this is unexpected"
+            logger.error(message)
+            raise RuntimeError(message)
 
         notebook_path = Path(__file__).parent / "_notebook.py"
         if not notebook_path.is_file():
             message = f"Notebook file not found at '{notebook_path.absolute()}'"
             logger.error(message)
             raise RuntimeError(message)
+
+        # Reset server state
+        self._server_url = None
+        self._server_ready.clear()
 
         self._marimo_server = Popen(  # noqa: S603
             [
@@ -72,7 +86,7 @@ class _Runner:
                 notebook_path.absolute(),
             ],
             stdout=PIPE,
-            stderr=PIPE,
+            stderr=STDOUT,
             text=True,
             bufsize=1,
         )
@@ -83,28 +97,60 @@ class _Runner:
             raise RuntimeError(message)
 
         # Start a thread to monitor the subprocess output
-        self._monitor_thread = Thread(target=_Runner._capture_stdout, args=(self._marimo_server), daemon=True)
+        self._monitor_thread = Thread(target=self._capture_output, args=(self._marimo_server,), daemon=True)
+        self._monitor_thread.start()
 
-    @staticmethod
-    def _capture_stdout(process: Popen) -> None:
-        """Capture stdout of the subprocess.
+        # Wait up to 10 seconds for the server URL to be detected
+        if not self._server_ready.wait(timeout=10.0):
+            self.stop()  # Kill the process if it didn't start properly
+            message = "Marimo server didn't start within 10 seconds (URL not detected)"
+            logger.error(message)
+            raise RuntimeError(message)
+
+        # At this point, self._server_url should be set, but let's check to be safe
+        if self._server_url is None:
+            self.stop()
+            message = "Server URL was not set despite server ready event being triggered"
+            logger.error(message)
+            raise RuntimeError(message)
+
+        return self._server_url
+
+    def _capture_output(self, process: Popen) -> None:
+        """Capture stdout of the subprocess and detect when server is ready.
 
         Args:
             process (Popen): The subprocess to capture stdout from.
         """
-        captured = ""
+        captured_line = ""
+        url_pattern = re.compile(r"\s*➜\s+URL:\s+(https?://\S+)")
+
         if process.stdout is None:
             logger.warning("Cannot capture stdout")
             return
-        # Read one character at a time to handle carriage returns
+
+        # Buffer for collecting output
+        self._output = ""
+
         while process.poll() is None:
             char = process.stdout.read(1)
             if not char:  # End of stream
                 break
-            captured += char
-            logger.debug(char)
 
-        logger.debug("Process completed")
+            self._output += char
+            captured_line += char
+
+            if char == "\n":
+                logger.debug(captured_line.rstrip())
+                url_match = url_pattern.search(captured_line)
+                if url_match:
+                    self._server_url = url_match.group(1)
+                    logger.info("Marimo server started at URL: %s", self._server_url)
+                    self._server_ready.set()
+
+                captured_line = ""
+
+        logger.debug("Marimo server process completed")
 
     def is_marimo_server_running(self) -> bool:
         """Check if the marimo server is running.
@@ -144,9 +190,11 @@ class _Runner:
         logger.info("Service stopped")
 
 
+# Singleton instance of Runner
 runner: _Runner | None = None
 
 
+# Lazy init the runner
 def _get_runner() -> _Runner:
     """Get the singleton runner.
 
@@ -159,6 +207,7 @@ def _get_runner() -> _Runner:
     return runner
 
 
+# Facade to the runner
 class Service(BaseService):
     """Service of the Marimo module."""
 
@@ -178,11 +227,14 @@ class Service(BaseService):
         """
         return _get_runner().health()
 
-    def start(self) -> None:  # noqa: PLR6301
+    def start(self) -> str:  # noqa: PLR6301
         """Start the Marimo server.
 
+        Returns:
+            str: The URL of the started Marimo server.
+
         Raises:
-            RuntimeError: If the Marimo server fails to start.
+            RuntimeError: If the Marimo server fails to start or if the URL isn't detected within 10 seconds.
         """
         return _get_runner().start()
 

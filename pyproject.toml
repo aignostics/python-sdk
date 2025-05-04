@@ -78,11 +78,11 @@ dependencies = [
     "pydantic-settings>=2.9.1",
     "pywin32>=310 ; sys_platform == 'win32'",
     "sentry-sdk>=2.27.0",
-    "typer>=0.15.1",
+    "typer>=0.15.3",
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
-    "boto3>=1.37.3",
+    "boto3>=1.37.8",
     "dicom-validator>=0.6.2",
     "dicomweb-client[gcp]>=0.59.3",
     "google-cloud-storage>=3.1.0",
@@ -108,17 +108,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-examples = [
+jupyter = ["jupyter>=1.1.1"]
+marimo = [
     "cloudpathlib>=0.21.0",
-    "highdicom>=0.25.1",
-    "jinja2>=3.1.6",
-    "jupyter>=1.1.1",
     "marimo>=0.13.4",
     "matplotlib>=3.10.1",
     "shapely>=2.1.0",
-    "streamlit>=1.44.1",
 ]
-
+qupath = ["ijson>=3.3.0", "geopandas>=1.0.1", "paquo>=0.8.1"]
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",

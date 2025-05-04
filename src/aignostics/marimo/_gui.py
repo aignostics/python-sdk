@@ -1,7 +1,5 @@
 """Marimo GUI."""
 
-import time
-
 from aignostics.gui import theme
 from aignostics.utils import BasePageBuilder, get_logger
 
@@ -21,11 +19,15 @@ class PageBuilder(BasePageBuilder):
             theme()
 
             with ui.row().classes("w-full justify-end"):
-                ui.button("Overview", icon="arrow_back", on_click=ui.navigate.back)
+                ui.button("Back to Application Run", icon="arrow_back", on_click=ui.navigate.back)
 
-            Service().start()
-            time.sleep(1)
-
-            ui.html(
-                f'<iframe src="http://localhost:2718?run_id={application_run_id}" width="100%" height="100%"></iframe>'
-            ).classes("w-full h-[calc(100vh-5rem)]")
+            try:
+                server_url = Service().start()
+                ui.html(
+                    f'<iframe src="{server_url}?run_id={application_run_id}" width="100%" height="100%"></iframe>'
+                ).classes("w-full h-[calc(100vh-5rem)]")
+            except Exception:
+                message = "Failed to start Marimo server."
+                logger.exception("Failed to start Marimo server")
+                ui.label(message).classes("text-red-500")
+                ui.button("Retry", on_click=ui.navigate.reload).props("color=red")
