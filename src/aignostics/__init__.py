@@ -4,6 +4,8 @@
 # HACK START to workaround
 import ssl
 
+import pip_system_certs.wrapt_requests  # noqa: F401
+
 from .constants import MODULES_TO_INSTRUMENT
 from .utils.boot import boot
 
@@ -12,5 +14,6 @@ myssl.check_hostname = False
 myssl.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 # HACK END
+
 
 boot(modules_to_instrument=MODULES_TO_INSTRUMENT)
