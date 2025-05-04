@@ -105,6 +105,7 @@ dependencies = [
     "urllib3>=2.2.3",
     "shapely>=2.1.0",
     "s3fs>=2025.3.2",
+    "pip-system-certs>=4.0",
 ]
 
 [project.optional-dependencies]
