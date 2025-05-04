@@ -8,6 +8,8 @@ for all interactions with the Aignostics platform.
 
 from aignx.codegen.models import (
     ApplicationReadResponse as Application,
+)
+from aignx.codegen.models import (
     ApplicationVersionReadResponse as ApplicationVersion,
 )
 from aignx.codegen.models import (
@@ -41,6 +43,7 @@ from ._constants import (
     TOKEN_URL_STAGING,
 )
 from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
+from ._service import Service
 from ._settings import Settings, settings
 from ._utils import calculate_file_crc32c, download_file, generate_signed_url, mime_type_to_file_ending
 from .resources.runs import ApplicationRun
@@ -72,12 +75,13 @@ __all__ = [
     "TOKEN_URL_STAGING",
     "UNKNOWN_ENDPOINT_URL",
     "Application",
-    "ApplicationVersion",
     "ApplicationRun",
     "ApplicationRunStatus",
+    "ApplicationVersion",
     "Client",
     "InputArtifact",
     "InputItem",
+    "Service",
     "Settings",
     "calculate_file_crc32c",
     "download_file",
