@@ -113,6 +113,9 @@ AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID=YOUR_SECRET
 AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY=YOUR_SECRET
 "@ | Out-File -FilePath "$env:USERPROFILE\.aignostics\.env" -Encoding utf8
 
+# Install VC Redist
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://vcredist.com/install.ps1'))
+
 # Install the uv package manager
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
@@ -172,3 +175,19 @@ uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aig
                              │    94 │   │   return signing_keys                                        │
                              │    95 │                                                                  │
                              │    96 │   def get_signing_key(self, kid: str) -> PyJWK:                  │
+
+
+    "aignostics.platform._service.Service": {
+      "status": "DOWN",
+      "reason": "Components 'api_public', 'api_authenticated' are DOWN",
+      "components": {
+        "api_public": {
+          "status": "DOWN",
+          "reason": "Issue with Aignostics Platform API: 'HTTPSConnectionPool(host='platform.aignostics.com', port=443): Max retries exceeded with url: /api/v1/health (Caused by SSLError(SSLCertVerificationError(5, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1028)')))'",
+          "components": {}
+        },
+        "api_authenticated": {
+          "status": "DOWN",
+          "reason": "Issue with Aignostics Platform API: 'Authentication failed. Please check your credentials.'",
+          "components": {}
+        }
