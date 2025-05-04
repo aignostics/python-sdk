@@ -5,6 +5,7 @@ import os
 import platform
 import sys
 import typing as t
+from http import HTTPStatus
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
 from typing import Any, NotRequired, TypedDict, cast
@@ -40,7 +41,6 @@ JsonType: t.TypeAlias = list[JsonValue] | t.Mapping[str, JsonValue]
 MEASURE_INTERVAL_SECONDS = 2
 NETWORK_TIMEOUT = 5
 IPIFY_URL = "https://api.ipify.org"
-HTTP_OK = 200
 
 
 class RuntimeDict(TypedDict, total=False):
@@ -99,7 +99,7 @@ class Service(BaseService):
                 headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
             )
 
-            if response.status != HTTP_OK:
+            if response.status != HTTPStatus.OK:
                 logger.error("'%s' returned '%s'", IPIFY_URL, response.status)
                 return Health(status=Health.Code.DOWN, reason=f"'{IPIFY_URL}' returned status '{response.status}'")
         except Exception as e:

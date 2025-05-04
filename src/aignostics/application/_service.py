@@ -58,14 +58,6 @@ class Service(BaseService):
             status=Health.Code.UP,
         )
 
-    def get_data_directory(self) -> Path:
-        """Get the data directory.
-
-        Returns:
-            Path: The data directory.
-        """
-        return Path(self._settings.data_directory)
-
     @staticmethod
     def _get_platform_client() -> Client:
         """Get the platform client.

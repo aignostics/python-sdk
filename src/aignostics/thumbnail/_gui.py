@@ -3,7 +3,6 @@
 from pathlib import Path
 
 from fastapi import HTTPException, Response
-from nicegui import app
 
 from aignostics.utils import BasePageBuilder, get_logger
 
@@ -15,6 +14,8 @@ logger = get_logger(__name__)
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
+        from nicegui import app  # noqa: PLC0415
+
         @app.get("/thumbnail")
         def thumbnail(source: str) -> Response:
             """Serve a thumbnail for a given reference.

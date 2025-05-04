@@ -30,8 +30,6 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
 if find_spec("marimo"):
     from typing import Annotated
 
-    import uvicorn
-
     from .utils import create_marimo_app
 
     @cli.command()
@@ -40,6 +38,8 @@ if find_spec("marimo"):
         port: Annotated[int, typer.Option(help="Port to bind the server to")] = 8001,
     ) -> None:
         """Run notebook server."""
+        import uvicorn  # noqa: PLC0415
+
         console.print(f"Starting marimo notebook server at http://{host}:{port}")
         uvicorn.run(
             create_marimo_app(),

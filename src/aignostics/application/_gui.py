@@ -5,8 +5,6 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 
-from nicegui import app
-
 from aignostics.gui import frame
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker, get_logger
 
@@ -20,7 +18,7 @@ SERIES_INSTANCE_ID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915
-        from nicegui import binding, context, run, ui  # noq  # noqa: PLC0415
+        from nicegui import app, binding, context, run, ui  # noq  # noqa: PLC0415
 
         @binding.bindable_dataclass
         class SubmitForm:
@@ -195,7 +193,7 @@ class PageBuilder(BasePageBuilder):
                     1. Select an application from the left sidebar and use our wizard to analyze your whole slide images.
                     2. Select a run to monitor progress, inspect results, or cancel a pending run.
                         Visualize in QuPath with one click.
-                    3. Try out with public data? Open **☰** Menu and download datasets from
+                    3. Trial with public data? Open **☰** Menu and download datasets from
                         Image Data Commons (IDC) by National Cancer Institute (NCI).
                 """
             )
@@ -289,21 +287,26 @@ class PageBuilder(BasePageBuilder):
                             "Select a folder with whole slide images you want to analyze"
                         ) if submit_form.wsi_step_label else None
                         submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
-                        ui.notify("The selected path is not a directory. Please select a valid directory.")
+                        ui.notify(
+                            "The selected path is not a directory. Please select a valid directory.", type="warning"
+                        )
                     else:
                         submit_form.source = path
                         submit_form.wsi_step_label.set_text(
                             f"Selected folder {submit_form.source} to analyze"
                         ) if submit_form.wsi_step_label else None
                         submit_form.wsi_next_button.enable() if submit_form.wsi_next_button else None
-                        ui.notify(f"You chose directory {submit_form.source}.")
+                        ui.notify(f"You chose directory {submit_form.source}.", type="info")
                 else:
                     submit_form.source = None
                     submit_form.wsi_step_label.set_text(
                         "Select a folder with whole slide images you want to analyze"
                     ) if submit_form.wsi_step_label else None
                     submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
-                    ui.notify("You did not make a selection. You must choose a source directory to upload from.")
+                    ui.notify(
+                        "You did not make a selection. You must choose a source directory to upload from.",
+                        type="warning",
+                    )
 
             async def _on_wsi_next_click() -> None:
                 """Handle the 'Next' button click in WSI step.
@@ -320,7 +323,7 @@ class PageBuilder(BasePageBuilder):
                     and submit_form.wsi_next_button
                 ):
                     try:
-                        ui.notify(f"Finding WSIs and generating metadata for {submit_form.source}...")
+                        ui.notify(f"Finding WSIs and generating metadata for {submit_form.source}...", type="info")
                         if submit_form.metadata_grid is None:
                             logger.error("Metadata grid is not initialized.")
                             return
@@ -333,13 +336,16 @@ class PageBuilder(BasePageBuilder):
                         submit_form.wsi_next_button.set_visibility(True)
                         submit_form.wsi_spinner.set_visibility(False)
                         submit_form.metadata_grid.update()
-                        ui.notify(f"Found {len(submit_form.metadata_grid.options['rowData'])} slides for analysis.")
+                        ui.notify(
+                            f"Found {len(submit_form.metadata_grid.options['rowData'])} slides for analysis.",
+                            type="positive",
+                        )
                         stepper.next()
                     except Exception as e:
-                        ui.notify(f"Error generating metadata: {e!s}", color="negative")
+                        ui.notify(f"Error generating metadata: {e!s}", type="warning")
                         raise
                 else:
-                    ui.notify("No source directory selected", color="negative")
+                    ui.notify("No source directory selected", type="warning")
 
             with ui.dialog() as info_dialog, ui.card().style("width: 1200px; max-width: none; height: 1000px"):  # noqa: PLR1702
                 if submit_form.application_version_id is None:
@@ -455,7 +461,9 @@ class PageBuilder(BasePageBuilder):
                         if not valid:
                             submit_form.metadata_next_button.disable()
                         else:
-                            ui.notify("Your metadata is now valid. Feel free to continue to the next step.")
+                            ui.notify(
+                                "Your metadata is now valid. Feel free to continue to the next step.", type="positive"
+                            )
                             submit_form.metadata_next_button.enable()
                         submit_form.metadata_grid.run_grid_method("autoSizeAllColumns")
 
@@ -466,7 +474,7 @@ class PageBuilder(BasePageBuilder):
                         submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                         _upload_ui.refresh(submit_form.metadata)
                         submit_form.submission_upload_button.enable()
-                        ui.notify("Prepared upload ui")
+                        ui.notify("Prepared upload ui", type="info")
                         stepper.next()
 
                     async def _delete_selected() -> None:
@@ -623,7 +631,7 @@ class PageBuilder(BasePageBuilder):
                     if submit_form.submission_submit_button is None or submit_form.submission_upload_button is None:
                         logger.error("Submission submit button is not initialized.")
                         return
-                    ui.notify("Uploading slides to Aignostics Platform ...")
+                    ui.notify("Uploading slides to Aignostics Platform ...", type="info")
                     if upload_message_queue is None:
                         logger.error("Upload message queue is not initialized.")
                         return
@@ -634,7 +642,7 @@ class PageBuilder(BasePageBuilder):
                         submit_form.metadata or [],
                         upload_message_queue,
                     )
-                    ui.notify("Upload to Aignostics Platform completed.")
+                    ui.notify("Upload to Aignostics Platform completed.", type="positive")
                     submit_form.submission_submit_button.enable()
                     submit_form.submission_upload_button.disable()
 
@@ -674,16 +682,16 @@ class PageBuilder(BasePageBuilder):
 
                 def _submit() -> None:
                     """Submit the application run."""
-                    ui.notify("Submitting application run ...")
+                    ui.notify("Submitting application run ...", type="info")
                     try:
                         run = service.application_run_submit_from_metadata(
                             str(submit_form.application_version_id),
                             submit_form.metadata or [],
                         )
                     except Exception as e:  # noqa: BLE001
-                        ui.notify(f"Failed to submit application run: {e}.")
+                        ui.notify(f"Failed to submit application run: {e}.", type="warning")
                         return
-                    ui.notify(f"Application run submitted with id '{run.application_run_id}'.")
+                    ui.notify(f"Application run submitted with id '{run.application_run_id}'.", type="positive")
                     ui.navigate.to(f"/application/run/{run.application_run_id}")
 
                 with ui.step("Submission"):
@@ -739,16 +747,16 @@ class PageBuilder(BasePageBuilder):
                 Returns:
                     bool: True if the run was cancelled, False otherwise.
                 """
-                ui.notify(f"Canceling application run with id {run_id}...")
+                ui.notify(f"Canceling application run with id {run_id}...", type="info")
                 try:
                     canceled = service.application_run_cancel(run_id)
                     if canceled:
-                        ui.notify("Application Run Cancelled!")
+                        ui.notify("Application run cancelled!", type="positive")
                         return True
-                    ui.notify("Application Run can not be cancelled!")
+                    ui.notify("Application run can not be cancelled!", type="negative")
                     return False
                 except Exception as e:  # noqa: BLE001
-                    ui.notify(f"Failed to cancel application run: {e}.")
+                    ui.notify(f"Failed to cancel application run: {e}.", type="warning")
                     return False
 
             with ui.dialog() as download_run_dialog:
@@ -814,11 +822,15 @@ class PageBuilder(BasePageBuilder):
                                                     if artifact.mime_type == "image/tiff":
                                                         ui.button(
                                                             "view", icon=_mime_type_to_icon(artifact.mime_type)
-                                                        ).on_click(lambda: ui.notify("Not yet implemented"))
+                                                        ).on_click(
+                                                            lambda: ui.notify("Not yet implemented", type="warning")
+                                                        )
                                                     if artifact.mime_type == "text/csv":
                                                         ui.button(
                                                             "view", icon=_mime_type_to_icon(artifact.mime_type)
-                                                        ).on_click(lambda: ui.notify("Not yet implemented"))
+                                                        ).on_click(
+                                                            lambda: ui.notify("Not yet implemented", type="warning")
+                                                        )
 
                                                     with ui.link(target=artifact.download_url, new_tab=True):
                                                         ui.button(text="Download", icon="cloud_download")

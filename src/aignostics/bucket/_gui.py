@@ -56,16 +56,21 @@ class PageBuilder(BasePageBuilder):
                     return
                 selected_rows = await bucket_form.grid.get_selected_rows()
                 if not selected_rows or selected_rows == []:
-                    ui.notify("No objects selected.")
+                    ui.notify("No objects selected.", type="warning")
                     return
-                ui.notify(f"Deleting {len(selected_rows)} objects ...")
-                Service().delete_objects(
-                    [row["object"] for row in selected_rows],
-                )
-                ui.notify(f"Deleted {len(selected_rows)} objects.")
+                ui.notify(f"Deleting {len(selected_rows)} objects ...", type="info")
+                try:
+                    Service().delete_objects(
+                        [row["key"] for row in selected_rows],
+                    )
+                except Exception as e:  # noqa: BLE001
+                    ui.notify(f"Error deleting objects: {e}", color="red", type="warning")
+                    return
+                ui.notify(f"Deleted {len(selected_rows)} objects.", type="positive")
                 bucket_form.delete_button.set_text("Delete")
                 bucket_form.delete_button.disable()
                 bucket_form.grid.options["rowData"] = _get_rows()
+                bucket_form.grid.update()
 
             async def _handle_grid_selection_changed() -> None:
                 if bucket_form.grid is None or bucket_form.delete_button is None:

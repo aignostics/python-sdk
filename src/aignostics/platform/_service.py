@@ -1,5 +1,6 @@
 """Service of the platform module."""
 
+from http import HTTPStatus
 from typing import Any
 
 import urllib3
@@ -10,8 +11,6 @@ from aignostics.utils import BaseService, Health, __version__, get_logger
 from ._settings import Settings
 
 logger = get_logger(__name__)
-
-HTTP_OK = 200
 
 
 # Services derived from BaseService and exported by modules via their __init__.py are automatically registered
@@ -50,7 +49,7 @@ class Service(BaseService):
                 headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
             )
 
-            if response.status != HTTP_OK:
+            if response.status != HTTPStatus.OK:
                 logger.error("Aignostics Platform API (public) returned '%s'", response.status)
                 return Health(
                     status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status}'"
@@ -76,7 +75,7 @@ class Service(BaseService):
                 url=self._settings.api_root + "/api/v1/health",
                 method="GET",
             )
-            if response.status != HTTP_OK:
+            if response.status != HTTPStatus.OK:
                 logger.error("Aignostics Platform API (authenticated) returned '%s'", response.status)
                 return Health(status=Health.Code.DOWN, reason=f"Aignostics Platform API returned '{response.status}'")
         except Exception as e:

@@ -94,7 +94,7 @@ uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a9
   full name
 - possiblity to delete runs
 
-## Windows PowerShell Instructions
+## Windows Install
 
 ```powershell
 # Create Aignostics directory if it doesn't exist
@@ -114,19 +114,23 @@ AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY=YOUR_SECRET
 "@ | Out-File -FilePath "$env:USERPROFILE\.aignostics\.env" -Encoding utf8
 
 # Install VC Redist
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://vcredist.com/install.ps1'))
+winget install --id=Microsoft.VCRedist.2015+.x64 -e
 
 # Install the uv package manager
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Install the Aignostics Python SDK
 uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system install
-uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics bucket ls
-uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system info
 uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system health
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system info
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics bucket ls
 ```
 
-# 
+# Edit .env
+
+notepad .aignostics/.env
+
+# Strangeness, gone away suddenly.
 
                                                                          │
                              │ C:\Users\helmut\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64- │
@@ -175,22 +179,3 @@ uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aig
                              │    94 │   │   return signing_keys                                        │
                              │    95 │                                                                  │
                              │    96 │   def get_signing_key(self, kid: str) -> PyJWK:                  │
-
-
-    "aignostics.platform._service.Service": {
-      "status": "DOWN",
-      "reason": "Components 'api_public', 'api_authenticated' are DOWN",
-      "components": {
-        "api_public": {
-          "status": "DOWN",
-          "reason": "Issue with Aignostics Platform API: 'HTTPSConnectionPool(host='platform.aignostics.com', port=443): Max retries exceeded with url: /api/v1/health (Caused by SSLError(SSLCertVerificationError(5, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1028)')))'",
-          "components": {}
-        },
-        "api_authenticated": {
-          "status": "DOWN",
-          "reason": "Issue with Aignostics Platform API: 'Authentication failed. Please check your credentials.'",
-          "components": {}
-        }
-
-https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
-https://aka.ms/vs/17/release/vc_redist.x64.exe Uninstall-VcRedist

@@ -113,14 +113,11 @@ class Service(BaseService):
         Returns:
             bool: True if successful, False otherwise.
         """
-        s3fs = self.s3fs()
+        s3c = self._get_s3_client()
         for key in keys:
-            s3fs.rm(key)
-        #        s3c = self._get_s3_client()
-        #        s3c.delete_objects(
-        #            Bucket=self._settings.name,
-        #            Delete={
-        #                "Objects": [{"Key": key} for key in keys],
-        #            },
-        #        )
+            logger.debug("Deleting key: %s", key)
+            # Strip bucket prefix if present in key
+            pruned_key = key.removeprefix(f"{self._settings.name}/")
+            s3c.delete_object(Bucket=self._settings.name, Key=pruned_key)
+
         return True

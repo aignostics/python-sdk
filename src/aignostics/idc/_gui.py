@@ -81,17 +81,19 @@ class PageBuilder(BasePageBuilder):
                         download_form.destination = None
                         download_form.destination_label.set_text("No download folder selected")
                         download_form.destination_open_button.disable()
-                        ui.notify("The selected path is not a directory. Please select a valid directory.")
+                        ui.notify(
+                            "The selected path is not a directory. Please select a valid directory.", type="warning"
+                        )
                     else:
                         download_form.destination = path
                         download_form.destination_label.set_text(str(path))
                         download_form.destination_open_button.enable()
-                        ui.notify(f"You chose directory {download_form.destination}.")
+                        ui.notify(f"You chose directory {download_form.destination}.", type="info")
                 else:
                     download_form.destination = None
                     download_form.destination_label.set_text("No download folder selected")
                     download_form.destination_open_button.disable()
-                    ui.notify("You did not make a selection. You must chose a download folder.")
+                    ui.notify("You did not make a selection. You must choose a download folder.", type="warning")
                 if (download_form.source is not None) and (download_form.destination is not None):
                     download_form.download_button.enable()
                 else:
@@ -110,7 +112,7 @@ class PageBuilder(BasePageBuilder):
                     or download_form.destination is None
                 ):
                     return
-                ui.notify(f"Downloading {source!s} ...")
+                ui.notify(f"Downloading {source!s} ...", type="info")
                 download_form.download_progress.visible = True
                 download_form.download_button.visible = False
                 await run.cpu_bound(
@@ -121,7 +123,7 @@ class PageBuilder(BasePageBuilder):
                     TARGET_LAYOUT_DEFAULT,
                     False,
                 )
-                ui.notify("Download completed.")
+                ui.notify("Download completed.", type="positive")
                 download_form.download_button.visible = True
                 download_form.download_progress.visible = False
                 _open_destination()
