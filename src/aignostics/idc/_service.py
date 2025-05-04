@@ -61,8 +61,8 @@ class Service(BaseService):
             if not char:  # End of stream
                 break
 
-            char_str = char.decode("utf-8", errors="replace")
-
+            # char_str = char.decode("utf-8", errors="replace")
+            char_str = char
             # Handle carriage return (line overwrite)
             if char_str == "\r":
                 # Process the current buffer for percentage
@@ -189,8 +189,8 @@ client.download_from_selection(
                 [sys.executable, "-c", script_content],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=False,
-                bufsize=1,  # Line buffered
+                text=True,
+                bufsize=1,
             )
 
             # Start a thread to monitor the subprocess output
@@ -204,10 +204,10 @@ client.download_from_selection(
             monitor_thread.join()
 
             if return_code != 0:
-                stdout_output = process.stdout.read().decode("utf-8") if process.stdout else "No stdout output"
-                stderr_output = process.stderr.read().decode("utf-8") if process.stderr else "No stderr output"
+                stdout_output = process.stdout.read() if process.stdout else "No stdout output"
+                stderr_output = process.stderr.read() if process.stderr else "No stderr output"
                 logger.error(
-                    "Download subprocess failed with code '%d', stdout:\n\n%sstdin:\n\n%s\n\n",
+                    "Download subprocess failed with code '%d'\n\nstdout:\n\n%sstdin:\n\n%s\n\n",
                     return_code,
                     stdout_output,
                     stderr_output,
