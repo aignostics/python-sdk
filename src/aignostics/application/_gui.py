@@ -23,7 +23,7 @@ SERIES_INSTANCE_ID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915
-        from nicegui import binding, context, run, ui  # noq  # noqa: PLC0415
+        from nicegui import background_tasks, binding, context, run, ui  # noq  # noqa: PLC0415
 
         @binding.bindable_dataclass
         class SubmitForm:
@@ -162,33 +162,41 @@ class PageBuilder(BasePageBuilder):
                                         and args.get("application_id") == application.application_id
                                         else "normal"
                                     )
-                except Exception:  # noqa: BLE001
-                    ui.label("Failed to list applications.").mark("LABEL_ERROR")
+                except Exception as e:  # noqa: BLE001
+                    ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
+
+                async def application_runs_load_and_render() -> None:
+                    with runs_column:
+                        runs_with_status = await run.cpu_bound(Service.application_runs_with_status_static)
+                        runs_column.clear()
+                        for run_with_status in runs_with_status:
+                            with ui.item(
+                                on_click=lambda run_id=run_with_status["application_run_id"]: ui.navigate.to(
+                                    f"/application/run/{run_id}"
+                                )
+                            ).props("clickable"):
+                                with ui.item_section().props("avatar"):
+                                    ui.icon(_run_status_to_icon(run_with_status["status"]))
+                                with ui.item_section():
+                                    ui.label(f"{run_with_status['application_version_id']}").tailwind.font_weight(
+                                        "bold"
+                                        if context.client.page.path == "/application/run/{application_run_id}"
+                                        and args.get("application_run_id") == run_with_status["application_run_id"]
+                                        else "normal"
+                                    )
+                                    ui.label(
+                                        f"triggered on {run_with_status['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
+                                    )
 
                 try:
                     with ui.list().props("bordered separator").classes("full-width"):
                         ui.item_label("Runs").props("header")
                         ui.separator()
-                        for run, run_status in service.application_runs_with_status():
-                            with ui.item(
-                                on_click=lambda run_id=run.application_run_id: ui.navigate.to(
-                                    f"/application/run/{run_id}"
-                                )
-                            ).props("clickable"):
-                                with ui.item_section().props("avatar"):
-                                    ui.icon(_run_status_to_icon(run_status.status.value))
-                                with ui.item_section():
-                                    ui.label(f"{run_status.application_version_id}").tailwind.font_weight(
-                                        "bold"
-                                        if context.client.page.path == "/application/run/{application_run_id}"
-                                        and args.get("application_run_id") == run.application_run_id
-                                        else "normal"
-                                    )
-                                    ui.label(
-                                        f"triggered on {run_status.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
-                                    )
-                except Exception:  # noqa: BLE001
-                    ui.label("Failed to list application runs.").mark("LABEL_ERROR")
+                        with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
+                            ui.spinner(size="lg").classes("m-5")
+                        background_tasks.create(application_runs_load_and_render())
+                except Exception as e:  # noqa: BLE001
+                    ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")
 
         @ui.page("/")
         def page_index() -> None:
@@ -774,6 +782,7 @@ class PageBuilder(BasePageBuilder):
                     canceled = service.application_run_cancel(run_id)
                     if canceled:
                         ui.notify("Application run cancelled!", type="positive")
+                        ui.navigate.reload()
                         return True
                     ui.notify("Application run can not be cancelled!", type="negative")
                     return False

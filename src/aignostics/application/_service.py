@@ -331,6 +331,18 @@ class Service(BaseService):
         logger.info("Upload completed successfully.")
         return True
 
+    @staticmethod
+    def application_runs_with_status_static() -> list[dict[str, Any]]:
+        rtn = []
+        for run, status in Service().application_runs_with_status():
+            rtn.append({
+                "application_run_id": run.application_run_id,
+                "application_version_id": status.application_version_id,
+                "triggered_at": status.triggered_at,
+                "status": status.status,
+            })
+        return rtn
+
     def application_runs_with_status(self) -> list[tuple[ApplicationRun, ApplicationRunStatus]]:
         """Get a list of all application runs.
 

@@ -17,7 +17,7 @@ def _(mo):
     query_params = mo.query_params()
     print(query_params)
 
-    print("Hallo Welt")
+    print("Hallo Test VIKTOR")
     return
 
 

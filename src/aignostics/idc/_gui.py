@@ -46,9 +46,7 @@ class PageBuilder(BasePageBuilder):
                     """).classes("w-3/5")
                 ui.space()
                 with ui.column().classes("w-1/5"):
-                    ui.image(
-                        "https://storage.googleapis.com/idc-prod-web-static-files/static/img/NIH_IDC_title.svg"
-                    ).classes("w-25").style("margin-top:1.25rem")
+                    ui.image("/assets/NIH_IDC_title.svg").classes("w-25").style("margin-top:1.25rem")
                     with ui.link(target="https://portal.imaging.datacommons.cancer.gov/explore/", new_tab=True):
                         ui.button("Explore Portal", icon="search")
 

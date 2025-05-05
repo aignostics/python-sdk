@@ -82,18 +82,18 @@ uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a9
 - Regulatory class missing in H&E App
 - Input artifact mime type should be a list, e.g. to indicate image/tiff and
   application/dicom support
-- Results are zeroes (csv), and empty (heatmaps)
+- Invalid, was Test / Dummy App: Results are zeroes (csv), and empty (heatmaps)
 
 ### Requests to improve
 
 - Message of ValueError "X is greater then Y supported" does not indicate the
   attribute this refers to - in this case mpp
-- Sort runs by triggered date, descending
+- Sort runs by triggered date, descending -> self
 - Allow to retrieve progress
 - Get info about completion date of a run
 - Get incremental progress info
 - Get info in list of runs, so i don't have to blast to fetch details just to
-  get triggered date
+  get triggered date -> self
 - Get info about organisation name, not only this interesting organisation id.
 
 ## Feature requests
