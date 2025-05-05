@@ -8,7 +8,7 @@
 
 import marimo
 
-__generated_with = "0.13.2"
+__generated_with = "0.13.4"
 app = marimo.App(width="full")
 
 
@@ -16,6 +16,8 @@ app = marimo.App(width="full")
 def _(mo):
     query_params = mo.query_params()
     print(query_params)
+
+    print("Hallo Welt")
     return
 
 

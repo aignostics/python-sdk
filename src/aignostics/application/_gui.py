@@ -156,7 +156,7 @@ class PageBuilder(BasePageBuilder):
                                 with ui.item_section().props("avatar"):
                                     ui.icon(_application_id_to_icon(application.application_id))
                                 with ui.item_section():
-                                    ui.label(f"{application.name}").mark("LABEL_APPLICATION").tailwind.font_weight(
+                                    ui.label(f"{application.name}").tailwind.font_weight(
                                         "bold"
                                         if context.client.page.path == "/application/{application_id}"
                                         and args.get("application_id") == application.application_id
@@ -171,14 +171,14 @@ class PageBuilder(BasePageBuilder):
                         ui.separator()
                         for run, run_status in service.application_runs_with_status():
                             with ui.item(
-                                on_click=lambda _: ui.navigate.to(f"/application/run/{run.application_run_id}")
+                                on_click=lambda run_id=run.application_run_id: ui.navigate.to(
+                                    f"/application/run/{run_id}"
+                                )
                             ).props("clickable"):
                                 with ui.item_section().props("avatar"):
                                     ui.icon(_run_status_to_icon(run_status.status.value))
                                 with ui.item_section():
-                                    ui.label(
-                                        f"{run_status.application_version_id}",
-                                    ).tailwind.font_weight(
+                                    ui.label(f"{run_status.application_version_id}").tailwind.font_weight(
                                         "bold"
                                         if context.client.page.path == "/application/run/{application_run_id}"
                                         and args.get("application_run_id") == run.application_run_id
@@ -863,6 +863,7 @@ class PageBuilder(BasePageBuilder):
                 ui.markdown(
                     f"""
                     * Application Version: {run_status.application_version_id}
+                    * Application Run ID: {run.application_run_id}
                     * Status: {run_status.status.value}
                     * Triggered at: {run_status.triggered_at.astimezone().strftime("%m-%d %H:%M")}
                     * Organization: {run_status.organization_id}
