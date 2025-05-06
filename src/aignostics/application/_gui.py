@@ -297,7 +297,7 @@ class PageBuilder(BasePageBuilder):
                 with ui.column(), ui.expansion(application.name, icon="info").classes("full-width") as application_info:
                     ui.markdown(
                         f"""
-                                > {application.description}
+                            {application.description}
                             """
                     )
                 ui.space()
