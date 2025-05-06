@@ -1,10 +1,10 @@
 """Command-line interface utilities."""
 
-import sys
-from pathlib import Path
 import os
 import re
+import sys
 from collections.abc import Callable
+from pathlib import Path
 
 import typer
 
@@ -70,6 +70,7 @@ def _no_args_is_help_recursively(cli: typer.Typer) -> None:
             if (typer_instance is not cli) and typer_instance:
                 _no_args_is_help_recursively(typer_instance)
 
+
 def path_autocomplete(
     file_okay: bool = True,
     dir_okay: bool = True,
@@ -86,9 +87,7 @@ def path_autocomplete(
         items = os.listdir()
         completions = []
         for item in items:
-            if not file_okay and os.path.isfile(item):
-                continue
-            elif not dir_okay and os.path.isdir(item):
+            if (not file_okay and os.path.isfile(item)) or (not dir_okay and os.path.isdir(item)):
                 continue
 
             if readable and not os.access(item, os.R_OK):

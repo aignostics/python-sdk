@@ -18,7 +18,6 @@ def _(mo):
     print(query_params)
 
     print("Hallo Test Jonathan")
-    return
 
 
 @app.cell
@@ -29,26 +28,14 @@ def _():
     - See https://colab.research.google.com/github/ImagingDataCommons/IDC-Tutorials/blob/master/notebooks/pathomics/microscopy_dicom_ann_intro.ipynb#scrollTo=fMRsnFlzinO5
 
     """
-
     import os
-    import random
-    import subprocess
     from pathlib import Path
-    from typing import Union
 
-    import highdicom as hd
     import marimo as mo
     import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
-    import shapely
     from cloudpathlib import GSPath
     from dotenv import load_dotenv
     from idc_index import index
-    from PIL import Image, ImageDraw
-    from shapely.affinity import translate
-    from shapely.geometry import Polygon, box
-    from shapely.strtree import STRtree
     from wsidicom import WsiDicom
 
     load_dotenv()
@@ -95,7 +82,6 @@ def _(Path, mo):
             restrict_navigation=True,
         )
     ])
-    return
 
 
 @app.cell
@@ -134,7 +120,6 @@ def _(idc_client, pan_ann):
     from IPython.display import IFrame
 
     IFrame(viewer_url, width=1260, height=900)
-    return
 
 
 @app.cell
@@ -155,7 +140,6 @@ def _(Path, WsiDicom, idc_client, plt):
     axes.imshow(thumbnail)
     axes.axis("off")
     plt.show()
-    return
 
 
 @app.cell

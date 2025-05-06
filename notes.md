@@ -211,3 +211,4 @@ TODO
 - Single File Selection
 - CHeck
 - Reset
+- Offline Mode

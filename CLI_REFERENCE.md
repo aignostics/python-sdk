@@ -21,8 +21,11 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `gui`: Open graphical user interface (GUI).
 * `notebook`: Run notebook server.
 * `application`: Run applications on Aignostics platform.
+* `bucket`: Operations on cloud bucket on Aignostics...
+* `dicom`: Operations on DICOM datasets.
 * `idc`: Download datasets from Image Data Commons...
 * `system`: Determine health, info and further...
+* `tiff`: Operations on pyramidal TIFF files.
 
 ## `aignostics gui`
 
@@ -70,6 +73,8 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
+* `download`: Download from bucket to folder via a...
+* `upload`: Upload a filew to a transfer bucket via a...
 * `list`: List available applications.
 * `describe`: Describe application.
 * `bucket`: Transfer bucket provide by platform
@@ -77,9 +82,46 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 * `metadata`: Metadata required as input for applications
 * `run`: Runs of applications
 
+### `aignostics application download`
+
+Download from bucket to folder via a signed URL.
+
+**Usage**:
+
+```console
+$ aignostics application download [OPTIONS]
+```
+
+**Options**:
+
+* `--source-url TEXT`: URL to download  [required]
+* `--destination-directory TEXT`: Destination directory to download to  [required]
+* `--help`: Show this message and exit.
+
+### `aignostics application upload`
+
+Upload a filew to a transfer bucket via a signed URL, authenticating with hmac.
+
+**Usage**:
+
+```console
+$ aignostics application upload [OPTIONS]
+```
+
+**Options**:
+
+* `--source-file TEXT`: Source file to upload  [required]
+* `--help`: Show this message and exit.
+
 ### `aignostics application list`
 
 List available applications.
+
+Args:
+    verbose (bool): If True, show detailed information about each application
+
+Returns:
+    bool: Success status of the operation
 
 **Usage**:
 
@@ -95,6 +137,12 @@ $ aignostics application list [OPTIONS]
 ### `aignostics application describe`
 
 Describe application.
+
+Args:
+    application_id (str): The ID of the application to describe
+
+Returns:
+    bool: Success status of the operation
 
 **Usage**:
 
@@ -398,6 +446,196 @@ $ aignostics application run result delete [OPTIONS]
 
 * `--help`: Show this message and exit.
 
+## `aignostics bucket`
+
+Operations on cloud bucket on Aignostics Platform.
+
+**Usage**:
+
+```console
+$ aignostics bucket [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `ls`: List objects in bucket on Aignostics...
+* `find`: Find objects in bucket on Aignostics...
+
+### `aignostics bucket ls`
+
+List objects in bucket on Aignostics Platform.
+
+**Usage**:
+
+```console
+$ aignostics bucket ls [OPTIONS]
+```
+
+**Options**:
+
+* `--detail / --no-detail`: Show details  [default: no-detail]
+* `--help`: Show this message and exit.
+
+### `aignostics bucket find`
+
+Find objects in bucket on Aignostics Platform.
+
+**Usage**:
+
+```console
+$ aignostics bucket find [OPTIONS]
+```
+
+**Options**:
+
+* `--detail / --no-detail`: Show details  [default: no-detail]
+* `--help`: Show this message and exit.
+
+## `aignostics dicom`
+
+Operations on DICOM datasets.
+
+**Usage**:
+
+```console
+$ aignostics dicom [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `inspect`: Inspect DICOM files at any hierarchy level.
+* `validate`: Validate DICOM files.
+* `geojson`: Operations on GeoJSON files.
+* `wsi`: Operations on WSI files.
+
+### `aignostics dicom inspect`
+
+Inspect DICOM files at any hierarchy level.
+
+**Usage**:
+
+```console
+$ aignostics dicom inspect [OPTIONS] PATH
+```
+
+**Arguments**:
+
+* `PATH`: Path of file or directory to inspect  [required]
+
+**Options**:
+
+* `--verbose / --no-verbose`: Verbose output  [default: no-verbose]
+* `--summary / --no-summary`: Show only summary information  [default: no-summary]
+* `--help`: Show this message and exit.
+
+### `aignostics dicom validate`
+
+Validate DICOM files.
+
+**Usage**:
+
+```console
+$ aignostics dicom validate [OPTIONS] DICOM_PATH
+```
+
+**Arguments**:
+
+* `DICOM_PATH`: [required]
+
+**Options**:
+
+* `--verbose / --no-verbose`: [default: no-verbose]
+* `-src, --standard-path PATH`: Base path with the DICOM specs in docbook and json format  [default: /Users/helmut/dicom-validator]
+* `-r, --revision TEXT`: Standard revision (e.g. &quot;2014c&quot;), year of revision, &quot;current&quot; or &quot;local&quot; (latest locally installed)  [default: current]
+* `--force-read`: Force-read DICOM files without DICOM header
+* `--recreate-json`: Force recreating the JSON information from the DICOM specs
+* `-svr, --suppress-vr-warnings`: Suppress warnings for values not matching value representation (VR)
+* `--help`: Show this message and exit.
+
+### `aignostics dicom geojson`
+
+Operations on GeoJSON files.
+
+**Usage**:
+
+```console
+$ aignostics dicom geojson [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `import`: Import GeoJSON annotations into DICOM ANN...
+
+#### `aignostics dicom geojson import`
+
+Import GeoJSON annotations into DICOM ANN instance.
+
+**Usage**:
+
+```console
+$ aignostics dicom geojson import [OPTIONS] DICOM_PATH GEOJSON_PATH
+```
+
+**Arguments**:
+
+* `DICOM_PATH`: [required]
+* `GEOJSON_PATH`: [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics dicom wsi`
+
+Operations on WSI files.
+
+**Usage**:
+
+```console
+$ aignostics dicom wsi [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--verbose / --no-verbose`: [default: no-verbose]
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `convert`: Convert a WSI to DICOM SM instances.
+
+#### `aignostics dicom wsi convert`
+
+Convert a WSI to DICOM SM instances.
+
+**Usage**:
+
+```console
+$ aignostics dicom wsi convert [OPTIONS] WSI_PATH DICOM_PATH
+```
+
+**Arguments**:
+
+* `WSI_PATH`: [required]
+* `DICOM_PATH`: [required]
+
+**Options**:
+
+* `-i, --id-base INTEGER`: Base for ID generation  [default: 1]
+* `--help`: Show this message and exit.
+
 ## `aignostics idc`
 
 Download datasets from Image Data Commons (IDC) Portal of National Institute of Cancer (NIC).
@@ -627,6 +865,42 @@ Print user info.
 ```console
 $ aignostics system whoami [OPTIONS]
 ```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+## `aignostics tiff`
+
+Operations on pyramidal TIFF files.
+
+**Usage**:
+
+```console
+$ aignostics tiff [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `inspect`: Inspect a TIFF file and display its metadata.
+
+### `aignostics tiff inspect`
+
+Inspect a TIFF file and display its metadata.
+
+**Usage**:
+
+```console
+$ aignostics tiff inspect [OPTIONS] PATH
+```
+
+**Arguments**:
+
+* `PATH`: Path to the TIFF file  [required]
 
 **Options**:
 

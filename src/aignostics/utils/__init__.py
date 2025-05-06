@@ -1,6 +1,6 @@
 """Utilities module."""
 
-from ._cli import prepare_cli, path_autocomplete
+from ._cli import path_autocomplete, prepare_cli
 from ._console import console
 from ._constants import (
     __author_email__,
