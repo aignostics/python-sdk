@@ -6,6 +6,7 @@ The primary class in this module is the `Client` class, which serves as the entr
 for all interactions with the Aignostics platform.
 """
 
+from aignx.codegen.exceptions import ApiException, NotFoundException
 from aignx.codegen.models import (
     ApplicationReadResponse as Application,
 )
@@ -74,6 +75,7 @@ __all__ = [
     "TOKEN_URL_PRODUCTION",
     "TOKEN_URL_STAGING",
     "UNKNOWN_ENDPOINT_URL",
+    "ApiException",
     "Application",
     "ApplicationRun",
     "ApplicationRunStatus",
@@ -81,6 +83,7 @@ __all__ = [
     "Client",
     "InputArtifact",
     "InputItem",
+    "NotFoundException",
     "Service",
     "Settings",
     "calculate_file_crc32c",

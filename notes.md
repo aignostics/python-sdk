@@ -187,3 +187,34 @@ notepad .aignostics/.env
                              │    94 │   │   return signing_keys                                        │
                              │    95 │                                                                  │
                              │    96 │   def get_signing_key(self, kid: str) -> PyJWK:                  │
+
+# setup the `.env` file with your client credentials
+
+'''shell mkdir -p ~/.aignostics cat > ~/.aignostics/.env << 'EOF'
+CLIENT_ID_DEVICE=oRudbFkGwBRoEcX6h3EXzgVvmLXCzEP9
+CLIENT_ID_INTERACTIVE=YtJ7F9lAtxx16SZGQlYPe6wcjlXB78MM
+AIGNOSTICS_SENTRY_DSN=https://5e2b6e59746a3cb502589d8c2f0e3b64@o443095.ingest.us.sentry.io/4509130454466560
+AIGNOSTICS_LOGFIRE_TOKEN=pylf_v1_eu_CwtB1kc64d42qClGkVHLgZ65X4yFCSwPS6lv8ydw35Wm
+AIGNOSTICS_BUCKET_PROTOCOL=gs
+AIGNOSTICS_BUCKET_NAME=aignostics-platform-ext-a4f7e9
+AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID=GOOG1E5LNJAPJF6ZSQ2VF7SKH5O7Z3M2OH2QZVAQ7CI4ADJ7N5PRTTCNTJECS
+AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY=XrndE5ByHyorkAicetQgm3ubfXQWU3HAvpEHPLnQ
+EOF
+
+if ! command -v uv &> /dev/null; then echo "uv not found, installing..." curl
+-LsSf https://astral.sh/uv/install.sh | sh else UV_VERSION=$(uv --version | cut
+-d' ' -f2) echo "uv version $UV_VERSION found"
+  if [ "$(printf '%s\n' "0.6.17"
+"$UV_VERSION" | sort -V | head -n1)" != "0.6.17" ]; then
+    echo "Updating uv to the latest version..."
+    UV_PATH=$(which uv) if [[ "$UV_PATH" == _"brew"_ ]]; then echo "Updating uv
+using Homebrew..." brew upgrade uv else echo "Updating uv using the
+installer..." uv self update fi else echo "uv is up to date" fi fi
+
+# install the Aignostics Python SDK
+
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally
+--with aignostics[marimo] aignostics system install # Complete installation
+
+```
+```

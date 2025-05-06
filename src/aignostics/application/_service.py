@@ -18,6 +18,7 @@ from aignostics.platform import (
     Client,
     InputArtifact,
     InputItem,
+    NotFoundException,
 )
 from aignostics.tiff import Service as TiffService
 from aignostics.utils import BaseService, Health, get_logger
@@ -359,14 +360,17 @@ class Service(BaseService):
         try:
             runs = platform_client.runs.list()
             runs_with_status = []
-            for run in runs:
-                try:
-                    run_status = run.status()
-                    if run_status:
-                        runs_with_status.append((run, run_status))
-                except Exception:
-                    logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
-                    continue
+            try:
+                for run in runs:
+                    try:
+                        run_status = run.status()
+                        if run_status:
+                            runs_with_status.append((run, run_status))
+                    except Exception:
+                        logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+                        continue
+            except NotFoundException:
+                logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
 
             # Sort runs by triggered_at in descending order (newest first)
             return sorted(runs_with_status, key=lambda x: x[1].triggered_at, reverse=True)
