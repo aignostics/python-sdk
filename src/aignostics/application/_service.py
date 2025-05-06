@@ -356,6 +356,7 @@ class Service(BaseService):
         Raises:
             Exception: If the application run list cannot be retrieved.
         """
+        return []
         platform_client = self._get_platform_client()
         try:
             runs = platform_client.runs.list()
