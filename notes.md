@@ -209,6 +209,7 @@ aignostics --help ``
 TODO
 
 - Single File Selection
-- CHeck
-- Reset
+- Check
+- Reset in submission to back, then forward
 - Offline Mode
+- lung / other validate

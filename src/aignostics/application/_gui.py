@@ -291,7 +291,7 @@ class PageBuilder(BasePageBuilder):
 
             with ui.row(align_items="start").classes("justify-center w-full"):
                 with ui.column(), ui.expansion(application.name, icon="info").classes("full-width") as application_info:
-                    ui.markdown(application.description)
+                    ui.markdown(application.description.replace("\n", "\n\n"))
                 ui.space()
                 with ui.row(align_items="center"):
                     ui.button("Release Notes", icon="change_history", on_click=release_notes_dialog.open)
@@ -302,8 +302,10 @@ class PageBuilder(BasePageBuilder):
                                 new_tab=True,
                             ):
                                 ui.image("/assets/ruo.png").style("width: 45px; height: 36px")
+
                         elif regulatory_class == "demo":
-                            ui.icon("network_check")
+                            with ui.icon("network_check", size="lg", color="orange"):
+                                ui.tooltip("For testing only.")
                         else:
                             ui.label(f"{regulatory_class}")
                     if not application.regulatory_classes:
