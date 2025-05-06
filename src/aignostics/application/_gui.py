@@ -304,7 +304,7 @@ class PageBuilder(BasePageBuilder):
                 with ui.row(align_items="center"):
                     ui.button("Release Notes", icon="change_history", on_click=release_notes_dialog.open)
                     for regulatory_class in application.regulatory_classes:
-                        if regulatory_class == "RUO":
+                        if regulatory_class in {"RUO", "RuO"}:
                             with ui.link(
                                 target="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/distribution-in-vitro-diagnostic-products-labeled-research-use-only-or-investigational-use-only",
                                 new_tab=True,

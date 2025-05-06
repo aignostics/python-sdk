@@ -105,10 +105,7 @@ uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a9
 ## Windows Install
 
 ```powershell
-# Create Aignostics directory if it doesn't exist
 New-Item -ItemType Directory -Path "$env:USERPROFILE\.aignostics" -Force
-
-# Create the .env file with required environment variables
 @"
 # Aignostics Python SDK Environment Variables. Don't remove this line
 AIGNOSTICS_CLIENT_ID_DEVICE=YOUR_SECRET
@@ -120,18 +117,10 @@ AIGNOSTICS_BUCKET_NAME=aignostics-platform-ext-a4f7e9
 AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID=YOUR_SECRET
 AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY=YOUR_SECRET
 "@ | Out-File -FilePath "$env:USERPROFILE\.aignostics\.env" -Encoding utf8
-
-# Install VC Redist
 winget install --id=Microsoft.VCRedist.2015+.x64 -e
-
-# Install the uv package manager
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Install the Aignostics Python SDK
-uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system install
-uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system health
-uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics system info
-uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally aignostics bucket ls
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally --with marimo aignostics system install
+uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally --with marimo aignostics --help
 ```
 
 # Edit .env
@@ -190,16 +179,15 @@ notepad .aignostics/.env
 
 # setup the `.env` file with your client credentials
 
-'''shell mkdir -p ~/.aignostics cat > ~/.aignostics/.env << 'EOF'
-CLIENT_ID_DEVICE=oRudbFkGwBRoEcX6h3EXzgVvmLXCzEP9
-CLIENT_ID_INTERACTIVE=YtJ7F9lAtxx16SZGQlYPe6wcjlXB78MM
+'''shell echo "Creating ~/.aignostics/.env file" mkdir -p ~/.aignostics cat >
+~/.aignostics/.env << 'EOF' CLIENT_ID_DEVICE=YOUR_SECRET
+CLIENT_ID_INTERACTIVE=YOUR_SECRET
 AIGNOSTICS_SENTRY_DSN=https://5e2b6e59746a3cb502589d8c2f0e3b64@o443095.ingest.us.sentry.io/4509130454466560
 AIGNOSTICS_LOGFIRE_TOKEN=pylf_v1_eu_CwtB1kc64d42qClGkVHLgZ65X4yFCSwPS6lv8ydw35Wm
 AIGNOSTICS_BUCKET_PROTOCOL=gs
 AIGNOSTICS_BUCKET_NAME=aignostics-platform-ext-a4f7e9
-AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID=GOOG1E5LNJAPJF6ZSQ2VF7SKH5O7Z3M2OH2QZVAQ7CI4ADJ7N5PRTTCNTJECS
-AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY=XrndE5ByHyorkAicetQgm3ubfXQWU3HAvpEHPLnQ
-EOF
+AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID=YOUR_SECRET
+AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY=YOUR_SECRET EOF
 
 if ! command -v uv &> /dev/null; then echo "uv not found, installing..." curl
 -LsSf https://astral.sh/uv/install.sh | sh else UV_VERSION=$(uv --version | cut
@@ -214,7 +202,12 @@ installer..." uv self update fi else echo "uv is up to date" fi fi
 # install the Aignostics Python SDK
 
 uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally
---with aignostics[marimo] aignostics system install # Complete installation
+--with marimo aignostics system install uvx --from
+git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally --with marimo
+aignostics --help ``
 
-```
-```
+TODO
+
+- Single File Selection
+- CHeck
+- Reset
