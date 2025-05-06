@@ -302,6 +302,8 @@ class PageBuilder(BasePageBuilder):
                                 new_tab=True,
                             ):
                                 ui.image("/assets/ruo.png").style("width: 45px; height: 36px")
+                        elif regulatory_class == "demo":
+                            ui.icon("network_check")
                         else:
                             ui.label(f"{regulatory_class}")
                     if not application.regulatory_classes:
