@@ -358,13 +358,12 @@ class Service(BaseService):
         """
         platform_client = self._get_platform_client()
         try:
-            runs = platform_client.runs.list()
-            if not runs:
-                logger.debug("No application runs found.")
-                return []
-            logger.debug("Jovana - runs is not none")
-            runs_with_status = []
             try:
+                runs = platform_client.runs.list()
+                if not runs:
+                    logger.debug("No application runs found.")
+                    return []
+                runs_with_status = []
                 for run in runs:
                     try:
                         run_status = run.status()

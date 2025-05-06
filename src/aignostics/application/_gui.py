@@ -167,26 +167,41 @@ class PageBuilder(BasePageBuilder):
 
                 async def application_runs_load_and_render() -> None:
                     with runs_column:
-                        runs_with_status = await run.cpu_bound(Service.application_runs_with_status_static)
-                        runs_column.clear()
-                        for run_with_status in runs_with_status:
-                            with ui.item(
-                                on_click=lambda run_id=run_with_status["application_run_id"]: ui.navigate.to(
-                                    f"/application/run/{run_id}"
-                                )
-                            ).props("clickable"):
+                        try:
+                            runs_with_status = await run.cpu_bound(Service.application_runs_with_status_static)
+                            runs_column.clear()
+                            for run_with_status in runs_with_status or []:
+                                with ui.item(
+                                    on_click=lambda run_id=run_with_status["application_run_id"]: ui.navigate.to(
+                                        f"/application/run/{run_id}"
+                                    )
+                                ).props("clickable"):
+                                    with ui.item_section().props("avatar"):
+                                        ui.icon(_run_status_to_icon(run_with_status["status"]))
+                                    with ui.item_section():
+                                        ui.label(f"{run_with_status['application_version_id']}").tailwind.font_weight(
+                                            "bold"
+                                            if context.client.page.path == "/application/run/{application_run_id}"
+                                            and args.get("application_run_id") == run_with_status["application_run_id"]
+                                            else "normal"
+                                        )
+                                        ui.label(
+                                            f"triggered on {run_with_status['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
+                                        )
+                            if not runs_with_status:
+                                with ui.item():
+                                    with ui.item_section().props("avatar"):
+                                        ui.icon("info")
+                                    with ui.item_section():
+                                        ui.label("You did not yet create a run.")
+                        except Exception:
+                            runs_column.clear()
+                            with ui.item():
                                 with ui.item_section().props("avatar"):
-                                    ui.icon(_run_status_to_icon(run_with_status["status"]))
+                                    ui.icon("error")
                                 with ui.item_section():
-                                    ui.label(f"{run_with_status['application_version_id']}").tailwind.font_weight(
-                                        "bold"
-                                        if context.client.page.path == "/application/run/{application_run_id}"
-                                        and args.get("application_run_id") == run_with_status["application_run_id"]
-                                        else "normal"
-                                    )
-                                    ui.label(
-                                        f"triggered on {run_with_status['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
-                                    )
+                                    ui.label("Error loading runs.")
+                            logger.exception("Failed to load application runs")
 
                 try:
                     with ui.list().props("bordered separator").classes("full-width"):
