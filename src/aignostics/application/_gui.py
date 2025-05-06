@@ -285,13 +285,13 @@ class PageBuilder(BasePageBuilder):
                 with ui.scroll_area().classes("w-full h-100"):
                     for application_version in application_versions:
                         ui.label(f"Version {application_version.version}").classes("text-h6")
-                        ui.markdown(f"""{application_version.changelog}""")
+                        ui.markdown(application_version.changelog)
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=release_notes_dialog.close)
 
             with ui.row(align_items="start").classes("justify-center w-full"):
                 with ui.column(), ui.expansion(application.name, icon="info").classes("full-width") as application_info:
-                    ui.markdown(f"""{application.description}""")
+                    ui.markdown(application.description)
                 ui.space()
                 with ui.row(align_items="center"):
                     ui.button("Release Notes", icon="change_history", on_click=release_notes_dialog.open)
@@ -391,7 +391,7 @@ class PageBuilder(BasePageBuilder):
                     for application_version in application_versions:
                         if application_version.application_version_id == submit_form.application_version_id:
                             ui.label(f"Latest changes in v{application_version.version}").classes("text-h5")
-                            ui.markdown(f"""{application_version.changelog}""")
+                            ui.markdown(application_version.changelog)
                             ui.label("Expected Input Artifacts:").classes("text-h5")
                             for artifact in application_version.input_artifacts:
                                 with ui.expansion(artifact.name, icon=_mime_type_to_icon(artifact.mime_type)).classes(

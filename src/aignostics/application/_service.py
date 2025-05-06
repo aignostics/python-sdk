@@ -1,12 +1,13 @@
 """Service of the application module."""
 
-import binascii
+import base64
 import os
 from collections.abc import Generator, Iterator
 from multiprocessing import Queue
 from pathlib import Path
 from typing import Any
 
+import google_crc32c
 import requests
 
 from aignostics.dicom import Service as DicomService
@@ -214,9 +215,12 @@ class Service(BaseService):
         try:
             for extension in file_extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
+                    # Generate CRC32C checksum with google_crc32c and encode as base64
+                    hash_sum = google_crc32c.Checksum()
                     with file_path.open("rb") as f:
-                        file_content = f.read()
-                        checksum = format(binascii.crc32(file_content) & 0xFFFFFFFF, "08x")
+                        while chunk := f.read(1024):
+                            hash_sum.update(chunk)
+                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")
                     if file_path.suffix in {".tiff", ".tif"}:
                         image_metadata = TiffService().get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
