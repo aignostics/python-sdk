@@ -359,6 +359,9 @@ class Service(BaseService):
         platform_client = self._get_platform_client()
         try:
             runs = platform_client.runs.list()
+            if not runs:
+                logger.debug("No application runs found.")
+                return []
             runs_with_status = []
             try:
                 for run in runs:
