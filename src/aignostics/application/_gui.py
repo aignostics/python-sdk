@@ -7,9 +7,6 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote as urlencode
 
-import pandas as pd
-from nicegui import app
-
 from aignostics.gui import frame
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker, get_logger
 
@@ -23,7 +20,8 @@ SERIES_INSTANCE_ID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915
-        from nicegui import background_tasks, binding, context, run, ui  # noq  # noqa: PLC0415
+        import pandas as pd  # noqa: PLC0415
+        from nicegui import app, background_tasks, binding, context, run, ui  # noq  # noqa: PLC0415
 
         @binding.bindable_dataclass
         class SubmitForm:
@@ -198,9 +196,9 @@ class PageBuilder(BasePageBuilder):
                             runs_column.clear()
                             with ui.item():
                                 with ui.item_section().props("avatar"):
-                                    ui.icon("error")
+                                    ui.icon("info")
                                 with ui.item_section():
-                                    ui.label("Error loading runs.")
+                                    ui.label("You did not yet create a run.")
                             logger.exception("Failed to load application runs")
 
                 try:

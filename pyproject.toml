@@ -105,6 +105,8 @@ dependencies = [
     "urllib3>=2.2.3",
     "shapely>=2.1.0",
     "wsidicom>=0.27.0",
+    "pycairo>=1.28.0",              # Linux
+    "pygobject>=3.52.3",            # Linux
 ]
 
 [project.optional-dependencies]
