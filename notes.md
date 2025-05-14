@@ -172,7 +172,8 @@ aignostics --help ``
 # TODOs (Helmut)
 
 ## General
-Ruff, Mypy
+- Ruff, Mypy
+- GPG
 
 ## Bugs or Issues
 
