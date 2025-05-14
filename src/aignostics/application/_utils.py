@@ -5,10 +5,10 @@ import os
 from enum import StrEnum
 from operator import itemgetter
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 from boto3.session import Session
-from botocore.client import Config
+from botocore.client import BaseClient, Config
 
 from aignostics.platform import (
     Application,
@@ -22,6 +22,8 @@ from aignostics.platform import (
 from aignostics.utils import console, get_logger
 
 logger = get_logger(__name__)
+
+RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
 
 
 class OutputFormat(StrEnum):
@@ -59,11 +61,14 @@ def get_platform_client() -> Client | None:
     return None
 
 
-def _get_s3_client(endpoint_url: str = "https://storage.googleapis.com"):  # noqa: ANN202
+def _get_s3_client(endpoint_url: str = "https://storage.googleapis.com") -> BaseClient:
     """Get a client instance for S3.
 
+    Args:
+        endpoint_url (str): The endpoint URL for the S3 service.
+
     Returns:
-        botocore.client.S3: A Boto3 S3 client instance.
+        BaseClient: A Boto3 S3 client instance.
     """
     # https://www.kmp.tw/post/accessgcsusepythonboto3/
     hmac_access_key_id = os.environ.get("AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID")
@@ -87,9 +92,10 @@ def create_signed_upload_url(bucket_name: str, object_key: str) -> str:
     Returns:
         str: A signed URL that can be used to upload to the bucket and key.
     """
-    return _get_s3_client().generate_presigned_url(
+    url = _get_s3_client().generate_presigned_url(
         ClientMethod="put_object", Params={"Bucket": bucket_name, "Key": object_key}, ExpiresIn=3600
     )
+    return cast("str", url)
 
 
 def create_signed_download_url(bucket_name: str, object_key: str) -> str:
@@ -102,9 +108,10 @@ def create_signed_download_url(bucket_name: str, object_key: str) -> str:
     Returns:
         str: A signed URL that can be used to download from the bucket and key.
     """
-    return _get_s3_client().generate_presigned_url(
+    url = _get_s3_client().generate_presigned_url(
         ClientMethod="get_object", Params={"Bucket": bucket_name, "Key": object_key}, ExpiresIn=3600
     )
+    return cast("str", url)
 
 
 def construct_input_items(source_csv: Path) -> list[InputItem]:
@@ -122,7 +129,6 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
         reader = csv.reader(csvfile, delimiter=";", quotechar='"')
         pos = 0
         for row in reader:
-            # TODO(Helmut): Introspect to generate the below
             if pos == 0:
                 pos += 1
                 continue
@@ -130,7 +136,7 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
             if row[0].startswith("gs://"):
                 # Remove 'gs://' prefix and split into bucket name and object key
                 url_parts = row[0][5:].split("/", 1)
-                if len(url_parts) == 2:
+                if len(url_parts) == 2:  # noqa: PLR2004
                     bucket_name = url_parts[0]
                     object_key = url_parts[1]
                     download_url = create_signed_download_url(bucket_name, object_key)
@@ -354,7 +360,7 @@ def _retrieve_and_print_run_status(run: ApplicationRun, run_count: int) -> tuple
     try:
         run_status = run.status()
     except Exception as e:
-        logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+        logger.exception(RUN_FAILED_MESSAGE, run.application_run_id)
         console.print(
             f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
         )
@@ -375,7 +381,7 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
     try:
         item_statuses = run.item_status()
     except Exception as e:
-        logger.exception("Failed to get item statuses for run with ID '%s'", run.application_run_id)
+        logger.exception("Failed to get item status for run with ID '%s'", run.application_run_id)
         console.print(
             f"[bold red]Error:[/bold red] Failed to get item statuses for run with ID '{run.application_run_id}': {e}"
         )
@@ -419,7 +425,7 @@ def print_runs_verbose(runs: list[ApplicationRun]) -> int:
             else:
                 run_count += 1  # Count failed runs
         except Exception as e:
-            logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+            logger.exception(RUN_FAILED_MESSAGE, run.application_run_id)
             console.print(
                 f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
             )
@@ -476,7 +482,7 @@ def print_runs_non_verbose(runs: list[ApplicationRun]) -> int:
             else:
                 run_count += 1  # Count failed runs
         except Exception as e:
-            logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
+            logger.exception(RUN_FAILED_MESSAGE, run.application_run_id)
             console.print(
                 f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
             )

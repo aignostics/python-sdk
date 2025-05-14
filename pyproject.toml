@@ -197,6 +197,7 @@ line-length = 120
 extend-exclude = [
     ".fixme",
     "notebook.py",
+    "_notebook.py",
     "template/*.py",
     "bottle.py",
     "examples/*.py",
@@ -260,7 +261,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["bottle.py"]
+exclude = ["bottle.py", "tiff", "dicom", "application/_gui.py", "_notebook.py"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true

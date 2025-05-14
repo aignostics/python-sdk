@@ -1,4 +1,3 @@
-import datetime
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -8,17 +7,9 @@ import highdicom as hd
 import numpy as np
 import pydicom
 import pydicom.errors
-import wsidicom
-import wsidicom.conceptcode
-import wsidicom.file
-import wsidicom.metadata
-from dicom_validator.spec_reader.edition_reader import EditionReader
-from dicom_validator.validator.dicom_file_validator import DicomFileValidator
 from pydicom.sr.codedict import codes
 from pydicom.sr.coding import Code
 from shapely.geometry import Polygon
-from wsidicomizer.metadata import WsiDicomizerMetadata
-from wsidicomizer.wsidicomizer import WsiDicomizer
 
 from aignostics.utils import console, get_logger
 
@@ -45,7 +36,7 @@ class DicomHandler:
         files = self._scan_files(verbose)
         return self._organize_by_hierarchy(files)
 
-    def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0915
+    def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0914, PLR0915
         dicom_files = []
 
         for file_path in self.path.rglob("*"):  # noqa: PLR1702
@@ -57,9 +48,10 @@ class DicomHandler:
                 ds = pydicom.dcmread(str(file_path), stop_before_pixels=True)
                 print(ds)
                 continue
-                # print(ds["Modality"].value)
-                # print(getattr(ds, "Modality", "unknown"))
-                # sys.exit()
+                # TODO(Helmut): Uncomment when DICOM is implemented
+                # print(ds["Modality"].value)  # noqa: ERA001
+                # print(getattr(ds, "Modality", "unknown"))  # noqa: ERA001
+                # sys.exit()  # noqa: ERA001
 
                 # Basic required DICOM fields
                 file_info: dict[str, Any] = {
@@ -107,7 +99,6 @@ class DicomHandler:
                     })
                 elif getattr(ds, "Modality", "") == "ANN":
                     ann = hd.ann.MicroscopyBulkSimpleAnnotations.from_dataset(ds)
-                    assert isinstance(ann, hd.ann.MicroscopyBulkSimpleAnnotations)
                     group_infos = []
                     groups = ann.get_annotation_groups()
                     for group in groups:
@@ -171,16 +162,17 @@ class DicomHandler:
                         frame_groups[level_idx]["count"] += 1
 
                     # Sort and store pyramid level information
-                    pyramid_info = []
-                    for level_idx in sorted(frame_groups.keys()):
-                        pyramid_info.append({
+                    pyramid_info = [
+                        {
                             "level": int(level_idx),
                             "frame_count": frame_groups[level_idx]["count"],
                             "frame_size": (
                                 frame_groups[level_idx]["columns"],
                                 frame_groups[level_idx]["rows"],
                             ),
-                        })
+                        }
+                        for level_idx in sorted(frame_groups.keys())
+                    ]
                     file_info["pyramid_info"] = pyramid_info
 
                 dicom_files.append(file_info)
@@ -190,7 +182,8 @@ class DicomHandler:
 
         return dicom_files
 
-    def _organize_by_hierarchy(self, files: list[dict[str, Any]]) -> dict[str, Any]:
+    @staticmethod
+    def _organize_by_hierarchy(files: list[dict[str, Any]]) -> dict[str, Any]:
         if not files:
             return {"type": "empty", "message": "No DICOM files found"}
 
@@ -358,53 +351,20 @@ class DicomHandler:
     def __enter__(self) -> "DicomHandler":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        pass  # No cleanup needed for now
-
-    def _get_specimen_info(self, ds) -> dict:
-        """Extract specimen information from DICOM dataset.
-
-        Args:
-            ds: The DICOM dataset from which to extract specimen information.
-
-        Returns:
-            dict: A dictionary containing specimen information
-        """
-        specimen_info = {
-            "description": "",
-            "anatomical_structure": "",
-            "collection_method": "",
-            "parent_specimens": [],
-            "embedding_medium": "",
-        }
-
-        # Get specimen sequence
-        specimen_seq = getattr(ds, "SpecimenPreparationSequence", [])
-        if specimen_seq:
-            # Get description from first item
-            specimen_info["description"] = str(getattr(ds, "ContainerDescription", ""))
-
-            for item in specimen_seq:
-                # Collect all parent specimen IDs
-                if hasattr(item, "ParentSpecimenSequence"):
-                    for parent in item.ParentSpecimenSequence:
-                        parent_id = str(getattr(parent, "SpecimenIdentifier", ""))
-                        if parent_id and parent_id not in specimen_info["parent_specimens"]:
-                            specimen_info["parent_specimens"].append(parent_id)
-
-                # Get first non-empty values for other fields
-                if not specimen_info["anatomical_structure"]:
-                    specimen_info["anatomical_structure"] = str(getattr(item, "PrimaryAnatomicStructure", ""))
-                if not specimen_info["collection_method"]:
-                    specimen_info["collection_method"] = str(getattr(item, "SamplingMethodDescription", ""))
-                if not specimen_info["embedding_medium"]:
-                    specimen_info["embedding_medium"] = str(getattr(item, "FixationMethod", ""))
-
-        return specimen_info
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001
+        return
 
     @staticmethod
-    def geojson_import(dicom_path: Path, geojson_path: Path) -> bool:
-        """Convert GeoJSON to DICOM ANN instance"""
+    def geojson_import(dicom_path: Path, geojson_path: Path) -> bool:  # noqa: C901, PLR0912, PLR0914, PLR0915
+        """Convert GeoJSON to DICOM ANN instance.
+
+        Args:
+            dicom_path (Path): Path to the DICOM directory.
+            geojson_path (Path): Path to the GeoJSON file.
+
+        Returns:
+            bool: True if the import was successful, False otherwise.
+        """
         try:
             with open(geojson_path, encoding="utf-8") as f:
                 geojson_data = json.load(f)
@@ -419,7 +379,7 @@ class DicomHandler:
 
                 try:
                     ds = pydicom.dcmread(str(file_path), stop_before_pixels=True)
-                    if getattr(ds, "Modality", "") in ["SM", "WSI"]:
+                    if getattr(ds, "Modality", "") in {"SM", "WSI"}:
                         columns = int(getattr(ds, "TotalPixelMatrixColumns", 0))
                         rows = int(getattr(ds, "TotalPixelMatrixRows", 0))
                         dimension = columns * rows
@@ -496,11 +456,10 @@ class DicomHandler:
 
                 annotation_group = hd.ann.AnnotationGroup(
                     number=1,
-                    uid=pydicom.uid.generate_uid(),
+                    uid=pydicom.uid.generate_uid(),  # type: ignore
                     label="Cell nuclei",
                     description="Generated by Orion CLI",
                     annotated_property_category=codes.SCT.AnatomicalStructure,
-                    # annotated_property_type=Code('53982002', "SCT", "Cell membrane"),
                     annotated_property_type=Code(
                         "84640000", "SCT", "Nucleus"
                     ),  # https://termbrowser.nhs.uk/?perspective=full&conceptId1=84640000&edition=uk-edition&release=v20240925&server=https://termbrowser.nhs.uk/sct-browser-api/snomed&langRefset=999001261000000100,999000691000001104
@@ -542,257 +501,3 @@ class DicomHandler:
         except (OSError, json.JSONDecodeError) as e:
             console.print(f"Failed to import GeoJSON: {e}")
             return False
-
-    @staticmethod
-    def default_metadata(id_base: int) -> WsiDicomizerMetadata:
-        no = id_base
-        study = wsidicom.metadata.Study(
-            identifier=f"Study id {no}",
-            accession_number=f"Accession {no}",
-            date=datetime.date.today(),
-            time=datetime.datetime.now().time(),
-            referring_physician_name="Dr. Who",
-        )
-        series = wsidicom.metadata.Series(number=no)
-        patient = wsidicom.metadata.Patient(
-            identifier="helmuthva",
-            name="Hoffer von Ankershoffen^Helmut",
-            birth_date=datetime.date(1973, 9, 30),
-            sex=wsidicom.metadata.PatientSex("male"),
-        )
-        label = wsidicom.metadata.Label(
-            text="Label text",
-            barcode="123",
-            label_in_volume_image=True,
-            label_in_overview_image=False,
-            label_is_phi=False,
-        )
-        equipment = wsidicom.metadata.Equipment(
-            manufacturer="Scanner manufacturer",
-            model_name="Scanner model name",
-            device_serial_number="Scanner serial number",
-            software_versions=["Scanner software versions"],
-        )
-        specimen = wsidicom.metadata.Specimen(
-            identifier=f"spec {no}",
-            extraction_step=wsidicom.metadata.Collection(
-                method=wsidicom.conceptcode.SpecimenCollectionProcedureCode("Excision")
-            ),
-            type=wsidicom.conceptcode.AnatomicPathologySpecimenTypesCode("Gross specimen"),
-            container=wsidicom.conceptcode.ContainerTypeCode("Specimen container"),
-            steps=[
-                wsidicom.metadata.Fixation(
-                    fixative=wsidicom.conceptcode.SpecimenFixativesCode("Neutral Buffered Formalin")
-                )
-            ],
-        )
-        optical_path = wsidicom.metadata.OpticalPath(
-            identifier=f"opt {no}",
-            description="Optical path description",
-            illumination_types=[wsidicom.conceptcode.IlluminationCode("Brightfield illumination")],
-            illumination=wsidicom.conceptcode.IlluminationColorCode("Full spectrum"),
-            # light_path_filter=wsidicom.metadata.LightPathFilter(
-            #   filters=[wsidicom.conceptcode.LightPathFilterCode("Hoffman modulator")],
-            #    nominal=1,
-            #    low_pass=-0,
-            #    high_pass=3
-            # ),
-            # image_path_filter=wsidicom.metadata.ImagePathFilter(
-            #    filters=[wsidicom.conceptcode.ImagePathFilterCode("Condenser annulus")],
-            #    nominal=1,
-            #    low_pass=-0,
-            #    high_pass=3
-            # ),
-            objective=wsidicom.metadata.Objectives(
-                lenses=[wsidicom.conceptcode.LenseCode("High power non-immersion lens")],
-                condenser_power=2525,
-                objective_power=4711,
-                objective_numerical_aperture=1.0,
-            ),
-        )
-        block = wsidicom.metadata.Sample(
-            identifier=f"block/sample {no}",
-            sampled_from=[specimen.sample(method=wsidicom.conceptcode.SpecimenSamplingProcedureCode("Dissection"))],
-            type=wsidicom.conceptcode.AnatomicPathologySpecimenTypesCode("tissue specimen"),
-            container=wsidicom.conceptcode.ContainerTypeCode("Tissue cassette"),
-            steps=[wsidicom.metadata.Embedding(medium=wsidicom.conceptcode.SpecimenEmbeddingMediaCode("Paraffin wax"))],
-        )
-        slide_sample = wsidicom.metadata.SlideSample(
-            identifier=f"Sample {no}",
-            sampled_from=block.sample(method=wsidicom.conceptcode.SpecimenSamplingProcedureCode("Block sectioning")),
-        )
-        slide = wsidicom.metadata.Slide(
-            identifier=f"Slide {no}",
-            stainings=[
-                wsidicom.metadata.Staining(
-                    substances=[
-                        wsidicom.conceptcode.SpecimenStainsCode("hematoxylin stain"),
-                        wsidicom.conceptcode.SpecimenStainsCode("water soluble eosin stain"),
-                    ]
-                )
-            ],
-            samples=[slide_sample],
-        )
-        metadata = WsiDicomizerMetadata(
-            study=study,
-            series=series,
-            patient=patient,
-            equipment=equipment,
-            optical_paths=[optical_path],
-            slide=slide,
-            label=label,
-        )
-        return metadata
-
-    @staticmethod
-    def wsi_convert(wsi_path: Path, dicom_path: Path, id_base: int) -> bool:
-        """Convert whole slide image to DICOM SM series.
-
-        Args:
-            wsi_path (Path): Path to the WSI file.
-            dicom_path (Path): Path to save the DICOM file.
-            id_base (int): Base ID for generating unique identifiers.
-
-        Returns:
-            bool: True if conversion was successful, False otherwise.
-        """
-        try:
-            console.print(wsi_path)
-            console.print(dicom_path)
-            created_files = WsiDicomizer.convert(
-                filepath=wsi_path,
-                output_path=dicom_path,
-                metadata=DicomHandler.default_metadata(id_base),
-                default_metadata=None,
-                tile_size=256,
-                add_missing_levels=True,
-                include_label=True,
-                include_overview=True,
-                include_confidential=True,
-                workers=None,  # Use all available cores
-                chunk_size=None,  # Use 16
-                encoding=None,
-                offset_table=wsidicom.file.OffsetTableType.BASIC,
-                label=None,
-            )
-            console.print(created_files)
-            return True
-
-        except Exception:
-            logger.exception("Error converting WSI to DICOM")
-            return False
-
-    @staticmethod
-    def load_datasets(dicom_path: Path, full: bool) -> list[pydicom.FileDataset]:
-        """Load datasets from file or directory"""
-        datasets = []
-        # Handle directory or glob pattern
-        if "*" in str(dicom_path):
-            files = Path().glob(str(dicom_path))
-        else:
-            path = Path(dicom_path)
-            files = path.rglob("*") if path.is_dir() else [path]
-
-        for file_path in files:
-            if not file_path.is_file():
-                continue
-            try:
-                console.print(f"{file_path} ...")
-                if full:
-                    dataset = pydicom.dcmread(file_path)
-                else:
-                    dataset = pydicom.dcmread(file_path, defer_size=True, stop_before_pixels=True)
-                datasets.append(dataset)
-            except pydicom.errors.InvalidDicomError:
-                console.print(f"Skipping non-DICOM file: {file_path}")
-                continue
-        return datasets
-
-    @staticmethod
-    def validate(
-        dicom_path: Path,
-        *,
-        standard_path: Path = None,
-        revision: str = "current",
-        force_read: bool = False,
-        suppress_vr_warnings: bool = False,
-        recreate_json: bool = False,
-        verbose: bool = False,
-    ) -> int:
-        """Validate DICOM files using dicom-validator.
-
-        Args:
-            dicom_path: Path or glob pattern to DICOM files
-            standard_path: Path to DICOM validator files
-            revision: DICOM standard revision to use
-            force_read: Whether to force read non-DICOM files
-            suppress_vr_warnings: Whether to suppress VR warnings
-            recreate_json: Whether to recreate JSON files
-
-        Returns:
-            Number of validation errors found
-        """
-        if standard_path is None:
-            standard_path = Path.home() / "dicom-validator"
-
-        try:
-            # Setup validator
-            edition_reader = EditionReader(standard_path)
-            destination = edition_reader.get_revision(revision, recreate_json, True)
-            if destination is None:
-                logger.error("Failed to get DICOM edition %s - aborting", revision)
-                return 1
-
-            json_path = Path(destination, "json")
-            dicom_info = EditionReader.load_dicom_info(json_path)
-            validator = DicomFileValidator(
-                dicom_info,
-                force_read=force_read,
-                suppress_vr_warnings=suppress_vr_warnings,
-            )
-
-            # Process files
-            total_errors = 0
-            total_files = 0
-
-            # Get all file paths
-            if "*" in str(dicom_path):
-                files = Path().glob(str(dicom_path))
-            else:
-                path = Path(dicom_path)
-                files = path.rglob("*") if path.is_dir() else [path]
-
-            # Validate each file path
-            for file_path in files:
-                if not file_path.is_file():
-                    continue
-                total_files += 1
-                dataset = pydicom.dcmread(file_path, stop_before_pixels=True)
-                if dataset.SOPClassUID == "1.2.840.10008.5.1.4.1.1.91.1":
-                    # skip for ANN (bulk annotations)
-                    continue
-                errors = validator.validate(file_path)
-                error_count = sum(len(err_list) for err_list in errors.values())
-                total_errors += error_count
-
-                if error_count > 0:
-                    logger.error("Validation errors in %s:", file_path)
-                    for tag, err_list in errors.items():
-                        for error in err_list:
-                            logger.error("%s: %s", tag, error)
-                else:
-                    logger.info("%s is valid", file_path)
-
-            if total_files == 0:
-                logger.warning("No DICOM files found matching pattern: %s", dicom_path)
-            else:
-                logger.info("Validated %d files with %d total errors", total_files, total_errors)
-
-            return total_errors
-
-        except ValueError:
-            logger.exception("Validation failed")
-            return 1
-        except OSError:
-            logger.exception("File system error")
-            return 1

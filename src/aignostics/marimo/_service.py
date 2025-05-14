@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class _Runner:
     """Runner class of the Marimo module."""
 
-    _marimo_server: Popen | None = None
+    _marimo_server: Popen[str] | None = None
     _monitor_thread: Thread | None = None
     _output: str = ""
     _server_url: str | None = None
@@ -91,11 +91,6 @@ class _Runner:
             bufsize=1,
         )
 
-        if self._marimo_server is None:
-            message = "Failed to start Marimo server"
-            logger.error(message)
-            raise RuntimeError(message)
-
         # Start a thread to monitor the subprocess output
         self._monitor_thread = Thread(target=self._capture_output, args=(self._marimo_server,), daemon=True)
         self._monitor_thread.start()
@@ -107,16 +102,16 @@ class _Runner:
             logger.error(message)
             raise RuntimeError(message)
 
-        # At this point, self._server_url should be set, but let's check to be safe
+        # At this point, self._server_url should be set by thread
         if self._server_url is None:
             self.stop()
             message = "Server URL was not set despite server ready event being triggered"
             logger.error(message)
             raise RuntimeError(message)
 
-        return self._server_url
+        return self._server_url  # type: ignore[unreachable]
 
-    def _capture_output(self, process: Popen) -> None:
+    def _capture_output(self, process: Popen[str]) -> None:
         """Capture stdout of the subprocess and detect when server is ready.
 
         Args:

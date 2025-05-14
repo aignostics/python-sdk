@@ -171,11 +171,19 @@ aignostics --help ``
 
 # TODOs (Helmut)
 
-## Bugs
+## General
+Ruff, Mypy
+
+## Bugs or Issues
 
 - Behavior if no run
-- Check
 - Reset in submission to back, then forward
-- Offline Mode
 - lung / other validate
+- Pin Versions, see 0.10.0
+- Proxy for Windows
+- File Selection on Linux
+
+# Features
+- QuPath Integration
 - Single File Selection
+- Offline Mode

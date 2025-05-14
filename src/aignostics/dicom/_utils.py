@@ -2,6 +2,8 @@ from pathlib import Path
 
 from aignostics.utils import console
 
+KILO = 1024
+
 
 def format_file_size(size_bytes: int) -> str:
     """
@@ -19,34 +21,54 @@ def format_file_size(size_bytes: int) -> str:
     """
     size_human = float(size_bytes)
     for unit in ["B", "KB", "MB", "GB"]:
-        if size_human < 1024:
+        if size_human < KILO:
             return f"{size_human:.2f} {unit}"
-        size_human /= 1024
+        size_human /= KILO
     return f"{size_human:.2f} TB"
 
 
-def get_tag_info(tag_str):
-    """Convert DICOM tag to human readable name"""
-    from pydicom.datadict import dictionary_description
+def get_tag_info(tag_str: str) -> str:
+    """Convert DICOM tag to human readable name.
+
+    Args:
+        tag_str(str): DICOM tag string in format '00100010'.
+
+    Returns:
+        str: Human readable name of the DICOM tag or the original tag string if not found.
+    """
+    from pydicom.datadict import dictionary_description  # noqa: PLC0415
 
     try:
         # Convert string tag like '00100010' to tuple format (0010,0010)
         tag_tuple = (int(tag_str[0:4], 16), int(tag_str[4:8], 16))
         description = dictionary_description(tag_tuple)
         return f"{description}" if description else tag_str
-    except Exception:
+    except KeyError:
         return tag_str
 
 
 def format_dimensions(dim: tuple) -> str:
-    """Format dimensions tuple into string"""
+    """Format dimensions tuple into string.
+
+    Args:
+        dim (tuple): A tuple containing dimension values.
+
+    Returns:
+        str: A formatted string representation of the dimensions,
+            joined with the "x" symbol, or "unknown" if the tuple is empty.
+    """
     if not dim:
         return "unknown"
-    return " × ".join(str(d) for d in dim)
+    return " x ".join(str(d) for d in dim)
 
 
-def print_file_info(file_info: dict, indent: int = 0):
-    """Print formatted file information"""
+def print_file_info(file_info: dict, indent: int = 0) -> None:  # noqa: C901, PLR0912, PLR0915
+    """Print formatted file information.
+
+    Args:
+        file_info (dict): Dictionary containing file information.
+        indent (int): Indentation level for formatting.
+    """
     prefix = "  " * indent
 
     # Keep existing basic info
@@ -120,22 +142,34 @@ def print_file_info(file_info: dict, indent: int = 0):
             console.print(f"{prefix}  Level {level['level']}: {level['frame_count']} frames @ {frame_size} pixels")
 
 
-def print_series_info(series_data: dict, indent: int = 0):
-    """Print formatted series information"""
+def print_series_info(series_data: dict, indent: int = 0) -> None:
+    """Print formatted series information."""
     prefix = "  " * indent
     console.print(f"{prefix}[key]Files:[/key] {series_data['file_count']}")
     console.print(f"{prefix}[key]Modality:[/key] {series_data['modality']}")
 
 
 def format_dicom_time(time_str: str) -> str:
-    """Format DICOM time string to HH:MM:SS"""
-    if not time_str or len(time_str) < 6:
+    """Format DICOM time string to HH:MM:SS.
+
+    Args:
+        time_str (str): DICOM time string in the format HHMMSS.
+
+    Returns:
+        str: Formatted time string in the format HH:MM:SS or the original string if invalid.
+    """
+    if not time_str or len(time_str) < 6:  # noqa: PLR2004
         return time_str
     return f"{time_str[0:2]}:{time_str[2:4]}:{time_str[4:6]}"
 
 
-def print_study_info(study_data: dict, indent: int = 0):
-    """Print formatted study information"""
+def print_study_info(study_data: dict, indent: int = 0) -> None:
+    """Print formatted study information.
+
+    Args:
+        study_data (dict): Dictionary containing study information.
+        indent (int): Indentation level for formatting.
+    """
     prefix = "  " * indent
 
     # Patient Section
@@ -162,8 +196,14 @@ def print_study_info(study_data: dict, indent: int = 0):
         console.print(f"{prefix}  [key]Site Name:[/key] {study_data['clinical_trial']['site_name']}")
 
 
-def print_slide_info(slide_data: dict, indent: int = 0, verbose: bool = False):
-    """Print formatted slide (container) information"""
+def print_slide_info(slide_data: dict, indent: int = 0, verbose: bool = False) -> None:
+    """Print formatted slide (container) information.
+
+    Args:
+        slide_data (dict): Dictionary containing slide information.
+        indent (int): Indentation level for formatting.
+        verbose (bool): If True, print detailed file information.
+    """
     prefix = "  " * indent
 
     # Specimen Section

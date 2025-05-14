@@ -257,7 +257,7 @@ class Runs:
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
         # TODO (Andreas): application_run_id - ensure this is correctly handled. Ignoring for now
-        return ApplicationRun(self._api, res.application_run_id)
+        return ApplicationRun(self._api, str(res.application_run_id))
 
     def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
         """Lists application runs, optionally filtered by application version.

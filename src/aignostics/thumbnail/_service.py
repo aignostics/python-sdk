@@ -50,11 +50,9 @@ class Service(BaseService):
         from aignostics.tiff import Service as TIFFService  # noqa: PLC0415
 
         if path.suffix.lower() == ".dcm":
-            handler = DICOMService()
-            return handler.get_thumbnail(path)
+            return DICOMService().get_thumbnail(path)
         if path.suffix.lower() == ".tiff" or path.suffix.lower() == ".tif":
-            handler = TIFFService()
-            return handler.get_thumbnail(path)
+            return TIFFService().get_thumbnail(path)
         message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
         logger.error(message)
         logger.error(message)
@@ -98,7 +96,7 @@ class Service(BaseService):
 
         try:
             # Open the URL and read the content into a bytes object
-            with urllib.request.urlopen(url) as response:
+            with urllib.request.urlopen(url) as response:  # noqa: S310
                 tiff_data = response.read()
 
             # Create a BytesIO object from the image data

@@ -3,7 +3,7 @@
 from typing import Any
 
 from boto3 import Session
-from botocore.client import Config
+from botocore.client import BaseClient, Config
 
 from aignostics.utils import BaseService, Health, get_logger
 
@@ -43,11 +43,14 @@ class Service(BaseService):
             components={},
         )
 
-    def _get_s3_client(self, endpoint_url: str = ENDPOINT_URL_DEFAULT):  # noqa: ANN202
+    def _get_s3_client(self, endpoint_url: str = ENDPOINT_URL_DEFAULT) -> BaseClient:
         """Get a Boto3 S3 client instance for cloud bucket on Aignostics Platform.
 
+        Args:
+            endpoint_url (str): The endpoint URL for the S3 service.
+
         Returns:
-            botocore.client.S3: A Boto3 S3 client instance.
+            BaseClient: A Boto3 S3 client instance.
         """
         # https://www.kmp.tw/post/accessgcsusepythonboto3/
         session = Session(
@@ -72,12 +75,12 @@ class Service(BaseService):
             detail (bool): If True, return detailed information including object type, else return only paths.
 
         Returns:
-            list[str | dict[str, Any]]: List of objects directly in the bucket with optional detail.
+            list[Union[str, dict[str, Any]]]: List of objects directly in the bucket with optional detail.
         """
         s3c = self._get_s3_client()
         response = s3c.list_objects_v2(Bucket=self._settings.name, Prefix="", Delimiter="/")
 
-        result = []
+        result: list[str | dict[str, Any]] = []
         contents = response.get("Contents", [])
         common_prefixes = response.get("CommonPrefixes", [])
 
@@ -133,13 +136,13 @@ class Service(BaseService):
             detail (bool): If True, return detailed information including object type, else return only paths.
 
         Returns:
-            list[str | dict[str, Any]]: List of objects in the bucket with optional detail.
+            list[Union[str, dict[str, Any]]]: List of objects in the bucket with optional detail.
         """
         s3c = self._get_s3_client()
         paginator = s3c.get_paginator("list_objects_v2")
         pages = paginator.paginate(Bucket=self._settings.name)
 
-        result = []
+        result: list[str | dict[str, Any]] = []
         for page in pages:
             contents = page.get("Contents", [])
             common_prefixes = page.get("CommonPrefixes", [])

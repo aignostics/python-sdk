@@ -41,8 +41,9 @@ class Service(BaseService):
         """
         from aignostics.tiff import Service as TiffService  # noqa: PLC0415
 
-        #        handler = DicomHandler.from_file(path)
-        #        return handler.get_metadata()
+        # TODO(Helmut): Uncomment when DICOM is implemented
+        #        handler = DicomHandler.from_file(path)  # noqa: ERA001
+        #        return handler.get_metadata()  # noqa: ERA001
         return TiffService().get_metadata(path)
 
     def get_thumbnail(self, path: Path) -> Image:  # noqa: PLR6301

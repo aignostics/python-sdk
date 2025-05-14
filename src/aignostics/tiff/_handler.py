@@ -7,6 +7,8 @@ from typing import Any
 import openslide
 from PIL.Image import Image
 
+TIFF_IMAGE_DESCRIPTION = "tiff.ImageDescription"
+
 
 class TiffHandler:
     """Handler for TIFF files using OpenSlide."""
@@ -28,9 +30,9 @@ class TiffHandler:
         props = dict(self.slide.properties)
 
         # Check for libvips signature in XML metadata
-        if "tiff.ImageDescription" in props:
+        if TIFF_IMAGE_DESCRIPTION in props:
             try:
-                root = ET.fromstring(props["tiff.ImageDescription"])  # noqa: S314
+                root = ET.fromstring(props[TIFF_IMAGE_DESCRIPTION])  # noqa: S314
                 if root.get("xmlns") == "http://www.vips.ecs.soton.ac.uk//dzsave":
                     return "pyramidal-tiff (libvips)"
             except ET.ParseError:
@@ -56,7 +58,7 @@ class TiffHandler:
         """
         return self.slide.get_thumbnail((256, 256))
 
-    def _parse_xml_image_description(self, xml_string: str) -> dict[str, Any]:  # noqa: PLR6301
+    def _parse_xml_image_description(self, xml_string: str) -> dict[str, Any]:  # noqa: C901, PLR6301
         """Parse the XML image description.
 
         Args:
@@ -74,7 +76,12 @@ class TiffHandler:
                 "properties": {},
             }
             for prop in root.findall(".//ns:property", namespace):
-                name = prop.find("ns:name", namespace).text
+                name_elem = prop.find("ns:name", namespace)
+                if name_elem is None:
+                    continue
+                name = name_elem.text
+                if name is None:
+                    continue
                 value_elem = prop.find("ns:value", namespace)
                 if value_elem is None:
                     continue
@@ -105,7 +112,7 @@ class TiffHandler:
 
         Returns:
             list[dict[str, Any]]: A list of dictionaries containing detailed information for each level
-                of the pyramidal TIFF image.
+                of the pyramidal image.
         """
         levels = []
         props = dict(self.slide.properties)
@@ -150,7 +157,7 @@ class TiffHandler:
         """Get comprehensive slide metadata.
 
         Returns:
-            dict[str, Any]: A dictionary containing detailed metadata about the TIFF image,
+            dict[str, Any]: A dictionary containing detailed metadata about the image,
                 including format, file information, dimensions, resolution, levels, and other properties.
         """
         props = dict(self.slide.properties)
@@ -187,8 +194,8 @@ class TiffHandler:
         }
 
         # Parse image description if available
-        if "tiff.ImageDescription" in props:
-            image_desc = self._parse_xml_image_description(props["tiff.ImageDescription"])
+        if TIFF_IMAGE_DESCRIPTION in props:
+            image_desc = self._parse_xml_image_description(props[TIFF_IMAGE_DESCRIPTION])
             if image_desc:
                 metadata["properties"]["image"] = image_desc
                 if "libvips_version" in image_desc:

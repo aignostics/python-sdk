@@ -18,7 +18,7 @@ PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID"
 
 # Global registry of active processes for cleanup
-_active_processes: list[subprocess.Popen] = []
+_active_processes: list[subprocess.Popen[str]] = []
 
 
 def _cleanup_processes() -> None:
@@ -70,7 +70,11 @@ class Service(BaseService):
         )
 
     @staticmethod
-    def _capture_progress_output(process: subprocess.Popen, queue: Queue, base_progress: float = 0.04) -> None:  # noqa: C901
+    def _capture_progress_output(  # noqa: C901
+        process: subprocess.Popen[str],
+        queue: Queue,  # type: ignore[type-arg]
+        base_progress: float = 0.04,
+    ) -> None:
         """Capture output from the download process and update progress queue.
 
         Args:
@@ -140,7 +144,7 @@ class Service(BaseService):
 
     @staticmethod
     def download_with_queue(  # noqa: PLR0915
-        queue: Queue,
+        queue: Queue,  # type: ignore[type-arg]
         source: str,
         target: str = str(Path.cwd()),
         target_layout: str = TARGET_LAYOUT_DEFAULT,

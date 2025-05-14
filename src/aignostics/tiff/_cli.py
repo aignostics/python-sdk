@@ -66,7 +66,7 @@ def inspect(
         console.print("  Downsample factor:", style="blue", end=" ")
         console.print(downsample, style="green")
 
-        pixel_size = f"{metadata['resolution']['mpp_x'] * level['downsample']:.3f} µm/pixel"
+        pixel_size = f"{metadata['resolution']['mpp_x'] * level['downsample']:.3f} μm/pixel"
         console.print("  Pixel size:", style="blue", end=" ")
         console.print(pixel_size, style="green")
 

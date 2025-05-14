@@ -78,7 +78,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         dark=dark_mode,
         host=host,
         port=port or native_app.find_open_port(),
-        frameless=native and os.name != "nt",
+        frameless=native and os.name not in {"nt", "linux"},
         show_welcome_message=native is False,
         show=show,
         window_size=(1200, 768) if native else None,
@@ -164,7 +164,7 @@ class GUILocalFilePicker:
 
             def add_drives_toggle(self) -> None:
                 if platform.system() == "Windows":
-                    import win32api  # noqa: PLC0415
+                    import win32api  # type: ignore[unused-ignore] # type: ignore # noqa: PLC0415
 
                     drives = win32api.GetLogicalDriveStrings().split("\000")[:-1]
                     self.drives_toggle = ui.toggle(drives, value=drives[0], on_change=self.update_drive)

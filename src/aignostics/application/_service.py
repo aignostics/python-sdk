@@ -5,7 +5,7 @@ import os
 from collections.abc import Generator, Iterator
 from multiprocessing import Queue
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 import google_crc32c
 import requests
@@ -29,6 +29,14 @@ from ._utils import application_versions_sorted_by_semver, create_signed_downloa
 from ._utils import find_latest_application_version_id as util_find_latest_application_version_id
 
 logger = get_logger(__name__)
+
+
+class UploadProgressItem(TypedDict, total=False):
+    """Type definition for upload progress queue items."""
+
+    reference: str
+    platform_bucket_url: str
+    file_upload_progress: float
 
 
 # Services derived from BaseService and exported by modules via their __init__.py are automatically registered
@@ -216,11 +224,11 @@ class Service(BaseService):
             for extension in file_extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
                     # Generate CRC32C checksum with google_crc32c and encode as base64
-                    hash_sum = google_crc32c.Checksum()
+                    hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
                     with file_path.open("rb") as f:
                         while chunk := f.read(1024):
-                            hash_sum.update(chunk)
-                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")
+                            hash_sum.update(chunk)  # type: ignore[no-untyped-call]
+                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
                     if file_path.suffix in {".tiff", ".tif"}:
                         image_metadata = TiffService().get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
@@ -266,7 +274,7 @@ class Service(BaseService):
         upload_id: str,
         application_version_id: str,
         metadata: list[dict[str, Any]],
-        upload_progress_queue: Queue,
+        upload_progress_queue: Queue,  # type: ignore[type-arg]
     ) -> bool:
         """Upload files with a progress queue.
 
@@ -274,7 +282,7 @@ class Service(BaseService):
             upload_id (str): The ID of the upload.
             application_version_id (str): The ID of the application version.
             metadata (list[dict[str, Any]]): The metadata to upload.
-            upload_progress_queue (Queue[Any]): The queue to use for progress updates.
+            upload_progress_queue (Queue[Dict[str, Any]]): The queue to use for progress updates.
 
         Returns:
             bool: True if the upload was successful, False otherwise.
@@ -312,7 +320,7 @@ class Service(BaseService):
             ):
 
                 def read_in_chunks(
-                    reference: str, file_size: int, upload_progress_queue: Queue
+                    reference: str, file_size: int, upload_progress_queue: Queue[dict[str, Any]]
                 ) -> Generator[bytes, None, None]:
                     while True:
                         chunk = f.read(1048576)
@@ -433,7 +441,7 @@ class Service(BaseService):
                 platform_bucket_url = row["platform_bucket_url"]
                 if platform_bucket_url and platform_bucket_url.startswith("gs://"):
                     url_parts = platform_bucket_url[5:].split("/", 1)
-                    if len(url_parts) == 2:
+                    if len(url_parts) == 2:  # noqa: PLR2004
                         bucket_name = url_parts[0]
                         object_key = url_parts[1]
                         download_url = create_signed_download_url(bucket_name, object_key)
@@ -466,12 +474,14 @@ class Service(BaseService):
                 )
             else:
                 logger.error("Missing platform bucket URL in metadata: %s", row)
-                continue
         logger.debug("Items for application run submission: %s", items)
         platform_client = self._get_platform_client()
         try:
-            return platform_client.runs.create(application_version=application_version_id, items=items)
-            logger.info("Submitted application run with items: %s", items)
+            run = platform_client.runs.create(application_version=application_version_id, items=items)
+            logger.info(
+                "Submitted application run with items: %s, application run id %s", items, run.application_run_id
+            )
+            return run
         except Exception:
             logger.exception("Failed to submit application run.")
             raise
@@ -514,14 +524,15 @@ class Service(BaseService):
         Raises:
             Exception: If canceling the run failed unexpectedly.
         """
-        (run, status) = self.application_run(run_id)
-        try:
-            if run and status:
-                run.cancel()
-        except ApplicationRunStatus.NotCancellable:
-            logger.warning("Run '%s' is not cancellable.", run_id)
+        result = self.application_run(run_id)
+        if result is None:
+            logger.warning("Run '%s' not found.", run_id)
             return False
+
+        run, _status = result
+        try:
+            run.cancel()
+            return True
         except Exception:
             logger.exception("Failed to cancel application run '%s'.", run_id)
             raise
-        return True

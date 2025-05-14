@@ -10,6 +10,8 @@ from aignostics.gui import frame
 from ..utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
 from ._service import TARGET_LAYOUT_DEFAULT, Service
 
+MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
+
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
@@ -34,6 +36,7 @@ class PageBuilder(BasePageBuilder):
         async def page_idc() -> None:  # noqa: C901, PLR0915, RUF029
             """IDC page."""
             with frame("Download Datasets from Image Data", left_sidebar=False):
+                # No need to do anything here
                 pass
             with ui.row(align_items="start").classes("full-width"):
                 ui.markdown("""
@@ -77,7 +80,7 @@ class PageBuilder(BasePageBuilder):
                     path = Path(result[0])
                     if not path.is_dir():
                         download_form.destination = None
-                        download_form.destination_label.set_text("No download folder selected")
+                        download_form.destination_label.set_text(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
                         download_form.destination_open_button.disable()
                         ui.notify(
                             "The selected path is not a directory. Please select a valid directory.", type="warning"
@@ -89,7 +92,7 @@ class PageBuilder(BasePageBuilder):
                         ui.notify(f"You chose directory {download_form.destination}.", type="info")
                 else:
                     download_form.destination = None
-                    download_form.destination_label.set_text("No download folder selected")
+                    download_form.destination_label.set_text(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
                     download_form.destination_open_button.disable()
                     ui.notify("You did not make a selection. You must choose a download folder.", type="warning")
                 if (download_form.source is not None) and (download_form.destination is not None):
@@ -114,10 +117,10 @@ class PageBuilder(BasePageBuilder):
                 download_form.download_progress.visible = True
                 download_form.download_button.visible = False
                 await run.cpu_bound(
-                    Service.download_with_queue,
-                    download_message_queue,
+                    Service.download_with_queue,  # type: ignore[arg-type]
+                    download_message_queue,  # type: ignore[unused-ignore] # type: ignore
                     source,
-                    download_form.destination,
+                    str(download_form.destination),
                     TARGET_LAYOUT_DEFAULT,
                     False,
                 )
@@ -132,7 +135,7 @@ class PageBuilder(BasePageBuilder):
                     source_input = ui.input(
                         label="Dataset UID",
                         placeholder="start typing",
-                        on_change=lambda e: _on_source_input_change(e),
+                        on_change=lambda e: _on_source_input_change(e),  # noqa: PLW0108
                     ).classes("w-2/5")
                     ui.space()
                     ui.icon(name="east", size="lg", color="primary")
@@ -140,7 +143,7 @@ class PageBuilder(BasePageBuilder):
                     with ui.row(align_items="center").classes("w-2/5"):
                         ui.space()
                         download_form.destination_label = ui.label(
-                            "No download folder selected"
+                            MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED
                             if download_form.destination is None
                             else str(download_form.destination)
                         )
@@ -177,11 +180,14 @@ class PageBuilder(BasePageBuilder):
                     )
 
             download_message_queue = Manager().Queue()
-            ui.timer(
-                0.1,
-                callback=lambda: download_form.download_progress.set_value(
-                    download_message_queue.get()
-                    if not download_message_queue.empty()
-                    else download_form.download_progress.value
-                ),
-            )
+
+            def update_progress() -> None:
+                """Update the progress indicator with values from the queue."""
+                if download_form.download_progress is None:
+                    return
+
+                if not download_message_queue.empty():
+                    new_value = download_message_queue.get()
+                    download_form.download_progress.set_value(new_value)
+
+            ui.timer(0.1, update_progress)

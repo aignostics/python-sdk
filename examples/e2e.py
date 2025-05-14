@@ -73,8 +73,8 @@ def _():
     ])
 
     mo.vstack([
-        mo.ui.file_browser(
-            GSPath("gs://aignx-storage-service-dev/sample_data_formatted"),
+        mo.ui.file_browser( # type: ignore
+            GSPath("gs://aignx-storage-service-dev/sample_data_formatted"), # type: ignore
             filetypes=[".dcm", ".tif", ".tiff", ".svs", ".json"],
             multiple=True,
             restrict_navigation=True,

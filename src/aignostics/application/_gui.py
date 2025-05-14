@@ -15,6 +15,10 @@ from ._service import Service
 logger = get_logger(__name__)
 
 SERIES_INSTANCE_ID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
+WIDTH_100 = "width: 100%"
+WIDTH_1200px = "width: 1200px; max-width: none"
+BORDERED_SEPARATOR = "bordered separator"
+MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 
 
 class PageBuilder(BasePageBuilder):
@@ -142,7 +146,7 @@ class PageBuilder(BasePageBuilder):
             service = Service()
             with frame(navigation_title=navigation_title, navigation_icon=navigation_icon, left_sidebar=left_sidebar):  # noqa: PLR1702
                 try:
-                    with ui.list().props("bordered separator").classes("full-width"):
+                    with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
                         ui.item_label("Applications").props("header")
                         ui.separator()
                         for application in service.applications():
@@ -184,7 +188,8 @@ class PageBuilder(BasePageBuilder):
                                             else "normal"
                                         )
                                         ui.label(
-                                            f"triggered on {run_with_status['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
+                                            f"triggered on "
+                                            f"{run_with_status['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
                                         )
                             if not runs_with_status:
                                 with ui.item():
@@ -202,7 +207,7 @@ class PageBuilder(BasePageBuilder):
                             logger.exception("Failed to load application runs")
 
                 try:
-                    with ui.list().props("bordered separator").classes("full-width"):
+                    with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
                         ui.item_label("Runs").props("header")
                         ui.separator()
                         with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
@@ -219,8 +224,8 @@ class PageBuilder(BasePageBuilder):
             ui.markdown(
                 """
                     ## Welcome to the Aignostics Platform Launcher!
-                    1. Select an application from the left sidebar and use our wizard to submit a run on your whole slide
-                    images.
+                    1. Select an application from the left sidebar and use our wizard to submit a run on your
+                    whole slide images.
                     2. Select a run to monitor progress, cancel while pending, or download results.
                 """  # noqa: S608
                 + (
@@ -278,7 +283,7 @@ class PageBuilder(BasePageBuilder):
             latest_application_version_id = latest_application_version.application_version_id
             submit_form.application_version_id = latest_application_version_id
 
-            with ui.dialog() as release_notes_dialog, ui.card().style("width: 1200px; max-width: none"):
+            with ui.dialog() as release_notes_dialog, ui.card().style(WIDTH_1200px):
                 ui.label(f"Release notes of {application.name}").classes("text-h5")
                 with ui.scroll_area().classes("w-full h-100"):
                     for application_version in application_versions:
@@ -364,7 +369,7 @@ class PageBuilder(BasePageBuilder):
                     try:
                         ui.notify(f"Finding WSIs and generating metadata for {submit_form.source}...", type="info")
                         if submit_form.metadata_grid is None:
-                            logger.error("Metadata grid is not initialized.")
+                            logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                             return
                         submit_form.wsi_spinner.set_visibility(True)
                         submit_form.wsi_next_button.set_visibility(False)
@@ -407,7 +412,7 @@ class PageBuilder(BasePageBuilder):
                                         "mainMenuBar": False,
                                         "navigationBar": True,
                                         "statusBar": False,
-                                    }).style("width: 100%")
+                                    }).style(WIDTH_100)
                             ui.label("Generated output artifacts:").classes("text-h5")
                             for artifact in application_version.output_artifacts:
                                 with ui.expansion(artifact.name, icon=_mime_type_to_icon(artifact.mime_type)).classes(
@@ -423,7 +428,7 @@ class PageBuilder(BasePageBuilder):
                                         "mainMenuBar": False,
                                         "navigationBar": True,
                                         "statusBar": False,
-                                    }).style("width: 100%")
+                                    }).style(WIDTH_100)
                             break
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=info_dialog.close)
@@ -469,7 +474,7 @@ class PageBuilder(BasePageBuilder):
 
                     async def _validate() -> None:
                         if submit_form.metadata_grid is None:
-                            logger.error("Metadata grid is not initialized.")
+                            logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                             return
                         rows = await submit_form.metadata_grid.get_client_data()
                         valid = True
@@ -504,7 +509,7 @@ class PageBuilder(BasePageBuilder):
 
                     async def _metadata_next() -> None:
                         if submit_form.metadata_grid is None or submit_form.submission_upload_button is None:
-                            logger.error("Metadata grid is not initialized.")
+                            logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                             return
                         submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                         _upload_ui.refresh(submit_form.metadata)
@@ -514,7 +519,7 @@ class PageBuilder(BasePageBuilder):
 
                     async def _delete_selected() -> None:
                         if submit_form.metadata_grid is None or submit_form.metadata_exclude_button is None:
-                            logger.error("Metadata grid is not initialized.")
+                            logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                             return
                         selected_rows = await submit_form.metadata_grid.get_selected_rows()
                         if (selected_rows is None) or (len(selected_rows) == 0):
@@ -550,7 +555,7 @@ class PageBuilder(BasePageBuilder):
                                 return this.eGui;
                             }
                         }
-                    """
+                    """  # noqa: E501
 
                     submit_form.metadata_grid = (
                         ui.aggrid({
@@ -675,7 +680,7 @@ class PageBuilder(BasePageBuilder):
                         str(time.time() * 1000),
                         str(submit_form.application_version_id),
                         submit_form.metadata or [],
-                        upload_message_queue,
+                        upload_message_queue,  # type: ignore
                     )
                     ui.notify("Upload to Aignostics Platform completed.", type="positive")
                     submit_form.submission_submit_button.enable()
@@ -695,7 +700,8 @@ class PageBuilder(BasePageBuilder):
                                 ui.label(f"{row['source']} ({row['file_size_human']})").classes("w-4/5")
                         if upload_complete:
                             ui.label(
-                                f"2. All uploads completed successfully. Click submit to run {submit_form.application_version_id} on {len(metadata)} slides."
+                                f"2. All uploads completed successfully. Click submit to run "
+                                f"{submit_form.application_version_id} on {len(metadata)} slides."
                             )
 
                 def _update_upload_progress() -> None:
@@ -752,12 +758,18 @@ class PageBuilder(BasePageBuilder):
         def page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
             """Describe Application."""
             service = Service()
-            run, run_status = service.application_run(application_run_id)
+            result = service.application_run(application_run_id)
+            run = run_status = None
+            if result is not None:
+                run, run_status = result
 
             if run and run_status:
                 _frame(
                     navigation_icon=_run_status_to_icon(run_status.status.value),
-                    navigation_title=f"Run of {run_status.application_version_id} on {run_status.triggered_at.astimezone().strftime('%m-%d %H:%M')}",
+                    navigation_title=(
+                        f"Run of {run_status.application_version_id} "
+                        f"on {run_status.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
+                    ),
                     left_sidebar=True,
                     args={"application_run_id": application_run_id},
                 )
@@ -795,12 +807,12 @@ class PageBuilder(BasePageBuilder):
                     ui.notify(f"Failed to cancel application run: {e}.", type="warning")
                     return False
 
-            with ui.dialog() as download_run_dialog, ui.card().style("width: 1200px; max-width: none"):
+            with ui.dialog() as download_run_dialog, ui.card().style(WIDTH_1200px):
                 ui.button("Select download folder")
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=download_run_dialog.close)
 
-            with ui.dialog() as qupath_project_create_dialog, ui.card().style("width: 1200px; max-width: none"):
+            with ui.dialog() as qupath_project_create_dialog, ui.card().style(WIDTH_1200px):
                 ui.button("Select QuPath folder")
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=download_run_dialog.close)
@@ -812,12 +824,12 @@ class PageBuilder(BasePageBuilder):
                 if url:
                     try:
                         csv_df = pd.read_csv(url, comment="#")
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         ui.notify(f"Failed to load CSV: {e!s}", type="negative")
                         csv_df = pd.DataFrame()  # Empty dataframe as fallback
                     ui.aggrid.from_pandas(csv_df)
 
-            with ui.dialog() as csv_view_dialog, ui.card().style("width: 1200px; max-width: none"):
+            with ui.dialog() as csv_view_dialog, ui.card().style(WIDTH_1200px):
                 csv_view_dialog_content(title=None, url=None)
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=csv_view_dialog.close)
@@ -835,20 +847,26 @@ class PageBuilder(BasePageBuilder):
                     try:
                         with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
                             ui.image("/tiff?url=" + urlencode(url))
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         ui.notify(f"Failed to load CSV: {e!s}", type="negative")
 
-            with ui.dialog() as tiff_view_dialog, ui.card().style("width: 1200px; max-width: none"):
+            with ui.dialog() as tiff_view_dialog, ui.card().style(WIDTH_1200px):
                 tiff_view_dialog_content(title=None, url=None)
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=tiff_view_dialog.close)
 
             def tiff_dialog_open(title: str, url: str) -> None:
-                """Open the TIFF dialog."""
+                """Open the TIFF dialog.
+
+                Args:
+                    title (str): The title of the TIFF dialog.
+                    url (str): The URL of the TIFF image.
+
+                """
                 tiff_view_dialog_content.refresh(title=title, url=url)
                 tiff_view_dialog.open()
 
-            if run_status.status.value == "running":
+            if run_status and run_status.status.value == "running":
                 with ui.row().classes("w-full justify-end"):
                     ui.button(
                         "Cancel",
@@ -857,7 +875,7 @@ class PageBuilder(BasePageBuilder):
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-            if run_status.status.value == "completed":
+            if run_status and run_status.status.value == "completed":
                 with ui.row().classes("w-full justify-end"):
                     if find_spec("paquo"):
                         ui.button(
@@ -873,19 +891,20 @@ class PageBuilder(BasePageBuilder):
                         )
                     ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
 
-            with ui.card():
-                ui.markdown(
-                    f"""
-                    * Application Version: {run_status.application_version_id}
-                    * Application Run ID: {run.application_run_id}
-                    * Status: {run_status.status.value}
-                    * Triggered at: {run_status.triggered_at.astimezone().strftime("%m-%d %H:%M")}
-                    * Organization: {run_status.organization_id}
-                    * Triggered by: {run_status.triggered_by}
-                    """
-                )
+            if run_status:
+                with ui.card():
+                    ui.markdown(
+                        f"""
+                        * Application Version: {run_status.application_version_id}
+                        * Application Run ID: {run.application_run_id}
+                        * Status: {run_status.status.value}
+                        * Triggered at: {run_status.triggered_at.astimezone().strftime("%m-%d %H:%M")}
+                        * Organization: {run_status.organization_id}
+                        * Triggered by: {run_status.triggered_by}
+                        """
+                    )
 
-            with ui.list().props("bordered separator").classes("full-width"):  # noqa: PLR1702
+            with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):  # noqa: PLR1702
                 for item in run.results():
                     with ui.item().props("clickable"):
                         with ui.item_section().props("avatar"):
@@ -911,13 +930,17 @@ class PageBuilder(BasePageBuilder):
                                                         ui.button(
                                                             "Preview",
                                                             icon=_mime_type_to_icon(artifact.mime_type),
-                                                            on_click=lambda _, url=url: tiff_dialog_open(title, url),
+                                                            on_click=lambda _, url=url, title=title: tiff_dialog_open(
+                                                                title, url
+                                                            ),
                                                         )
                                                     if artifact.mime_type == "text/csv":
                                                         ui.button(
                                                             "Preview",
                                                             icon=_mime_type_to_icon(artifact.mime_type),
-                                                            on_click=lambda _, url=url: csv_dialog_open(title, url),
+                                                            on_click=lambda _, url=url, title=title: csv_dialog_open(
+                                                                title, url
+                                                            ),
                                                         )
 
                                                     with ui.link(target=artifact.download_url, new_tab=True):
@@ -931,5 +954,5 @@ class PageBuilder(BasePageBuilder):
                                                         "mainMenuBar": False,
                                                         "navigationBar": True,
                                                         "statusBar": False,
-                                                    }).style("width: 100%")
+                                                    }).style(WIDTH_100)
                                             ui.label(f"ID: {artifact.output_artifact_id!s}")
