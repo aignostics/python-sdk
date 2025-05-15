@@ -8,7 +8,7 @@ BUILT_WITH_LOVE = "built with love in Berlin"
 @pytest.mark.xdist_group(name="docker")
 @pytest.mark.skip_with_act
 @pytest.mark.docker
-# @pytest.mark.long_running
+@pytest.mark.long_running
 @pytest.mark.scheduled
 def test_core_docker_cli_help_with_love(docker_services) -> None:
     """Test the CLI help command with docker services returns expected output."""
