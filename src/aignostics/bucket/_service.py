@@ -4,6 +4,7 @@ from typing import Any
 
 from boto3 import Session
 from botocore.client import BaseClient, Config
+from botocore.exceptions import ClientError
 
 from aignostics.utils import BaseService, Health, get_logger
 
@@ -151,7 +152,7 @@ class Service(BaseService):
                 # Process directories (common prefixes)
                 for prefix in common_prefixes:
                     if prefix.get("Prefix") not in {None, ""}:
-                        prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
+                        prefix_path = f"{prefix['Prefix']}"
                         result.append({
                             "key": prefix_path,
                             "size": 0,
@@ -167,7 +168,7 @@ class Service(BaseService):
                         # Determine if this item is a "directory" (ends with /)
                         item_key = item["Key"]
                         item_type = "directory" if item_key.endswith("/") else "file"
-                        item_path = f"{self._settings.name}/{item_key}"
+                        item_path = f"{item_key}"
 
                         result.append({
                             "key": item_path,
@@ -181,13 +182,13 @@ class Service(BaseService):
                 # Process directories (common prefixes) for non-detailed view
                 for prefix in common_prefixes:
                     if prefix.get("Prefix") not in {None, ""}:
-                        prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
+                        prefix_path = f"{prefix['Prefix']}"
                         result.append(prefix_path)
 
                 # Process files for non-detailed view
                 for item in contents:
                     if item.get("Key") not in {None, ""}:
-                        item_path = f"{self._settings.name}/{item['Key']}"
+                        item_path = f"{item['Key']}"
                         result.append(item_path)
 
         return result
@@ -206,6 +207,13 @@ class Service(BaseService):
             logger.debug("Deleting key: %s", key)
             # Strip bucket prefix if present in key
             pruned_key = key.removeprefix(f"{self._settings.name}/")
-            s3c.delete_object(Bucket=self._settings.name, Key=pruned_key)
-
+            try:
+                s3c.delete_object(Bucket=self._settings.name, Key=pruned_key)
+            except ClientError as e:
+                if e.response["Error"]["Code"] == "NoSuchKey":
+                    logger.warning("Object with key '%s' not found", key)
+                    return False
+                logger.exception("Error deleting object with key '%s'", key)
+                return False
+        logger.info("Deleted %d objects", len(keys))
         return True

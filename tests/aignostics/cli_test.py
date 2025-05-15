@@ -1,6 +1,7 @@
 """Tests to verify the CLI functionality of OE Python Template."""
 
 import os
+import platform
 import subprocess
 import sys
 from importlib.util import find_spec
@@ -118,6 +119,7 @@ if find_spec("nicegui"):
             frameless=False,
             show_welcome_message=False,
             show=False,
+            window_size=None,
         ):
             nonlocal mock_ui_run_called, mock_ui_run_args
             mock_ui_run_called = True
@@ -132,6 +134,7 @@ if find_spec("nicegui"):
                 "frameless": frameless,
                 "show_welcome_message": show_welcome_message,
                 "show": show,
+                "window_size": window_size,
             }
 
         def mock_gui_register_pages():
@@ -164,13 +167,16 @@ if find_spec("nicegui"):
 
         # Check that ui.run was called with the expected parameters
         assert mock_ui_run_called, "ui.run was not called"
-        assert mock_ui_run_args["title"] == "Aignostics Python SDK", "title parameter is incorrect"
+        assert mock_ui_run_args["title"] == "Aignostics Platform Launchpad", "title parameter is incorrect"
         assert mock_ui_run_args["favicon"] == "🔬", "favicon parameter is incorrect"
         assert mock_ui_run_args["native"] is True, "native parameter should be True"
         assert mock_ui_run_args["reload"] is False, "reload parameter is incorrect"
         assert not mock_ui_run_args["dark"], "dark parameter should be False"
-        assert mock_ui_run_args["frameless"] is False, "frameless parameter should be False"
-        assert mock_ui_run_args["show_welcome_message"] is True, "show_welcome_message parameter should be True"
+        if platform.system() == "Darwin":
+            assert mock_ui_run_args["frameless"] is True, "frameless parameter should be True"
+        else:
+            assert mock_ui_run_args["frameless"] is False, "frameless parameter should be False"
+        assert mock_ui_run_args["show_welcome_message"] is False, "show_welcome_message parameter should be False"
         assert mock_ui_run_args["show"] is False, "show parameter should be False"
 
 

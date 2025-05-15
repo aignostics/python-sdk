@@ -24,6 +24,7 @@ class PageBuilder(BasePageBuilder):
         async def page_index() -> None:  # noqa: RUF029
             """Index page of bucket module."""
             with frame("Manage Cloud Bucket on Aignostics Platform", left_sidebar=False):
+                # Nothing to do here, just to show the page
                 pass
             with ui.row(align_items="start").classes("w-full"):
                 ui.markdown("""

@@ -25,6 +25,8 @@ from ._utils import (
     retrieve_and_print_run_details,
 )
 
+MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
+
 logger = get_logger(__name__)
 
 cli = typer.Typer(name="application", help="Run applications on Aignostics platform.")
@@ -272,28 +274,10 @@ def application_describe(
     return True
 
 
-@bucket_app.command("ls")
-def bucket_ls() -> None:
-    """List contents of tranfer bucket."""
-    console.print("bucket ls")
-
-
-@bucket_app.command("purge")
-def bucket_purge() -> None:
-    """Purge content of transfer bucket."""
-    console.print("bucket purged.")
-
-
-@datasset_app.command("download")
-def dataset_download() -> None:
-    """Download dataset."""
-    console.print("dataset download")
-
-
 @metadata_app.command("generate")
 def metadata_generate() -> None:
     """Generate metadata."""
-    console.print("generate metadata")
+    console.print(MESSAGE_NOT_YET_IMPLEMENTED)
 
 
 @run_app.command("submit")
@@ -458,7 +442,7 @@ def run_cancel(
 @result_app.command("describe")
 def result_describe() -> None:
     """Describe the result of an application run."""
-    console.print("NOT YET IMPLEMENTED")
+    console.print(MESSAGE_NOT_YET_IMPLEMENTED)
 
 
 @result_app.command("download")
@@ -517,4 +501,4 @@ def result_download(
 @result_app.command("delete")
 def result_delete() -> None:
     """Delete the result of an application run."""
-    console.print("NOT YET IMPLEMENTED")
+    console.print(MESSAGE_NOT_YET_IMPLEMENTED)

@@ -282,7 +282,7 @@ class Service(BaseService):
             upload_id (str): The ID of the upload.
             application_version_id (str): The ID of the application version.
             metadata (list[dict[str, Any]]): The metadata to upload.
-            upload_progress_queue (Queue[Dict[str, Any]]): The queue to use for progress updates.
+            upload_progress_queue (Queue): The queue to use for progress updates.
 
         Returns:
             bool: True if the upload was successful, False otherwise.
@@ -320,7 +320,7 @@ class Service(BaseService):
             ):
 
                 def read_in_chunks(
-                    reference: str, file_size: int, upload_progress_queue: Queue[dict[str, Any]]
+                    reference: str, file_size: int, upload_progress_queue: Queue
                 ) -> Generator[bytes, None, None]:
                     while True:
                         chunk = f.read(1048576)

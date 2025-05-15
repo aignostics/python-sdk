@@ -61,6 +61,8 @@ class PageBuilder(BasePageBuilder):
                     return "biotech"
                 case "two-task-dummy":
                     return "construction"
+                case "test-app":
+                    return "construction"
                 case _:
                     return "bug_report"
 

@@ -1,4 +1,3 @@
-import os
 import platform
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -78,7 +77,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         dark=dark_mode,
         host=host,
         port=port or native_app.find_open_port(),
-        frameless=native and os.name not in {"nt", "linux"},
+        frameless=native and platform.system() == "Darwin",
         show_welcome_message=native is False,
         show=show,
         window_size=(1200, 768) if native else None,

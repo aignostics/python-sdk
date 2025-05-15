@@ -183,6 +183,7 @@ aignostics --help ``
 - Pin Versions, see 0.10.0
 - Proxy for Windows
 - File Selection on Linux
+- Detection of Staining
 
 # Features
 - QuPath Integration

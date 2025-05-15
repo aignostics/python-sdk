@@ -317,6 +317,16 @@ concurrency = ["thread", "multiprocessing"]
 
 [tool.coverage.paths]
 source = ["src/"]
+omit = [
+    "src/aignostics/application/_gui.py",
+    "src/aignostics/bucket/_gui.py",
+    "src/aignostics/gui",
+    "src/aignostics/idc/_gui.py",
+    "src/aignostics/marimo/_gui.py",
+    "src/aignostics/marimo/_notebook.py",
+    "src/aignostics/system/_gui.py",
+    "src/aignostics/thumbnail/_gui.py",
+]
 
 
 [tool.bumpversion]

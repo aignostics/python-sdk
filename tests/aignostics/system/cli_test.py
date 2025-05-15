@@ -84,6 +84,7 @@ def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunn
             frameless=False,
             show_welcome_message=True,
             show=False,
+            window_size=None,
         )
 
 

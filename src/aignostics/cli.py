@@ -24,7 +24,7 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
         """Open graphical user interface (GUI)."""
         from .utils import gui_run  # noqa: PLC0415
 
-        gui_run(native=True, with_api=False, title="Aignostics Platform Launcher", icon="🔬")
+        gui_run(native=True, with_api=False, title="Aignostics Platform Launchpad", icon="🔬")
 
 
 if find_spec("marimo"):
