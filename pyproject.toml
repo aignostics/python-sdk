@@ -105,7 +105,7 @@ dependencies = [
     "urllib3>=2.2.3",
     "shapely>=2.1.0",
     "wsidicom>=0.27.0",
-    "pywebview[qt]>=5.4; sys_platform == 'linux'",
+    #    "pywebview[qt6]>=5.4; sys_platform == 'linux'",
 ]
 
 [project.optional-dependencies]
@@ -310,23 +310,13 @@ md_report_exclude_outcomes = ["passed", "skipped"]
 sigterm = true
 relative_files = true
 source = ["src"]
-omit = []
+omit = ["*/_gui.py", "*/_notebook.py", "src/aignostics/gui"]
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]
 
 [tool.coverage.paths]
 source = ["src/"]
-omit = [
-    "src/aignostics/application/_gui.py",
-    "src/aignostics/bucket/_gui.py",
-    "src/aignostics/gui",
-    "src/aignostics/idc/_gui.py",
-    "src/aignostics/marimo/_gui.py",
-    "src/aignostics/marimo/_notebook.py",
-    "src/aignostics/system/_gui.py",
-    "src/aignostics/thumbnail/_gui.py",
-]
 
 
 [tool.bumpversion]

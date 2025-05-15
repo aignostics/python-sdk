@@ -320,7 +320,9 @@ class Service(BaseService):
             ):
 
                 def read_in_chunks(
-                    reference: str, file_size: int, upload_progress_queue: Queue
+                    reference: str,
+                    file_size: int,
+                    upload_progress_queue: Queue,  # type: ignore[type-arg]
                 ) -> Generator[bytes, None, None]:
                     while True:
                         chunk = f.read(1048576)
