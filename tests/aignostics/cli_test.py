@@ -56,6 +56,7 @@ def test_cli_fails_on_invalid_setting_with_env_arg() -> None:
     assert "Input should be 'CRITICAL'" in result.stdout
 
 
+@pytest.mark.sequential
 def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
     """Check system fails on boot with invalid setting using CliRunner and environment variables."""
     # Set the environment variable directly
