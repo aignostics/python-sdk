@@ -45,6 +45,7 @@
         "codegen/**",
         "_notebook.py",
         "e2e.py",
+        "**/.vendored/**",
         "src/aignostics/dicom/_handler.py"
     ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,

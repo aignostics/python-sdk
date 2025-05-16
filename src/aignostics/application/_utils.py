@@ -18,6 +18,7 @@ from aignostics.platform import (
     Client,
     InputArtifact,
     InputItem,
+    NotFoundException,
 )
 from aignostics.utils import console, get_logger
 
@@ -260,12 +261,15 @@ def find_run_by_id(run_id: str, client: Client) -> ApplicationRun | None:
     Returns:
         The ApplicationRun object if found, None otherwise
     """
-    runs = client.runs.list()
+    try:
+        runs = client.runs.list()
 
-    for run in runs:
-        run_status = run.status()
-        if run_status.application_run_id == run_id:
-            return run
+        for run in runs:
+            run_status = run.status()
+            if run_status.application_run_id == run_id:
+                return run
+    except NotFoundException:
+        pass
 
     return None
 

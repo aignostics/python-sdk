@@ -175,13 +175,13 @@ class _Runner:
             self._marimo_server = None
             logger.info("Marimo server stopped")
         else:
-            logger.warning("Marimo server is not running")
+            logger.debug("Marimo server is not running")
         if self._monitor_thread is not None:
             self._monitor_thread.join()
             self._monitor_thread = None
             logger.info("Monitor thread stopped")
         else:
-            logger.warning("Monitor thread is not running")
+            logger.debug("Monitor thread is not running")
         logger.info("Service stopped")
 
 

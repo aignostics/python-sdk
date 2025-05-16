@@ -25,6 +25,7 @@ def test_cli_health(runner: CliRunner) -> None:
     assert "UP" in result.output
 
 
+@pytest.mark.sequential
 def test_cli_info(runner: CliRunner) -> None:
     """Check health is true."""
     result = runner.invoke(cli, ["system", "info"])
@@ -32,6 +33,7 @@ def test_cli_info(runner: CliRunner) -> None:
     assert "aignostics.log" in result.output
 
 
+@pytest.mark.sequential
 def test_cli_info_secrets(runner: CliRunner) -> None:
     """Check secrets only shown if requested."""
     with runner.isolated_filesystem():

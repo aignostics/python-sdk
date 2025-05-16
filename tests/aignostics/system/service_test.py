@@ -3,9 +3,12 @@
 import os
 from unittest import mock
 
+import pytest
+
 from aignostics.system._service import Service
 
 
+@pytest.mark.timeout(15)
 def test_is_token_valid() -> None:
     """Test that is_token_valid works correctly with environment variable."""
     # Set the environment variable for the test

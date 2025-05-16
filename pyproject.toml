@@ -261,7 +261,14 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["bottle.py", "tiff", "dicom", "application/_gui.py", "_notebook.py"]
+exclude = [
+    "bottle.py",
+    "tiff",
+    "dicom",
+    "application/_gui.py",
+    "_notebook.py",
+    "bottle.py",
+]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
