@@ -325,6 +325,7 @@ def _generate_api_reference(session: nox.Session) -> None:
         output_file = f"API_REFERENCE_{version}.md"
         session.run(
             "npx",
+            "--yes",
             "widdershins",
             f"docs/source/_static/openapi_{version}.yaml",
             "--omitHeader",

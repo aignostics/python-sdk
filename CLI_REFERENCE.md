@@ -169,39 +169,6 @@ $ aignostics application bucket [OPTIONS] COMMAND [ARGS]...
 
 * `--help`: Show this message and exit.
 
-**Commands**:
-
-* `ls`: List contents of tranfer bucket.
-* `purge`: Purge content of transfer bucket.
-
-#### `aignostics application bucket ls`
-
-List contents of tranfer bucket.
-
-**Usage**:
-
-```console
-$ aignostics application bucket ls [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-#### `aignostics application bucket purge`
-
-Purge content of transfer bucket.
-
-**Usage**:
-
-```console
-$ aignostics application bucket purge [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
 ### `aignostics application dataset`
 
 Datasets for use as input for applications
@@ -210,24 +177,6 @@ Datasets for use as input for applications
 
 ```console
 $ aignostics application dataset [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `download`: Download dataset.
-
-#### `aignostics application dataset download`
-
-Download dataset.
-
-**Usage**:
-
-```console
-$ aignostics application dataset download [OPTIONS]
 ```
 
 **Options**:
@@ -464,6 +413,8 @@ $ aignostics bucket [OPTIONS] COMMAND [ARGS]...
 
 * `ls`: List objects in bucket on Aignostics...
 * `find`: Find objects in bucket on Aignostics...
+* `delete`: Find objects in bucket on Aignostics...
+* `purge`: Purge all objects in bucket on Aignostics...
 
 ### `aignostics bucket ls`
 
@@ -495,6 +446,38 @@ $ aignostics bucket find [OPTIONS]
 * `--detail / --no-detail`: Show details  [default: no-detail]
 * `--help`: Show this message and exit.
 
+### `aignostics bucket delete`
+
+Find objects in bucket on Aignostics Platform.
+
+**Usage**:
+
+```console
+$ aignostics bucket delete [OPTIONS] KEY
+```
+
+**Arguments**:
+
+* `KEY`: key of object in object  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics bucket purge`
+
+Purge all objects in bucket on Aignostics Platform.
+
+**Usage**:
+
+```console
+$ aignostics bucket purge [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
 ## `aignostics dicom`
 
 Operations on DICOM datasets.
@@ -512,9 +495,7 @@ $ aignostics dicom [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `inspect`: Inspect DICOM files at any hierarchy level.
-* `validate`: Validate DICOM files.
 * `geojson`: Operations on GeoJSON files.
-* `wsi`: Operations on WSI files.
 
 ### `aignostics dicom inspect`
 
@@ -534,30 +515,6 @@ $ aignostics dicom inspect [OPTIONS] PATH
 
 * `--verbose / --no-verbose`: Verbose output  [default: no-verbose]
 * `--summary / --no-summary`: Show only summary information  [default: no-summary]
-* `--help`: Show this message and exit.
-
-### `aignostics dicom validate`
-
-Validate DICOM files.
-
-**Usage**:
-
-```console
-$ aignostics dicom validate [OPTIONS] DICOM_PATH
-```
-
-**Arguments**:
-
-* `DICOM_PATH`: [required]
-
-**Options**:
-
-* `--verbose / --no-verbose`: [default: no-verbose]
-* `-src, --standard-path PATH`: Base path with the DICOM specs in docbook and json format  [default: /Users/helmut/dicom-validator]
-* `-r, --revision TEXT`: Standard revision (e.g. &quot;2014c&quot;), year of revision, &quot;current&quot; or &quot;local&quot; (latest locally installed)  [default: current]
-* `--force-read`: Force-read DICOM files without DICOM header
-* `--recreate-json`: Force recreating the JSON information from the DICOM specs
-* `-svr, --suppress-vr-warnings`: Suppress warnings for values not matching value representation (VR)
 * `--help`: Show this message and exit.
 
 ### `aignostics dicom geojson`
@@ -590,50 +547,11 @@ $ aignostics dicom geojson import [OPTIONS] DICOM_PATH GEOJSON_PATH
 
 **Arguments**:
 
-* `DICOM_PATH`: [required]
-* `GEOJSON_PATH`: [required]
+* `DICOM_PATH`: Path to the DICOM file  [required]
+* `GEOJSON_PATH`: Path to the GeoJSON file  [required]
 
 **Options**:
 
-* `--help`: Show this message and exit.
-
-### `aignostics dicom wsi`
-
-Operations on WSI files.
-
-**Usage**:
-
-```console
-$ aignostics dicom wsi [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--verbose / --no-verbose`: [default: no-verbose]
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `convert`: Convert a WSI to DICOM SM instances.
-
-#### `aignostics dicom wsi convert`
-
-Convert a WSI to DICOM SM instances.
-
-**Usage**:
-
-```console
-$ aignostics dicom wsi convert [OPTIONS] WSI_PATH DICOM_PATH
-```
-
-**Arguments**:
-
-* `WSI_PATH`: [required]
-* `DICOM_PATH`: [required]
-
-**Options**:
-
-* `-i, --id-base INTEGER`: Base for ID generation  [default: 1]
 * `--help`: Show this message and exit.
 
 ## `aignostics idc`
