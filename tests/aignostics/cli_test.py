@@ -170,15 +170,24 @@ if find_spec("nicegui"):
         assert mock_ui_run_called, "ui.run was not called"
         assert mock_ui_run_args["title"] == "Aignostics Platform Launchpad", "title parameter is incorrect"
         assert mock_ui_run_args["favicon"] == "🔬", "favicon parameter is incorrect"
-        assert mock_ui_run_args["native"] is True, "native parameter should be True"
+        if platform.system() == "Linux":
+            assert mock_ui_run_args["native"] is False, "native parameter should be False on Linux"
+            assert mock_ui_run_args["show_welcome_message"] is True, (
+                "show_welcome_message parameter should be True when native is False"
+            )
+            assert mock_ui_run_args["show"] is True, "show parameter should be True when native is False"
+        else:
+            assert mock_ui_run_args["native"] is True, "native parameter should be True on platforms other than Linux"
+            assert mock_ui_run_args["show_welcome_message"] is False, (
+                "show_welcome_message parameter should be False when native is True"
+            )
+            assert mock_ui_run_args["show"] is False, "show parameter should be False when native is True"
         assert mock_ui_run_args["reload"] is False, "reload parameter is incorrect"
         assert not mock_ui_run_args["dark"], "dark parameter should be False"
         if platform.system() == "Darwin":
             assert mock_ui_run_args["frameless"] is True, "frameless parameter should be True"
         else:
             assert mock_ui_run_args["frameless"] is False, "frameless parameter should be False"
-        assert mock_ui_run_args["show_welcome_message"] is False, "show_welcome_message parameter should be False"
-        assert mock_ui_run_args["show"] is False, "show parameter should be False"
 
 
 if find_spec("marimo") and find_spec("fastapi"):
