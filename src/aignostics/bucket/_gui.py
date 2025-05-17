@@ -1,4 +1,4 @@
-"""GUI of Bucket Module."""
+"""GUI of bucket module."""
 
 from aignostics.gui import frame
 

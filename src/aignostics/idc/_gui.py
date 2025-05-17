@@ -1,4 +1,4 @@
-"""GUI for IDC."""
+"""GUI of idc module."""
 
 from multiprocessing import Manager
 from pathlib import Path

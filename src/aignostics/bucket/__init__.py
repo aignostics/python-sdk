@@ -1,4 +1,4 @@
-"""National Institute of Cancer (NIC) Image Data Commons (IDC) module."""
+"""Bucket module."""
 
 from importlib.util import find_spec
 

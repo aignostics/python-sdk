@@ -1,4 +1,4 @@
-"""Settings of the application module."""
+"""Settings of the bucket module."""
 
 from enum import StrEnum
 from typing import Annotated

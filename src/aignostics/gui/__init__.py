@@ -1,4 +1,4 @@
-"""Layout, Menu and Theme of GUI."""
+"""Layout and theme of GUI."""
 
 from importlib.util import find_spec
 

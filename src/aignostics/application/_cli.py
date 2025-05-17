@@ -1,4 +1,4 @@
-"""CLI (Command Line Interface) of Aignostics Python SDK."""
+"""CLI of application module."""
 
 import time
 from collections.abc import Generator

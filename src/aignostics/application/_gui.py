@@ -1,4 +1,4 @@
-"""Homepage (index) of GUI."""
+"""GUI of application module including homepage of app."""
 
 import time
 from importlib.util import find_spec

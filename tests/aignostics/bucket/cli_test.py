@@ -18,7 +18,7 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
-def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:
+def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0912, PLR0915
     """E2E flow testing all bucket CLI commands.
 
     1. Creates 9 files with 2 sub directories in tmpdir, with total file size of 1MB

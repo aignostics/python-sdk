@@ -1,4 +1,4 @@
-"""CLI of Image Data Commons Group (IDC) module."""
+"""CLI of idc module."""
 
 import webbrowser
 from pathlib import Path
@@ -129,15 +129,15 @@ def download(
     index_df = client.index
     client.fetch_index("sm_instance_index")
     logger.info("Downloaded instance index")
-    sm_instance_index_df = client.sm_instance_index  # type: ignore[attr-defined]
+    sm_instance_index_df = client.sm_instance_index
 
     def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
         if column_name != "SOPInstanceUID":
             matches = index_df[column_name].isin(item_ids)
             matched_ids = index_df[column_name][matches].unique().tolist()
         else:
-            matches = sm_instance_index_df[column_name].isin(item_ids)
-            matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()
+            matches = sm_instance_index_df[column_name].isin(item_ids)  # type: ignore
+            matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()  # type: ignore
         if not matched_ids:
             return False
         unmatched_ids = list(set(item_ids) - set(matched_ids))

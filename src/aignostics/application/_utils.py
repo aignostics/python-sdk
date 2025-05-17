@@ -1,4 +1,4 @@
-"""Utility functions to ease using the platform client."""
+"""Utility functions for printing of resources."""
 
 import csv
 from enum import StrEnum
