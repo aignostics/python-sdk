@@ -51,6 +51,7 @@ def mime_type_to_file_ending(mime_type: str) -> str:
     raise ValueError(msg)
 
 
+# TODO(Andreas,Helmut): discuss
 def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None:
     """Downloads a file from a signed URL and verifies its integrity.
 

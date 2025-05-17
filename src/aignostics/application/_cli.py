@@ -10,16 +10,12 @@ import requests
 import typer
 from tqdm.rich import tqdm
 
-from aignostics.platform import generate_signed_url
+from aignostics.platform import Client, generate_signed_url
 from aignostics.utils import console, get_logger
 
 from ._utils import (
     construct_input_items,
     create_signed_upload_url,
-    find_application_by_id,
-    find_latest_application_version_id,
-    find_run_by_id,
-    get_platform_client,
     print_runs_non_verbose,
     print_runs_verbose,
     retrieve_and_print_run_details,
@@ -131,7 +127,7 @@ def upload(
 
 
 @cli.command("list")
-def application_list(  # noqa: C901
+def application_list(
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
 ) -> bool:
     """List available applications.
@@ -142,12 +138,8 @@ def application_list(  # noqa: C901
     Returns:
         bool: Success status of the operation
     """
-    platform_client = get_platform_client()
-    if not platform_client:
-        return False
-
     try:
-        applications = platform_client.applications.list()
+        applications = Client().applications.find()
     except Exception as e:
         logger.exception("Failed to list applications")
         console.print(f"[bold red]Error:[/bold red] Failed to list applications: {e}")
@@ -167,7 +159,7 @@ def application_list(  # noqa: C901
 
             # Display available versions
             try:
-                versions = list(platform_client.applications.versions.list(app))
+                versions = list(Client().applications.versions.find(app))
             except Exception as e:
                 logger.exception("Failed to list versions for application '%s'", app.application_id)
                 console.print(
@@ -196,7 +188,7 @@ def application_list(  # noqa: C901
         for app in applications:
             app_count += 1
             # Get latest version info for this application
-            latest_version = find_latest_application_version_id(app, platform_client)
+            latest_version = Client().versions.find_latest_version_id(app)
             console.print(f"- [bold]{app.application_id}[/bold] - latest application version id: `{latest_version}`")
 
     if app_count == 0:
@@ -218,12 +210,8 @@ def application_describe(
     Returns:
         bool: Success status of the operation
     """
-    platform_client = get_platform_client()
-    if not platform_client:
-        return False
-
     try:
-        application = find_application_by_id(application_id, platform_client)
+        application = Client().application(application_id)
     except Exception as e:
         logger.exception("Failed to find application with ID '%s'", application_id)
         console.print(f"[bold red]Error:[/bold red] Failed to find application: {e}")
@@ -245,7 +233,7 @@ def application_describe(
         console.print(f"  {line}")
 
     # Display available versions
-    versions = list(platform_client.applications.versions.list(application))
+    versions = list(Client().applications.versions.find(application))
     if versions:
         console.print()
         console.print("[bold]Available Versions:[/bold]")
@@ -301,10 +289,6 @@ def run_submit(
     Returns:
         bool: Success status of the operation
     """
-    platform_client = get_platform_client()
-    if not platform_client:
-        return False
-
     source_csv = Path(source)
     if not source_csv.is_file():
         logger.warning("Source file '%s' does not exist.", source)
@@ -313,7 +297,7 @@ def run_submit(
     payload = construct_input_items(source_csv)
 
     try:
-        application_run = platform_client.runs.create(application_version=application_version_id, items=payload)
+        application_run = Client().runs.create(application_version=application_version_id, items=payload)
     except Exception as e:
         logger.exception("Failed to create run for application version '%s'", application_version_id)
         console.print(
@@ -337,20 +321,14 @@ def run_list(
     Returns:
         bool: Success status of the operation
     """
-    platform_client = get_platform_client()
-    if not platform_client:
-        return False
-
     try:
-        # List all runs and convert generator to list
-        runs = list(platform_client.runs.list())
+        runs_data = list(Client().runs.find_data())
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[bold red]Error:[/bold red] Failed to list runs: {e}")
         return False
 
-    # Use different display functions based on verbose flag
-    run_count = print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
+    run_count = print_runs_verbose(runs_data, Client()) if verbose else print_runs_non_verbose(runs_data)
 
     if run_count == 0:
         logger.warning("No application runs found.")
@@ -360,7 +338,7 @@ def run_list(
 
 
 @run_app.command("describe")
-def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desfribe")]) -> bool:
+def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to describe")]) -> bool:
     """Describe run.
 
     Args:
@@ -371,31 +349,14 @@ def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desf
     """
     logger.debug("Describing run with ID '%s'", run_id)
 
-    platform_client = get_platform_client()
-    if not platform_client:
-        return False
-
     try:
-        run = find_run_by_id(run_id, platform_client)
+        retrieve_and_print_run_details(Client().run(run_id))
     except Exception as e:
-        logger.exception("Failed to find run with ID '%s'", run_id)
-        console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
+        logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to retrieve run details for ID '{run_id}': {e}")
         return False
-
-    if run:
-        logger.debug("Found run with ID '%s'", run_id)
-        try:
-            retrieve_and_print_run_details(run, run_id)
-        except Exception as e:
-            logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
-            console.print(f"[bold red]Error:[/bold red] Failed to retrieve run details for ID '{run_id}': {e}")
-            return False
-        logger.info("Described run with ID '%s'", run_id)
-        return True
-
-    logger.warning("Run with ID '%s' not found.", run_id)
-    console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
-    return False
+    logger.info("Described run with ID '%s'", run_id)
+    return True
 
 
 @run_app.command("cancel")
@@ -412,31 +373,15 @@ def run_cancel(
     """
     logger.debug("Canceling run with ID '%s'", run_id)
 
-    platform_client = get_platform_client()
-    if not platform_client:
-        return False
-
     try:
-        run = find_run_by_id(run_id, platform_client)
+        Client().run(run_id).cancel()
     except Exception as e:
-        logger.exception("Failed to find run with ID '%s'", run_id)
-        console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
+        logger.exception("Failed to cancel run with ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
         return False
-
-    if run:
-        try:
-            run.cancel()
-        except Exception as e:
-            logger.exception("Failed to cancel run with ID '%s'", run_id)
-            console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
-            return False
-        logger.info("Canceled run with ID '%s'.", run)
-        console.print(f"Run with ID '{run_id}' has been canceled.")
-        return True
-
-    logger.warning("Run with ID '%s' not found.", run_id)
-    console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
-    return False
+    logger.info("Canceled run with ID '%s'.", run_id)
+    console.print(f"Run with ID '{run_id}' has been canceled.")
+    return True
 
 
 @result_app.command("describe")
@@ -470,16 +415,7 @@ def result_download(
         console.log(f"[bold red]Error:[/bold red] Failed to create destination directory '{destination}': {e}")
         return False
 
-    platform_client = get_platform_client()
-    if not platform_client:
-        return False
-
-    try:
-        run = find_run_by_id(run_id, platform_client)
-    except Exception as e:
-        logger.exception("Failed to find run with ID '%s'", run_id)
-        console.print(f"[bold red]Error:[/bold red] Failed to find run with ID '{run_id}': {e}")
-        return False
+    run = Client().run(run_id)
 
     if run:
         logger.debug("Found run with ID '%s'", run_id)

@@ -261,14 +261,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = [
-    "bottle.py",
-    "tiff",
-    "dicom",
-    "application/_gui.py",
-    "_notebook.py",
-    "bottle.py",
-]
+exclude = ["_notebook.py", "application/_gui.py", "bottle.py", "dicom", "tiff"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -289,7 +282,6 @@ warn_untyped_fields = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# openapi code generate creates tests with test_*.py
 python_files = ["*_test.py", "test_*.py"]
 addopts = "-v --strict-markers --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 asyncio_mode = "auto"

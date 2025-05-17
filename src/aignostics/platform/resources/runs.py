@@ -18,14 +18,18 @@ from aignx.codegen.models import (
     ItemStatus,
     RunCreationRequest,
     RunCreationResponse,
-    RunReadResponse,
+)
+from aignx.codegen.models import (
+    RunReadResponse as ApplicationRunData,
 )
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
 from aignostics.platform._utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
 from aignostics.platform.resources.applications import Versions
-from aignostics.platform.resources.utils import paginate
+from aignostics.platform.resources.utils import paginate, paginate_flex
+
+LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 
 
 class ApplicationRun:
@@ -58,11 +62,24 @@ class ApplicationRun:
 
         return cls(Client.get_api_client(cache_token=False), application_run_id)
 
-    def status(self) -> RunReadResponse:
+    # TODO(Andreas,Helmut): Discuss if we can get rid of this one,
+    # which is not only returning the status, but the whole run data.
+    def status(self) -> ApplicationRunData:
         """Retrieves the current status of the application run.
 
         Returns:
-            RunReadResponse: The run status details.
+            ApplicationRunData: The run data.
+
+        Raises:
+            Exception: If the API request fails.
+        """
+        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id, include=None)
+
+    def find(self) -> ApplicationRunData:
+        """Finds the application run.
+
+        Returns:
+            ApplicationRunData: The run data.
 
         Raises:
             Exception: If the API request fails.
@@ -214,7 +231,7 @@ class ApplicationRun:
 class Runs:
     """Resource class for managing application runs.
 
-    Provides operations to create, list, and retrieve runs.
+    Provides operations to create, find, and retrieve runs.
     """
 
     def __init__(self, api: PublicApi) -> None:
@@ -259,14 +276,15 @@ class Runs:
         # TODO (Andreas): application_run_id - ensure this is correctly handled. Ignoring for now
         return ApplicationRun(self._api, str(res.application_run_id))
 
-    def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
-        """Lists application runs, optionally filtered by application version.
+    # TODO(Andreas,Helmut): Breaking, renamed from list
+    def find(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
+        """Find application runs, optionally filtered by application version.
 
         Args:
             for_application_version: Optional application version ID to filter by.
 
         Returns:
-            list[ApplicationRun]: A list of application runs.
+            Generator[ApplicationRun, Any, None]: A generator yielding application runs.
 
         Raises:
             Exception: If the API request fails.
@@ -276,6 +294,45 @@ class Runs:
         else:
             res = paginate(self._api.list_application_runs_v1_runs_get, application_version_id=for_application_version)
         return (ApplicationRun(self._api, response.application_run_id) for response in res)
+
+    # TODO(Andreas,Helmut): Discuss
+    def find_data(
+        self,
+        for_application_version: str | None = None,
+        sort: str | None = None,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    ) -> t.Iterator[ApplicationRunData]:
+        """Fetch application runs, optionally filtered by application version.
+
+        Args:
+            for_application_version (str | None): Optional application version ID to filter by.
+            sort (str | None): Optional field to sort by.
+            page_size (int): Number of items per page, defaults to max
+
+        Returns:
+            Iterator[ApplicationRunData]: Iterator yielding application run data.
+
+        Raises:
+            ValueError: If page_size is greater than 100.
+            Exception: If the API request fails.
+        """
+        if page_size > LIST_APPLICATION_RUNS_MAX_PAGE_SIZE:
+            message = (
+                f"page_size is must be less than or equal to {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}, but got {page_size}"
+            )
+            raise ValueError(message)
+        if not for_application_version:
+            res = paginate_flex(
+                self._api.list_application_runs_v1_runs_get, page_size=page_size, sort=[sort] if sort else None
+            )
+        else:
+            res = paginate_flex(
+                self._api.list_application_runs_v1_runs_get,
+                page_size=page_size,
+                application_version_id=for_application_version,
+                sort=[sort + " DESC"] if sort else None,
+            )
+        return res
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.

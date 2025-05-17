@@ -14,19 +14,17 @@ from aignostics.dicom import Service as DicomService
 from aignostics.platform import (
     Application,
     ApplicationRun,
-    ApplicationRunStatus,
+    ApplicationRunData,
     ApplicationVersion,
     Client,
     InputArtifact,
     InputItem,
-    NotFoundException,
 )
 from aignostics.tiff import Service as TiffService
 from aignostics.utils import BaseService, Health, get_logger
 
 from ._settings import Settings
-from ._utils import application_versions_sorted_by_semver, create_signed_download_url, create_signed_upload_url
-from ._utils import find_latest_application_version_id as util_find_latest_application_version_id
+from ._utils import create_signed_download_url, create_signed_upload_url
 
 logger = get_logger(__name__)
 
@@ -39,12 +37,11 @@ class UploadProgressItem(TypedDict, total=False):
     file_upload_progress: float
 
 
-# Services derived from BaseService and exported by modules via their __init__.py are automatically registered
-# with the system module, enabling for dynamic discovery of health, info and further functionality.
 class Service(BaseService):
     """Service of the application module."""
 
     _settings: Settings
+    _client: Client | None = None
 
     def __init__(self) -> None:
         """Initialize service."""
@@ -68,8 +65,7 @@ class Service(BaseService):
             status=Health.Code.UP,
         )
 
-    @staticmethod
-    def _get_platform_client() -> Client:
+    def _get_platform_client(self) -> Client:
         """Get the platform client.
 
         Returns:
@@ -78,14 +74,15 @@ class Service(BaseService):
         Raises:
             Exception: If the client cannot be created.
         """
-        try:
-            logger.debug("Creating authenticated client.")
-            client = Client()
-            logger.debug("Authenticated client created.")
-            return client
-        except Exception:
-            logger.exception("Failed to create authenticated client.")
-            raise
+        if self._client is None:
+            logger.debug("Creating platform client.")
+            try:
+                self._client = Client()
+            except Exception:
+                logger.exception("Failed to create platform client.")
+                raise
+        logger.debug("Using existing platform client.")
+        return self._client
 
     def applications(self) -> Iterator[Application]:
         """Get a list of all applications.
@@ -99,12 +96,7 @@ class Service(BaseService):
         Raises:
             Exception: If the application list cannot be retrieved.
         """
-        platform_client = self._get_platform_client()
-        try:
-            return platform_client.applications.list()
-        except Exception:
-            logger.exception("Failed to list applications.")
-            raise
+        return self._get_platform_client().applications.find()
 
     def application(self, application_id: str) -> Application | None:
         """Get a specific application.
@@ -116,21 +108,9 @@ class Service(BaseService):
             Application | None: The application or None if not found.
 
         Raises:
-            Exception: If the client cannot be created.
-
-        Raises:
             Exception: If the application cannot be retrieved.
         """
-        platform_client = self._get_platform_client()
-        try:
-            applications = platform_client.applications.list()
-            for application in applications:
-                if application.application_id == application_id:
-                    return application
-            return None
-        except Exception:
-            logger.exception("Failed to get application.")
-            raise
+        return self._get_platform_client().application(application_id)
 
     def application_versions(self, application: Application) -> list[ApplicationVersion]:
         """Get a list of all versions of the given application.
@@ -142,19 +122,9 @@ class Service(BaseService):
             list[ApplicationVersion]: A list of all application versions.
 
         Raises:
-            Exception: If the client cannot be created.
-
-        Raises:
-            Exception: If the application version list cannot be retrieved.
+            Exception: If version list cannot be retrieved
         """
-        platform_client = self._get_platform_client()
-        try:
-            return application_versions_sorted_by_semver(application, platform_client)
-        except Exception:
-            logger.exception(
-                "Failed to retrieve application versions for  application id '%s'.", application.application_id
-            )
-            raise
+        return self._get_platform_client().versions.find_sorted(application=application)
 
     def find_latest_application_version_id(self, application: Application) -> str:
         """Find the latest version of the given application.
@@ -163,22 +133,18 @@ class Service(BaseService):
             application (Application): The application to check for the latest version.
 
         Returns:
-            list[str]: A list of all application runs.
+            str: The ID of the latest application version.
 
         Raises:
-            Exception: If the client cannot be created.
-
-        Raises:
-            Exception: If the latest version cannot be retrieved.
+            ValueError: If no versions are found for the application.
+            Exception: If the application cannot be retrieved
         """
-        platform_client = self._get_platform_client()
-        try:
-            return str(util_find_latest_application_version_id(application, platform_client))
-        except Exception:
-            logger.exception(
-                "Failed to retrieve latest application for application id '%s'.", application.application_id
-            )
-            raise
+        latest_version_id = self._get_platform_client().versions.find_latest_version_id(application=application)
+        if not latest_version_id:
+            message = f"No versions found for application {application.application_id}"
+            logger.error(message)
+            raise ValueError(message)
+        return str(latest_version_id)
 
     @staticmethod
     def generate_metadata_from_source_directory(source_directory: Path) -> list[dict[str, Any]]:
@@ -347,76 +313,46 @@ class Service(BaseService):
         return True
 
     @staticmethod
-    def application_runs_with_status_static() -> list[dict[str, Any]]:
-        rtn = []
-        for run, status in Service().application_runs_with_status():
-            rtn.append({
+    def application_runs_static() -> list[dict[str, Any]]:
+        return [
+            {
                 "application_run_id": run.application_run_id,
-                "application_version_id": status.application_version_id,
-                "triggered_at": status.triggered_at,
-                "status": status.status,
-            })
-        return rtn
+                "application_version_id": run.application_version_id,
+                "triggered_at": run.triggered_at,
+                "status": run.status,
+            }
+            for run in Service().application_runs()
+        ]
 
-    def application_runs_with_status(self) -> list[tuple[ApplicationRun, ApplicationRunStatus]]:
+    def application_runs(self) -> list[ApplicationRunData]:
         """Get a list of all application runs.
 
         Returns:
-            list[str]: A list of all application runs.
-
-        Raises:
-            Exception: If the client cannot be created.
+            list[ApplicationRunData]: A list of all application runs.
 
         Raises:
             Exception: If the application run list cannot be retrieved.
         """
-        platform_client = self._get_platform_client()
         try:
-            try:
-                runs = platform_client.runs.list()
-                if not runs:
-                    logger.debug("No application runs found.")
-                    return []
-                runs_with_status = []
-                for run in runs:
-                    try:
-                        run_status = run.status()
-                        if run_status:
-                            runs_with_status.append((run, run_status))
-                    except Exception:
-                        logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
-                        continue
-            except NotFoundException:
-                logger.exception("Failed to get status for run with ID '%s'", run.application_run_id)
-
-            # Sort runs by triggered_at in descending order (newest first)
-            return sorted(runs_with_status, key=lambda x: x[1].triggered_at, reverse=True)
+            runs = self._get_platform_client().runs.find_data(sort="triggered_at")
+            if not runs:
+                logger.debug("No application runs found.")
+                return []
+            return list(runs)[::-1]
         except Exception:
             logger.exception("Failed to list application runs.")
             raise
 
-    def application_run(self, run_id: str) -> tuple[ApplicationRun, ApplicationRunStatus] | None:
+    def application_run(self, run_id: str) -> ApplicationRun:
         """Find a run by its ID.
 
         Args:
             run_id: The ID of the run to find
 
         Returns:
-            tuple[ApplicationRun, ApplicationRunStatus] | None: The run and its status or None if not found.
+            ApplicationRun: The run that can be fetched using the .find() call.
         """
-        platform_client = self._get_platform_client()
-
-        try:
-            runs = platform_client.runs.list()
-            for run in runs:
-                run_status = run.status()
-                if run_status.application_run_id == run_id:
-                    return (run, run_status)
-        except Exception:
-            logger.exception("Failed to get application run '%s'.", run_id)
-            raise
-
-        return None
+        return self._get_platform_client().run(run_id)
 
     def application_run_submit_from_metadata(
         self, application_version_id: str, metadata: list[dict[str, Any]]
@@ -429,9 +365,6 @@ class Service(BaseService):
 
         Returns:
             ApplicationRun: The submitted run.
-
-        Raises:
-            Exception: If the client cannot be created.
 
         Raises:
             Exception: If submitting the run failed unexpectedly.
@@ -477,9 +410,8 @@ class Service(BaseService):
             else:
                 logger.error("Missing platform bucket URL in metadata: %s", row)
         logger.debug("Items for application run submission: %s", items)
-        platform_client = self._get_platform_client()
         try:
-            run = platform_client.runs.create(application_version=application_version_id, items=items)
+            run = self._get_platform_client().runs.create(application_version=application_version_id, items=items)
             logger.info(
                 "Submitted application run with items: %s, application run id %s", items, run.application_run_id
             )
@@ -499,26 +431,15 @@ class Service(BaseService):
             ApplicationRun: The submitted run.
 
         Raises:
-            Exception: If the client cannot be created.
-
-        Raises:
             Exception: If submitting the run failed unexpectedly.
         """
-        platform_client = self._get_platform_client()
-        try:
-            return platform_client.runs.create(application_version=application_version_id, items=items)
-        except Exception:
-            logger.exception("Failed to submit application run.")
-            raise
+        return self._get_platform_client().runs.create(application_version=application_version_id, items=items)
 
-    def application_run_cancel(self, run_id: str) -> bool:
+    def application_run_cancel(self, run_id: str) -> None:
         """Cancel a run by its ID.
 
         Args:
             run_id: The ID of the run to cancel
-
-        Returns:
-            bool: True if the run was cancelled, False otherwise.
 
         Raises:
             Exception: If the client cannot be created.
@@ -526,15 +447,4 @@ class Service(BaseService):
         Raises:
             Exception: If canceling the run failed unexpectedly.
         """
-        result = self.application_run(run_id)
-        if result is None:
-            logger.warning("Run '%s' not found.", run_id)
-            return False
-
-        run, _status = result
-        try:
-            run.cancel()
-            return True
-        except Exception:
-            logger.exception("Failed to cancel application run '%s'.", run_id)
-            raise
+        self.application_run(run_id).cancel()

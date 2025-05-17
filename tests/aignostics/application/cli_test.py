@@ -68,14 +68,14 @@ def test_cli_run_describe_not_found(runner: CliRunner) -> None:
     """Check run describe command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "describe", "--run-id", "4711"])
     assert result.exit_code == 0
-    assert MESSAGE_RUN_NOT_FOUND in result.output
+    assert "Failed to retrieve run details for ID '4711'" in result.output
 
 
 def test_cli_run_cancel_not_found(runner: CliRunner) -> None:
     """Check run cancel command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "cancel", "--run-id", "4711"])
     assert result.exit_code == 0
-    assert MESSAGE_RUN_NOT_FOUND in result.output
+    assert "Failed to cancel run with ID '4711'" in result.output
 
 
 def test_cli_run_result_describe(runner: CliRunner) -> None:
@@ -91,7 +91,7 @@ def test_cli_run_result_download_not_found(runner: CliRunner, tmp_path: Path) ->
         cli, ["application", "run", "result", "download", "--run-id", "4711", "--destination", str(tmp_path)]
     )
     assert result.exit_code == 0
-    assert MESSAGE_RUN_NOT_FOUND in result.output
+    assert "Failed to download results for run with ID '4711'" in result.output
 
 
 def test_cli_run_result_delete(runner: CliRunner) -> None:

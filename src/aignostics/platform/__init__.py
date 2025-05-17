@@ -12,8 +12,7 @@ from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
 from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import ItemCreationRequest as InputItem
-
-from aignostics.platform._utils import generate_signed_url
+from aignx.codegen.models import RunReadResponse as ApplicationRunData
 
 from ._client import Client
 from ._constants import (
@@ -74,6 +73,7 @@ __all__ = [
     "ApiException",
     "Application",
     "ApplicationRun",
+    "ApplicationRunData",
     "ApplicationRunStatus",
     "ApplicationVersion",
     "Client",

@@ -172,28 +172,32 @@ class PageBuilder(BasePageBuilder):
                 async def application_runs_load_and_render() -> None:
                     with runs_column:
                         try:
-                            runs_with_status = await run.cpu_bound(Service.application_runs_with_status_static)
+                            runs = await run.cpu_bound(Service.application_runs_static)
                             runs_column.clear()
-                            for run_with_status in runs_with_status or []:
-                                with ui.item(
-                                    on_click=lambda run_id=run_with_status["application_run_id"]: ui.navigate.to(
-                                        f"/application/run/{run_id}"
+                            for index, run_data in enumerate(runs):
+                                with (
+                                    ui.item(
+                                        on_click=lambda run_id=run_data["application_run_id"]: ui.navigate.to(
+                                            f"/application/run/{run_id}"
+                                        )
                                     )
-                                ).props("clickable"):
+                                    .props("clickable")
+                                    .mark(f"SIDEBAR_RUN_ITEM:{index}")
+                                ):
                                     with ui.item_section().props("avatar"):
-                                        ui.icon(_run_status_to_icon(run_with_status["status"]))
+                                        ui.icon(_run_status_to_icon(run_data["status"]))
                                     with ui.item_section():
-                                        ui.label(f"{run_with_status['application_version_id']}").tailwind.font_weight(
+                                        ui.label(f"{run_data['application_version_id']}").tailwind.font_weight(
                                             "bold"
                                             if context.client.page.path == "/application/run/{application_run_id}"
-                                            and args.get("application_run_id") == run_with_status["application_run_id"]
+                                            and args.get("application_run_id") == run_data["application_run_id"]
                                             else "normal"
                                         )
                                         ui.label(
                                             f"triggered on "
-                                            f"{run_with_status['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
+                                            f"{run_data['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
                                         )
-                            if not runs_with_status:
+                            if not runs:
                                 with ui.item():
                                     with ui.item_section().props("avatar"):
                                         ui.icon("info")
@@ -760,17 +764,15 @@ class PageBuilder(BasePageBuilder):
         def page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
             """Describe Application."""
             service = Service()
-            result = service.application_run(application_run_id)
-            run = run_status = None
-            if result is not None:
-                run, run_status = result
+            run = service.application_run(application_run_id)
+            run_data = run.find()
 
-            if run and run_status:
+            if run and run_data:
                 _frame(
-                    navigation_icon=_run_status_to_icon(run_status.status.value),
+                    navigation_icon=_run_status_to_icon(run_data.status.value),
                     navigation_title=(
-                        f"Run of {run_status.application_version_id} "
-                        f"on {run_status.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
+                        f"Run of {run_data.application_version_id} "
+                        f"on {run_data.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
                     ),
                     left_sidebar=True,
                     args={"application_run_id": application_run_id},
@@ -868,7 +870,7 @@ class PageBuilder(BasePageBuilder):
                 tiff_view_dialog_content.refresh(title=title, url=url)
                 tiff_view_dialog.open()
 
-            if run_status and run_status.status.value == "running":
+            if run_data and run_data.status.value == "running":
                 with ui.row().classes("w-full justify-end"):
                     ui.button(
                         "Cancel",
@@ -877,7 +879,7 @@ class PageBuilder(BasePageBuilder):
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-            if run_status and run_status.status.value == "completed":
+            if run_data and run_data.status.value == "completed":
                 with ui.row().classes("w-full justify-end"):
                     if find_spec("paquo"):
                         ui.button(
@@ -893,16 +895,16 @@ class PageBuilder(BasePageBuilder):
                         )
                     ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
 
-            if run_status:
+            if run_data:
                 with ui.card():
                     ui.markdown(
                         f"""
-                        * Application Version: {run_status.application_version_id}
+                        * Application Version: {run_data.application_version_id}
                         * Application Run ID: {run.application_run_id}
-                        * Status: {run_status.status.value}
-                        * Triggered at: {run_status.triggered_at.astimezone().strftime("%m-%d %H:%M")}
-                        * Organization: {run_status.organization_id}
-                        * Triggered by: {run_status.triggered_by}
+                        * Status: {run_data.status.value}
+                        * Triggered at: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
+                        * Organization: {run_data.organization_id}
+                        * Triggered by: {run_data.triggered_by}
                         """
                     )
 

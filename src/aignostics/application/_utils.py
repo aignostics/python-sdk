@@ -3,7 +3,6 @@
 import csv
 import os
 from enum import StrEnum
-from operator import itemgetter
 from pathlib import Path
 from typing import Literal, cast
 
@@ -11,14 +10,11 @@ from boto3.session import Session
 from botocore.client import BaseClient, Config
 
 from aignostics.platform import (
-    Application,
     ApplicationRun,
-    ApplicationRunStatus,
-    ApplicationVersion,
+    ApplicationRunData,
     Client,
     InputArtifact,
     InputItem,
-    NotFoundException,
 )
 from aignostics.utils import console, get_logger
 
@@ -43,23 +39,6 @@ class OutputFormat(StrEnum):
 
     TEXT = "text"
     JSON = "json"
-
-
-def get_platform_client() -> Client | None:
-    """Get a client instance.
-
-    Returns:
-        Client | None: A Client instance if successful, None otherwise.
-    """
-    try:
-        logger.debug("Creating authenticated client.")
-        client = Client()
-        logger.debug("Authenticated client created.")
-        return client
-    except Exception as e:
-        logger.exception("Failed to create authenticated client.")
-        console.print(f"[bold red]Error:[/bold red] Failed to connect to Aignostics Platform: {e}")
-    return None
 
 
 def _get_s3_client(endpoint_url: str = "https://storage.googleapis.com") -> BaseClient:
@@ -174,122 +153,21 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
     return payload
 
 
-def application_versions_sorted_by_semver(app: Application, client: Client) -> list[ApplicationVersion]:
-    """Get application versions sorted by semver, latest first.
-
-    Args:
-        app(Application): The application to find versions for
-        client(Client): The Client instance to use
-
-    Returns:
-        list: List of version objects sorted by semantic versioning (latest first),
-            or empty list if no versions are found
-    """
-    # Get versions for this application
-    versions = list(client.applications.versions.list(app))
-
-    # If no versions available
-    if not versions:
-        return []
-
-    # Extract semantic versions from the version property
-    versions_with_semver = []
-    for v in versions:
-        try:
-            # Split into major, minor, patch components for proper comparison
-            version_parts = [int(x) for x in v.version.split(".")]
-            versions_with_semver.append((v, version_parts))
-        except (ValueError, AttributeError):
-            # If we can't parse the version or version attribute doesn't exist, skip it
-            continue
-
-    # Sort by semantic version (major, minor, patch)
-    if versions_with_semver:
-        versions_with_semver.sort(key=itemgetter(1), reverse=True)
-        # Return just the version objects, not the tuples
-        return [item[0] for item in versions_with_semver]
-
-    # If we couldn't parse any versions, return all versions as is
-    return versions
-
-
-def find_latest_application_version_id(app: Application, client: Client) -> str | None:
-    """Find the latest version of an application.
-
-    Args:
-        app(Application): The application to find the latest version for
-        client(Client): The Client instance to use
-
-    Returns:
-        str: The application_version_id of the latest version, or "No versions" if no versions are found
-    """
-    # Get sorted versions using the existing utility function
-    sorted_versions = application_versions_sorted_by_semver(app, client)
-
-    # If no versions available
-    if not sorted_versions:
-        return None
-
-    # The first item is the latest version
-    return str(sorted_versions[0].application_version_id)
-
-
-def find_application_by_id(application_id: str, client: Client) -> Application | None:
-    """Find an application by its ID.
-
-    Args:
-        application_id(str): The ID of the application to find
-        client(Client): The Client instance to use
-
-    Returns:
-        Application | None: The Application object if found, None otherwise
-    """
-    applications = client.applications.list()
-    for application in applications:
-        if application.application_id == application_id:
-            return application
-    return None
-
-
-def find_run_by_id(run_id: str, client: Client) -> ApplicationRun | None:
-    """Find a run by its ID.
-
-    Args:
-        run_id: The ID of the run to find
-        client: The Client instance to use
-
-    Returns:
-        The ApplicationRun object if found, None otherwise
-    """
-    try:
-        runs = client.runs.list()
-
-        for run in runs:
-            run_status = run.status()
-            if run_status.application_run_id == run_id:
-                return run
-    except NotFoundException:
-        pass
-
-    return None
-
-
-def retrieve_and_print_run_details(run: ApplicationRun, run_id: str) -> None:
+def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
         run(ApplicationRun): The ApplicationRun object
-        run_id(str): The ID of the run
 
     """
-    run_status = run.status()
-    console.print(f"[bold]Run Details for {run_id}[/bold]")
+    run_data = run.find()
+    console.print(f"[bold]Run Details for {run.application_run_id}[/bold]")
     console.print("=" * 80)
-    console.print(f"[bold]App Version:[/bold] {run_status.application_version_id}")
-    console.print(f"[bold]Status:[/bold] {run_status.status.value}")
-    console.print(f"[bold]Triggered at:[/bold] {run_status.triggered_at}")
-    console.print(f"[bold]Organization:[/bold] {run_status.organization_id}")
-    console.print(f"[bold]Triggered by:[/bold] {run_status.triggered_by}")
+    console.print(f"[bold]App Version:[/bold] {run_data.application_version_id}")
+    console.print(f"[bold]Status:[/bold] {run_data.status.value}")
+    console.print(f"[bold]Triggered at:[/bold] {run_data.triggered_at}")
+    console.print(f"[bold]Organization:[/bold] {run_data.organization_id}")
+    console.print(f"[bold]Triggered by:[/bold] {run_data.triggered_by}")
 
     # Get and display detailed item status
     console.print()
@@ -351,33 +229,11 @@ def _print_run_status_summary(run: ApplicationRun) -> None:
         console.print(f"  {status}: {count}")
 
 
-def _retrieve_and_print_run_status(run: ApplicationRun, run_count: int) -> tuple[int, ApplicationRunStatus | None]:
-    """Retrieve and print basic run status information.
-
-    Args:
-        run: The run object
-        run_count: Counter for runs
-
-    Returns:
-        tuple[int, ApplicationRunStatus | None]: A tuple containing the updated run count and the run status
-    """
-    try:
-        run_status = run.status()
-    except Exception as e:
-        logger.exception(RUN_FAILED_MESSAGE, run.application_run_id)
-        console.print(
-            f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
-        )
-        return run_count, None
-
-    return run_count + 1, run_status
-
-
 def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
     """Retrieve and print item status counts for a run.
 
     Args:
-        run(ApplicationRun): The run object
+        run (ApplicationRun): The run object
 
     Returns:
         bool: True if successful, False otherwise
@@ -405,11 +261,12 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
     return True
 
 
-def print_runs_verbose(runs: list[ApplicationRun]) -> int:
+def print_runs_verbose(runs: list[ApplicationRunData], client: Client) -> int:
     """Print detailed information about runs, sorted by triggered_at in descending order.
 
     Args:
-        runs: List of runs
+        runs (list[ApplicationRunData]): List of run data
+        client (Client): The Client instance to use
 
     Returns:
         int: Number of runs processed
@@ -419,38 +276,19 @@ def print_runs_verbose(runs: list[ApplicationRun]) -> int:
 
     run_count = 0
 
-    # First collect all valid run status objects with their data
-    runs_with_status = []
-    for run in runs:
-        try:
-            _, run_status = _retrieve_and_print_run_status(run, 0)  # Use 0 as we'll count later
-            if run_status:
-                runs_with_status.append((run, run_status))
-            else:
-                run_count += 1  # Count failed runs
-        except Exception as e:
-            logger.exception(RUN_FAILED_MESSAGE, run.application_run_id)
-            console.print(
-                f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
-            )
-            run_count += 1
-            continue
-
     # Sort runs by triggered_at in descending order (newest first)
-    sorted_runs = sorted(runs_with_status, key=lambda x: x[1].triggered_at, reverse=True)
+    sorted_runs = sorted(runs, key=lambda x: x.triggered_at, reverse=True)
 
     # Display the sorted runs
-    for run, run_status in sorted_runs:
-        console.print(f"[bold]Run ID:[/bold] {run_status.application_run_id}")
-        console.print(f"[bold]App Version:[/bold] {run_status.application_version_id}")
-        console.print(f"[bold]Status:[/bold] {run_status.status.value}")
-        console.print(
-            f"[bold]Triggered at:[/bold] {run_status.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}"
-        )
-        console.print(f"[bold]Organization:[/bold] {run_status.organization_id}")
+    for run in sorted_runs:
+        console.print(f"[bold]Run ID:[/bold] {run.application_run_id}")
+        console.print(f"[bold]App Version:[/bold] {run.application_version_id}")
+        console.print(f"[bold]Status:[/bold] {run.status.value}")
+        console.print(f"[bold]Triggered at:[/bold] {run.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        console.print(f"[bold]Organization:[/bold] {run.organization_id}")
 
         try:
-            _retrieve_and_print_item_status_counts(run)
+            _retrieve_and_print_item_status_counts(client.run(run.application_run_id))
         except Exception as e:
             logger.exception("Failed to retrieve item status counts for run with ID '%s'", run.application_run_id)
             console.print(
@@ -464,7 +302,7 @@ def print_runs_verbose(runs: list[ApplicationRun]) -> int:
     return run_count
 
 
-def print_runs_non_verbose(runs: list[ApplicationRun]) -> int:
+def print_runs_non_verbose(runs: list[ApplicationRunData]) -> int:
     """Print simplified information about runs, sorted by triggered_at in descending order.
 
     Args:
@@ -476,25 +314,8 @@ def print_runs_non_verbose(runs: list[ApplicationRun]) -> int:
     console.print("[bold]Application Run IDs:[/bold]")
     run_count = 0
 
-    # First collect all valid run status objects with their data
-    runs_with_status = []
-    for run in runs:
-        try:
-            _, run_status = _retrieve_and_print_run_status(run, 0)  # Use 0 as we'll count later
-            if run_status:
-                runs_with_status.append(run_status)
-            else:
-                run_count += 1  # Count failed runs
-        except Exception as e:
-            logger.exception(RUN_FAILED_MESSAGE, run.application_run_id)
-            console.print(
-                f"[bold red]Error:[/bold red] Failed to get status for run with ID '{run.application_run_id}': {e}"
-            )
-            run_count += 1
-            continue
-
     # Sort runs by triggered_at in descending order (newest first)
-    sorted_runs = sorted(runs_with_status, key=lambda x: x.triggered_at, reverse=True)
+    sorted_runs = sorted(runs, key=lambda x: x.triggered_at, reverse=True)
 
     # Display the sorted runs
     for run_status in sorted_runs:

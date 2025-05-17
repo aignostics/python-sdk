@@ -6,9 +6,11 @@ It includes functionality for listing applications and managing application vers
 
 import re
 import typing as t
+from operator import itemgetter
 
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.models import ApplicationReadResponse, ApplicationVersionReadResponse
+from aignx.codegen.models import ApplicationReadResponse as Application
+from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
 
 from aignostics.platform.resources.utils import paginate
 
@@ -29,40 +31,44 @@ class Versions:
         """
         self._api = api
 
-    def list(self, application: ApplicationReadResponse | str) -> t.Iterator[ApplicationVersionReadResponse]:
-        """Lists all versions for a specific application.
+    # TODO(Andreas,Helmut): Breaking change. Had to rename from list, otherwise
+    # shadowing builtin list, so could not return a list ...
+    def find(self, application: Application | str) -> t.Iterator[ApplicationVersion]:
+        """Find all versions for a specific application.
 
         Args:
-            application: Either an ApplicationReadResponse object or
-                an application ID string.
+            application (Application | str): The application to find versions for, either object or id
 
         Returns:
-            Iterator[ApplicationVersionReadResponse]: A Iterator over the available application versions.
+            Iterator[ApplicationVersion]: A Iterator over the available application versions.
 
         Raises:
             Exception: If the API request fails.
         """
-        application_id = application.application_id if isinstance(application, ApplicationReadResponse) else application
+        application_id = application.application_id if isinstance(application, Application) else application
 
         return paginate(
             self._api.list_versions_by_application_id_v1_applications_application_id_versions_get,
             application_id=application_id,
         )
 
-    def details(self, application_version: ApplicationVersionReadResponse | str) -> ApplicationVersionReadResponse:
+    # TODO(Andreas,Helmut): Discuss. This is getting an application version and returning it.
+    # Can we make this a find_by_id, just getting an application_version_id as a string,
+    # and returning the application version object?
+    def details(self, application_version: ApplicationVersion | str) -> ApplicationVersion:
         """Retrieves details for a specific application version.
 
         Args:
             application_version: The ID of the application version.
 
         Returns:
-            VersionReadResponse: The version details.
+            ApplicationVersion: The version details.
 
         Raises:
             RuntimeError: If the application version ID is invalid or if the API request fails.
             Exception: If the API request fails.
         """
-        if isinstance(application_version, ApplicationVersionReadResponse):
+        if isinstance(application_version, ApplicationVersion):
             application_id = application_version.application_id
             version = application_version.version
         else:
@@ -84,6 +90,66 @@ class Versions:
             raise RuntimeError(msg)
         return application_versions[0]
 
+    def find_sorted(self, application: Application | str) -> list[ApplicationVersion]:
+        """Get application versions sorted by semver, latest first.
+
+        Args:
+            application (Application | str): The application to find versions for, either object or id
+
+        Returns:
+            list[ApplicationVersion]: List of version objects sorted by semantic versioning (latest first),
+                or empty list if no versions are found
+        """
+        versions = list(self.find(application=application))
+
+        # If no versions available
+        if not versions:
+            return []
+
+        # Extract semantic versions from the version property
+        versions_with_semver = []
+        for v in versions:
+            try:
+                # Split into major, minor, patch components for proper comparison
+                version_parts = [int(x) for x in v.version.split(".")]
+                versions_with_semver.append((v, version_parts))
+            except (ValueError, AttributeError):
+                # If we can't parse the version or version attribute doesn't exist, skip it
+                continue
+
+        # Sort by semantic version (major, minor, patch)
+        if versions_with_semver:
+            versions_with_semver.sort(key=itemgetter(1), reverse=True)
+            # Return just the version objects, not the tuples
+            return [item[0] for item in versions_with_semver]
+
+        # If we couldn't parse any versions, return all versions as is
+        return versions
+
+    def find_latest_version(self, application: Application | str) -> ApplicationVersion | None:
+        """Get latest version.
+
+        Args:
+            application (Application | str): The application to find versions for, either object or id
+
+        Returns:
+            ApplicationVersion | None: The latest version id, or None if no versions found.
+        """
+        sorted_versions = self.find_sorted(application=application)
+        return sorted_versions[0] if sorted_versions else None
+
+    def find_latest_version_id(self, application: Application | str) -> str | None:
+        """Get latest version id.
+
+        Args:
+            application (Application | str): The application to find versions for, either object or id
+
+        Returns:
+            str | None: The latest version id, or None if no versions found.
+        """
+        latest_version = self.find_latest_version(application=application)
+        return latest_version.application_version_id if latest_version else None
+
 
 class Applications:
     """Resource class for managing applications.
@@ -100,11 +166,13 @@ class Applications:
         self._api = api
         self.versions: Versions = Versions(self._api)
 
-    def list(self) -> t.Iterator[ApplicationReadResponse]:
-        """Lists all available applications.
+    # TODO(Andreas,Helmut): had to rename from list, otherwise shadowing builtin list,
+    # so could not return a list ...
+    def find(self) -> t.Iterator[Application]:
+        """Find all available applications.
 
         Returns:
-            Iterator[ApplicationReadResponse]: A Iterator over the available applications.
+            Iterator[Application]: A Iterator over the available applications.
 
         Raises:
             Exception: If the API request fails.
