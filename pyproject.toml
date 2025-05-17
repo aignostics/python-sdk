@@ -106,6 +106,7 @@ dependencies = [
     "shapely>=2.1.0",
     "wsidicom>=0.27.0",
     #    "pywebview[qt6]>=5.4; sys_platform == 'linux'",
+    "humanize>=4.12.3",
 ]
 
 [project.optional-dependencies]
@@ -310,7 +311,8 @@ md_report_exclude_outcomes = ["passed", "skipped"]
 sigterm = true
 relative_files = true
 source = ["src"]
-omit = ["*/_gui.py", "*/_notebook.py", "src/aignostics/gui", "*/.vendored/*"]
+#omit = ["*/_gui.py", "*/_notebook.py", "src/aignostics/gui", "*/.vendored/*"]
+omit = ["*/_notebook.py", "src/aignostics/gui", "*/.vendored/*"]
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]

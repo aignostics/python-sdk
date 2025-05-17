@@ -1,14 +1,11 @@
 """Utility functions to ease using the platform client."""
 
 import csv
-import os
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 
-from boto3.session import Session
-from botocore.client import BaseClient, Config
-
+from aignostics.bucket import Service as BucketService
 from aignostics.platform import (
     ApplicationRun,
     ApplicationRunData,
@@ -41,59 +38,6 @@ class OutputFormat(StrEnum):
     JSON = "json"
 
 
-def _get_s3_client(endpoint_url: str = "https://storage.googleapis.com") -> BaseClient:
-    """Get a client instance for S3.
-
-    Args:
-        endpoint_url (str): The endpoint URL for the S3 service.
-
-    Returns:
-        BaseClient: A Boto3 S3 client instance.
-    """
-    # https://www.kmp.tw/post/accessgcsusepythonboto3/
-    hmac_access_key_id = os.environ.get("AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID")
-    hmac_secret_access_key = os.environ.get("AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY")
-
-    region_name = "EUROPE-WEST3"
-
-    session = Session(
-        aws_access_key_id=hmac_access_key_id, aws_secret_access_key=hmac_secret_access_key, region_name=region_name
-    )
-    return session.client("s3", endpoint_url=endpoint_url, config=Config(signature_version="s3v4"))
-
-
-def create_signed_upload_url(bucket_name: str, object_key: str) -> str:
-    """Generates a signed URL to upload a Google Cloud Storage object.
-
-    Args:
-        bucket_name (str): The name of the bucket to generate a signed URL for.
-        object_key (str): The key of the object to generate a signed URL for.
-
-    Returns:
-        str: A signed URL that can be used to upload to the bucket and key.
-    """
-    url = _get_s3_client().generate_presigned_url(
-        ClientMethod="put_object", Params={"Bucket": bucket_name, "Key": object_key}, ExpiresIn=3600
-    )
-    return cast("str", url)
-
-
-def create_signed_download_url(bucket_name: str, object_key: str) -> str:
-    """Generates a signed URL to download a Google Cloud Storage object.
-
-    Args:
-        bucket_name (str): The name of the bucket to generate a signed URL for.
-        object_key (str): The key of the object to generate a signed URL for.
-
-    Returns:
-        str: A signed URL that can be used to download from the bucket and key.
-    """
-    url = _get_s3_client().generate_presigned_url(
-        ClientMethod="get_object", Params={"Bucket": bucket_name, "Key": object_key}, ExpiresIn=3600
-    )
-    return cast("str", url)
-
-
 def construct_input_items(source_csv: Path) -> list[InputItem]:
     """Construct payload from CSV file.
 
@@ -119,7 +63,7 @@ def construct_input_items(source_csv: Path) -> list[InputItem]:
                 if len(url_parts) == 2:  # noqa: PLR2004
                     bucket_name = url_parts[0]
                     object_key = url_parts[1]
-                    download_url = create_signed_download_url(bucket_name, object_key)
+                    download_url = BucketService().create_signed_download_url(object_key, bucket_name=bucket_name)
                     logger.debug("Constructed signed download URL: %s", download_url)
                 else:
                     logger.warning("Invalid GCS URL format: %s", row[0])

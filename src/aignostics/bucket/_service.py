@@ -1,7 +1,10 @@
 """Service of the bucket module."""
 
-from typing import Any
+from collections.abc import Callable, Generator
+from pathlib import Path
+from typing import Any, cast
 
+import requests
 from boto3 import Session
 from botocore.client import BaseClient, Config
 from botocore.exceptions import ClientError
@@ -12,6 +15,7 @@ from ._settings import Settings
 
 logger = get_logger(__name__)
 
+BUCKET_PROTOCOL = "gs"
 ENDPOINT_URL_DEFAULT = "https://storage.googleapis.com"
 SIGNATURE_VERSION = "s3v4"
 
@@ -68,6 +72,133 @@ class Service(BaseService):
             str: The bucket name.
         """
         return self._settings.name
+
+    def create_signed_upload_url(self, object_key: str, bucket_name: str | None = None) -> str:
+        """Generates a signed URL to upload a Google Cloud Storage object.
+
+        Args:
+            object_key (str): The key of the object to generate a signed URL for.
+            bucket_name (str): The name of the bucket to generate a signed URL for.
+                If None, use the default bucket.
+
+        Returns:
+            str: A signed URL that can be used to upload to the bucket and key.
+        """
+        url = self._get_s3_client().generate_presigned_url(
+            ClientMethod="put_object",
+            Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
+            ExpiresIn=3600,
+        )
+        return cast("str", url)
+
+    def upload_file(
+        self, source_path: Path, object_key: str, callback: Callable[[int, Path], None] | None = None
+    ) -> bool:
+        """Upload a file to the bucket using a signed URL.
+
+        Args:
+            source_path (Path): Path of the local file to upload.
+            object_key (str): Key to use for the uploaded object.
+            callback (Callable[[int, int], None] | None): Optional callback function for upload progress.
+                Function receives bytes_read and total_bytes parameters.
+
+        Returns:
+            bool: True if upload was successful, False otherwise.
+        """
+        logger.debug("Uploading file '%s' to object key '%s'", source_path, object_key)
+        if not source_path.is_file():
+            logger.error("Source path '%s' is not a file", source_path)
+            return False
+
+        signed_url = self.create_signed_upload_url(object_key)
+
+        try:
+            with open(source_path, "rb") as f:
+
+                def read_in_chunks() -> Generator[bytes, None, None]:
+                    while True:
+                        chunk = f.read(1048576)  # ~1MB chunks
+                        if not chunk:
+                            break
+                        if callback:
+                            callback(len(chunk), source_path)
+                        yield chunk
+
+                response = requests.put(
+                    signed_url,
+                    data=read_in_chunks(),
+                    headers={"Content-Type": "application/octet-stream"},
+                    timeout=60,
+                )
+                response.raise_for_status()
+
+            logger.info("Successfully uploaded '%s' to object key '%s'", source_path, object_key)
+            return True
+
+        except (OSError, requests.RequestException):
+            logger.exception("Error uploading file '%s' to object key '%s'", source_path, object_key)
+            return False
+
+    def create_signed_download_url(self, object_key: str, bucket_name: str | None = None) -> str:
+        """Generates a signed URL to download a Google Cloud Storage object.
+
+        Args:
+            object_key (str): The key of the object to generate a signed URL for.
+            bucket_name (str | None): The name of the bucket to generate a signed URL for.
+                If None, use the default bucket.
+
+        Returns:
+            str: A signed URL that can be used to download from the bucket and key.
+        """
+        url = self._get_s3_client().generate_presigned_url(
+            ClientMethod="get_object",
+            Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
+            ExpiresIn=3600,
+        )
+        return cast("str", url)
+
+    def upload(
+        self,
+        source_path: Path,
+        destination_prefix: str,
+        callback: Callable[[int, Path], None] | None = None,
+    ) -> dict[str, list[str]]:
+        """Upload a file or directory to the bucket.
+
+        Args:
+            source_path (Path): Path to file or directory to upload.
+            destination_prefix (str): Prefix for object keys (e.g. username).
+            callback (Callable[[int, int], None] | None): Optional callback function for upload progress.
+                Function receives bytes_read and total_bytes parameters.
+
+        Returns:
+            dict[str, list[str]]: Dict with 'success' and 'failed' lists containing object keys.
+        """
+        results: dict[str, list[str]] = {"success": [], "failed": []}
+
+        destination_prefix = destination_prefix.rstrip("/")
+
+        if source_path.is_file():
+            object_key = f"{destination_prefix}/{source_path.name}"
+            if self.upload_file(source_path, object_key, callback):
+                results["success"].append(object_key)
+            else:
+                results["failed"].append(object_key)
+
+        elif source_path.is_dir():
+            for file_path in source_path.glob("**/*"):
+                if file_path.is_file():
+                    rel_path = file_path.relative_to(source_path)
+                    object_key = f"{destination_prefix}/{rel_path}"
+
+                    if self.upload_file(file_path, object_key, callback):
+                        results["success"].append(object_key)
+                    else:
+                        results["failed"].append(object_key)
+        else:
+            logger.error("Source path '%s' is neither a file nor directory", source_path)
+
+        return results
 
     def ls(self, detail: bool = False) -> list[str | dict[str, Any]]:
         """List objects directly in the bucket (non-recursive).

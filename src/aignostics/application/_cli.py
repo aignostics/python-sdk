@@ -1,6 +1,5 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
-import os
 import time
 from collections.abc import Generator
 from pathlib import Path
@@ -10,12 +9,12 @@ import requests
 import typer
 from tqdm.rich import tqdm
 
+from aignostics.bucket import Service as BucketService
 from aignostics.platform import Client, generate_signed_url
 from aignostics.utils import console, get_logger
 
 from ._utils import (
     construct_input_items,
-    create_signed_upload_url,
     print_runs_non_verbose,
     print_runs_verbose,
     retrieve_and_print_run_details,
@@ -85,6 +84,8 @@ def upload(
     source_file: Annotated[str, typer.Option(help="Source file to upload")],
 ) -> None:
     """Upload a filew to a transfer bucket via a signed URL, authenticating with hmac."""
+    import psutil  # noqa: PLC0415
+
     source_file_path = Path(source_file)
     if not source_file_path.is_file():
         logger.warning("Source file '%s' does not exist.", source_file)
@@ -92,10 +93,8 @@ def upload(
         return
 
     # Generate signed URL
-    bucket_name = str(os.environ.get("AIGNOSTICS_BUCKET_NAME"))
-    timestamp_millis = int(time.time() * 1000)
-    object_key = f"helmut/heta/{timestamp_millis}_{source_file_path.name}"
-    url = create_signed_upload_url(bucket_name, object_key)
+    object_key = f"{psutil.Process().username()}/{int(time.time() * 1000)}/{source_file_path.name}"
+    url = BucketService().create_signed_upload_url(object_key)
 
     logger.debug("Generated signed upload URL: %s", url)
 
@@ -122,7 +121,7 @@ def upload(
         response.raise_for_status()
 
     console.print(
-        f"[bold green]Success:[/bold green] File '{source_file_path.name}' uploaded successfully to 'gs://{bucket_name}/{object_key}'."
+        f"[bold green]Success:[/bold green] File '{source_file_path.name}' uploaded successfully to 'gs://{BucketService().get_bucket_name()}/{object_key}'."
     )
 
 

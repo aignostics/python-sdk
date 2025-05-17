@@ -26,6 +26,7 @@ class PageBuilder(BasePageBuilder):
             with frame("Manage Cloud Bucket on Aignostics Platform", left_sidebar=False):
                 # Nothing to do here, just to show the page
                 pass
+
             with ui.row(align_items="start").classes("w-full"):
                 ui.markdown("""
                         ## Managing your cloud bucket
@@ -45,7 +46,7 @@ class PageBuilder(BasePageBuilder):
                 return [
                     {
                         "key": obj["key"],  # type: ignore
-                        "type": obj["type"],  # type: ignore
+                        "last_modified": obj["last_modified"].astimezone().strftime("%x %X %Z"),  # type: ignore
                         "size": f"{obj['size'] / (1024 * 1024 * 1024):.2f} GB",  # type: ignore
                     }
                     for obj in objs
@@ -92,9 +93,12 @@ class PageBuilder(BasePageBuilder):
                             "field": "key",
                             "checkboxSelection": True,
                             "filter": "agTextColumnFilter",
-                            "floatingFilter": True,
                         },
-                        {"headerName": "Type", "field": "type", "filter": "agTextColumnFilter", "floatingFilter": True},
+                        {
+                            "headerName": "Last modified",
+                            "field": "last_modified",
+                            "filter": "agTextColumnFilter",
+                        },
                         {
                             "headerName": "Size",
                             "field": "size",
@@ -102,6 +106,7 @@ class PageBuilder(BasePageBuilder):
                     ],
                     "rowData": _get_rows(),
                     "rowSelection": "multiple",
+                    "enableCellTextSelection": "true",
                     "autoSizeStrategy": {
                         "type": "fitCellContents",
                         "defaultMinWidth": 10,
@@ -111,15 +116,16 @@ class PageBuilder(BasePageBuilder):
                 .classes("ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham")
                 .classes("full-width")
                 .style("height: 310px")
-                .on("selectionChanged", _handle_grid_selection_changed)
                 .mark("GRID_BUCKET")
+                .on("selectionChanged", _handle_grid_selection_changed)
             )
 
             bucket_form.delete_button = (
                 ui.button(
                     "Delete",
-                    on_click=lambda _: _delete_selected(),
+                    on_click=_delete_selected,
                 )
+                .mark("BUTTON_DELETE_OBJECTS")
                 .props("color=red")
                 .classes("w-1/5")
             )

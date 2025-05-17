@@ -632,6 +632,7 @@ class PageBuilder(BasePageBuilder):
                             "rowData": [],
                             "rowSelection": "multiple",
                             "stopEditingWhenCellsLoseFocus": True,
+                            "enableCellTextSelection": "true",
                             "autoSizeStrategy": {
                                 "type": "fitCellContents",
                                 "defaultMinWidth": 10,

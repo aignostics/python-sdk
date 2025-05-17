@@ -10,6 +10,7 @@ from typing import Any, TypedDict
 import google_crc32c
 import requests
 
+from aignostics.bucket import Service as BucketService
 from aignostics.dicom import Service as DicomService
 from aignostics.platform import (
     Application,
@@ -24,7 +25,6 @@ from aignostics.tiff import Service as TiffService
 from aignostics.utils import BaseService, Health, get_logger
 
 from ._settings import Settings
-from ._utils import create_signed_download_url, create_signed_upload_url
 
 logger = get_logger(__name__)
 
@@ -253,6 +253,8 @@ class Service(BaseService):
         Returns:
             bool: True if the upload was successful, False otherwise.
         """
+        import psutil  # noqa: PLC0415
+
         logger.debug("Uploading files with upload ID '%s'", upload_id)
         for row in metadata:
             reference = row["reference"]
@@ -263,10 +265,9 @@ class Service(BaseService):
 
             # Generate signed URL
             bucket_protocol = str(os.environ.get("AIGNOSTICS_BUCKET_PROTOCOL"))
-            bucket_name = str(os.environ.get("AIGNOSTICS_BUCKET_NAME"))
-            object_key = f"helmut/{upload_id}/{application_version_id}/{source_file_path.name}"
-            platform_bucket_url = f"{bucket_protocol}://{bucket_name}/{object_key}"
-            signed_upload_url = create_signed_upload_url(bucket_name, object_key)
+            object_key = f"{psutil.Process().username()}/{upload_id}/{application_version_id}/{source_file_path.name}"
+            platform_bucket_url = f"{bucket_protocol}://{BucketService().get_bucket_name()}/{object_key}"
+            signed_upload_url = BucketService().create_signed_upload_url(object_key)
             logger.debug("Generated signed upload URL '%s' for object '%s'", signed_upload_url, platform_bucket_url)
             upload_progress_queue.put_nowait({
                 "reference": reference,
@@ -378,7 +379,7 @@ class Service(BaseService):
                     if len(url_parts) == 2:  # noqa: PLR2004
                         bucket_name = url_parts[0]
                         object_key = url_parts[1]
-                        download_url = create_signed_download_url(bucket_name, object_key)
+                        download_url = BucketService().create_signed_download_url(object_key, bucket_name)
                     else:
                         logger.error("Invalid GCS URL format: %s", row["platform_bucket_url"])
                         continue

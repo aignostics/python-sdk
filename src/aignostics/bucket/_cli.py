@@ -1,12 +1,25 @@
 """CLI of bucket module."""
 
+import datetime
+from pathlib import Path
 from typing import Annotated
 
+import humanize
 import typer
+from rich.progress import (
+    BarColumn,
+    FileSizeColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+    TotalFileSizeColumn,
+    TransferSpeedColumn,
+)
 
 from aignostics.utils import console, get_logger
 
-from ._service import Service
+from ._service import BUCKET_PROTOCOL, Service
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 
@@ -17,6 +30,98 @@ cli = typer.Typer(
     name="bucket",
     help="Operations on cloud bucket on Aignostics Platform.",
 )
+
+
+@cli.command()
+def upload(
+    source: Annotated[
+        Path,
+        typer.Argument(
+            help="Source file or directory to upload",
+            exists=True,
+            file_okay=True,
+            dir_okay=True,
+            writable=False,
+            readable=True,
+            resolve_path=False,
+        ),
+    ],
+    destination_prefix: Annotated[
+        str,
+        typer.Option(
+            help="Destination layout. Supports {username}, {timestamp}. "
+            'E.g. you might want to use "{username}/myproject/"'
+        ),
+    ] = "{username}",
+) -> None:
+    """Upload file or directory to bucket in Aignostics platform."""
+    import psutil  # noqa: PLC0415
+
+    console.print(f"Uploading {source} to bucket...")
+
+    # Create a counter for total bytes
+    total_bytes = 0
+    files_count = 0
+
+    # First, calculate total size and count files
+    if source.is_file():
+        total_bytes = source.stat().st_size
+        files_count = 1
+    else:
+        for file_path in source.glob("**/*"):
+            if file_path.is_file():
+                total_bytes += file_path.stat().st_size
+                files_count += 1
+
+    console.print(f"Found {files_count} files with total size of {humanize.naturalsize(total_bytes)}")
+
+    # Generate base prefix with placeholders replaced
+    username = psutil.Process().username()
+    timestamp = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d_%H%M%S")
+
+    # Replace placeholders in the destination_prefix
+    base_prefix = destination_prefix.format(username=username, timestamp=timestamp)
+
+    # Remove leading/trailing slashes for consistency
+    base_prefix = base_prefix.strip("/")
+
+    with Progress(
+        TextColumn(
+            f"[progress.description]Uploading from {source.name} to "
+            f"{BUCKET_PROTOCOL}:/{Service().get_bucket_name()}/{base_prefix}"
+        ),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        FileSizeColumn(),
+        TotalFileSizeColumn(),
+        TransferSpeedColumn(),
+        TextColumn("[progress.description]{task.description}"),
+    ) as progress:
+        # Create a task for overall progress
+        task = progress.add_task(f"Uploading to {base_prefix}/...", total=total_bytes)
+
+        # Callback function to update progress
+        def update_progress(bytes_uploaded: int, file: Path) -> None:
+            relpath = file.relative_to(source)
+            progress.update(task, advance=bytes_uploaded, description=f"{relpath}")
+
+        # Upload with progress reporting
+        results = Service().upload(source, base_prefix, update_progress)
+
+    # Print results summary
+    if results["success"]:
+        console.print(f"[green]Successfully uploaded {len(results['success'])} files:[/green]")
+        for key in results["success"]:
+            console.print(f"  [green]- {key}[/green]")
+
+    if results["failed"]:
+        console.print(f"[red]Failed to upload {len(results['failed'])} files:[/red]")
+        for key in results["failed"]:
+            console.print(f"  [red]- {key}[/red]")
+
+    if not results["failed"]:
+        console.print("[green]All files uploaded successfully![/green]")
 
 
 @cli.command()
