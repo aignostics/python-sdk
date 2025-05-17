@@ -15,7 +15,7 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
-    def register_pages() -> None:  # noqa: C901, PLR0915
+    def register_pages() -> None:  # noqa: C901, PLR0915 #NOSONAR
         from nicegui import binding, run, ui  # noqa: PLC0415
         from nicegui.events import ValueChangeEventArguments  # noqa: PLC0415
 
@@ -100,6 +100,23 @@ class PageBuilder(BasePageBuilder):
                 else:
                     download_form.download_button.disable()
 
+            async def _select_home() -> None:  # noqa: RUF029
+                """Open a file picker dialog and show notifier when closed again."""
+                if (
+                    download_form.destination_label is None
+                    or download_form.destination_open_button is None
+                    or download_form.download_button is None
+                ):
+                    return
+
+                download_form.destination = Path.home()
+                download_form.destination_label.set_text(str(download_form.destination))
+                download_form.destination_open_button.enable()
+                if download_form.source is not None:
+                    download_form.download_button.enable()
+                else:
+                    download_form.download_button.disable()
+
             def _open_destination() -> None:
                 """Open the destination directory in the file explorer."""
                 show_in_file_manager(str(download_form.destination))
@@ -132,11 +149,16 @@ class PageBuilder(BasePageBuilder):
             with ui.card().classes("w-full"):
                 ui.label("Download Dataset").classes("text-h6")
                 with ui.row(align_items="center").classes("w-full"):
-                    source_input = ui.input(
-                        label="Dataset UID",
-                        placeholder="start typing",
-                        on_change=lambda e: _on_source_input_change(e),  # noqa: PLW0108
-                    ).classes("w-2/5")
+                    source_input = (
+                        ui.input(
+                            label="Dataset UID",
+                            placeholder="start typing",
+                            on_change=lambda e: _on_source_input_change(e),  # noqa: PLW0108
+                        )
+                        .props("clearable")
+                        .classes("w-2/5")
+                        .mark("SOURCE_INPUT")
+                    )
                     ui.space()
                     ui.icon(name="east", size="lg", color="primary")
                     ui.space()
@@ -175,6 +197,7 @@ class PageBuilder(BasePageBuilder):
                             ui.button(icon="cloud_download").props("flat round").disable()
                         download_form.download_progress.visible = False
                     ui.space()
+                    ui.button("Use Home", on_click=_select_home, icon="home").mark("BUTTON_DOWNLOAD_DESTINATION_HOME")
                     ui.button("Select Download Folder", on_click=_select_destination, icon="folder").mark(
                         "BUTTON_DOWNLOAD_DESTINATION"
                     )

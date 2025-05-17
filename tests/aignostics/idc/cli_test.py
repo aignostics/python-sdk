@@ -2,13 +2,12 @@
 
 import logging
 import re
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
-
-THE_VALUE = "THE_VALUE"
 
 
 @pytest.fixture
@@ -17,35 +16,86 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
-@pytest.mark.scheduled
-def test_cli_columns(runner: CliRunner) -> None:
+def test_cli_indices(runner: CliRunner) -> None:
+    """Check expected column returned."""
+    result = runner.invoke(cli, ["idc", "indices"])
+    assert result.exit_code == 0
+    assert all(
+        index in result.output
+        for index in ["index", "prior_versions_index", "sm_index", "sm_instance_index", "clinical_index"]
+    )
+
+
+def test_cli_columns_default_index(runner: CliRunner) -> None:
     """Check expected column returned."""
     result = runner.invoke(cli, ["idc", "columns"])
     assert result.exit_code == 0
-    assert "Modality" in result.output
+    assert "SOPInstanceUID" in result.output
 
 
-@pytest.mark.scheduled
+def test_cli_columns_special_index(runner: CliRunner) -> None:
+    """Check expected column returned."""
+    result = runner.invoke(cli, ["idc", "columns", "--index", "index"])
+    assert result.exit_code == 0
+    assert "series_aws_url" in result.output
+
+
 def test_cli_query(runner: CliRunner) -> None:
     """Check query returns expected results."""
     result = runner.invoke(cli, ["idc", "query"])
     assert result.exit_code == 0
-    assert "rows x 1 columns" in result.output
+    assert "rows x 6 columns" in result.output
     # Verify the number of rows is greater than 100000
     match = re.search(r"\[(\d+) rows x", result.output)
     assert match is not None, f"Could not find row count in output: {result.output}"
     num_rows = int(match.group(1))
-    assert num_rows > 100000, f"Expected more than 100000 rows, but got {num_rows}"
+    assert num_rows >= 50421, f"Expected equal or more than 50421 rows, but got {num_rows}"
 
 
-@pytest.mark.scheduled
-def test_cli_download(runner: CliRunner, caplog, tmp_path) -> None:
+def test_cli_download_series_dry(runner: CliRunner, caplog, tmp_path) -> None:
     """Check download functionality with dry-run option."""
     caplog.set_level(logging.INFO)
     result = runner.invoke(
         cli,
-        ["idc", "download", "1.3.6.1.4.1.5962.99.1.1042652702.25371455.1637425225246.2.0", str(tmp_path), "--dry-run"],
+        [
+            "idc",
+            "download",
+            "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0",  # a series
+            str(tmp_path),
+            "--dry-run",
+        ],
     )
     assert result.exit_code == 0
     for record in caplog.records:
         assert record.levelname != "ERROR"  # if id would not be found, error would be logged
+
+
+def test_cli_download_instance_thumbnail(runner: CliRunner, caplog, tmpdir) -> None:
+    """Check download functionality with dry-run option."""
+    caplog.set_level(logging.INFO)
+    result = runner.invoke(
+        cli,
+        [
+            "idc",
+            "download",
+            "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0",  # an instance of type thumbnail
+            str(tmpdir),
+        ],
+    )
+    assert result.exit_code == 0
+    for record in caplog.records:
+        assert record.levelname != "ERROR"  # if id would not be found, error would be logged
+
+    expected_file = (
+        Path(tmpdir)
+        / "tcga_luad"
+        / "TCGA-91-6830"
+        / "2.25.5646130214350101265514421836879989792"
+        / "SM_1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.2.0"
+        / "975bc2fa-d403-4c4c-affa-0fbb08475651.dcm"
+    )
+
+    assert expected_file.exists(), f"Expected file {expected_file} not found"
+    assert expected_file.stat().st_size == 1369290, (
+        f"File size {expected_file.stat().st_size} doesn't match expected 1369290 bytes"
+    )

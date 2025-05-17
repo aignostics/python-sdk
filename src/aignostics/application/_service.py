@@ -81,7 +81,7 @@ class Service(BaseService):
             except Exception:
                 logger.exception("Failed to create platform client.")
                 raise
-        logger.debug("Using existing platform client.")
+        logger.debug("Reusing platform client.")
         return self._client
 
     def applications(self) -> Iterator[Application]:
@@ -333,15 +333,11 @@ class Service(BaseService):
         Raises:
             Exception: If the application run list cannot be retrieved.
         """
-        try:
-            runs = self._get_platform_client().runs.find_data(sort="triggered_at")
-            if not runs:
-                logger.debug("No application runs found.")
-                return []
-            return list(runs)[::-1]
-        except Exception:
-            logger.exception("Failed to list application runs.")
-            raise
+        runs = self._get_platform_client().runs.find_data(sort="triggered_at")
+        if not runs:
+            logger.debug("No application runs found.")
+            return []
+        return list(runs)[::-1]
 
     def application_run(self, run_id: str) -> ApplicationRun:
         """Find a run by its ID.
@@ -351,6 +347,9 @@ class Service(BaseService):
 
         Returns:
             ApplicationRun: The run that can be fetched using the .find() call.
+
+        Raises:
+            Exception: If initializing the client fails.
         """
         return self._get_platform_client().run(run_id)
 

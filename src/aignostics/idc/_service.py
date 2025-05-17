@@ -15,31 +15,40 @@ from aignostics.utils import BaseService, Health, get_logger
 logger = get_logger(__name__)
 
 PATH_LENGTH_MAX = 260
-TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID"
+TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"
 
 # Global registry of active processes for cleanup
 _active_processes: list[subprocess.Popen[str]] = []
+
+
+def _terminate_process(process: subprocess.Popen[str]) -> None:
+    """Terminate a single subprocess with graceful shutdown attempt.
+
+    Args:
+        process: The subprocess to terminate.
+    """
+    try:
+        logger.warning("Terminating orphaned subprocess with PID %d", process.pid)
+        process.terminate()
+        # Give it a moment to terminate gracefully
+        for _ in range(5):
+            if process.poll() is not None:
+                break
+            time.sleep(0.1)
+        # If still running, force kill
+        if process.poll() is None:
+            logger.warning("Forcefully killing subprocess with PID %d", process.pid)
+            process.kill()
+    except Exception:
+        message = f"Error terminating subprocess with PID {process.pid}"
+        logger.exception(message)
 
 
 def _cleanup_processes() -> None:
     """Terminate any active subprocesses on exit."""
     for process in _active_processes[:]:
         if process.poll() is None:  # Process is still running
-            try:
-                logger.warning("Terminating orphaned subprocess with PID %d", process.pid)
-                process.terminate()
-                # Give it a moment to terminate gracefully
-                for _ in range(5):
-                    if process.poll() is not None:
-                        break
-                    time.sleep(0.1)
-                # If still running, force kill
-                if process.poll() is None:
-                    logger.warning("Forcefully killing subprocess with PID %d", process.pid)
-                    process.kill()
-            except Exception:
-                message = f"Error terminating subprocess with PID {process.pid}"
-                logger.exception(message)
+            _terminate_process(process)
             _active_processes.remove(process)
 
 
@@ -168,9 +177,6 @@ class Service(BaseService):
         client = IDCClient.client()
         queue.put_nowait(0.02)
 
-        logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
-        client.fetch_index("sm_instance_index")
-        logger.info("Downloaded instance index")
         queue.put_nowait(0.03)
 
         target_directory = Path(target)
@@ -185,10 +191,17 @@ class Service(BaseService):
             logger.error("No IDs provided.")
 
         index_df = client.index
+        client.fetch_index("sm_instance_index")
+        logger.info("Downloaded instance index")
+        sm_instance_index_df = client.sm_instance_index  # type: ignore[attr-defined]
 
         def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
-            matches = index_df[column_name].isin(item_ids)
-            matched_ids = index_df[column_name][matches].unique().tolist()
+            if column_name != "SOPInstanceUID":
+                matches = index_df[column_name].isin(item_ids)
+                matched_ids = index_df[column_name][matches].unique().tolist()
+            else:
+                matches = sm_instance_index_df[column_name].isin(item_ids)
+                matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()
             if not matched_ids:
                 return False
             unmatched_ids = list(set(item_ids) - set(matched_ids))
@@ -268,9 +281,9 @@ client.download_from_selection(
         matches_found += check_and_download("PatientID", item_ids, target_directory, "patientId")
         matches_found += check_and_download("StudyInstanceUID", item_ids, target_directory, "studyInstanceUID")
         matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
-        matches_found += check_and_download("crdc_series_uuid", item_ids, target_directory, "crdc_series_uuid")
+        matches_found += check_and_download("SOPInstanceUID", item_ids, target_directory, "sopInstanceUID")
         if not matches_found:
             logger.error(
                 "None of the values passed matched any of the identifiers: "
-                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, crdc_series_uuid."
+                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
             )

@@ -27,7 +27,7 @@ from jsonschema.validators import validate
 
 from aignostics.platform._utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
 from aignostics.platform.resources.applications import Versions
-from aignostics.platform.resources.utils import paginate, paginate_flex
+from aignostics.platform.resources.utils import paginate
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 
@@ -58,7 +58,7 @@ class ApplicationRun:
         Returns:
             ApplicationRun: The initialized ApplicationRun instance.
         """
-        from aignostics.platform import Client  # noqa: PLC0415
+        from aignostics.platform._client import Client  # noqa: PLC0415
 
         return cls(Client.get_api_client(cache_token=False), application_run_id)
 
@@ -95,11 +95,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        results = self.results()
-        item_status = {}
-        for item in results:
-            item_status[item.reference] = item.status
-        return item_status
+        return {item.reference: item.status for item in self.results()}
 
     # TODO(Andreas): Fails with Internal Server Error if run canceled
     # TODO(Andreas): Don't throw generic exceptions
@@ -322,15 +318,15 @@ class Runs:
             )
             raise ValueError(message)
         if not for_application_version:
-            res = paginate_flex(
+            res = paginate(
                 self._api.list_application_runs_v1_runs_get, page_size=page_size, sort=[sort] if sort else None
             )
         else:
-            res = paginate_flex(
+            res = paginate(
                 self._api.list_application_runs_v1_runs_get,
                 page_size=page_size,
                 application_version_id=for_application_version,
-                sort=[sort + " DESC"] if sort else None,
+                sort=[sort] if sort else None,
             )
         return res
 

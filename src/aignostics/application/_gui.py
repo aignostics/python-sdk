@@ -207,9 +207,9 @@ class PageBuilder(BasePageBuilder):
                             runs_column.clear()
                             with ui.item():
                                 with ui.item_section().props("avatar"):
-                                    ui.icon("info")
+                                    ui.icon("error")
                                 with ui.item_section():
-                                    ui.label("You did not yet create a run.")
+                                    ui.label("Failed to load application runs.")
                             logger.exception("Failed to load application runs")
 
                 try:
