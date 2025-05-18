@@ -52,14 +52,14 @@ class Service(BaseService):
 
         if path.exists() is False:
             message = f"File does not exist: {path}"
-            logger.error(message)
+            logger.warning(message)
             raise ValueError(message)
         if path.suffix.lower() == ".dcm":
             return DICOMService().get_thumbnail(path)
         if path.suffix.lower() in {".tiff", ".tif"}:
             return TIFFService().get_thumbnail(path)
         message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
-        logger.error(message)
+        logger.warning(message)
         raise ValueError(message)
 
     def get_thumbnail_bytes(self, path: Path) -> bytes:
@@ -94,7 +94,7 @@ class Service(BaseService):
         """
         if not url.startswith(("http://", "https://")):
             error_msg = "URL must start with 'http://' or 'https://'."
-            logger.error(error_msg)
+            logger.warning(error_msg)
             raise ValueError(error_msg)
         try:
             response = requests.get(url, timeout=TIMEOUT)

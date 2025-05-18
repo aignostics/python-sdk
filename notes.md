@@ -192,10 +192,11 @@ aignostics --help ``
 
 
 # Proxy with HTTP Toolkit (https://httptoolkit.com/) on MacOS
-export HTTP_PROXY=http://localhost:8000
-export HTTPS_PROXY=http://localhost:8000
-export REQUESTS_CA_BUNDLE=~/Library/Preferences/httptoolkit/ca.pem
-export SSL_CERT_FILE=~/Library/Preferences/httptoolkit/ca.pem
+export HTTP_PROXY="http://localhost:8000"
+export HTTPS_PROXY="http://localhost:8000"
+export NO_PROXY="localhost,127.0.0.1,.charite.de,charite.de"
+export REQUESTS_CA_BUNDLE="~/Library/Preferences/httptoolkit/ca.pem"
+export SSL_CERT_FILE="~/Library/Preferences/httptoolkit/ca.pem"
 git config --global http.sslCAInfo ~/Library/Preferences/httptoolkit/ca.pem
 
 unset HTTP_PROXY

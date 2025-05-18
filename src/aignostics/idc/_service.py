@@ -180,7 +180,7 @@ class Service(BaseService):
 
         target_directory = Path(target)
         if not target_directory.is_dir():
-            logger.error("Target directory does not exist: %s", target_directory)
+            logger.warning("Target directory does not exist: %s", target_directory)
             message = f"Target directory does not exist: {target_directory}"
             raise ValueError(message)
 
@@ -188,7 +188,7 @@ class Service(BaseService):
 
         if not item_ids:
             message = "No IDs provided."
-            logger.error(message)
+            logger.warning(message)
             raise ValueError(message)
 
         index_df = client.index
@@ -287,5 +287,5 @@ client.download_from_selection(
         if not matches_found:
             message = "None of the values passed matched any of the identifiers: "
             message += "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
-            logger.error(message)
+            logger.warning(message)
             raise ValueError(message)
