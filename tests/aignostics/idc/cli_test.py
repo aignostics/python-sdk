@@ -9,6 +9,9 @@ from typer.testing import CliRunner
 
 from aignostics.cli import cli
 
+SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
+THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
+
 
 @pytest.fixture
 def runner() -> CliRunner:
@@ -60,7 +63,7 @@ def test_cli_download_series_dry(runner: CliRunner, caplog, tmp_path) -> None:
         [
             "idc",
             "download",
-            "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0",  # a series
+            SERIES_UID,
             str(tmp_path),
             "--dry-run",
         ],
@@ -78,7 +81,7 @@ def test_cli_download_instance_thumbnail(runner: CliRunner, caplog, tmpdir) -> N
         [
             "idc",
             "download",
-            "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0",  # an instance of type thumbnail
+            THUMBNAIL_UID,
             str(tmpdir),
         ],
     )

@@ -44,11 +44,12 @@ class PageBuilder(BasePageBuilder):
             with ui.row(align_items="start").classes("full-width"):
                 ui.markdown("""
                     ##### Download DICOM datasets from IDC Portal of NCI
-                    1. Click "Explore Portal" to find DICOM datasets of interest.
-                    2. When you found a case, study, or series of interest, copy it's UID into the field below.
-                    3. If you are lazy and don't want to explore, just click on "Example Dataset" below.
-                    4. Select a download folder and hit download.
-                    5. Go to Run Applications via the ☰ menu, select an application, and the folder
+                    1. Click 🔍 Explore Portal to find DICOM datasets of interest.
+                    2. Find a collection, patient case, study, series, or instance of interest, 
+                        and copy one or multiple IDs into the field below.
+                    3. If you don't want to explore, simply click on "Example Dataset".
+                    4. Use ⌂ Home or 📁 select a download folder and hit ↓ download.
+                    5. Run Applications via the ☰ menu, select an application, and the folder
                     """).classes("w-3/5")
                 ui.space()
                 with ui.column().classes("w-1/5"):
@@ -161,8 +162,8 @@ class PageBuilder(BasePageBuilder):
                 with ui.row(align_items="center").classes("w-full"):
                     source_input = (
                         ui.input(
-                            label="Dataset UID",
-                            placeholder="start typing",
+                            label="Enter ID of collection, patient case, study, series or instance.",
+                            placeholder="Click 🔍 Explore Portal to find IDs",
                             on_change=lambda e: _on_source_input_change(e),  # noqa: PLW0108
                         )
                         .props("clearable")

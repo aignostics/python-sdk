@@ -31,9 +31,14 @@ class PageBuilder(BasePageBuilder):
             """
             try:
                 return Response(content=Service().get_thumbnail_bytes(Path(source)), media_type="image/png")
-            except Exception as e:
-                logger.exception("Error generating thumbnail")
-                raise HTTPException(status_code=500, detail=f"Error generating thumbnail: {e!s}") from e
+            except ValueError as e:
+                logger.exception("Error generating thumbnail on bad request or invalid image input")
+                raise HTTPException(status_code=400, detail=f"Bad request or invalid image input: {e!s}") from e
+            except RuntimeError as e:
+                logger.exception("Internal server error when generating thumbnail")
+                raise HTTPException(
+                    status_code=500, detail=f"Internal server error when generating thumbnail: {e!s}"
+                ) from e
 
         @app.get("/tiff")
         def tiff(url: str) -> Response:
@@ -49,7 +54,10 @@ class PageBuilder(BasePageBuilder):
                 HTTPException: If the file does not exist or if thumbnail generation fails.
             """
             try:
-                return Response(content=Service().get_tiff_as_jpg(url), media_type="application/jpg")
-            except Exception as e:
-                logger.exception("Error generating thumbnail")
-                raise HTTPException(status_code=500, detail=f"Error generating jpg: {e!s}") from e
+                return Response(content=Service().get_tiff_as_jpg(url), media_type="image/jpeg")
+            except ValueError as e:
+                logger.exception("Error generating jpeg on bad request or invalid tiff input")
+                raise HTTPException(status_code=400, detail=f"Bad request or invalid tiff input: {e!s}") from e
+            except RuntimeError as e:
+                logger.exception("Internal server error when generating jpeg")
+                raise HTTPException(status_code=500, detail=f"Internal server error when generating jpeg: {e!s}") from e
