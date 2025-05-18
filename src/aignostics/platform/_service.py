@@ -70,7 +70,7 @@ class Service(BaseService):
         """
         try:
             client = Client()
-            api_client = client.get_api_client(cache_token=False).api_client
+            api_client = client.get_api_client(cache_token=True).api_client
             response = api_client.call_api(
                 url=self._settings.api_root + "/api/v1/health",
                 method="GET",
