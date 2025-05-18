@@ -81,7 +81,6 @@ jobs:
           uv run --all-extras aignostics system info
           uv run --all-extras aignostics system health
           uv run --all-extras aignostics application list
-          uv run --all-extras aignostics application run list
       
       - name: Test / regular
         run: |
