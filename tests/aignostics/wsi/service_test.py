@@ -15,7 +15,7 @@ from PIL import Image
 from aignostics.utils import gui_register_pages
 
 
-async def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
+def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
     """Test that the thumbnail fails on missing file."""
     gui_register_pages()
     client = TestClient(app)
@@ -30,7 +30,7 @@ async def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
     assert detail_message.startswith("Bad request or invalid image input: File does not exist: ")
 
 
-async def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
+def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
     """Test that the thumbnail fails on unsupported_filetype."""
     gui_register_pages()
     client = TestClient(app)
@@ -47,7 +47,7 @@ async def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None
     )
 
 
-async def test_serve_thumbnail_for_dicom_thumbnail(user: User) -> None:
+def test_serve_thumbnail_for_dicom_thumbnail(user: User) -> None:
     """Test that the thumbnail route works for non-pyramidal dicom thumbnail file."""
     gui_register_pages()
     client = TestClient(app)
@@ -67,7 +67,7 @@ async def test_serve_thumbnail_for_dicom_thumbnail(user: User) -> None:
     assert image.height > 0
 
 
-async def test_serve_thumbnail_for_dicom_pyramidal_small(user: User) -> None:
+def test_serve_thumbnail_for_dicom_pyramidal_small(user: User) -> None:
     """Test that the thumbnail route works for small pyramidal dicom file."""
     gui_register_pages()
     client = TestClient(app)
@@ -87,7 +87,7 @@ async def test_serve_thumbnail_for_dicom_pyramidal_small(user: User) -> None:
     assert image.height > 0
 
 
-async def test_serve_thumbnail_for_tiff(user: User) -> None:
+def test_serve_thumbnail_for_tiff(user: User) -> None:
     """Test that the thumbnail route works for dicom file."""
     gui_register_pages()
     client = TestClient(app)
@@ -107,7 +107,7 @@ async def test_serve_thumbnail_for_tiff(user: User) -> None:
     assert image.height > 0
 
 
-async def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User) -> None:
+def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User) -> None:
     """Test that the tiff route serves the expected jpeg.
 
     - Spin up local webserver serving tests/resources/single-channel-ome.tiff
@@ -161,7 +161,7 @@ def _local_http_server(directory: Path) -> str:
             print("Warning: Server thread did not terminate within timeout")
 
 
-async def test_serve_tiff_to_jpeg(user: User) -> None:
+def test_serve_tiff_to_jpeg(user: User) -> None:
     """Test that the tiff route serves the expected jpeg.
 
     - Spin up local webserver serving tests/resources/single-channel-ome.tiff
@@ -190,7 +190,7 @@ async def test_serve_tiff_to_jpeg(user: User) -> None:
     assert image.height > 0
 
 
-async def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
+def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
     """Test that the tiff route fails as expected on broken tiff.
 
     - Spin up local webserver serving 4711 random bytes
@@ -216,7 +216,7 @@ async def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> No
     )
 
 
-async def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
+def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
     """Test that the tiff route fails as expected on tiff not found.
 
     - Spin up local webserver
@@ -237,12 +237,13 @@ async def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) ->
     assert response.status_code == 400
     detail_message = response.json()["detail"]
     assert detail_message.startswith(
-        "Bad request or invalid tiff input: HTTP error while fetching TIFF from URL: 404 Client Error: File not found for url: http://localhost:"
+        "Bad request or invalid tiff input: HTTP error while fetching TIFF from URL: 404 Client Error: "
+        "File not found for url: http://localhost:"
     )
     assert detail_message.endswith("/not-found.tiff.")
 
 
-async def test_serve_tiff_to_jpeg_fails_on_tiff_url_broken(user: User) -> None:
+def test_serve_tiff_to_jpeg_fails_on_tiff_url_broken(user: User) -> None:
     """Test that the tiff route fails as expected on invalid url as arg.
 
     - Open the broken url and check the response

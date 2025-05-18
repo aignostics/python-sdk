@@ -45,7 +45,7 @@ class PageBuilder(BasePageBuilder):
                 ui.markdown("""
                     ##### Download DICOM datasets from IDC Portal of NCI
                     1. Click 🔍 Explore Portal to find DICOM datasets of interest.
-                    2. Find a collection, patient case, study, series, or instance of interest, 
+                    2. Find a collection, patient case, study, series, or instance of interest,
                         and copy one or multiple IDs into the field below.
                     3. If you don't want to explore, simply click on "Example Dataset".
                     4. Use ⌂ Home or 📁 select a download folder and hit ↓ download.
