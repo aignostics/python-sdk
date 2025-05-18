@@ -179,8 +179,9 @@ packages = ["src/aignostics", "codegen/out/aignx"]
 
 [tool.uv]
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
-    "h11>=0.16.0", # vulnerability
+    "h11>=0.16.0",                      # CVE-2025-47287
     "rfc3987; sys_platform == 'never'", # GPLv3
+    "tornado>=6.5.0",                   # CVE-2025-47287
 ]
 
 [tool.ruff]
