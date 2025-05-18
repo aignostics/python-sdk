@@ -108,19 +108,19 @@ class Service(BaseService):
                 return jpg_buffer.getvalue()
         except requests.HTTPError as e:
             error_msg = f"HTTP error while fetching TIFF from URL: {e!s}."
-            logger.exception(error_msg)
+            logger.warning(error_msg)
             raise ValueError(error_msg) from e
         except requests.exceptions.InvalidURL as e:
             error_msg = f"URL error prevented fetching TIFF: {e!s}."
-            logger.exception(error_msg)
+            logger.warning(error_msg)
             raise ValueError(error_msg) from e
         except requests.URLRequired as e:
             error_msg = f"URL error prevented fetching TIFF: {e!s}."
-            logger.exception(error_msg)
+            logger.warning(error_msg)
             raise ValueError(error_msg) from e
         except UnidentifiedImageError as e:
             error_msg = f"Unidentified image error while trying to process as TIFF: {e!s}."
-            logger.exception(error_msg)
+            logger.warning(error_msg)
             raise ValueError(error_msg) from e
         except Exception as e:
             error_msg = f"Unexpected error converting TIFF to JPEG: {e!s}."

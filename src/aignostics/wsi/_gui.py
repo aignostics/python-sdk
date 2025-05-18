@@ -32,7 +32,7 @@ class PageBuilder(BasePageBuilder):
             try:
                 return Response(content=Service().get_thumbnail_bytes(Path(source)), media_type="image/png")
             except ValueError as e:
-                logger.exception("Error generating thumbnail on bad request or invalid image input")
+                logger.warning("Error generating thumbnail on bad request or invalid image input")
                 raise HTTPException(status_code=400, detail=f"Bad request or invalid image input: {e!s}") from e
             except RuntimeError as e:
                 logger.exception("Internal server error when generating thumbnail")
@@ -56,7 +56,7 @@ class PageBuilder(BasePageBuilder):
             try:
                 return Response(content=Service().get_tiff_as_jpg(url), media_type="image/jpeg")
             except ValueError as e:
-                logger.exception("Error generating jpeg on bad request or invalid tiff input")
+                logger.warning("Error generating jpeg on bad request or invalid tiff input")
                 raise HTTPException(status_code=400, detail=f"Bad request or invalid tiff input: {e!s}") from e
             except RuntimeError as e:
                 logger.exception("Internal server error when generating jpeg")
