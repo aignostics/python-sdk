@@ -45,11 +45,29 @@ async def test_gui_applications(user: User, route: str, expected_text: str) -> N
     await user.should_see(expected_text)
 
 
-async def test_gui_run(user: User) -> None:
+async def test_gui_run(user: User, runner: CliRunner, tmp_path: Path) -> None:
     """Test that the user sees the index page, and sees the intro."""
     gui_register_pages()
-    await user.open("/application/run/6adbd0fe-a82a-4fda-9eab-a9619d82299f")
-    await user.should_see("Run of")
+
+    # Submit run
+    csv_content = "source;checksum_crc32c;base_mpp;width;height;cancer.type;cancer.tissue\n"
+    csv_content += "gs://bucket/test;5onqtA==;0.26268186053789266;7447;7196;lung;lung"
+    csv_path = tmp_path / "dummy.csv"
+    csv_path.write_text(csv_content)
+    result = runner.invoke(
+        cli, ["application", "run", "submit", "--application-version-id", "he-tme:v0.45.0", "--source", str(csv_path)]
+    )
+    assert result.exit_code == 0
+
+    # Extract the run ID from the output
+    run_id_match = re.search(r"Application run `([0-9a-f-]+)`", result.output)
+    assert run_id_match is not None, f"Could not extract run ID from output: {result.output}"
+    run_id = run_id_match.group(1)
+
+    # Navigate to the extracted run ID
+    await user.open(f"/application/run/{run_id}")
+    await user.should_see("Run of he-tme:v0.45.0")
+    await user.should_see("Application Version: he-tme:v0.45.0")
 
 
 async def test_runs_shown(user: User, runner: CliRunner, tmp_path: Path) -> None:
