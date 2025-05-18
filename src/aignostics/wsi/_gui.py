@@ -18,10 +18,10 @@ class PageBuilder(BasePageBuilder):
 
         @app.get("/thumbnail")
         def thumbnail(source: str) -> Response:
-            """Serve a thumbnail for a given reference.
+            """Serve a thumbnail for a given source reference.
 
             Args:
-                source (str): The source of the slide.
+                source (str): The source of the slide pointing to a file on the filesystem.
 
             Returns:
                 fastapi.Response: HTTP response containing the thumbnail image.

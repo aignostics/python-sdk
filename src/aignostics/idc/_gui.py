@@ -11,11 +11,14 @@ from ..utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
 from ._service import TARGET_LAYOUT_DEFAULT, Service
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
+PORTAL_URL = "https://portal.imaging.datacommons.cancer.gov/explore/"
+SOURCE_EXAMPLE_ID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915 #NOSONAR
+        import nicegui  # noqa: PLC0415
         from nicegui import binding, run, ui  # noqa: PLC0415
         from nicegui.events import ValueChangeEventArguments  # noqa: PLC0415
 
@@ -50,7 +53,7 @@ class PageBuilder(BasePageBuilder):
                 ui.space()
                 with ui.column().classes("w-1/5"):
                     ui.image("/assets/NIH_IDC_title.svg").classes("w-25").style("margin-top:1.25rem")
-                    with ui.link(target="https://portal.imaging.datacommons.cancer.gov/explore/", new_tab=True):
+                    with ui.link(target=PORTAL_URL, new_tab=True):
                         ui.button("Explore Portal", icon="search")
 
             def _on_source_input_change(e: ValueChangeEventArguments) -> None:
@@ -133,14 +136,21 @@ class PageBuilder(BasePageBuilder):
                 ui.notify(f"Downloading {source!s} ...", type="info")
                 download_form.download_progress.visible = True
                 download_form.download_button.visible = False
-                await run.cpu_bound(
-                    Service.download_with_queue,  # type: ignore[arg-type]
-                    download_message_queue,  # type: ignore[unused-ignore] # type: ignore
-                    source,
-                    str(download_form.destination),
-                    TARGET_LAYOUT_DEFAULT,
-                    False,
-                )
+                try:
+                    await run.io_bound(
+                        Service.download_with_queue,  # type: ignore[arg-type]
+                        download_message_queue,  # type: ignore[unused-ignore] # type: ignore
+                        source,
+                        str(download_form.destination),
+                        TARGET_LAYOUT_DEFAULT,
+                        False,
+                    )
+                except ValueError as e:
+                    ui.label("bla")
+                    nicegui.ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
+                    download_form.download_button.visible = True
+                    download_form.download_progress.visible = False
+                    return
                 ui.notify("Download completed.", type="positive")
                 download_form.download_button.visible = True
                 download_form.download_progress.visible = False
@@ -177,9 +187,7 @@ class PageBuilder(BasePageBuilder):
                 with ui.row(align_items="center").classes("w-full"):
                     ui.button(
                         "Use Example Dataset",
-                        on_click=lambda _: source_input.set_value(
-                            "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
-                        ),
+                        on_click=lambda _: source_input.set_value(SOURCE_EXAMPLE_ID),
                         icon="folder",
                         color="secondary",
                     ).mark("BUTTON_EXAMPLE_DATASET")

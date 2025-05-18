@@ -1,4 +1,4 @@
-"""Thumbnail module."""
+"""WSI module."""
 
 from ._service import Service
 

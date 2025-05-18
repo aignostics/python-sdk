@@ -89,7 +89,7 @@ dependencies = [
     "google-crc32c>=1.7.1",
     "highdicom>=0.25.1",
     "httpx>=0.28.1",
-    "idc-index>=0.8.7",
+    "idc-index @ git+https://github.com/aignostics/idc-index.git@main", # --no-verify-ssl for corporate proxy
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
     "openslide-bin>=4.0.0.8",
@@ -183,6 +183,9 @@ include = ["src/*", "codegen/out/*", "examples"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aignostics", "codegen/out/aignx", "examples"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.uv]
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
@@ -312,7 +315,7 @@ sigterm = true
 relative_files = true
 source = ["src"]
 #omit = ["*/_gui.py", "*/_notebook.py", "src/aignostics/gui", "*/.vendored/*"]
-omit = ["*/_notebook.py", "src/aignostics/gui", "*/.vendored/*"]
+omit = ["*/.vendored/*", "*/_notebook.py", "src/aignostics/gui"]
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]

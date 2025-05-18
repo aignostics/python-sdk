@@ -139,7 +139,7 @@ requires-dist = [
     { name = "highdicom", specifier = ">=0.25.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "humanize", specifier = ">=4.12.3" },
-    { name = "idc-index", specifier = ">=0.8.7" },
+    { name = "idc-index", git = "https://github.com/aignostics/idc-index.git?rev=main" },
     { name = "ijson", marker = "extra == 'qupath'", specifier = ">=3.3.0" },
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", specifier = ">=4.23.0" },
@@ -1820,8 +1820,8 @@ wheels = [
 
 [[package]]
 name = "idc-index"
-version = "0.8.7"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.dev338+gca52c75"
+source = { git = "https://github.com/aignostics/idc-index.git?rev=main#ca52c750bf0a9c2107708d66900d8596e5f0c910" }
 dependencies = [
     { name = "click" },
     { name = "duckdb" },
@@ -1835,10 +1835,6 @@ dependencies = [
     { name = "s5cmd" },
     { name = "sphinx-click" },
     { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/22/9f31d40cfa5003830a673d71d2bcf3a4a08bef5955950952d46bac4dd2fa/idc_index-0.8.7.tar.gz", hash = "sha256:6306cc357f48bff8ce061326f4e6e380a0d27f19ef4ce80eba493700d9ee967a", size = 41840, upload-time = "2025-05-16T22:09:46.194Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/8c/2c3cd7131123d27a88f638dd82ffe721eea4dd1d7608e8660907ec36b62f/idc_index-0.8.7-py3-none-any.whl", hash = "sha256:638da57cd95971aba10a29c9223ee4aa10ada78867c8cf165d8e8431e66fa946", size = 27237, upload-time = "2025-05-16T22:09:44.334Z" },
 ]
 
 [[package]]

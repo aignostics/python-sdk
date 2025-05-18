@@ -189,3 +189,8 @@ aignostics --help ``
 - QuPath Integration
 - Single File Selection
 - Offline Mode
+
+
+# Proxy with HTTP Toolkit (https://httptoolkit.com/) on MacOS
+export HTTPS_PROXY=http://localhost:8000
+export REQUESTS_CA_BUNDLE=~/Library/Preferences/httptoolkit/ca.pem

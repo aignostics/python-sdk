@@ -9,9 +9,8 @@ from http import HTTPStatus
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
 from typing import Any, NotRequired, TypedDict, cast
-from urllib.error import HTTPError
+from urllib.request import getproxies
 
-import urllib3
 from pydantic_settings import BaseSettings
 from requests import get
 
@@ -86,22 +85,24 @@ class Service(BaseService):
         """Determine we can reach a well known and secure endpoint.
 
         - Checks if health endpoint is reachable and returns 200 OK
-        - Uses urllib3 for a direct connection check without authentication
+        - Uses requests library for a direct connection check without authentication
 
         Returns:
-            Health: The healthiness of the Aignostics Platform API via basic unauthenticated request.
+            Health: The healthiness of the network connection via basic unauthenticated request.
         """
         try:
-            http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5.0, read=10.0))
-            response = http.request(
-                method="GET",
+            response = get(
                 url=IPIFY_URL,
                 headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
+                timeout=NETWORK_TIMEOUT,
             )
 
-            if response.status != HTTPStatus.OK:
-                logger.error("'%s' returned '%s'", IPIFY_URL, response.status)
-                return Health(status=Health.Code.DOWN, reason=f"'{IPIFY_URL}' returned status '{response.status}'")
+            if response.status_code != HTTPStatus.OK:
+                logger.error("'%s' returned '%s'", IPIFY_URL, response.status_code)
+                return Health(
+                    status=Health.Code.DOWN,
+                    reason=f"'{IPIFY_URL}' returned status '{response.status_code}'",
+                )
         except Exception as e:
             message = f"Issue reaching {IPIFY_URL}: {e}"
             logger.exception(message)
@@ -156,7 +157,7 @@ class Service(BaseService):
             response = get(url=IPIFY_URL, timeout=timeout)
             response.raise_for_status()
             return response.text
-        except HTTPError as e:
+        except Exception as e:
             message = f"Failed to get public IP: {e}"
             logger.exception(message)
             return None
@@ -256,6 +257,8 @@ class Service(BaseService):
                         "hostname": platform.node(),
                         "local_ipv4": Service._get_local_ipv4(),
                         "public_ipv4": Service._get_public_ipv4(),
+                        "proxies": getproxies(),
+                        "requests_ca_bundle": os.getenv("REQUESTS_CA_BUNDLE"),
                     },
                     "uptime": {
                         "seconds": uptime(),

@@ -34,7 +34,8 @@ def frame(  # noqa: PLR0915
     right_drawer.hide()  # Hide by default
 
     with ui.header(elevated=True).classes("items-center justify-between"):
-        ui.image("/assets/logo.png").style("width: 110px")
+        with ui.link(target="/"):
+            ui.image("/assets/logo.png").style("width: 110px")
         ui.space()
         if navigation_icon is not None:
             ui.icon(navigation_icon)

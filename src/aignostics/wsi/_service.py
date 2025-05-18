@@ -1,16 +1,17 @@
-"""Service of the thumbnail module."""
+"""Service of the wsi module."""
 
 import io
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
+import requests
 from PIL import Image
 
 from aignostics.utils import BaseService, Health, get_logger
 
 logger = get_logger(__name__)
+
+TIMEOUT = 60  # 1 minutes
 
 
 class Service(BaseService):
@@ -34,8 +35,8 @@ class Service(BaseService):
             status=Health.Code.UP,
         )
 
-    def get_thumbnail_image(self, path: Path) -> Image.Image:  # noqa: PLR6301
-        """Get thumbnail of a image as PIL image.
+    def get_thumbnail(self, path: Path) -> Image.Image:  # noqa: PLR6301
+        """Get thumbnail as PIL image.
 
         Args:
             path (Path): Path to the image.
@@ -51,10 +52,9 @@ class Service(BaseService):
 
         if path.suffix.lower() == ".dcm":
             return DICOMService().get_thumbnail(path)
-        if path.suffix.lower() == ".tiff" or path.suffix.lower() == ".tif":
+        if path.suffix.lower() in {".tiff", ".tif"}:
             return TIFFService().get_thumbnail(path)
         message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
-        logger.error(message)
         logger.error(message)
         raise ValueError(message)
 
@@ -70,7 +70,7 @@ class Service(BaseService):
         Raises:
             ValueError: If the file type is not supported (.dcm, .tiff, or .tif).
         """
-        thumbnail_image = self.get_thumbnail_image(path)
+        thumbnail_image = self.get_thumbnail(path)
         buffer = io.BytesIO()
         thumbnail_image.save(buffer, format="PNG")
         return buffer.getvalue()
@@ -85,44 +85,33 @@ class Service(BaseService):
             bytes: The TIFF image converted to JPG format as bytes.
 
         Raises:
-            ValueError: If the URL does not point to a TIFF image or if the conversion fails.
-            HTTPError: If the request to the URL fails.
+            ValueError: If URL format is invalid or if there's an error converting TIFF to JPG.
+            requests.HTTPError: If there's an HTTP error while fetching the TIFF from the URL.
+            requests.URLRequired: If there's a URL error while fetching the TIFF from the URL.
         """
-        # Validate URL
         if not url.startswith(("http:", "https:")):
             error_msg = "URL must start with 'http:' or 'https:'"
             logger.error(error_msg)
             raise ValueError(error_msg)
-
         try:
-            # Open the URL and read the content into a bytes object
-            with urllib.request.urlopen(url) as response:  # noqa: S310
-                tiff_data = response.read()
-
-            # Create a BytesIO object from the image data
+            response = requests.get(url, timeout=TIMEOUT)
+            response.raise_for_status()
+            tiff_data = response.content
             tiff_buffer = io.BytesIO(tiff_data)
-
-            # Open the image using PIL
             with Image.open(tiff_buffer) as img:
-                # Convert to RGB if needed (in case it's a RGBA or other format)
-                rgb_img = img.convert("RGB") if img.mode != "RGB" else img.copy()
-
-                # Save the image as JPG to a BytesIO buffer
+                rgb_img = img.convert("RGB") if img.mode != "RGB" else img
                 jpg_buffer = io.BytesIO()
                 rgb_img.save(jpg_buffer, format="JPEG", quality=90)
-
-                # Get the bytes from the buffer
                 return jpg_buffer.getvalue()
-
-        except urllib.error.HTTPError as e:
-            error_msg = f"HTTP error while fetching TIFF from URL: {e}"
+        except requests.HTTPError:
+            error_msg = "HTTP error while fetching TIFF from URL"
             logger.exception(error_msg)
             raise
-        except urllib.error.URLError as e:
-            error_msg = f"URL error while fetching TIFF from URL: {e}"
+        except requests.URLRequired:
+            error_msg = "URL error while fetching TIFF from URL"
             logger.exception(error_msg)
-            raise ValueError(error_msg) from e
+            raise
         except Exception as e:
-            error_msg = f"Error converting TIFF to JPG: {e}"
+            error_msg = "Error converting TIFF to JPG"
             logger.exception(error_msg)
             raise ValueError(error_msg) from e

@@ -4,9 +4,12 @@ from asyncio import sleep
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from nicegui.testing import User
 
 from aignostics.utils import gui_register_pages
+
+MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
 
 async def test_gui_idc_shows(user: User) -> None:
@@ -32,10 +35,11 @@ async def test_gui_idc_downloads(user: User, tmpdir) -> None:
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION").click()
         await user.should_see(marker="BUTTON_FILEPICKER_CANCEL")
         user.find(marker="BUTTON_FILEPICKER_CANCEL").click()
-        await user.should_see("No download folder selected")
+        await user.should_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_HOME").click()
-        await user.should_not_see("No download folder selected")
+        await user.should_not_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
+
         user.find(marker="BUTTON_DOWNLOAD").click()
 
         for _ in range(30):
@@ -55,3 +59,40 @@ async def test_gui_idc_downloads(user: User, tmpdir) -> None:
         assert expected_file.stat().st_size == 1369290, (
             f"File size {expected_file.stat().st_size} doesn't match expected 1369290 bytes"
         )
+
+
+@pytest.mark.parametrize(
+    ("source_input", "expected_notification"),
+    [
+        (" ", "Download failed: No IDs provided."),
+        (
+            "4711",
+            "Download failed: None of the values passed matched any of the identifiers: "
+            "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID.",
+        ),
+        (
+            " ",
+            "Download failed: No IDs provided",
+        ),
+    ],
+)
+async def test_gui_idc_download_fails_with_invalid_inputs(
+    user: User, tmpdir, source_input: str, expected_notification: str
+) -> None:
+    """Test that the download fails with appropriate notification when invalid IDs are provided."""
+    with patch("pathlib.Path.home", return_value=Path(tmpdir)):
+        gui_register_pages()
+        await user.open("/idc")
+        user.find(marker="SOURCE_INPUT").clear()
+        user.find(marker="SOURCE_INPUT").type(source_input)
+
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_HOME").click()
+        await user.should_not_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
+
+        user.find(marker="BUTTON_DOWNLOAD").click()
+
+        for _ in range(30):
+            if user.notify.contains("Download failed"):
+                break
+            await sleep(1)
+        assert user.notify.contains(expected_notification)

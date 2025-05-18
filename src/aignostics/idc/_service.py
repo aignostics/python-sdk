@@ -174,10 +174,9 @@ class Service(BaseService):
         from idc_index.index import IDCClient  # noqa: PLC0415
 
         queue.put_nowait(0.01)
+
         client = IDCClient.client()
         queue.put_nowait(0.02)
-
-        queue.put_nowait(0.03)
 
         target_directory = Path(target)
         if not target_directory.is_dir():
@@ -188,12 +187,15 @@ class Service(BaseService):
         item_ids = [item.strip() for item in source.split(",") if item.strip()]
 
         if not item_ids:
-            logger.error("No IDs provided.")
+            message = "No IDs provided."
+            logger.error(message)
+            raise ValueError(message)
 
         index_df = client.index
         client.fetch_index("sm_instance_index")
         logger.info("Downloaded instance index")
         sm_instance_index_df = client.sm_instance_index
+        queue.put_nowait(0.03)
 
         def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
             if column_name != "SOPInstanceUID":
@@ -283,7 +285,7 @@ client.download_from_selection(
         matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
         matches_found += check_and_download("SOPInstanceUID", item_ids, target_directory, "sopInstanceUID")
         if not matches_found:
-            logger.error(
-                "None of the values passed matched any of the identifiers: "
-                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
-            )
+            message = "None of the values passed matched any of the identifiers: "
+            message += "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
+            logger.error(message)
+            raise ValueError(message)

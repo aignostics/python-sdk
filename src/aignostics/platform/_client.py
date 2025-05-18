@@ -1,3 +1,6 @@
+import os
+from urllib.request import getproxies
+
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
@@ -91,10 +94,13 @@ class Client:
             RuntimeError: If authentication fails.
         """
         token = get_token(use_cache=cache_token)
+        config = Configuration(
+            host=settings().api_root,
+            ssl_ca_cert=os.getenv("REQUESTS_CA_BUNDLE"),  # point to .cer file of proxy if defined
+        )
+        config.proxy = getproxies().get("https")  # use system proxy
         client = ApiClient(
-            Configuration(
-                host=settings().api_root,
-            ),
+            config,
             header_name="Authorization",
             header_value=f"Bearer {token}",
         )
