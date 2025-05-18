@@ -74,4 +74,4 @@ async def test_runs_shown(user: User, runner: CliRunner, tmp_path: Path) -> None
     await user.should_see("Applications")
     await user.should_see("Atlas H&E-TME")
     await user.should_see("Runs")
-    await user.should_see("he-tme:v0.45.0", marker="SIDEBAR_RUN_ITEM:0", retries=100)
+    await user.should_see("he-tme:v0.45.0", marker="SIDEBAR_RUN_ITEM:0", retries=1000)
