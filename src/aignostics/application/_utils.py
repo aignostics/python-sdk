@@ -27,11 +27,6 @@ class OutputFormat(StrEnum):
     This enum defines the possible formats for output data:
     - TEXT: Output data as formatted text
     - JSON: Output data in JSON format
-
-    Usage:
-        format = OutputFormat.YAML
-        print(f"Using {format} format")
-    https://nicegui.io/documentation/html
     """
 
     TEXT = "text"
@@ -101,7 +96,7 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
-        run(ApplicationRun): The ApplicationRun object
+        run (ApplicationRun): The ApplicationRun object
 
     """
     run_data = run.details()
@@ -125,7 +120,7 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
     """Retrieve and print information about items in a run.
 
     Args:
-        run(ApplicationRun): The ApplicationRun object
+        run (ApplicationRun): The ApplicationRun object
     """
     # Get results with detailed information
     results = run.results()
@@ -155,7 +150,7 @@ def _print_run_status_summary(run: ApplicationRun) -> None:
     """Print summary of item statuses in a run.
 
     Args:
-        run(ApplicationRun): The ApplicationRun object
+        run (ApplicationRun): The ApplicationRun object
     """
     # Get and display item status counts
     item_statuses = run.item_status()

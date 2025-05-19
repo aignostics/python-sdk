@@ -1,4 +1,4 @@
-"""GUI of application module including homepage of app."""
+"""GUI of application module including homepage of Atlas Launchpad."""
 
 import time
 from importlib.util import find_spec
