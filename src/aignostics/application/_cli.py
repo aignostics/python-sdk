@@ -338,8 +338,9 @@ def run_list(
         return 0
 
     display_count = min(len(runs), limit) if limit is not None else len(runs)
-    console.print(f"found {len(runs)} application runs, displaying {display_count}.")
+    console.print(f"Found {len(runs)} application runs, displaying {display_count}...")
     print_runs_verbose(runs[:display_count], Client()) if verbose else print_runs_non_verbose(runs[:display_count])
+    console.print(f"Displayed {display_count} application runs.")
     return len(runs)
 
 

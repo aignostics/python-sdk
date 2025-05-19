@@ -79,6 +79,7 @@ def test_cli_run_list_verbose(runner: CliRunner) -> None:
     assert result.exit_code == 0
     assert "Application Runs:" in result.output
     assert "Item Status Counts:" in result.output
+    assert "Displayed 1 application runs." in result.output
 
 
 def test_cli_run_describe_not_found(runner: CliRunner) -> None:
