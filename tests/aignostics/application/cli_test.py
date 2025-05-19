@@ -26,7 +26,7 @@ def test_cli_application_list(runner: CliRunner) -> None:
     assert "test-app" in result.output
 
 
-def test_cli_application_list_verbose(runner: CliRunner) -> None:
+def test_cli_application_list_verbose_max_10(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list", "--verbose"])
     assert result.exit_code == 0
@@ -73,10 +73,9 @@ def test_cli_run_list(runner: CliRunner) -> None:
     assert "Application Run IDs:" in result.output
 
 
-@pytest.mark.skip
 def test_cli_run_list_verbose(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
-    result = runner.invoke(cli, ["application", "run", "list", "--verbose"])
+    result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
     assert result.exit_code == 0
     assert "Application Runs:" in result.output
     assert "Item Status Counts:" in result.output

@@ -205,26 +205,18 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
     return True
 
 
-def print_runs_verbose(runs: list[ApplicationRunData], client: Client) -> int:
+def print_runs_verbose(runs: list[ApplicationRunData], client: Client) -> None:
     """Print detailed information about runs, sorted by triggered_at in descending order.
 
     Args:
         runs (list[ApplicationRunData]): List of run data
         client (Client): The Client instance to use
 
-    Returns:
-        int: Number of runs processed
     """
     console.print("[bold]Application Runs:[/bold]")
     console.print("=" * 80)
 
-    run_count = 0
-
-    # Sort runs by triggered_at in descending order (newest first)
-    sorted_runs = sorted(runs, key=lambda x: x.triggered_at, reverse=True)
-
-    # Display the sorted runs
-    for run in sorted_runs:
+    for run in runs:
         console.print(f"[bold]Run ID:[/bold] {run.application_run_id}")
         console.print(f"[bold]App Version:[/bold] {run.application_version_id}")
         console.print(f"[bold]Status:[/bold] {run.status.value}")
@@ -241,34 +233,21 @@ def print_runs_verbose(runs: list[ApplicationRunData], client: Client) -> int:
             )
             continue
         console.print("-" * 80)
-        run_count += 1
-
-    return run_count
 
 
-def print_runs_non_verbose(runs: list[ApplicationRunData]) -> int:
+def print_runs_non_verbose(runs: list[ApplicationRunData]) -> None:
     """Print simplified information about runs, sorted by triggered_at in descending order.
 
     Args:
-        runs: List of runs
+        runs (list[ApplicationRunData]): List of runs
 
-    Returns:
-        int: Number of runs processed
     """
     console.print("[bold]Application Run IDs:[/bold]")
-    run_count = 0
 
-    # Sort runs by triggered_at in descending order (newest first)
-    sorted_runs = sorted(runs, key=lambda x: x.triggered_at, reverse=True)
-
-    # Display the sorted runs
-    for run_status in sorted_runs:
+    for run_status in runs:
         console.print(
             f"- [bold]{run_status.application_run_id}[/bold] of "
             f"[bold]{run_status.application_version_id}[/bold] "
             f"(triggered: {run_status.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
             f"status: {run_status.status.value})"
         )
-        run_count += 1
-
-    return run_count

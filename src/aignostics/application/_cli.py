@@ -314,29 +314,33 @@ def run_submit(
 @run_app.command("list")
 def run_list(
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
-) -> bool:
-    """List runs.
+    limit: Annotated[int | None, typer.Option(help="Maximum number of runs to display")] = None,
+) -> int:
+    """List runs, sorted by triggered_at, descending.
 
     Args:
-        verbose (bool): If True, show detailed information about each run
+        verbose (bool): If True, show detailed information about each run.
+        limit (int | None): Maximum number of runs to display. If None, display all runs.
 
     Returns:
-        bool: Success status of the operation
+        int: Number of runs found, or -1 if an error occurred
     """
     try:
-        runs_data = list(Client().runs.list_data())
+        runs = list(Client().runs.list_data(sort="triggered_at"))[::-1]
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[bold red]Error:[/bold red] Failed to list runs: {e}")
-        return False
+        return -1
 
-    run_count = print_runs_verbose(runs_data, Client()) if verbose else print_runs_non_verbose(runs_data)
-
-    if run_count == 0:
+    if len(runs) == 0:
         logger.warning("No application runs found.")
         console.print("No application runs found.")
+        return 0
 
-    return True
+    display_count = min(len(runs), limit) if limit is not None else len(runs)
+    console.print(f"found {len(runs)} application runs, displaying {display_count}.")
+    print_runs_verbose(runs[:display_count], Client()) if verbose else print_runs_non_verbose(runs[:display_count])
+    return len(runs)
 
 
 @run_app.command("describe")
