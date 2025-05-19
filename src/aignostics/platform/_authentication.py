@@ -31,9 +31,9 @@ def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
     """Retrieves an authentication token, either from cache or via login.
 
     Args:
-        use_cache: Boolean indicating whether to store & use the token from disk cache.
+        use_cache (bool): Boolean indicating whether to store & use the token from disk cache.
             Defaults to True.
-        use_device_flow: Boolean indicating whether to force the usage of the device flow for authentication.
+        use_device_flow (bool): Boolean indicating whether to force the usage of the device flow for authentication.
 
     Returns:
         str: The JWT access token.
@@ -75,7 +75,7 @@ def _authenticate(use_device_flow: bool) -> str:
     a browser can be opened, then executes that flow.
 
     Args:
-        use_device_flow: Boolean indicating whether to force the usage of the device flow for authentication.
+        use_device_flow (bool): Boolean indicating whether to force the usage of the device flow for authentication.
 
     Returns:
         str: The JWT access token.
@@ -100,10 +100,10 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
     Args:
-        token: The JWT token to verify and decode.
+        token (str): The JWT token to verify and decode.
 
     Returns:
-        dict: The decoded token claims.
+        dict[str,str]: The decoded token claims.
 
     Raises:
         RuntimeError: If token verification or decoding fails.
@@ -246,7 +246,7 @@ def _perform_device_flow() -> str | None:
     on another device and polls for authorization completion.
 
     Returns:
-        str: The JWT access token.
+        str | None: The JWT access token.
 
     Raises:
         RuntimeError: If authentication fails or is denied.
@@ -305,10 +305,10 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
     """Obtains a new access token using a refresh token.
 
     Args:
-        refresh_token: The refresh token to use for obtaining a new access token.
+        refresh_token (SecretStr): The refresh token to use for obtaining a new access token.
 
     Returns:
-        str: The new JWT access token.
+        str | None: The new JWT access token.
 
     Raises:
         RuntimeError: If token refresh fails.
@@ -334,8 +334,8 @@ def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_
     """Check if a port is already in use.
 
     Args:
-        port: int The port number to check.
-        max_retries: int The maximum number of retries to check the port.
+        port (int): The port number to check.
+        max_retries (int): The maximum number of retries to check the port.
 
     Returns:
         bool: True if the port is not in use, False otherwise.

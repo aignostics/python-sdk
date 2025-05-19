@@ -315,7 +315,12 @@ md_report_exclude_outcomes = ["passed", "skipped"]
 sigterm = true
 relative_files = true
 source = ["src"]
-omit = ["*/.vendored/*", "*/_notebook.py"]
+omit = [
+    "*/.vendored/*",
+    "*/_notebook.py",
+    "*/_pydicom_handler.py",
+    "*/_openslide_handler.py",
+]
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]

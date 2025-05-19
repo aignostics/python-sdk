@@ -3,10 +3,10 @@
 import subprocess
 from unittest import mock
 
-from aignostics.idc._service import _active_processes, _cleanup_processes, _terminate_process
+from aignostics.dataset._service import _active_processes, _cleanup_processes, _terminate_process
 
 
-@mock.patch("aignostics.idc._service._terminate_process")
+@mock.patch("aignostics.dataset._service._terminate_process")
 def test_cleanup_processes_terminates_running_processes(mock_terminate_process: mock.MagicMock) -> None:
     """Test that _cleanup_processes terminates all running processes."""
     # Create mock processes
@@ -64,7 +64,7 @@ def test_terminate_process_graceful_exit(mock_sleep: mock.MagicMock) -> None:
     assert mock_sleep.call_count == 1  # Should have slept once before detecting termination
 
 
-@mock.patch("aignostics.idc._service.logger")
+@mock.patch("aignostics.dataset._service.logger")
 def test_terminate_process_exception_handling(mock_logger: mock.MagicMock) -> None:
     """Test that _terminate_process handles exceptions properly."""
     # Create a mock process that raises an exception when terminated

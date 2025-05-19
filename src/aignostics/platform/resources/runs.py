@@ -42,8 +42,8 @@ class ApplicationRun:
         """Initializes an ApplicationRun instance.
 
         Args:
-            api: The configured API client.
-            application_run_id: The ID of the application run.
+            api (PublicApi): The configured API client.
+            application_run_id (str): The ID of the application run.
         """
         self._api = api
         self.application_run_id = application_run_id
@@ -53,7 +53,7 @@ class ApplicationRun:
         """Creates an ApplicationRun instance for an existing run.
 
         Args:
-            application_run_id: The ID of the application run.
+            application_run_id (str): The ID of the application run.
 
         Returns:
             ApplicationRun: The initialized ApplicationRun instance.
@@ -125,7 +125,7 @@ class ApplicationRun:
         Monitors run progress and downloads results as they become available.
 
         Args:
-            download_base: Base directory to download results to.
+            download_base (Path | str): Base directory to download results to.
 
         Raises:
             ValueError: If the provided path is not a directory.
@@ -163,8 +163,8 @@ class ApplicationRun:
         Downloads missing or partially downloaded artifacts and verifies their integrity.
 
         Args:
-            base_folder: Base directory to download artifacts to.
-            item: The item result containing the artifacts to download.
+            base_folder (Path): Base directory to download artifacts to.
+            item (ItemResultReadResponse): The item result containing the artifacts to download.
 
         Raises:
             ValueError: If checksums don't match.
@@ -232,7 +232,7 @@ class Runs:
         """Initializes the Runs resource with the API client.
 
         Args:
-            api: The configured API client.
+            api (PublicApi): The configured API client.
         """
         self._api = api
 
@@ -240,7 +240,7 @@ class Runs:
         """Retrieves an ApplicationRun instance for an existing run.
 
         Args:
-            application_run_id: The ID of the application run.
+            application_run_id (str): The ID of the application run.
 
         Returns:
             ApplicationRun: The initialized ApplicationRun instance.
@@ -251,8 +251,8 @@ class Runs:
         """Creates a new application run.
 
         Args:
-            application_version: The ID of the application version.
-            items: The run creation request payload.
+            application_version (ApplicationVersion | str): The ID of the application version.
+            items (list[ItemCreationRequest]): The run creation request payload.
 
         Returns:
             ApplicationRun: The created application run.
@@ -273,7 +273,7 @@ class Runs:
         """Find application runs, optionally filtered by application version.
 
         Args:
-            for_application_version: Optional application version ID to filter by.
+            for_application_version (str | None): Optional application version ID to filter by.
 
         Returns:
             Generator[ApplicationRun, Any, None]: A generator yielding application runs.
@@ -333,7 +333,7 @@ class Runs:
         and artifact metadata matches the expected schema.
 
         Args:
-            payload: The run creation request payload.
+            payload (RunCreationRequest): The run creation request payload.
 
         Raises:
             ValueError: If validation fails.

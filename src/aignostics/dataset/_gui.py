@@ -1,4 +1,4 @@
-"""GUI of idc module."""
+"""GUI of dataset module."""
 
 from multiprocessing import Manager
 from pathlib import Path
@@ -35,7 +35,7 @@ class PageBuilder(BasePageBuilder):
 
         download_form = DownloadForm()
 
-        @ui.page("/idc")
+        @ui.page("/dataset/idc")
         async def page_idc() -> None:  # noqa: C901, PLR0915, RUF029
             """IDC page."""
             with frame("Download Datasets from Image Data", left_sidebar=False):

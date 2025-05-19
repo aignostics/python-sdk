@@ -25,9 +25,9 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
     a page returns fewer items than the requested page size or a NotFoundException is raised.
 
     Args:
-        func: The function to paginate, which should accept page and page_size parameters.
+        func (Callable[..., list[T]]): The function to paginate, which should accept page and page_size parameters.
         *args: Positional arguments to pass to the function.
-        page_size: The number of items to request per page.
+        page_size (int): The number of items to request per page
         **kwargs: Keyword arguments to pass to the function.
 
     Yields:

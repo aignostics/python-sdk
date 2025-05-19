@@ -1,4 +1,4 @@
-"""Service of idc module."""
+"""Service of dataset module."""
 
 import atexit
 import re

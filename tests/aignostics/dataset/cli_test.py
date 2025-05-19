@@ -19,9 +19,9 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
-def test_cli_indices(runner: CliRunner) -> None:
+def test_cli_idc_indices(runner: CliRunner) -> None:
     """Check expected column returned."""
-    result = runner.invoke(cli, ["idc", "indices"])
+    result = runner.invoke(cli, ["dataset", "idc", "indices"])
     assert result.exit_code == 0
     assert all(
         index in result.output
@@ -29,23 +29,23 @@ def test_cli_indices(runner: CliRunner) -> None:
     )
 
 
-def test_cli_columns_default_index(runner: CliRunner) -> None:
+def test_cli_idc_columns_default_index(runner: CliRunner) -> None:
     """Check expected column returned."""
-    result = runner.invoke(cli, ["idc", "columns"])
+    result = runner.invoke(cli, ["dataset", "idc", "columns"])
     assert result.exit_code == 0
     assert "SOPInstanceUID" in result.output
 
 
 def test_cli_columns_special_index(runner: CliRunner) -> None:
     """Check expected column returned."""
-    result = runner.invoke(cli, ["idc", "columns", "--index", "index"])
+    result = runner.invoke(cli, ["dataset", "idc", "columns", "--index", "index"])
     assert result.exit_code == 0
     assert "series_aws_url" in result.output
 
 
-def test_cli_query(runner: CliRunner) -> None:
+def test_cli_idc_query(runner: CliRunner) -> None:
     """Check query returns expected results."""
-    result = runner.invoke(cli, ["idc", "query"])
+    result = runner.invoke(cli, ["dataset", "idc", "query"])
     assert result.exit_code == 0
     assert "rows x 6 columns" in result.output
     # Verify the number of rows is greater than 100000
@@ -55,12 +55,13 @@ def test_cli_query(runner: CliRunner) -> None:
     assert num_rows >= 50421, f"Expected equal or more than 50421 rows, but got {num_rows}"
 
 
-def test_cli_download_series_dry(runner: CliRunner, caplog, tmp_path) -> None:
+def test_cli_idc_download_series_dry(runner: CliRunner, caplog, tmp_path) -> None:
     """Check download functionality with dry-run option."""
     caplog.set_level(logging.INFO)
     result = runner.invoke(
         cli,
         [
+            "dataset",
             "idc",
             "download",
             SERIES_UID,
@@ -73,12 +74,13 @@ def test_cli_download_series_dry(runner: CliRunner, caplog, tmp_path) -> None:
         assert record.levelname != "ERROR"  # if id would not be found, error would be logged
 
 
-def test_cli_download_instance_thumbnail(runner: CliRunner, caplog, tmpdir) -> None:
+def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog, tmpdir) -> None:
     """Check download functionality with dry-run option."""
     caplog.set_level(logging.INFO)
     result = runner.invoke(
         cli,
         [
+            "dataset",
             "idc",
             "download",
             THUMBNAIL_UID,
@@ -102,3 +104,28 @@ def test_cli_download_instance_thumbnail(runner: CliRunner, caplog, tmpdir) -> N
     assert expected_file.stat().st_size == 1369290, (
         f"File size {expected_file.stat().st_size} doesn't match expected 1369290 bytes"
     )
+
+
+def test_cli_aignostics_download_sample(runner: CliRunner, tmpdir) -> None:
+    """Check download functionality with dry-run option."""
+    result = runner.invoke(
+        cli,
+        [
+            "dataset",
+            "aignostics",
+            "download",
+            "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+            str(tmpdir),
+        ],
+    )
+    assert result.exit_code == 0
+
+    # Check that the output contains the successful download message
+    # Use a simpler pattern that just checks for the key phrase and filename, regardless of formatting
+    assert "Successfully downloaded" in result.stdout
+    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout
+
+    # Verify the file exists in the tmpdir
+    expected_file = Path(tmpdir) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+    assert expected_file.exists(), f"Expected file {expected_file} not found"
+    assert expected_file.stat().st_size == 14681750

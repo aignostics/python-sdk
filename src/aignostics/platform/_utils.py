@@ -29,7 +29,7 @@ def mime_type_to_file_ending(mime_type: str) -> str:
     """Converts a MIME type to an appropriate file extension.
 
     Args:
-        mime_type: The MIME type string to convert.
+        mime_type (str): The MIME type string to convert.
 
     Returns:
         str: The corresponding file extension including the dot.
@@ -56,9 +56,9 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
     """Downloads a file from a signed URL and verifies its integrity.
 
     Args:
-        signed_url: The signed URL to download the file from.
-        file_path: The local path where the file should be saved.
-        verify_checksum: The expected CRC32C checksum in base64 encoding.
+        signed_url (str): The signed URL to download the file from.
+        file_path (str): The local path where the file should be saved.
+        verify_checksum (str): The expected CRC32C checksum in base64 encoding.
 
     Raises:
         ValueError: If the downloaded file's checksum doesn't match the expected value.
@@ -82,11 +82,11 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
         raise ValueError(msg)
 
 
-def generate_signed_url(fully_qualified_gs_path: str) -> str:
+def generate_signed_url(url: str) -> str:
     """Generates a signed URL for a Google Cloud Storage object.
 
     Args:
-        fully_qualified_gs_path: The full GS path (gs://bucket/path/to/object).
+        url (str): The fully qualified bucket URL (e.g. gs://bucket/path/to/object).
 
     Returns:
         str: A signed URL that can be used to download the object.
@@ -97,7 +97,7 @@ def generate_signed_url(fully_qualified_gs_path: str) -> str:
     from google.cloud import storage  # noqa: PLC0415, lazy loading for performance
 
     pattern = r"gs://(?P<bucket_name>[^/]+)/(?P<path>.*)"
-    m = re.fullmatch(pattern, fully_qualified_gs_path)
+    m = re.fullmatch(pattern, url)
     if not m:
         msg = "Invalid google storage URI"
         raise ValueError(msg)
@@ -108,7 +108,7 @@ def generate_signed_url(fully_qualified_gs_path: str) -> str:
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(path)
     if not blob.exists():
-        msg = f"Blob does not exist: {fully_qualified_gs_path}"
+        msg = f"Blob does not exist: {url}"
         raise ValueError(msg)
 
     return t.cast("str", blob.generate_signed_url(expiration=datetime.timedelta(hours=1), method="GET", version="v4"))
@@ -118,7 +118,7 @@ def calculate_file_crc32c(file: Path) -> str:
     """Calculates the CRC32C checksum of a file.
 
     Args:
-        file: Path to the file to calculate the checksum for.
+        file (Path): Path to the file to calculate the checksum for.
 
     Returns:
         str: The CRC32C checksum in base64 encoding.
@@ -135,8 +135,8 @@ def download_temporarily(signed_url: str, verify_checksum: str) -> Generator[IO[
     """Downloads a file to a temporary location and provides file handle.
 
     Args:
-        signed_url: The signed URL to download the file from.
-        verify_checksum: The expected CRC32C checksum in base64 encoding.
+        signed_url (str): The signed URL to download the file from.
+        verify_checksum (str): The expected CRC32C checksum in base64 encoding.
 
     Yields:
         IO[bytes]: File handle to the downloaded temporary file.

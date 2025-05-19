@@ -15,7 +15,7 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 async def test_gui_idc_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
     gui_register_pages()
-    await user.open("/idc")
+    await user.open("/dataset/idc")
     await user.should_see("Explore Portal")
 
 
@@ -24,7 +24,7 @@ async def test_gui_idc_downloads(user: User, tmpdir) -> None:
     # Mock Path.home() to return the tmpdir for this test
     with patch("pathlib.Path.home", return_value=Path(tmpdir)):
         gui_register_pages()
-        await user.open("/idc")
+        await user.open("/dataset/idc")
         user.find(marker="BUTTON_EXAMPLE_DATASET").click()
         await user.should_see("1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0")
 
@@ -82,7 +82,7 @@ async def test_gui_idc_download_fails_with_invalid_inputs(
     """Test that the download fails with appropriate notification when invalid IDs are provided."""
     with patch("pathlib.Path.home", return_value=Path(tmpdir)):
         gui_register_pages()
-        await user.open("/idc")
+        await user.open("/dataset/idc")
         user.find(marker="SOURCE_INPUT").clear()
         user.find(marker="SOURCE_INPUT").type(source_input)
 

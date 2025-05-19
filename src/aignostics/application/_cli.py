@@ -1,16 +1,11 @@
 """CLI of application module."""
 
-import time
-from collections.abc import Generator
 from pathlib import Path
 from typing import Annotated
 
-import requests
 import typer
-from tqdm.rich import tqdm
 
-from aignostics.bucket import Service as BucketService
-from aignostics.platform import Client, generate_signed_url
+from aignostics.platform import Client, NotFoundException
 from aignostics.utils import console, get_logger
 
 from ._utils import (
@@ -26,12 +21,6 @@ logger = get_logger(__name__)
 
 cli = typer.Typer(name="application", help="Run applications on Aignostics Platform.")
 
-bucket_app = typer.Typer()
-cli.add_typer(bucket_app, name="bucket", help="Transfer bucket provided by Aignostics Platform")
-
-datasset_app = typer.Typer()
-cli.add_typer(datasset_app, name="dataset", help="Datasets for use as input for applications")
-
 metadata_app = typer.Typer()
 cli.add_typer(metadata_app, name="metadata", help="Metadata required as input for applications")
 
@@ -40,89 +29,6 @@ cli.add_typer(run_app, name="run", help="Runs of applications")
 
 result_app = typer.Typer()
 run_app.add_typer(result_app, name="result", help="Results of applications runs")
-
-
-@cli.command("download")
-def download(
-    source_url: Annotated[str, typer.Option(help="URL to download")],
-    destination_directory: Annotated[str, typer.Option(help="Destination directory to download to")],
-) -> None:
-    """Download from bucket to folder via a signed URL."""
-    source_url_signed = generate_signed_url(source_url)
-    console.print("Generated signed URL:")
-    console.print(source_url_signed)
-    destination_directory_path = Path(destination_directory)
-    if not destination_directory_path.is_dir():
-        console.print(f"[error]Error:[/error] Destination directory '{destination_directory}' does not exist.")
-        return
-    # Extract filename from the URL
-    filename = source_url_signed.split("/")[-1].split("?")[0]
-
-    output_path = Path(destination_directory) / filename
-
-    # Download the file
-    response = requests.get(source_url_signed, stream=True, timeout=60)
-    response.raise_for_status()  # Raise an exception for HTTP errors
-
-    # Get total file size for progress bar
-    total_size = int(response.headers.get("content-length", 0))
-
-    with (
-        open(output_path, "wb") as f,
-        tqdm(total=total_size, unit="B", unit_scale=True, unit_divisor=1024, desc=filename, miniters=1) as progress_bar,
-    ):
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
-                progress_bar.update(len(chunk))
-
-    print(f"File successfully downloaded to {output_path}")
-
-
-@cli.command("upload")
-def upload(
-    source_file: Annotated[str, typer.Option(help="Source file to upload")],
-) -> None:
-    """Upload a filew to a transfer bucket via a signed URL, authenticating with hmac."""
-    import psutil  # noqa: PLC0415
-
-    source_file_path = Path(source_file)
-    if not source_file_path.is_file():
-        logger.warning("Source file '%s' does not exist.", source_file)
-        console.print(f"[error]Error:[/error] Source file '{source_file}' does not exist.")
-        return
-
-    # Generate signed URL
-    object_key = f"{psutil.Process().username()}/{int(time.time() * 1000)}/{source_file_path.name}"
-    url = BucketService().create_signed_upload_url(object_key)
-
-    logger.debug("Generated signed upload URL: %s", url)
-
-    file_size = source_file_path.stat().st_size
-    with (
-        open(source_file_path, "rb") as f,
-        tqdm(
-            total=file_size, unit="B", unit_scale=True, unit_divisor=1024, desc=source_file_path.name, miniters=1
-        ) as progress_bar,
-    ):
-
-        def read_in_chunks() -> Generator[bytes, None, None]:
-            while True:
-                chunk = f.read(8192)  # 8KB chunks
-                if not chunk:
-                    break
-                progress_bar.update(len(chunk))
-                yield chunk
-
-        response = requests.put(
-            url, data=read_in_chunks(), headers={"Content-Type": "application/octet-stream"}, timeout=60
-        )
-
-        response.raise_for_status()
-
-    console.print(
-        f"[bold green]Success:[/bold green] File '{source_file_path.name}' uploaded successfully to 'gs://{BucketService().get_bucket_name()}/{object_key}'."
-    )
 
 
 @cli.command("list")
@@ -202,7 +108,7 @@ def application_list(
 
 @cli.command("describe")
 def application_describe(
-    application_id: Annotated[str, typer.Option(help="Id of the application to describe")],
+    application_id: Annotated[str, typer.Argument(help="Id of the application to describe")],
 ) -> bool:
     """Describe application.
 
@@ -264,6 +170,7 @@ def application_describe(
     return True
 
 
+# TODO(Helmut): Implement metadata generation as used in the GUI
 @metadata_app.command("generate")
 def metadata_generate() -> None:
     """Generate metadata."""
@@ -272,10 +179,10 @@ def metadata_generate() -> None:
 
 @run_app.command("submit")
 def run_submit(
-    application_version_id: Annotated[str, typer.Option(help="Id of the application version to submit run for")],
+    application_version_id: Annotated[str, typer.Argument(help="Id of the application version to submit run for")],
     source: Annotated[
         str,
-        typer.Option(
+        typer.Argument(
             help="Source of the run. If not starting with 's3://' or 'gs://', "
             "it is assumed to be a local file path pointing to a .csv file"
         ),
@@ -348,7 +255,7 @@ def run_list(
 
 
 @run_app.command("describe")
-def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to describe")]) -> bool:
+def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to describe")]) -> bool:
     """Describe run.
 
     Args:
@@ -371,7 +278,7 @@ def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desc
 
 @run_app.command("cancel")
 def run_cancel(
-    run_id: Annotated[str, typer.Option(..., help="Id of the run to cancel")],
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to cancel")],
 ) -> bool:
     """Cancel run.
 
@@ -402,8 +309,8 @@ def result_describe() -> None:
 
 @result_app.command("download")
 def result_download(
-    run_id: Annotated[str, typer.Option(..., help="Id of the run to download results for")],
-    destination: Annotated[str, typer.Option(help="Destination directory to download results to")],
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to download results for")],
+    destination: Annotated[str, typer.Argument(help="Destination directory to download results to")],
 ) -> bool:
     """Download the result of an application run.
 
@@ -426,24 +333,25 @@ def result_download(
         return False
 
     run = Client().run(run_id)
+    try:
+        run.download_to_folder(destination_dir)
+    except NotFoundException as e:
+        logger.warning("Run with ID '%s' not found: %s", run_id, e)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        return False
+    except Exception as e:
+        logger.exception("Failed to download results for run with ID '%s'", run_id)
+        console.print(
+            f"[error]Error:[/error] Failed to download results for run with ID '{run_id}': {type(e).__name__}: {e}"
+        )
+        return False
+    message = f"Downloaded results for run with ID '{run_id}' to '{destination_dir}'"
+    logger.info(message)
+    console.print(message, style="info")
+    return True
 
-    if run:
-        logger.debug("Found run with ID '%s'", run_id)
-        try:
-            run.download_to_folder(destination_dir)
-        except Exception as e:
-            logger.exception("Failed to download results for run with ID '%s'", run_id)
-            console.print(f"[error]Error:[/error] Failed to download results for run with ID '{run_id}': {e}")
-            return False
-        logger.info("Downloaded results for run with ID '%s' to '%s'", run_id, destination_dir)
-        console.print("downloaded result")
-        return True
 
-    logger.warning("Run with ID '%s' not found.", run_id)
-    console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
-    return False
-
-
+# TODO(Helmut): Implement result delete when available in client
 @result_app.command("delete")
 def result_delete() -> None:
     """Delete the result of an application run."""

@@ -28,7 +28,7 @@ class Versions:
         """Initializes the Versions resource with the API platform.
 
         Args:
-            api: The configured API platform.
+            api (PublicApi): The configured API platform.
         """
         self._api = api
 
@@ -58,7 +58,7 @@ class Versions:
         """Retrieves details for a specific application version.
 
         Args:
-            application_version: The ID of the application version.
+            application_version (ApplicationVersion | str): The ID of the application version.
 
         Returns:
             ApplicationVersion: The version details.
@@ -149,7 +149,7 @@ class Applications:
         """Initializes the Applications resource with the API platform.
 
         Args:
-            api: The configured API platform.
+            api (PublicApi): The configured API platform.
         """
         self._api = api
         self.versions: Versions = Versions(self._api)

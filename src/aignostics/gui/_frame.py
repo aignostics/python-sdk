@@ -78,12 +78,12 @@ def frame(  # noqa: PLR0915
                     ui.label("Run Applications").tailwind.font_weight(
                         "bold" if context.client.page.path == "/" else "normal"
                     )
-            with ui.item(on_click=lambda _: ui.navigate.to("/idc")).props("clickable"):
+            with ui.item(on_click=lambda _: ui.navigate.to("/dataset/idc")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("image", color="#BA1F40")
                 with ui.item_section():
                     ui.label("Download Datasets").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/idc" else "normal"
+                        "bold" if context.client.page.path == "/dataset/idc" else "normal"
                     )
         ui.space()
         with ui.list():
