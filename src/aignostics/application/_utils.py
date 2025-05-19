@@ -104,7 +104,7 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
         run(ApplicationRun): The ApplicationRun object
 
     """
-    run_data = run.find()
+    run_data = run.details()
     console.print(f"[bold]Run Details for {run.application_run_id}[/bold]")
     console.print("=" * 80)
     console.print(f"[bold]App Version:[/bold] {run_data.application_version_id}")

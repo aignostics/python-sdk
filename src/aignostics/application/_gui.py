@@ -766,7 +766,7 @@ class PageBuilder(BasePageBuilder):
             """Describe Application."""
             service = Service()
             run = service.application_run(application_run_id)
-            run_data = run.find()
+            run_data = run.details()
 
             if run and run_data:
                 _frame(

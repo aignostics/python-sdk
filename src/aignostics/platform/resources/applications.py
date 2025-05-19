@@ -4,6 +4,7 @@ This module provides classes for interacting with application resources in the A
 It includes functionality for listing applications and managing application versions.
 """
 
+import builtins
 import re
 import typing as t
 from operator import itemgetter
@@ -31,9 +32,7 @@ class Versions:
         """
         self._api = api
 
-    # TODO(Andreas,Helmut): Breaking change. Had to rename from list, otherwise
-    # shadowing builtin list, so could not return a list ...
-    def find(self, application: Application | str) -> t.Iterator[ApplicationVersion]:
+    def list(self, application: Application | str) -> t.Iterator[ApplicationVersion]:
         """Find all versions for a specific application.
 
         Args:
@@ -90,8 +89,9 @@ class Versions:
             raise RuntimeError(msg)
         return application_versions[0]
 
-    def find_sorted(self, application: Application | str) -> list[ApplicationVersion]:
-        """Get application versions sorted by semver, latest first.
+    # TODO(Andreas): Remove when supported in backend
+    def list_sorted(self, application: Application | str) -> builtins.list[ApplicationVersion]:
+        """Get application versions sorted by semver, descending.
 
         Args:
             application (Application | str): The application to find versions for, either object or id
@@ -100,7 +100,7 @@ class Versions:
             list[ApplicationVersion]: List of version objects sorted by semantic versioning (latest first),
                 or empty list if no versions are found
         """
-        versions = list(self.find(application=application))
+        versions = builtins.list(self.list(application=application))
 
         # If no versions available
         if not versions:
@@ -126,7 +126,7 @@ class Versions:
         # If we couldn't parse any versions, return all versions as is
         return versions
 
-    def find_latest_version(self, application: Application | str) -> ApplicationVersion | None:
+    def latest(self, application: Application | str) -> ApplicationVersion | None:
         """Get latest version.
 
         Args:
@@ -135,20 +135,8 @@ class Versions:
         Returns:
             ApplicationVersion | None: The latest version id, or None if no versions found.
         """
-        sorted_versions = self.find_sorted(application=application)
+        sorted_versions = self.list_sorted(application=application)
         return sorted_versions[0] if sorted_versions else None
-
-    def find_latest_version_id(self, application: Application | str) -> str | None:
-        """Get latest version id.
-
-        Args:
-            application (Application | str): The application to find versions for, either object or id
-
-        Returns:
-            str | None: The latest version id, or None if no versions found.
-        """
-        latest_version = self.find_latest_version(application=application)
-        return latest_version.application_version_id if latest_version else None
 
 
 class Applications:
@@ -166,9 +154,7 @@ class Applications:
         self._api = api
         self.versions: Versions = Versions(self._api)
 
-    # TODO(Andreas,Helmut): had to rename from list, otherwise shadowing builtin list,
-    # so could not return a list ...
-    def find(self) -> t.Iterator[Application]:
+    def list(self) -> t.Iterator[Application]:
         """Find all available applications.
 
         Returns:

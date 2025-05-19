@@ -96,7 +96,7 @@ class Service(BaseService):
         Raises:
             Exception: If the application list cannot be retrieved.
         """
-        return self._get_platform_client().applications.find()
+        return self._get_platform_client().applications.list()
 
     def application(self, application_id: str) -> Application | None:
         """Get a specific application.
@@ -124,7 +124,7 @@ class Service(BaseService):
         Raises:
             Exception: If version list cannot be retrieved
         """
-        return self._get_platform_client().versions.find_sorted(application=application)
+        return self._get_platform_client().applications.versions.list_sorted(application=application)
 
     def find_latest_application_version_id(self, application: Application) -> str:
         """Find the latest version of the given application.
@@ -139,7 +139,8 @@ class Service(BaseService):
             ValueError: If no versions are found for the application.
             Exception: If the application cannot be retrieved
         """
-        latest_version_id = self._get_platform_client().versions.find_latest_version_id(application=application)
+        latest_version = self._get_platform_client().applications.versions.latest(application=application)
+        latest_version_id = latest_version.application_version_id if latest_version else None
         if not latest_version_id:
             message = f"No versions found for application {application.application_id}"
             logger.error(message)
@@ -334,7 +335,7 @@ class Service(BaseService):
         Raises:
             Exception: If the application run list cannot be retrieved.
         """
-        runs = self._get_platform_client().runs.find_data(sort="triggered_at")
+        runs = self._get_platform_client().runs.list_data(sort="triggered_at")
         if not runs:
             logger.debug("No application runs found.")
             return []
@@ -347,7 +348,7 @@ class Service(BaseService):
             run_id: The ID of the run to find
 
         Returns:
-            ApplicationRun: The run that can be fetched using the .find() call.
+            ApplicationRun: The run that can be fetched using the .details() call.
 
         Raises:
             Exception: If initializing the client fails.

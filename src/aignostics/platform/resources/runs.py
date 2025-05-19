@@ -62,21 +62,8 @@ class ApplicationRun:
 
         return cls(Client.get_api_client(cache_token=False), application_run_id)
 
-    # TODO(Andreas,Helmut): Discuss if we can get rid of this one,
-    # which is not only returning the status, but the whole run data.
-    def status(self) -> ApplicationRunData:
+    def details(self) -> ApplicationRunData:
         """Retrieves the current status of the application run.
-
-        Returns:
-            ApplicationRunData: The run data.
-
-        Raises:
-            Exception: If the API request fails.
-        """
-        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id, include=None)
-
-    def find(self) -> ApplicationRunData:
-        """Finds the application run.
 
         Returns:
             ApplicationRunData: The run data.
@@ -97,8 +84,7 @@ class ApplicationRun:
         """
         return {item.reference: item.status for item in self.results()}
 
-    # TODO(Andreas): Fails with Internal Server Error if run canceled
-    # TODO(Andreas): Don't throw generic exceptions
+    # TODO(Andreas): Fails with Internal Server Error if run canceled; don't throw generic exceptions
     def cancel(self) -> None:
         """Cancels the application run.
 
@@ -141,13 +127,13 @@ class ApplicationRun:
         application_run_dir = Path(download_base) / self.application_run_id
 
         # incrementally check for available results
-        application_run_status = self.status().status
+        application_run_status = self.details().status
         while application_run_status == ApplicationRunStatus.RUNNING:
             for item in self.results():
                 if item.status == ItemStatus.SUCCEEDED:
                     self.ensure_artifacts_downloaded(application_run_dir, item)
             sleep(5)
-            application_run_status = self.status().status
+            application_run_status = self.details().status
             print(self)
 
         # check if last results have been downloaded yet and report on errors
@@ -208,7 +194,7 @@ class ApplicationRun:
         Returns:
             str: String representation of the application run.
         """
-        app_status = self.status().status.value
+        app_status = self.details().status.value
         item_status = self.item_status()
         pending, succeeded, error = 0, 0, 0
         for item in item_status.values():
@@ -269,11 +255,9 @@ class Runs:
         )
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
-        # TODO (Andreas): application_run_id - ensure this is correctly handled. Ignoring for now
         return ApplicationRun(self._api, str(res.application_run_id))
 
-    # TODO(Andreas,Helmut): Breaking, renamed from list
-    def find(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
+    def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
         """Find application runs, optionally filtered by application version.
 
         Args:
@@ -291,8 +275,8 @@ class Runs:
             res = paginate(self._api.list_application_runs_v1_runs_get, application_version_id=for_application_version)
         return (ApplicationRun(self._api, response.application_run_id) for response in res)
 
-    # TODO(Andreas,Helmut): Discuss
-    def find_data(
+    # TODO(Andreas): Think about merging by having list(...) above return active records that as well hold data
+    def list_data(
         self,
         for_application_version: str | None = None,
         sort: str | None = None,

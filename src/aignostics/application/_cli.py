@@ -138,7 +138,7 @@ def application_list(
         bool: Success status of the operation
     """
     try:
-        applications = Client().applications.find()
+        applications = Client().applications.list()
     except Exception as e:
         logger.exception("Failed to list applications")
         console.print(f"[bold red]Error:[/bold red] Failed to list applications: {e}")
@@ -158,7 +158,7 @@ def application_list(
 
             # Display available versions
             try:
-                versions = list(Client().applications.versions.find(app))
+                versions = list(Client().applications.versions.list(app))
             except Exception as e:
                 logger.exception("Failed to list versions for application '%s'", app.application_id)
                 console.print(
@@ -187,8 +187,11 @@ def application_list(
         for app in applications:
             app_count += 1
             # Get latest version info for this application
-            latest_version = Client().versions.find_latest_version_id(app)
-            console.print(f"- [bold]{app.application_id}[/bold] - latest application version id: `{latest_version}`")
+            latest_version = Client().applications.versions.latest(app)
+            console.print(
+                f"- [bold]{app.application_id}[/bold] - latest application version id: "
+                f"`{latest_version.application_version_id if latest_version else 'None'}`"
+            )
 
     if app_count == 0:
         logger.warning("No applications available.")
@@ -232,7 +235,7 @@ def application_describe(
         console.print(f"  {line}")
 
     # Display available versions
-    versions = list(Client().applications.versions.find(application))
+    versions = list(Client().applications.versions.list(application))
     if versions:
         console.print()
         console.print("[bold]Available Versions:[/bold]")
@@ -321,7 +324,7 @@ def run_list(
         bool: Success status of the operation
     """
     try:
-        runs_data = list(Client().runs.find_data())
+        runs_data = list(Client().runs.list_data())
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[bold red]Error:[/bold red] Failed to list runs: {e}")

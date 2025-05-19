@@ -12,7 +12,6 @@ from aignostics.platform.resources.applications import Applications, Versions
 from aignostics.platform.resources.runs import ApplicationRun, Runs
 from aignostics.utils import get_logger
 
-from ._constants import API_ROOT_DEV, API_ROOT_PRODUCTION, API_ROOT_STAGING
 from ._settings import settings
 
 logger = get_logger(__name__)
@@ -42,7 +41,6 @@ class Client:
             logger.debug("Initializing client with cache_token=%s", cache_token)
             self._api = Client.get_api_client(cache_token=cache_token)
             self.applications: Applications = Applications(self._api)
-            self.versions: Versions = Versions(self._api)
             self.runs: Runs = Runs(self._api)
             logger.debug("Client initialized successfully.")
         except Exception:
@@ -60,6 +58,7 @@ class Client:
         """
         return ApplicationRun(self._api, application_run_id)
 
+    # TODO(Andreas): Provide a /v1/applications/{application_id} endpoint and use that
     def application(self, application_id: str) -> Application:
         """Finds a specific application by id.
 
@@ -72,7 +71,7 @@ class Client:
         Returns:
             Application: The application object.
         """
-        applications = self.applications.find()
+        applications = self.applications.list()
         for application in applications:
             if application.application_id == application_id:
                 return application
@@ -105,24 +104,3 @@ class Client:
             header_value=f"Bearer {token}",
         )
         return PublicApi(client)
-
-    @staticmethod
-    def get_info() -> dict[str, dict]:  # type: ignore[type-arg]
-        """Retrieves process information.
-
-        Returns:
-            dict[str, dict]: Process information including platform API roots.
-        """
-        return {
-            "platform": {
-                "production": {
-                    "API_ROOT": API_ROOT_PRODUCTION,
-                },
-                "staging": {
-                    "API_ROOT": API_ROOT_STAGING,
-                },
-                "dev": {
-                    "API_ROOT": API_ROOT_DEV,
-                },
-            }
-        }
