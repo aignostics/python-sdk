@@ -84,9 +84,13 @@ node_modules/
 profile.json
 profile.html
 
-
+# Nicegui
+.nicegui
 
 
 # Application specific
 data/**
-!data/.keep
+!data/.keep 
+dist_vercel
+setup.sh.secret
+__marimo__

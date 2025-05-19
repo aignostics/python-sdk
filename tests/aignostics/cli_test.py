@@ -1,6 +1,7 @@
 """Tests to verify the CLI functionality of OE Python Template."""
 
 import os
+import platform
 import subprocess
 import sys
 from importlib.util import find_spec
@@ -55,6 +56,7 @@ def test_cli_fails_on_invalid_setting_with_env_arg() -> None:
     assert "Input should be 'CRITICAL'" in result.stdout
 
 
+@pytest.mark.sequential
 def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
     """Check system fails on boot with invalid setting using CliRunner and environment variables."""
     # Set the environment variable directly
@@ -96,11 +98,11 @@ if find_spec("nicegui"):
 
     def test_cli_gui_help(runner: CliRunner) -> None:
         """Check gui help works."""
-        result = runner.invoke(cli, ["gui", "--help"])
+        result = runner.invoke(cli, ["launchpad", "--help"])
         assert result.exit_code == 0
 
     def test_cli_gui_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Check gui component behaviors when gui command is executed."""
+        """Check gui component behaviors when launchpad command is executed."""
         # Create mocks
         mock_ui_run_called = False
         mock_ui_run_args = {}
@@ -118,6 +120,7 @@ if find_spec("nicegui"):
             frameless=False,
             show_welcome_message=False,
             show=False,
+            window_size=None,
         ):
             nonlocal mock_ui_run_called, mock_ui_run_args
             mock_ui_run_called = True
@@ -132,6 +135,7 @@ if find_spec("nicegui"):
                 "frameless": frameless,
                 "show_welcome_message": show_welcome_message,
                 "show": show,
+                "window_size": window_size,
             }
 
         def mock_gui_register_pages():
@@ -151,7 +155,7 @@ if find_spec("nicegui"):
         monkeypatch.setattr("nicegui.native.find_open_port", lambda: 8080)
 
         # Run the CLI command
-        result = runner.invoke(cli, ["gui"])
+        result = runner.invoke(cli, ["launchpad"])
 
         # Check that the command executed successfully
         assert result.exit_code == 0
@@ -164,14 +168,26 @@ if find_spec("nicegui"):
 
         # Check that ui.run was called with the expected parameters
         assert mock_ui_run_called, "ui.run was not called"
-        assert mock_ui_run_args["title"] == "Aignostics Python SDK", "title parameter is incorrect"
+        assert mock_ui_run_args["title"] == "Atlas Launchpad", "title parameter is incorrect"
         assert mock_ui_run_args["favicon"] == "🔬", "favicon parameter is incorrect"
-        assert mock_ui_run_args["native"] is True, "native parameter should be True"
+        if platform.system() == "Linux":
+            assert mock_ui_run_args["native"] is False, "native parameter should be False on Linux"
+            assert mock_ui_run_args["show_welcome_message"] is True, (
+                "show_welcome_message parameter should be True when native is False"
+            )
+            assert mock_ui_run_args["show"] is True, "show parameter should be True when native is False"
+        else:
+            assert mock_ui_run_args["native"] is True, "native parameter should be True on platforms other than Linux"
+            assert mock_ui_run_args["show_welcome_message"] is False, (
+                "show_welcome_message parameter should be False when native is True"
+            )
+            assert mock_ui_run_args["show"] is False, "show parameter should be False when native is True"
         assert mock_ui_run_args["reload"] is False, "reload parameter is incorrect"
         assert not mock_ui_run_args["dark"], "dark parameter should be False"
-        assert mock_ui_run_args["frameless"] is False, "frameless parameter should be False"
-        assert mock_ui_run_args["show_welcome_message"] is True, "show_welcome_message parameter should be True"
-        assert mock_ui_run_args["show"] is False, "show parameter should be False"
+        if platform.system() == "Darwin":
+            assert mock_ui_run_args["frameless"] is True, "frameless parameter should be True"
+        else:
+            assert mock_ui_run_args["frameless"] is False, "frameless parameter should be False"
 
 
 if find_spec("marimo") and find_spec("fastapi"):

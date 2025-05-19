@@ -1,7 +1,7 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all act audit bump clean dist docs docker_build install lint pre_commit_run_all profile setup setup test test_scheduled test_long_running test_coverage_reset update_from_template gui_watch
+.PHONY: all act audit bump clean dist docs docker_build install lint pre_commit_run_all profile setup setup test test_coverage_reset test_long_running test_scheduled test_sequential update_from_template gui_watch
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
@@ -35,15 +35,19 @@ install:
 	sh install.sh
 	uv run pre-commit install
 
-## Run tests marked as scheduled
-test_scheduled:
-	uv run --all-extras nox -s test -p 3.13 -- -m scheduled
-
 ## Run tests marked as long_running
 test_long_running:
 	uv run --all-extras nox -s test -p 3.13 -- -m long_running --cov-append
 
 ## Run tests marked as scheduled
+test_scheduled:
+	uv run --all-extras nox -s test -p 3.13 -- -m scheduled
+
+## Run tests marked as sequential
+test_sequential:
+	uv run --all-extras nox -s test -p 3.13 -- -m sequential
+
+## Reset test coverage data
 test_coverage_reset:
 	rm -rf .coverage
 	rm -rf reports/coverage*
@@ -55,10 +59,11 @@ clean:
 	rm -rf .pytest_cache
 	rm -rf .ruff_cache
 	rm -rf .venv
-	rm -rf dist
+	rm -rf dist && mkdir -p dist && touch dist/.keep
+	rm -rf dist_vercel/wheels && mkdir -p dist_vercel/wheels && touch dist_vercel/wheels/.keep
 	rm -rf .coverage
-	make -C docs clean
 	rm -rf reports && mkdir -p reports && touch reports/.keep
+	uv run make -C docs clean
 
 ## Build Docker image
 docker_build:
@@ -117,8 +122,9 @@ help:
 	@echo "  profile               - Profile with Scalene"
 	@echo "  setup                 - Setup development environment"
 	@echo "  test [3.11|3.12|3.13] - Run tests (for specific Python version)"
-	@echo "  test_scheduled        - Run tests marked as scheduled with Python 3.11"
-	@echo "  test_long_running     - Run tests marked as long running with Python 3.11"
+	@echo "  test_sequential       - Run tests marked as sequential with Python 3.13"
+	@echo "  test_scheduled        - Run tests marked as scheduled with Python 3.13"
+	@echo "  test_long_running     - Run tests marked as long running with Python 3.13"
 	@echo "  test_coverage_reset   - Reset test coverage data"
 	@echo "  update_from_template  - Update from template using copier"
 	@echo ""

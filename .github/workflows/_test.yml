@@ -57,6 +57,9 @@ jobs:
           envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
           envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
           envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+          envkey_AIGNOSTICS_BUCKET_NAME: ${{ secrets.AIGNOSTICS_BUCKET_NAME }}
+          envkey_AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID: ${{ secrets.AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID }}
+          envkey_AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY: ${{ secrets.AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY }}
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access
@@ -77,6 +80,8 @@ jobs:
           uv run --no-dev aignostics --help
           uv run --all-extras aignostics system info
           uv run --all-extras aignostics system health
+          uv run --all-extras aignostics application list
+          uv run --all-extras aignostics application run list --verbose --limit 1
       
       - name: Test / regular
         run: |

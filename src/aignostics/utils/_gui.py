@@ -38,6 +38,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
     icon: str = "",
     watch: bool = False,
     with_api: bool = False,
+    dark_mode: bool = False,
 ) -> None:
     """Start the GUI.
 
@@ -50,21 +51,26 @@ def gui_run(  # noqa: PLR0913, PLR0917
         icon: Icon for the GUI.
         watch: Whether to watch for changes and reload the GUI.
         with_api: Whether to mount the API.
+        dark_mode: Whether to use dark mode.
 
     Raises:
         ValueError: If with_notebook is True but notebook_path is None,
             or trying to run native within container.
     """
-    from nicegui import app, ui  # noqa: PLC0415
     from nicegui import native as native_app  # noqa: PLC0415
+    from nicegui import ui  # noqa: PLC0415
 
     if __is_running_in_container__ and native:
         message = "Native GUI cannot be run in a container. Please run with uvx or in browser."
         raise ValueError(message)
-    if with_api:
-        from ..api import api  # noqa: PLC0415, TID252
 
-        app.mount("/api", api)
+    if with_api:
+        message = "with_api is not supported in this project."
+        raise ValueError(message)
+
+    if native and platform.system() == "Linux":
+        native = False
+        show = True
 
     gui_register_pages()
     ui.run(
@@ -72,12 +78,13 @@ def gui_run(  # noqa: PLR0913, PLR0917
         favicon=icon,
         native=native,
         reload=watch,
-        dark=False,
+        dark=dark_mode,
         host=host,
         port=port or native_app.find_open_port(),
-        frameless=False,
-        show_welcome_message=True,
+        frameless=native and platform.system() == "Darwin",
+        show_welcome_message=native is False,
         show=show,
+        window_size=(1200, 768) if native else None,
     )
 
 
@@ -103,7 +110,7 @@ class GUILocalFilePicker:
         Returns:
             An instance of the dialog with lazy-loaded dependencies.
         """
-        from nicegui import events, ui  # noqa: PLC0415
+        from nicegui import app, events, ui  # noqa: PLC0415
         # Lazy import ui only when actually creating an instance
 
         # Define the actual implementation class with the imports available
@@ -148,22 +155,25 @@ class GUILocalFilePicker:
                             html_columns=[0],
                         )
                         .classes("w-96")
+                        .classes(
+                            "ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham"
+                        )
                         .on("cellDoubleClicked", self.handle_double_click)
                     )
                     with ui.row().classes("w-full justify-end"):
-                        ui.button("Cancel", on_click=self.close).props("outline").mark("BUTTON_CANCEL")
-                        ui.button("Ok", on_click=self._handle_ok).mark("BUTTON_OK")
+                        ui.button("Cancel", on_click=self.close).props("outline").mark("BUTTON_FILEPICKER_CANCEL")
+                        ui.button("Ok", on_click=self._handle_ok).mark("BUTTON_FILEPICKER_OK")
                 self.update_grid()
 
             def add_drives_toggle(self) -> None:
                 if platform.system() == "Windows":
-                    import win32api  # noqa: PLC0415
+                    import win32api  # type: ignore[unused-ignore] # type: ignore # noqa: PLC0415
 
                     drives = win32api.GetLogicalDriveStrings().split("\000")[:-1]
                     self.drives_toggle = ui.toggle(drives, value=drives[0], on_change=self.update_drive)
 
             def update_drive(self) -> None:
-                self.path = Path(self.drives_toggle.value).expanduser()
+                self.path = Path(str(self.drives_toggle.value)).expanduser()
                 self.update_grid()
 
             def update_grid(self) -> None:

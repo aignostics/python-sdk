@@ -3,13 +3,13 @@
 import json
 import os
 import platform
-import pwd
 import sys
 import typing as t
+from http import HTTPStatus
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
 from typing import Any, NotRequired, TypedDict, cast
-from urllib.error import HTTPError
+from urllib.request import getproxies
 
 from pydantic_settings import BaseSettings
 from requests import get
@@ -31,10 +31,15 @@ from ..utils import (  # noqa: TID252
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
 
-log = get_logger(__name__)
+logger = get_logger(__name__)
 
-JsonType: t.TypeAlias = list["JsonValue"] | t.Mapping[str, "JsonValue"]
-JsonValue: t.TypeAlias = str | int | float | JsonType | None
+JsonValue: t.TypeAlias = str | int | float | list["JsonValue"] | t.Mapping[str, "JsonValue"] | None
+JsonType: t.TypeAlias = list[JsonValue] | t.Mapping[str, JsonValue]
+
+# Note: There is multiple measurements and network calls
+MEASURE_INTERVAL_SECONDS = 2
+NETWORK_TIMEOUT = 5
+IPIFY_URL = "https://api.ipify.org"
 
 
 class RuntimeDict(TypedDict, total=False):
@@ -75,6 +80,36 @@ class Service(BaseService):
         """
         return True
 
+    @staticmethod
+    def _determine_network_health() -> Health:
+        """Determine we can reach a well known and secure endpoint.
+
+        - Checks if health endpoint is reachable and returns 200 OK
+        - Uses requests library for a direct connection check without authentication
+
+        Returns:
+            Health: The healthiness of the network connection via basic unauthenticated request.
+        """
+        try:
+            response = get(
+                url=IPIFY_URL,
+                headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
+                timeout=NETWORK_TIMEOUT,
+            )
+
+            if response.status_code != HTTPStatus.OK:
+                logger.error("'%s' returned '%s'", IPIFY_URL, response.status_code)
+                return Health(
+                    status=Health.Code.DOWN,
+                    reason=f"'{IPIFY_URL}' returned status '{response.status_code}'",
+                )
+        except Exception as e:
+            message = f"Issue reaching {IPIFY_URL}: {e}"
+            logger.exception(message)
+            return Health(status=Health.Code.DOWN, reason=message)
+
+        return Health(status=Health.Code.UP)
+
     def health(self) -> Health:
         """Determine aggregate health of the system.
 
@@ -89,6 +124,7 @@ class Service(BaseService):
         for service_class in locate_subclasses(BaseService):
             if service_class is not Service:
                 components[f"{service_class.__module__}.{service_class.__name__}"] = service_class().health()
+        components["network"] = self._determine_network_health()
 
         # Set the system health status based on is_healthy attribute
         status = Health.Code.UP if self._is_healthy() else Health.Code.DOWN
@@ -101,14 +137,14 @@ class Service(BaseService):
         Returns:
             bool: True if the token is valid, False otherwise.
         """
-        log.info(token)
+        logger.info(token)
         if not self._settings.token:
-            log.warning("Token is not set in settings.")
+            logger.warning("Token is not set in settings.")
             return False
         return token == self._settings.token.get_secret_value()
 
     @staticmethod
-    def _get_public_ipv4(timeout: int = 5) -> str | None:
+    def _get_public_ipv4(timeout: int = NETWORK_TIMEOUT) -> str | None:
         """Get the public IPv4 address of the system.
 
         Args:
@@ -118,12 +154,12 @@ class Service(BaseService):
             str: The public IPv4 address.
         """
         try:
-            response = get(url="https://api.ipify.org", timeout=timeout)
+            response = get(url=IPIFY_URL, timeout=timeout)
             response.raise_for_status()
             return response.text
-        except HTTPError as e:
+        except Exception as e:
             message = f"Failed to get public IP: {e}"
-            log.exception(message)
+            logger.exception(message)
             return None
 
     @staticmethod
@@ -139,7 +175,7 @@ class Service(BaseService):
                 return str(connection.getsockname()[0])
         except Exception as e:
             message = f"Failed to get local IP: {e}"
-            log.exception(message)
+            logger.exception(message)
             return None
 
     @staticmethod
@@ -162,8 +198,8 @@ class Service(BaseService):
         bootdatetime = boottime()
         vmem = psutil.virtual_memory()
         swap = psutil.swap_memory()
-        cpu_percent = psutil.cpu_percent(interval=2)
-        cpu_times_percent = psutil.cpu_times_percent(interval=2)
+        cpu_percent = psutil.cpu_percent(interval=MEASURE_INTERVAL_SECONDS)
+        cpu_times_percent = psutil.cpu_times_percent(interval=MEASURE_INTERVAL_SECONDS)
 
         rtn: InfoDict = {
             "package": {
@@ -174,7 +210,7 @@ class Service(BaseService):
             },
             "runtime": {
                 "environment": __env__,
-                "username": pwd.getpwuid(os.getuid())[0],
+                "username": psutil.Process().username(),
                 "process": {
                     "command_line": " ".join(sys.argv),
                     "entry_point": sys.argv[0] if sys.argv else None,
@@ -221,6 +257,8 @@ class Service(BaseService):
                         "hostname": platform.node(),
                         "local_ipv4": Service._get_local_ipv4(),
                         "public_ipv4": Service._get_public_ipv4(),
+                        "proxies": getproxies(),
+                        "requests_ca_bundle": os.getenv("REQUESTS_CA_BUNDLE"),
                     },
                     "uptime": {
                         "seconds": uptime(),
@@ -243,7 +281,7 @@ class Service(BaseService):
             if filter_secrets:
                 runtime["environ"] = {
                     k: v
-                    for k, v in os.environ.items()
+                    for k, v in sorted(os.environ.items())
                     if not (
                         "token" in k.lower()
                         or "key" in k.lower()
@@ -253,7 +291,7 @@ class Service(BaseService):
                     )
                 }
             else:
-                runtime["environ"] = dict(os.environ)
+                runtime["environ"] = dict(sorted(os.environ.items()))
 
         settings: dict[str, Any] = {}
         for settings_class in locate_subclasses(BaseSettings):
@@ -265,7 +303,7 @@ class Service(BaseService):
             for key, value in settings_dict.items():
                 flat_key = f"{env_prefix}{key}".upper()
                 settings[flat_key] = value
-        rtn["settings"] = settings
+        rtn["settings"] = {k: settings[k] for k in sorted(settings)}
 
         # Convert the TypedDict to a regular dict before adding dynamic service keys
         result_dict: dict[str, Any] = dict(rtn)
@@ -275,7 +313,7 @@ class Service(BaseService):
                 service = service_class()
                 result_dict[service.key()] = service.info()
 
-        log.info("Service info: %s", result_dict)
+        logger.info("Service info: %s", result_dict)
         return result_dict
 
     @staticmethod

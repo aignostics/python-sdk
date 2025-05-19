@@ -9,27 +9,46 @@ functions are designed to be used internally by the SDK's resource classes.
 from collections.abc import Callable, Iterator
 from typing import TypeVar
 
+from aignx.codegen.exceptions import NotFoundException
+
 T = TypeVar("T")
 
 PAGE_SIZE = 20
 
 
-def paginate(func: Callable[..., list[T]], *args, **kwargs) -> Iterator[T]:  # type: ignore[no-untyped-def]
+def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_SIZE, **kwargs: object) -> Iterator[T]:
     """
-    A decorator to paginate a function that returns a list of items.
+    A generator function that handles pagination for API calls.
+
+    This function takes a callable that returns a list of items and handles pagination
+    by repeatedly calling the function with increasing page numbers until either
+    a page returns fewer items than the requested page size or a NotFoundException is raised.
 
     Args:
-        func: The function to paginate.
+        func (Callable[..., list[T]]): The function to paginate, which should accept page and page_size parameters.
         *args: Positional arguments to pass to the function.
+        page_size (int): The number of items to request per page
         **kwargs: Keyword arguments to pass to the function.
 
     Yields:
-        T: The items from the paginated function.
+        Individual items from all pages.
+
+    Example:
+        >>> def list_items(page=1, page_size=20):
+        ...     # API call that returns a list of items for the given page
+        ...     return [f"item_{i}" for i in range(page_size)]
+        >>> items = list(paginate(list_items))
+        >>> print(len(items))
     """
     page = 1
     while True:
-        results = func(*args, page=page, page_size=PAGE_SIZE, **kwargs)
-        yield from results
-        if len(results) < PAGE_SIZE:
-            break
-        page += 1
+        try:
+            results = func(*args, page=page, page_size=page_size, **kwargs)
+            if not results:
+                break
+            yield from results
+            if len(results) < page_size:
+                break
+            page += 1
+        except NotFoundException:
+            break  # We've paginated beyond the last page

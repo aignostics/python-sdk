@@ -1,5 +1,5 @@
 # We share the base in the builder and targets
-FROM python:3.13-slim-bookworm AS base
+FROM python:3.12-slim-bookworm AS base
 
 # The base of our builder
 FROM base AS builder
@@ -27,7 +27,7 @@ FROM builder AS builder-slim
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev --no-editable
+    uv sync --frozen --no-install-project --no-dev --no-editable --python 3.12
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
@@ -46,7 +46,7 @@ COPY examples /app/examples
 # Nothing yet
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable
+    uv sync --frozen --no-dev --no-editable --python 3.12
 
 
 # The all builder takes in all extras
@@ -56,7 +56,7 @@ FROM builder AS builder-all
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --all-extras --no-dev --no-editable
+    uv sync --frozen --no-install-project --all-extras --no-dev --no-editable --python 3.12
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
@@ -75,7 +75,7 @@ COPY examples /app/examples
 COPY codegen/out/aignx /app/codegen/out/aignx
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --all-extras --no-dev --no-editable
+    uv sync --frozen --all-extras --no-dev --no-editable --python 3.12
 
 
 # Base of our build targets

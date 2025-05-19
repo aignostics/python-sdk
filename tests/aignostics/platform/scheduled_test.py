@@ -167,7 +167,7 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
         application_run (ApplicationRun): The application run to validate.
         output_base_folder (Path): The base folder where the output is stored.
     """
-    assert application_run.status().status == ApplicationRunStatus.COMPLETED, (
+    assert application_run.details().status == ApplicationRunStatus.COMPLETED, (
         "Application run did not finish in completed status"
     )
 

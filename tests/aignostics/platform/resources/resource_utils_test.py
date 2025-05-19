@@ -64,10 +64,28 @@ def test_paginate_passes_additional_arguments() -> None:
     additional_kwarg = {"key": "value"}
 
     # Act
-    list(paginate(mock_func, additional_arg, keyword=additional_kwarg))
+    # Use a keyword argument for page_size to avoid confusion with positional args
+    list(paginate(mock_func, *[additional_arg], keyword=additional_kwarg))
 
     # Assert
     mock_func.assert_called_once_with(additional_arg, keyword=additional_kwarg, page=1, page_size=PAGE_SIZE)
+
+
+def test_paginate_custom_page_size() -> None:
+    """Test that paginate correctly uses custom page size.
+
+    This test verifies that the paginate function correctly uses a custom page size
+    when provided and passes it to the wrapped function.
+    """
+    # Arrange
+    mock_func = Mock(return_value=[])
+    custom_page_size = 50
+
+    # Act
+    list(paginate(mock_func, page_size=custom_page_size))
+
+    # Assert
+    mock_func.assert_called_once_with(page=1, page_size=custom_page_size)
 
 
 def test_paginate_multiple_pages() -> None:

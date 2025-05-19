@@ -6,13 +6,13 @@ The primary class in this module is the `Client` class, which serves as the entr
 for all interactions with the Aignostics platform.
 """
 
+from aignx.codegen.exceptions import ApiException, NotFoundException
+from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationRunStatus, ItemStatus
-from aignx.codegen.models import (
-    InputArtifactCreationRequest as InputArtifact,
-)
+from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
+from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import ItemCreationRequest as InputItem
-
-from aignostics.platform._utils import generate_signed_url
+from aignx.codegen.models import RunReadResponse as ApplicationRunData
 
 from ._client import Client
 from ._constants import (
@@ -39,8 +39,9 @@ from ._constants import (
     TOKEN_URL_STAGING,
 )
 from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
+from ._service import Service
 from ._settings import Settings, settings
-from ._utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
+from ._utils import calculate_file_crc32c, download_file, generate_signed_url, mime_type_to_file_ending
 from .resources.runs import ApplicationRun
 
 __all__ = [
@@ -69,12 +70,18 @@ __all__ = [
     "TOKEN_URL_PRODUCTION",
     "TOKEN_URL_STAGING",
     "UNKNOWN_ENDPOINT_URL",
+    "ApiException",
+    "Application",
     "ApplicationRun",
+    "ApplicationRunData",
     "ApplicationRunStatus",
+    "ApplicationVersion",
     "Client",
     "InputArtifact",
     "InputItem",
     "ItemStatus",
+    "NotFoundException",
+    "Service",
     "Settings",
     "calculate_file_crc32c",
     "download_file",

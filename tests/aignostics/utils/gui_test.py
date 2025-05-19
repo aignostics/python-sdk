@@ -1,5 +1,6 @@
 """Tests for GUI module."""
 
+import platform
 from unittest import mock
 
 import pytest
@@ -73,7 +74,7 @@ def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mo
         # Verify default parameters
         call_kwargs = mock_ui.run.call_args[1]
         assert call_kwargs["title"] == __project_name__
-        assert call_kwargs["native"] is True
+        assert call_kwargs["native"] is (platform.system() != "Linux")
         assert call_kwargs["reload"] is False
         assert call_kwargs["port"] == 8000
 

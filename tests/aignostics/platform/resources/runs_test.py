@@ -189,3 +189,57 @@ def test_runs_create_returns_application_run(runs, mock_api) -> None:
     call_args = mock_api.create_application_run_v1_runs_post.call_args[0][0]
     assert call_args.application_version_id == "mock"
     assert call_args.items == mock_items
+
+
+def test_paginate_with_not_found_exception_on_first_page(runs, mock_api) -> None:
+    """Test that paginate handles NotFoundException on the first page gracefully.
+
+    This test verifies that when a NotFoundException is raised on the first page request,
+    the paginate function returns an empty iterator without error.
+
+    Args:
+        runs: Runs instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    # Arrange
+    from aignx.codegen.exceptions import NotFoundException
+
+    # Make the API throw NotFoundException on the first call
+    mock_api.list_application_runs_v1_runs_get.side_effect = NotFoundException()
+
+    # Act
+    result = list(runs.list())
+
+    # Assert
+    assert len(result) == 0
+    mock_api.list_application_runs_v1_runs_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
+
+
+def test_paginate_with_not_found_exception_after_full_page(runs, mock_api) -> None:
+    """Test that paginate handles NotFoundException after a full page.
+
+    This test verifies that when we get exactly PAGE_SIZE items on the first page
+    and then a NotFoundException on the second page, we correctly return just the
+    first page's items.
+
+    Args:
+        runs: Runs instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    # Arrange
+    from aignx.codegen.exceptions import NotFoundException
+
+    # Return exactly PAGE_SIZE items for first page, then throw NotFoundException
+    full_page = [Mock(spec=RunReadResponse, application_run_id=f"run-{i}") for i in range(PAGE_SIZE)]
+    mock_api.list_application_runs_v1_runs_get.side_effect = [full_page, NotFoundException()]
+
+    # Act
+    result = list(runs.list())
+
+    # Assert
+    assert len(result) == PAGE_SIZE
+    assert mock_api.list_application_runs_v1_runs_get.call_count == 2
+    mock_api.list_application_runs_v1_runs_get.assert_has_calls([
+        call(page=1, page_size=PAGE_SIZE),
+        call(page=2, page_size=PAGE_SIZE),
+    ])

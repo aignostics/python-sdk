@@ -7,7 +7,16 @@ Library Reference
 .. automodule:: aignostics.application
     :members:
     
-.. automodule:: aignostics.idc
+.. automodule:: aignostics.dataset
+    :members:
+
+.. automodule:: aignostics.bucket
+    :members:
+
+.. automodule:: aignostics.notebook
+    :members:
+
+.. automodule:: aignostics.wsi
     :members:
 
 .. automodule:: aignostics.system

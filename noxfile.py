@@ -325,6 +325,7 @@ def _generate_api_reference(session: nox.Session) -> None:
         output_file = f"API_REFERENCE_{version}.md"
         session.run(
             "npx",
+            "--yes",
             "widdershins",
             f"docs/source/_static/openapi_{version}.yaml",
             "--omitHeader",
@@ -562,7 +563,11 @@ def _run_pytest(
     is_sequential = test_type == "sequential"
 
     # Build base pytest arguments
-    pytest_args = ["pytest", "--disable-warnings", JUNIT_XML, "-n", "auto", "--dist", "loadgroup"]
+    pytest_args = ["pytest", "--disable-warnings", JUNIT_XML]
+
+    # Distribute tests across available CPUs if not sequential
+    if not is_sequential:
+        pytest_args.extend(["-n", "auto", "--dist", "loadgroup"])
 
     # Add act environment filter if needed
     if _is_act_environment():
