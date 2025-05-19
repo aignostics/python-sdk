@@ -71,6 +71,11 @@ def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
     assert "Application Run IDs:" in result.output
+    # Verify we find a message about the count and that the displayed count is <= 10
+    match = re.search(r"Found \d+ application runs, displayed (\d+)\.", result.output)
+    assert match, "Expected run count message not found"
+    displayed_count = int(match.group(1))
+    assert displayed_count <= 10, f"Expected displayed count to be <= 10, but got {displayed_count}"
 
 
 def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
@@ -79,7 +84,9 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     assert result.exit_code == 0
     assert "Application Runs:" in result.output
     assert "Item Status Counts:" in result.output
-    assert "Displayed 1 application runs." in result.output
+    assert re.search(r"Found \d+ application runs, displayed 1\.", result.output), (
+        "Expected run count message not found"
+    )
 
 
 def test_cli_run_describe_not_found(runner: CliRunner) -> None:

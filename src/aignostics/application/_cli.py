@@ -339,9 +339,11 @@ def run_list(
         return 0
 
     limit = min(len(runs), limit) if limit is not None else len(runs)
-    console.print(f"Found {len(runs)} application runs, displaying {limit}...")
+    console.print(f"Found {len(runs)} application runs, displaying {limit} ...", style="debug")
     print_runs_verbose(runs[:limit], Client()) if verbose else print_runs_non_verbose(runs[:limit])
-    console.print(f"Displayed {limit} application runs.")
+    message = f"Found {len(runs)} application runs, displayed {limit}."
+    logger.info(message)
+    console.print(message, style="info")
     return len(runs)
 
 
