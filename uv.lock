@@ -139,7 +139,7 @@ requires-dist = [
     { name = "highdicom", specifier = ">=0.25.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "humanize", specifier = ">=4.12.3" },
-    { name = "idc-index", git = "https://github.com/aignostics/idc-index.git?rev=main" },
+    { name = "idc-index", url = "https://github.com/aignostics/idc-index/raw/34be7271faabac9b3232f46b92deafcc357d10ab/dist/idc_index-0.1.dev338+gca52c75-py3-none-any.whl" },
     { name = "ijson", marker = "extra == 'qupath'", specifier = ">=3.3.0" },
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", specifier = ">=4.23.0" },
@@ -1821,7 +1821,7 @@ wheels = [
 [[package]]
 name = "idc-index"
 version = "0.1.dev338+gca52c75"
-source = { git = "https://github.com/aignostics/idc-index.git?rev=main#ca52c750bf0a9c2107708d66900d8596e5f0c910" }
+source = { url = "https://github.com/aignostics/idc-index/raw/34be7271faabac9b3232f46b92deafcc357d10ab/dist/idc_index-0.1.dev338+gca52c75-py3-none-any.whl" }
 dependencies = [
     { name = "click" },
     { name = "duckdb" },
@@ -1836,6 +1836,35 @@ dependencies = [
     { name = "sphinx-click" },
     { name = "tqdm" },
 ]
+wheels = [
+    { url = "https://github.com/aignostics/idc-index/raw/34be7271faabac9b3232f46b92deafcc357d10ab/dist/idc_index-0.1.dev338+gca52c75-py3-none-any.whl", hash = "sha256:6255bf9711893e44a2648ec3d6102a68f81d370caf85512994dfdf1acfa1103f" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "click" },
+    { name = "duckdb", specifier = ">=0.10.0,<=1.2.1" },
+    { name = "furo", marker = "extra == 'docs'", specifier = ">=2023.8.17" },
+    { name = "idc-index-data", specifier = "==20.0.3" },
+    { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=0.13" },
+    { name = "packaging" },
+    { name = "pandas", specifier = "<=2.2.4" },
+    { name = "platformdirs" },
+    { name = "psutil" },
+    { name = "pyarrow" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=6" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=6" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=3" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=3" },
+    { name = "requests" },
+    { name = "s5cmd" },
+    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.0" },
+    { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'" },
+    { name = "sphinx-click" },
+    { name = "sphinx-copybutton", marker = "extra == 'docs'" },
+    { name = "tqdm" },
+]
+provides-extras = ["dev", "docs", "test"]
 
 [[package]]
 name = "idc-index-data"
