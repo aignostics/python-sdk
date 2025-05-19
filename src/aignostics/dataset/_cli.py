@@ -81,7 +81,8 @@ if find_spec("idc_index"):
             str,
             typer.Argument(
                 help="SQL Query to execute."
-                "See https://idc-index.readthedocs.io/en/latest/column_descriptions.html for indices and their attributes"
+                "See https://idc-index.readthedocs.io/en/latest/column_descriptions.html "
+                "for indices and their attributes"
             ),
         ] = """SELECT
         SOPInstanceUID, SeriesInstanceUID, ImageType[3], instance_size, TotalPixelMatrixColumns, TotalPixelMatrixRows
