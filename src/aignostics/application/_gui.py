@@ -229,7 +229,7 @@ class PageBuilder(BasePageBuilder):
 
             ui.markdown(
                 """
-                    ## Welcome to the Aignostics Platform Launcher!
+                    ## Welcome to the Atlas Launchpad!
                     1. Select an application from the left sidebar and use our wizard to submit a run on your
                     whole slide images.
                     2. Select a run to monitor progress, cancel while pending, or download results.

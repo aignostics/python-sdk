@@ -190,6 +190,9 @@ aignostics --help ``
 - Single File Selection
 - Offline Mode
 
+# Other
+- Check upload behind proxy, including test for GUI
+
 
 # Proxy with HTTP Toolkit (https://httptoolkit.com/) on MacOS
 export HTTP_PROXY="http://localhost:8000"
@@ -204,3 +207,4 @@ unset HTTPS_PROXY
 unset REQUESTS_CA_BUNDLE
 unset SSL_CERT_FILE
 git config --global --unset http.sslCAInfo 
+
