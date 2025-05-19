@@ -40,10 +40,10 @@ def applications(mock_api) -> Applications:
     return Applications(mock_api)
 
 
-def test_applications_find_with_pagination(applications, mock_api) -> None:
-    """Test that Applications.find() correctly handles pagination.
+def test_applications_list_with_pagination(applications, mock_api) -> None:
+    """Test that Applications.list() correctly handles pagination.
 
-    This test verifies that the find method properly aggregates results
+    This test verifies that the list method properly aggregates results
     from multiple paginated API responses.
 
     Args:
@@ -57,7 +57,7 @@ def test_applications_find_with_pagination(applications, mock_api) -> None:
     mock_api.list_applications_v1_applications_get.side_effect = [page1, page2]
 
     # Act
-    result = list(applications.find())
+    result = list(applications.list())
 
     # Assert
     assert len(result) == PAGE_SIZE + 5
@@ -68,10 +68,10 @@ def test_applications_find_with_pagination(applications, mock_api) -> None:
     ])
 
 
-def test_versions_find_with_pagination(mock_api) -> None:
-    """Test that Versions.find() correctly handles pagination.
+def test_versions_list_with_pagination(mock_api) -> None:
+    """Test that Versions.list() correctly handles pagination.
 
-    This test verifies that the find method for application versions properly
+    This test verifies that the list method for application versions properly
     aggregates results from multiple paginated API responses.
 
     Args:
@@ -89,7 +89,7 @@ def test_versions_find_with_pagination(mock_api) -> None:
     mock_api.list_versions_by_application_id_v1_applications_application_id_versions_get.side_effect = [page1, page2]
 
     # Act
-    result = list(versions.find(application=mock_app))
+    result = list(versions.list(application=mock_app))
 
     # Assert
     assert len(result) == PAGE_SIZE + 5
@@ -100,10 +100,10 @@ def test_versions_find_with_pagination(mock_api) -> None:
     ])
 
 
-def test_applications_find_returns_empty_list_when_no_applications(applications, mock_api) -> None:
-    """Test that Applications.find() returns an empty list when no applications are available.
+def test_applications_list_returns_empty_list_when_no_applications(applications, mock_api) -> None:
+    """Test that Applications.list() returns an empty list when no applications are available.
 
-    This test verifies that the find method handles empty API responses correctly.
+    This test verifies that the list method handles empty API responses correctly.
 
     Args:
         applications: Applications instance with mock API.
@@ -113,17 +113,17 @@ def test_applications_find_returns_empty_list_when_no_applications(applications,
     mock_api.list_applications_v1_applications_get.return_value = []
 
     # Act
-    result = list(applications.find())
+    result = list(applications.list())
 
     # Assert
     assert len(result) == 0
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
-def test_applications_find_returns_applications_when_available(applications, mock_api) -> None:
-    """Test that Applications.find() returns a list of applications when available.
+def test_applications_list_returns_applications_when_available(applications, mock_api) -> None:
+    """Test that Applications.list() returns a list of applications when available.
 
-    This test verifies that the find method correctly returns application objects
+    This test verifies that the list method correctly returns application objects
     from the API response.
 
     Args:
@@ -136,7 +136,7 @@ def test_applications_find_returns_applications_when_available(applications, moc
     mock_api.list_applications_v1_applications_get.return_value = [mock_app1, mock_app2]
 
     # Act
-    result = list(applications.find())
+    result = list(applications.list())
 
     # Assert
     assert len(result) == 2
@@ -145,8 +145,8 @@ def test_applications_find_returns_applications_when_available(applications, moc
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
-def test_applications_find_passes_through_api_exception(applications, mock_api) -> None:
-    """Test that Applications.find() passes through exceptions from the API.
+def test_applications_list_passes_through_api_exception(applications, mock_api) -> None:
+    """Test that Applications.list() passes through exceptions from the API.
 
     This test verifies that exceptions raised by the API client are propagated
     to the caller without being caught or modified.
@@ -160,7 +160,7 @@ def test_applications_find_passes_through_api_exception(applications, mock_api) 
 
     # Act & Assert
     with pytest.raises(Exception, match=API_ERROR):
-        list(applications.find())
+        list(applications.list())
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
@@ -181,10 +181,10 @@ def test_versions_property_returns_versions_instance(applications) -> None:
     assert versions._api == applications._api
 
 
-def test_versions_find_returns_versions_for_application(mock_api) -> None:
-    """Test that Versions.find() returns versions for a specified application.
+def test_versions_list_returns_versions_for_application(mock_api) -> None:
+    """Test that Versions.list() returns versions for a specified application.
 
-    This test verifies that the find method correctly returns version objects
+    This test verifies that the list method correctly returns version objects
     for a given application from the API response.
 
     Args:
@@ -198,7 +198,7 @@ def test_versions_find_returns_versions_for_application(mock_api) -> None:
     mock_api.list_versions_by_application_id_v1_applications_application_id_versions_get.return_value = [mock_version]
 
     # Act
-    result = list(versions.find(application=mock_app))
+    result = list(versions.list(application=mock_app))
 
     # Assert
     assert len(result) == 1
@@ -208,10 +208,10 @@ def test_versions_find_returns_versions_for_application(mock_api) -> None:
     )
 
 
-def test_versions_find_returns_empty_list_when_no_versions(mock_api) -> None:
-    """Test that Versions.find() returns an empty list when no versions are available.
+def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
+    """Test that Versions.list() returns an empty list when no versions are available.
 
-    This test verifies that the find method handles empty API responses correctly
+    This test verifies that the list method handles empty API responses correctly
     when requesting application versions.
 
     Args:
@@ -224,7 +224,7 @@ def test_versions_find_returns_empty_list_when_no_versions(mock_api) -> None:
     mock_api.list_versions_by_application_id_v1_applications_application_id_versions_get.return_value = []
 
     # Act
-    result = list(versions.find(application=mock_app))
+    result = list(versions.list(application=mock_app))
 
     # Assert
     assert len(result) == 0
@@ -233,8 +233,8 @@ def test_versions_find_returns_empty_list_when_no_versions(mock_api) -> None:
     )
 
 
-def test_versions_find_passes_through_api_exception(mock_api) -> None:
-    """Test that Versions.find() passes through exceptions from the API.
+def test_versions_list_passes_through_api_exception(mock_api) -> None:
+    """Test that Versions.list() passes through exceptions from the API.
 
     This test verifies that exceptions raised by the API client when requesting
     application versions are propagated to the caller without being caught or modified.
@@ -252,4 +252,4 @@ def test_versions_find_passes_through_api_exception(mock_api) -> None:
 
     # Act & Assert
     with pytest.raises(Exception, match=API_ERROR):
-        list(versions.find(application=mock_app))
+        list(versions.list(application=mock_app))

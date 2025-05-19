@@ -56,10 +56,10 @@ def app_run(mock_api) -> ApplicationRun:
     return ApplicationRun(mock_api, "test-run-id")
 
 
-def test_runs_find_with_pagination(runs, mock_api) -> None:
-    """Test that Runs.find() correctly handles pagination.
+def test_runs_list_with_pagination(runs, mock_api) -> None:
+    """Test that Runs.list() correctly handles pagination.
 
-    This test verifies that the find method properly aggregates results from
+    This test verifies that the list method properly aggregates results from
     multiple paginated API responses and converts them to ApplicationRun instances.
 
     Args:
@@ -72,7 +72,7 @@ def test_runs_find_with_pagination(runs, mock_api) -> None:
     mock_api.list_application_runs_v1_runs_get.side_effect = [page1, page2]
 
     # Act
-    result = list(runs.find())
+    result = list(runs.list())
 
     # Assert
     assert len(result) == PAGE_SIZE + 5
@@ -84,8 +84,8 @@ def test_runs_find_with_pagination(runs, mock_api) -> None:
     ])
 
 
-def test_runs_find_with_application_version_filter(runs, mock_api) -> None:
-    """Test that Runs.find() correctly filters by application version.
+def test_runs_list_with_application_version_filter(runs, mock_api) -> None:
+    """Test that Runs.list() correctly filters by application version.
 
     This test verifies that the application version filter parameter is
     correctly passed to the API client.
@@ -99,7 +99,7 @@ def test_runs_find_with_application_version_filter(runs, mock_api) -> None:
     mock_api.list_application_runs_v1_runs_get.return_value = []
 
     # Act
-    list(runs.find(for_application_version=app_version_id))
+    list(runs.list(for_application_version=app_version_id))
 
     # Assert
     mock_api.list_application_runs_v1_runs_get.assert_called_once_with(
@@ -208,7 +208,7 @@ def test_paginate_with_not_found_exception_on_first_page(runs, mock_api) -> None
     mock_api.list_application_runs_v1_runs_get.side_effect = NotFoundException()
 
     # Act
-    result = list(runs.find())
+    result = list(runs.list())
 
     # Assert
     assert len(result) == 0
@@ -234,7 +234,7 @@ def test_paginate_with_not_found_exception_after_full_page(runs, mock_api) -> No
     mock_api.list_application_runs_v1_runs_get.side_effect = [full_page, NotFoundException()]
 
     # Act
-    result = list(runs.find())
+    result = list(runs.list())
 
     # Assert
     assert len(result) == PAGE_SIZE
