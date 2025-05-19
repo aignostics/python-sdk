@@ -90,7 +90,7 @@ cli_dicom = typer.Typer(no_args_is_help=True)
 cli.add_typer(cli_dicom, name="dicom")
 
 
-@cli_dicom.command()
+@cli_dicom.command(name="inspect")
 def dicom_inspect(
     path: Annotated[
         Path,

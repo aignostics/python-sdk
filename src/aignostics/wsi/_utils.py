@@ -1,31 +1,9 @@
 from pathlib import Path
 from typing import Any
 
+import humanize
+
 from aignostics.utils import console
-
-KILO = 1024
-
-
-def format_file_size(size_bytes: int) -> str:
-    """
-    Format file size in a human-readable format.
-
-    This function takes a file size in bytes and converts it to a more
-    readable format using appropriate units (B, KB, MB, GB, TB).
-
-    Args:
-        size_bytes (float): The size of the file in bytes.
-
-    Returns:
-        str: The formatted file size as a string with two decimal places
-            and the appropriate unit.
-    """
-    size_human = float(size_bytes)
-    for unit in ["B", "KB", "MB", "GB"]:
-        if size_human < KILO:
-            return f"{size_human:.2f} {unit}"
-        size_human /= KILO
-    return f"{size_human:.2f} TB"
 
 
 def get_tag_info(tag_str: str) -> str:
@@ -59,7 +37,7 @@ def print_file_info(file_info: dict[str, Any], indent: int = 0) -> None:  # noqa
 
     # Keep existing basic info
     console.print(f"{prefix}[key]Path:[/key] {Path(file_info['path']).name}")
-    console.print(f"{prefix}[key]Size:[/key] {format_file_size(file_info['size'])}")
+    console.print(f"{prefix}[key]Size:[/key] {humanize.naturalsize(file_info['size'])}")
     console.print(f"{prefix}[key]Type:[/key] {file_info['type']}")
 
     if "instance_uid" in file_info:

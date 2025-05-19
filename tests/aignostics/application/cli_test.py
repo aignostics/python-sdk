@@ -26,6 +26,15 @@ def test_cli_application_list(runner: CliRunner) -> None:
     assert "test-app" in result.output
 
 
+def test_cli_application_list_verbose(runner: CliRunner) -> None:
+    """Check application list command runs successfully."""
+    result = runner.invoke(cli, ["application", "list", "--verbose"])
+    assert result.exit_code == 0
+    assert "he-tme" in result.output
+    assert "Artifacts: 1 input(s), 6 output(s)" in result.output
+    assert "test-app" in result.output
+
+
 def test_cli_application_describe(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
     result = runner.invoke(cli, ["application", "describe", "--application-id", "he-tme"])
@@ -62,6 +71,14 @@ def test_cli_run_list(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "run", "list"])
     assert result.exit_code == 0
     assert "Application Run IDs:" in result.output
+
+
+def test_cli_run_list_verbose(runner: CliRunner) -> None:
+    """Check run list command runs successfully."""
+    result = runner.invoke(cli, ["application", "run", "list", "--verbose"])
+    assert result.exit_code == 0
+    assert "Application Runs:" in result.output
+    assert "Item Status Counts:" in result.output
 
 
 def test_cli_run_describe_not_found(runner: CliRunner) -> None:

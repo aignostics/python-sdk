@@ -39,15 +39,13 @@ class PydicomHandler:
     def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0914, PLR0915
         dicom_files = []
 
-        for file_path in self.path.rglob("*"):  # noqa: PLR1702
+        for file_path in self.path.rglob("*.dcm"):  # noqa: PLR1702
             if not file_path.is_file():
                 continue
 
             try:
                 print(file_path)
                 ds = pydicom.dcmread(str(file_path), stop_before_pixels=True)
-                print(ds)
-                continue
                 # TODO(Helmut): Uncomment when DICOM is implemented
                 # print(ds["Modality"].value)  # noqa: ERA001
                 # print(getattr(ds, "Modality", "unknown"))  # noqa: ERA001
@@ -66,11 +64,9 @@ class PydicomHandler:
 
                 # Try to determine file type using highdicom
                 try:
-                    if hd.sr.is_microscopy_bulk_simple_annotation(ds):
-                        file_info["type"] = "annotation"
-                    elif hd.sr.is_microscopy_measurement(ds):
-                        file_info["type"] = "measurement"
-                    elif getattr(ds, "Modality", "") in {"SM", "WSI"}:
+                    # TODO(Helmut): Check below, hd.sr.is_microscopy_bulk_simple_annotation(ds),
+                    # hd.sr.is_microscopy_measurement(ds) for type annotation/measurement
+                    if getattr(ds, "Modality", "") in {"SM", "WSI"}:
                         file_info["type"] = "image"
                 except Exception:
                     logger.exception("Failed to analyze DICOM file with highdicom")
