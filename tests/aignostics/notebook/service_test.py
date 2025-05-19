@@ -114,7 +114,7 @@ def test_serve_notebook(user: User) -> None:
     assert "run_id=4711" in notebook_url, f"run_id not found in iframe src: {notebook_url}"
 
 
-def test_startup_timeout():
+def test_startup_timeout() -> None:
     """Test handling of timeout during server startup.
 
     This test mocks the _server_ready.wait() method to simulate a timeout
@@ -150,7 +150,7 @@ def test_startup_timeout():
         mock_stop.assert_called_once()
 
 
-def test_missing_url():
+def test_missing_url() -> None:
     """Test handling of missing URL after server ready event is triggered.
 
     This test mocks the _server_ready event to return True (server ready)
@@ -173,7 +173,7 @@ def test_missing_url():
             runner.start()
 
 
-def test_stop_nonrunning_server():
+def test_stop_nonrunning_server() -> None:
     """Test stopping a server that isn't running.
 
     Verifies that stopping a non-running server doesn't cause errors
@@ -193,7 +193,7 @@ def test_stop_nonrunning_server():
         mock_logger.info.assert_called_with("Service stopped")
 
 
-def test_capture_output_no_stdout():
+def test_capture_output_no_stdout() -> None:
     """Test _capture_output method with None stdout.
 
     This tests the case where process.stdout is None, which should
@@ -211,7 +211,7 @@ def test_capture_output_no_stdout():
         mock_logger.warning.assert_called_once_with("Cannot capture stdout")
 
 
-def test_server_url_detection():
+def test_server_url_detection() -> None:
     """Test server URL detection from output.
 
     This test verifies that the URL detection regex works correctly
@@ -223,7 +223,6 @@ def test_server_url_detection():
         "\t➜\tURL:\thttps://0.0.0.0:5000",
     ]
 
-    runner = _Runner()
     url_pattern = re.compile(r"\s*➜\s+URL:\s+(https?://\S+)")
 
     for output in sample_outputs:
@@ -232,7 +231,7 @@ def test_server_url_detection():
         assert match.group(1).startswith("http"), f"Extracted invalid URL from: {output}"
 
 
-def test_singleton_runner():
+def test_singleton_runner() -> None:
     """Test that _get_runner returns a singleton instance."""
     # Reset the singleton for testing
     import aignostics.notebook._service

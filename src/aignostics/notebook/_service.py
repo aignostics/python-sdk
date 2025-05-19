@@ -109,8 +109,8 @@ class _Runner:
             logger.error(message)
             raise RuntimeError(message)
 
-        logger.info("Marimo server started at URL: %s", self._server_url)
-        return self._server_url  # type: ignore[unreachable]
+        logger.info("Marimo server started at URL: %s", self._server_url)  # type: ignore[unreachable]
+        return self._server_url
 
     def _capture_output(self, process: Popen[str]) -> None:
         """Capture stdout of the subprocess and detect when server is ready.

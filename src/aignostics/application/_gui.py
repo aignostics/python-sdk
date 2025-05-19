@@ -163,6 +163,7 @@ class PageBuilder(BasePageBuilder):
                                     ui.label(f"{application.name}").tailwind.font_weight(
                                         "bold"
                                         if context.client.page.path == "/application/{application_id}"
+                                        and args
                                         and args.get("application_id") == application.application_id
                                         else "normal"
                                     )
@@ -190,6 +191,7 @@ class PageBuilder(BasePageBuilder):
                                         ui.label(f"{run_data['application_version_id']}").tailwind.font_weight(
                                             "bold"
                                             if context.client.page.path == "/application/run/{application_run_id}"
+                                            and args
                                             and args.get("application_run_id") == run_data["application_run_id"]
                                             else "normal"
                                         )
@@ -375,7 +377,7 @@ class PageBuilder(BasePageBuilder):
                     try:
                         ui.notify(f"Finding WSIs and generating metadata for {submit_form.source}...", type="info")
                         if submit_form.metadata_grid is None:
-                            logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
+                            logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)  # type: ignore[unreachable]
                             return
                         submit_form.wsi_spinner.set_visibility(True)
                         submit_form.wsi_next_button.set_visibility(False)
@@ -452,7 +454,7 @@ class PageBuilder(BasePageBuilder):
                         with ui.column():
                             ui.button(icon="info", on_click=info_dialog.open)
                     with ui.stepper_navigation():
-                        ui.button("Next", on_click=lambda: [application_info.close(), stepper.next()]).mark(
+                        ui.button("Next", on_click=lambda: (application_info.close(), stepper.next())).mark(  # type: ignore[func-returns-value]
                             "BUTTON_APPLICATION_VERSION_NEXT"
                         )
 
@@ -680,7 +682,7 @@ class PageBuilder(BasePageBuilder):
                         return
                     ui.notify("Uploading slides to Aignostics Platform ...", type="info")
                     if upload_message_queue is None:
-                        logger.error("Upload message queue is not initialized.")
+                        logger.error("Upload message queue is not initialized.")  # type: ignore[unreachable]
                         return
                     await run.cpu_bound(
                         Service.upload_with_queue,
@@ -787,7 +789,7 @@ class PageBuilder(BasePageBuilder):
                 )
 
             if run is None:
-                ui.label(f"Failed to get run '{application_run_id}'").mark("LABEL_ERROR")
+                ui.label(f"Failed to get run '{application_run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
                 return
 
             def _cancel(run_id: str) -> bool:
@@ -801,13 +803,10 @@ class PageBuilder(BasePageBuilder):
                 """
                 ui.notify(f"Canceling application run with id {run_id}...", type="info")
                 try:
-                    canceled = service.application_run_cancel(run_id)
-                    if canceled:
-                        ui.notify("Application run cancelled!", type="positive")
-                        ui.navigate.reload()
-                        return True
-                    ui.notify("Application run can not be cancelled!", type="negative")
-                    return False
+                    service.application_run_cancel(run_id)
+                    ui.notify("Application run cancelled!", type="positive")
+                    ui.navigate.reload()
+                    return True
                 except Exception as e:  # noqa: BLE001
                     ui.notify(f"Failed to cancel application run: {e}.", type="warning")
                     return False

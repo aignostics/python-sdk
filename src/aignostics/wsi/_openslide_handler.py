@@ -70,7 +70,7 @@ class OpenSlideHandler:
         try:
             root = ET.fromstring(xml_string)  # noqa: S314
             namespace = {"ns": "http://www.vips.ecs.soton.ac.uk//dzsave"}
-            image_desc = {
+            image_desc: dict[str, Any] = {
                 "date": root.get("date"),
                 "version": root.get("version"),
                 "properties": {},
@@ -91,9 +91,9 @@ class OpenSlideHandler:
                 value_type = value_elem.get("type", "")
 
                 if value_type == "gint":
-                    value = int(value)
+                    value = int(value)  # type: ignore[assignment]
                 elif value_type == "gdouble":
-                    value = float(value)
+                    value = float(value)  # type: ignore[assignment]
                 elif value_type == "VipsRefString":
                     # Handle special libvips string properties
                     if name == "aix-libVips-version":
@@ -197,7 +197,10 @@ class OpenSlideHandler:
         if TIFF_IMAGE_DESCRIPTION in props:
             image_desc = self._parse_xml_image_description(props[TIFF_IMAGE_DESCRIPTION])
             if image_desc:
-                metadata["properties"]["image"] = image_desc
+                # Initialize "properties.image" as a dict if needed
+                if "properties" not in metadata:
+                    metadata["properties"] = {}
+                metadata["properties"]["image"] = image_desc  # type: ignore[index, assignment]
                 if "libvips_version" in image_desc:
                     metadata["generator"] = f"libvips {image_desc['libvips_version']}"
 
@@ -208,7 +211,7 @@ class OpenSlideHandler:
         # Add associated images if any
         associated_images = list(self.slide.associated_images.keys())
         if associated_images:
-            metadata["associated_images"] = associated_images
+            metadata["associated_images"] = associated_images  # type: ignore[assignment]
 
         return metadata
 
@@ -219,5 +222,17 @@ class OpenSlideHandler:
     def __enter__(self) -> "OpenSlideHandler":
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        """Exit the context manager.
+
+        Args:
+            exc_type: The exception type if an exception was raised.
+            exc_val: The exception value if an exception was raised.
+            exc_tb: The traceback if an exception was raised.
+        """
         self.close()

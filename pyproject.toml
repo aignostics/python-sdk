@@ -267,7 +267,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["_notebook.py", "application/_gui.py", "bottle.py", "dicom", "tiff"]
+exclude = ["_notebook.py", "bottle.py", "_pydicom_handler.py"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -315,8 +315,7 @@ md_report_exclude_outcomes = ["passed", "skipped"]
 sigterm = true
 relative_files = true
 source = ["src"]
-#omit = ["*/_gui.py", "*/_notebook.py", "src/aignostics/gui", "*/.vendored/*"]
-omit = ["*/.vendored/*", "*/_notebook.py", "src/aignostics/gui"]
+omit = ["*/.vendored/*", "*/_notebook.py", "*/_pydicom_handler.py"]
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from aignostics.utils import console
 
@@ -47,22 +48,7 @@ def get_tag_info(tag_str: str) -> str:
         return tag_str
 
 
-def format_dimensions(dim: tuple) -> str:
-    """Format dimensions tuple into string.
-
-    Args:
-        dim (tuple): A tuple containing dimension values.
-
-    Returns:
-        str: A formatted string representation of the dimensions,
-            joined with the "x" symbol, or "unknown" if the tuple is empty.
-    """
-    if not dim:
-        return "unknown"
-    return " x ".join(str(d) for d in dim)
-
-
-def print_file_info(file_info: dict, indent: int = 0) -> None:  # noqa: C901, PLR0912, PLR0915
+def print_file_info(file_info: dict[str, Any], indent: int = 0) -> None:  # noqa: C901, PLR0912, PLR0915
     """Print formatted file information.
 
     Args:
@@ -142,7 +128,7 @@ def print_file_info(file_info: dict, indent: int = 0) -> None:  # noqa: C901, PL
             console.print(f"{prefix}  Level {level['level']}: {level['frame_count']} frames @ {frame_size} pixels")
 
 
-def print_series_info(series_data: dict, indent: int = 0) -> None:
+def print_series_info(series_data: dict[str, Any], indent: int = 0) -> None:
     """Print formatted series information."""
     prefix = "  " * indent
     console.print(f"{prefix}[key]Files:[/key] {series_data['file_count']}")
@@ -163,7 +149,7 @@ def format_dicom_time(time_str: str) -> str:
     return f"{time_str[0:2]}:{time_str[2:4]}:{time_str[4:6]}"
 
 
-def print_study_info(study_data: dict, indent: int = 0) -> None:
+def print_study_info(study_data: dict[str, Any], indent: int = 0) -> None:
     """Print formatted study information.
 
     Args:
@@ -196,7 +182,7 @@ def print_study_info(study_data: dict, indent: int = 0) -> None:
         console.print(f"{prefix}  [key]Site Name:[/key] {study_data['clinical_trial']['site_name']}")
 
 
-def print_slide_info(slide_data: dict, indent: int = 0, verbose: bool = False) -> None:
+def print_slide_info(slide_data: dict[str, Any], indent: int = 0, verbose: bool = False) -> None:
     """Print formatted slide (container) information.
 
     Args:

@@ -71,25 +71,19 @@ class Service(BaseService):
             return handler.get_thumbnail()
         except OpenSlideUnsupportedFormatError:
             # If OpenSlide fails, try using PIL directly
-            img = PILImage.open(path)
+            img_file = PILImage.open(path)
             # Create a thumbnail with max size 256x256 while maintaining aspect ratio
-            img.thumbnail((256, 256))
+            img_file.thumbnail((256, 256))
             # Convert to RGB mode if needed (for PNG compatibility)
-            if img.mode not in {"RGB", "RGBA"}:
-                img = img.convert("RGB")
-            # Return the thumbnail image
-            return img
+            return img_file.convert("RGB") if img_file.mode not in {"RGB", "RGBA"} else img_file.copy()
         except OpenSlideError as e:
             if str(e) == "No pyramid levels found":
                 # If regular OpenSlide fails, try using PIL directly
-                img = PILImage.open(path)
+                img_file = PILImage.open(path)
                 # Create a thumbnail with max size 256x256 while maintaining aspect ratio
-                img.thumbnail((256, 256))
+                img_file.thumbnail((256, 256))
                 # Convert to RGB mode if needed (for PNG compatibility)
-                if img.mode not in {"RGB", "RGBA"}:
-                    img = img.convert("RGB")
-                # Return the thumbnail image
-                return img
+                return img_file.convert("RGB") if img_file.mode not in {"RGB", "RGBA"} else img_file.copy()
             raise
 
     def get_thumbnail(self, path: Path) -> Image:
