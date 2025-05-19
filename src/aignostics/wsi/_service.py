@@ -5,7 +5,10 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from PIL import Image, UnidentifiedImageError
+from openslide import OpenSlideError, OpenSlideUnsupportedFormatError
+from PIL import Image as PILImage
+from PIL import UnidentifiedImageError
+from PIL.Image import Image
 
 from aignostics.utils import BaseService, Health, get_logger
 
@@ -35,7 +38,61 @@ class Service(BaseService):
             status=Health.Code.UP,
         )
 
-    def get_thumbnail(self, path: Path) -> Image.Image:  # noqa: PLR6301
+    def _get_openslide_metadata(self, path: Path) -> dict[str, Any]:  # noqa: PLR6301
+        """Get metadata of a wsi file via OpenSlide.
+
+        Args:
+            path (Path): Path to the wsi file.
+
+        Returns:
+            dict[str, Any]: Metadata of the wsi file.
+        """
+        from ._openslide_handler import OpenSlideHandler  # noqa: PLC0415
+
+        handler = OpenSlideHandler.from_file(path)
+        return handler.get_metadata()
+
+    def _get_openslide_thumbnail(self, path: Path) -> Image:  # noqa: PLR6301
+        """Get thumbnail of a wsi file via OpenSlide.
+
+        Args:
+            path (Path): Path to the wsi file.
+
+        Returns:
+            Image: Thumbnail of the wsi file.
+
+        Raises:
+            OpenSlideError: If there is an error processing the wsi file with OpenSlide.
+        """
+        from ._openslide_handler import OpenSlideHandler  # noqa: PLC0415
+
+        try:
+            handler = OpenSlideHandler.from_file(path)
+            return handler.get_thumbnail()
+        except OpenSlideUnsupportedFormatError:
+            # If OpenSlide fails, try using PIL directly
+            img = PILImage.open(path)
+            # Create a thumbnail with max size 256x256 while maintaining aspect ratio
+            img.thumbnail((256, 256))
+            # Convert to RGB mode if needed (for PNG compatibility)
+            if img.mode not in {"RGB", "RGBA"}:
+                img = img.convert("RGB")
+            # Return the thumbnail image
+            return img
+        except OpenSlideError as e:
+            if str(e) == "No pyramid levels found":
+                # If regular OpenSlide fails, try using PIL directly
+                img = PILImage.open(path)
+                # Create a thumbnail with max size 256x256 while maintaining aspect ratio
+                img.thumbnail((256, 256))
+                # Convert to RGB mode if needed (for PNG compatibility)
+                if img.mode not in {"RGB", "RGBA"}:
+                    img = img.convert("RGB")
+                # Return the thumbnail image
+                return img
+            raise
+
+    def get_thumbnail(self, path: Path) -> Image:
         """Get thumbnail as PIL image.
 
         Args:
@@ -47,17 +104,12 @@ class Service(BaseService):
         Raises:
             ValueError: If the file type is not supported (.dcm, .tiff, or .tif).
         """
-        from aignostics.dicom import Service as DICOMService  # noqa: PLC0415
-        from aignostics.tiff import Service as TIFFService  # noqa: PLC0415
-
         if path.exists() is False:
             message = f"File does not exist: {path}"
             logger.warning(message)
             raise ValueError(message)
-        if path.suffix.lower() == ".dcm":
-            return DICOMService().get_thumbnail(path)
-        if path.suffix.lower() in {".tiff", ".tif"}:
-            return TIFFService().get_thumbnail(path)
+        if path.suffix.lower() in {".dcm", ".tiff", ".tif"}:
+            return self._get_openslide_thumbnail(path)
         message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
         logger.warning(message)
         raise ValueError(message)
@@ -78,6 +130,17 @@ class Service(BaseService):
         buffer = io.BytesIO()
         thumbnail_image.save(buffer, format="PNG")
         return buffer.getvalue()
+
+    def get_metadata(self, path: Path) -> dict[str, Any]:
+        """Get metadata from a TIFF file.
+
+        Args:
+            path (Path): Path to the TIFF file.
+
+        Returns:
+            dict[str, Any]: Metadata of the TIFF file.
+        """
+        return self._get_openslide_metadata(path)
 
     def get_tiff_as_jpg(self, url: str) -> bytes:  # noqa: PLR6301
         """Get a TIFF image from a URL and convert it to JPG format.
@@ -101,7 +164,7 @@ class Service(BaseService):
             response.raise_for_status()
             tiff_data = response.content
             tiff_buffer = io.BytesIO(tiff_data)
-            with Image.open(tiff_buffer) as img:
+            with PILImage.open(tiff_buffer) as img:
                 rgb_img = img.convert("RGB") if img.mode != "RGB" else img
                 jpg_buffer = io.BytesIO()
                 rgb_img.save(jpg_buffer, format="JPEG", quality=90)

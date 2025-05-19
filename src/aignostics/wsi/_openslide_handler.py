@@ -1,4 +1,4 @@
-"""Handler for TIFF files using OpenSlide."""
+"""Handler for wsi files using OpenSlide."""
 
 import xml.etree.ElementTree as ET  # noqa: S405
 from pathlib import Path
@@ -10,15 +10,15 @@ from PIL.Image import Image
 TIFF_IMAGE_DESCRIPTION = "tiff.ImageDescription"
 
 
-class TiffHandler:
-    """Handler for TIFF files using OpenSlide."""
+class OpenSlideHandler:
+    """Handler for WSI files using OpenSlide."""
 
     def __init__(self, path: str) -> None:
         self.path = Path(path)
         self.slide = openslide.OpenSlide(str(path))
 
     @classmethod
-    def from_file(cls, path: str | Path) -> "TiffHandler":
+    def from_file(cls, path: str | Path) -> "OpenSlideHandler":
         return cls(str(path))
 
     def _detect_format(self) -> str | None:
@@ -216,7 +216,7 @@ class TiffHandler:
         """Close the OpenSlide object."""
         self.slide.close()
 
-    def __enter__(self) -> "TiffHandler":
+    def __enter__(self) -> "OpenSlideHandler":
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001

@@ -78,13 +78,6 @@ def frame(  # noqa: PLR0915
                     ui.label("Run Applications").tailwind.font_weight(
                         "bold" if context.client.page.path == "/" else "normal"
                     )
-            with ui.item(on_click=lambda _: ui.navigate.to("/bucket")).props("clickable"):
-                with ui.item_section().props("avatar"):
-                    ui.icon("cloud", color="#4185F4")
-                with ui.item_section():
-                    ui.label("Manage Cloud Bucket").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/bucket" else "normal"
-                    )
             with ui.item(on_click=lambda _: ui.navigate.to("/idc")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("image", color="#BA1F40")
@@ -94,6 +87,13 @@ def frame(  # noqa: PLR0915
                     )
         ui.space()
         with ui.list():
+            with ui.item(on_click=lambda _: ui.navigate.to("/bucket")).props("clickable"):
+                with ui.item_section().props("avatar"):
+                    ui.icon("cloud", color="#4185F4")
+                with ui.item_section():
+                    ui.label("Manage Cloud Bucket").tailwind.font_weight(
+                        "bold" if context.client.page.path == "/bucket" else "normal"
+                    )
             with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("settings", color="positive")

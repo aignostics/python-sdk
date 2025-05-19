@@ -11,7 +11,6 @@ import google_crc32c
 import requests
 
 from aignostics.bucket import Service as BucketService
-from aignostics.dicom import Service as DicomService
 from aignostics.platform import (
     Application,
     ApplicationRun,
@@ -21,8 +20,8 @@ from aignostics.platform import (
     InputArtifact,
     InputItem,
 )
-from aignostics.tiff import Service as TiffService
 from aignostics.utils import BaseService, Health, get_logger
+from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
 
@@ -196,14 +195,8 @@ class Service(BaseService):
                         while chunk := f.read(1024):
                             hash_sum.update(chunk)  # type: ignore[no-untyped-call]
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
-                    if file_path.suffix in {".tiff", ".tif"}:
-                        image_metadata = TiffService().get_metadata(file_path)
-                        width = image_metadata["dimensions"]["width"]
-                        height = image_metadata["dimensions"]["height"]
-                        mpp = image_metadata["resolution"]["mpp_x"]
-                        file_size_human = image_metadata["file"]["size_human"]
-                    elif file_path.suffix == ".dcm":
-                        image_metadata = DicomService().get_metadata(file_path)
+                    if file_path.suffix in {".dcm", ".tiff", ".tif"}:
+                        image_metadata = WSIService().get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
                         height = image_metadata["dimensions"]["height"]
                         mpp = image_metadata["resolution"]["mpp_x"]

@@ -1,8 +1,9 @@
 """WSI module."""
 
+from ._cli import cli
 from ._service import Service
 
-__all__ = ["Service"]
+__all__ = ["Service", "cli"]
 
 from importlib.util import find_spec
 
