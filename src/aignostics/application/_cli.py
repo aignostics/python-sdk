@@ -53,7 +53,7 @@ def download(
     console.print(source_url_signed)
     destination_directory_path = Path(destination_directory)
     if not destination_directory_path.is_dir():
-        console.print(f"[bold red]Error:[/bold red] Destination directory '{destination_directory}' does not exist.")
+        console.print(f"[error]Error:[/error] Destination directory '{destination_directory}' does not exist.")
         return
     # Extract filename from the URL
     filename = source_url_signed.split("/")[-1].split("?")[0]
@@ -89,7 +89,7 @@ def upload(
     source_file_path = Path(source_file)
     if not source_file_path.is_file():
         logger.warning("Source file '%s' does not exist.", source_file)
-        console.print(f"[bold red]Error:[/bold red] Source file '{source_file}' does not exist.")
+        console.print(f"[error]Error:[/error] Source file '{source_file}' does not exist.")
         return
 
     # Generate signed URL
@@ -141,7 +141,7 @@ def application_list(
         applications = Client().applications.list()
     except Exception as e:
         logger.exception("Failed to list applications")
-        console.print(f"[bold red]Error:[/bold red] Failed to list applications: {e}")
+        console.print(f"[error]Error:[/error] Failed to list applications: {e}")
         return False
 
     app_count = 0
@@ -162,7 +162,7 @@ def application_list(
             except Exception as e:
                 logger.exception("Failed to list versions for application '%s'", app.application_id)
                 console.print(
-                    f"[bold red]Error:[/bold red] Failed to list versions for application '{app.application_id}': {e}"
+                    f"[error]Error:[/error] Failed to list versions for application '{app.application_id}': {e}"
                 )
                 continue
             if versions:
@@ -216,12 +216,12 @@ def application_describe(
         application = Client().application(application_id)
     except Exception as e:
         logger.exception("Failed to find application with ID '%s'", application_id)
-        console.print(f"[bold red]Error:[/bold red] Failed to find application: {e}")
+        console.print(f"[error]Error:[/error] Failed to find application: {e}")
         return False
 
     if not application:
         logger.warning("Application with ID '%s' not found.", application_id)
-        console.print(f"[bold red]Warning:[/bold red] Application with ID '{application_id}' not found.")
+        console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
         return False
 
     console.print(f"[bold]Application Details for {application.application_id}[/bold]")
@@ -294,7 +294,7 @@ def run_submit(
     source_csv = Path(source)
     if not source_csv.is_file():
         logger.warning("Source file '%s' does not exist.", source)
-        console.print(f"[bold red]Error:[/bold red] Source file '{source}' does not exist.")
+        console.print(f"[error]Error:[/error] Source file '{source}' does not exist.")
         return False
     payload = construct_input_items(source_csv)
 
@@ -303,7 +303,7 @@ def run_submit(
     except Exception as e:
         logger.exception("Failed to create run for application version '%s'", application_version_id)
         console.print(
-            f"[bold red]Error:[/bold red] Failed to create run for application version '{application_version_id}': {e}"
+            f"[error]Error:[/error] Failed to create run for application version '{application_version_id}': {e}"
         )
         return False
 
@@ -329,18 +329,19 @@ def run_list(
         runs = list(Client().runs.list_data(sort="triggered_at"))[::-1]
     except Exception as e:
         logger.exception("Failed to list runs")
-        console.print(f"[bold red]Error:[/bold red] Failed to list runs: {e}")
+        console.print(f"[error]Error:[/error] Failed to list runs: {e}")
         return -1
 
     if len(runs) == 0:
-        logger.warning("No application runs found.")
-        console.print("No application runs found.")
+        message = "You did not yet create a run."
+        logger.warning(message)
+        console.print(message, style="warning")
         return 0
 
-    display_count = min(len(runs), limit) if limit is not None else len(runs)
-    console.print(f"Found {len(runs)} application runs, displaying {display_count}...")
-    print_runs_verbose(runs[:display_count], Client()) if verbose else print_runs_non_verbose(runs[:display_count])
-    console.print(f"Displayed {display_count} application runs.")
+    limit = min(len(runs), limit) if limit is not None else len(runs)
+    console.print(f"Found {len(runs)} application runs, displaying {limit}...")
+    print_runs_verbose(runs[:limit], Client()) if verbose else print_runs_non_verbose(runs[:limit])
+    console.print(f"Displayed {limit} application runs.")
     return len(runs)
 
 
@@ -360,7 +361,7 @@ def run_describe(run_id: Annotated[str, typer.Option(help="Id of the run to desc
         retrieve_and_print_run_details(Client().run(run_id))
     except Exception as e:
         logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
-        console.print(f"[bold red]Error:[/bold red] Failed to retrieve run details for ID '{run_id}': {e}")
+        console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
         return False
     logger.info("Described run with ID '%s'", run_id)
     return True
@@ -430,14 +431,14 @@ def result_download(
             run.download_to_folder(destination_dir)
         except Exception as e:
             logger.exception("Failed to download results for run with ID '%s'", run_id)
-            console.print(f"[bold red]Error:[/bold red] Failed to download results for run with ID '{run_id}': {e}")
+            console.print(f"[error]Error:[/error] Failed to download results for run with ID '{run_id}': {e}")
             return False
         logger.info("Downloaded results for run with ID '%s' to '%s'", run_id, destination_dir)
         console.print("downloaded result")
         return True
 
     logger.warning("Run with ID '%s' not found.", run_id)
-    console.print(f"[bold yellow]Warning:[/bold yellow] Run with ID '{run_id}' not found.")
+    console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
     return False
 
 

@@ -19,6 +19,7 @@ WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 BORDERED_SEPARATOR = "bordered separator"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
+RUNS_LIMIT = 200
 
 
 class PageBuilder(BasePageBuilder):
@@ -173,7 +174,7 @@ class PageBuilder(BasePageBuilder):
                 async def application_runs_load_and_render() -> None:
                     with runs_column:
                         try:
-                            runs = await run.io_bound(Service.application_runs_static)
+                            runs = await run.io_bound(Service.application_runs_static, RUNS_LIMIT)
                             runs_column.clear()
                             for index, run_data in enumerate(runs):
                                 with (

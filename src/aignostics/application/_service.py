@@ -308,7 +308,7 @@ class Service(BaseService):
         return True
 
     @staticmethod
-    def application_runs_static() -> list[dict[str, Any]]:
+    def application_runs_static(limit: int | None = None) -> list[dict[str, Any]]:
         return [
             {
                 "application_run_id": run.application_run_id,
@@ -316,11 +316,14 @@ class Service(BaseService):
                 "triggered_at": run.triggered_at,
                 "status": run.status,
             }
-            for run in Service().application_runs()
+            for run in Service().application_runs(limit=limit)
         ]
 
-    def application_runs(self) -> list[ApplicationRunData]:
+    def application_runs(self, limit: int | None = None) -> list[ApplicationRunData]:
         """Get a list of all application runs.
+
+        Args:
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[ApplicationRunData]: A list of all application runs.
@@ -328,11 +331,8 @@ class Service(BaseService):
         Raises:
             Exception: If the application run list cannot be retrieved.
         """
-        runs = self._get_platform_client().runs.list_data(sort="triggered_at")
-        if not runs:
-            logger.debug("No application runs found.")
-            return []
-        return list(runs)[::-1]
+        runs = list(self._get_platform_client().runs.list_data(sort="triggered_at"))[::-1]
+        return runs[: min(len(runs), limit) if limit is not None else len(runs)]
 
     def application_run(self, run_id: str) -> ApplicationRun:
         """Find a run by its ID.

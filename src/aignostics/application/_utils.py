@@ -139,7 +139,7 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         console.print(f"  [bold]Status:[/bold] {item.status.value}")
 
         if item.error:
-            console.print(f"  [bold red]Error:[/bold red] {item.error}")
+            console.print(f"  [error]Error:[/error] {item.error}")
 
         if item.output_artifacts:
             console.print("  [bold]Output Artifacts:[/bold]")
@@ -187,7 +187,7 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
     except Exception as e:
         logger.exception("Failed to get item status for run with ID '%s'", run.application_run_id)
         console.print(
-            f"[bold red]Error:[/bold red] Failed to get item statuses for run with ID '{run.application_run_id}': {e}"
+            f"[error]Error:[/error] Failed to get item statuses for run with ID '{run.application_run_id}': {e}"
         )
         return False
 
@@ -228,7 +228,7 @@ def print_runs_verbose(runs: list[ApplicationRunData], client: Client) -> None:
         except Exception as e:
             logger.exception("Failed to retrieve item status counts for run with ID '%s'", run.application_run_id)
             console.print(
-                f"[bold red]Error:[/bold red] Failed to retrieve item status counts for run with ID "
+                f"[error]Error:[/error] Failed to retrieve item status counts for run with ID "
                 f"'{run.application_run_id}': {e}"
             )
             continue

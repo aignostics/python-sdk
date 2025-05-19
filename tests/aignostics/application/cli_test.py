@@ -26,7 +26,7 @@ def test_cli_application_list(runner: CliRunner) -> None:
     assert "test-app" in result.output
 
 
-def test_cli_application_list_verbose_max_10(runner: CliRunner) -> None:
+def test_cli_application_list_verbose(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list", "--verbose"])
     assert result.exit_code == 0
@@ -66,14 +66,14 @@ def test_cli_run_submit(runner: CliRunner, tmp_path: Path) -> None:
     ), f"Output '{result.output}' doesn't match expected pattern"
 
 
-def test_cli_run_list(runner: CliRunner) -> None:
+def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
-    result = runner.invoke(cli, ["application", "run", "list"])
+    result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
     assert "Application Run IDs:" in result.output
 
 
-def test_cli_run_list_verbose(runner: CliRunner) -> None:
+def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
     assert result.exit_code == 0
