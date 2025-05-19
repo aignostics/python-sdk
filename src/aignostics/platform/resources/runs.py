@@ -62,6 +62,18 @@ class ApplicationRun:
 
         return cls(Client.get_api_client(cache_token=False), application_run_id)
 
+    # TODO(Andreas): Deprecated, please remove when you updated your integration code
+    def status(self) -> ApplicationRunData:
+        """Retrieves the current status of the application run.
+
+        Returns:
+            ApplicationRunData: The run data.
+
+        Raises:
+            Exception: If the API request fails.
+        """
+        return self.details()
+
     def details(self) -> ApplicationRunData:
         """Retrieves the current status of the application run.
 
