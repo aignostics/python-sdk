@@ -9794,6 +9794,40 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ```
 
+## humanize (4.12.3) - UNKNOWN
+
+Python humanize utilities
+
+* URL: https://github.com/python-humanize/humanize
+* Author(s): Jason Moiron <jmoiron@jmoiron.net>
+* Maintainer(s): Hugo van Kemenade
+
+### License Text
+
+```
+Copyright (c) 2010-2020 Jason Moiron and Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+```
+
 ## idc-index (0.8.6) - MIT License
 
 Package to query and download data from an index of ImagingDataCommons
@@ -33216,7 +33250,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## tornado (6.4.2) - Apache Software License
+## tornado (6.5) - Apache Software License
 
 Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed.
 

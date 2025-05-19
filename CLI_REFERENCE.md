@@ -1,6 +1,6 @@
 # CLI Reference
 
-Command Line Interface of Aignostics Python SDK
+Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.
 
 **Usage**:
 
@@ -18,23 +18,22 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `gui`: Open graphical user interface (GUI).
-* `notebook`: Run notebook server.
-* `application`: Run applications on Aignostics platform.
+* `launchpad`: Open Atlas Launchpad, the graphical user...
+* `notebook`: Run Python notebook server based on Marimo.
+* `application`: Run applications on Aignostics Platform.
 * `bucket`: Operations on cloud bucket on Aignostics...
-* `dicom`: Operations on DICOM datasets.
-* `idc`: Download datasets from Image Data Commons...
+* `dataset`: Download datasets from National Institute...
 * `system`: Determine health, info and further...
-* `tiff`: Operations on pyramidal TIFF files.
+* `wsi`: Operations on whole slide images.
 
-## `aignostics gui`
+## `aignostics launchpad`
 
-Open graphical user interface (GUI).
+Open Atlas Launchpad, the graphical user interface of the Aignostics Platform.
 
 **Usage**:
 
 ```console
-$ aignostics gui [OPTIONS]
+$ aignostics launchpad [OPTIONS]
 ```
 
 **Options**:
@@ -43,7 +42,7 @@ $ aignostics gui [OPTIONS]
 
 ## `aignostics notebook`
 
-Run notebook server.
+Run Python notebook server based on Marimo.
 
 **Usage**:
 
@@ -59,7 +58,7 @@ $ aignostics notebook [OPTIONS]
 
 ## `aignostics application`
 
-Run applications on Aignostics platform.
+Run applications on Aignostics Platform.
 
 **Usage**:
 
@@ -73,45 +72,10 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `download`: Download from bucket to folder via a...
-* `upload`: Upload a filew to a transfer bucket via a...
 * `list`: List available applications.
 * `describe`: Describe application.
-* `bucket`: Transfer bucket provide by platform
-* `dataset`: Datasets for use as input for applications
 * `metadata`: Metadata required as input for applications
 * `run`: Runs of applications
-
-### `aignostics application download`
-
-Download from bucket to folder via a signed URL.
-
-**Usage**:
-
-```console
-$ aignostics application download [OPTIONS]
-```
-
-**Options**:
-
-* `--source-url TEXT`: URL to download  [required]
-* `--destination-directory TEXT`: Destination directory to download to  [required]
-* `--help`: Show this message and exit.
-
-### `aignostics application upload`
-
-Upload a filew to a transfer bucket via a signed URL, authenticating with hmac.
-
-**Usage**:
-
-```console
-$ aignostics application upload [OPTIONS]
-```
-
-**Options**:
-
-* `--source-file TEXT`: Source file to upload  [required]
-* `--help`: Show this message and exit.
 
 ### `aignostics application list`
 
@@ -147,37 +111,12 @@ Returns:
 **Usage**:
 
 ```console
-$ aignostics application describe [OPTIONS]
+$ aignostics application describe [OPTIONS] APPLICATION_ID
 ```
 
-**Options**:
+**Arguments**:
 
-* `--application-id TEXT`: Id of the application to describe  [required]
-* `--help`: Show this message and exit.
-
-### `aignostics application bucket`
-
-Transfer bucket provide by platform
-
-**Usage**:
-
-```console
-$ aignostics application bucket [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-### `aignostics application dataset`
-
-Datasets for use as input for applications
-
-**Usage**:
-
-```console
-$ aignostics application dataset [OPTIONS] COMMAND [ARGS]...
-```
+* `APPLICATION_ID`: Id of the application to describe  [required]
 
 **Options**:
 
@@ -232,7 +171,7 @@ $ aignostics application run [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `submit`: Create run.
-* `list`: List runs.
+* `list`: List runs, sorted by triggered_at,...
 * `describe`: Describe run.
 * `cancel`: Cancel run.
 * `result`: Results of applications runs
@@ -252,24 +191,28 @@ Returns:
 **Usage**:
 
 ```console
-$ aignostics application run submit [OPTIONS]
+$ aignostics application run submit [OPTIONS] APPLICATION_VERSION_ID SOURCE
 ```
+
+**Arguments**:
+
+* `APPLICATION_VERSION_ID`: Id of the application version to submit run for  [required]
+* `SOURCE`: Source of the run. If not starting with &#x27;s3://&#x27; or &#x27;gs://&#x27;, it is assumed to be a local file path pointing to a .csv file  [required]
 
 **Options**:
 
-* `--application-version-id TEXT`: Id of the application version to submit run for  [required]
-* `--source TEXT`: Source of the run. If not starting with &#x27;s3://&#x27; or &#x27;gs://&#x27;, it is assumed to be a local file path pointing to a .csv file  [required]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`
 
-List runs.
+List runs, sorted by triggered_at, descending.
 
 Args:
-    verbose (bool): If True, show detailed information about each run
+    verbose (bool): If True, show detailed information about each run.
+    limit (int | None): Maximum number of runs to display. If None, display all runs.
 
 Returns:
-    bool: Success status of the operation
+    int: Number of runs found, or -1 if an error occurred
 
 **Usage**:
 
@@ -280,6 +223,7 @@ $ aignostics application run list [OPTIONS]
 **Options**:
 
 * `--verbose / --no-verbose`: Show application details  [default: no-verbose]
+* `--limit INTEGER`: Maximum number of runs to display
 * `--help`: Show this message and exit.
 
 #### `aignostics application run describe`
@@ -295,12 +239,15 @@ Returns:
 **Usage**:
 
 ```console
-$ aignostics application run describe [OPTIONS]
+$ aignostics application run describe [OPTIONS] RUN_ID
 ```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run to describe  [required]
 
 **Options**:
 
-* `--run-id TEXT`: Id of the run to desfribe  [required]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run cancel`
@@ -316,12 +263,15 @@ Returns:
 **Usage**:
 
 ```console
-$ aignostics application run cancel [OPTIONS]
+$ aignostics application run cancel [OPTIONS] RUN_ID
 ```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run to cancel  [required]
 
 **Options**:
 
-* `--run-id TEXT`: Id of the run to cancel  [required]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run result`
@@ -372,13 +322,16 @@ Returns:
 **Usage**:
 
 ```console
-$ aignostics application run result download [OPTIONS]
+$ aignostics application run result download [OPTIONS] RUN_ID DESTINATION
 ```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run to download results for  [required]
+* `DESTINATION`: Destination directory to download results to  [required]
 
 **Options**:
 
-* `--run-id TEXT`: Id of the run to download results for  [required]
-* `--destination TEXT`: Destination directory to download results to  [required]
 * `--help`: Show this message and exit.
 
 ##### `aignostics application run result delete`
@@ -411,10 +364,30 @@ $ aignostics bucket [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
+* `upload`: Upload file or directory to bucket in...
 * `ls`: List objects in bucket on Aignostics...
 * `find`: Find objects in bucket on Aignostics...
 * `delete`: Find objects in bucket on Aignostics...
 * `purge`: Purge all objects in bucket on Aignostics...
+
+### `aignostics bucket upload`
+
+Upload file or directory to bucket in Aignostics platform.
+
+**Usage**:
+
+```console
+$ aignostics bucket upload [OPTIONS] SOURCE
+```
+
+**Arguments**:
+
+* `SOURCE`: Source file or directory to upload  [required]
+
+**Options**:
+
+* `--destination-prefix TEXT`: Destination layout. Supports {username}, {timestamp}. E.g. you might want to use &quot;{username}/myproject/&quot;  [default: {username}]
+* `--help`: Show this message and exit.
 
 ### `aignostics bucket ls`
 
@@ -478,14 +451,14 @@ $ aignostics bucket purge [OPTIONS]
 
 * `--help`: Show this message and exit.
 
-## `aignostics dicom`
+## `aignostics dataset`
 
-Operations on DICOM datasets.
+Download datasets from National Institute of Cancer (NIC) and Aignostics.
 
 **Usage**:
 
 ```console
-$ aignostics dicom [OPTIONS] COMMAND [ARGS]...
+$ aignostics dataset [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -494,74 +467,17 @@ $ aignostics dicom [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `inspect`: Inspect DICOM files at any hierarchy level.
-* `geojson`: Operations on GeoJSON files.
+* `idc`: Download public datasets from Image Data...
+* `aignostics`: Download proprietary sample datasets from...
 
-### `aignostics dicom inspect`
+### `aignostics dataset idc`
 
-Inspect DICOM files at any hierarchy level.
-
-**Usage**:
-
-```console
-$ aignostics dicom inspect [OPTIONS] PATH
-```
-
-**Arguments**:
-
-* `PATH`: Path of file or directory to inspect  [required]
-
-**Options**:
-
-* `--verbose / --no-verbose`: Verbose output  [default: no-verbose]
-* `--summary / --no-summary`: Show only summary information  [default: no-summary]
-* `--help`: Show this message and exit.
-
-### `aignostics dicom geojson`
-
-Operations on GeoJSON files.
+Download public datasets from Image Data Commons (IDC) Portal of National Institute of Cancer (NIC).
 
 **Usage**:
 
 ```console
-$ aignostics dicom geojson [OPTIONS] COMMAND [ARGS]...
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `import`: Import GeoJSON annotations into DICOM ANN...
-
-#### `aignostics dicom geojson import`
-
-Import GeoJSON annotations into DICOM ANN instance.
-
-**Usage**:
-
-```console
-$ aignostics dicom geojson import [OPTIONS] DICOM_PATH GEOJSON_PATH
-```
-
-**Arguments**:
-
-* `DICOM_PATH`: Path to the DICOM file  [required]
-* `GEOJSON_PATH`: Path to the GeoJSON file  [required]
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-## `aignostics idc`
-
-Download datasets from Image Data Commons (IDC) Portal of National Institute of Cancer (NIC).
-
-**Usage**:
-
-```console
-$ aignostics idc [OPTIONS] COMMAND [ARGS]...
+$ aignostics dataset idc [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -571,63 +487,82 @@ $ aignostics idc [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `browse`: Open browser to explore IDC portal.
-* `columns`: List available columns in IDC index.
+* `indices`: List available columns in given of the IDC...
+* `columns`: List available columns in given of the IDC...
 * `query`: Query IDC index.
 * `download`: Download from manifest file, identifier,...
 
-### `aignostics idc browse`
+#### `aignostics dataset idc browse`
 
 Open browser to explore IDC portal.
 
 **Usage**:
 
 ```console
-$ aignostics idc browse [OPTIONS]
+$ aignostics dataset idc browse [OPTIONS]
 ```
 
 **Options**:
 
 * `--help`: Show this message and exit.
 
-### `aignostics idc columns`
+#### `aignostics dataset idc indices`
 
-List available columns in IDC index.
+List available columns in given of the IDC Portal.
 
 **Usage**:
 
 ```console
-$ aignostics idc columns [OPTIONS]
+$ aignostics dataset idc indices [OPTIONS]
 ```
 
 **Options**:
 
 * `--help`: Show this message and exit.
 
-### `aignostics idc query`
+#### `aignostics dataset idc columns`
+
+List available columns in given of the IDC Portal.
+
+**Usage**:
+
+```console
+$ aignostics dataset idc columns [OPTIONS]
+```
+
+**Options**:
+
+* `--index TEXT`: List available columns in given of the IDC Portal. See List available columns in given of the IDC Portal for available indices  [default: sm_instance_index]
+* `--help`: Show this message and exit.
+
+#### `aignostics dataset idc query`
 
 Query IDC index. For example queries see https://github.com/ImagingDataCommons/IDC-Tutorials/blob/master/notebooks/labs/idc_rsna2023.ipynb.
 
 **Usage**:
 
 ```console
-$ aignostics idc query [OPTIONS] [QUERY]
+$ aignostics dataset idc query [OPTIONS] [QUERY]
 ```
 
 **Arguments**:
 
-* `[QUERY]`: SQL Query  [default: SELECT
-  SeriesInstanceUID
-FROM
-  index
-WHERE
-  Modality = &#x27;MR&#x27;
-]
+* `[QUERY]`: SQL Query to execute.See https://idc-index.readthedocs.io/en/latest/column_descriptions.html for indices and their attributes  [default: SELECT
+        SOPInstanceUID, SeriesInstanceUID, ImageType[3], instance_size, TotalPixelMatrixColumns, TotalPixelMatrixRows
+    FROM
+        sm_instance_index
+    WHERE
+        TotalPixelMatrixColumns &gt; 25000
+        AND TotalPixelMatrixRows &gt; 25000
+        AND ImageType[3] = &#x27;VOLUME&#x27;
+    ]
 
 **Options**:
 
+* `--indices TEXT`: Comma separated list of additional indices to sync before running the query. The main index is always present. By default sm_instance_index is synched in addition. See https://idc-index.readthedocs.io/en/latest/column_descriptions.html for available indices.  [default: sm_instance_index]
 * `--help`: Show this message and exit.
 
-### `aignostics idc download`
+#### `aignostics dataset idc download`
 
 Download from manifest file, identifier, or comma-separate set of identifiers.
 
@@ -637,18 +572,55 @@ Raises:
 **Usage**:
 
 ```console
-$ aignostics idc download [OPTIONS] SOURCE [TARGET]
+$ aignostics dataset idc download [OPTIONS] SOURCE [TARGET]
 ```
 
 **Arguments**:
 
-* `SOURCE`: Filename of manifest, identifier, or comma-separate set of identifiers  [required]
+* `SOURCE`: Identifier or comma-separated set of identifiers. IDs matched against collection_id, PatientId, StudyInstanceUID, SeriesInstanceUID or SOPInstanceUID.  [required]
 * `[TARGET]`: target directory for download  [default: /Users/helmut/Code/python-sdk]
 
 **Options**:
 
-* `--target-layout TEXT`: layout of the target directory. See default for available elements for use  [default: %collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID]
+* `--target-layout TEXT`: layout of the target directory. See default for available elements for use  [default: %collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/]
 * `--dry-run / --no-dry-run`: dry run  [default: no-dry-run]
+* `--help`: Show this message and exit.
+
+### `aignostics dataset aignostics`
+
+Download proprietary sample datasets from Aignostics.
+
+**Usage**:
+
+```console
+$ aignostics dataset aignostics [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `download`: Download from bucket to folder via a...
+
+#### `aignostics dataset aignostics download`
+
+Download from bucket to folder via a signed URL.
+
+**Usage**:
+
+```console
+$ aignostics dataset aignostics download [OPTIONS] SOURCE_URL DESTINATION_DIRECTORY
+```
+
+**Arguments**:
+
+* `SOURCE_URL`: URL to download, e.g. gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
+* `DESTINATION_DIRECTORY`: Destination directory to download to  [required]
+
+**Options**:
+
 * `--help`: Show this message and exit.
 
 ## `aignostics system`
@@ -788,14 +760,14 @@ $ aignostics system whoami [OPTIONS]
 
 * `--help`: Show this message and exit.
 
-## `aignostics tiff`
+## `aignostics wsi`
 
-Operations on pyramidal TIFF files.
+Operations on whole slide images.
 
 **Usage**:
 
 ```console
-$ aignostics tiff [OPTIONS] COMMAND [ARGS]...
+$ aignostics wsi [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -804,21 +776,78 @@ $ aignostics tiff [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `inspect`: Inspect a TIFF file and display its metadata.
+* `inspect`: Inspect a wsi file and display its metadata.
+* `dicom`
 
-### `aignostics tiff inspect`
+### `aignostics wsi inspect`
 
-Inspect a TIFF file and display its metadata.
+Inspect a wsi file and display its metadata.
 
 **Usage**:
 
 ```console
-$ aignostics tiff inspect [OPTIONS] PATH
+$ aignostics wsi inspect [OPTIONS] PATH
 ```
 
 **Arguments**:
 
-* `PATH`: Path to the TIFF file  [required]
+* `PATH`: Path to the wsi file  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics wsi dicom`
+
+**Usage**:
+
+```console
+$ aignostics wsi dicom [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `inspect`: Inspect DICOM files at any hierarchy level.
+* `geojson_import`: Import GeoJSON annotations into DICOM ANN...
+
+#### `aignostics wsi dicom inspect`
+
+Inspect DICOM files at any hierarchy level.
+
+**Usage**:
+
+```console
+$ aignostics wsi dicom inspect [OPTIONS] PATH
+```
+
+**Arguments**:
+
+* `PATH`: Path of file or directory to inspect  [required]
+
+**Options**:
+
+* `--verbose / --no-verbose`: Verbose output  [default: no-verbose]
+* `--summary / --no-summary`: Show only summary information  [default: no-summary]
+* `--help`: Show this message and exit.
+
+#### `aignostics wsi dicom geojson_import`
+
+Import GeoJSON annotations into DICOM ANN instance.
+
+**Usage**:
+
+```console
+$ aignostics wsi dicom geojson_import [OPTIONS] DICOM_PATH GEOJSON_PATH
+```
+
+**Arguments**:
+
+* `DICOM_PATH`: Path to the DICOM file  [required]
+* `GEOJSON_PATH`: Path to the GeoJSON file  [required]
 
 **Options**:
 

@@ -27,7 +27,7 @@ repos:
       - id: check-illegal-windows-names
       - id: check-merge-conflict
         args: ["--assume-in-merge"]
-        exclude: "license.rst"
+        exclude: "license.rst|ATTRIBUTIONS.md"
       - id: check-shebang-scripts-are-executable
         exclude: "bottle.py"
       - id: check-symlinks

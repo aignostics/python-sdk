@@ -93,3 +93,4 @@ data/**
 !data/.keep 
 dist_vercel
 setup.sh.secret
+__marimo__

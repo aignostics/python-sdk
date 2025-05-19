@@ -33,4 +33,3 @@ else
 fi
 uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally --with marimo aignostics system install
 uvx --from git+https://github.com/aignostics/python-sdk@feat/cli-e2e-finally --with marimo aignostics --help
-
