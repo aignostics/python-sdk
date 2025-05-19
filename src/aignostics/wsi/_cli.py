@@ -100,9 +100,9 @@ def dicom_inspect(
     summary: Annotated[bool, typer.Option(help="Show only summary information")] = False,
 ) -> None:  # pylint: disable=W0613
     """Inspect DICOM files at any hierarchy level."""
-    from ._pydicom_handler import DicomHandler  # noqa: PLC0415
+    from ._pydicom_handler import PydicomHandler  # noqa: PLC0415
 
-    with DicomHandler.from_file(str(path)) as handler:
+    with PydicomHandler.from_file(str(path)) as handler:
         metadata = handler.get_metadata(verbose)
 
         if metadata["type"] == "empty":
@@ -126,7 +126,7 @@ def dicom_geojson_import(
     geojson_path: Annotated[Path, typer.Argument(help="Path to the GeoJSON file", exists=True)],
 ) -> None:  # pylint: disable=W0613
     """Import GeoJSON annotations into DICOM ANN instance."""
-    from ._pydicom_handler import DicomHandler  # noqa: PLC0415
+    from ._pydicom_handler import PydicomHandler  # noqa: PLC0415
 
     console.print("\nImporting GeoJSON annotations into DICOM ANN instance...", style="blue")
-    DicomHandler.geojson_import(dicom_path, geojson_path)
+    PydicomHandler.geojson_import(dicom_path, geojson_path)

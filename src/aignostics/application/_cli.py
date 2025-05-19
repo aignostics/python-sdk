@@ -24,10 +24,10 @@ MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 
 logger = get_logger(__name__)
 
-cli = typer.Typer(name="application", help="Run applications on Aignostics platform.")
+cli = typer.Typer(name="application", help="Run applications on Aignostics Platform.")
 
 bucket_app = typer.Typer()
-cli.add_typer(bucket_app, name="bucket", help="Transfer bucket provide by platform")
+cli.add_typer(bucket_app, name="bucket", help="Transfer bucket provided by Aignostics Platform")
 
 datasset_app = typer.Typer()
 cli.add_typer(datasset_app, name="dataset", help="Datasets for use as input for applications")

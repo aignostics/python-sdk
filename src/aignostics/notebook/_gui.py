@@ -1,4 +1,4 @@
-"""Marimo GUI."""
+"""Notebook GUI."""
 
 from aignostics.gui import theme
 from aignostics.utils import BasePageBuilder, get_logger
@@ -13,7 +13,7 @@ class PageBuilder(BasePageBuilder):
 
         from ._service import Service  # noqa: PLC0415
 
-        @ui.page("/marimo/{application_run_id}")
+        @ui.page("/notebook/{application_run_id}")
         def page_application_run_marimo(application_run_id: str) -> None:
             """Inspect Application Run in Marimo."""
             theme()

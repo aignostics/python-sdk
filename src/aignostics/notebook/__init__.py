@@ -1,4 +1,4 @@
-"""Marimo module."""
+"""Notebook module."""
 
 from importlib.util import find_spec
 

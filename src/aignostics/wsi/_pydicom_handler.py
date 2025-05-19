@@ -16,19 +16,19 @@ from aignostics.utils import console, get_logger
 logger = get_logger(__name__)
 
 
-class DicomHandler:
+class PydicomHandler:
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
 
     @classmethod
-    def from_file(cls, path: str | Path) -> "DicomHandler":
-        """Create a DicomHandler instance from a file or directory path.
+    def from_file(cls, path: str | Path) -> "PydicomHandler":
+        """Create a PydicomHandler instance from a file or directory path.
 
         Args:
             path (str | Path): Path to the DICOM file or directory.
 
         Returns:
-            DicomHandler: An instance of DicomHandler.
+            PydicomHandler: An instance of PydicomHandler.
         """
         return cls(Path(path))
 
@@ -348,7 +348,7 @@ class DicomHandler:
 
         return {"type": "root", "studies": studies}
 
-    def __enter__(self) -> "DicomHandler":
+    def __enter__(self) -> "PydicomHandler":
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001

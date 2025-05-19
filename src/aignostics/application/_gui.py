@@ -890,9 +890,9 @@ class PageBuilder(BasePageBuilder):
                         )
                     if find_spec("marimo"):
                         ui.button(
-                            "Open in Marimo Notebook",
+                            "Open in Python Notebook",
                             icon="analytics",
-                            on_click=lambda: ui.navigate.to(f"/marimo/{run.application_run_id}"),
+                            on_click=lambda: ui.navigate.to(f"/notebook/{run.application_run_id}"),
                         )
                     ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
 

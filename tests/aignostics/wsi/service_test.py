@@ -1,4 +1,4 @@
-"""Tests of the idc service."""
+"""Tests of the wsi service and it's endpoints."""
 
 import contextlib
 import http.server

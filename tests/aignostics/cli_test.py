@@ -98,11 +98,11 @@ if find_spec("nicegui"):
 
     def test_cli_gui_help(runner: CliRunner) -> None:
         """Check gui help works."""
-        result = runner.invoke(cli, ["gui", "--help"])
+        result = runner.invoke(cli, ["launchpad", "--help"])
         assert result.exit_code == 0
 
     def test_cli_gui_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Check gui component behaviors when gui command is executed."""
+        """Check gui component behaviors when launchpad command is executed."""
         # Create mocks
         mock_ui_run_called = False
         mock_ui_run_args = {}
@@ -155,7 +155,7 @@ if find_spec("nicegui"):
         monkeypatch.setattr("nicegui.native.find_open_port", lambda: 8080)
 
         # Run the CLI command
-        result = runner.invoke(cli, ["gui"])
+        result = runner.invoke(cli, ["launchpad"])
 
         # Check that the command executed successfully
         assert result.exit_code == 0
@@ -168,7 +168,7 @@ if find_spec("nicegui"):
 
         # Check that ui.run was called with the expected parameters
         assert mock_ui_run_called, "ui.run was not called"
-        assert mock_ui_run_args["title"] == "Aignostics Platform Launchpad", "title parameter is incorrect"
+        assert mock_ui_run_args["title"] == "Atlas Launchpad", "title parameter is incorrect"
         assert mock_ui_run_args["favicon"] == "🔬", "favicon parameter is incorrect"
         if platform.system() == "Linux":
             assert mock_ui_run_args["native"] is False, "native parameter should be False on Linux"

@@ -1,4 +1,4 @@
-"""Marimo Service."""
+"""Notebook service running Marimo."""
 
 import atexit
 import re
@@ -109,6 +109,7 @@ class _Runner:
             logger.error(message)
             raise RuntimeError(message)
 
+        logger.info("Marimo server started at URL: %s", self._server_url)
         return self._server_url  # type: ignore[unreachable]
 
     def _capture_output(self, process: Popen[str]) -> None:
@@ -202,7 +203,7 @@ def _get_runner() -> _Runner:
     return runner
 
 
-# Facade to the runner
+# Facade to the Marimo runner
 class Service(BaseService):
     """Service of the Marimo module."""
 
