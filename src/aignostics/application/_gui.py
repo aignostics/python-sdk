@@ -1,5 +1,6 @@
-"""GUI of application module including homepage of Atlas Launchpad."""
+"""GUI of application module including homepage of Aignostics Launchpad."""
 
+import sys
 import time
 from importlib.util import find_spec
 from multiprocessing import Manager
@@ -19,7 +20,7 @@ WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 BORDERED_SEPARATOR = "bordered separator"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
-RUNS_LIMIT = 200
+RUNS_LIMIT = 100
 
 
 class PageBuilder(BasePageBuilder):
@@ -87,8 +88,7 @@ class PageBuilder(BasePageBuilder):
                     return "sync_problem"
                 case "completed":
                     return "done_all"
-                case _:
-                    return "bug_report"
+            return "bug_report"
 
         def _run_item_status_to_icon(run_status: str) -> str:  # noqa: PLR0911
             """Convert run item status to icon.
@@ -112,8 +112,7 @@ class PageBuilder(BasePageBuilder):
                     return "error"
                 case "succeeded":
                     return "check"
-                case _:
-                    return "bug_report"
+            return "bug_report"
 
         def _mime_type_to_icon(mime_type: str) -> str:
             """Convert mime type to icon.
@@ -135,10 +134,9 @@ class PageBuilder(BasePageBuilder):
                     return "place"
                 case "application/json":
                     return "data_object"
-                case _:
-                    return "bug_report"
+            return "bug_report"
 
-        def _frame(
+        def _frame(  # noqa: C901, PLR0915
             navigation_title: str,
             navigation_icon: str | None = None,
             left_sidebar: bool = False,
@@ -147,17 +145,22 @@ class PageBuilder(BasePageBuilder):
             if args is None:
                 args = {}
             service = Service()
+            noruns = args and args.get("noruns")
             with frame(navigation_title=navigation_title, navigation_icon=navigation_icon, left_sidebar=left_sidebar):  # noqa: PLR1702
                 try:
                     with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
                         ui.item_label("Applications").props("header")
                         ui.separator()
                         for application in service.applications():
-                            with ui.item(
-                                on_click=lambda app_id=application.application_id: ui.navigate.to(
-                                    f"/application/{app_id}"
+                            with (
+                                ui.item(
+                                    on_click=lambda app_id=application.application_id: ui.navigate.to(
+                                        f"/application/{app_id}" + ("?noruns=true" if noruns else "")
+                                    )
                                 )
-                            ).props("clickable"):
+                                .mark(f"SIDEBAR_APPLICATION:{application.application_id}")
+                                .props("clickable")
+                            ):
                                 with ui.item_section().props("avatar"):
                                     ui.icon(_application_id_to_icon(application.application_id))
                                 with ui.item_section():
@@ -175,6 +178,10 @@ class PageBuilder(BasePageBuilder):
                     with runs_column:
                         try:
                             runs = await run.io_bound(Service.application_runs_static, RUNS_LIMIT)
+                            if runs is None:
+                                message = "run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
+                                logger.error(message)
+                                raise RuntimeError(message)  # noqa: TRY301
                             runs_column.clear()
                             for index, run_data in enumerate(runs):
                                 with (
@@ -221,18 +228,23 @@ class PageBuilder(BasePageBuilder):
                         ui.separator()
                         with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
                             ui.spinner(size="lg").classes("m-5")
-                        background_tasks.create(application_runs_load_and_render())
+                        if not noruns:
+                            background_tasks.create(application_runs_load_and_render())
                 except Exception as e:  # noqa: BLE001
                     ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")
 
         @ui.page("/")
-        def page_index() -> None:
-            """Homepage of Applications."""
-            _frame("Run our AI Applications on your Whole Slide Images", left_sidebar=True)
+        def page_index(noruns: bool = False) -> None:
+            """Homepage of Applications.
+
+            Args:
+                noruns (bool): If True, do not load and show runs in sidebar.
+            """
+            _frame("Run our AI Applications on your Whole Slide Images", left_sidebar=True, args={"noruns": noruns})
 
             ui.markdown(
                 """
-                    ## Welcome to the Atlas Launchpad!
+                    ## Welcome to the Aignostics Launchpad!
                     1. Select an application from the left sidebar and use our wizard to submit a run on your
                     whole slide images.
                     2. Select a run to monitor progress, cancel while pending, or download results.
@@ -265,8 +277,13 @@ class PageBuilder(BasePageBuilder):
                     ui.image("/assets/home-card-2.png").classes("w-[768px]")
 
         @ui.page("/application/{application_id}")
-        def page_application_describe(application_id: str) -> None:  # noqa: C901, PLR0915
-            """Describe Application."""
+        def page_application_describe(application_id: str, noruns: bool = False) -> None:  # noqa: C901, PLR0912, PLR0915
+            """Describe Application.
+
+            Args:
+                application_id (str): The application ID.
+                noruns (bool): If True, do not load and show runs in sidebar.
+            """
             service = Service()
             application = service.application(application_id)
 
@@ -275,7 +292,7 @@ class PageBuilder(BasePageBuilder):
                     navigation_icon="bug_report",
                     navigation_title=f"{application_id}",
                     left_sidebar=True,
-                    args={"application_id": application_id},
+                    args={"application_id": application_id, "noruns": noruns},
                 )
                 ui.label(f"Failed to get application '{application_id}'").mark("LABEL_ERROR")
                 return
@@ -284,7 +301,7 @@ class PageBuilder(BasePageBuilder):
                 navigation_icon=_application_id_to_icon(application_id),
                 navigation_title=f"{application.name if application else ''}",
                 left_sidebar=True,
-                args={"application_id": application_id},
+                args={"application_id": application_id, "noruns": noruns},
             )
 
             application_versions = service.application_versions(application)
@@ -346,7 +363,7 @@ class PageBuilder(BasePageBuilder):
                     else:
                         submit_form.source = path
                         submit_form.wsi_step_label.set_text(
-                            f"Selected folder {submit_form.source} to analyze"
+                            f"Selected folder {submit_form.source} to analyze."
                         ) if submit_form.wsi_step_label else None
                         submit_form.wsi_next_button.enable() if submit_form.wsi_next_button else None
                         ui.notify(f"You chose directory {submit_form.source}.", type="info")
@@ -361,6 +378,17 @@ class PageBuilder(BasePageBuilder):
                         type="warning",
                     )
 
+            async def _pytest_home() -> None:  # noqa: RUF029
+                """Select home folder."""
+                from nicegui import ui  # noqa: PLC0415
+
+                submit_form.source = Path.home()
+                submit_form.wsi_step_label.set_text(
+                    f"Selected folder {submit_form.source} to analyze."
+                ) if submit_form.wsi_step_label else None
+                submit_form.wsi_next_button.enable() if submit_form.wsi_next_button else None
+                ui.notify(f"You chose directory {submit_form.source}.", type="info")
+
             async def _on_wsi_next_click() -> None:
                 """Handle the 'Next' button click in WSI step.
 
@@ -368,6 +396,9 @@ class PageBuilder(BasePageBuilder):
                 1. Generates metadata from the selected source directory
                 2. Updates the metadata grid with the generated data
                 3. Moves to the next step
+
+                Raises:
+                    RuntimeError: If the metadata grid is not initialized or if the generated metadata is None.
                 """
                 if (
                     submit_form.source
@@ -386,6 +417,10 @@ class PageBuilder(BasePageBuilder):
                             Service.generate_metadata_from_source_directory,
                             submit_form.source,
                         )
+                        if submit_form.metadata_grid.options["rowData"] is None:
+                            msg = "run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
+                            logger.error(msg)
+                            raise RuntimeError(msg)  # noqa: TRY301
                         submit_form.wsi_next_button.set_visibility(True)
                         submit_form.wsi_spinner.set_visibility(False)
                         submit_form.metadata_grid.update()
@@ -464,6 +499,8 @@ class PageBuilder(BasePageBuilder):
                         "Select a folder with whole slide images you want to analyze."
                     )
                     with ui.stepper_navigation():
+                        if "pytest" in sys.modules:
+                            ui.button("Home", on_click=_pytest_home, icon="folder").mark("BUTTON_PYTEST_HOME")
                         ui.button("Select", on_click=_select_source, icon="folder").mark("BUTTON_WSI_SELECT")
                         submit_form.wsi_next_button = ui.button("Next", on_click=_on_wsi_next_click)
                         submit_form.wsi_next_button.mark("BUTTON_WSI_NEXT").disable()
@@ -480,6 +517,18 @@ class PageBuilder(BasePageBuilder):
                         3. You can revert to the original list by clicking the Back button.
                         """
                     )
+
+                    async def _pytest_meta() -> None:  # noqa: RUF029
+                        if submit_form.metadata_grid is None:
+                            logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
+                            return
+                        if submit_form.metadata_next_button is None:
+                            logger.error("Metadata next button is not initialized.")
+                            return
+                        submit_form.metadata_next_button.enable()
+                        ui.notify(
+                            "Your metadata is now valid! Feel free to continue to the next step.", type="positive"
+                        )
 
                     async def _validate() -> None:
                         if submit_form.metadata_grid is None:
@@ -510,20 +559,27 @@ class PageBuilder(BasePageBuilder):
                         if not valid:
                             submit_form.metadata_next_button.disable()
                         else:
+                            submit_form.metadata_next_button.enable()
                             ui.notify(
                                 "Your metadata is now valid. Feel free to continue to the next step.", type="positive"
                             )
-                            submit_form.metadata_next_button.enable()
                         submit_form.metadata_grid.run_grid_method("autoSizeAllColumns")
 
                     async def _metadata_next() -> None:
                         if submit_form.metadata_grid is None or submit_form.submission_upload_button is None:
                             logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                             return
-                        submit_form.metadata = await submit_form.metadata_grid.get_client_data()
+                        if "pytest" in sys.modules:
+                            rows = submit_form.metadata_grid.options["rowData"]
+                            for row in rows:
+                                row["tissue_type"] = "lung"
+                                row["disease"] = "lung"
+                            submit_form.metadata = rows
+                        else:
+                            submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                         _upload_ui.refresh(submit_form.metadata)
                         submit_form.submission_upload_button.enable()
-                        ui.notify("Prepared upload ui", type="info")
+                        ui.notify("Prepared upload UI.", type="info")
                         stepper.next()
 
                     async def _delete_selected() -> None:
@@ -667,12 +723,14 @@ class PageBuilder(BasePageBuilder):
                         else None,
                     )
                     with ui.stepper_navigation():
+                        if "pytest" in sys.modules:
+                            ui.button("Select", on_click=_pytest_meta, icon="folder").mark("BUTTON_PYTEST_META")
                         submit_form.metadata_exclude_button = ui.button(
                             "Exclude selected", on_click=_delete_selected
                         ).mark("BUTTON_DELETE_SELECTED")
                         submit_form.metadata_exclude_button.set_text("Exclude")
                         submit_form.metadata_exclude_button.disable()
-                        submit_form.metadata_next_button = ui.button("Next", on_click=lambda _: _metadata_next())
+                        submit_form.metadata_next_button = ui.button("Next", on_click=_metadata_next)
                         submit_form.metadata_next_button.mark("BUTTON_METADATA_NEXT").disable()
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
@@ -681,7 +739,7 @@ class PageBuilder(BasePageBuilder):
                     if submit_form.submission_submit_button is None or submit_form.submission_upload_button is None:
                         logger.error("Submission submit button is not initialized.")
                         return
-                    ui.notify("Uploading slides to Aignostics Platform ...", type="info")
+                    ui.notify("Uploading whole slide images to Aignostics Platform ...", type="info")
                     if upload_message_queue is None:
                         logger.error("Upload message queue is not initialized.")  # type: ignore[unreachable]
                         return
@@ -743,7 +801,7 @@ class PageBuilder(BasePageBuilder):
                         ui.notify(f"Failed to submit application run: {e}.", type="warning")
                         return
                     ui.notify(f"Application run submitted with id '{run.application_run_id}'.", type="positive")
-                    ui.navigate.to(f"/application/run/{run.application_run_id}")
+                    ui.navigate.to(f"/application/run/{run.application_run_id}" + ("?noruns=true" if noruns else ""))
 
                 with ui.step("Submission"):
                     _upload_ui([])
@@ -753,19 +811,19 @@ class PageBuilder(BasePageBuilder):
                     with ui.stepper_navigation():
                         submit_form.submission_upload_button = ui.button(
                             "Upload",
-                            on_click=lambda _: _upload(),
+                            on_click=_upload,
                             icon="check",
                         ).mark("BUTTON_SUBMISSION_UPLOAD")
                         submit_form.submission_submit_button = ui.button(
                             "Submit",
-                            on_click=lambda _: _submit(),
+                            on_click=_submit,
                             icon="check",
                         )
                         submit_form.submission_submit_button.mark("BUTTON_SUBMISSION_SUBMIT").disable()
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
         @ui.page("/application/run/{application_run_id}")
-        def page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
+        def page_application_run_describe(application_run_id: str, noruns: bool = False) -> None:  # noqa: C901, PLR0912, PLR0915
             """Describe Application."""
             service = Service()
             run = service.application_run(application_run_id)
@@ -779,14 +837,14 @@ class PageBuilder(BasePageBuilder):
                         f"on {run_data.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
                     ),
                     left_sidebar=True,
-                    args={"application_run_id": application_run_id},
+                    args={"application_run_id": application_run_id, "noruns": noruns},
                 )
             else:
                 _frame(
                     navigation_icon="bug_report",
                     navigation_title=f"Run {application_run_id}",
                     left_sidebar=True,
-                    args={"application_run_id": application_run_id},
+                    args={"application_run_id": application_run_id, "noruns": noruns},
                 )
 
             if run is None:
@@ -802,7 +860,7 @@ class PageBuilder(BasePageBuilder):
                 Returns:
                     bool: True if the run was cancelled, False otherwise.
                 """
-                ui.notify(f"Canceling application run with id {run_id}...", type="info")
+                ui.notify(f"Canceling application run with id '{run_id}' ...", type="info")
                 try:
                     service.application_run_cancel(run_id)
                     ui.notify("Application run cancelled!", type="positive")

@@ -119,7 +119,8 @@ class _Runner:
             process (Popen): The subprocess to capture stdout from.
         """
         captured_line = ""
-        url_pattern = re.compile(r"\s*➜\s+URL:\s+(https?://\S+)")
+        # Use a more specific pattern with atomic groups to prevent backtracking
+        url_pattern = re.compile(r"\s*➜\s+URL:\s+((?:http|https)://[^\s]{1,2083})")
 
         if process.stdout is None:
             logger.warning("Cannot capture stdout")

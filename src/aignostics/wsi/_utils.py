@@ -1,3 +1,5 @@
+"""Utils for printing wsi files."""
+
 from pathlib import Path
 from typing import Any
 

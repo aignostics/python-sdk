@@ -567,7 +567,7 @@ def _run_pytest(
 
     # Distribute tests across available CPUs if not sequential
     if not is_sequential:
-        pytest_args.extend(["-n", "auto", "--dist", "loadgroup"])
+        pytest_args.extend(["-n", "logical", "--dist", "loadgroup"])
 
     # Add act environment filter if needed
     if _is_act_environment():

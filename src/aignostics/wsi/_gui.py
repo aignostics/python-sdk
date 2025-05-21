@@ -1,4 +1,4 @@
-"""Thumbnail API."""
+"""WSI API."""
 
 from pathlib import Path
 

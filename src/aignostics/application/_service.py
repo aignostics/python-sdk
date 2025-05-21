@@ -2,7 +2,7 @@
 
 import base64
 import os
-from collections.abc import Generator, Iterator
+from collections.abc import Generator
 from multiprocessing import Queue
 from pathlib import Path
 from typing import Any, TypedDict
@@ -75,15 +75,12 @@ class Service(BaseService):
         """
         if self._client is None:
             logger.debug("Creating platform client.")
-            try:
-                self._client = Client()
-            except Exception:
-                logger.exception("Failed to create platform client.")
-                raise
-        logger.debug("Reusing platform client.")
+            self._client = Client()
+        else:
+            logger.debug("Reusing platform client.")
         return self._client
 
-    def applications(self) -> Iterator[Application]:
+    def applications(self) -> list[Application]:
         """Get a list of all applications.
 
         Returns:
@@ -95,7 +92,11 @@ class Service(BaseService):
         Raises:
             Exception: If the application list cannot be retrieved.
         """
-        return self._get_platform_client().applications.list()
+        return [
+            app
+            for app in list(self._get_platform_client().applications.list())
+            if app.application_id not in {"h-e-tme", "two-task-dummy"}
+        ]
 
     def application(self, application_id: str) -> Application | None:
         """Get a specific application.
@@ -124,27 +125,6 @@ class Service(BaseService):
             Exception: If version list cannot be retrieved
         """
         return self._get_platform_client().applications.versions.list_sorted(application=application)
-
-    def find_latest_application_version_id(self, application: Application) -> str:
-        """Find the latest version of the given application.
-
-        Args:
-            application (Application): The application to check for the latest version.
-
-        Returns:
-            str: The ID of the latest application version.
-
-        Raises:
-            ValueError: If no versions are found for the application.
-            Exception: If the application cannot be retrieved
-        """
-        latest_version = self._get_platform_client().applications.versions.latest(application=application)
-        latest_version_id = latest_version.application_version_id if latest_version else None
-        if not latest_version_id:
-            message = f"No versions found for application {application.application_id}"
-            logger.error(message)
-            raise ValueError(message)
-        return str(latest_version_id)
 
     @staticmethod
     def generate_metadata_from_source_directory(source_directory: Path) -> list[dict[str, Any]]:

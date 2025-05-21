@@ -42,6 +42,13 @@ def test_cli_application_describe(runner: CliRunner) -> None:
     assert "tissue_qc:geojson_polygons" in result.output
 
 
+def test_cli_application_describe_not_found(runner: CliRunner) -> None:
+    """Check application describe command fails as expected on unknown upplication."""
+    result = runner.invoke(cli, ["application", "describe", "unknown"])
+    assert result.exit_code == 0
+    assert "Application with ID 'unknown' not found." in result.output
+
+
 def test_cli_application_metadata_generate(runner: CliRunner) -> None:
     """Check application metadata generate command runs successfully."""
     result = runner.invoke(cli, ["application", "metadata", "generate"])
@@ -49,7 +56,7 @@ def test_cli_application_metadata_generate(runner: CliRunner) -> None:
     assert MESSAGE_NOT_YET_IMPLEMENTED in result.output
 
 
-def test_cli_run_submit_and_describe_and_cancel(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command runs successfully."""
     csv_content = "source;checksum_crc32c;base_mpp;width;height;cancer.type;cancer.tissue\n"
     csv_content += "gs://bucket/test;5onqtA==;0.26268186053789266;7447;7196;lung;lung"
@@ -101,6 +108,10 @@ def test_cli_run_submit_and_describe_and_cancel(runner: CliRunner, tmp_path: Pat
         f"Expected path '{normalized_tmp_path}' not found in output: '{download_result.output}'"
     )
 
+    download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, "/4711"])
+    assert download_result.exit_code == 0
+    assert "Failed to create destination directory '/4711'" in download_result.output
+
 
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
@@ -125,18 +136,32 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     )
 
 
-def test_cli_run_describe_not_found(runner: CliRunner) -> None:
-    """Check run describe command runs successfully."""
+def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
+    """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "4711"])
     assert result.exit_code == 0
-    assert "Failed to retrieve run details for ID '4711'" in result.output
+    assert "Error: Failed to retrieve run details for ID '4711'" in result.output
 
 
-def test_cli_run_cancel_not_found(runner: CliRunner) -> None:
-    """Check run cancel command runs successfully."""
+def test_cli_run_describe_not_found(runner: CliRunner) -> None:
+    """Check run describe command fails as expected on run not found."""
+    result = runner.invoke(cli, ["application", "run", "describe", "00000000000000000000000000000000"])
+    assert result.exit_code == 0
+    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output
+
+
+def test_cli_run_cancel_invalid_run_id(runner: CliRunner) -> None:
+    """Check run cancel command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "cancel", "4711"])
     assert result.exit_code == 0
     assert "Failed to cancel run with ID '4711'" in result.output
+
+
+def test_cli_run_cancel_not_found(runner: CliRunner) -> None:
+    """Check run cancel command fails as expected on run not found."""
+    result = runner.invoke(cli, ["application", "run", "cancel", "00000000000000000000000000000000"])
+    assert result.exit_code == 0
+    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output
 
 
 def test_cli_run_result_describe(runner: CliRunner) -> None:

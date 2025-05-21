@@ -168,7 +168,7 @@ if find_spec("nicegui"):
 
         # Check that ui.run was called with the expected parameters
         assert mock_ui_run_called, "ui.run was not called"
-        assert mock_ui_run_args["title"] == "Atlas Launchpad", "title parameter is incorrect"
+        assert mock_ui_run_args["title"] == "Aignostics Launchpad", "title parameter is incorrect"
         assert mock_ui_run_args["favicon"] == "🔬", "favicon parameter is incorrect"
         if platform.system() == "Linux":
             assert mock_ui_run_args["native"] is False, "native parameter should be False on Linux"

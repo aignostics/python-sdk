@@ -21,10 +21,10 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
 
     @cli.command()
     def launchpad() -> None:
-        """Open Atlas Launchpad, the graphical user interface of the Aignostics Platform."""
+        """Open Aignostics Launchpad, the graphical user interface of the Aignostics Platform."""
         from .utils import gui_run  # noqa: PLC0415
 
-        gui_run(native=True, with_api=False, title="Atlas Launchpad", icon="🔬")
+        gui_run(native=True, with_api=False, title="Aignostics Launchpad", icon="🔬")
 
 
 if find_spec("marimo"):

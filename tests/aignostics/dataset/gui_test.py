@@ -12,6 +12,15 @@ from aignostics.utils import gui_register_pages
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
 
+async def _assert_notified(user: User, expected_notification: str, wait_seconds=5):
+    """Check if the user receives a notification within the specified time."""
+    for _ in range(wait_seconds):
+        if user.notify.contains(expected_notification):
+            break
+        await sleep(1)
+    assert user.notify.contains(expected_notification)
+
+
 async def test_gui_idc_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
     gui_register_pages()
@@ -91,8 +100,4 @@ async def test_gui_idc_download_fails_with_invalid_inputs(
 
         user.find(marker="BUTTON_DOWNLOAD").click()
 
-        for _ in range(30):
-            if user.notify.contains("Download failed"):
-                break
-            await sleep(1)
-        assert user.notify.contains(expected_notification)
+        await _assert_notified(user, expected_notification, wait_seconds=30)

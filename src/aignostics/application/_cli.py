@@ -120,14 +120,13 @@ def application_describe(
     """
     try:
         application = Client().application(application_id)
+    except NotFoundException:
+        logger.warning("Application with ID '%s' not found.", application_id)
+        console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
+        return False
     except Exception as e:
         logger.exception("Failed to find application with ID '%s'", application_id)
         console.print(f"[error]Error:[/error] Failed to find application: {e}")
-        return False
-
-    if not application:
-        logger.warning("Application with ID '%s' not found.", application_id)
-        console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
         return False
 
     console.print(f"[bold]Application Details for {application.application_id}[/bold]")
@@ -268,6 +267,10 @@ def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to de
 
     try:
         retrieve_and_print_run_details(Client().run(run_id))
+    except NotFoundException:
+        logger.warning("Run with ID '%s' not found.", run_id)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        return False
     except Exception as e:
         logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
         console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
@@ -292,6 +295,10 @@ def run_cancel(
 
     try:
         Client().run(run_id).cancel()
+    except NotFoundException:
+        logger.warning("Run with ID '%s' not found.", run_id)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        return False
     except Exception as e:
         logger.exception("Failed to cancel run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")

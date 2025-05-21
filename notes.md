@@ -102,6 +102,9 @@ uv run aignostics application upload --source-file data/in/8fafc17d-a5cc-4e9d-a9
   full name
 - possiblity to delete runs
 
+# Tests
+- ANN Slide
+
 # Edit .env
 
 notepad .aignostics/.env

@@ -1,3 +1,5 @@
+"""Handler for wsi files using Pydicom."""
+
 import json
 from collections import defaultdict
 from pathlib import Path

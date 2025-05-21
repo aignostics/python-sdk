@@ -120,7 +120,7 @@ def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User) -> None:
     response = client.get("/tiff?url=bla")
     assert response.status_code == 400
     assert response.json() == {
-        "detail": "Bad request or invalid tiff input: URL must start with 'http://' or 'https://'."
+        "detail": "Bad request or invalid tiff input: URL must start with 'http://localhost' or 'https://'."
     }
 
 

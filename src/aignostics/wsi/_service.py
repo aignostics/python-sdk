@@ -149,8 +149,8 @@ class Service(BaseService):
             ValueError: If URL format is invalid or if there's an error opening the tiff.
             RuntimeError: If there's an unexpected internal error.
         """
-        if not url.startswith(("http://", "https://")):
-            error_msg = "URL must start with 'http://' or 'https://'."
+        if not url.startswith(("http://localhost", "https://")):
+            error_msg = "URL must start with 'http://localhost' or 'https://'."
             logger.warning(error_msg)
             raise ValueError(error_msg)
         try:
