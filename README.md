@@ -27,15 +27,13 @@ Aignostics Platform:
    The Launchpad is a user-friendly desktop application running on
    MacOS X, Windows and Linux that allows you to easily upload your data 
    without needing to write any code.
-2. Use the **Aignostics Command Line Interface (CLI)** to run AI applications
-   directly from your terminal. The CLI is included in the SDK and allows you
-   to quyery public datasets provided by [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/), 
+2. Use the **Aignostics CLI** to run AI applications
+   directly from your terminal. The Aignostics Command Line Interface (CLI) allows to query public datasets provided by [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/), 
    run applications on public and private whole slide images, and download results.
-3. Use the included example notebook as a starting point to run AI applications
+3. Use the included **example** notebook as a starting point to run AI applications
    directly from your notebook environment. 
-4. Deeply integrate the platform in your **enterprise image mangement systems and workflows**
-   using the Python client provided via the SDK, which provides a higher
-   level obstraction of the Aignostics Platform API.
+4. Use the **Aignostics Client** to deeply integrate the Aignostics Platform with your enterprise image management systems and scientific workflows.
+   The client makes it easy to call the Aignostics Platform API from your Python codebase.
 
 ### We take quality and security seriously
 
@@ -57,7 +55,7 @@ more about how we achieve
 [quality](https://aignostics.readthedocs.io/en/latest/quality.html) and
 [security](https://aignostics.readthedocs.io/en/latest/security.html).
 
-### Run your first AI workflow in 10 minutes with the Aignostics Launchpad
+## Aignostics Launchpad: Run your first AI workflow in 10 minutes from your Desktop
 
 1. Go to [Quick Start](https://platform.aignostics.com/getting-started/quick-start)
 in the Web Console of the Aignostics Platform. 
@@ -67,7 +65,7 @@ Python SDK.
 3. Execute `uvx aignostics launchpad` to open the included desktop application.
 4. Follow the instructions in the application to run your first AI workflow.
 
-## CLI Usage
+## Aignostics CLI: Manage datasets and application runs from your terminal
 
 The Python SDK includes a Command Line Interface (CLI) that allows you to
 interact with the Aignostics Platform directly from your terminal.
@@ -107,7 +105,7 @@ Check out our
 [CLI reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html#cli)
 to learn about all commands and options available.
 
-## Use in Python Notebooks
+## Examples: Interact with the Aignostics Platform from your Python Notebook environment
 
 > [!IMPORTANT]\
 > Before you get started, you need to set up your authentication credentials if
@@ -136,7 +134,7 @@ uv run jupyter notebook examples/notebook.ipynb
 uv run marimo edit examples/notebook.py
 ```
 
-## Using the Python SDK in your Codebase
+## Aignostics Client: Call the Aignostics Platform API from your Python scripts
 
 > [!IMPORTANT]\
 > Before you get started, you need to set up your authentication credentials if
