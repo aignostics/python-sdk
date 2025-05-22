@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-## [0.1.13](https://github.com/aignostics/python-sdk/compare/v0.0.12..0.1.13) - 2025-05-22
+## [0.1.14](https://github.com/aignostics/python-sdk/compare/v0.1.13..0.1.14) - 2025-05-22
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump downgrade - ([46521cb](https://github.com/aignostics/python-sdk/commit/46521cb997755f2339c509183545ae7007d3319a))
+
+
+## [0.1.13](https://github.com/aignostics/python-sdk/compare/v0.0.12..v0.1.13) - 2025-05-22
 
 ### ⚙️ Miscellaneous Tasks
 
