@@ -1,5 +1,16 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+## [0.0.11](https://github.com/aignostics/python-sdk/compare/v0.0.10..0.0.11) - 2025-05-22
+
+### ⛰️  Features
+
+- Aignostics Launchpad, Aignostics CLI, Aignostics Client - ([3747624](https://github.com/aignostics/python-sdk/commit/3747624fc411bd01e87431663a2216113d84a02f))
+
+### 📚 Documentation
+
+- Tweaks - ([ee8b71d](https://github.com/aignostics/python-sdk/commit/ee8b71d3cdcb81c6a87d73ec1243042fcdad7243))
+
+
 ## [0.0.6](https://github.com/aignostics/python-sdk/compare/v0.0.5..v0.0.6) - 2025-03-25
 
 ### ⚙️ Miscellaneous Tasks
@@ -27,3 +38,5 @@
 ## New Contributors ❤️
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
