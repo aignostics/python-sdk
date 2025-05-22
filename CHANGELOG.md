@@ -1,5 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+## [0.1.13](https://github.com/aignostics/python-sdk/compare/v0.0.12..0.1.13) - 2025-05-22
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump dep - ([0e17674](https://github.com/aignostics/python-sdk/commit/0e17674f1b76ae03328aff7dd4c53f30935ae614))
+
+
 ## [0.0.11](https://github.com/aignostics/python-sdk/compare/v0.0.10..v0.0.11) - 2025-05-22
 
 ### ⛰️  Features
