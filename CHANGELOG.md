@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-## [0.1.14](https://github.com/aignostics/python-sdk/compare/v0.1.13..0.1.14) - 2025-05-22
+## [0.1.15](https://github.com/aignostics/python-sdk/compare/v0.1.14..0.1.15) - 2025-05-22
+
+### ⚙️ Miscellaneous Tasks
+
+- Don't fail on warning - ([f3f5993](https://github.com/aignostics/python-sdk/commit/f3f5993d441f3aac1de5f83e86bc0dea8f1db8f8))
+
+
+## [0.1.14](https://github.com/aignostics/python-sdk/compare/v0.1.13..v0.1.14) - 2025-05-22
 
 ### ⚙️ Miscellaneous Tasks
 
