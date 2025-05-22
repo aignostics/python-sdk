@@ -1,20 +1,6 @@
 """Python SDK providing access to Aignostics AI services."""
 
-from .constants import (
-    __project_name__,
-    __project_path__,
-    __version__,
-)
-from .models import Echo, Health, HealthStatus, Utterance
-from .service import Service
+from .constants import MODULES_TO_INSTRUMENT
+from .utils.boot import boot
 
-__all__ = [
-    "Echo",
-    "Health",
-    "HealthStatus",
-    "Service",
-    "Utterance",
-    "__project_name__",
-    "__project_path__",
-    "__version__",
-]
+boot(modules_to_instrument=MODULES_TO_INSTRUMENT)

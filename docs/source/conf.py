@@ -1,4 +1,4 @@
-"""Sphinx configuration."""  # noqa: INP001
+"""Sphinx configuration."""
 
 import re
 from datetime import UTC, datetime
@@ -9,7 +9,6 @@ extensions = [
     "sphinx_toolbox.github",
     "sphinx_toolbox.source",
     "sphinx.ext.autodoc",
-    #    "enum_tools.autoenum",  # https://github.com/domdfcoding/enum_tools/tree/master  # noqa: ERA001
     "sphinx.ext.napoleon",  # https://sphinxcontrib-napoleon.readthedocs.io/en/latest/
     "sphinxcontrib.autodoc_pydantic",  # https://autodoc-pydantic.readthedocs.io/en/stable/users/examples.html
     "sphinx.ext.coverage",
@@ -43,6 +42,9 @@ ogp_custom_meta_tags = [
 ogp_enable_meta_description = True
 ogp_description_length = 300
 
+show_warning_types = True
+suppress_warnings = ["ref.ref", "docutils"]
+
 autodoc_pydantic_model_show_json = False
 
 napoleon_google_docstring = True
@@ -67,7 +69,6 @@ linkcheck_ignore = [
     r"http://127\.0\.0\.1",
     r"http://localhost",
 ]
-
 
 templates_path = ["_templates"]
 exclude_patterns = []

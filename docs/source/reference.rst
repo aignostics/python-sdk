@@ -1,5 +1,0 @@
-Reference
-=========
-
-.. automodule:: aignostics
-    :members:

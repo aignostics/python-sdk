@@ -1,0 +1,69 @@
+name: "Publish Package"
+
+on:
+  workflow_call:
+    # No inputs needed at this time
+
+jobs:
+  package_publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
+        with:
+          version: "0.6.3"
+          cache-dependency-glob: uv.lock
+          enable-cache: true
+
+      - name: Install dev tools
+        shell: bash
+        run: .github/workflows/_install_dev_tools.bash
+
+      - name: Docs
+        run: make docs
+
+      - name: Generate release notes
+        uses: orhun/git-cliff-action@4a4a951bc43fafe41cd2348d181853f52356bee7 # v4.4.2
+        id: git-cliff
+        with:
+          config: pyproject.toml
+          args: --verbose --latest --strip header
+        env:
+          OUTPUT: RELEASE_NOTES.md
+          GITHUB_REPO: ${{ github.repository }}
+
+      - name: Print the release notes
+        run: cat "${{ steps.git-cliff.outputs.changelog }}"
+
+      - name: Build distribution into dist/
+        run: make dist
+
+
+      - name: Publish distribution to Python Package Index at pypi.org
+        run: uv publish -t ${{ secrets.UV_PUBLISH_TOKEN }}
+
+
+      - name: Have audit checks publish to reports/ for auditing
+        run: make audit
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} ./dist/* ./reports/* \
+            --notes-file ${{ steps.git-cliff.outputs.changelog }}
+            
+      - name: Allow other workflows to trigger on release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/aignostics/python-sdk/dispatches \
+            -f event_type=release_created_programatically

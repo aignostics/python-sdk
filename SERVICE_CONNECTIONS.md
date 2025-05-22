@@ -75,6 +75,92 @@
 4. Enable Dependabot security updates
 5. CodeQL analyis will be automatically set up via a GitHub action
 
+
+## Error monitoring and profiling with Sentry
+
+1. Goto https://sentry.io/ and sign-in - it's free for solo devs
+2. Follow the instructions to create a new project and get the DSN. Copy the
+   value of the token into your clipboard.
+3. For your local environment: Open your local `.env` file and set the
+   `AIGNOSTICS_SENTRY_DSN` variable to the value of the token from your
+   clipboard. You can check `.env.example` for the correct format.
+4. For the test, preview and production stage: Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `AIGNOSTICS_SENTRY_DSN`,
+   pasting from your clipboard.
+
+## Logging and metrics with Logfire
+
+1. Goto https://pydantic.dev/logfire and sign-in - it's free for up to 10
+   million spans/metrics per month.
+2. Follow the instructions to create a new project and get the write token. Copy
+   the value of the token into your clipboard.
+3. For your local environment: Open your local `.env` file and set the
+   `AIGNOSTICS_LOGFIRE_TOKEN` variable to the value of the token from
+   your clipboard. You can check `.env.example` for the correct format.
+4. For the test, preview and production stage: Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `AIGNOSTICS_SENTRY_DSN`,
+   pasting from your clipboard.
+
+## Uptime monitoring with betterstack
+
+### Monitoring your API and display uptime on status page and in GitHub
+1. Goto https://betterstack.com/ and sign-in - it's free for up to 10 monitors
+   and one status page
+2. Go to Uptime > Monitors and create a monitor, pointing to the `/api/v1/healthz` endpoint of your API on
+   your production environment: (a) . Copy the URL into the "URL to monitor" field. (b) Set "Alert us when" to "URL returns HTTP status other then",
+   (c) )select "200" from drop down "Expected HTTP status codes". (d) Click "Create monitor" at the bottom of the page.
+3. Go to Uptime > Status pages and create a status page for your project. Add the monitor you created in step #2 to the page.
+4. Go to Uptime > Monitors, select the monitor you created in step #2. (a) Click "Configure", and scroll down to "Advanced Settings" / "Github badge".
+   Click "Copy to clipboard" for a badge of your liking, (b) `copier update --trust` and paste the snippet when asked for it
+
+### Monitoring your scheduled tests
+1. Go to https://betterstack.com/ and sign-in.
+2. Goto Uptime > Heartbeat and hit "Create heartbeat".
+3. Set "What service will this heartbeat track? to "Aignostics Python SDK / Scheduled tests"
+4. Change "Expect a heartbeat every" in case you changed cron setting in your `.github/workflows/test-scheduled.yml`. If you did not change, the efault of 1 day is fine.
+5. Click "Create heartbeat" at the bottom of the page.
+6. Click "Copy to clipboard' next to "Make a HEAD, GET, or a POST request to the following URL".
+7. Goto https://github.com/aignostics/python-sdk/settings/secrets/actions/new and create a new repository secret called `BETTERSTACK_HEARTBEAT_TEST_SCHEDULED_URL`, pasting the URL from your clipboard as value.
+
+## Deploying webservice to Vercel as serverless function (optional)
+
+1. Ensure you enabled Vercel deployment when creating or updating the project.
+   If not, enable with `copier update`
+2. Goto https://vercel.com/ and sign-in - it's free for solo devs and open
+   source projects
+3. Execute `pnpm i -g vercel@latest` to install or update the Vercel CLI, see
+   https://vercel.com/docs/cli.
+4. Execute `vercel login` to login to your Vercel account
+5. In Vercel create a new project
+6. Execute `vercel link` and link your repository to the newly created project
+7. Execute `cat .vercel/project.json` to show the orgId and projectId
+8. Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `VERCEL_ORG_ID`, copy and pasting
+   from the output of step 6.
+9. Goto
+   https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+   and create a new repository secret called `VERCEL_PROJECT_ID`, copy and
+   pasting from the output of step 6
+10. Goto `https://vercel.com/account/tokens` and create a new token called
+   `aignostics`. Copy the value of the token into your clipboard.
+11. Goto
+    https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+    and create a new repository secret called `VERCEL_TOKEN`, pasting from your
+    clipboard.
+12. In your Vercel project go to Settings > Deployment Protection, enable
+    Protection Bypass for Automation, and copy the token it your clipboard.
+13. Goto
+    https://github.com/aignostics/python-sdk/settings/secrets/actions/new
+    and create a new repository secret called `VERCEL_AUTOMATION_BYPASS_SECRET`, pasting from your
+    clipboard. This is so the smoke test post deploy via GitHub Action can validate
+    the deployment was successful.
+14. Optional: In your Vercel project go to Settings > Environment Variables > Environments, and
+      add environment variables with key 'AIGNOSTICS_LOGFIRE_TOKEN' 
+      and 'AIGNOSTICS_SENTRY_DSN' - check your `.env` file for the values
+
 ## Polishing GitHub repository
 
 1. Goto https://github.com/aignostics/python-sdk

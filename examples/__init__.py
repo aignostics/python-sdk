@@ -1,1 +1,1 @@
-"""Example scripts demonstrating the usage of the Aignostics Python SDK."""
+"""Example scripts demonstrating the usage of Aignostics Python SDK."""

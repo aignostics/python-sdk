@@ -2,20 +2,16 @@
 
 Thank you for considering contributing to Aignostics Python SDK!
 
-
 ## Setup
-
-Install or update tools required for development:
-
-```shell
-# Install Homebrew, uv package manager, copier and further dev tools
-curl -LsSf https://raw.githubusercontent.com/helmut-hoffer-von-ankershoffen/oe-python-template/HEAD/install.sh | sh
-```
 
 [Create a fork](https://github.com/aignostics/python-sdk/fork) and clone your fork using ```git clone URL_OF_YOUR_CLONE```. Then change into the directory of your local Aignostics Python SDK repository with ```cd python-sdk```.
 
 If you are one of the committers of https://github.com/aignostics/python-sdk you can directly clone via ```git clone git@github.com:aignostics/python-sdk.git``` and ```cd python-sdk```.
 
+Install or update development dependencies using 
+```shell
+make install
+```
 
 ## Directory Layout
 
@@ -31,16 +27,16 @@ If you are one of the committers of https://github.com/aignostics/python-sdk you
 ├── .env                   # Environment variables, on .gitignore
 ├── .env.example           # Example environment variables
 src/aignostics/  # Source code
-├── __init__.py          # Package initialization
-├── constants.py         # Constants used throughout the app
-├── settings.py          # Settings loaded from environment and .env
-├── models.py            # Models and data structures
-├── service.py           # Service exposed for use as shared library
-├── cli.py               # CLI enabling to interact with service from terminal
-└── api.py               # API exposing service as web service
-tests/                   # Unit and E2E tests
-├── cli_tests.py         # Verifies the CLI functionality
-├── api_tests.py         # Verifies the API functionality
+├── __init__.py          # Package initialization and 
+├── utils/*.py           # Infrastructure for logging, sentry, logfire etc.
+├── system/*.py          # Module for system management, including service, CLI commands and API operations
+├── hello/*.py           # Module for "Hello" functionality, including service, CLI commands and API operations
+├── cli.py               # CLI entrypoint with auto-registration of CLI commands of modules
+├── api.py               # Webservice API entrypoint with auto-registration of API operations of modules
+└── constants.py         # Package specific constants such as major API versions and modules to instrument.
+tests/aignostics/ # Tests
+├── **/cli_tests.py      # Verifies the core and module specific CLI commands
+├── **/api_tests.py      # Verifies the core and module specific API operations 
 └── fixtures/            # Fixtures and mock data
 docs/                    # Documentation
 ├── partials/*.md        # Partials to compile README.md,  _main partial included in HTML and PDF documentation
@@ -67,7 +63,6 @@ reports/                 # Compliance reports for auditing
 ├── vulnerabilities.json # .json file with vulnerabilities detected in dependencies by pip-audit
 └── sbom.json            # Software Bill of Materials in OWASP CycloneDX format
 ```
-
 
 ## Build, Run and Release
 
@@ -130,6 +125,14 @@ Notes:
 
 ## Advanced usage
 
+### Developing the GUI
+
+To run the GUI in the browser with hot reloading, use the following command:
+
+```shell
+make gui_watch
+```
+
 ### Running GitHub CI Workflow locally
 
 ```shell
@@ -138,7 +141,7 @@ make act
 
 Notes:
 1. Workflow defined in `.github/workflows/*.yml`
-2. test-and-report.yml calls all build steps defined in noxfile.py
+2. ci-cd.yml calls all build steps defined in noxfile.py
 
 ### Docker
 
@@ -146,9 +149,11 @@ Build and run the Docker image with plain Docker
 
 ```shell
 # Build from Dockerimage
-make docker build
+make docker_build # builds targets all and slim
+
 # Run the CLI
-docker run --env THE_VAR=THE_VALUE aignostics --help
+docker run --env THE_VAR=THE_VALUE -t aignostics --target all --help    # target with all extras
+docker run --env THE_VAR=THE_VALUE -t aignostics --target slim --help   # slim flavor, no extras
 ```
 
 Build and run the Docker image with docker compose:
@@ -164,7 +169,7 @@ echo "Checking health of v1 API ..."
 curl http://127.0.0.1:8000/api/v1/healthz
 echo ""
 echo "Saying hello world with v1 API ..."
-curl http://127.0.0.1:8000/api/v1/hello-world
+curl http://127.0.0.1:8000/api/v1/hello/world
 echo ""
 echo "Swagger docs of v1 API ..."
 curl http://127.0.0.1:8000/api/v1/docs
@@ -173,7 +178,7 @@ echo "Checking health of v2 API ..."
 curl http://127.0.0.1:8000/api/v2/healthz
 echo ""
 echo "Saying hello world with v1 API ..."
-curl http://127.0.0.1:8000/api/v2/hello-world
+curl http://127.0.0.1:8000/api/v2/hello/world
 echo ""
 echo "Swagger docs of v2 API ..."
 curl http://127.0.0.1:8000/api/v2/docs
@@ -181,6 +186,10 @@ echo ""
 echo "Shutting down the API container ..."
 docker compose down
 ```
+
+Notes:
+1. The API service is run based on the slim Docker image. Change in compose.yaml if you need the API service to run on the fat image.
+
 
 ### Pinning GitHub Actions
 

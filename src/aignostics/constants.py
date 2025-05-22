@@ -1,10 +1,11 @@
-"""Constants used throughout Aignostics Python SDK's codebase ."""
+"""Static configuration of Aignostics Python SDK."""
 
-import importlib.metadata
-import pathlib
+from pathlib import Path
 
-__project_name__ = __name__.split(".")[0]
-__project_path__ = str(pathlib.Path(__file__).parent.parent.parent)
-__version__ = importlib.metadata.version(__project_name__)
+# Configuration required by oe-python-template
+API_VERSIONS: dict[str, str] = {"v1": "1.0.0"}
+MODULES_TO_INSTRUMENT: list[str] = ["aignostics.platform", "aignostics.application"]
+NOTEBOOK_FOLDER = Path(__file__).parent.parent.parent / "examples"
+NOTEBOOK_APP = Path(__file__).parent.parent.parent / "examples" / "notebook.py"
 
-LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+# Project specific configuration
