@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.1.16 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.0 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -203,7 +203,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1747949619439.721]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1747952510754.803]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
