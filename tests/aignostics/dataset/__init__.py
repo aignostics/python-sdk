@@ -1,1 +1,1 @@
-"""Tests of idc module."""
+"""Tests of dataset module."""

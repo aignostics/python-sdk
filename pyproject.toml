@@ -89,8 +89,6 @@ dependencies = [
     "google-crc32c>=1.7.1",
     "highdicom>=0.25.1",
     "httpx>=0.28.1",
-    #    "idc-index @ https://github.com/aignostics/idc-index/raw/34be7271faabac9b3232f46b92deafcc357d10ab/dist/idc_index-0.1.dev338+gca52c75-py3-none-any.whl", # --no-verify-ssl for corporate proxy
-    "idc-index @ https://github.com/aignostics/idc-index/raw/34be7271faabac9b3232f46b92deafcc357d10ab/dist/idc_index-0.1.dev338+gca52c75-py3-none-any.whl", # --no-verify-ssl for corporate proxy
     "jsf>=0.11.2",
     "jsonschema>=4.23.0",
     "openslide-bin>=4.0.0.8",
@@ -108,6 +106,19 @@ dependencies = [
     "wsidicom>=0.27.1",
     #    "pywebview[qt6]>=5.4; sys_platform == 'linux'",
     "humanize>=4.12.3",
+    # idc-index
+    "click",
+    'duckdb>=0.10.0,<=1.2.1',
+    "idc-index-data==20.0.3",
+    "packaging",
+    "pandas<=2.2.4",
+    "platformdirs",
+    "psutil",
+    "pyarrow",
+    "requests",
+    "s5cmd",
+    "sphinx-click",
+    "tqdm",
 ]
 
 [project.optional-dependencies]
@@ -206,6 +217,7 @@ extend-exclude = [
     "_notebook.py",
     "template/*.py",
     "bottle.py",
+    "_idc_index.py",
     "examples/*.py",
     "codegen",
 ]
@@ -267,7 +279,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["_notebook.py", "bottle.py", "_pydicom_handler.py"]
+exclude = ["_notebook.py", "bottle.py", "_idc_index.py", "_pydicom_handler.py"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -317,6 +329,7 @@ relative_files = true
 source = ["src"]
 omit = [
     "*/.vendored/*",
+    "*/_idc_index.py",
     "*/_notebook.py",
     "*/_pydicom_handler.py",
     "*/_openslide_handler.py",

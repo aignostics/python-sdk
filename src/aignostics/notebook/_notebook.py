@@ -36,7 +36,7 @@ def _():
     import matplotlib.pyplot as plt
     from cloudpathlib import GSPath
     from dotenv import load_dotenv
-    from idc_index import index
+    from aignostics.dataset._idc_index import IDCClient
     from wsidicom import WsiDicom
 
     load_dotenv()
@@ -88,7 +88,7 @@ def _(Path, mo):
 
 @app.cell
 def _(index):
-    idc_client = index.IDCClient()  # set-up idc_client
+    idc_client = IDCClient()  # set-up idc_client
     idc_client.fetch_index("sm_instance_index")
     return (idc_client,)
 
