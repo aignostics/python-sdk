@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-## [0.1.15](https://github.com/aignostics/python-sdk/compare/v0.1.14..0.1.15) - 2025-05-22
+## [0.1.16](https://github.com/aignostics/python-sdk/compare/v0.1.15..0.1.16) - 2025-05-22
+
+### ⚙️ Miscellaneous Tasks
+
+- Include IDCClient for publish - ([0d40ac5](https://github.com/aignostics/python-sdk/commit/0d40ac5fbcdedd2ae19ddf4841957fa2eceb46dc))
+
+
+## [0.1.15](https://github.com/aignostics/python-sdk/compare/v0.1.14..v0.1.15) - 2025-05-22
 
 ### ⚙️ Miscellaneous Tasks
 
