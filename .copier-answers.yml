@@ -1,8 +1,10 @@
-_commit: v0.6.27
+_commit: v0.17.8
 _src_path: gh:helmut-hoffer-von-ankershoffen/oe-python-template
+attestations_enabled: false
 author_email: helmut@aignostics.com
 author_github_username: helmut-hoffer-von-ankershoffen
 author_name: Helmut Hoffer von Ankershoffen
+codeql_enabled: true
 docker_io_enabled: true
 docker_io_image_name: aignostics-python-sdk
 docker_io_owner: helmuthva
@@ -17,7 +19,11 @@ project_description: Python SDK providing access to Aignostics AI services.
 project_icon: 🔬
 project_name: Aignostics Python SDK
 pypi_distribution_name: aignostics
+pypi_enabled: true
 readthedocs_domain: readthedocs.org
 readthedocs_project_key: aignostics
 sonarqube_key: aignostics_python-sdk
 streamlit_project_key: aignostics
+uptime_badge_snippet: '[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/1vtu1.svg)](https://aignostics.betteruptime.com/)'
+vercel_badge_snippet: ''
+vercel_function_enabled: false

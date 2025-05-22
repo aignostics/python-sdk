@@ -1,0 +1,13 @@
+{
+  "globalProperties": {
+    "models": "",
+    "modelTests": false,
+    "modelDocs": false,
+    "apis": "Public",
+    "apiTests": false,
+    "apiDocs": true,
+    "supportingFiles": "configuration.py,rest.py,api_client.py,exceptions.py,api_response.py"
+  },
+  "packageName": "aignx.codegen",
+  "library": "urllib3"
+}

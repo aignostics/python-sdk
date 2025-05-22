@@ -2,11 +2,11 @@
 
 # Environment
 .env
-.env.backup
-.env.bak
+.env.*
+!.env.example
+.envrc
 ENV/
 env/
-.envrc
 
 ## secrets
 .secret
@@ -16,6 +16,10 @@ env/
 .secrets.yml
 .secrets.json
 .act-env-secret
+
+# More secrets
+.ssh
+.aws
 
 # Python virtual environment
 venv/
@@ -69,10 +73,25 @@ tmp/
 # Node temps
 node_modules/
 
+
 # AI workflow
 .fixme
 
 # Copier
 *.rej
 
+# Scalene
+profile.json
+profile.html
+
+# Nicegui
+.nicegui
+
+
 # Application specific
+data/**
+!data/.keep 
+dist_vercel
+setup.sh.secret
+__marimo__
+notes.md

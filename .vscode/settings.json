@@ -3,7 +3,7 @@
         "editor.defaultFormatter": "vscode.json-language-features"
     },
     "files.exclude": {
-        "**/__pycache__ ": true
+        "**/__pycache__ ": true,
     },
     "editor.formatOnSave": true,
     "terminal.integrated.scrollback": 100000,
@@ -31,18 +31,30 @@
     "python.analysis.exclude": [
         "**/.nox/**",
         "**/.venv/**",
+        "**/dist-packages/**",
+        "**/dist_vercel/.vercel/**",
         "**/site-packages/**",
-        "**/dist-packages/**"
     ],
     "python.analysis.ignore": [
-        "**/typing.py"
+        "**/.vendored/**",
+        "dist/**",
+        "dist_vercel/**",
+        "template/**",
+        "tests/**",
+        "codegen/**",
+        "_notebook.py",
+        "e2e.py",
+        "src/aignostics/dicom/_handler.py"
     ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
         "-v",
-        "--cov=aignostics"
+        "--cov=aignostics",
+        "-n",
+        "logical",
+        "--dist=load"
     ],
     "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
     "github.copilot.nextEditSuggestions.enabled": true,
@@ -53,8 +65,8 @@
     },
     "github.copilot.advanced": {},
     "github.copilot.chat.editor.temporalContext.enabled": true,
-    "github.copilot.chat.edits.codesearch.enabled": true,
     "github.copilot.chat.edits.temporalContext.enabled": true,
+    "github.copilot.chat.codesearch.enabled": true,
     "github.copilot.chat.codeGeneration.instructions": [
         {
             "file": "CODE_STYLE.md"
@@ -70,7 +82,8 @@
     "github.copilot.chat.scopeSelection": true,
     "github.copilot.chat.search.semanticTextResults": true,
     "sonarlint.connectedMode.project": {
-        "connectionId": "aignostics-gmbh",
-        "projectKey": "aignostics-gmbh_aignostics-python-sdk"
-    }
+        "connectionId": "aignostics",
+        "projectKey": "aignostics_python-sdk"
+    },
+    "makefile.configureOnOpen": false
 }

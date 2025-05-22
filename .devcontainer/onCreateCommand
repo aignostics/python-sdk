@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "onCreateCommand: start"
-git config --global --add safe.directory /workspaces/aignostics-python-sdk
+git config --global --add safe.directory /workspaces/aignostics
 rm -rf .nox
 rm -rf .venv
 uv sync --frozen

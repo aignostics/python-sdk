@@ -1,0 +1,13 @@
+name: "Scheduled Testing"
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  test-scheduled:
+    uses: ./.github/workflows/_scheduled-test.yml
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit

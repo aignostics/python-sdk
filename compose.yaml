@@ -1,9 +1,11 @@
 services:
   aignostics:
-    build: .
+    build:
+      context: .
+      target: all
     env_file:
       - path: .env
-        required: true
+        required: false
     develop:
       watch:
         - path: src
@@ -13,21 +15,23 @@ services:
       - manual
     tty: true
     stdin_open: true
-  aignostics-api:
-    build: .
+  aignostics-notebook:
+    build:
+      context: .
+      target: all
     env_file:
       - path: .env
-        required: true
+        required: false
     develop:
       watch:
         - path: src
           action: rebuild
-    command: serve --host=0.0.0.0 --port=8000 --no-reload
+    command: notebook --host=0.0.0.0 --port=8001
     restart: always
     ports:
-      - "8000:8000"
+      - "8001:8001"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8000/healthz" ]
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8001/healthz" ]
       interval: 5s
       timeout: 2s
       retries: 3

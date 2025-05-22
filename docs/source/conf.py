@@ -1,4 +1,4 @@
-"""Sphinx configuration."""  # noqa: INP001
+"""Sphinx configuration."""
 
 import re
 from datetime import UTC, datetime
@@ -9,9 +9,7 @@ extensions = [
     "sphinx_toolbox.github",
     "sphinx_toolbox.source",
     "sphinx.ext.autodoc",
-    #    "enum_tools.autoenum",  # https://github.com/domdfcoding/enum_tools/tree/master  # noqa: ERA001
     "sphinx.ext.napoleon",  # https://sphinxcontrib-napoleon.readthedocs.io/en/latest/
-    "sphinx-pydantic",
     "sphinxcontrib.autodoc_pydantic",  # https://autodoc-pydantic.readthedocs.io/en/stable/users/examples.html
     "sphinx.ext.coverage",
     "sphinx_copybutton",
@@ -29,7 +27,7 @@ extensions = [
 project = "aignostics"
 author = "Helmut Hoffer von Ankershoffen"
 copyright = f" (c) 2025-{datetime.now(UTC).year}, {author}"  # noqa: A001
-version = "0.0.1"
+version = "0.1.16"
 release = version
 github_username = "aignostics"
 github_repository = "python-sdk"
@@ -43,6 +41,9 @@ ogp_custom_meta_tags = [
 ]
 ogp_enable_meta_description = True
 ogp_description_length = 300
+
+show_warning_types = True
+suppress_warnings = ["ref.ref", "docutils"]
 
 autodoc_pydantic_model_show_json = False
 
@@ -69,7 +70,6 @@ linkcheck_ignore = [
     r"http://localhost",
 ]
 
-
 templates_path = ["_templates"]
 exclude_patterns = []
 
@@ -81,7 +81,7 @@ html_theme_options = {
         '<a target="_blank" href="https://github.com/aignostics/python-sdk">GitHub</a> - '
         '<a target="_blank" href="https://pypi.org/project/aignostics">PyPI</a> - '
         '<a target="_blank" href="https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags">Docker</a> - '
-        '<a target="_blank" href="https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk">SonarQube</a> - '  # noqa: E501
+        '<a target="_blank" href="https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk">SonarQube</a> - '
         '<a target="_blank" href="https://app.codecov.io/gh/aignostics/python-sdk">Codecov</a>'
     ),
 }

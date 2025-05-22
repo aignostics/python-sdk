@@ -1,0 +1,111 @@
+name: "Scheduled Test"
+
+on:
+  workflow_call:
+    # No inputs needed at this time
+
+jobs:
+  test-scheduled:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
+        with:
+          version: "0.6.3"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dev tools
+        shell: bash
+        run: .github/workflows/_install_dev_tools.bash
+
+      - name: Install Python, venv and dependencies
+        run: uv sync --all-extras --frozen --link-mode=copy
+
+      - name: Create .env file
+        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
+        with:
+          envkey_AIGNOSTICS_LOGFIRE_TOKEN: "${{ secrets.AIGNOSTICS_LOGFIRE_TOKEN }}"
+          envkey_AIGNOSTICS_SENTRY_DSN: "${{ secrets.AIGNOSTICS_SENTRY_DSN }}"
+          envkey_AIGNOSTICS_API_ROOT: https://platform.aignostics.com
+          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
+          envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
+          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+          envkey_AIGNOSTICS_BUCKET_NAME: ${{ secrets.AIGNOSTICS_BUCKET_NAME }}
+          envkey_AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID: ${{ secrets.AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID }}
+          envkey_AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY: ${{ secrets.AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY }}
+          fail_on_empty: false
+
+      - name: Set up GCP credentials for bucket access
+        run: |
+          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+
+      - name: Audit
+        run: make audit
+
+      - name: Test / scheduled
+        env:
+          BETTERSTACK_HEARTBEAT_URL: "${{ secrets.BETTERSTACK_HEARTBEAT_URL }}"
+        run: |
+          set +e
+          make test_scheduled
+          EXIT_CODE=$?
+          # Show test execution in GitHub Job summary
+          found_files=0
+          for file in reports/pytest_*.md; do
+            if [ -f "$file" ]; then
+              cat "$file" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              found_files=1
+            fi
+          done
+          if [ $found_files -eq 0 ]; then
+            echo "# All scheduled tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          # Show test coverage in GitHub Job summary
+          if [ -f "reports/coverage.md" ]; then
+            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          # Provide heartbeat to bettersqtack for monitoring/alerting if heartbeat url is configured as secret
+          if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
+            if [ $EXIT_CODE -eq 0 ]; then
+              curl -s $BETTERSTACK_HEARTBEAT_URL
+            else
+              curl -s $BETTERSTACK_HEARTBEAT_URL/$EXIT_CODE
+            fi
+          fi
+          exit $EXIT_CODE
+
+      - name: Upload test results
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        with:
+          name: test-results-scheduled
+          path: |
+            reports/mypy_junit.xml
+            reports/sbom.json
+            reports/sbom.spdx
+            reports/licenses.csv
+            reports/licenses.json
+            reports/licenses_grouped.json
+            reports/vulnerabilities.json
+            reports/junit.xml
+            reports/coverage.xml
+            reports/coverage.md
+            reports/coverage_html
+            aignostics.log
+          retention-days: 7

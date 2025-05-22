@@ -18,25 +18,27 @@ We currently provide security updates for the latest minor version.
 
 Aignostics Python SDK employs several automated tools to continuously monitor and improve security:
 
-### 1. Dependency Vulnerability Scanning
+### 1. Vulnerability Scanning
 
-a. **GitHub Dependabot**: Monitors dependencies for known vulnerabilities and automatically creates pull requests to update them when security issues are found. [Dependendabot alerts](https://github.com/aignostics/python-sdk/security/dependabot) published.
-b. **Renovate Bot**: Automatically creates pull requests to update dependencies when new versions are available, with a focus on security patches. [Dependency Dashboard](https://github.com/aignostics/python-sdk/issues?q=is%3Aissue%20state%3Aopen%20Dependency%20Dashboard) published.
-c. **pip-audit**: Regularly scans Python dependencies for known vulnerabilities using data from the Python Advisory Database. `vulnerabilities.json` published [per release](https://github.com/aignostics/python-sdk/releases).
+a. **[GitHub Dependabot](https://github.com/dependabot)**: Monitors dependencies for vulnerabilities pre and post release on GitHub. [Dependendabot alerts](https://github.com/aignostics/python-sdk/security/dependabot) published.
+b. **[Renovate](https://www.mend.io/renovate/)**: Monitors dependencies for vulnerabilities pre and post release on GitHub. [Dependency Dashboard](https://github.com/aignostics/python-sdk/issues?q=is%3Aissue%20state%3Aopen%20Dependency%20Dashboard) published.
+c. **[pip-audit](https://pypi.org/project/pip-audit/)**: Pre commit to GitHub scans Python dependencies for known vulnerabilities using data from the [Python Advisory Database](https://github.com/pypa/advisory-database). `vulnerabilities.json` published [per release](https://github.com/aignostics/python-sdk/releases).
+d. **[trivy](https://trivy.dev/latest/)**: Pre commit to GitHub scans Python dependencies for known vulnerabilities using data from [GitHub Advisory Database](https://github.com/advisories?query=ecosystem%3Apip) and [OSV.dev](https://osv.dev/list?q=&ecosystem=PyPI). `sbom.spdx` published [per release](https://github.com/aignostics/python-sdk/releases).
 
-### 2. Dependency Compliance
+### 2. License Compliance Checks and Software Bill of Materials (SBOM)
 
-a. **cyclonedx-py**: Generates a Software Bill of Materials (SBOM) in SPDX format, listing all components and dependencies used in the project. `sbom.json` (SPDX format) published [per release](https://github.com/aignostics/python-sdk/releases).
-b. **pip-licenses**: Exports the licenses of all dependencies to ensure compliance with licensing requirements and avoid using components with problematic licenses. `licenses.csv`, `licenses.json` and `licenses_grouped.json` published [per release](https://github.com/aignostics/python-sdk/releases).
+a. **[pip-licenses](https://pypi.org/project/pip-licenses/)**: Inspects and matches the licenses of all dependencies with allow list to ensure compliance with licensing requirements and avoid using components with problematic licenses. `licenses.csv`, `licenses.json` and `licenses_grouped.json` published [per release](https://github.com/aignostics/python-sdk/releases).
+a. **[cyclonedx-py](https://github.com/CycloneDX/cyclonedx-python)**: Generates Software Bill of Materials (SBOM) in [CycloneDX](https://cyclonedx.org/) format, listing all components and dependencies used in the project. `sbom.json` published [per release](https://github.com/aignostics/python-sdk/releases).
+d. **[trivy](https://trivy.dev/latest/)**: Generates Software Bill of Materials (SBOM) in [SPDX](https://spdx.dev/) format, listing all components and dependencies used in the project. `sbom.spdx` published [per release](https://github.com/aignostics/python-sdk/releases).
 
 ### 3. Static Code Analysis
 
-a. **GitHub CodeQL**: Analyzes code for common vulnerabilities and coding errors using GitHub's semantic code analysis engine. [Code scanning results](https://github.com/aignostics/python-sdk/security/code-scanning) published.
-b. **SonarQube**: Performs comprehensive static code analysis to detect code quality issues, security vulnerabilities, and bugs. [Security hotspots](https://sonarcloud.io/project/security_hotspots?id=aignostics_python-sdk) published.
+a. **[GitHub CodeQL](https://codeql.github.com/)**: Analyzes code for common vulnerabilities and coding errors using GitHub's semantic code analysis engine. [Code scanning results](https://github.com/aignostics/python-sdk/security/code-scanning) published.
+b. **[SonarQube](https://www.sonarsource.com/products/sonarcloud/)**: Performs comprehensive static code analysis to detect code quality issues, security vulnerabilities, and bugs. [Security hotspots](https://sonarcloud.io/project/security_hotspots?id=aignostics_python-sdk) published.
 
 ### 4. Secret Detection
-a. **GitHub Secret scanning**: Automatically scans for secrets in the codebase and alerts if any are found. [Secret scanning alerts](https://github.com/aignostics/python-sdk/security/secret-scanning) published.
-b. **Yelp/detect-secrets**: Pre-commit hook and automated scanning to prevent accidental inclusion of secrets or sensitive information in commits. [Pre-Commit hook](https://github.com/aignostics/python-sdk/blob/main/.pre-commit-config.yaml) published.
+a. **[GitHub Secret scanning](https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning)**: Automatically scans for secrets in the codebase and alerts if any are found. [Secret scanning alerts](https://github.com/aignostics/python-sdk/security/secret-scanning) published.
+b. **[Yelp/detect-secrets](https://github.com/Yelp/detect-secrets)**: Pre-commit hook and automated scanning to prevent accidental inclusion of secrets or sensitive information in commits. [Pre-Commit hook](https://github.com/aignostics/python-sdk/blob/main/.pre-commit-config.yaml) published.
 
 ## Security Best Practices
 

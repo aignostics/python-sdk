@@ -11,13 +11,15 @@
    :maxdepth: 2
 
    main
-   api_v1
-   api_v2
-   reference
+   cli_reference
+   lib_reference
+   api_explorer_v1
+   api_reference_v1
+   operational_excellence
    security
+   license
+   attributions
    release-notes
-   contributing
-   code-style
 
 .. sidebar-links::
    :caption: Links
@@ -25,10 +27,9 @@
    :pypi: aignostics
 
    Docker <https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags>
+   ghcr.io <https://github.com/aignostics/python-sdk/pkgs/container/python-sdk>
    SonarQube <https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk>
    Codecov <https://app.codecov.io/gh/aignostics/python-sdk>
-   ghcr.io <https://github.com/aignostics/python-sdk/pkgs/container/python-sdk>
-   License <https://github.com/aignostics/python-sdk/blob/main/LICENSE>
 
 .. only:: html
 
