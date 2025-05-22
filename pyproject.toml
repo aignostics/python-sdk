@@ -109,7 +109,7 @@ dependencies = [
     # idc-index
     "click",
     'duckdb>=0.10.0,<=1.2.1',
-    "idc-index-data==20.0.3",
+    "idc-index-data==21.0.0",
     "packaging",
     "pandas<=2.2.4",
     "platformdirs",
