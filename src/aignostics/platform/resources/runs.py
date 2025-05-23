@@ -30,6 +30,7 @@ from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
+LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 
 
 class ApplicationRun:

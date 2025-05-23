@@ -12,6 +12,7 @@ import requests
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    LIST_APPLICATION_RUNS_MIN_PAGE_SIZE,
     Application,
     ApplicationRun,
     ApplicationRunData,
@@ -378,7 +379,7 @@ class Service(BaseService):
             return []
         runs = []
         page_size = (
-            min(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, limit)
+            max(LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, min(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, limit))
             if limit is not None
             else LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         )
