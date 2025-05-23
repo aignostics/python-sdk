@@ -1,7 +1,7 @@
 # Operational Excellence
 
 > 🧠 This project was scaffolded using the template [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template) with [copier](https://copier.readthedocs.io/), thereby applying the following toolchain:
-
+>
 1. Linting with [Ruff](https://github.com/astral-sh/ruff)
 2. Static type checking with [mypy](https://mypy.readthedocs.io/en/stable/)
 3. Complete set of [pre-commit](https://pre-commit.com/) hooks including [detect-secrets](https://github.com/Yelp/detect-secrets) and [pygrep](https://github.com/pre-commit/pygrep-hooks)
@@ -30,3 +30,5 @@
 26. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
 27. Settings for use with [VSCode](https://code.visualstudio.com/)
 28. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+
+See [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template?tab=readme-ov-file#multi-head-application-features) for how to bootstrap multi-headed applications with the template. Example code generated applies the modulith software architecture pattern with dependency injection, enabling auto-discovery of domain services, CLI commands, API operations and GUI pages.

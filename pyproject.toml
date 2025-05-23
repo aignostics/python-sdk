@@ -5,11 +5,22 @@ description = "🔬 Python SDK providing access to Aignostics AI services."
 readme = "README.md"
 authors = [
     { name = "Helmut Hoffer von Ankershoffen", email = "helmut@aignostics.com" },
+    { name = "Andreas Kuhn" },
 ]
 license = { file = "LICENSE" }
 
 keywords = [
     "aignostics",
+    "atlas",
+    "whole-slide-imaging",
+    "machine-learning",
+    "digital-pathology",
+    "medical-imaging",
+    "qupath",
+    "dicom",
+    "pydicom",
+    "openslide",
+    "image-data-commons",
     "act",
     "codecov",
     "copier",
@@ -36,7 +47,6 @@ keywords = [
     "sonarqube",
     "sonarcloud",
     "sphinx",
-    "streamlit",
     "typer",
     "uv",
 ]
@@ -126,7 +136,7 @@ dependencies = [
 jupyter = ["jupyter>=1.1.1"]
 marimo = [
     "cloudpathlib>=0.21.1",
-    "marimo>=0.13.10",
+    "marimo>=0.13.11",
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
@@ -146,7 +156,7 @@ dev = [
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
-    "pyright>=1.1.399",
+    "pyright>=1.1.401",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
     "pytest-cov>=6.1.1",
@@ -372,6 +382,14 @@ post_commit_hooks = []
 
 [[tool.bumpversion.files]]
 filename = "pyproject.toml"
+search = """
+[project]
+name = \"aignostics\"
+version = \"{current_version}\""""
+replace = """
+[project]
+name = \"aignostics\"
+version = \"{new_version}\""""
 
 [[tool.bumpversion.files]]
 filename = "VERSION"
@@ -401,11 +419,11 @@ header = """
 body = """
 
 {%- macro remote_url() -%}
-  https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
+https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
 {%- endmacro -%}
 
 {% macro print_commit(commit) -%}
-    - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
+- {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
         {% if commit.breaking %}[**breaking**] {% endif %}\
         {{ commit.message | upper_first }} - \
         ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}))\
@@ -413,17 +431,14 @@ body = """
 
 {% if version %}\
     {% if previous.version %}\
-        ## [{{ version | trim_start_matches(pat="v") }}]\
           ({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
     {% else %}\
-        ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
     {% endif %}\
 {% else %}\
-    ## [unreleased]
+
 {% endif %}\
 
 {% for group, commits in commits | group_by(attribute="group") %}
-    ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits
     | unique(attribute="message")
     | filter(attribute="scope")
@@ -439,12 +454,12 @@ body = """
 {% endfor -%}
 {%- if github -%}
 {% if github.contributors | filter(attribute="is_first_time", value=true) | length != 0 %}
-  ## New Contributors ❤️
+
 {% endif %}\
 {% for contributor in github.contributors | filter(attribute="is_first_time", value=true) %}
   * @{{ contributor.username }} made their first contribution
     {%- if contributor.pr_number %} in \
-      [#{{ contributor.pr_number }}]({{ self::remote_url() }}/pull/{{ contributor.pr_number }}) \
+[#{{ contributor.pr_number }}]({{ self::remote_url() }}/pull/{{ contributor.pr_number }}) \
     {%- endif %}
 {%- endfor -%}
 {%- endif %}
@@ -455,6 +470,11 @@ body = """
 footer = """
 """
 
+## [{{ version | trim_start_matches(pat="v") }}]\
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+## [unreleased]
+### {{ group | striptags | trim | upper_first }}
+## New Contributors ❤️
 ## [{{ version | trim_start_matches(pat="v") }}]\
 ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 ## [unreleased]

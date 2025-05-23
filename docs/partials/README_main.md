@@ -3,19 +3,17 @@
 The Aignostics Python SDK includes multiple pathways to interact with the
 Aignostics Platform:
 
-1. Use the **Aignostics Launchpad** to analyze your whole slide images 
-   with our AI applications and inspect the results with common tools
-   such as [QuPath](https://qupath.github.io/) and Python Notebooks.
-   The Launchpad is a user-friendly desktop application running on
-   MacOS X, Windows and Linux that allows you to easily upload your data 
-   without needing to write any code.
-2. Use the **Aignostics CLI** to run AI applications
-   directly from your terminal. The Aignostics Command Line Interface (CLI) allows to query public datasets provided by [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/), 
-   run applications on public and private whole slide images, and download results.
-3. Use the included **example** notebook as a starting point to run AI applications
-   directly from your notebook environment. 
-4. Use the **Aignostics Client** to deeply integrate the Aignostics Platform with your enterprise image management systems and scientific workflows.
-   The client makes it easy to call the Aignostics Platform API from your Python codebase.
+1. Use the **Aignostics Launchpad** to analyze whole slide images with AI applications like 
+   [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product).
+   This desktop application runs seamlessly on Mac OS X, Windows, and Linux.
+   View your results by launching popular tools such as [QuPath](https://qupath.github.io/) and Python Notebooks with one click.
+2. Use the **Aignostics CLI** to run AI applications directly from your terminal. 
+   This command-line interface lets you query public datasets from the [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/),
+   process both public and private whole slide images, and easily download results.
+3. Use the included **example notebooks** as starting points to run AI applications
+   directly from your preferred notebook environment.
+4. Use the **Aignostics Client** to seamlessly integrate the Aignostics Platform with your enterprise image management systems and scientific workflows.
+   The client provides a simple way to access the Aignostics Platform API from your Python codebase.
 
 ### We take quality and security seriously
 
@@ -37,15 +35,14 @@ more about how we achieve
 [operational excellence](https://aignostics.readthedocs.io/en/latest/operational_excellence.html) and
 [security](https://aignostics.readthedocs.io/en/latest/security.html).
 
-## Aignostics Launchpad: Run your first AI workflow in 10 minutes from your Desktop
+## Aignostics Launchpad: Run your first AI analysis in minutes from your desktop
 
-1. Go to [Quick Start](https://platform.aignostics.com/getting-started/quick-start)
-in the Web Console of the Aignostics Platform. 
-2. Copy and paste the install script into your terminal - we support MacOS, Windows and Linux. 
-This will install the [uv package manager](https://github.com/astral-sh/uv) and this
-Python SDK.
-3. Execute `uvx aignostics launchpad` to open the included desktop application.
-4. Follow the instructions in the application to run your first AI workflow.
+1. Visit the [Quick Start](https://platform.aignostics.com/getting-started/quick-start) 
+   page in the Aignostics Platform Web Console.
+2. Copy the installation script and paste it into your terminal - compatible with MacOS, Windows, and Linux.
+3. Launch the application by running `uvx aignostics launchpad`.
+4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images 
+   with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other AI applications.
 
 ## Aignostics CLI: Manage datasets and application runs from your terminal
 
