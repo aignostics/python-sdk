@@ -1,14 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.0..0.2.1) - 2025-05-23
+(https://github.com/aignostics/python-sdk/compare/v0.2.1..0.2.2) - 2025-05-23
+
+
+- Polish incl. updated assets - ([6cd7bbd](https://github.com/aignostics/python-sdk/commit/6cd7bbd939751b42baff5154d9922d77ec8b11fe))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.0..v0.2.1) - 2025-05-23
 
 
 - Polish readme intro and oe - ([8c89ab9](https://github.com/aignostics/python-sdk/commit/8c89ab9e5f498585405da461a406083b46d84288))
 - Logo - ([eb777b5](https://github.com/aignostics/python-sdk/commit/eb777b5925abc4e601761af3c9a335e0577e4db1))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 
 
@@ -20,3 +23,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
