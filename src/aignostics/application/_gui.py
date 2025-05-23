@@ -20,7 +20,7 @@ WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 BORDERED_SEPARATOR = "bordered separator"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
-RUNS_LIMIT = 100
+RUNS_LIMIT = 500
 
 
 class PageBuilder(BasePageBuilder):

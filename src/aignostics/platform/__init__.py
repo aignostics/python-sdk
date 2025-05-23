@@ -42,7 +42,7 @@ from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPO
 from ._service import Service
 from ._settings import Settings, settings
 from ._utils import calculate_file_crc32c, download_file, generate_signed_url, mime_type_to_file_ending
-from .resources.runs import ApplicationRun
+from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, ApplicationRun
 
 __all__ = [
     "API_ROOT_DEV",
@@ -61,6 +61,7 @@ __all__ = [
     "JWS_JSON_URL_DEV",
     "JWS_JSON_URL_PRODUCTION",
     "JWS_JSON_URL_STAGING",
+    "LIST_APPLICATION_RUNS_MAX_PAGE_SIZE",
     "NOT_YET_IMPLEMENTED",
     "NOT_YET_IMPLEMENTED",
     "REDIRECT_URI_DEV",

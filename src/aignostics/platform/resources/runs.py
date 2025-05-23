@@ -298,7 +298,7 @@ class Runs:
 
         Args:
             for_application_version (str | None): Optional application version ID to filter by.
-            sort (str | None): Optional field to sort by.
+            sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
 
         Returns:

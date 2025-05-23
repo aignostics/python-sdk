@@ -11,6 +11,7 @@ import requests
 
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import (
+    LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     Application,
     ApplicationRun,
     ApplicationRunData,
@@ -373,8 +374,20 @@ class Service(BaseService):
         Raises:
             Exception: If the application run list cannot be retrieved.
         """
-        runs = list(self._get_platform_client().runs.list_data(sort="triggered_at"))[::-1]
-        return runs[: min(len(runs), limit) if limit is not None else len(runs)]
+        if limit is not None and limit <= 0:
+            return []
+        runs = []
+        page_size = (
+            min(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, limit)
+            if limit is not None
+            else LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+        )
+        run_iterator = self._get_platform_client().runs.list_data(sort="-triggered_at", page_size=page_size)
+        for run in run_iterator:
+            runs.append(run)
+            if limit is not None and len(runs) >= limit:
+                break
+        return runs
 
     def application_run(self, run_id: str) -> ApplicationRun:
         """Find a run by its ID.
