@@ -5,7 +5,7 @@ description = "🔬 Python SDK providing access to Aignostics AI services."
 readme = "README.md"
 authors = [
     { name = "Helmut Hoffer von Ankershoffen", email = "helmut@aignostics.com" },
-    { name = "Andreas Kuhn" },
+    { name = "Andreas Kunft" },
 ]
 license = { file = "LICENSE" }
 
