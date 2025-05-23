@@ -38,10 +38,10 @@ def single_spot_payload() -> list[platform.InputItem]:
                         "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
                     ),
                     metadata={
-                        "checksum_crc32c": "5onqtA==",
-                        "base_mpp": 0.26268186053789266,
-                        "width": 7447,
-                        "height": 7196,
+                        "checksum_base64_crc32c": "5onqtA==",
+                        "resolution_mpp": 0.26268186053789266,
+                        "width_px": 7447,
+                        "height_px": 7196,
                     },
                 )
             ],
@@ -61,10 +61,10 @@ def three_spots_payload() -> list[platform.InputItem]:
                         "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
                     ),
                     metadata={
-                        "checksum_crc32c": "9l3NNQ==",
-                        "base_mpp": 0.46499982,
-                        "width": 3728,
-                        "height": 3640,
+                        "checksum_base64_crc32c": "9l3NNQ==",
+                        "resolution_mpp": 0.46499982,
+                        "width_px": 3728,
+                        "height_px": 3640,
                     },
                 )
             ],
@@ -78,10 +78,10 @@ def three_spots_payload() -> list[platform.InputItem]:
                         "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
                     ),
                     metadata={
-                        "checksum_crc32c": "w+ud3g==",
-                        "base_mpp": 0.46499982,
-                        "width": 3616,
-                        "height": 3400,
+                        "checksum_base64_crc32c": "w+ud3g==",
+                        "resolution_mpp": 0.46499982,
+                        "width_px": 3616,
+                        "height_px": 3400,
                     },
                 )
             ],
@@ -95,10 +95,10 @@ def three_spots_payload() -> list[platform.InputItem]:
                         "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
                     ),
                     metadata={
-                        "checksum_crc32c": "Zmx0wA==",
-                        "base_mpp": 0.46499982,
-                        "width": 4016,
-                        "height": 3952,
+                        "checksum_base64_crc32c": "Zmx0wA==",
+                        "resolution_mpp": 0.46499982,
+                        "width_px": 4016,
+                        "height_px": 3952,
                     },
                 )
             ],
@@ -120,7 +120,7 @@ def three_spots_payload() -> list[platform.InputItem]:
                     item,
                     {
                         "user_slide": {
-                            "cancer": {"type": "lung", "tissue": "lung"},
+                            "specimen": {"tissue": "LUNG", "disease": "LUNG_CANCER"},
                         }
                     },
                 )
@@ -187,6 +187,6 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
             file_ending = platform.mime_type_to_file_ending(artifact.mime_type)
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), f"Artifact {artifact} was not downloaded"
-            checksum = artifact.metadata["checksum_crc32c"]
+            checksum = artifact.metadata["checksum_base64_crc32c"]
             file_checksum = platform.calculate_file_crc32c(file_path)
             assert file_checksum == checksum, f"Metadata checksum != file checksum {checksum} <> {file_checksum}"

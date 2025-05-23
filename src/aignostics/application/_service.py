@@ -186,15 +186,15 @@ class Service(BaseService):
         - Creates a dict with the following columns
             - reference (str): The reference of the file, being equivalent to the file name without suffix
             - source (str): The full path of the file
-            - checksum_crc32c (str): The checksum of the file constructed using the CRC32C algorithm
-            - base_mpp (float): The microns per pixel, inspecting the base layer
-            - width: The width of the image, inspecting the base layer
-            - height: The height of the image in pixes, inspecting the base layer
-            - staining: The staining of the sample, fixed to "H&E"
-            - sample_tissue: The tissue of the sample, None or an entry from the enum of
-                ["adrenal gland", "bladder", "bone", "brain", "breast", "colon", "liver", "lung", "lymph node"]
-            - sample_disease: The disease of the sample, None or an entry from the enum of
-                ["lung", "liver", "breast", "bladder", "colorectal"]
+            - checksum_base64_crc32c (str): The checksum of the file constructed using the CRC32C algorithm, base64 encodeds
+            - resolution_mpp (float): The microns per pixel, inspecting the base layer
+            - height_px: The height of the image in pixels, inspecting the base layer
+            - width_px: The width of the image in pixels, inspecting the base layer
+            - staining_method: The staining of the sample, fixed to "H&E"
+            - speciment.tissue: The tissue of the sample, None or an entry from the enum of
+                ["ADRENAL_GLAND", "BLADDER", "BONE", "BRAIN", "BREAST", "COLON", "LIVER", "LUNG", "LYMPH_NODE"]
+            - speciment.disease: The disease of the sample, None or an entry from the enum of
+                ["BREAST_CANCER", "BLADDER_CANCER", "COLORECTAL_CANCER", "LIVER_CANCER", "LUNG_CANCER"]
 
         Args:
             application_version_id (str): The ID of the application version.
@@ -246,12 +246,12 @@ class Service(BaseService):
                     entry = {
                         "reference": file_path.stem,
                         "source": str(file_path),
-                        "checksum_crc32c": checksum,
-                        "mpp": mpp,
-                        "width": width,
-                        "height": height,
-                        "staining": "H&E",
-                        "tissue_type": None,
+                        "checksum_base64_crc32c": checksum,
+                        "resolution_mpp": mpp,
+                        "width_px": width,
+                        "height_px": height,
+                        "staining_method": "H&E",
+                        "tissue": None,
                         "disease": None,
                         "file_size_human": file_size_human,
                         "file_upload_progress": 0.0,
@@ -441,14 +441,15 @@ class Service(BaseService):
                             name="user_slide",
                             download_url=download_url,
                             metadata={
-                                "checksum_crc32c": row["checksum_crc32c"],
-                                "base_mpp": float(row["mpp"]),
-                                "width": int(row["width"]),
-                                "height": int(row["height"]),
-                                "cancer": {
-                                    "type": row["disease"],
-                                    "tissue": row["tissue_type"],
+                                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
+                                "height_px": int(row["height_px"]),
+                                "width_px": int(row["width_px"]),
+                                "resolution_mpp": float(row["resolution_mpp"]),
+                                "specimen": {
+                                    "disease": row["disease"],
+                                    "tissue": row["tissue"],
                                 },
+                                "staining_method": row["staining"],
                             },
                         )
                     ],

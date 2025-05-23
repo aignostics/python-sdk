@@ -534,19 +534,28 @@ class PageBuilder(BasePageBuilder):
                         valid = True
                         for row in rows:
                             if (
-                                row["tissue_type"]
+                                row["tissue"]
                                 not in {
-                                    "adrenal gland",
-                                    "bladder",
-                                    "bone",
-                                    "brain",
-                                    "breast",
-                                    "colon",
-                                    "liver",
-                                    "lung",
-                                    "lymph node",
+                                    "ADRENAL_GLAND gland",
+                                    "BLADDER",
+                                    "BONE",
+                                    "BRAIN",
+                                    "BREAST",
+                                    "COLON",
+                                    "LIVER",
+                                    "LUNG",
+                                    "LYMPH_NODE",
                                 }
-                            ) or (row["disease"] not in {"lung", "liver", "breast", "bladder", "colorectal"}):
+                            ) or (
+                                row["disease"]
+                                not in {
+                                    "BREAST_CANCER",
+                                    "BLADDER_CANCER",
+                                    "COLORECTAL_CANCER",
+                                    "LIVER_CANCER",
+                                    "LUNG_CANCER",
+                                }
+                            ):
                                 valid = False
                                 break
                         if submit_form.metadata_next_button is None:
@@ -568,8 +577,8 @@ class PageBuilder(BasePageBuilder):
                         if "pytest" in sys.modules:
                             rows = submit_form.metadata_grid.options["rowData"]
                             for row in rows:
-                                row["tissue_type"] = "lung"
-                                row["disease"] = "lung"
+                                row["tissue"] = "LUNG"
+                                row["disease"] = "LUNG_CANCER"
                             submit_form.metadata = rows
                         else:
                             submit_form.metadata = await submit_form.metadata_grid.get_client_data()
@@ -629,29 +638,29 @@ class PageBuilder(BasePageBuilder):
                                     "autoHeight": True,
                                 },
                                 {
-                                    "headerName": "Tissue Type",
-                                    "field": "tissue_type",
+                                    "headerName": "Tissue",
+                                    "field": "tissue",
                                     "editable": True,
                                     "cellEditor": "agSelectCellEditor",
                                     "cellEditorParams": {
                                         "values": [
-                                            "adrenal gland",
-                                            "bladder",
-                                            "bone",
-                                            "brain",
-                                            "breast",
-                                            "colon",
-                                            "liver",
-                                            "lung",
-                                            "lymph node",
+                                            "ADRENAL_GLAND",
+                                            "BLADDER",
+                                            "BONE",
+                                            "BRAIN",
+                                            "BREAST",
+                                            "COLON",
+                                            "LIVER",
+                                            "LUNG",
+                                            "LYMPH_NODE",
                                         ],
                                         "valueListGap": 10,
                                     },
                                     "cellClassRules": {
-                                        "bg-red-300": "!new Set(['adrenal gland', 'bladder', 'bone', 'brain',"
-                                        "'breast', 'colon', 'liver', 'lung', 'lymph node']).has(x)",
-                                        "bg-green-300": "new Set(['adrenal gland', 'bladder', 'bone', 'brain',"
-                                        "'breast', 'colon', 'liver', 'lung', 'lymph node']).has(x)",
+                                        "bg-red-300": "!new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
+                                        "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
+                                        "bg-green-300": "new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
+                                        "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
                                     },
                                 },
                                 {
@@ -660,23 +669,29 @@ class PageBuilder(BasePageBuilder):
                                     "editable": True,
                                     "cellEditor": "agSelectCellEditor",
                                     "cellEditorParams": {
-                                        "values": ["lung", "liver", "breast", "bladder", "colorectal"],
+                                        "values": [
+                                            "BREAST_CANCER",
+                                            "BLADDER_CANCER",
+                                            "COLORECTAL_CANCER",
+                                            "LIVER_CANCER",
+                                            "LUNG_CANCER",
+                                        ],
                                         "valueListGap": 10,
                                     },
                                     "cellClassRules": {
-                                        "bg-red-300": "!new Set(['lung', 'liver', 'breast', 'bladder',"
-                                        " 'colorectal']).has(x)",
-                                        "bg-green-300": "new Set(['lung', 'liver', 'breast', 'bladder',"
-                                        " 'colorectal']).has(x)",
+                                        "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', 'COLORECTAL_CANCER',"
+                                        " 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
+                                        "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', 'COLORECTAL_CANCER',"
+                                        " 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
                                     },
                                 },
                                 {"headerName": "File size", "field": "file_size_human"},
-                                {"headerName": "MPP", "field": "mpp"},
-                                {"headerName": "Width", "field": "width"},
-                                {"headerName": "Height", "field": "height"},
-                                {"headerName": "Staining", "field": "staining"},
+                                {"headerName": "MPP", "field": "resolution_mpp"},
+                                {"headerName": "Width", "field": "width_px"},
+                                {"headerName": "Height", "field": "height_px"},
+                                {"headerName": "Staining", "field": "staining_method"},
                                 {"headerName": "Source", "field": "source"},
-                                {"headerName": "Checksum", "field": "checksum_crc32c"},
+                                {"headerName": "Checksum", "field": "checksum_base64_crc32c"},
                                 {"headerName": "Upload progress", "field": "file_upload_progress", "initialHide": True},
                                 {
                                     "headerName": "Platform Bucket URL",

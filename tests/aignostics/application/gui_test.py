@@ -87,9 +87,11 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     gui_register_pages()
 
     # Submit run
-    csv_content = "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+    csv_content = (
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    )
     csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;lung;lung;;;gs://bucket/test"
+    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
     result = runner.invoke(cli, ["application", "run", "submit", "he-tme:v0.45.0", str(csv_path)])
