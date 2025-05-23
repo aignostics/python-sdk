@@ -7,7 +7,6 @@ including creating runs, downloading results, and validating outputs.
 
 import tempfile
 from pathlib import Path
-from typing import Any
 
 import pytest
 from _pytest.fixtures import FixtureRequest
@@ -19,16 +18,7 @@ from aignostics.platform.resources.runs import ApplicationRun
 HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
 
 
-def _decorate_with_metadata(
-    item: platform.InputItem, artifact_name_to_metadata: dict[str, dict[str, Any]]
-) -> platform.InputItem:
-    for input_artifact in item.input_artifacts:
-        if input_artifact.name in artifact_name_to_metadata:
-            input_artifact.metadata.update(artifact_name_to_metadata[input_artifact.name])
-    return item
-
-
-def single_spot_payload() -> list[platform.InputItem]:
+def single_spot_payload_heta_0_51_0() -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
         platform.InputItem(
@@ -44,6 +34,10 @@ def single_spot_payload() -> list[platform.InputItem]:
                         "resolution_mpp": 0.26268186053789266,
                         "width_px": 7447,
                         "height_px": 7196,
+                        "media_type": "image/tiff",
+                        "staining_method": "H&E",
+                        "tissue": "LUNG",
+                        "disease": "LUNG_CANCER",
                     },
                 )
             ],
@@ -51,7 +45,7 @@ def single_spot_payload() -> list[platform.InputItem]:
     ]
 
 
-def three_spots_payload() -> list[platform.InputItem]:
+def three_spots_payload_for_dummy_0_35_0() -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
         platform.InputItem(
@@ -63,10 +57,10 @@ def three_spots_payload() -> list[platform.InputItem]:
                         "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
                     ),
                     metadata={
-                        "checksum_base64_crc32c": "9l3NNQ==",
-                        "resolution_mpp": 0.46499982,
-                        "width_px": 3728,
-                        "height_px": 3640,
+                        "checksum_crc32c": "9l3NNQ==",
+                        "base_mpp": 0.46499982,
+                        "width": 3728,
+                        "height": 3640,
                     },
                 )
             ],
@@ -80,10 +74,10 @@ def three_spots_payload() -> list[platform.InputItem]:
                         "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
                     ),
                     metadata={
-                        "checksum_base64_crc32c": "w+ud3g==",
-                        "resolution_mpp": 0.46499982,
-                        "width_px": 3616,
-                        "height_px": 3400,
+                        "checksum_crc32c": "w+ud3g==",
+                        "base_mpp": 0.46499982,
+                        "width": 3616,
+                        "height": 3400,
                     },
                 )
             ],
@@ -97,10 +91,10 @@ def three_spots_payload() -> list[platform.InputItem]:
                         "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
                     ),
                     metadata={
-                        "checksum_base64_crc32c": "Zmx0wA==",
-                        "resolution_mpp": 0.46499982,
-                        "width_px": 4016,
-                        "height_px": 3952,
+                        "checksum_crc32c": "Zmx0wA==",
+                        "base_mpp": 0.46499982,
+                        "width": 4016,
+                        "height": 3952,
                     },
                 )
             ],
@@ -113,28 +107,14 @@ def three_spots_payload() -> list[platform.InputItem]:
 @pytest.mark.parametrize(
     ("timeout", "application_version_id", "payload"),
     [
-        (240, "two-task-dummy:v0.35.0", three_spots_payload()),
-        (
-            3600,
-            HETA_APPLICATION_VERSION_ID,
-            [
-                _decorate_with_metadata(
-                    item,
-                    {
-                        "user_slide": {
-                            "specimen": {"tissue": "LUNG", "disease": "LUNG_CANCER"},
-                        }
-                    },
-                )
-                for item in single_spot_payload()
-            ],
-        ),
+        (240, "two-task-dummy:v0.35.0", three_spots_payload_for_dummy_0_35_0()),
+        (3600, HETA_APPLICATION_VERSION_ID, single_spot_payload_heta_0_51_0()),
     ],
 )
 def test_application_runs(
     timeout: int, application_version_id: str, payload: list[platform.InputItem], request: FixtureRequest
 ) -> None:
-    """Test the two-task dummy application.
+    """Test application runs.
 
     This test creates an application run using a predefined application version and input samples.
     It then downloads the results to a temporary directory and performs various checks to ensure
