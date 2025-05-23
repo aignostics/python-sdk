@@ -191,9 +191,9 @@ class Service(BaseService):
             - height_px: The height of the image in pixels, inspecting the base layer
             - width_px: The width of the image in pixels, inspecting the base layer
             - staining_method: The staining of the sample, fixed to "H&E"
-            - speciment.tissue: The tissue of the sample, None or an entry from the enum of
+            - tissue: The tissue of the sample, None or an entry from the enum of
                 ["ADRENAL_GLAND", "BLADDER", "BONE", "BRAIN", "BREAST", "COLON", "LIVER", "LUNG", "LYMPH_NODE"]
-            - speciment.disease: The disease of the sample, None or an entry from the enum of
+            - disease: The disease of the sample, None or an entry from the enum of
                 ["BREAST_CANCER", "BLADDER_CANCER", "COLORECTAL_CANCER", "LIVER_CANCER", "LUNG_CANCER"]
 
         Args:
@@ -246,12 +246,12 @@ class Service(BaseService):
                     entry = {
                         "reference": file_path.stem,
                         "source": str(file_path),
-                        "checksum_crc32c": checksum,
-                        "mpp": mpp,
-                        "width": width,
-                        "height": height,
-                        "staining": "H&E",
-                        "tissue_type": None,
+                        "checksum_base64_crc32c": checksum,
+                        "resolution_mpp": mpp,
+                        "width_px": width,
+                        "height_px": height,
+                        "staining_method": "H&E",
+                        "tissue": None,
                         "disease": None,
                         "file_size_human": file_size_human,
                         "file_upload_progress": 0.0,
@@ -433,6 +433,7 @@ class Service(BaseService):
                 message = f"Invalid platform bucket URL: '{platform_bucket_url}'."
                 logger.warning(message)
                 raise ValueError(message)
+
             items.append(
                 InputItem(
                     reference=row["reference"],
@@ -444,12 +445,19 @@ class Service(BaseService):
                                 "checksum_base64_crc32c": row["checksum_base64_crc32c"],
                                 "height_px": int(row["height_px"]),
                                 "width_px": int(row["width_px"]),
+                                "media_type": (
+                                    "image/tiff"
+                                    if row["source"].lower().endswith((".tif", ".tiff"))
+                                    else "application/dicom"
+                                    if row["source"].lower().endswith(".dcm")
+                                    else "application/octet-stream"
+                                ),
                                 "resolution_mpp": float(row["resolution_mpp"]),
                                 "specimen": {
                                     "disease": row["disease"],
                                     "tissue": row["tissue"],
                                 },
-                                "staining_method": row["staining"],
+                                "staining_method": row["staining_method"],
                             },
                         )
                     ],
