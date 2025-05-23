@@ -22,7 +22,7 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-added-large-files
-        exclude: "ATTRIBUTIONS.md|resources|assets"
+        exclude: "ATTRIBUTIONS.md|resources|assets|platform.png"
       - id: check-case-conflict
       - id: check-illegal-windows-names
       - id: check-merge-conflict

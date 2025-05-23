@@ -1,19 +1,19 @@
-## Introduction
+## 1) Introduction
 
-The Aignostics Python SDK includes multiple pathways to interact with the
-Aignostics Platform:
+The **Aignostics Python SDK** includes multiple pathways to interact with the
+**Aignostics Platform**:
 
-1. Use the **Aignostics Launchpad** to analyze whole slide images with AI applications like 
-   [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product).
-   This desktop application runs seamlessly on Mac OS X, Windows, and Linux.
+1. Use the **Aignostics Launchpad** to analyze whole slide images with advanced computational pathology applications like 
+   [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) directly from your desktop.
    View your results by launching popular tools such as [QuPath](https://qupath.github.io/) and Python Notebooks with one click.
-2. Use the **Aignostics CLI** to run AI applications directly from your terminal. 
-   This command-line interface lets you query public datasets from the [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/),
-   process both public and private whole slide images, and easily download results.
-3. Use the included **example notebooks** as starting points to run AI applications
-   directly from your preferred notebook environment.
-4. Use the **Aignostics Client** to seamlessly integrate the Aignostics Platform with your enterprise image management systems and scientific workflows.
-   The client provides a simple way to access the Aignostics Platform API from your Python codebase.
+   The app runs on Mac OS X, Windows, and Linux.
+2. Use the **Aignostics Command-line interface (CLI)** to run applications directly from your terminal or shell scripts.
+   THe CLI lets you query public datasets from the [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/),
+   process both public and private whole slide images, and easily download results. The CLI is available for Mac OS X, Windows, and Linux.
+3. Use the included **example notebooks** as starting points to run applications
+   directly from your preferred notebook environment. We support Marimo and Jupyter based notebooks environments including Google Collab.
+4. Use the **Aignostics Client Library** to seamlessly integrate the Aignostics Platform with your enterprise image management systems and scientific workflows.
+   The client provides a simple way to access the Aignostics Platform API from your Python codebase. We support Python 3.11 and above.
 
 ### We take quality and security seriously
 
@@ -35,22 +35,33 @@ more about how we achieve
 [operational excellence](https://aignostics.readthedocs.io/en/latest/operational_excellence.html) and
 [security](https://aignostics.readthedocs.io/en/latest/security.html).
 
-## Aignostics Launchpad: Run your first AI analysis in minutes from your desktop
+## 2) Quick Start
+
+> [!Note]
+> See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible. 
+> If you first want to learn bout the basic concepts and components of the Aignostics Platform, please jump to section 3 below.
+
+### Aignostics Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
+
+The **Aignostics Launchpad** is a graphical desktop application that allows you to run
+applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists. 
+
+The Launchpad is available for Mac OS X, Windows, and Linux, and can be installed easily:
 
 1. Visit the [Quick Start](https://platform.aignostics.com/getting-started/quick-start) 
-   page in the Aignostics Platform Web Console.
+   page in the Aignostics Console.
 2. Copy the installation script and paste it into your terminal - compatible with MacOS, Windows, and Linux.
 3. Launch the application by running `uvx aignostics launchpad`.
 4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images 
-   with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other AI applications.
+   with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other computational pathology applications.
 
-## Aignostics CLI: Manage datasets and application runs from your terminal
+### Aignostics CLI: Manage datasets and application runs from your terminal
 
-The Python SDK includes a Command Line Interface (CLI) that allows you to
-interact with the Aignostics Platform directly from your terminal.
+The Aignostics Python SDK includes the **Aignostics CLI**, a Command-Line Interface that allows you to
+interact with the Aignostics Platform directly from your terminal or shell script.
 
-See as follows for a simple example where we download a sample dataset for the Atlas
-H&E-TME application, submit an application run, and download the results.
+See as follows for a simple example where we download a sample dataset for the [Atlas
+H&E-TME application](https://www.aignostics.com/products/he-tme-profiling-product), submit an application run, and download the results.
 
 ```shell
 # Download a sample dataset from the NCI Image Data Commons (IDC) portal to your current working directory
@@ -74,19 +85,19 @@ uvx aignostics application run result dowload APPLICATION_RUN_ID # Fill in the a
 The CLI provides extensive help:
 
 ```shell
-uvx aignostics --help                   # all subcommands
-uvx aignostics application --help       # list subcommands in the application space
-uvx aignostics application list --help  # help for specific command
-uvx aignostics application run --help.  # list subcommands in the application run space
+uvx aignostics --help                        # list all spaces such as application, dataset, bucket and system, 
+uvx aignostics application --help            # list subcommands in the application space
+uvx aignostics application run --help.       # list subcommands in the application run sub-space
+uvx aignostics application run list --help   # show help for specific command
 ```
 
 Check out our
 [CLI reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html#cli)
 to learn about all commands and options available.
 
-## Examples: Interact with the Aignostics Platform from your Python Notebook environment
+### Example Notebooks: Interact with the Aignostics Platform from your Python Notebook environment
 
-> [!IMPORTANT]\
+> [!IMPORTANT]
 > Before you get started, you need to set up your authentication credentials if
 > you did not yet do so! Please visit
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
@@ -113,7 +124,11 @@ uv run jupyter notebook examples/notebook.ipynb
 uv run marimo edit examples/notebook.py
 ```
 
-## Aignostics Client: Call the Aignostics Platform API from your Python scripts
+> [!Note]
+> You can as well run a notebook within the Aignostics Launchpad. To do so, select the
+> Run you want to inspect in the left sidebar, and click the button "Open in Python Notebook".
+
+### Aignostics Client Library: Call the Aignostics Platform API from your Python scripts
 
 > [!IMPORTANT]\
 > Before you get started, you need to set up your authentication credentials if
@@ -121,12 +136,13 @@ uv run marimo edit examples/notebook.py
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
 > and follow the steps outlined in the `Enterprise Integration` section.
 
-Next to using the CLI and notebooks, you can also use the Python SDK in your
+Next to using the Launchpad, CLI and notebooks, you can also use the Python SDK in your
 codebase. The following sections outline how to install the SDK and interact
 with it.
 
 ### Installation
 
+The Aignostics Python SDK is available via the
 Adding Aignostics Python SDK to your codebase as a dependency is easy. You can
 directly add the dependency via your favourite package manager:
 
@@ -146,7 +162,7 @@ uv add aignostics
 pip install aignostics
 ```
 
-### Usage
+#### Usage
 
 The following snippet shows how to use the Python SDK to trigger an application
 run:
@@ -186,7 +202,7 @@ and read the
 [client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 to learn about all classes and methods.
 
-#### Defining the input for an application run
+##### Defining the input for an application run
 
 Next to the `application_version` of the application you want to run, you have
 to define the input items you want to process in the run. The input items are
@@ -223,7 +239,7 @@ download the image data later during processing.
 
 #### Self-signed URLs for large files
 
-To make the images you want to process available to the Aignostics Platform, you
+To make the whole slide images you want to process available to the Aignostics Platform, you
 need to provide a signed URL that allows the platform to download the data.
 Self-signed URLs for files in google storage buckets can be generated using the
 `generate_signed_url`

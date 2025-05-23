@@ -317,9 +317,10 @@ def _generate_readme(session: nox.Session) -> None:
     preamble = "\n[//]: # (README.md generated from docs/partials/README_*.md)\n\n"
     header = Path("docs/partials/README_header.md").read_text(encoding="utf-8")
     main = Path("docs/partials/README_main.md").read_text(encoding="utf-8")
-    api = Path("docs/partials/README_api.md").read_text(encoding="utf-8")
+    platform = Path("docs/partials/README_platform.md").read_text(encoding="utf-8")
+    glossary = Path("docs/partials/README_glossary.md").read_text(encoding="utf-8")
     footer = Path("docs/partials/README_footer.md").read_text(encoding="utf-8")
-    readme_content = f"{preamble}{header}\n\n{main}\n\n{api}\n\n{footer}"
+    readme_content = f"{preamble}{header}\n\n{main}\n\n{platform}\n\n{footer}\n\n{glossary}"
     Path("README.md").write_text(readme_content, encoding="utf-8")
     session.log("Generated README.md file from partials")
 
