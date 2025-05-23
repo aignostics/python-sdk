@@ -536,7 +536,7 @@ class PageBuilder(BasePageBuilder):
                             if (
                                 row["tissue"]
                                 not in {
-                                    "ADRENAL_GLAND gland",
+                                    "ADRENAL_GLAND",
                                     "BLADDER",
                                     "BONE",
                                     "BRAIN",
@@ -679,8 +679,8 @@ class PageBuilder(BasePageBuilder):
                                         "valueListGap": 10,
                                     },
                                     "cellClassRules": {
-                                        "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', 'COLORECTAL_CANCER',"
-                                        " 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
+                                        "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
+                                        "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
                                         "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', 'COLORECTAL_CANCER',"
                                         " 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
                                     },
