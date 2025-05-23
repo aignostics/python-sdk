@@ -16,6 +16,8 @@ from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 from aignostics import platform
 from aignostics.platform.resources.runs import ApplicationRun
 
+HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
+
 
 def _decorate_with_metadata(
     item: platform.InputItem, artifact_name_to_metadata: dict[str, dict[str, Any]]
@@ -114,7 +116,7 @@ def three_spots_payload() -> list[platform.InputItem]:
         (240, "two-task-dummy:v0.35.0", three_spots_payload()),
         (
             3600,
-            "h-e-tme:v0.36.0",
+            HETA_APPLICATION_VERSION_ID,
             [
                 _decorate_with_metadata(
                     item,

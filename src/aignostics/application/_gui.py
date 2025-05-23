@@ -681,8 +681,8 @@ class PageBuilder(BasePageBuilder):
                                     "cellClassRules": {
                                         "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
                                         "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
-                                        "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', 'COLORECTAL_CANCER',"
-                                        " 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
+                                        "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
+                                        "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
                                     },
                                 },
                                 {"headerName": "File size", "field": "file_size_human"},

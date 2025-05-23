@@ -11,7 +11,7 @@ from aignostics.cli import cli
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
-APPLICATION_VERSION_ID = "he-tme:v0.50.0"
+HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     source_directory = Path(__file__).parent.parent.parent / "resources" / "run"
     metadata_csv = tmp_path / "metadata.csv"
     result = runner.invoke(
-        cli, ["application", "run", "prepare", APPLICATION_VERSION_ID, str(metadata_csv), str(source_directory)]
+        cli, ["application", "run", "prepare", HETA_APPLICATION_VERSION_ID, str(metadata_csv), str(source_directory)]
     )
     assert result.exit_code == 0
     assert metadata_csv.exists()
@@ -69,7 +69,8 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
         "EfIIhA==;8.065226874391001;2054;1529;H&E;;;0.00 GB;0.0;\n"
     )
 
-    # Step 2: Simulate user now upading the metadata.csv file, byt setting the tissue to "LUNG" and disease to "LUNG_CANCER"
+    # Step 2: Simulate user now upading the metadata.csv file, by setting the tissue to "LUNG"
+    # and disease to "LUNG_CANCER"
     metadata_csv.write_text(
         "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         "file_size_human;file_upload_progress;platform_bucket_url\n"
@@ -78,12 +79,12 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     )
 
     # Step 3: Upload the file to the platform
-    result = runner.invoke(cli, ["application", "run", "upload", APPLICATION_VERSION_ID, str(metadata_csv)])
+    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_VERSION_ID, str(metadata_csv)])
     assert result.exit_code == 0
     assert "Upload completed." in result.output
 
     # Step 3: Submit the run from the metadata file
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(metadata_csv)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_VERSION_ID, str(metadata_csv)])
     assert result.exit_code == 0
     assert "Invalid metadata for artifact `user_slide`" in result.output
     assert "8.065226874391001 is greater than" in result.output
@@ -99,7 +100,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
         "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;0.00 GB;0.0;\n"
     )
 
-    result = runner.invoke(cli, ["application", "run", "upload", APPLICATION_VERSION_ID, str(metadata_csv)])
+    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_VERSION_ID, str(metadata_csv)])
     assert result.exit_code == 0
     assert "Warning: Source file 'missing.file' (row 0) does not exist" in result.output
 
@@ -130,7 +131,7 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_VERSION_ID, str(csv_path)])
 
     assert result.exit_code == 0
     assert "Invalid platform bucket URL: 'aws://bucket/test'" in result.output
@@ -146,7 +147,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_VERSION_ID, str(csv_path)])
 
     assert result.exit_code == 0
     assert "Invalid platform bucket URL: ''" in result.output
@@ -162,7 +163,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, 
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_VERSION_ID, str(csv_path)])
 
     assert result.exit_code == 0
     assert re.search(

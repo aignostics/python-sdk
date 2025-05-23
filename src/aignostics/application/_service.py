@@ -186,7 +186,7 @@ class Service(BaseService):
         - Creates a dict with the following columns
             - reference (str): The reference of the file, being equivalent to the file name without suffix
             - source (str): The full path of the file
-            - checksum_base64_crc32c (str): The checksum of the file constructed using the CRC32C algorithm, base64 encodeds
+            - checksum_base64_crc32c (str): The CRC32C checksum of the file constructed, base64 encoded
             - resolution_mpp (float): The microns per pixel, inspecting the base layer
             - height_px: The height of the image in pixels, inspecting the base layer
             - width_px: The width of the image in pixels, inspecting the base layer

@@ -16,6 +16,8 @@ from aignostics.utils import get_logger, gui_register_pages
 
 logger = get_logger(__name__)
 
+HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
+
 
 @pytest.fixture
 def runner() -> CliRunner:
@@ -94,7 +96,7 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
-    result = runner.invoke(cli, ["application", "run", "submit", "he-tme:v0.45.0", str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_VERSION_ID, str(csv_path)])
     assert result.exit_code == 0
 
     # Extract the run ID from the output
@@ -107,12 +109,12 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     await user.should_see("Applications")
     await user.should_see("Atlas H&E-TME")
     await user.should_see("Runs")
-    await user.should_see("he-tme:v0.45.0", marker="SIDEBAR_RUN_ITEM:0", retries=1000)
+    await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
 
     # Navigate to the extracted run ID
     await user.open(f"/application/run/{run_id}")
-    await user.should_see("Run of he-tme:v0.45.0")
-    await user.should_see("Application Version: he-tme:v0.45.0")
+    await user.should_see(f"Run of {HETA_APPLICATION_VERSION_ID}")
+    await user.should_see(f"Application Version: {HETA_APPLICATION_VERSION_ID}")
     user.should_see("Status: running")
     user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
     await _assert_notified(user, f"Canceling application run with id '{run_id}' ...")
