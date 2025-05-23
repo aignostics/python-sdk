@@ -1,4 +1,4 @@
-## 3) Aignostics Platform: Concepts
+## Platform
 
 ### Overview
 

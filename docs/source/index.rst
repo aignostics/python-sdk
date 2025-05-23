@@ -17,6 +17,7 @@
    api_reference_v1
    operational_excellence
    security
+   glossary
    license
    attributions
    release-notes

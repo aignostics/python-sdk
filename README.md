@@ -20,7 +20,7 @@
 ---
 
 
-## 1) Introduction
+## Introduction
 
 The **Aignostics Python SDK** includes multiple pathways to interact with the
 **Aignostics Platform**:
@@ -57,11 +57,13 @@ more about how we achieve
 [operational excellence](https://aignostics.readthedocs.io/en/latest/operational_excellence.html) and
 [security](https://aignostics.readthedocs.io/en/latest/security.html).
 
-## 2) Quick Start
+## Quick Start
 
 > [!Note]
 > See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible. 
-> If you first want to learn bout the basic concepts and components of the Aignostics Platform, please jump to section 3 below.
+> If you first want to learn bout the basic concepts and components of the Aignostics Platform skip to that section below. 
+> The further reading section points you to reference documentation listing all available CLI commans, methods and classes provided by the SDK, how we achieve operational excellence and security, and more. 
+> If you are not familiar with terminology please check the glossary at the end of this document.
 
 ### Aignostics Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
 
@@ -272,7 +274,7 @@ Self-signed URLs for files in google storage buckets can be generated using the
 for the Google Storage Bucket**
 
 
-## 3) Aignostics Platform: Concepts
+## Platform
 
 ### Overview
 
@@ -378,7 +380,7 @@ Every WSI processed by the Platform generates a cost. Usage of the "Test Applica
 **[Read the API reference documentation](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)** or use our **[Interactive API Explorer](https://platform.aignostics.com/explore-api)** to dive into details of all operations and parameters.
 
 
-## 4) Further Reading
+## Further Reading
 
 1. Inspect our
    [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
@@ -403,7 +405,7 @@ Every WSI processed by the Platform generates a cost. Usage of the "Test Applica
    that this project builds upon. Thank you to all these wonderful contributors!
 
 
-## 5) Glossary
+## Glossary
 
 ### A
 

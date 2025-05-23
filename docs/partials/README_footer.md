@@ -1,4 +1,4 @@
-## 4) Further Reading
+## Further Reading
 
 1. Inspect our
    [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
