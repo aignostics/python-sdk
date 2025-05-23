@@ -78,7 +78,7 @@ async def test_gui_home_to_application(
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
     gui_register_pages()
-    await user.open("/?noruns=true")
+    await user.open("/")
     await user.should_see(application_name, retries=100)
     user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
     await user.should_see(expected_text, retries=100)
@@ -148,7 +148,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
         assert expected_file.stat().st_size == 14681750
 
         # Open the GUI and navigate to Atlas H&E-TME application
-        await user.open("/?noruns=true")
+        await user.open("/")
         await user.should_see("Applications")
         await user.should_see("Atlas H&E-TME")
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
