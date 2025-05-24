@@ -26,7 +26,7 @@ extensions = [
 
 project = "aignostics"
 author = "Helmut Hoffer von Ankershoffen"
-copyright = f" (c) 2025-{datetime.now(UTC).year}, {author}"  # noqa: A001
+copyright = f" (c) 2025-{datetime.now(UTC).year} Aignostics GmbH, Author: {author}"  # noqa: A001
 version = "0.2.2"
 release = version
 github_username = "aignostics"
