@@ -1,7 +1,7 @@
 [project]
 name = "aignostics"
 version = "0.2.2"
-description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics Command-Line Interface (CLI), example notebooks, and Aignostics Client Library."
+description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
     { name = "Helmut Hoffer von Ankershoffen", email = "helmut@aignostics.com" },
