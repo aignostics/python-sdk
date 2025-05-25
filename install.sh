@@ -39,6 +39,7 @@ LINUX_APT_TOOLS=(
 
 BREW_TOOLS=(
     "act;act;https://nektosact.com/;local"
+    "gh;gh;https://cli.github.com//;local"
     "git;git;https://git-scm.com/;local"
     "gmake;make;https://www.gnu.org/software/make/;"
     "gpg;gnupg;https://gnupg.org/;"
@@ -47,6 +48,7 @@ BREW_TOOLS=(
     "nixpacks;nixpacks;https://nixpacks.com/;"
     "pinact;pinact;https://github.com/suzuki-shunsuke/pinact;local"
     "pnpm;pnpm;https://pnpm.io/;"
+    "rg;ripgrep;https://github.com/BurntSushi/ripgrep;local"
     "trivy;trivy;https://trivy.dev/latest/;"
     "uv;uv;https://docs.astral.sh/uv/;local"
     "xmllint;libxml2;https://en.wikipedia.org/wiki/Libxml2;"

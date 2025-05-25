@@ -1,16 +1,22 @@
 """CLI of application module."""
 
+import sys
 import time
 from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.console import Group
+from rich.live import Live
+from rich.panel import Panel
 from rich.progress import (
     BarColumn,
     FileSizeColumn,
     Progress,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
+    TimeElapsedColumn,
     TimeRemainingColumn,
     TotalFileSizeColumn,
     TransferSpeedColumn,
@@ -20,8 +26,9 @@ from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException
 from aignostics.utils import console, get_logger
 
-from ._service import Service
+from ._service import DownloadProgress, DownloadProgressState, Service
 from ._utils import (
+    application_run_status_to_str,
     print_runs_non_verbose,
     print_runs_verbose,
     read_metadata_csv_to_dict,
@@ -39,27 +46,20 @@ run_app = typer.Typer()
 cli.add_typer(run_app, name="run", help="List, submit and manage application runs")
 
 result_app = typer.Typer()
-run_app.add_typer(result_app, name="result", help="Inspect and download application run results")
+run_app.add_typer(result_app, name="result", help="Download or delete run results.")
 
 
 @cli.command("list")
 def application_list(
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
-) -> bool:
-    """List available applications.
-
-    Args:
-        verbose (bool): If True, show detailed information about each application
-
-    Returns:
-        bool: Success status of the operation
-    """
+) -> None:
+    """List available applications."""
     try:
         applications = Service().applications()
     except Exception as e:
         logger.exception("Failed to list applications")
         console.print(f"[error]Error:[/error] Failed to list applications: {e}")
-        return False
+        sys.exit(1)
 
     app_count = 0
 
@@ -111,34 +111,25 @@ def application_list(
             )
 
     if app_count == 0:
-        logger.warning("No applications available.")
+        logger.info("No applications available.")
         console.print("No applications available.")
-
-    return True
 
 
 @cli.command("describe")
 def application_describe(
     application_id: Annotated[str, typer.Argument(help="Id of the application to describe")],
-) -> bool:
-    """Describe application.
-
-    Args:
-        application_id (str): The ID of the application to describe
-
-    Returns:
-        bool: Success status of the operation
-    """
+) -> None:
+    """Describe application."""
     try:
         application = Service().application(application_id)
     except NotFoundException:
         logger.warning("Application with ID '%s' not found.", application_id)
         console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
-        return False
+        sys.exit(2)
     except Exception as e:
         logger.exception("Failed to describe application with ID '%s'", application_id)
         console.print(f"[error]Error:[/error] Failed to describe application: {e}")
-        return False
+        sys.exit(1)
 
     console.print(f"[bold]Application Details for {application.application_id}[/bold]")
     console.print("=" * 80)
@@ -177,16 +168,20 @@ def application_describe(
 
             console.print()
 
-    return True
 
-
-@run_app.command(name="prepare")
-def run_prepare(
-    application_version_id: Annotated[str, typer.Argument(help="Id of the application to generate the metadata for")],
-    metadata_csv: Annotated[
+@run_app.command(name="execute")
+def run_execute(  # noqa: PLR0913, PLR0917
+    application_version_id: Annotated[
+        str,
+        typer.Argument(
+            help="Id of application version to execute. "
+            "If application id is given, the latest version of that application is used."
+        ),
+    ],
+    metadata_csv_file: Annotated[
         Path,
         typer.Argument(
-            help="Target filename for the generated metadata file. .csv will be appended automatically.",
+            help="Filename of the .csv file containing the metadata and references.",
             exists=False,
             file_okay=True,
             dir_okay=False,
@@ -207,23 +202,142 @@ def run_prepare(
             resolve_path=True,
         ),
     ],
+    mapping: Annotated[
+        list[str],
+        typer.Argument(
+            help="Mapping to use for amending metadata CSV file. "
+            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'. "
+            "The regular expression is matched against the reference attribute of the entry. "
+            "The key/value pairs are applied to the entry if the pattern matches. "
+            "You can use the mapping option multiple times to set values for multiple files. ",
+        ),
+    ],
+    create_subdirectory_for_run: Annotated[
+        bool,
+        typer.Option(
+            help="Create a subdirectory for the results of the run in the destination directory",
+        ),
+    ] = True,
+    create_subdirectory_per_item: Annotated[
+        bool,
+        typer.Option(
+            help="Create a subdirectory per item in the destination directory",
+        ),
+    ] = True,
+    upload_prefix: Annotated[
+        str,
+        typer.Option(
+            help="Prefix for the upload destination. If not given will be set to current milliseconds.",
+        ),
+    ] = f"{time.time() * 1000}",
+    wait_for_completion: Annotated[
+        bool,
+        typer.Option(
+            help="Wait for run completion and download results incrementally",
+        ),
+    ] = True,
+) -> None:
+    """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
+
+    (1) Prepares metadata CSV file for the given application version
+        by scanning the source directory for whole slide images
+        and extracting metadata such as width, height, and mpp.
+    (2) Amends the metadata CSV file using the given mappings
+        to set all required attributes.
+    (3) Uploads the files referenced in the metadata CSV file
+        to the cloud bucket provisioned in the Aignostics platform.
+    (4) Submits the run for the given application version
+        with the metadata from the CSV file.
+    (5) Downloads the results of the run to the destination directory,
+        by default waiting for the run to complete
+        and downloading results incrementally.
+    """
+    run_prepare(
+        application_version_id=application_version_id,
+        metadata_csv=metadata_csv_file,
+        source_directory=source_directory,
+        mapping=mapping,
+    )
+    run_upload(
+        application_version_id=application_version_id,
+        metadata_csv_file=metadata_csv_file,
+        upload_prefix=upload_prefix,
+    )
+    application_run_id = run_submit(
+        application_version_id=application_version_id,
+        metadata_csv_file=metadata_csv_file,
+    )
+    result_download(
+        run_id=application_run_id,
+        destination_directory=metadata_csv_file.parent,
+        create_subdirectory_for_run=create_subdirectory_for_run,
+        create_subdirectory_per_item=create_subdirectory_per_item,
+        wait_for_completion=wait_for_completion,
+    )
+
+
+@run_app.command(name="prepare")
+def run_prepare(
+    application_version_id: Annotated[
+        str,
+        typer.Argument(
+            help="Id of the application version to generate the metadata for. "
+            "If application id is given, the latest version of that application is used."
+        ),
+    ],
+    metadata_csv: Annotated[
+        Path,
+        typer.Argument(
+            help="Target filename for the generated metadata CSV file.",
+            exists=False,
+            file_okay=True,
+            dir_okay=False,
+            writable=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    source_directory: Annotated[
+        Path,
+        typer.Argument(
+            help="Source directory to scan for whole slide images",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            writable=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ],
+    mapping: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Mapping to use for amending metadata CSV file. "
+            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'. "
+            "The regular expression is matched against the reference attribute of the entry. "
+            "The key/value pairs are applied to the entry if the pattern matches. "
+            "You can use the mapping option multiple times to set values for multiple files. "
+        ),
+    ] = None,
 ) -> None:
     """Prepare metadata CSV file required for submitting a run.
 
-    1. Scans source_directory for whole slide images (.tif, .tiff and .dcm)
-    2. Extracts metadata from whole slide images such as width, height, mpp
-    3. Creates CSV file with metadata as required for the given application version
+    (1) Scans source_directory for whole slide images (.tif, .tiff and .dcm.
+    (2) Extracts metadata from whole slide images such as width, height, mpp.
+    (3) Creates CSV file with columns as required by the given application version.
+    (4) Optionally applies mappings to amend the metadata CSV file for columns
+        that are not automatically filled by the metadata extraction process.
 
-    Args:
-        application_version_id (str): The ID of the application version to generate metadata for
-        metadata_csv (str): The target filename for the generated metadata file.
-        source_directory (str): The source directory to scan for whole slide images
+    Example:
+        aignostics application run prepare "he-tme:v0.51.0" metadata.csv /path/to/source_directory
+        --mapping "*.tiff:staining_method:H&E,tissue:LUNG,disease:LUNG_CANCER"
     """
     write_metadata_dict_to_csv(
         metadata_csv=metadata_csv,
         metadata_dict=Service().generate_metadata_from_source_directory(
             application_version_id=application_version_id,
             source_directory=source_directory,
+            mappings=mapping or [],
         ),
     )
     console.print(f"Generated metadata file [bold]{metadata_csv}[/bold]")
@@ -232,7 +346,13 @@ def run_prepare(
 
 @run_app.command(name="upload")
 def run_upload(
-    application_version_id: Annotated[str, typer.Argument(help="Id of the application to generate the metadata for")],
+    application_version_id: Annotated[
+        str,
+        typer.Argument(
+            help="Id of the application version to upload data for. "
+            "If application id is given, the latest version of that application is used."
+        ),
+    ],
     metadata_csv_file: Annotated[
         Path,
         typer.Argument(
@@ -251,24 +371,16 @@ def run_upload(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
         ),
     ] = f"{time.time() * 1000}",
-) -> bool:
+) -> None:
     """Upload files referenced in the metadata CSV file to the Aignostics platform.
 
-    1. Reads the metadata CSV file
-    2. Uploads the files referenced in the CSV file to the Aignostics platform
-    3. Incrementally updates the CSV file with upload progress and the signed URLs for the uploaded files
-
-    Args:
-        application_version_id (str): The ID of the application version to generate the metadata for
-        metadata_csv_file (str): The metadata file containing the references to whole slide images.
-        upload_prefix (str): The prefix for the upload destination. If not given, will be set to current milliseconds.
-
-    Returns:
-        bool: Success status of the operation
+    1. Reads the metadata CSV file.
+    2. Uploads the files referenced in the CSV file to the Aignostics platform.
+    3. Incrementally updates the CSV file with upload progress and the signed URLs for the uploaded files.
     """
     metadata_dict = read_metadata_csv_to_dict(metadata_csv_file=metadata_csv_file)
     if not metadata_dict:
-        return False
+        sys.exit(2)
 
     total_bytes = 0
     for i, entry in enumerate(metadata_dict):
@@ -277,7 +389,8 @@ def run_upload(
         if not source_file_path.is_file():
             logger.warning("Source file '%s' (row %d) does not exist", source_file_path, i)
             console.print(f"[warning]Warning:[/warning] Source file '{source_file_path}' (row {i}) does not exist")
-            return False
+            sys.exit(2)
+
         total_bytes += source_file_path.stat().st_size
 
     with Progress(
@@ -316,12 +429,17 @@ def run_upload(
 
     logger.info("Upload completed.")
     console.print("Upload completed.", style="info")
-    return True
 
 
 @run_app.command("submit")
 def run_submit(
-    application_version_id: Annotated[str, typer.Argument(help="Id of the application version to submit run for")],
+    application_version_id: Annotated[
+        str,
+        typer.Argument(
+            help="Id of the application version to submit run for. "
+            "If application id is given, the latest version of that application is used."
+        ),
+    ],
     metadata_csv_file: Annotated[
         Path,
         typer.Argument(
@@ -334,23 +452,19 @@ def run_submit(
             resolve_path=True,
         ),
     ],
-) -> bool:
+) -> str:
     """Submit run by referencing the metadata CSV file.
 
     1. Requires the metadata CSV file to be generated and referenced files uploaded first
 
-    Args:
-        application_version_id (str): The ID of the application version to submit a run for
-        metadata_csv_file (str): The metadata file containing the references to whole slide images
-            and their metadata to submit.
-
     Returns:
-        bool: Success status of the operation
+        The ID of the submitted application run.
     """
     try:
         metadata_dict = read_metadata_csv_to_dict(metadata_csv_file=metadata_csv_file)
         if not metadata_dict:
-            return False
+            console.print("Could mot read metadata file '%s'", metadata_csv_file)
+            sys.exit(2)
         logger.debug(
             "Submitting run for application version '%s' with metadata: %s", application_version_id, metadata_dict
         )
@@ -358,121 +472,88 @@ def run_submit(
             application_version_id=application_version_id,
             metadata=metadata_dict,
         )
-        console.print(f"submitted run with id '{application_run}'")
-        return True
+        console.print(f"Submitted run with id '{application_run.application_run_id}' for '{application_version_id}'.")
+        return application_run.application_run_id
     except ValueError as e:
         logger.warning("Bad input to create run for application version '%s': %s", application_version_id, e)
         console.print(
             f"[warning]Warning:[/warning] Bad input to create run for application version "
             f"'{application_version_id}': {e}"
         )
-        return False
+        sys.exit(2)
     except Exception as e:
         logger.exception("Failed to create run for application version '%s'", application_version_id)
         console.print(
             f"[error]Error:[/error] Failed to create run for application version '{application_version_id}': {e}"
         )
-        return False
+        sys.exit(1)
 
 
 @run_app.command("list")
 def run_list(
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
     limit: Annotated[int | None, typer.Option(help="Maximum number of runs to display")] = None,
-) -> int:
-    """List application runs, sorted by triggered_at, descending.
-
-    Args:
-        verbose (bool): If True, show detailed information about each run.
-        limit (int | None): Maximum number of runs to display. If None, display all runs.
-
-    Returns:
-        int: Number of runs found, or -1 if an error occurred
-    """
+) -> None:
+    """List runs."""
     try:
         runs = Service().application_runs(limit=limit)
         if len(runs) == 0:
             message = "You did not yet create a run."
             logger.warning(message)
             console.print(message, style="warning")
-            return 0
-
-        limit = min(len(runs), limit) if limit is not None else len(runs)
-        console.print(f"Found {len(runs)} application runs, displaying {limit} ...", style="debug")
-        print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
-        message = f"Found {len(runs)} application runs, displayed {limit}."
-        logger.info(message)
-        console.print(message, style="info")
-        return len(runs)
+        else:
+            limit = min(len(runs), limit) if limit is not None else len(runs)
+            console.print(f"Found {len(runs)} application runs, displaying {limit} ...", style="debug")
+            print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
+            message = f"Found {len(runs)} application runs, displayed {limit}."
+            logger.info(message)
+            console.print(message, style="info")
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
-        return -1
 
 
 @run_app.command("describe")
-def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to describe")]) -> bool:
-    """Describe application run.
-
-    Args:
-        run_id (str): The ID of the run to describe
-
-    Returns:
-        bool: Success status of the operation
-    """
+def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to describe")]) -> None:
+    """Describe run."""
     logger.debug("Describing run with ID '%s'", run_id)
 
     try:
         retrieve_and_print_run_details(Service().application_run(run_id))
         logger.info("Described run with ID '%s'", run_id)
-        return True
     except NotFoundException:
         logger.warning("Run with ID '%s' not found.", run_id)
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
-        return False
+        sys.exit(2)
     except Exception as e:
         logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
         console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
-        return False
+        sys.exit(1)
 
 
 @run_app.command("cancel")
 def run_cancel(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to cancel")],
-) -> bool:
-    """Cancel application run.
-
-    Args:
-        run_id(str): The ID of the run to cancel
-
-    Returns:
-        bool: True if the run was canceled successfully, False otherwise
-    """
+) -> None:
+    """Cancel run."""
     logger.debug("Canceling run with ID '%s'", run_id)
 
     try:
         Service().application_run_cancel(run_id)
         logger.info("Canceled run with ID '%s'.", run_id)
         console.print(f"Run with ID '{run_id}' has been canceled.")
-        return True
     except NotFoundException:
         logger.warning("Run with ID '%s' not found.", run_id)
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
-        return False
+        sys.exit(2)
     except Exception as e:
         logger.exception("Failed to cancel run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
-        return False
-
-
-@result_app.command("describe")
-def result_describe() -> None:
-    """Describe the result of an application run."""
-    console.print(MESSAGE_NOT_YET_IMPLEMENTED)
+        sys.exit(1)
 
 
 @result_app.command("download")
-def download(
+def result_download(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to download results for")],
     destination_directory: Annotated[
         Path,
@@ -486,49 +567,155 @@ def download(
             resolve_path=True,
         ),
     ],
-) -> bool:
-    """Download the results of an application run.
-
-    Args:
-        run_id (str): The ID of the run to download results for
-        destination_directory (str): The destination directory to download results to
-
-    Returns:
-        bool: True if the download was successful, False otherwise
-    """
-    logger.debug("Downloading results for run with ID '%s' to '%s'", run_id, destination_directory)
+    create_subdirectory_for_run: Annotated[
+        bool,
+        typer.Option(
+            help="Create a subdirectory for the results of the run in the destination directory",
+        ),
+    ] = True,
+    create_subdirectory_per_item: Annotated[
+        bool,
+        typer.Option(
+            help="Create a subdirectory per item in the destination directory",
+        ),
+    ] = True,
+    wait_for_completion: Annotated[
+        bool,
+        typer.Option(
+            help="Wait for run completion and download results incrementally",
+        ),
+    ] = True,
+) -> None:
+    """Download results of a run."""
+    logger.debug(
+        "Downloading results for run with ID '%s' to '%s' with options: "
+        "create_subdirectory_for_run=%s, create_subdirectory_per_item=%s, wait_for_completion=%s",
+        run_id,
+        destination_directory,
+        create_subdirectory_for_run,
+        create_subdirectory_per_item,
+        wait_for_completion,
+    )
 
     try:
-        destination_directory.mkdir(parents=True, exist_ok=True)
-        logger.debug("Created destination directory '%s'", destination_directory)
-    except OSError as e:
-        logger.exception("Failed to create destination directory '%s'", destination_directory)
-        console.log(
-            f"[bold red]Error:[/bold red] Failed to create destination directory '{destination_directory}': {e}"
+        progress: DownloadProgress = DownloadProgress()
+        download_tasks: dict[str, TaskID] = {}
+
+        main_download_progress_ui = Progress(
+            BarColumn(),
+            TaskProgressColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            TextColumn("{task.fields[extra_description]}"),
         )
-        return False
+        artifact_download_progress_ui = Progress(
+            BarColumn(),
+            TaskProgressColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            FileSizeColumn(),
+            TotalFileSizeColumn(),
+            TransferSpeedColumn(),
+            TextColumn("{task.fields[extra_description]}"),
+        )
+        panel = Panel(
+            Group(main_download_progress_ui, artifact_download_progress_ui),
+            title=f"Run {run_id}",
+            subtitle=progress.status,
+            highlight=True,
+        )
+        with Live(panel):
+            # Main download task
+            main_task = main_download_progress_ui.add_task(
+                description=progress.status, total=None, extra_description=""
+            )
 
-    try:
-        run = Service().application_run(run_id)
-        run.download_to_folder(destination_directory)
-        message = f"Downloaded results for run with ID '{run_id}' to '{destination_directory}'"
+            def update_progress() -> None:
+                """Update progress bar for file downloads."""
+                if progress.run:
+                    panel.title = f"Run {progress.run.application_run_id} of {progress.run.application_version_id}"
+                    panel.subtitle = f"Triggered at {progress.run.triggered_at.strftime('%a, %x %X')}"
+                    if progress.item_count:
+                        panel.subtitle += f" with {progress.item_count} " + (
+                            "item" if progress.item_count == 1 else "items"
+                        )
+                    panel.subtitle += f", status: {application_run_status_to_str(progress.run.status)}."
+                main_download_progress_ui.update(
+                    main_task,
+                    description=(
+                        progress.status
+                        if progress.status is not DownloadProgressState.DOWNLOADING or not progress.total_artifact_index
+                        else (
+                            f"Downloading artifact {progress.total_artifact_index + 1} "
+                            f"of {progress.total_artifact_count}"
+                        )
+                    ).ljust(50),
+                )
+                if progress.artifact_path:
+                    task_key = str(progress.artifact_path.absolute())
+                    if task_key not in download_tasks:
+                        download_tasks[task_key] = artifact_download_progress_ui.add_task(
+                            f"{progress.artifact_path.name}".ljust(50),
+                            total=progress.artifact_size,
+                            extra_description=f"Item {progress.item.reference if progress.item else 'unknown'}",
+                        )
+
+                    artifact_download_progress_ui.update(
+                        download_tasks[task_key],
+                        total=progress.artifact_size,
+                        advance=progress.artifact_downloaded_chunk_size,
+                    )
+
+                if (
+                    progress.item_count
+                    and progress.item_index is not None
+                    and progress.artifact_count
+                    and progress.artifact_index is not None
+                ):
+                    main_download_progress_ui.update(
+                        main_task,
+                        completed=progress.item_index * progress.artifact_count + progress.artifact_index + 1,
+                        total=float(progress.total_artifact_count) if progress.total_artifact_count else 0.0,
+                    )
+
+            # Download with progress tracking
+            destination_directory = Service().application_run_download(
+                progress=progress,
+                run_id=run_id,
+                destination_directory=destination_directory,
+                create_subdirectory_for_run=create_subdirectory_for_run,
+                create_subdirectory_per_item=create_subdirectory_per_item,
+                wait_for_completion=wait_for_completion,
+                download_progress_callable=update_progress,
+            )
+
+            # Update main task to completed
+            main_download_progress_ui.update(main_task, completed=100, total=100)
+
+        message = f"Downloaded results of run '{run_id}' to '{destination_directory}'"
         logger.info(message)
         console.print(message, style="info")
-        return True
     except NotFoundException as e:
         logger.warning("Run with ID '%s' not found: %s", run_id, e)
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
-        return False
+        sys.exit(2)
+    except ValueError as e:
+        logger.warning("Bad input to download results of run with ID '%s': %s", run_id, e)
+        console.print(f"[warning]Warning:[/warning] Bad input to download results of run with ID '{run_id}': {e}")
+        sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to download results for run with ID '%s'", run_id)
+        logger.exception("Failed to download results of run with ID '%s'", run_id)
         console.print(
-            f"[error]Error:[/error] Failed to download results for run with ID '{run_id}': {type(e).__name__}: {e}"
+            f"[error]Error:[/error] Failed to download results of run with ID '{run_id}': {type(e).__name__}: {e}"
         )
-        return False
+        sys.exit(1)
 
 
 # TODO(Helmut): Implement result delete when available in platform
 @result_app.command("delete")
 def result_delete() -> None:
-    """Delete the results of an application run."""
+    """Delete results of a run."""
     console.print(MESSAGE_NOT_YET_IMPLEMENTED)
+    sys.exit(1)

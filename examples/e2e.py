@@ -42,7 +42,7 @@ def _():
     import shapely
     from cloudpathlib import GSPath
     from dotenv import load_dotenv
-    from idc_index import index
+    from aignostics import dataset
     from PIL import Image, ImageDraw
     from shapely.affinity import translate
     from shapely.geometry import Polygon, box
@@ -80,7 +80,7 @@ def _():
             restrict_navigation=True,
         )
     ])  # type: ignore
-    return Path, WsiDicom, index, mo, plt
+    return Path, WsiDicom, dataset, mo, plt
 
 
 @app.cell
@@ -97,8 +97,8 @@ def _(Path, mo):
 
 
 @app.cell
-def _(index):
-    idc_client = index.IDCClient()  # set-up idc_client
+def _(dataset):
+    idc_client = dataset.IDCClient()  # set-up idc_client
     idc_client.fetch_index("sm_instance_index")
     return (idc_client,)
 

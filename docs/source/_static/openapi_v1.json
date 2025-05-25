@@ -1,3 +1,4 @@
+2025-05-25 15:42:33 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.2.2 (project root /Users/helmut/Code/python-sdk, pid 5603), parent 'Python' (pid 5548)                                                           boot.py:84
 {
   "openapi": "3.1.0",
   "info": {

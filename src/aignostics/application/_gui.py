@@ -1,5 +1,6 @@
 """GUI of application module including homepage of Aignostics Launchpad."""
 
+import queue
 import sys
 import time
 from importlib.util import find_spec
@@ -11,7 +12,7 @@ from urllib.parse import quote as urlencode
 from aignostics.gui import frame
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker, get_logger
 
-from ._service import Service
+from ._service import DownloadProgress, DownloadProgressState, Service
 
 logger = get_logger(__name__)
 
@@ -27,7 +28,8 @@ class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915
         import pandas as pd  # noqa: PLC0415
-        from nicegui import app, background_tasks, binding, context, run, ui  # noq  # noqa: PLC0415
+        from nicegui import app, background_tasks, binding, context, ui  # noq  # noqa: PLC0415
+        from nicegui import run as nicegui_run  # noqa: PLC0415
 
         @binding.bindable_dataclass
         class SubmitForm:
@@ -169,12 +171,16 @@ class PageBuilder(BasePageBuilder):
                 except Exception as e:  # noqa: BLE001
                     ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
 
-                async def application_runs_load_and_render() -> None:
+                async def application_runs_load_and_render(
+                    runs_column: ui.column, completed_only: bool = False
+                ) -> None:
                     with runs_column:
                         try:
-                            runs = await run.io_bound(Service.application_runs_static, RUNS_LIMIT)
+                            runs = await nicegui_run.io_bound(
+                                Service.application_runs_static, limit=RUNS_LIMIT, completed_only=completed_only
+                            )
                             if runs is None:
-                                message = "run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
+                                message = "nicegui_run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
                                 logger.error(message)
                                 raise RuntimeError(message)  # noqa: TRY301
                             runs_column.clear()
@@ -217,14 +223,46 @@ class PageBuilder(BasePageBuilder):
                                     ui.label("Failed to load application runs.")
                             logger.exception("Failed to load application runs")
 
+                @ui.refreshable
+                def _runs_list(completed_only: bool = False) -> None:
+                    with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
+                        ui.spinner(size="lg").classes("m-5")
+                        if not noruns:
+                            background_tasks.create(
+                                application_runs_load_and_render(runs_column=runs_column, completed_only=completed_only)
+                            )
+
+                class RunFilterButton(ui.button):
+                    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+                        super().__init__(*args, **kwargs)
+                        self._state = False
+                        self.on("click", self.toggle)
+
+                    def toggle(self) -> None:
+                        self._state = not self._state
+                        self.update()
+                        _runs_list.refresh(completed_only=self.is_active())
+
+                    def update(self) -> None:
+                        self.props(f"color={'black' if self._state else 'grey'}")
+                        super().update()
+
+                    def is_active(self) -> bool:
+                        """Check if the button is active.
+
+                        Returns:
+                            bool: True if the button is active, False otherwise.
+                        """
+                        return self._state
+
                 try:
                     with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
-                        ui.item_label("Runs").props("header")
+                        with ui.row(align_items="center").classes("justify-center"):
+                            ui.item_label("Runs").props("header")
+                            ui.space()
+                            RunFilterButton(icon="done_all")
                         ui.separator()
-                        with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
-                            ui.spinner(size="lg").classes("m-5")
-                        if not noruns:
-                            background_tasks.create(application_runs_load_and_render())
+                        _runs_list()
                 except Exception as e:  # noqa: BLE001
                     ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")
 
@@ -408,13 +446,14 @@ class PageBuilder(BasePageBuilder):
                             return
                         submit_form.wsi_spinner.set_visibility(True)
                         submit_form.wsi_next_button.set_visibility(False)
-                        submit_form.metadata_grid.options["rowData"] = await run.cpu_bound(
+                        submit_form.metadata_grid.options["rowData"] = await nicegui_run.cpu_bound(
                             Service.generate_metadata_from_source_directory,
                             str(submit_form.application_version_id),
                             submit_form.source,
+                            [".*:staining_method=H&E"],
                         )
                         if submit_form.metadata_grid.options["rowData"] is None:
-                            msg = "run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
+                            msg = "nicegui_run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
                             logger.error(msg)
                             raise RuntimeError(msg)  # noqa: TRY301
                         submit_form.wsi_next_button.set_visibility(True)
@@ -754,7 +793,7 @@ class PageBuilder(BasePageBuilder):
                     if upload_message_queue is None:
                         logger.error("Upload message queue is not initialized.")  # type: ignore[unreachable]
                         return
-                    await run.cpu_bound(
+                    await nicegui_run.cpu_bound(
                         Service.application_run_upload,
                         str(submit_form.application_version_id),
                         submit_form.metadata or [],
@@ -882,9 +921,103 @@ class PageBuilder(BasePageBuilder):
                     return False
 
             with ui.dialog() as download_run_dialog, ui.card().style(WIDTH_1200px):
-                ui.button("Select download folder")
-                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
-                    ui.button("Close", on_click=download_run_dialog.close)
+                ui.label("Download Results").classes("text-h6")
+                ui.label("Select a folder to download all results for this application run.")
+
+                selected_folder = ui.input("Selected folder", value="").props("readonly")
+
+                with ui.row().classes("w-full"):
+
+                    async def _select_download_destination() -> None:
+                        result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
+                        if result and len(result) > 0:
+                            folder_path = Path(result[0])
+                            if folder_path.is_dir():
+                                selected_folder.value = str(folder_path)
+                            else:
+                                selected_folder.value = str(folder_path.parent)
+                        else:
+                            ui.notify("No folder selected", type="warning")
+
+                    async def _select_home() -> None:  # noqa: RUF029
+                        """Open a file picker dialog and show notifier when closed again."""
+                        selected_folder.value = str(Path.home())
+
+                    ui.button("Use Home", on_click=_select_home, icon="home").mark("BUTTON_DOWNLOAD_DESTINATION_HOME")
+                    ui.button("Select Destination", on_click=_select_download_destination, icon="folder_open").mark(
+                        "BUTTON_DOWNLOAD_DESTINATION_SELECT"
+                    )
+
+                download_item_status = ui.label("")
+                download_item_status.set_visibility(False)
+                download_item_progress = ui.linear_progress(value=0, show_value=False).props("instant-feedback")
+                download_item_progress.set_visibility(False)
+                download_artifact_status = ui.label("")
+                download_artifact_status.set_visibility(False)
+                download_artifact_progress = ui.linear_progress(value=0, show_value=False).props("instant-feedback")
+                download_artifact_progress.set_visibility(False)
+
+                async def start_download() -> None:
+                    if not selected_folder.value:
+                        ui.notify("Please select a folder first", type="warning")
+                        return
+
+                    ui.notify("Downloading  ...", type="info")
+                    progress_queue: queue.Queue[DownloadProgress] = queue.Queue()
+
+                    def update_download_progress() -> None:
+                        """Update the progress indicator with values from the queue."""
+                        if not progress_queue.empty():
+                            progress = progress_queue.get()
+                            download_item_status.set_text(
+                                progress.status
+                                if progress.status is not DownloadProgressState.DOWNLOADING
+                                or progress.total_artifact_index is None
+                                else (
+                                    f"Downloading artifact {progress.total_artifact_index + 1} "
+                                    f"of {progress.total_artifact_count}"
+                                )
+                            )
+                            download_item_progress.set_value(progress.item_progress_normalized)
+                            if progress.status is DownloadProgressState.DOWNLOADING:
+                                if progress.artifact_path:
+                                    download_artifact_status.set_text(str(progress.artifact_path))
+                                download_artifact_status.set_visibility(True)
+                                download_artifact_progress.set_value(progress.artifact_progress_normalized)
+                                download_artifact_progress.set_visibility(True)
+
+                    ui.timer(0.1, update_download_progress)
+                    try:
+                        download_item_status.set_visibility(True)
+                        download_item_progress.set_visibility(True)
+                        await nicegui_run.io_bound(
+                            Service.application_run_download_static,
+                            progress=DownloadProgress(),
+                            run_id=run.application_run_id,
+                            destination_directory=Path(selected_folder.value),
+                            wait_for_completion=True,
+                            download_progress_queue=progress_queue,
+                        )
+                    except ValueError as e:
+                        download_item_status.set_visibility(False)
+                        download_item_progress.set_visibility(False)
+                        download_artifact_status.set_visibility(False)
+                        download_artifact_progress.set_visibility(False)
+                        ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
+                        return
+                    download_item_status.set_visibility(False)
+                    download_item_progress.set_visibility(False)
+                    download_artifact_status.set_visibility(False)
+                    download_artifact_progress.set_visibility(False)
+                    ui.notify("Download completed.", type="positive")
+
+                with ui.row(align_items="end").classes("w-full"):
+                    ui.button("Download", icon="cloud_download", on_click=start_download).props("color=primary").mark(
+                        "DIALOG_BUTTON_DOWNLOAD_RUN"
+                    )
+                    ui.button("Close", on_click=download_run_dialog.close, color="secondary").mark(
+                        "DIALOG_BUTTON_DOWNLOAD_CLOSE"
+                    )
 
             with ui.dialog() as qupath_project_create_dialog, ui.card().style(WIDTH_1200px):
                 ui.button("Select QuPath folder")
@@ -963,7 +1096,9 @@ class PageBuilder(BasePageBuilder):
                             icon="analytics",
                             on_click=lambda: ui.navigate.to(f"/notebook/{run.application_run_id}"),
                         )
-                    ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
+                    ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open).mark(
+                        "BUTTON_DOWNLOAD_RUN"
+                    )
 
             if run_data:
                 with ui.card():

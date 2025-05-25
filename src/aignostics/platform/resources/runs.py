@@ -20,6 +20,9 @@ from aignx.codegen.models import (
     RunCreationResponse,
 )
 from aignx.codegen.models import (
+    ItemResultReadResponse as ItemResultData,
+)
+from aignx.codegen.models import (
     RunReadResponse as ApplicationRunData,
 )
 from jsonschema.exceptions import ValidationError
@@ -106,11 +109,11 @@ class ApplicationRun:
         """
         self._api.cancel_application_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
 
-    def results(self) -> t.Iterator[ItemResultReadResponse]:
+    def results(self) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
 
         Returns:
-            list[ItemResultReadResponse]: A list of item results.
+            list[ItemResultData]: A list of item results.
 
         Raises:
             Exception: If the API request fails.

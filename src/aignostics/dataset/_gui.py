@@ -147,7 +147,6 @@ class PageBuilder(BasePageBuilder):
                         False,
                     )
                 except ValueError as e:
-                    ui.label("bla")
                     nicegui.ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
                     download_form.download_button.visible = True
                     download_form.download_progress.visible = False

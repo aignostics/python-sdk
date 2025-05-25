@@ -8,6 +8,7 @@ from typing import Any, Literal
 from aignostics.platform import (
     ApplicationRun,
     ApplicationRunData,
+    ApplicationRunStatus,
 )
 from aignostics.utils import console, get_logger
 
@@ -229,3 +230,36 @@ def read_metadata_csv_to_dict(
         logger.warning("Failed to parse metadata CSV file '%s': %s", metadata_csv_file, e)
         console.print(f"[warning]Warning:[/warning] Failed to parse metadata CSV file '{metadata_csv_file}': {e}")
         return None
+
+
+def application_run_status_to_str(
+    status: ApplicationRunStatus,
+) -> str:
+    """Convert application status to a human-readable string.
+
+    Args:
+        status (ApplicationRunStatus): The application status
+
+    Raises:
+        RuntimeError: If the status is invalid or unknown
+
+    Returns:
+        str: Human-readable string representation of the status
+    """
+    status_mapping = {
+        ApplicationRunStatus.CANCELED_SYSTEM: "canceled by platform",
+        ApplicationRunStatus.CANCELED_USER: "canceled by user",
+        ApplicationRunStatus.COMPLETED: "completed",
+        ApplicationRunStatus.COMPLETED_WITH_ERROR: "completed with error",
+        ApplicationRunStatus.RECEIVED: "received by platform",
+        ApplicationRunStatus.REJECTED: "rejected by platform",
+        ApplicationRunStatus.RUNNING: "running on platform",
+        ApplicationRunStatus.SCHEDULED: "scheduled for processing",
+    }
+
+    if status in status_mapping:
+        return status_mapping[status]
+
+    message = f"Unknown application status: {status.value}"
+    logger.error(message)
+    raise RuntimeError(message)

@@ -106,7 +106,7 @@ def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog, tmpdir) 
     )
 
 
-def test_cli_aignostics_download_sample(runner: CliRunner, tmpdir) -> None:
+def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path) -> None:
     """Check download functionality with dry-run option."""
     result = runner.invoke(
         cli,
@@ -115,7 +115,7 @@ def test_cli_aignostics_download_sample(runner: CliRunner, tmpdir) -> None:
             "aignostics",
             "download",
             "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
-            str(tmpdir),
+            str(tmp_path),
         ],
     )
     assert result.exit_code == 0
@@ -126,6 +126,6 @@ def test_cli_aignostics_download_sample(runner: CliRunner, tmpdir) -> None:
     assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout
 
     # Verify the file exists in the tmpdir
-    expected_file = Path(tmpdir) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+    expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
     assert expected_file.exists(), f"Expected file {expected_file} not found"
     assert expected_file.stat().st_size == 14681750

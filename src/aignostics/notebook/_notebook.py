@@ -36,14 +36,14 @@ def _():
     import matplotlib.pyplot as plt
     from cloudpathlib import GSPath
     from dotenv import load_dotenv
-    from aignostics.dataset._idc_index import IDCClient
+    from aignostics import dataset
     from wsidicom import WsiDicom
 
     load_dotenv()
 
     os.environ
 
-    print(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS2", "bla"))
+    print(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "default"))
 
     print(Path.cwd())
 
@@ -70,8 +70,8 @@ def _():
             restrict_navigation=True,
         )
     ])  # type: ignore
-    return Path, WsiDicom, index, mo, plt
-
+    return Path, WsiDicom, dataset, mo, plt
+ex
 
 @app.cell
 def _(Path, mo):
@@ -87,8 +87,8 @@ def _(Path, mo):
 
 
 @app.cell
-def _(index):
-    idc_client = IDCClient()  # set-up idc_client
+def _(dataset):
+    idc_client = dataset.IDCClient()  # set-up idc_client
     idc_client.fetch_index("sm_instance_index")
     return (idc_client,)
 

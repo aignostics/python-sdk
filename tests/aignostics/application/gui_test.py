@@ -7,16 +7,19 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from nicegui.html import mark
 from nicegui.testing import User
 from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
+from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import get_logger, gui_register_pages
 
 logger = get_logger(__name__)
 
 HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
+HETA_APPLICATION_ID = "he-tme"
 
 
 @pytest.fixture
@@ -88,6 +91,9 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     """Test that the user sees the index page, and sees the intro."""
     gui_register_pages()
 
+    latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
+    latest_version_id = latest_version.application_version_id
+
     # Submit run
     csv_content = (
         "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
@@ -96,12 +102,13 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_VERSION_ID, str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
     assert result.exit_code == 0
 
     # Extract the run ID from the output
-    run_id_match = re.search(r"Application run `([0-9a-f-]+)`", result.output)
-    assert run_id_match is not None, f"Could not extract run ID from output: {result.output}"
+    output = result.output.replace("\n", "")
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+    assert run_id_match is not None, f"Could not extract run ID from output: {output}"
     run_id = run_id_match.group(1)
 
     # Run shown in he GUI
@@ -113,8 +120,8 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
 
     # Navigate to the extracted run ID
     await user.open(f"/application/run/{run_id}")
-    await user.should_see(f"Run of {HETA_APPLICATION_VERSION_ID}")
-    await user.should_see(f"Application Version: {HETA_APPLICATION_VERSION_ID}")
+    await user.should_see(f"Run of {latest_version_id}")
+    await user.should_see(f"Application Version: {latest_version_id}")
     user.should_see("Status: running")
     user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
     await _assert_notified(user, f"Canceling application run with id '{run_id}' ...")
@@ -206,3 +213,24 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
         await _assert_notified(user, "Canceling application run with id")
         await _assert_notified(user, "Application run cancelled!")
         await user.should_see("Status: canceled_user")
+
+
+async def test_gui_cli_run_download(user: User, runner: CliRunner, tmp_path: Path) -> None:
+    """Test that the user can download a run."""
+    gui_register_pages()
+
+    latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
+    latest_version_id = latest_version.application_version_id
+    runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+
+    if not runs:
+        pytest.fail("No completed runs found, please run the test first.")
+    run = runs[0]
+    print(f"Found existing run: {run.application_run_id}, status: {run.status}")
+    await user.open(f"/application/run/{run.application_run_id}")
+    await user.should_see(f"Run of {latest_version_id}")
+
+    user.find(marker="BUTTON_DOWNLOAD_RUN").click()
+    await user.should_see(mark("DIALOG_BUTTON_DOWNLOAD_RUN"))
+    user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
+    await _assert_notified(user, "Download completed.", 30)

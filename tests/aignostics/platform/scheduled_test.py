@@ -15,6 +15,7 @@ from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 from aignostics import platform
 from aignostics.platform.resources.runs import ApplicationRun
 
+TEST_APPLICATION_VERSION_ID = "two-task-dummy:v0.35.0"
 HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
 
 
@@ -107,7 +108,7 @@ def three_spots_payload_for_dummy_0_35_0() -> list[platform.InputItem]:
 @pytest.mark.parametrize(
     ("timeout", "application_version_id", "payload"),
     [
-        (240, "two-task-dummy:v0.35.0", three_spots_payload_for_dummy_0_35_0()),
+        (240, TEST_APPLICATION_VERSION_ID, three_spots_payload_for_dummy_0_35_0()),
         (3600, HETA_APPLICATION_VERSION_ID, single_spot_payload_heta_0_51_0()),
     ],
 )

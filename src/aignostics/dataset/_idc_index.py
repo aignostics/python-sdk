@@ -21,12 +21,13 @@ import requests
 from packaging.version import Version
 from tqdm import tqdm
 
+from aignostics.utils import get_logger
+
 aws_endpoint_url = "https://s3.amazonaws.com"
 gcp_endpoint_url = "https://storage.googleapis.com"
 asset_endpoint_url = f"https://github.com/ImagingDataCommons/idc-index-data/releases/download/{idc_index_data.__version__}"
 
-logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # TODO(Helmut): Clean solution for no-verify-ssl
  

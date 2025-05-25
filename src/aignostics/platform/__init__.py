@@ -12,6 +12,8 @@ from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
 from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import ItemCreationRequest as InputItem
+from aignx.codegen.models import ItemResultReadResponse as ItemResult
+from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifact
 from aignx.codegen.models import RunReadResponse as ApplicationRunData
 
 from ._client import Client
@@ -77,12 +79,15 @@ __all__ = [
     "ApplicationRun",
     "ApplicationRunData",
     "ApplicationRunStatus",
+    "ApplicationRunStatus",
     "ApplicationVersion",
     "Client",
     "InputArtifact",
     "InputItem",
+    "ItemResult",
     "ItemStatus",
     "NotFoundException",
+    "OutputArtifact",
     "Service",
     "Settings",
     "calculate_file_crc32c",
