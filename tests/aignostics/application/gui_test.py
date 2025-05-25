@@ -7,7 +7,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from nicegui.html import mark
 from nicegui.testing import User
 from typer.testing import CliRunner
 
@@ -26,6 +25,25 @@ HETA_APPLICATION_ID = "he-tme"
 def runner() -> CliRunner:
     """Provide a CLI test runner fixture."""
     return CliRunner()
+
+
+def _print_directory_structure(path: Path, step: str | None) -> None:
+    if step is not None:
+        print(f"\n==> Directory structure of '{path}' after step '{step}':")
+    else:
+        print(f"\n==> Directory structure of '{path}':")
+    for root, dirs, files in Path(path).walk():
+        rel_path = root.relative_to(path) if root != path else Path()
+        print(f"Directory: {rel_path}")
+        for directory in dirs:
+            print(f"  Dir: {directory}")
+        for file in files:
+            file_path = root / file
+            file_size = file_path.stat().st_size
+            file_size_human = (
+                f"{file_size / (1024 * 1024):.2f} MB" if file_size > 1024 * 1024 else f"{file_size / 1024:.2f} KB"
+            )
+            print(f"  File: {file} ({file_size_human}, {file_size} bytes)")
 
 
 async def _assert_notified(user: User, expected_notification: str, wait_seconds=5):
@@ -148,8 +166,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
             ],
         )
         assert result.exit_code == 0
-        assert "Successfully downloaded" in result.stdout
-        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout
+        assert "Successfully downloaded" in result.stdout.replace("\n", "")
+        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout.replace("\n", "")
         expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
         assert expected_file.exists(), f"Expected file {expected_file} not found"
         assert expected_file.stat().st_size == 14681750
@@ -215,22 +233,50 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
         await user.should_see("Status: canceled_user")
 
 
-async def test_gui_cli_run_download(user: User, runner: CliRunner, tmp_path: Path) -> None:
+async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path) -> None:
     """Test that the user can download a run."""
-    gui_register_pages()
+    with patch("pathlib.Path.home", return_value=tmp_path):
+        gui_register_pages()
 
-    latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
-    latest_version_id = latest_version.application_version_id
-    runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
+        latest_version_id = latest_version.application_version_id
+        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
 
-    if not runs:
-        pytest.fail("No completed runs found, please run the test first.")
-    run = runs[0]
-    print(f"Found existing run: {run.application_run_id}, status: {run.status}")
-    await user.open(f"/application/run/{run.application_run_id}")
-    await user.should_see(f"Run of {latest_version_id}")
+        if not runs:
+            pytest.fail("No completed runs found, please run the test first.")
+        run = runs[0]
 
-    user.find(marker="BUTTON_DOWNLOAD_RUN").click()
-    await user.should_see(mark("DIALOG_BUTTON_DOWNLOAD_RUN"))
-    user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
-    await _assert_notified(user, "Download completed.", 30)
+        # Step 1: Go to latest completed run
+        print(f"Found existing run: {run.application_run_id}, status: {run.status}")
+        await user.open(f"/application/run/{run.application_run_id}")
+        await user.should_see(f"Run of {latest_version_id}")
+
+        # Step 2: Open Result Download dialog
+        user.find(marker="BUTTON_DOWNLOAD_RUN").click()
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_HOME")
+
+        # Step 3: Select Home
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_HOME").click()
+
+        # Step 3: Trigger Download
+        await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")
+        user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
+
+        # Check: Download completed
+        await _assert_notified(user, "Download completed.", 30)
+        _print_directory_structure(tmp_path, "execute")
+        run_out_dir = tmp_path / run.application_run_id
+        assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
+        # Find any subdirectory in the run_out_dir
+        subdirs = [d for d in run_out_dir.iterdir() if d.is_dir()]
+        assert len(subdirs) > 0, f"Expected at least one subdirectory in {run_out_dir}, but found none"
+
+        # Take the first subdirectory found (item_out_dir)
+        item_out_dir = subdirs[0]
+        print(f"Found subdirectory: {item_out_dir.name}")
+
+        # Check for files in the item directory
+        files_in_item_dir = list(item_out_dir.glob("*"))
+        assert len(files_in_item_dir) == 9, (
+            f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: {[f.name for f in files_in_item_dir]}"
+        )

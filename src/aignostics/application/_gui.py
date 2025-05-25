@@ -10,6 +10,7 @@ from typing import Any
 from urllib.parse import quote as urlencode
 
 from aignostics.gui import frame
+from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker, get_logger
 
 from ._service import DownloadProgress, DownloadProgressState, Service
@@ -1082,7 +1083,7 @@ class PageBuilder(BasePageBuilder):
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-            if run_data and run_data.status.value == "completed":
+            if run_data and run_data.status.value == ApplicationRunStatus.COMPLETED:
                 with ui.row().classes("w-full justify-end"):
                     if find_spec("paquo"):
                         ui.button(

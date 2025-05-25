@@ -44,31 +44,31 @@ def test_cli_application_list(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list"])
     assert result.exit_code == 0
-    assert HETA_APPLICATION_ID in result.output
-    assert TEST_APPLICATION_ID in result.output
+    assert HETA_APPLICATION_ID in result.output.replace("\n", "")
+    assert TEST_APPLICATION_ID in result.output.replace("\n", "")
 
 
 def test_cli_application_list_verbose(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list", "--verbose"])
     assert result.exit_code == 0
-    assert HETA_APPLICATION_ID in result.output
-    assert "Artifacts: 1 input(s), 6 output(s)" in result.output
-    assert TEST_APPLICATION_ID in result.output
+    assert HETA_APPLICATION_ID in result.output.replace("\n", "")
+    assert "Artifacts: 1 input(s), 6 output(s)" in result.output.replace("\n", "")
+    assert TEST_APPLICATION_ID in result.output.replace("\n", "")
 
 
 def test_cli_application_describe(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID])
     assert result.exit_code == 0
-    assert "tissue_qc:geojson_polygons" in result.output
+    assert "tissue_qc:geojson_polygons" in result.output.replace("\n", "")
 
 
 def test_cli_application_describe_not_found(runner: CliRunner) -> None:
     """Check application describe command fails as expected on unknown upplication."""
     result = runner.invoke(cli, ["application", "describe", "unknown"])
     assert result.exit_code == 2
-    assert "Application with ID 'unknown' not found." in result.output
+    assert "Application with ID 'unknown' not found." in result.output.replace("\n", "")
 
 
 def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner, tmp_path: Path) -> None:
@@ -101,13 +101,13 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     # Step 3: Upload the file to the platform
     result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 0
-    assert "Upload completed." in result.output
+    assert "Upload completed." in result.output.replace("\n", "")
 
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 2
-    assert "Invalid metadata for artifact `user_slide`" in result.output
-    assert "8.065226874391001 is greater than" in result.output
+    assert "Invalid metadata for artifact `user_slide`" in result.output.replace("\n", "")
+    assert "8.065226874391001 is greater than" in result.output.replace("\n", "")
 
 
 def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, tmp_path: Path) -> None:
@@ -122,7 +122,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
 
     result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 2
-    assert "Warning: Source file 'missing.file' (row 0) does not exist" in result.output
+    assert "Warning: Source file 'missing.file' (row 0) does not exist" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path) -> None:
@@ -138,7 +138,7 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     result = runner.invoke(cli, ["application", "run", "submit", "wrong:v1.2.3", str(csv_path)])
 
     assert result.exit_code == 1
-    assert "Error: Failed to create run for application version" in result.output
+    assert "Error: Failed to create run for application version" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path) -> None:
@@ -154,7 +154,7 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
 
     assert result.exit_code == 2
-    assert "Invalid platform bucket URL: 'aws://bucket/test'" in result.output
+    assert "Invalid platform bucket URL: 'aws://bucket/test'" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) -> None:
@@ -170,7 +170,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
 
     assert result.exit_code == 2
-    assert "Invalid platform bucket URL: ''" in result.output
+    assert "Invalid platform bucket URL: ''" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, tmp_path: Path) -> None:
@@ -199,34 +199,34 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, 
     # Test the describe command with the extracted run ID
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
-    assert f"Run Details for {run_id}" in describe_result.output
-    assert "Status: running" in describe_result.output
+    assert f"Run Details for {run_id}" in describe_result.output.replace("\n", "")
+    assert "Status: running" in describe_result.output.replace("\n", "")
 
     # Test the download command spots the run is still running
     download_result = runner.invoke(
         cli, ["application", "run", "result", "download", run_id, str(tmp_path), "--no-wait-for-completion"]
     )
     assert download_result.exit_code == 0
-    assert f"Downloaded results of run '{run_id}'" in download_result.output
-    assert "status: running on platform." in download_result.output
+    assert f"Downloaded results of run '{run_id}'" in download_result.output.replace("\n", "")
+    assert "status: running on platform." in download_result.output.replace("\n", "")
 
     # Test the cancel command with the extracted run ID
     cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
     assert cancel_result.exit_code == 0
-    assert f"Run with ID '{run_id}' has been canceled." in cancel_result.output
+    assert f"Run with ID '{run_id}' has been canceled." in cancel_result.output.replace("\n", "")
 
     # Test the describe command with the extracted run ID on canceled run
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
-    assert f"Run Details for {run_id}" in describe_result.output
-    assert "Status: canceled_user" in describe_result.output
+    assert f"Run Details for {run_id}" in describe_result.output.replace("\n", "")
+    assert "Status: canceled_user" in describe_result.output.replace("\n", "")
 
     download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, str(tmp_path)])
     assert download_result.exit_code == 0
 
     # Verify the download message and path
-    assert f"Downloaded results of run '{run_id}'" in download_result.output
-    assert "status: canceled by user." in download_result.output
+    assert f"Downloaded results of run '{run_id}'" in download_result.output.replace("\n", "")
+    assert "status: canceled by user." in download_result.output.replace("\n", "")
 
     # More robust path verification - normalize paths and check if the destination path is mentioned in the output
     normalized_tmp_path = str(Path(tmp_path).resolve())
@@ -246,9 +246,10 @@ def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
-    assert "Application Run IDs:" in result.output
+    output = result.output.replace("\n", "")
+    assert "Application Run IDs:" in output
     # Verify we find a message about the count and that the displayed count is <= 10
-    match = re.search(r"Found \d+ application runs, displayed (\d+)\.", result.output)
+    match = re.search(r"Found \d+ application runs, displayed (\d+)\.", output)
     assert match, "Expected run count message not found"
     displayed_count = int(match.group(1))
     assert displayed_count <= 10, f"Expected displayed count to be <= 10, but got {displayed_count}"
@@ -258,39 +259,38 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
     assert result.exit_code == 0
-    assert "Application Runs:" in result.output
-    assert "Item Status Counts:" in result.output
-    assert re.search(r"Found \d+ application runs, displayed 1\.", result.output), (
-        "Expected run count message not found"
-    )
+    output = result.output.replace("\n", "")
+    assert "Application Runs:" in output
+    assert "Item Status Counts:" in output
+    assert re.search(r"Found \d+ application runs, displayed 1\.", output), "Expected run count message not found"
 
 
 def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
     """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "4711"])
     assert result.exit_code == 1
-    assert "Error: Failed to retrieve run details for ID '4711'" in result.output
+    assert "Error: Failed to retrieve run details for ID '4711'" in result.output.replace("\n", "")
 
 
 def test_cli_run_describe_not_found(runner: CliRunner) -> None:
     """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "00000000000000000000000000000000"])
     assert result.exit_code == 2
-    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output
+    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output.replace("\n", "")
 
 
 def test_cli_run_cancel_invalid_run_id(runner: CliRunner) -> None:
     """Check run cancel command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "cancel", "4711"])
     assert result.exit_code == 1
-    assert "Failed to cancel run with ID '4711'" in result.output
+    assert "Failed to cancel run with ID '4711'" in result.output.replace("\n", "")
 
 
 def test_cli_run_cancel_not_found(runner: CliRunner) -> None:
     """Check run cancel command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "cancel", "00000000000000000000000000000000"])
     assert result.exit_code == 2
-    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output
+    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output.replace("\n", "")
 
 
 def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path) -> None:
@@ -315,7 +315,7 @@ def test_cli_run_result_delete(runner: CliRunner) -> None:
     """Check run result delete command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "result", "delete"])
     assert result.exit_code == 1
-    assert MESSAGE_NOT_YET_IMPLEMENTED in result.output
+    assert MESSAGE_NOT_YET_IMPLEMENTED in result.output.replace("\n", "")
 
 
 @pytest.mark.long_running
@@ -334,8 +334,8 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
     )
     _print_directory_structure(tmp_path, "download")
     assert result.exit_code == 0
-    assert "Successfully downloaded" in result.stdout
-    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout
+    assert "Successfully downloaded" in result.stdout.replace("\n", "")
+    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout.replace("\n", "")
     expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
     assert expected_file.exists(), f"Expected file {expected_file} not found"
     assert expected_file.stat().st_size == 14681750
