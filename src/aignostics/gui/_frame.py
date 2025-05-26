@@ -94,20 +94,11 @@ def frame(  # noqa: PLR0915
                     ui.label("Manage Cloud Bucket").tailwind.font_weight(
                         "bold" if context.client.page.path == "/bucket" else "normal"
                     )
-            with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
-                with ui.item_section().props("avatar"):
-                    ui.icon("settings", color="positive")
-                with ui.item_section():
-                    ui.label("Diagnose System").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/system" else "normal"
-                    )
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("domain")
                 with ui.item_section():
-                    ui.link("Go to Management UI", "https://platform.aignostics.com", new_tab=True).mark(
-                        "LINK_PLATFORM"
-                    )
+                    ui.link("Go to Console", "https://platform.aignostics.com", new_tab=True).mark("LINK_PLATFORM")
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("local_library")
@@ -127,6 +118,13 @@ def frame(  # noqa: PLR0915
                     ui.icon("check_circle")
                 with ui.item_section():
                     ui.link("Platform Status", "https://status.aignostics.com", new_tab=True).mark("LINK_DOCUMENTATION")
+            with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
+                with ui.item_section().props("avatar"):
+                    ui.icon("settings", color="positive")
+                with ui.item_section():
+                    ui.label("Inspector").tailwind.font_weight(
+                        "bold" if context.client.page.path == "/system" else "normal"
+                    )
             with ui.item(on_click=app.shutdown).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("logout", color="negative")

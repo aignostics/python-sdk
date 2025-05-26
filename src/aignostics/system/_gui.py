@@ -27,7 +27,7 @@ class PageBuilder(BasePageBuilder):
         @ui.page("/system")
         async def page_system() -> None:
             """System page."""
-            with frame("System", left_sidebar=False):
+            with frame("Inspector", left_sidebar=False):
                 pass
             ui.label("Health").classes("text-h6")
             properties = {
