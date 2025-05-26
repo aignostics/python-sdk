@@ -700,7 +700,7 @@ class Service(BaseService):
         try:
             details = application_run.details()
         except ApiException as e:
-            if e.status == HTTPStatus.UNPROCESSABLE_CONTENT:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
                 message = f"Run ID '{run_id}' invalid: {e!s}."
                 logger.warning(message)
                 raise ValueError(message) from e
