@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.8..0.2.9) - 2025-05-26
+(https://github.com/aignostics/python-sdk/compare/v0.2.8..v0.2.9) - 2025-05-26
 
 
 - Fail properly when starting GUI while settings not configured - ([b2d534e](https://github.com/aignostics/python-sdk/commit/b2d534e0479ad94f02cdf57c961c7fb3a4145123))
