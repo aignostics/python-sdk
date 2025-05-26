@@ -73,7 +73,6 @@ def application_list(
             console.print(f"[bold]Name:[/bold] {app.name}")
             console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
 
-            # Display available versions
             try:
                 versions = Service().application_versions(app)
             except Exception as e:
@@ -88,12 +87,10 @@ def application_list(
                     console.print(f"  - {version.version} ({version.application_version_id})")
                     console.print(f"    Changelog: {version.changelog}")
 
-                    # Count input and output artifacts
                     num_inputs = len(version.input_artifacts)
                     num_outputs = len(version.output_artifacts)
                     console.print(f"    Artifacts: {num_inputs} input(s), {num_outputs} output(s)")
 
-            # Display description with proper wrapping
             console.print("[bold]Description:[/bold]")
             for line in app.description.strip().split("\n"):
                 console.print(f"  {line}")
@@ -103,7 +100,6 @@ def application_list(
         console.print("[bold]Available Aignostics Applications:[/bold]")
         for app in applications:
             app_count += 1
-            # Get latest version info for this application
             latest_version = Service().application_version_latest(app)
             console.print(
                 f"- [bold]{app.application_id}[/bold] - latest application version id: "
@@ -136,12 +132,10 @@ def application_describe(
     console.print(f"[bold]Name:[/bold] {application.name}")
     console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(application.regulatory_classes)}")
 
-    # Display description with proper wrapping
     console.print("[bold]Description:[/bold]")
     for line in application.description.strip().split("\n"):
         console.print(f"  {line}")
 
-    # Display available versions
     versions = Service().application_versions(application)
     if versions:
         console.print()
@@ -151,14 +145,12 @@ def application_describe(
             console.print(f"  [bold]Version:[/bold] {version.version}")
             console.print(f"  [bold]Changelog:[/bold] {version.changelog}")
 
-            # Display input artifacts
             console.print("  [bold]Input Artifacts:[/bold]")
             for artifact in version.input_artifacts:
                 console.print(f"    - Name: {artifact.name}")
                 console.print(f"      MIME Type: {artifact.mime_type}")
                 console.print(f"      Schema: {artifact.metadata_schema}")
 
-            # Display output artifacts
             console.print("  [bold]Output Artifacts:[/bold]")
             for artifact in version.output_artifacts:
                 console.print(f"    - Name: {artifact.name}")
@@ -502,12 +494,10 @@ def run_list(
             logger.warning(message)
             console.print(message, style="warning")
         else:
-            limit = min(len(runs), limit) if limit is not None else len(runs)
-            console.print(f"Found {len(runs)} application runs, displaying {limit} ...", style="debug")
             print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
-            message = f"Found {len(runs)} application runs, displayed {limit}."
-            logger.info(message)
+            message = f"Listed '{len(runs)}' run(s)."
             console.print(message, style="info")
+            logger.info(message, len(runs))
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
@@ -627,7 +617,6 @@ def result_download(
             highlight=True,
         )
         with Live(panel):
-            # Main download task
             main_task = main_download_progress_ui.add_task(
                 description=progress.status, total=None, extra_description=""
             )
@@ -680,7 +669,6 @@ def result_download(
                         total=float(progress.total_artifact_count) if progress.total_artifact_count else 0.0,
                     )
 
-            # Download with progress tracking
             destination_directory = Service().application_run_download(
                 progress=progress,
                 run_id=run_id,
@@ -691,7 +679,6 @@ def result_download(
                 download_progress_callable=update_progress,
             )
 
-            # Update main task to completed
             main_download_progress_ui.update(main_task, completed=100, total=100)
 
         message = f"Downloaded results of run '{run_id}' to '{destination_directory}'"

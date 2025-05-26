@@ -251,10 +251,10 @@ def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     output = result.output.replace("\n", "")
     assert "Application Run IDs:" in output
     # Verify we find a message about the count and that the displayed count is <= 10
-    match = re.search(r"Found \d+ application runs, displayed (\d+)\.", output)
+    match = re.search(r"Listed '(\d+)' run\(s\)\.", output)
     assert match, "Expected run count message not found"
     displayed_count = int(match.group(1))
-    assert displayed_count <= 10, f"Expected displayed count to be <= 10, but got {displayed_count}"
+    assert displayed_count <= 10, f"Expected listed count to be <= 10, but got {displayed_count}"
 
 
 def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
@@ -264,7 +264,10 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     output = result.output.replace("\n", "")
     assert "Application Runs:" in output
     assert "Item Status Counts:" in output
-    assert re.search(r"Found \d+ application runs, displayed 1\.", output), "Expected run count message not found"
+    match = re.search(r"Listed '(\d+)' run\(s\)\.", output)
+    assert match, "Expected run count message not found"
+    displayed_count = int(match.group(1))
+    assert displayed_count == 1, f"Expected listed count to be == 1, but got {displayed_count}"
 
 
 def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
