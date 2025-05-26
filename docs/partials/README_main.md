@@ -88,7 +88,7 @@ uvx aignostics application run result download APPLICATION_RUN_ID
 ```
 
 For convenience the the `application run execute` command combines preparation, upload, submission and download.
-The below is equivalent to the above, while adding additionally required metadata using a mapping
+The below is equivalent to the above, while adding additionally required metadata using a mapping:
 
 ```shell
 uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 data/
@@ -106,7 +106,7 @@ uvx aignostics application run execute --help   # show help for another command
 ```
 
 Check out our
-[CLI reference documentation](https://aignostics.readthedocs.io/en/latest/reference.html#cli)
+[CLI reference documentation](https://aignostics.readthedocs.io/en/latest/cli_reference.html)
 to learn about all commands and options available.
 
 ### Example Notebooks: Interact with the Aignostics Platform from your Python Notebook environment
