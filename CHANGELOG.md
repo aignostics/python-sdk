@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.2..0.2.3) - 2025-05-26
+(https://github.com/aignostics/python-sdk/compare/v0.2.3..0.2.4) - 2025-05-26
+
+
+- Fix test - ([903f9c8](https://github.com/aignostics/python-sdk/commit/903f9c8adcd7e3c96915edb742b3e1c609440b0a))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.2..v0.2.3) - 2025-05-26
 
 
 - Additional pages for read the docs (rtd) - ([c419e12](https://github.com/aignostics/python-sdk/commit/c419e1205a01f8e15700a5ce0bcfc6eeb0c5c056))
