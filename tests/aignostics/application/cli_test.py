@@ -1,5 +1,6 @@
 """Tests to verify the CLI functionality of the appliction module."""
 
+import os
 import re
 from pathlib import Path
 
@@ -26,7 +27,8 @@ def _print_directory_structure(path: Path, step: str | None) -> None:
         print(f"\n==> Directory structure of '{path}' after step '{step}':")
     else:
         print(f"\n==> Directory structure of '{path}':")
-    for root, dirs, files in Path(path).walk():
+    for root_str, dirs, files in os.walk(path):
+        root = Path(root_str)
         rel_path = root.relative_to(path) if root != path else Path()
         print(f"Directory: {rel_path}")
         for directory in dirs:
