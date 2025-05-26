@@ -83,7 +83,7 @@ async def test_gui_index(user: User) -> None:
         (
             "he-tme",
             "Atlas H&E-TME",
-            "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded)  "
+            "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) "
             "tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the "
             "tumor microenvironment.",
         ),
