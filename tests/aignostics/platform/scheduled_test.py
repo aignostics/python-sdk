@@ -172,6 +172,6 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
             file_ending = platform.mime_type_to_file_ending(artifact.mime_type)
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), f"Artifact {artifact} was not downloaded"
-            checksum = artifact.metadata["checksum_base64_crc32c"]
+            checksum = artifact.metadata["checksum_crc32c"]
             file_checksum = platform.calculate_file_crc32c(file_path)
             assert file_checksum == checksum, f"Metadata checksum != file checksum {checksum} <> {file_checksum}"
