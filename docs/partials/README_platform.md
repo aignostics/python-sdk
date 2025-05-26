@@ -2,7 +2,7 @@
 
 ### Overview
 
-The Aignostics Platform is a comprehensive cloud-based service that allows organizations to leverage advanced computational pathology applications without the need for specialized expertise or complex infrastructure. Via its API it provides a standardized, secure interface for accessing Aignostics' portfolio of advanced computational pathology applications. These applications perform machine learning based tissue and cell analysis on histopathology slides, delivering quantitative measurements, visual representations, and detailed statistical data.
+The **Aignostics Platform** is a comprehensive cloud-based service that allows organizations to leverage advanced computational pathology applications without the need for specialized expertise or complex infrastructure. Via its API it provides a standardized, secure interface for accessing Aignostics' portfolio of advanced computational pathology applications. These applications perform machine learning based tissue and cell analysis on histopathology slides, delivering quantitative measurements, visual representations, and detailed statistical data.
 
 ![Overview](https://raw.githubusercontent.com/aignostics/python-sdk/main/platform.png)
 
@@ -28,9 +28,10 @@ To start using the Aignostics Platform and its advanced applications, your organ
 > 3. We can integrate with your IDP system (e.g. SAML, OIDC) for user authentication. Please contact us to discuss the integration.
 > 4. Registering your organistation typically takes 2 business days depending on the complexity of the signed business agreement and specific requirements.
 
-### Aignostics Console
+### Console
 
-The web-based [*Console*](https://platform.aignostics.com) of the Aignostics Platform is a user-friendly interface that allows you to manage your organization, applications, quotas, and users. It provides a centralized location for accessing all features and functionalities of the platform. 
+The web-based [*Aignostics Console*](https://platform.aignostics.com) is a user-friendly interface that allows you to 
+manage your organization, applications, quotas, and users registered with the Aignostics Platform.
 
 1. The Console is available to users registered for your organisation to manage their profile and monitor usage of their quota.
 2. Administrators of your organization can invite additional users, manage the organisation and user specific quotas and monitor usage.
@@ -91,7 +92,7 @@ Visit the [Console](https://platform.aignostics.com) to check your current quota
 
 ### API
 
-The Aignostics Platform API is a RESTful web service that allows you to interact with the platform programmatically. It provides endpoints for submitting whole slide images (WSIs) for analysis, checking the status of application runs, and retrieving results.
+The **Aignostics Platform API** is a RESTful web service that allows you to interact with the platform programmatically. It provides endpoints for submitting whole slide images (WSIs) for analysis, checking the status of application runs, and retrieving results.
 
 You can interact with the API using the Python client, which is a wrapper around the RESTful API. The Python client simplifies the process of making requests to the API and handling responses. It also provides convenient methods for uploading WSIs, checking application run status, and downloading results.
 

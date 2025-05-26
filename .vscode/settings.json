@@ -44,7 +44,9 @@
         "codegen/**",
         "_notebook.py",
         "e2e.py",
-        "src/aignostics/dicom/_handler.py"
+        "src/aignostics/wsi/_pydicom_handler.py",
+        "src/aignostics/dataset/_idc_index.py",
+        "src/aignostics/notebook/_notebook.py"
     ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.testing.unittestEnabled": false,

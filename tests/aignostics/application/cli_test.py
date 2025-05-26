@@ -11,7 +11,8 @@ from aignostics.cli import cli
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
-APPLICATION_VERSION_ID = "he-tme:v0.50.0"
+HETA_APPLICATION_ID = "he-tme"
+TEST_APPLICATION_ID = "test-app"
 
 
 @pytest.fixture
@@ -20,35 +21,54 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
+def _print_directory_structure(path: Path, step: str | None) -> None:
+    if step is not None:
+        print(f"\n==> Directory structure of '{path}' after step '{step}':")
+    else:
+        print(f"\n==> Directory structure of '{path}':")
+    for root, dirs, files in Path(path).walk():
+        rel_path = root.relative_to(path) if root != path else Path()
+        print(f"Directory: {rel_path}")
+        for directory in dirs:
+            print(f"  Dir: {directory}")
+        for file in files:
+            file_path = root / file
+            file_size = file_path.stat().st_size
+            file_size_human = (
+                f"{file_size / (1024 * 1024):.2f} MB" if file_size > 1024 * 1024 else f"{file_size / 1024:.2f} KB"
+            )
+            print(f"  File: {file} ({file_size_human}, {file_size} bytes)")
+
+
 def test_cli_application_list(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list"])
     assert result.exit_code == 0
-    assert "he-tme" in result.output
-    assert "test-app" in result.output
+    assert HETA_APPLICATION_ID in result.output.replace("\n", "")
+    assert TEST_APPLICATION_ID in result.output.replace("\n", "")
 
 
 def test_cli_application_list_verbose(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list", "--verbose"])
     assert result.exit_code == 0
-    assert "he-tme" in result.output
-    assert "Artifacts: 1 input(s), 6 output(s)" in result.output
-    assert "test-app" in result.output
+    assert HETA_APPLICATION_ID in result.output.replace("\n", "")
+    assert "Artifacts: 1 input(s), 6 output(s)" in result.output.replace("\n", "")
+    assert TEST_APPLICATION_ID in result.output.replace("\n", "")
 
 
 def test_cli_application_describe(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
-    result = runner.invoke(cli, ["application", "describe", "he-tme"])
+    result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID])
     assert result.exit_code == 0
-    assert "tissue_qc:geojson_polygons" in result.output
+    assert "tissue_qc:geojson_polygons" in result.output.replace("\n", "")
 
 
 def test_cli_application_describe_not_found(runner: CliRunner) -> None:
     """Check application describe command fails as expected on unknown upplication."""
     result = runner.invoke(cli, ["application", "describe", "unknown"])
-    assert result.exit_code == 0
-    assert "Application with ID 'unknown' not found." in result.output
+    assert result.exit_code == 2
+    assert "Application with ID 'unknown' not found." in result.output.replace("\n", "")
 
 
 def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner, tmp_path: Path) -> None:
@@ -57,137 +77,156 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     source_directory = Path(__file__).parent.parent.parent / "resources" / "run"
     metadata_csv = tmp_path / "metadata.csv"
     result = runner.invoke(
-        cli, ["application", "run", "prepare", APPLICATION_VERSION_ID, str(metadata_csv), str(source_directory)]
+        cli, ["application", "run", "prepare", HETA_APPLICATION_ID, str(metadata_csv), str(source_directory)]
     )
     assert result.exit_code == 0
     assert metadata_csv.exists()
     assert (
-        metadata_csv.read_text() == "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+        metadata_csv.read_text()
+        == "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         "file_size_human;file_upload_progress;platform_bucket_url\n"
-        f"small-pyramidal;{source_directory / 'small-pyramidal.dcm'};"
-        "EfIIhA==;8.065226874391001;2054;1529;H&E;;;0.00 GB;0.0;\n"
+        f"{source_directory / 'small-pyramidal.dcm'};{source_directory / 'small-pyramidal.dcm'};"
+        "EfIIhA==;8.065226874391001;2054;1529;;;;0.00 GB;0.0;\n"
     )
 
-    # Step 2: Simulate user now upading the metadata.csv file, byt setting the tissue_type and disease to "lung"
+    # Step 2: Simulate user now upading the metadata.csv file, by setting the tissue to "LUNG"
+    # and disease to "LUNG_CANCER"
     metadata_csv.write_text(
-        "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         "file_size_human;file_upload_progress;platform_bucket_url\n"
-        f"small-pyramidal;{source_directory / 'small-pyramidal.dcm'};"
-        "EfIIhA==;8.065226874391001;2054;1529;H&E;lung;lung;0.00 GB;0.0;\n"
+        f"{source_directory / 'small-pyramidal.dcm'};{source_directory / 'small-pyramidal.dcm'};"
+        "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;0.00 GB;0.0;\n"
     )
 
     # Step 3: Upload the file to the platform
-    result = runner.invoke(cli, ["application", "run", "upload", APPLICATION_VERSION_ID, str(metadata_csv)])
+    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 0
-    assert "Upload completed." in result.output
+    assert "Upload completed." in result.output.replace("\n", "")
 
     # Step 3: Submit the run from the metadata file
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(metadata_csv)])
-    assert result.exit_code == 0
-    assert "Invalid metadata for artifact `user_slide`" in result.output
-    assert "8.065226874391001 is greater than" in result.output
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
+    assert result.exit_code == 2
+    assert "Invalid metadata for artifact `user_slide`" in result.output.replace("\n", "")
+    assert "8.065226874391001 is greater than" in result.output.replace("\n", "")
 
 
 def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, tmp_path: Path) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     metadata_csv = tmp_path / "metadata.csv"
     metadata_csv.write_text(
-        "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         "file_size_human;file_upload_progress;platform_bucket_url\n"
         "small-pyramidal;missing.file;"
-        "EfIIhA==;8.065226874391001;2054;1529;H&E;lung;lung;0.00 GB;0.0;\n"
+        "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;0.00 GB;0.0;\n"
     )
 
-    result = runner.invoke(cli, ["application", "run", "upload", APPLICATION_VERSION_ID, str(metadata_csv)])
-    assert result.exit_code == 0
-    assert "Warning: Source file 'missing.file' (row 0) does not exist" in result.output
+    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
+    assert result.exit_code == 2
+    assert "Warning: Source file 'missing.file' (row 0) does not exist" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+    csv_content = (
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    )
     csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;lung;lung;;;gs://bucket/test"
+    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", "wrong:v0.45.0", str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", "wrong:v1.2.3", str(csv_path)])
 
-    assert result.exit_code == 0
-    assert "Error: Failed to create run for application version" in result.output
+    assert result.exit_code == 1
+    assert "Error: Failed to create run for application version" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+    csv_content = (
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    )
     csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;lung;lung;;;aws://bucket/test"
+    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;aws://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
 
-    assert result.exit_code == 0
-    assert "Invalid platform bucket URL: 'aws://bucket/test'" in result.output
+    assert result.exit_code == 2
+    assert "Invalid platform bucket URL: 'aws://bucket/test'" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+    csv_content = (
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    )
     csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;lung;lung;;;"
+    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
 
-    assert result.exit_code == 0
-    assert "Invalid platform bucket URL: ''" in result.output
+    assert result.exit_code == 2
+    assert "Invalid platform bucket URL: ''" in result.output.replace("\n", "")
 
 
 def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command runs successfully."""
-    csv_content = "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+    csv_content = (
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    )
     csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;lung;lung;;;gs://bucket/test"
+    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", APPLICATION_VERSION_ID, str(csv_path)])
-
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+    output = result.output.replace("\n", "")
     assert result.exit_code == 0
     assert re.search(
-        r"submitted run with id 'Application run `[0-9a-f-]+`:\s+running, 1 items - \(1/0/0\)", result.output
-    ), f"Output '{result.output}' doesn't match expected pattern"
+        r"Submitted run with id '[0-9a-f-]+' for '",
+        output,
+    ), f"Output '{output}' doesn't match expected pattern"
 
     # Extract run ID from the output
-    run_id_match = re.search(r"submitted run with id 'Application run `([0-9a-f-]+)`", result.output)
-    assert run_id_match, "Failed to extract run ID from output"
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+    assert run_id_match, f"Failed to extract run ID from output '{output}'"
     run_id = run_id_match.group(1)
 
     # Test the describe command with the extracted run ID
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
-    assert f"Run Details for {run_id}" in describe_result.output
-    assert "Status: running" in describe_result.output
+    assert f"Run Details for {run_id}" in describe_result.output.replace("\n", "")
+    assert "Status: running" in describe_result.output.replace("\n", "")
+
+    # Test the download command spots the run is still running
+    download_result = runner.invoke(
+        cli, ["application", "run", "result", "download", run_id, str(tmp_path), "--no-wait-for-completion"]
+    )
+    assert download_result.exit_code == 0
+    assert f"Downloaded results of run '{run_id}'" in download_result.output.replace("\n", "")
+    assert "status: running on platform." in download_result.output.replace("\n", "")
 
     # Test the cancel command with the extracted run ID
     cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
     assert cancel_result.exit_code == 0
-    assert f"Run with ID '{run_id}' has been canceled." in cancel_result.output
+    assert f"Run with ID '{run_id}' has been canceled." in cancel_result.output.replace("\n", "")
 
     # Test the describe command with the extracted run ID on canceled run
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
-    assert f"Run Details for {run_id}" in describe_result.output
-    assert "Status: canceled_user" in describe_result.output
+    assert f"Run Details for {run_id}" in describe_result.output.replace("\n", "")
+    assert "Status: canceled_user" in describe_result.output.replace("\n", "")
 
     download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, str(tmp_path)])
     assert download_result.exit_code == 0
 
     # Verify the download message and path
-    expected_message = f"Downloaded results for run with ID '{run_id}' to"
-    assert expected_message in download_result.output
+    assert f"Downloaded results of run '{run_id}'" in download_result.output.replace("\n", "")
+    assert "status: canceled by user." in download_result.output.replace("\n", "")
 
     # More robust path verification - normalize paths and check if the destination path is mentioned in the output
     normalized_tmp_path = str(Path(tmp_path).resolve())
@@ -199,17 +238,18 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, 
     )
 
     download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, "/4711"])
-    assert download_result.exit_code == 0
-    assert "Failed to create destination directory '/4711'" in download_result.output
+    assert download_result.exit_code == 2
+    assert f"Failed to create destination directory '/4711/{run_id}'" in download_result.output.replace("\n", "")
 
 
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
-    assert "Application Run IDs:" in result.output
+    output = result.output.replace("\n", "")
+    assert "Application Run IDs:" in output
     # Verify we find a message about the count and that the displayed count is <= 10
-    match = re.search(r"Found \d+ application runs, displayed (\d+)\.", result.output)
+    match = re.search(r"Found \d+ application runs, displayed (\d+)\.", output)
     assert match, "Expected run count message not found"
     displayed_count = int(match.group(1))
     assert displayed_count <= 10, f"Expected displayed count to be <= 10, but got {displayed_count}"
@@ -219,53 +259,45 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
     assert result.exit_code == 0
-    assert "Application Runs:" in result.output
-    assert "Item Status Counts:" in result.output
-    assert re.search(r"Found \d+ application runs, displayed 1\.", result.output), (
-        "Expected run count message not found"
-    )
+    output = result.output.replace("\n", "")
+    assert "Application Runs:" in output
+    assert "Item Status Counts:" in output
+    assert re.search(r"Found \d+ application runs, displayed 1\.", output), "Expected run count message not found"
 
 
 def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
     """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "4711"])
-    assert result.exit_code == 0
-    assert "Error: Failed to retrieve run details for ID '4711'" in result.output
+    assert result.exit_code == 1
+    assert "Error: Failed to retrieve run details for ID '4711'" in result.output.replace("\n", "")
 
 
 def test_cli_run_describe_not_found(runner: CliRunner) -> None:
     """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "00000000000000000000000000000000"])
-    assert result.exit_code == 0
-    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output
+    assert result.exit_code == 2
+    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output.replace("\n", "")
 
 
 def test_cli_run_cancel_invalid_run_id(runner: CliRunner) -> None:
     """Check run cancel command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "cancel", "4711"])
-    assert result.exit_code == 0
-    assert "Failed to cancel run with ID '4711'" in result.output
+    assert result.exit_code == 1
+    assert "Failed to cancel run with ID '4711'" in result.output.replace("\n", "")
 
 
 def test_cli_run_cancel_not_found(runner: CliRunner) -> None:
     """Check run cancel command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "cancel", "00000000000000000000000000000000"])
-    assert result.exit_code == 0
-    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output
-
-
-def test_cli_run_result_describe(runner: CliRunner) -> None:
-    """Check run result describe command runs successfully."""
-    result = runner.invoke(cli, ["application", "run", "result", "describe"])
-    assert result.exit_code == 0
-    assert MESSAGE_NOT_YET_IMPLEMENTED in result.output
+    assert result.exit_code == 2
+    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output.replace("\n", "")
 
 
 def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path) -> None:
     """Check run result download command fails on invalid uui."""
     result = runner.invoke(cli, ["application", "run", "result", "download", "4711", str(tmp_path)])
-    assert result.exit_code == 0
-    assert "Failed to download results for run with ID '4711'" in result.output
+    assert result.exit_code == 2
+    assert "Run ID '4711' invalid" in result.output.replace("\n", "")
 
 
 def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Path) -> None:
@@ -273,12 +305,81 @@ def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Pat
     result = runner.invoke(
         cli, ["application", "run", "result", "download", "00000000000000000000000000000000", str(tmp_path)]
     )
-    assert result.exit_code == 0
-    assert "Warning: Run with ID '00000000000000000000000000000000' not found." in result.output
+    assert result.exit_code == 1
+    assert "Failed to download results of run with ID '00000000000000000000000000000000'" in result.output.replace(
+        "\n", ""
+    )
 
 
 def test_cli_run_result_delete(runner: CliRunner) -> None:
     """Check run result delete command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "result", "delete"])
+    assert result.exit_code == 1
+    assert MESSAGE_NOT_YET_IMPLEMENTED in result.output.replace("\n", "")
+
+
+@pytest.mark.long_running
+def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
+    """Check run execution runs e2e."""
+    # Step 1: Download the sample file
+    result = runner.invoke(
+        cli,
+        [
+            "dataset",
+            "aignostics",
+            "download",
+            "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+            str(tmp_path),
+        ],
+    )
+    _print_directory_structure(tmp_path, "download")
     assert result.exit_code == 0
-    assert MESSAGE_NOT_YET_IMPLEMENTED in result.output
+    assert "Successfully downloaded" in result.stdout.replace("\n", "")
+    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout.replace("\n", "")
+    expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+    assert expected_file.exists(), f"Expected file {expected_file} not found"
+    assert expected_file.stat().st_size == 14681750
+
+    # Step 2: Execute the run, i.e. prepare, amend, upload, submit and download the results
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(tmp_path / "run.csv"),
+            str(tmp_path),
+            ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER",
+            "--no-create-subdirectory-for-run",
+        ],
+    )
+    _print_directory_structure(tmp_path, "execute")
+    assert result.exit_code == 0
+    item_out_dir = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627"
+    assert item_out_dir.is_dir(), f"Expected directory {item_out_dir} not found"
+    files_in_dir = list(item_out_dir.glob("*"))
+    assert len(files_in_dir) == 9, (
+        f"Expected 9 files in {item_out_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
+    )
+    expected_files = [
+        ("tissue_segmentation:csv_class_information.csv", 342, 10),
+        ("cell_classification:geojson_polygons.json", 16058196, 10),
+        ("readout_generation:cell_readouts.csv", 2234724, 10),
+        ("tissue_qc:csv_class_information.csv", 232, 10),
+        ("tissue_segmentation:geojson_polygons.json", 270932, 10),
+        ("tissue_qc:geojson_polygons.json", 180522, 10),
+        ("tissue_qc:segmentation_map_image.tiff", 464908, 10),
+        ("readout_generation:slide_readouts.csv", 348957, 10),
+        ("tissue_segmentation:segmentation_map_image.tiff", 521530, 10),
+    ]
+    for filename, expected_size, tolerance_percent in expected_files:
+        file_path = item_out_dir / filename
+        assert file_path.exists(), f"Expected file {filename} not found"
+        actual_size = file_path.stat().st_size
+        min_size = expected_size * (100 - tolerance_percent) // 100
+        max_size = expected_size * (100 + tolerance_percent) // 100
+        assert min_size <= actual_size <= max_size, (
+            f"File size for {filename} ({actual_size} bytes) is outside allowed range "
+            f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
+        )

@@ -12,15 +12,38 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
+from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import get_logger, gui_register_pages
 
 logger = get_logger(__name__)
+
+HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
+HETA_APPLICATION_ID = "he-tme"
 
 
 @pytest.fixture
 def runner() -> CliRunner:
     """Provide a CLI test runner fixture."""
     return CliRunner()
+
+
+def _print_directory_structure(path: Path, step: str | None) -> None:
+    if step is not None:
+        print(f"\n==> Directory structure of '{path}' after step '{step}':")
+    else:
+        print(f"\n==> Directory structure of '{path}':")
+    for root, dirs, files in Path(path).walk():
+        rel_path = root.relative_to(path) if root != path else Path()
+        print(f"Directory: {rel_path}")
+        for directory in dirs:
+            print(f"  Dir: {directory}")
+        for file in files:
+            file_path = root / file
+            file_size = file_path.stat().st_size
+            file_size_human = (
+                f"{file_size / (1024 * 1024):.2f} MB" if file_size > 1024 * 1024 else f"{file_size / 1024:.2f} KB"
+            )
+            print(f"  File: {file} ({file_size_human}, {file_size} bytes)")
 
 
 async def _assert_notified(user: User, expected_notification: str, wait_seconds=5):
@@ -76,7 +99,7 @@ async def test_gui_home_to_application(
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
     gui_register_pages()
-    await user.open("/?noruns=true")
+    await user.open("/")
     await user.should_see(application_name, retries=100)
     user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
     await user.should_see(expected_text, retries=100)
@@ -86,18 +109,24 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     """Test that the user sees the index page, and sees the intro."""
     gui_register_pages()
 
+    latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
+    latest_version_id = latest_version.application_version_id
+
     # Submit run
-    csv_content = "reference;source;checksum_crc32c;mpp;width;height;staining;tissue_type;disease;"
+    csv_content = (
+        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    )
     csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;lung;lung;;;gs://bucket/test"
+    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
-    result = runner.invoke(cli, ["application", "run", "submit", "he-tme:v0.45.0", str(csv_path)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
     assert result.exit_code == 0
 
     # Extract the run ID from the output
-    run_id_match = re.search(r"Application run `([0-9a-f-]+)`", result.output)
-    assert run_id_match is not None, f"Could not extract run ID from output: {result.output}"
+    output = result.output.replace("\n", "")
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+    assert run_id_match is not None, f"Could not extract run ID from output: {output}"
     run_id = run_id_match.group(1)
 
     # Run shown in he GUI
@@ -105,12 +134,12 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     await user.should_see("Applications")
     await user.should_see("Atlas H&E-TME")
     await user.should_see("Runs")
-    await user.should_see("he-tme:v0.45.0", marker="SIDEBAR_RUN_ITEM:0", retries=1000)
+    await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
 
     # Navigate to the extracted run ID
     await user.open(f"/application/run/{run_id}")
-    await user.should_see("Run of he-tme:v0.45.0")
-    await user.should_see("Application Version: he-tme:v0.45.0")
+    await user.should_see(f"Run of {latest_version_id}")
+    await user.should_see(f"Application Version: {latest_version_id}")
     user.should_see("Status: running")
     user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
     await _assert_notified(user, f"Canceling application run with id '{run_id}' ...")
@@ -137,14 +166,14 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
             ],
         )
         assert result.exit_code == 0
-        assert "Successfully downloaded" in result.stdout
-        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout
+        assert "Successfully downloaded" in result.stdout.replace("\n", "")
+        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout.replace("\n", "")
         expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
         assert expected_file.exists(), f"Expected file {expected_file} not found"
         assert expected_file.stat().st_size == 14681750
 
         # Open the GUI and navigate to Atlas H&E-TME application
-        await user.open("/?noruns=true")
+        await user.open("/")
         await user.should_see("Applications")
         await user.should_see("Atlas H&E-TME")
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
@@ -202,3 +231,60 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
         await _assert_notified(user, "Canceling application run with id")
         await _assert_notified(user, "Application run cancelled!")
         await user.should_see("Status: canceled_user")
+
+
+async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path) -> None:
+    """Test that the user can download a run."""
+    with patch("pathlib.Path.home", return_value=tmp_path):
+        gui_register_pages()
+
+        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
+        latest_version_id = latest_version.application_version_id
+        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+
+        if not runs:
+            pytest.fail("No completed runs found, please run the test first.")
+        # Find a completed run with the latest application version ID
+        run = None
+        for potential_run in runs:
+            if potential_run.application_version_id == latest_version_id:
+                run = potential_run
+                break
+        if not run:
+            pytest.skip(f"No completed runs found with version {latest_version_id}")
+
+        # Step 1: Go to latest completed run
+        print(f"Found existing run: {run.application_run_id}, status: {run.status}")
+        await user.open(f"/application/run/{run.application_run_id}")
+        await user.should_see(f"Run of {latest_version_id}")
+
+        # Step 2: Open Result Download dialog
+        user.find(marker="BUTTON_DOWNLOAD_RUN").click()
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_HOME")
+
+        # Step 3: Select Home
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_HOME").click()
+
+        # Step 3: Trigger Download
+        await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")
+        user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
+
+        # Check: Download completed
+        await _assert_notified(user, "Download completed.", 30)
+        _print_directory_structure(tmp_path, "execute")
+        run_out_dir = tmp_path / run.application_run_id
+        assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
+        # Find any subdirectory in the run_out_dir
+        subdirs = [d for d in run_out_dir.iterdir() if d.is_dir()]
+        assert len(subdirs) > 0, f"Expected at least one subdirectory in {run_out_dir}, but found none"
+
+        # Take the first subdirectory found (item_out_dir)
+        item_out_dir = subdirs[0]
+        print(f"Found subdirectory: {item_out_dir.name}")
+
+        # Check for files in the item directory
+        files_in_item_dir = list(item_out_dir.glob("*"))
+        assert len(files_in_item_dir) == 9, (
+            f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: "
+            f"{[f.name for f in files_in_item_dir]}"
+        )

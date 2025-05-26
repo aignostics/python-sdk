@@ -20,6 +20,9 @@ from aignx.codegen.models import (
     RunCreationResponse,
 )
 from aignx.codegen.models import (
+    ItemResultReadResponse as ItemResultData,
+)
+from aignx.codegen.models import (
     RunReadResponse as ApplicationRunData,
 )
 from jsonschema.exceptions import ValidationError
@@ -30,6 +33,7 @@ from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
+LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 
 
 class ApplicationRun:
@@ -105,11 +109,11 @@ class ApplicationRun:
         """
         self._api.cancel_application_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
 
-    def results(self) -> t.Iterator[ItemResultReadResponse]:
+    def results(self) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
 
         Returns:
-            list[ItemResultReadResponse]: A list of item results.
+            list[ItemResultData]: A list of item results.
 
         Raises:
             Exception: If the API request fails.
@@ -298,7 +302,7 @@ class Runs:
 
         Args:
             for_application_version (str | None): Optional application version ID to filter by.
-            sort (str | None): Optional field to sort by.
+            sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
 
         Returns:

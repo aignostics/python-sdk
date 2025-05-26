@@ -43,7 +43,7 @@ more about how we achieve
 > The further reading section points you to reference documentation listing all available CLI commans, methods and classes provided by the SDK, how we achieve operational excellence and security, and more. 
 > If you are not familiar with terminology please check the glossary at the end of this document.
 
-### Aignostics Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
+### Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
 
 The **Aignostics Launchpad** is a graphical desktop application that allows you to run
 applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists. 
@@ -57,9 +57,9 @@ The Launchpad is available for Mac OS X, Windows, and Linux, and can be installe
 4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images 
    with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other computational pathology applications.
 
-### Aignostics CLI: Manage datasets and application runs from your terminal
+### CLI: Manage datasets and application runs from your terminal
 
-The Aignostics Python SDK includes the **Aignostics CLI**, a Command-Line Interface that allows you to
+The Python SDK includes the **Aignostics CLI**, a Command-Line Interface that allows you to
 interact with the Aignostics Platform directly from your terminal or shell script.
 
 See as follows for a simple example where we download a sample dataset for the [Atlas
@@ -68,29 +68,41 @@ H&E-TME application](https://www.aignostics.com/products/he-tme-profiling-produc
 ```shell
 # Download a sample dataset from the NCI Image Data Commons (IDC) portal to your current working directory
 # As the dataset id refers to the TCGA LUAD collection, this creates a directory tcga_luad with the DICOM files
-uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 .
+uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 data/
 # Prepare the metadata for the application run by creating a metadata.csv, extracting 
 # the required metadata from the DICOM files. We furthermore add the required
 # information about the tissue type and disease. TODO (Helmut): Update
-uvx aignostics application run prepare he-tme:v0.50.0 tcga_luad/metadata.csv tcga_luad
-# Edit the metadata.csv to insert the required information about the tissue type and disease
-nano tcga_luad/metadata.csv # Adapt to your favourite editor
+uvx aignostics application run prepare he-tme data/tcga_luad/run.csv data/
+# Edit the metadata.csv to insert the required information about the staining method, tissue type and disease
+# Adapt to your favourite editor
+nano tcga_luad/metadata.csv 
 # Upload the metadata.csv and referenced whole slide images to the Aignostics Platform
-uvx aignostics application run upload he-tme:v0.50.0 tcga_luad/metadata.csv
+uvx aignostics application run upload he-tme data/tcga_luad/run.csv
 # Submit the application run and print tha run id
-uvx aignostics application run submit he-tme:v0.50.0 tcga_luad/metadata.csv
+uvx aignostics application run submit he-tme data/tcga_luad/run.csv
 # Check the status of the application run you triggered
 uvx aignostics application run list
-uvx aignostics application run result dowload APPLICATION_RUN_ID # Fill in the application run id
+# Incrementally download results when they become available
+# Fill in the id from the output in the previous step
+uvx aignostics application run result dowload APPLICATION_RUN_ID 
+```
+
+For convenience the the `application run execute` command combines preparation, upload, submission and download.
+The below is equivalent to the above, while adding additionally required metadata using a mapping
+
+```shell
+uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 data/
+uvx aignostics application run execute he-tme data/tcga_luad/run.csv data/ ".*\.dcm:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
 ```
 
 The CLI provides extensive help:
 
 ```shell
-uvx aignostics --help                        # list all spaces such as application, dataset, bucket and system, 
-uvx aignostics application --help            # list subcommands in the application space
-uvx aignostics application run --help.       # list subcommands in the application run sub-space
-uvx aignostics application run list --help   # show help for specific command
+uvx aignostics --help                           # list all spaces such as application, dataset, bucket and system, 
+uvx aignostics application --help               # list subcommands in the application space
+uvx aignostics application run --help           # list subcommands in the application run sub-space
+uvx aignostics application run list --help      # show help for specific command
+uvx aignostics application run execute --help   # show help for another command
 ```
 
 Check out our
@@ -105,10 +117,11 @@ to learn about all commands and options available.
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
 > and follow the steps outlined in the `Use in Python Notebooks` section.
 
-We provide Jupyter and Marimo notebooks to help you get started with the SDK.
-The notebooks showcase the interaction with the Aignostics Platform using our
-test application. To run one them, please follow the steps outlined in the
-snippet below to clone this repository and start either the
+The Python SDK includes Jupyter and Marimo notebooks to help you get started interacting 
+with the Aignostics Platform in your notebook environment.
+
+The notebooks showcase the interaction with the Aignostics Platform using our "Test Application". To run one them, 
+please follow the steps outlined in the snippet below to clone this repository and start either the
 [Jupyter](https://docs.jupyter.org/en/latest/index.html)
 ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb))
 or [Marimo](https://marimo.io/)
@@ -130,7 +143,7 @@ uv run marimo edit examples/notebook.py
 > You can as well run a notebook within the Aignostics Launchpad. To do so, select the
 > Run you want to inspect in the left sidebar, and click the button "Open in Python Notebook".
 
-### Aignostics Client Library: Call the Aignostics Platform API from your Python scripts
+### Client Library: Call the Aignostics Platform API from your Python scripts
 
 > [!IMPORTANT]\
 > Before you get started, you need to set up your authentication credentials if
@@ -138,35 +151,35 @@ uv run marimo edit examples/notebook.py
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
 > and follow the steps outlined in the `Enterprise Integration` section.
 
-Next to using the Launchpad, CLI and notebooks, you can also use the Python SDK in your
-codebase. The following sections outline how to install the SDK and interact
-with it.
+Next to using the Launchpad, CLI and example notebooks, the Python SDK includes the
+*Aignostics Client Library* for integration with your Python Codebase.
+
+The following sections outline how to install the Python SDK for this purpose and 
+interact with the Client.
 
 ### Installation
 
-The Aignostics Python SDK is available via the
-Adding Aignostics Python SDK to your codebase as a dependency is easy. You can
-directly add the dependency via your favourite package manager:
+The Aignostics Python SDK is published on the [Python Package Index (PyPI)](https://pypi.org/project/aignostics/), 
+is compatible with Python 3.11 and above, and can be installed via via `uv` or `pip`:
 
 **Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv
-installed follow
-[these instructions](https://docs.astral.sh/uv/getting-started/installation/).
+installed follow [these instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```shell
-# add SDK as dependency to your project
+# Add Aignostics Python SDK as dependency to your project
 uv add aignostics
 ```
 
 **Install with [pip](https://pip.pypa.io/en/stable/)**
 
 ```shell
-# add SDK as dependency to your project
+# Add Python SDK as dependency to your project
 pip install aignostics
 ```
 
 #### Usage
 
-The following snippet shows how to use the Python SDK to trigger an application
+The following snippet shows how to use the Client to trigger an application
 run:
 
 ```python

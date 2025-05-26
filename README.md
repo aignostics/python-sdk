@@ -65,7 +65,7 @@ more about how we achieve
 > The further reading section points you to reference documentation listing all available CLI commans, methods and classes provided by the SDK, how we achieve operational excellence and security, and more. 
 > If you are not familiar with terminology please check the glossary at the end of this document.
 
-### Aignostics Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
+### Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
 
 The **Aignostics Launchpad** is a graphical desktop application that allows you to run
 applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists. 
@@ -79,9 +79,9 @@ The Launchpad is available for Mac OS X, Windows, and Linux, and can be installe
 4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images 
    with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other computational pathology applications.
 
-### Aignostics CLI: Manage datasets and application runs from your terminal
+### CLI: Manage datasets and application runs from your terminal
 
-The Aignostics Python SDK includes the **Aignostics CLI**, a Command-Line Interface that allows you to
+The Python SDK includes the **Aignostics CLI**, a Command-Line Interface that allows you to
 interact with the Aignostics Platform directly from your terminal or shell script.
 
 See as follows for a simple example where we download a sample dataset for the [Atlas
@@ -127,10 +127,11 @@ to learn about all commands and options available.
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
 > and follow the steps outlined in the `Use in Python Notebooks` section.
 
-We provide Jupyter and Marimo notebooks to help you get started with the SDK.
-The notebooks showcase the interaction with the Aignostics Platform using our
-test application. To run one them, please follow the steps outlined in the
-snippet below to clone this repository and start either the
+The Python SDK includes Jupyter and Marimo notebooks to help you get started interacting 
+with the Aignostics Platform in your notebook environment.
+
+The notebooks showcase the interaction with the Aignostics Platform using our "Test Application". To run one them, 
+please follow the steps outlined in the snippet below to clone this repository and start either the
 [Jupyter](https://docs.jupyter.org/en/latest/index.html)
 ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb))
 or [Marimo](https://marimo.io/)
@@ -152,7 +153,7 @@ uv run marimo edit examples/notebook.py
 > You can as well run a notebook within the Aignostics Launchpad. To do so, select the
 > Run you want to inspect in the left sidebar, and click the button "Open in Python Notebook".
 
-### Aignostics Client Library: Call the Aignostics Platform API from your Python scripts
+### Client Library: Call the Aignostics Platform API from your Python scripts
 
 > [!IMPORTANT]\
 > Before you get started, you need to set up your authentication credentials if
@@ -160,35 +161,35 @@ uv run marimo edit examples/notebook.py
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
 > and follow the steps outlined in the `Enterprise Integration` section.
 
-Next to using the Launchpad, CLI and notebooks, you can also use the Python SDK in your
-codebase. The following sections outline how to install the SDK and interact
-with it.
+Next to using the Launchpad, CLI and example notebooks, the Python SDK includes the
+*Aignostics Client Library* for integration with your Python Codebase.
+
+The following sections outline how to install the Python SDK for this purpose and 
+interact with the Client.
 
 ### Installation
 
-The Aignostics Python SDK is available via the
-Adding Aignostics Python SDK to your codebase as a dependency is easy. You can
-directly add the dependency via your favourite package manager:
+The Aignostics Python SDK is published on the [Python Package Index (PyPI)](https://pypi.org/project/aignostics/), 
+is compatible with Python 3.11 and above, and can be installed via via `uv` or `pip`:
 
 **Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv
-installed follow
-[these instructions](https://docs.astral.sh/uv/getting-started/installation/).
+installed follow [these instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```shell
-# add SDK as dependency to your project
+# Add Aignostics Python SDK as dependency to your project
 uv add aignostics
 ```
 
 **Install with [pip](https://pip.pypa.io/en/stable/)**
 
 ```shell
-# add SDK as dependency to your project
+# Add Python SDK as dependency to your project
 pip install aignostics
 ```
 
 #### Usage
 
-The following snippet shows how to use the Python SDK to trigger an application
+The following snippet shows how to use the Client to trigger an application
 run:
 
 ```python
@@ -278,7 +279,7 @@ for the Google Storage Bucket**
 
 ### Overview
 
-The Aignostics Platform is a comprehensive cloud-based service that allows organizations to leverage advanced computational pathology applications without the need for specialized expertise or complex infrastructure. Via its API it provides a standardized, secure interface for accessing Aignostics' portfolio of advanced computational pathology applications. These applications perform machine learning based tissue and cell analysis on histopathology slides, delivering quantitative measurements, visual representations, and detailed statistical data.
+The **Aignostics Platform** is a comprehensive cloud-based service that allows organizations to leverage advanced computational pathology applications without the need for specialized expertise or complex infrastructure. Via its API it provides a standardized, secure interface for accessing Aignostics' portfolio of advanced computational pathology applications. These applications perform machine learning based tissue and cell analysis on histopathology slides, delivering quantitative measurements, visual representations, and detailed statistical data.
 
 ![Overview](https://raw.githubusercontent.com/aignostics/python-sdk/main/platform.png)
 
@@ -304,9 +305,10 @@ To start using the Aignostics Platform and its advanced applications, your organ
 > 3. We can integrate with your IDP system (e.g. SAML, OIDC) for user authentication. Please contact us to discuss the integration.
 > 4. Registering your organistation typically takes 2 business days depending on the complexity of the signed business agreement and specific requirements.
 
-### Aignostics Console
+### Console
 
-The web-based [*Console*](https://platform.aignostics.com) of the Aignostics Platform is a user-friendly interface that allows you to manage your organization, applications, quotas, and users. It provides a centralized location for accessing all features and functionalities of the platform. 
+The web-based [*Aignostics Console*](https://platform.aignostics.com) is a user-friendly interface that allows you to 
+manage your organization, applications, quotas, and users registered with the Aignostics Platform.
 
 1. The Console is available to users registered for your organisation to manage their profile and monitor usage of their quota.
 2. Administrators of your organization can invite additional users, manage the organisation and user specific quotas and monitor usage.
@@ -367,7 +369,7 @@ Visit the [Console](https://platform.aignostics.com) to check your current quota
 
 ### API
 
-The Aignostics Platform API is a RESTful web service that allows you to interact with the platform programmatically. It provides endpoints for submitting whole slide images (WSIs) for analysis, checking the status of application runs, and retrieving results.
+The **Aignostics Platform API** is a RESTful web service that allows you to interact with the platform programmatically. It provides endpoints for submitting whole slide images (WSIs) for analysis, checking the status of application runs, and retrieving results.
 
 You can interact with the API using the Python client, which is a wrapper around the RESTful API. The Python client simplifies the process of making requests to the API and handling responses. It also provides convenient methods for uploading WSIs, checking application run status, and downloading results.
 

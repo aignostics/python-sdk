@@ -1,3 +1,36 @@
+"""This file was extracted from the idc-index package and modified to support running the
+client behind corporate proxies with private certificates.
+
+The [idc-index](https://pypi.org/project/idc-index/) package enables basic operations 
+for working with [NCI Imaging Data Commons (IDC)](https://imaging.datacommons.cancer.gov).
+
+Authors of idc-index are [Andrey Fedorov](mailto:andrey.fedorov@gmail.com) and [Vamsi Thiriveedhi](mailto:vthiriveedhi@mgh.harvard.edu)
+
+The idc-index package distributed under the following license:
+
+MIT License
+
+Copyright (c) 2023 Imaging Data Commons
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -21,12 +54,13 @@ import requests
 from packaging.version import Version
 from tqdm import tqdm
 
+from aignostics.utils import get_logger
+
 aws_endpoint_url = "https://s3.amazonaws.com"
 gcp_endpoint_url = "https://storage.googleapis.com"
 asset_endpoint_url = f"https://github.com/ImagingDataCommons/idc-index-data/releases/download/{idc_index_data.__version__}"
 
-logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # TODO(Helmut): Clean solution for no-verify-ssl
  

@@ -1,11 +1,11 @@
 [project]
 name = "aignostics"
 version = "0.2.2"
-description = "🔬 Python SDK providing access to Aignostics AI services."
+description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
     { name = "Helmut Hoffer von Ankershoffen", email = "helmut@aignostics.com" },
-    { name = "Andreas Kuhn" },
+    { name = "Andreas Kunft", email = "andreas@aignostics.com" },
 ]
 license = { file = "LICENSE" }
 

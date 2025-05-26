@@ -1,5 +1,6 @@
 """GUI of application module including homepage of Aignostics Launchpad."""
 
+import queue
 import sys
 import time
 from importlib.util import find_spec
@@ -9,9 +10,10 @@ from typing import Any
 from urllib.parse import quote as urlencode
 
 from aignostics.gui import frame
+from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import BasePageBuilder, GUILocalFilePicker, get_logger
 
-from ._service import Service
+from ._service import DownloadProgress, DownloadProgressState, Service
 
 logger = get_logger(__name__)
 
@@ -20,14 +22,15 @@ WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 BORDERED_SEPARATOR = "bordered separator"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
-RUNS_LIMIT = 100
+RUNS_LIMIT = 500
 
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915
         import pandas as pd  # noqa: PLC0415
-        from nicegui import app, background_tasks, binding, context, run, ui  # noq  # noqa: PLC0415
+        from nicegui import app, background_tasks, binding, context, ui  # noq  # noqa: PLC0415
+        from nicegui import run as nicegui_run  # noqa: PLC0415
 
         @binding.bindable_dataclass
         class SubmitForm:
@@ -169,12 +172,16 @@ class PageBuilder(BasePageBuilder):
                 except Exception as e:  # noqa: BLE001
                     ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
 
-                async def application_runs_load_and_render() -> None:
+                async def application_runs_load_and_render(
+                    runs_column: ui.column, completed_only: bool = False
+                ) -> None:
                     with runs_column:
                         try:
-                            runs = await run.io_bound(Service.application_runs_static, RUNS_LIMIT)
+                            runs = await nicegui_run.io_bound(
+                                Service.application_runs_static, limit=RUNS_LIMIT, completed_only=completed_only
+                            )
                             if runs is None:
-                                message = "run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
+                                message = "nicegui_run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
                                 logger.error(message)
                                 raise RuntimeError(message)  # noqa: TRY301
                             runs_column.clear()
@@ -217,14 +224,46 @@ class PageBuilder(BasePageBuilder):
                                     ui.label("Failed to load application runs.")
                             logger.exception("Failed to load application runs")
 
+                @ui.refreshable
+                def _runs_list(completed_only: bool = False) -> None:
+                    with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
+                        ui.spinner(size="lg").classes("m-5")
+                        if not noruns:
+                            background_tasks.create(
+                                application_runs_load_and_render(runs_column=runs_column, completed_only=completed_only)
+                            )
+
+                class RunFilterButton(ui.icon):
+                    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+                        super().__init__(*args, **kwargs)
+                        self._state = False
+                        self.on("click", self.toggle)
+
+                    def toggle(self) -> None:
+                        self._state = not self._state
+                        self.update()
+                        _runs_list.refresh(completed_only=self.is_active())
+
+                    def update(self) -> None:
+                        self.props(f"color={'black' if self._state else 'grey'}")
+                        super().update()
+
+                    def is_active(self) -> bool:
+                        """Check if the button is active.
+
+                        Returns:
+                            bool: True if the button is active, False otherwise.
+                        """
+                        return self._state
+
                 try:
                     with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
-                        ui.item_label("Runs").props("header")
+                        with ui.row(align_items="center").classes("justify-center"):
+                            ui.item_label("Runs").props("header")
+                            ui.space()
+                            RunFilterButton("done_all", size="sm").classes("mr-3").mark("BUTTON_RUNS_FILTER_COMPLETED")
                         ui.separator()
-                        with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
-                            ui.spinner(size="lg").classes("m-5")
-                        if not noruns:
-                            background_tasks.create(application_runs_load_and_render())
+                        _runs_list()
                 except Exception as e:  # noqa: BLE001
                     ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")
 
@@ -408,13 +447,14 @@ class PageBuilder(BasePageBuilder):
                             return
                         submit_form.wsi_spinner.set_visibility(True)
                         submit_form.wsi_next_button.set_visibility(False)
-                        submit_form.metadata_grid.options["rowData"] = await run.cpu_bound(
+                        submit_form.metadata_grid.options["rowData"] = await nicegui_run.cpu_bound(
                             Service.generate_metadata_from_source_directory,
                             str(submit_form.application_version_id),
                             submit_form.source,
+                            [".*:staining_method=H&E"],
                         )
                         if submit_form.metadata_grid.options["rowData"] is None:
-                            msg = "run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
+                            msg = "nicegui_run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
                             logger.error(msg)
                             raise RuntimeError(msg)  # noqa: TRY301
                         submit_form.wsi_next_button.set_visibility(True)
@@ -534,19 +574,28 @@ class PageBuilder(BasePageBuilder):
                         valid = True
                         for row in rows:
                             if (
-                                row["tissue_type"]
+                                row["tissue"]
                                 not in {
-                                    "adrenal gland",
-                                    "bladder",
-                                    "bone",
-                                    "brain",
-                                    "breast",
-                                    "colon",
-                                    "liver",
-                                    "lung",
-                                    "lymph node",
+                                    "ADRENAL_GLAND",
+                                    "BLADDER",
+                                    "BONE",
+                                    "BRAIN",
+                                    "BREAST",
+                                    "COLON",
+                                    "LIVER",
+                                    "LUNG",
+                                    "LYMPH_NODE",
                                 }
-                            ) or (row["disease"] not in {"lung", "liver", "breast", "bladder", "colorectal"}):
+                            ) or (
+                                row["disease"]
+                                not in {
+                                    "BREAST_CANCER",
+                                    "BLADDER_CANCER",
+                                    "COLORECTAL_CANCER",
+                                    "LIVER_CANCER",
+                                    "LUNG_CANCER",
+                                }
+                            ):
                                 valid = False
                                 break
                         if submit_form.metadata_next_button is None:
@@ -568,8 +617,8 @@ class PageBuilder(BasePageBuilder):
                         if "pytest" in sys.modules:
                             rows = submit_form.metadata_grid.options["rowData"]
                             for row in rows:
-                                row["tissue_type"] = "lung"
-                                row["disease"] = "lung"
+                                row["tissue"] = "LUNG"
+                                row["disease"] = "LUNG_CANCER"
                             submit_form.metadata = rows
                         else:
                             submit_form.metadata = await submit_form.metadata_grid.get_client_data()
@@ -629,29 +678,29 @@ class PageBuilder(BasePageBuilder):
                                     "autoHeight": True,
                                 },
                                 {
-                                    "headerName": "Tissue Type",
-                                    "field": "tissue_type",
+                                    "headerName": "Tissue",
+                                    "field": "tissue",
                                     "editable": True,
                                     "cellEditor": "agSelectCellEditor",
                                     "cellEditorParams": {
                                         "values": [
-                                            "adrenal gland",
-                                            "bladder",
-                                            "bone",
-                                            "brain",
-                                            "breast",
-                                            "colon",
-                                            "liver",
-                                            "lung",
-                                            "lymph node",
+                                            "ADRENAL_GLAND",
+                                            "BLADDER",
+                                            "BONE",
+                                            "BRAIN",
+                                            "BREAST",
+                                            "COLON",
+                                            "LIVER",
+                                            "LUNG",
+                                            "LYMPH_NODE",
                                         ],
                                         "valueListGap": 10,
                                     },
                                     "cellClassRules": {
-                                        "bg-red-300": "!new Set(['adrenal gland', 'bladder', 'bone', 'brain',"
-                                        "'breast', 'colon', 'liver', 'lung', 'lymph node']).has(x)",
-                                        "bg-green-300": "new Set(['adrenal gland', 'bladder', 'bone', 'brain',"
-                                        "'breast', 'colon', 'liver', 'lung', 'lymph node']).has(x)",
+                                        "bg-red-300": "!new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
+                                        "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
+                                        "bg-green-300": "new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
+                                        "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
                                     },
                                 },
                                 {
@@ -660,23 +709,29 @@ class PageBuilder(BasePageBuilder):
                                     "editable": True,
                                     "cellEditor": "agSelectCellEditor",
                                     "cellEditorParams": {
-                                        "values": ["lung", "liver", "breast", "bladder", "colorectal"],
+                                        "values": [
+                                            "BREAST_CANCER",
+                                            "BLADDER_CANCER",
+                                            "COLORECTAL_CANCER",
+                                            "LIVER_CANCER",
+                                            "LUNG_CANCER",
+                                        ],
                                         "valueListGap": 10,
                                     },
                                     "cellClassRules": {
-                                        "bg-red-300": "!new Set(['lung', 'liver', 'breast', 'bladder',"
-                                        " 'colorectal']).has(x)",
-                                        "bg-green-300": "new Set(['lung', 'liver', 'breast', 'bladder',"
-                                        " 'colorectal']).has(x)",
+                                        "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
+                                        "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
+                                        "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
+                                        "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
                                     },
                                 },
                                 {"headerName": "File size", "field": "file_size_human"},
-                                {"headerName": "MPP", "field": "mpp"},
-                                {"headerName": "Width", "field": "width"},
-                                {"headerName": "Height", "field": "height"},
-                                {"headerName": "Staining", "field": "staining"},
+                                {"headerName": "MPP", "field": "resolution_mpp"},
+                                {"headerName": "Width", "field": "width_px"},
+                                {"headerName": "Height", "field": "height_px"},
+                                {"headerName": "Staining", "field": "staining_method"},
                                 {"headerName": "Source", "field": "source"},
-                                {"headerName": "Checksum", "field": "checksum_crc32c"},
+                                {"headerName": "Checksum", "field": "checksum_base64_crc32c"},
                                 {"headerName": "Upload progress", "field": "file_upload_progress", "initialHide": True},
                                 {
                                     "headerName": "Platform Bucket URL",
@@ -739,7 +794,7 @@ class PageBuilder(BasePageBuilder):
                     if upload_message_queue is None:
                         logger.error("Upload message queue is not initialized.")  # type: ignore[unreachable]
                         return
-                    await run.cpu_bound(
+                    await nicegui_run.cpu_bound(
                         Service.application_run_upload,
                         str(submit_form.application_version_id),
                         submit_form.metadata or [],
@@ -866,10 +921,105 @@ class PageBuilder(BasePageBuilder):
                     ui.notify(f"Failed to cancel application run: {e}.", type="warning")
                     return False
 
-            with ui.dialog() as download_run_dialog, ui.card().style(WIDTH_1200px):
-                ui.button("Select download folder")
-                with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
-                    ui.button("Close", on_click=download_run_dialog.close)
+            with ui.dialog() as download_run_dialog, ui.card():
+                selected_folder = ui.input("Selected folder", value="").classes("w-full").props("readonly")
+
+                with ui.row().classes("w-full"):
+
+                    async def _select_download_destination() -> None:
+                        result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
+                        if result and len(result) > 0:
+                            folder_path = Path(result[0])
+                            if folder_path.is_dir():
+                                selected_folder.value = str(folder_path)
+                            else:
+                                selected_folder.value = str(folder_path.parent)
+                        else:
+                            ui.notify("No folder selected", type="warning")
+
+                    async def _select_home() -> None:  # noqa: RUF029
+                        """Open a file picker dialog and show notifier when closed again."""
+                        selected_folder.value = str(Path.home())
+
+                    ui.label("Select a folder to download all results for this application run.")
+                    ui.button("Use Home", on_click=_select_home, icon="home").mark("BUTTON_DOWNLOAD_DESTINATION_HOME")
+                    ui.space()
+                    ui.button("Select Download Folder", on_click=_select_download_destination, icon="folder_open").mark(
+                        "BUTTON_DOWNLOAD_DESTINATION_SELECT"
+                    )
+
+                download_item_status = ui.label("")
+                download_item_status.set_visibility(False)
+                download_item_progress = ui.linear_progress(value=0, show_value=False).props("instant-feedback")
+                download_item_progress.set_visibility(False)
+                download_artifact_status = ui.label("")
+                download_artifact_status.set_visibility(False)
+                download_artifact_progress = ui.linear_progress(value=0, show_value=False).props("instant-feedback")
+                download_artifact_progress.set_visibility(False)
+
+                async def start_download() -> None:
+                    if not selected_folder.value:
+                        ui.notify("Please select a folder first", type="warning")
+                        return
+
+                    ui.notify("Downloading  ...", type="info")
+                    progress_queue: queue.Queue[DownloadProgress] = queue.Queue()
+
+                    def update_download_progress() -> None:
+                        """Update the progress indicator with values from the queue."""
+                        if not progress_queue.empty():
+                            progress = progress_queue.get()
+                            download_item_status.set_text(
+                                progress.status
+                                if progress.status is not DownloadProgressState.DOWNLOADING
+                                or progress.total_artifact_index is None
+                                else (
+                                    f"Downloading artifact {progress.total_artifact_index + 1} "
+                                    f"of {progress.total_artifact_count}"
+                                )
+                            )
+                            download_item_progress.set_value(progress.item_progress_normalized)
+                            if progress.status is DownloadProgressState.DOWNLOADING:
+                                if progress.artifact_path:
+                                    download_artifact_status.set_text(str(progress.artifact_path))
+                                download_artifact_status.set_visibility(True)
+                                download_artifact_progress.set_value(progress.artifact_progress_normalized)
+                                download_artifact_progress.set_visibility(True)
+
+                    ui.timer(0.1, update_download_progress)
+                    try:
+                        download_item_status.set_visibility(True)
+                        download_item_progress.set_visibility(True)
+                        await nicegui_run.io_bound(
+                            Service.application_run_download_static,
+                            progress=DownloadProgress(),
+                            run_id=run.application_run_id,
+                            destination_directory=Path(selected_folder.value),
+                            wait_for_completion=True,
+                            download_progress_queue=progress_queue,
+                        )
+                    except ValueError as e:
+                        download_item_status.set_visibility(False)
+                        download_item_progress.set_visibility(False)
+                        download_artifact_status.set_visibility(False)
+                        download_artifact_progress.set_visibility(False)
+                        ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
+                        return
+                    download_item_status.set_visibility(False)
+                    download_item_progress.set_visibility(False)
+                    download_artifact_status.set_visibility(False)
+                    download_artifact_progress.set_visibility(False)
+                    ui.notify("Download completed.", type="positive")
+
+                ui.separator()
+                with ui.row(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=download_run_dialog.close, color="secondary").props("outline").mark(
+                        "DIALOG_BUTTON_DOWNLOAD_CLOSE"
+                    )
+                    ui.space()
+                    ui.button("Download", icon="cloud_download", on_click=start_download).props("color=primary").mark(
+                        "DIALOG_BUTTON_DOWNLOAD_RUN"
+                    )
 
             with ui.dialog() as qupath_project_create_dialog, ui.card().style(WIDTH_1200px):
                 ui.button("Select QuPath folder")
@@ -934,7 +1084,7 @@ class PageBuilder(BasePageBuilder):
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-            if run_data and run_data.status.value == "completed":
+            if run_data and run_data.status.value == ApplicationRunStatus.COMPLETED:
                 with ui.row().classes("w-full justify-end"):
                     if find_spec("paquo"):
                         ui.button(
@@ -948,10 +1098,12 @@ class PageBuilder(BasePageBuilder):
                             icon="analytics",
                             on_click=lambda: ui.navigate.to(f"/notebook/{run.application_run_id}"),
                         )
-                    ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open)
+                    ui.button("Download Results", icon="cloud_download", on_click=download_run_dialog.open).mark(
+                        "BUTTON_DOWNLOAD_RUN"
+                    )
 
             if run_data:
-                with ui.card():
+                with ui.card().classes("w-full"):
                     ui.markdown(
                         f"""
                         * Application Version: {run_data.application_version_id}
@@ -966,10 +1118,14 @@ class PageBuilder(BasePageBuilder):
             with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):  # noqa: PLR1702
                 for item in run.results():
                     with ui.item().props("clickable"):
-                        with ui.item_section().props("avatar"):
-                            ui.icon(_run_item_status_to_icon(item.status.value))
-                        with ui.item_section().classes("w-1/5"):
-                            with ui.card():
+                        with ui.item_section().classes("w-64"):
+                            if Path(item.reference).is_file():
+                                ui.image("/thumbnail?source=" + urlencode(item.reference)).classes("w-64")
+                            else:
+                                ui.image("/assets/image-not-found.png").classes("w-64")
+                        with ui.item_section().classes("w-full"):
+                            with ui.card().classes("w-full"):
+                                ui.icon(_run_item_status_to_icon(item.status.value))
                                 ui.label(f"Item ID: {item.item_id}")
                                 ui.label(f"Reference: {item.reference}")
                                 ui.label(f"Status: {item.status.value}")

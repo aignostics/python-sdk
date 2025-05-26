@@ -12,6 +12,8 @@ from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
 from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import ItemCreationRequest as InputItem
+from aignx.codegen.models import ItemResultReadResponse as ItemResult
+from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifact
 from aignx.codegen.models import RunReadResponse as ApplicationRunData
 
 from ._client import Client
@@ -42,7 +44,7 @@ from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPO
 from ._service import Service
 from ._settings import Settings, settings
 from ._utils import calculate_file_crc32c, download_file, generate_signed_url, mime_type_to_file_ending
-from .resources.runs import ApplicationRun
+from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, ApplicationRun
 
 __all__ = [
     "API_ROOT_DEV",
@@ -61,6 +63,8 @@ __all__ = [
     "JWS_JSON_URL_DEV",
     "JWS_JSON_URL_PRODUCTION",
     "JWS_JSON_URL_STAGING",
+    "LIST_APPLICATION_RUNS_MAX_PAGE_SIZE",
+    "LIST_APPLICATION_RUNS_MIN_PAGE_SIZE",
     "NOT_YET_IMPLEMENTED",
     "NOT_YET_IMPLEMENTED",
     "REDIRECT_URI_DEV",
@@ -75,12 +79,15 @@ __all__ = [
     "ApplicationRun",
     "ApplicationRunData",
     "ApplicationRunStatus",
+    "ApplicationRunStatus",
     "ApplicationVersion",
     "Client",
     "InputArtifact",
     "InputItem",
+    "ItemResult",
     "ItemStatus",
     "NotFoundException",
+    "OutputArtifact",
     "Service",
     "Settings",
     "calculate_file_crc32c",

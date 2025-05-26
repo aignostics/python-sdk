@@ -34,7 +34,7 @@ def test_strip_to_none_before_validator_with_valid_string() -> None:
     assert strip_to_none_before_validator("  test  ") == "test"
 
 
-class TestSettings(OpaqueSettings):
+class TheTestSettings(OpaqueSettings):
     """Test settings class."""
 
     test_value: str = "default"
@@ -75,7 +75,7 @@ def test_opaque_settings_serialize_sensitive_info_empty() -> None:
 @patch.dict(os.environ, {"REQUIRED_VALUE": "test_value"})
 def test_load_settings_success() -> None:
     """Test successful settings loading."""
-    settings = load_settings(TestSettings)
+    settings = load_settings(TheTestSettings)
     assert settings.test_value == "default"
     assert settings.required_value == "test_value"
 
@@ -86,7 +86,7 @@ def test_load_settings_validation_error(mock_console_print, mock_exit) -> None:
     """Test that validation error is handled properly."""
     # The settings class requires required_value, but we're not providing it
     # This will trigger a validation error
-    load_settings(TestSettings)
+    load_settings(TheTestSettings)
 
     # Verify that sys.exit was called with the correct code
     mock_exit.assert_called_once_with(78)
@@ -95,7 +95,7 @@ def test_load_settings_validation_error(mock_console_print, mock_exit) -> None:
     mock_console_print.assert_called_once()
 
 
-class TestSettingsWithEnvPrefix(OpaqueSettings):
+class TheTestSettingsWithEnvPrefix(OpaqueSettings):
     """Test settings class with an environment prefix."""
 
     model_config: ClassVar[dict[str, Any]] = {"env_prefix": "TEST_"}
@@ -106,11 +106,11 @@ class TestSettingsWithEnvPrefix(OpaqueSettings):
 @patch.dict(os.environ, {"TEST_VALUE": "prefixed_value"})
 def test_settings_with_env_prefix() -> None:
     """Test that settings with environment prefix work correctly."""
-    settings = load_settings(TestSettingsWithEnvPrefix)
+    settings = load_settings(TheTestSettingsWithEnvPrefix)
     assert settings.value == "prefixed_value"
 
 
-class TestSettingsWithEnvFile(OpaqueSettings):
+class TheTestSettingsWithEnvFile(OpaqueSettings):
     """Test settings class with a custom env file."""
 
     model_config: ClassVar[dict[str, Any]] = {"env_file": "custom.env"}
