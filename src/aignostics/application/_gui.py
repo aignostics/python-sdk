@@ -143,7 +143,6 @@ class PageBuilder(BasePageBuilder):
             if args is None:
                 args = {}
             service = Service()
-            noruns = args and args.get("noruns")
             with frame(navigation_title=navigation_title, navigation_icon=navigation_icon, left_sidebar=left_sidebar):  # noqa: PLR1702
                 try:
                     with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
@@ -153,7 +152,7 @@ class PageBuilder(BasePageBuilder):
                             with (
                                 ui.item(
                                     on_click=lambda app_id=application.application_id: ui.navigate.to(
-                                        f"/application/{app_id}" + ("?noruns=true" if noruns else "")
+                                        f"/application/{app_id}"
                                     )
                                 )
                                 .mark(f"SIDEBAR_APPLICATION:{application.application_id}")
@@ -228,10 +227,9 @@ class PageBuilder(BasePageBuilder):
                 def _runs_list(completed_only: bool = False) -> None:
                     with ui.column(align_items="center").classes("full-width justify-center") as runs_column:
                         ui.spinner(size="lg").classes("m-5")
-                        if not noruns:
-                            background_tasks.create(
-                                application_runs_load_and_render(runs_column=runs_column, completed_only=completed_only)
-                            )
+                        background_tasks.create(
+                            application_runs_load_and_render(runs_column=runs_column, completed_only=completed_only)
+                        )
 
                 class RunFilterButton(ui.icon):
                     def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
@@ -268,13 +266,9 @@ class PageBuilder(BasePageBuilder):
                     ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")
 
         @ui.page("/")
-        def page_index(noruns: bool = False) -> None:
-            """Homepage of Applications.
-
-            Args:
-                noruns (bool): If True, do not load and show runs in sidebar.
-            """
-            _frame("Run our AI Applications on your Whole Slide Images", left_sidebar=True, args={"noruns": noruns})
+        def page_index() -> None:
+            """Homepage of Applications."""
+            _frame("Run our AI Applications on your Whole Slide Images", left_sidebar=True)
 
             ui.markdown(
                 """
@@ -311,12 +305,11 @@ class PageBuilder(BasePageBuilder):
                     ui.image("/assets/home-card-2.png").classes("w-[768px]")
 
         @ui.page("/application/{application_id}")
-        def page_application_describe(application_id: str, noruns: bool = False) -> None:  # noqa: C901, PLR0912, PLR0915
+        def page_application_describe(application_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
             """Describe Application.
 
             Args:
                 application_id (str): The application ID.
-                noruns (bool): If True, do not load and show runs in sidebar.
             """
             service = Service()
             application = service.application(application_id)
@@ -326,7 +319,7 @@ class PageBuilder(BasePageBuilder):
                     navigation_icon="bug_report",
                     navigation_title=f"{application_id}",
                     left_sidebar=True,
-                    args={"application_id": application_id, "noruns": noruns},
+                    args={"application_id": application_id},
                 )
                 ui.label(f"Failed to get application '{application_id}'").mark("LABEL_ERROR")
                 return
@@ -335,7 +328,7 @@ class PageBuilder(BasePageBuilder):
                 navigation_icon=_application_id_to_icon(application_id),
                 navigation_title=f"{application.name if application else ''}",
                 left_sidebar=True,
-                args={"application_id": application_id, "noruns": noruns},
+                args={"application_id": application_id},
             )
 
             application_versions = service.application_versions(application)
@@ -852,7 +845,7 @@ class PageBuilder(BasePageBuilder):
                         ui.notify(f"Failed to submit application run: {e}.", type="warning")
                         return
                     ui.notify(f"Application run submitted with id '{run.application_run_id}'.", type="positive")
-                    ui.navigate.to(f"/application/run/{run.application_run_id}" + ("?noruns=true" if noruns else ""))
+                    ui.navigate.to(f"/application/run/{run.application_run_id}")
 
                 with ui.step("Submission"):
                     _upload_ui([])
@@ -874,7 +867,7 @@ class PageBuilder(BasePageBuilder):
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
         @ui.page("/application/run/{application_run_id}")
-        def page_application_run_describe(application_run_id: str, noruns: bool = False) -> None:  # noqa: C901, PLR0912, PLR0915
+        def page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
             """Describe Application."""
             service = Service()
             run = service.application_run(application_run_id)
@@ -888,14 +881,14 @@ class PageBuilder(BasePageBuilder):
                         f"on {run_data.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
                     ),
                     left_sidebar=True,
-                    args={"application_run_id": application_run_id, "noruns": noruns},
+                    args={"application_run_id": application_run_id},
                 )
             else:
                 _frame(
                     navigation_icon="bug_report",
                     navigation_title=f"Run {application_run_id}",
                     left_sidebar=True,
-                    args={"application_run_id": application_run_id, "noruns": noruns},
+                    args={"application_run_id": application_run_id},
                 )
 
             if run is None:
