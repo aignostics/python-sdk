@@ -278,5 +278,6 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path) -
         # Check for files in the item directory
         files_in_item_dir = list(item_out_dir.glob("*"))
         assert len(files_in_item_dir) == 9, (
-            f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: {[f.name for f in files_in_item_dir]}"
+            f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: "
+            f"{[f.name for f in files_in_item_dir]}"
         )

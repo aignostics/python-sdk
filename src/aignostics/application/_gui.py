@@ -233,7 +233,7 @@ class PageBuilder(BasePageBuilder):
                                 application_runs_load_and_render(runs_column=runs_column, completed_only=completed_only)
                             )
 
-                class RunFilterButton(ui.button):
+                class RunFilterButton(ui.icon):
                     def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
                         super().__init__(*args, **kwargs)
                         self._state = False
@@ -261,7 +261,7 @@ class PageBuilder(BasePageBuilder):
                         with ui.row(align_items="center").classes("justify-center"):
                             ui.item_label("Runs").props("header")
                             ui.space()
-                            RunFilterButton(icon="done_all")
+                            RunFilterButton("done_all", size="sm").classes("mr-3").mark("BUTTON_RUNS_FILTER_COMPLETED")
                         ui.separator()
                         _runs_list()
                 except Exception as e:  # noqa: BLE001
@@ -921,11 +921,8 @@ class PageBuilder(BasePageBuilder):
                     ui.notify(f"Failed to cancel application run: {e}.", type="warning")
                     return False
 
-            with ui.dialog() as download_run_dialog, ui.card().style(WIDTH_1200px):
-                ui.label("Download Results").classes("text-h6")
-                ui.label("Select a folder to download all results for this application run.")
-
-                selected_folder = ui.input("Selected folder", value="").props("readonly")
+            with ui.dialog() as download_run_dialog, ui.card():
+                selected_folder = ui.input("Selected folder", value="").classes("w-full").props("readonly")
 
                 with ui.row().classes("w-full"):
 
@@ -944,8 +941,10 @@ class PageBuilder(BasePageBuilder):
                         """Open a file picker dialog and show notifier when closed again."""
                         selected_folder.value = str(Path.home())
 
+                    ui.label("Select a folder to download all results for this application run.")
                     ui.button("Use Home", on_click=_select_home, icon="home").mark("BUTTON_DOWNLOAD_DESTINATION_HOME")
-                    ui.button("Select Destination", on_click=_select_download_destination, icon="folder_open").mark(
+                    ui.space()
+                    ui.button("Select Download Folder", on_click=_select_download_destination, icon="folder_open").mark(
                         "BUTTON_DOWNLOAD_DESTINATION_SELECT"
                     )
 
@@ -1012,12 +1011,14 @@ class PageBuilder(BasePageBuilder):
                     download_artifact_progress.set_visibility(False)
                     ui.notify("Download completed.", type="positive")
 
+                ui.separator()
                 with ui.row(align_items="end").classes("w-full"):
+                    ui.button("Close", on_click=download_run_dialog.close, color="secondary").props("outline").mark(
+                        "DIALOG_BUTTON_DOWNLOAD_CLOSE"
+                    )
+                    ui.space()
                     ui.button("Download", icon="cloud_download", on_click=start_download).props("color=primary").mark(
                         "DIALOG_BUTTON_DOWNLOAD_RUN"
-                    )
-                    ui.button("Close", on_click=download_run_dialog.close, color="secondary").mark(
-                        "DIALOG_BUTTON_DOWNLOAD_CLOSE"
                     )
 
             with ui.dialog() as qupath_project_create_dialog, ui.card().style(WIDTH_1200px):
@@ -1102,7 +1103,7 @@ class PageBuilder(BasePageBuilder):
                     )
 
             if run_data:
-                with ui.card():
+                with ui.card().classes("w-full"):
                     ui.markdown(
                         f"""
                         * Application Version: {run_data.application_version_id}
@@ -1117,10 +1118,14 @@ class PageBuilder(BasePageBuilder):
             with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):  # noqa: PLR1702
                 for item in run.results():
                     with ui.item().props("clickable"):
-                        with ui.item_section().props("avatar"):
-                            ui.icon(_run_item_status_to_icon(item.status.value))
-                        with ui.item_section().classes("w-1/5"):
-                            with ui.card():
+                        with ui.item_section().classes("w-64"):
+                            if Path(item.reference).is_file():
+                                ui.image("/thumbnail?source=" + urlencode(item.reference)).classes("w-64")  # type: ignore[no-untyped-call]
+                            else:
+                                ui.image("/assets/image-not-found.png").classes("w-64")
+                        with ui.item_section().classes("w-full"):
+                            with ui.card().classes("w-full"):
+                                ui.icon(_run_item_status_to_icon(item.status.value))
                                 ui.label(f"Item ID: {item.item_id}")
                                 ui.label(f"Reference: {item.reference}")
                                 ui.label(f"Status: {item.status.value}")
