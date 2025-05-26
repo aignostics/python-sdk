@@ -850,6 +850,8 @@ class Service(BaseService):
         file_extension = mimetypes.guess_extension(
             metadata.get("media_type", metadata.get("mime_type", "application/octet-stream")),
         )
+        if file_extension == ".geojson":
+            file_extension = ".json"
         logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
         artifact_path = destination_directory / f"{prefix}{artifact.name}{file_extension}"
 
