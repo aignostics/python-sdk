@@ -244,7 +244,14 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path) -
 
         if not runs:
             pytest.fail("No completed runs found, please run the test first.")
-        run = runs[0]
+        # Find a completed run with the latest application version ID
+        run = None
+        for potential_run in runs:
+            if potential_run.application_version_id == latest_version_id:
+                run = potential_run
+                break
+        if not run:
+            pytest.skip(f"No completed runs found with version {latest_version_id}")
 
         # Step 1: Go to latest completed run
         print(f"Found existing run: {run.application_run_id}, status: {run.status}")
