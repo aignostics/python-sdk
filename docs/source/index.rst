@@ -17,10 +17,10 @@
    api_reference_v1
    operational_excellence
    security
+   release-notes
    glossary
    license
    attributions
-   release-notes
 
 .. sidebar-links::
    :caption: Links
