@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.6..0.2.7) - 2025-05-26
+(https://github.com/aignostics/python-sdk/compare/v0.2.7..0.2.8) - 2025-05-26
+
+
+- Force .json for geojson - ([214d28e](https://github.com/aignostics/python-sdk/commit/214d28e101a3a3909be1668191644cf83f57019d))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.6..v0.2.7) - 2025-05-26
 
 
 - Simplify - ([05dd892](https://github.com/aignostics/python-sdk/commit/05dd89204bd418f3507b9c7c8737c0c021b6be89))
@@ -14,9 +20,6 @@
 
 - Fix test - ([b2741e0](https://github.com/aignostics/python-sdk/commit/b2741e02e7769af9b4a590ffc0a90bc6dbcc215d))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 (https://github.com/aignostics/python-sdk/compare/v0.2.4..v0.2.5) - 2025-05-26
 
