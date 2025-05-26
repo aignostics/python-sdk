@@ -1,5 +1,11 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+(https://github.com/aignostics/python-sdk/compare/v0.2.10..0.2.11) - 2025-05-26
+
+
+- Naming of navigation points - ([665edc2](https://github.com/aignostics/python-sdk/commit/665edc2dfd9fd8dff4a734f18c8aa01d6182dbc6))
+
+
 (https://github.com/aignostics/python-sdk/compare/v0.2.8..v0.2.9) - 2025-05-26
 
 
