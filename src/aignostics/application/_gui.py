@@ -1120,7 +1120,7 @@ class PageBuilder(BasePageBuilder):
                     with ui.item().props("clickable"):
                         with ui.item_section().classes("w-64"):
                             if Path(item.reference).is_file():
-                                ui.image("/thumbnail?source=" + urlencode(item.reference)).classes("w-64")  # type: ignore[no-untyped-call]
+                                ui.image("/thumbnail?source=" + urlencode(item.reference)).classes("w-64")
                             else:
                                 ui.image("/assets/image-not-found.png").classes("w-64")
                         with ui.item_section().classes("w-full"):
