@@ -1,6 +1,20 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.10..0.2.11) - 2025-05-26
+(https://github.com/aignostics/python-sdk/compare/v0.2.11..0.2.12) - 2025-05-26
+
+
+- *(cli)* List runs count - ([8e113c1](https://github.com/aignostics/python-sdk/commit/8e113c1560fee92057ba4bcce5c81e42bfeffacb))
+
+
+- Simplify, removing noruns - ([274e685](https://github.com/aignostics/python-sdk/commit/274e6858f5a8a3332e4c49421e5c3a0b48d46bef))
+
+
+- Update - ([b861b88](https://github.com/aignostics/python-sdk/commit/b861b88bfde53e6493fa12d4b3ea5ccfbf4d3410))
+- Reorder - ([b9399b3](https://github.com/aignostics/python-sdk/commit/b9399b33c8eedf76aa2f3f8c6421d139dc6b0243))
+- Fix broken link - ([3dbaace](https://github.com/aignostics/python-sdk/commit/3dbaace2a4ca769c7c7b103dfbe51c4b52a5a843))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.10..v0.2.11) - 2025-05-26
 
 
 - Naming of navigation points - ([665edc2](https://github.com/aignostics/python-sdk/commit/665edc2dfd9fd8dff4a734f18c8aa01d6182dbc6))
