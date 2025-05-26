@@ -37,8 +37,10 @@ def single_spot_payload_heta_0_51_0() -> list[platform.InputItem]:
                         "height_px": 7196,
                         "media_type": "image/tiff",
                         "staining_method": "H&E",
-                        "tissue": "LUNG",
-                        "disease": "LUNG_CANCER",
+                        "specimen": {
+                            "tissue": "LUNG",
+                            "disease": "LUNG_CANCER",
+                        },
                     },
                 )
             ],
