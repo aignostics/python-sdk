@@ -349,11 +349,6 @@ class Service(BaseService):
         # TODO(Helmut): Use it
         application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)  # noqa: F841
 
-        if not source_directory.is_dir():
-            logger.error("Source directory does not exist or is not a directory: %s", source_directory)
-            message = f"Source directory does not exist or is not a directory: {source_directory}"
-            raise ValueError(message)
-
         metadata = []
         file_extensions = [".tiff", ".tif", ".dcm"]
 
@@ -366,17 +361,11 @@ class Service(BaseService):
                         while chunk := f.read(1024):
                             hash_sum.update(chunk)  # type: ignore[no-untyped-call]
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
-                    if file_path.suffix in {".dcm", ".tiff", ".tif"}:
-                        image_metadata = WSIService().get_metadata(file_path)
-                        width = image_metadata["dimensions"]["width"]
-                        height = image_metadata["dimensions"]["height"]
-                        mpp = image_metadata["resolution"]["mpp_x"]
-                        file_size_human = image_metadata["file"]["size_human"]
-                    else:
-                        mpp = None
-                        width = None
-                        height = None
-                        file_size_human = None
+                    image_metadata = WSIService().get_metadata(file_path)
+                    width = image_metadata["dimensions"]["width"]
+                    height = image_metadata["dimensions"]["height"]
+                    mpp = image_metadata["resolution"]["mpp_x"]
+                    file_size_human = image_metadata["file"]["size_human"]
                     reference = file_path.absolute()
                     entry = {
                         "reference": str(reference),
