@@ -11,6 +11,8 @@ class PageBuilder(BasePageBuilder):
     def register_pages() -> None:
         from nicegui import run, ui  # noqa: PLC0415
 
+        Service().health()  # Ensure settings are loaded
+
         ui.add_head_html("""
             <style>
                 :global(.jse-modal-window.jse-modal-window-jsoneditor)

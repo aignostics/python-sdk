@@ -40,7 +40,7 @@ more about how we achieve
 > [!Note]
 > See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible. 
 > If you first want to learn bout the basic concepts and components of the Aignostics Platform skip to that section below. 
-> The further reading section points you to reference documentation listing all available CLI commans, methods and classes provided by the SDK, how we achieve operational excellence and security, and more. 
+> The further reading section points you to reference documentation listing all available CLI commands, methods and classes provided by the client library, operations of the API, how we achieve operational excellence, security, and more. 
 > If you are not familiar with terminology please check the glossary at the end of this document.
 
 ### Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
