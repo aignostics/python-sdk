@@ -84,7 +84,7 @@ uvx aignostics application run submit he-tme data/tcga_luad/run.csv
 uvx aignostics application run list
 # Incrementally download results when they become available
 # Fill in the id from the output in the previous step
-uvx aignostics application run result dowload APPLICATION_RUN_ID 
+uvx aignostics application run result download APPLICATION_RUN_ID 
 ```
 
 For convenience the the `application run execute` command combines preparation, upload, submission and download.

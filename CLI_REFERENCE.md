@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.2 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.4 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -125,18 +125,18 @@ $ aignostics application run [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `execute`: Execute an application run and download...
+* `execute`: Prepare metadata, upload data to platform,...
 * `prepare`: Prepare metadata CSV file required for...
 * `upload`: Upload files referenced in the metadata...
 * `submit`: Submit run by referencing the metadata CSV...
-* `list`: List application runs, sorted by...
-* `describe`: Describe application run.
-* `cancel`: Cancel application run.
-* `result`: Inspect and download application run results
+* `list`: List runs.
+* `describe`: Describe run.
+* `cancel`: Cancel run.
+* `result`: Download or delete run results.
 
 #### `aignostics application run execute`
 
-Execute an application run and download the results.
+Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
 (1) Prepares metadata CSV file for the given application version
     by scanning the source directory for whole slide images
@@ -159,7 +159,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of the application to execute  [required]
+* `APPLICATION_VERSION_ID`: Id of application version to execute. If application id is given, the latest version of that application is used.  [required]
 * `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and references.  [required]
 * `SOURCE_DIRECTORY`: Source directory to scan for whole slide images  [required]
 * `MAPPING...`: Mapping to use for amending metadata CSV file. Each mapping is of the form &#x27;&lt;regexp&gt;:&lt;key&gt;:&lt;value&gt;,&lt;key&gt;:&lt;value&gt;,...&#x27;. The regular expression is matched against the reference attribute of the entry. The key/value pairs are applied to the entry if the pattern matches. You can use the mapping option multiple times to set values for multiple files.   [required]
@@ -168,7 +168,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748180549329.9993]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748264419690.5442]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -194,7 +194,7 @@ $ aignostics application run prepare [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of the application to generate the metadata for  [required]
+* `APPLICATION_VERSION_ID`: Id of the application version to generate the metadata for. If application id is given, the latest version of that application is used.  [required]
 * `METADATA_CSV`: Target filename for the generated metadata CSV file.  [required]
 * `SOURCE_DIRECTORY`: Source directory to scan for whole slide images  [required]
 
@@ -219,12 +219,12 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of the application to generate the metadata for  [required]
+* `APPLICATION_VERSION_ID`: Id of the application version to upload data for. If application id is given, the latest version of that application is used.  [required]
 * `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and references.  [required]
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748180549330.086]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748264419690.628]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -244,7 +244,7 @@ $ aignostics application run submit [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of the application version to submit run for  [required]
+* `APPLICATION_VERSION_ID`: Id of the application version to submit run for. If application id is given, the latest version of that application is used.  [required]
 * `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and references.  [required]
 
 **Options**:
@@ -253,7 +253,7 @@ $ aignostics application run submit [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 #### `aignostics application run list`
 
-List application runs, sorted by triggered_at, descending.
+List runs.
 
 **Usage**:
 
@@ -269,7 +269,7 @@ $ aignostics application run list [OPTIONS]
 
 #### `aignostics application run describe`
 
-Describe application run.
+Describe run.
 
 **Usage**:
 
@@ -287,7 +287,7 @@ $ aignostics application run describe [OPTIONS] RUN_ID
 
 #### `aignostics application run cancel`
 
-Cancel application run.
+Cancel run.
 
 **Usage**:
 
@@ -305,7 +305,7 @@ $ aignostics application run cancel [OPTIONS] RUN_ID
 
 #### `aignostics application run result`
 
-Inspect and download application run results
+Download or delete run results.
 
 **Usage**:
 
@@ -319,12 +319,12 @@ $ aignostics application run result [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `download`: Download the results of an application run.
-* `delete`: Delete the results of an application run.
+* `download`: Download results of a run.
+* `delete`: Delete results of a run.
 
 ##### `aignostics application run result download`
 
-Download the results of an application run.
+Download results of a run.
 
 **Usage**:
 
@@ -346,7 +346,7 @@ $ aignostics application run result download [OPTIONS] RUN_ID DESTINATION_DIRECT
 
 ##### `aignostics application run result delete`
 
-Delete the results of an application run.
+Delete results of a run.
 
 **Usage**:
 

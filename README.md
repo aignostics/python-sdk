@@ -90,29 +90,41 @@ H&E-TME application](https://www.aignostics.com/products/he-tme-profiling-produc
 ```shell
 # Download a sample dataset from the NCI Image Data Commons (IDC) portal to your current working directory
 # As the dataset id refers to the TCGA LUAD collection, this creates a directory tcga_luad with the DICOM files
-uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 .
+uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 data/
 # Prepare the metadata for the application run by creating a metadata.csv, extracting 
 # the required metadata from the DICOM files. We furthermore add the required
 # information about the tissue type and disease. TODO (Helmut): Update
-uvx aignostics application run prepare he-tme:v0.50.0 tcga_luad/metadata.csv tcga_luad
-# Edit the metadata.csv to insert the required information about the tissue type and disease
-nano tcga_luad/metadata.csv # Adapt to your favourite editor
+uvx aignostics application run prepare he-tme data/tcga_luad/run.csv data/
+# Edit the metadata.csv to insert the required information about the staining method, tissue type and disease
+# Adapt to your favourite editor
+nano tcga_luad/metadata.csv 
 # Upload the metadata.csv and referenced whole slide images to the Aignostics Platform
-uvx aignostics application run upload he-tme:v0.50.0 tcga_luad/metadata.csv
+uvx aignostics application run upload he-tme data/tcga_luad/run.csv
 # Submit the application run and print tha run id
-uvx aignostics application run submit he-tme:v0.50.0 tcga_luad/metadata.csv
+uvx aignostics application run submit he-tme data/tcga_luad/run.csv
 # Check the status of the application run you triggered
 uvx aignostics application run list
-uvx aignostics application run result dowload APPLICATION_RUN_ID # Fill in the application run id
+# Incrementally download results when they become available
+# Fill in the id from the output in the previous step
+uvx aignostics application run result download APPLICATION_RUN_ID 
+```
+
+For convenience the the `application run execute` command combines preparation, upload, submission and download.
+The below is equivalent to the above, while adding additionally required metadata using a mapping
+
+```shell
+uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 data/
+uvx aignostics application run execute he-tme data/tcga_luad/run.csv data/ ".*\.dcm:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
 ```
 
 The CLI provides extensive help:
 
 ```shell
-uvx aignostics --help                        # list all spaces such as application, dataset, bucket and system, 
-uvx aignostics application --help            # list subcommands in the application space
-uvx aignostics application run --help.       # list subcommands in the application run sub-space
-uvx aignostics application run list --help   # show help for specific command
+uvx aignostics --help                           # list all spaces such as application, dataset, bucket and system, 
+uvx aignostics application --help               # list subcommands in the application space
+uvx aignostics application run --help           # list subcommands in the application run sub-space
+uvx aignostics application run list --help      # show help for specific command
+uvx aignostics application run execute --help   # show help for another command
 ```
 
 Check out our
