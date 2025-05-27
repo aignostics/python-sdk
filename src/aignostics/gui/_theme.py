@@ -24,10 +24,10 @@ def theme() -> None:
         accent="#111B1E",
         dark="#1d1d1d1d",
         dark_page="#12121212",
-        positive="#B0CCDA",
-        negative="#EBB8C7",
-        info="#31ccec",
-        warning="#f2c037",
+        positive="#0CA57B",
+        negative="#D4313C",
+        info="#261C8D",
+        warning="#FFCC00",
         brand_white="#EFF0F1",
         brand_background_light="#E7E6E8",
     )
@@ -43,10 +43,10 @@ def theme() -> None:
                 display: none;
             }
             .bg-red-300 {
-                background-color: #E9B9C7 !important;
+                background-color: #EEADB1 !important;
             }
             .bg-green-300 {
-                background-color: #B3CCD9 !important;
+                background-color: #9EDBCA !important;
             }
             .bg-aignostics-light {
                 background-color: #ECEDE9 !important;
@@ -57,7 +57,9 @@ def theme() -> None:
             html *
             {
                 font-family: "Nexa Text", Arial, sans-serif;
-                color: #1C1242
+            }
+            header {
+                color: white
             }
         </style>
     """)

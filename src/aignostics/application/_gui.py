@@ -356,7 +356,7 @@ class PageBuilder(BasePageBuilder):
                                 target="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/distribution-in-vitro-diagnostic-products-labeled-research-use-only-or-investigational-use-only",
                                 new_tab=True,
                             ):
-                                ui.image("/assets/ruo.png").style("width: 45px; height: 36px")
+                                ui.image("/assets/ruo.png").style("width: 70px; height: 36px")
 
                         elif regulatory_class == "demo":
                             with ui.icon("network_check", size="lg", color="orange"):
@@ -368,7 +368,7 @@ class PageBuilder(BasePageBuilder):
                             target="https://www.fda.gov/regulatory-information/search-fda-guidance-documents/distribution-in-vitro-diagnostic-products-labeled-research-use-only-or-investigational-use-only",
                             new_tab=True,
                         ):
-                            ui.image("/assets/ruo.png").style("width: 45px; height: 36px")
+                            ui.image("/assets/ruo.png").style("width: 70px; height: 36px")
 
             async def _select_source() -> None:
                 """Open a file picker dialog and show notifier when closed again."""
