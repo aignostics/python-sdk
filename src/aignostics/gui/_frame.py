@@ -48,6 +48,10 @@ def frame(  # noqa: PLR0915
         def toggle_dark_mode() -> None:
             app.storage.general["dark_mode"] = not app.storage.general.get("dark_mode", False)
             dark.toggle()
+            if dark.value:
+                ui.query("body").classes(replace="bg-aignostics-dark")
+            else:
+                ui.query("body").classes(replace="bg-aignostics-light")
 
         ui.button(
             on_click=toggle_dark_mode,
@@ -117,14 +121,17 @@ def frame(  # noqa: PLR0915
                 with ui.item_section().props("avatar"):
                     ui.icon("check_circle")
                 with ui.item_section():
-                    ui.link("Platform Status", "https://status.aignostics.com", new_tab=True).mark("LINK_DOCUMENTATION")
+                    ui.link("Show Service Status", "https://status.aignostics.com", new_tab=True).mark(
+                        "LINK_DOCUMENTATION"
+                    )
             with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("settings", color="positive")
                 with ui.item_section():
-                    ui.label("Inspector").tailwind.font_weight(
+                    ui.label("Check Inspector").tailwind.font_weight(
                         "bold" if context.client.page.path == "/system" else "normal"
                     )
+            ui.separator()
             with ui.item(on_click=app.shutdown).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("logout", color="negative")
@@ -140,6 +147,9 @@ def frame(  # noqa: PLR0915
             'width="250" height="30" frameborder="0" scrolling="no" '
             'style="color-scheme: dark"></iframe>'
         )
+        ui.query("body").classes(
+            replace="bg-aignostics-light dark:bg-aignostics-dark"
+        )  # https://github.com/zauberzeug/nicegui/pull/448#issuecomment-1492442558
         ui.space()
         ui.html(
             '🔬<a style="color: black; text-decoration: underline" target="_blank" href="https://github.com/aignostics/python-sdk/">'

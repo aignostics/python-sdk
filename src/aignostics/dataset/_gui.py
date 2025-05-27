@@ -53,7 +53,7 @@ class PageBuilder(BasePageBuilder):
                     """).classes("w-3/5")
                 ui.space()
                 with ui.column().classes("w-1/5"):
-                    ui.image("/assets/NIH_IDC_title.svg").classes("w-25").style("margin-top:1.25rem")
+                    ui.image("/assets/NIH-IDC-logo.svg").classes("w-25").style("margin-top:1.25rem")
                     with ui.link(target=PORTAL_URL, new_tab=True):
                         ui.button("Explore Portal", icon="search")
 

@@ -295,14 +295,13 @@ class PageBuilder(BasePageBuilder):
                 """
             )
 
-            with (
-                ui.row(align_items="center").classes("justify-center w-full"),
-                ui.carousel(animated=True, arrows=True, navigation=True).props("height=312px"),
-            ):
-                with ui.carousel_slide().classes("p-0"):
-                    ui.image("/assets/home-card-1.png").classes("w-[768px]")
-                with ui.carousel_slide().classes("p-0"):
-                    ui.image("/assets/home-card-2.png").classes("w-[768px]")
+            carousel = ui.carousel(animated=True, arrows=True, navigation=True).props(
+                "height=369px infinite autoplay=1000 control-color=purple"
+            )
+            with ui.row(align_items="center").classes("justify-center w-full"), carousel:
+                for i in range(1, 5):  # Loop from 1 to 4
+                    with ui.carousel_slide().classes("p-0"):
+                        ui.image(f"/assets/home-card-{i}.png").classes("w-[860px]")
 
         @ui.page("/application/{application_id}")
         def page_application_describe(application_id: str) -> None:  # noqa: C901, PLR0912, PLR0915

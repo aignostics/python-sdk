@@ -39,7 +39,7 @@ class PageBuilder(BasePageBuilder):
                         5. You can manually delete data at any time using the form below.
                         """).classes("w-3/5")
                 ui.space()
-                ui.image("/assets/Google_Cloud_logo.svg").classes("w-1/5").style("margin-top:1.25rem")
+                ui.image("/assets/Google-Cloud-logo.svg").classes("w-1/5").style("margin-top:1.25rem")
 
             def _get_rows() -> list[dict[str, str]]:
                 objs = Service().find(detail=True)
