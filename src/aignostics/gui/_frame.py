@@ -139,7 +139,7 @@ def frame(  # noqa: PLR0915
                     ui.label("Quit Launcher")
 
     with (
-        ui.footer().style("background-color: #EDEDE9").style("padding-top:0px; height: 30px;"),
+        ui.footer().style("background-color: #FFFFFF !important").style("padding-top:0px; height: 30px;"),
         ui.row(align_items="center").classes("justify-center w-full"),
     ):
         ui.html(

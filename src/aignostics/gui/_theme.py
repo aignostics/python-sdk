@@ -19,7 +19,7 @@ def theme() -> None:
     from nicegui import app, ui  # noqa: PLC0415
 
     ui.colors(
-        primary="#433D6B",
+        primary="#1C1242",
         secondary="#B9B1DF",
         accent="#111B1E",
         dark="#1d1d1d1d",
