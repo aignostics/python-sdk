@@ -56,7 +56,7 @@ def frame(  # noqa: PLR0915
         ui.button(
             on_click=toggle_dark_mode,
             icon="dark_mode",
-        )
+        ).set_visibility(False)
 
         with ui.link(target="https://aignostics.readthedocs.org/", new_tab=True):
             ui.button(icon="local_library").props(FLAT_COLOR_WHITE)
@@ -139,13 +139,21 @@ def frame(  # noqa: PLR0915
                     ui.label("Quit Launcher")
 
     with (
-        ui.footer().style("background-color: #FFFFFF !important").style("padding-top:0px; height: 30px;"),
+        ui.footer()
+        .style("background-color: #F0F0F0 !important")
+        .style("padding-top:0px; padding-left: 0px; height: 30px"),
         ui.row(align_items="center").classes("justify-center w-full"),
     ):
         ui.html(
-            '<iframe src="https://status.aignostics.com/badge?theme=dark" '
+            '<iframe id="betterstack" src="https://status.aignostics.com/badge?theme=dark" '
             'width="250" height="30" frameborder="0" scrolling="no" '
             'style="color-scheme: dark"></iframe>'
+        ).style("margin-left: 0px;")
+        ui.run_javascript(
+            "setTimeout(function() { "
+            'var x = document.getElementById("betterstack"); '
+            'x.contentWindow.document.body.style.backgroundColor = "#FF0000"; '
+            "}, 20000);"
         )
         ui.query("body").classes(
             replace="bg-aignostics-light dark:bg-aignostics-dark"

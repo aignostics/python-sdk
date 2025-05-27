@@ -42,6 +42,9 @@ def theme() -> None:
             ::-webkit-scrollbar {
                 display: none;
             }
+            .q-drawer-container {
+                background-color: red
+            }
             .bg-red-300 {
                 background-color: #EEADB1 !important;
             }
@@ -52,7 +55,13 @@ def theme() -> None:
                 background-color: #ECEDE9 !important;
             }
             .bg-aignostics-dark {
-                background-color: #030020 !important;
+                background-color: #000000 !important;
+            }
+            .q-stepper, .q-drawer, .q-footer {
+                background-color: #F0F0F0 !important;
+            }
+            .q-drawer.q-dark {
+                background-color: #000000 !important;
             }
             html *
             {
