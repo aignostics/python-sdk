@@ -56,7 +56,7 @@ def frame(  # noqa: PLR0915
         ui.button(
             on_click=toggle_dark_mode,
             icon="dark_mode",
-        ).props("flat color=black")
+        )
 
         with ui.link(target="https://aignostics.readthedocs.org/", new_tab=True):
             ui.button(icon="local_library").props(FLAT_COLOR_WHITE)
@@ -77,14 +77,14 @@ def frame(  # noqa: PLR0915
         with ui.list():
             with ui.item(on_click=lambda _: ui.navigate.to("/")).props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("biotech", color="#433D6B")
+                    ui.icon("biotech", color="primary")
                 with ui.item_section():
                     ui.label("Run Applications").tailwind.font_weight(
                         "bold" if context.client.page.path == "/" else "normal"
                     )
             with ui.item(on_click=lambda _: ui.navigate.to("/dataset/idc")).props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("image", color="#BA1F40")
+                    ui.icon("image", color="primary")
                 with ui.item_section():
                     ui.label("Download Datasets").tailwind.font_weight(
                         "bold" if context.client.page.path == "/dataset/idc" else "normal"
@@ -93,40 +93,40 @@ def frame(  # noqa: PLR0915
         with ui.list():
             with ui.item(on_click=lambda _: ui.navigate.to("/bucket")).props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("cloud", color="#4185F4")
+                    ui.icon("cloud", color="primary")
                 with ui.item_section():
                     ui.label("Manage Cloud Bucket").tailwind.font_weight(
                         "bold" if context.client.page.path == "/bucket" else "normal"
                     )
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("domain")
+                    ui.icon("domain", color="primary")
                 with ui.item_section():
                     ui.link("Go to Console", "https://platform.aignostics.com", new_tab=True).mark("LINK_PLATFORM")
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("local_library")
+                    ui.icon("local_library", color="primary")
                 with ui.item_section():
                     ui.link("Read The Docs", "https://aignostics.readthedocs.org/", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("help")
+                    ui.icon("help", color="primary")
                 with ui.item_section():
                     ui.link("Get Support", "https://platform.aignostics.com/support", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("check_circle")
+                    ui.icon("check_circle", color="primary")
                 with ui.item_section():
                     ui.link("Show Service Status", "https://status.aignostics.com", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
             with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("settings", color="positive")
+                    ui.icon("settings", color="primary")
                 with ui.item_section():
                     ui.label("Check Inspector").tailwind.font_weight(
                         "bold" if context.client.page.path == "/system" else "normal"
@@ -134,7 +134,7 @@ def frame(  # noqa: PLR0915
             ui.separator()
             with ui.item(on_click=app.shutdown).props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("logout", color="negative")
+                    ui.icon("logout", color="primary")
                 with ui.item_section():
                     ui.label("Quit Launcher")
 

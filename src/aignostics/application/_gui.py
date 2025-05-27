@@ -159,7 +159,7 @@ class PageBuilder(BasePageBuilder):
                                 .props("clickable")
                             ):
                                 with ui.item_section().props("avatar"):
-                                    ui.icon(_application_id_to_icon(application.application_id))
+                                    ui.icon(_application_id_to_icon(application.application_id)).style("color: #1C1242")
                                 with ui.item_section():
                                     ui.label(f"{application.name}").tailwind.font_weight(
                                         "bold"
@@ -195,7 +195,7 @@ class PageBuilder(BasePageBuilder):
                                     .mark(f"SIDEBAR_RUN_ITEM:{index}")
                                 ):
                                     with ui.item_section().props("avatar"):
-                                        ui.icon(_run_status_to_icon(run_data["status"]))
+                                        ui.icon(_run_status_to_icon(run_data["status"])).style("color: #1C1242")
                                     with ui.item_section():
                                         ui.label(f"{run_data['application_version_id']}").tailwind.font_weight(
                                             "bold"

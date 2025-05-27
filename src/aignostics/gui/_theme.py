@@ -49,14 +49,15 @@ def theme() -> None:
                 background-color: #B3CCD9 !important;
             }
             .bg-aignostics-light {
-                background-color: #EDEDE9 !important;
+                background-color: #ECEDE9 !important;
             }
             .bg-aignostics-dark {
-                background-color: #1C1242 !important;
+                background-color: #030020 !important;
             }
             html *
             {
                 font-family: "Nexa Text", Arial, sans-serif;
+                color: #1C1242
             }
         </style>
     """)
