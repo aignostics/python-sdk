@@ -1,6 +1,15 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.11..0.2.12) - 2025-05-26
+(https://github.com/aignostics/python-sdk/compare/v0.2.12..0.2.13) - 2025-05-27
+
+
+- Styling of ui theme - ([b87ffb6](https://github.com/aignostics/python-sdk/commit/b87ffb67df666ea0f987b341321c6c560f1113f2))
+
+
+- Reorder - ([c3c15b7](https://github.com/aignostics/python-sdk/commit/c3c15b7ddc6ff71caa3cc556da0ff2053209adef))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.11..v0.2.12) - 2025-05-26
 
 
 - *(cli)* List runs count - ([8e113c1](https://github.com/aignostics/python-sdk/commit/8e113c1560fee92057ba4bcce5c81e42bfeffacb))
