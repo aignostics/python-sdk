@@ -85,7 +85,7 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
 @pytest.mark.sequential
 async def test_gui_qupath_install_and_launch(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
-    if platform == "Linux":
+    if platform.system() == "Linux":
         pytest.skip("unsupported test for Linux platform")
 
     gui_register_pages()

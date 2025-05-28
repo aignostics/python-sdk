@@ -82,7 +82,7 @@ def test_cli_install_and_launch_embedded(runner: CliRunner) -> None:
 @pytest.mark.sequential
 def test_cli_install_and_launch_ui(runner: CliRunner) -> None:
     """Check expected column returned."""
-    if platform == "Linux":
+    if platform.system() == "Linux":
         pytest.skip("unsupported test for Linux platform")
 
     # Uninstall QuPath if it exists to have a clean state for the test
