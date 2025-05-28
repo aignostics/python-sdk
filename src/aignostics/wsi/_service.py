@@ -102,7 +102,7 @@ class Service(BaseService):
             message = f"File does not exist: {path}"
             logger.warning(message)
             raise ValueError(message)
-        if path.suffix.lower() in {".dcm", ".tiff", ".tif"}:
+        if path.suffix.lower() in {".dcm", ".tiff", ".tif", ".svs"}:
             return self._get_openslide_thumbnail(path)
         message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
         logger.warning(message)

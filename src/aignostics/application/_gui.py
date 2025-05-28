@@ -392,7 +392,10 @@ class PageBuilder(BasePageBuilder):
                             f"Selected folder {submit_form.source} to analyze."
                         ) if submit_form.wsi_step_label else None
                         submit_form.wsi_next_button.enable() if submit_form.wsi_next_button else None
-                        ui.notify(f"You chose directory {submit_form.source}.", type="info")
+                        ui.notify(
+                            f"You chose directory {submit_form.source}. Feel free to continue to the next step.",
+                            type="positive",
+                        )
                 else:
                     submit_form.source = None
                     submit_form.wsi_step_label.set_text(
@@ -413,7 +416,10 @@ class PageBuilder(BasePageBuilder):
                     f"Selected folder {submit_form.source} to analyze."
                 ) if submit_form.wsi_step_label else None
                 submit_form.wsi_next_button.enable() if submit_form.wsi_next_button else None
-                ui.notify(f"You chose directory {submit_form.source}.", type="info")
+                ui.notify(
+                    f"You chose directory {submit_form.source}. Feel free to continue to the next step.",
+                    type="positive",
+                )
 
             async def _on_wsi_next_click() -> None:
                 """Handle the 'Next' button click in WSI step.
@@ -453,7 +459,8 @@ class PageBuilder(BasePageBuilder):
                         submit_form.wsi_spinner.set_visibility(False)
                         submit_form.metadata_grid.update()
                         ui.notify(
-                            f"Found {len(submit_form.metadata_grid.options['rowData'])} slides for analysis.",
+                            f"Found {len(submit_form.metadata_grid.options['rowData'])} slides for analysis."
+                            "Please provide missing metadata.",
                             type="positive",
                         )
                         stepper.next()
@@ -506,10 +513,13 @@ class PageBuilder(BasePageBuilder):
                     ui.button("Close", on_click=info_dialog.close)
 
             with ui.stepper().props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
-                with ui.step("Application Version"):
+                with ui.step("Select Application Version"):
                     with ui.row().classes("w-full justify-center"):
                         with ui.column():
-                            ui.label(f"Select the version of {application.name} you want to run.")
+                            ui.label(
+                                f"Select the version of {application.name} you want to run. Not sure? "
+                                "Click “Next” to auto-select the latest version"
+                            )
                             ui.select(
                                 {version.application_version_id: version.version for version in application_versions},
                                 value=latest_application_version_id,
@@ -522,9 +532,9 @@ class PageBuilder(BasePageBuilder):
                             "BUTTON_APPLICATION_VERSION_NEXT"
                         )
 
-                with ui.step("Whole Slide Images"):
+                with ui.step("Select Whole Slide Images"):
                     submit_form.wsi_step_label = ui.label(
-                        "Select a folder with whole slide images you want to analyze."
+                        "Select the folder with the whole slide images you want to analyze then click Next."
                     )
                     with ui.stepper_navigation():
                         if "pytest" in sys.modules:
@@ -536,13 +546,21 @@ class PageBuilder(BasePageBuilder):
                         submit_form.wsi_spinner.set_visibility(False)
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
-                with ui.step("Metadata"):
+                with ui.step("Choose Images and Edit Metadata"):
                     ui.markdown(
                         """
-                        1. Check extracted and provide missing metadata.
-                            Double click red cells to edit - you are done when all turned green.
-                        2. You can exclude slides from the analysis by selecting them and clicking "Exclude slides".
-                        3. You can revert to the original list by clicking the Back button.
+                        The Launchpad has found all compatible slide files in your selected folder.
+
+                        1. Check the slides that have been found.
+                            If you wish to exclude any from analysis at this point, check the boxes next to those slides
+                            and click “Exclude” to remove them.
+                        2. For the slides you wish to analyze,
+                            provide the missing metadata to finalize the upload.
+                            Double click red cells to edit the missing data with the available options.
+                        3. Once all the metadata has been added and your slide selection has been finalized,
+                            click “Next”.
+
+                        You can revert to the previous step and reupload at any point by clicking “Back”.
                         """
                     )
 
@@ -662,7 +680,7 @@ class PageBuilder(BasePageBuilder):
                     submit_form.metadata_grid = (
                         ui.aggrid({
                             "columnDefs": [
-                                {"headerName": "Reference", "field": "reference", "checkboxSelection": True},
+                                {"headerName": "Reference", "field": "reference_short", "checkboxSelection": True},
                                 {
                                     "headerName": "Thumbnail",
                                     "field": "thumbnail",
@@ -750,7 +768,6 @@ class PageBuilder(BasePageBuilder):
                         .on("selectionChanged", _handle_grid_selection_changed)
                         .mark("GRID_METADATA")
                     )
-                    # .style("height: auto; width: 1000px")
                     # use ui timer to update the grid class depending on dark mode, with a frequency of once per second
                     ui.timer(
                         interval=1,
@@ -768,14 +785,32 @@ class PageBuilder(BasePageBuilder):
                     with ui.stepper_navigation():
                         if "pytest" in sys.modules:
                             ui.button("Select", on_click=_pytest_meta, icon="folder").mark("BUTTON_PYTEST_META")
+                        submit_form.metadata_next_button = ui.button("Next", on_click=_metadata_next)
+                        submit_form.metadata_next_button.mark("BUTTON_METADATA_NEXT").disable()
                         submit_form.metadata_exclude_button = ui.button(
                             "Exclude selected", on_click=_delete_selected
                         ).mark("BUTTON_DELETE_SELECTED")
                         submit_form.metadata_exclude_button.set_text("Exclude")
                         submit_form.metadata_exclude_button.disable()
-                        submit_form.metadata_next_button = ui.button("Next", on_click=_metadata_next)
-                        submit_form.metadata_next_button.mark("BUTTON_METADATA_NEXT").disable()
                         ui.button("Back", on_click=stepper.previous).props("flat")
+
+                def _submit() -> None:
+                    """Submit the application run."""
+                    ui.notify("Submitting application run ...", type="info")
+                    try:
+                        run = service.application_run_submit_from_metadata(
+                            str(submit_form.application_version_id),
+                            submit_form.metadata or [],
+                        )
+                    except Exception as e:  # noqa: BLE001
+                        ui.notify(f"Failed to submit application run: {e}.", type="warning")
+                        return
+                    ui.notify(
+                        f"Application run submitted with id '{run.application_run_id}'. "
+                        "Navigating to application run ...",
+                        type="positive",
+                    )
+                    ui.navigate.to(f"/application/run/{run.application_run_id}")
 
                 async def _upload() -> None:
                     """Upload prepared slides."""
@@ -796,12 +831,13 @@ class PageBuilder(BasePageBuilder):
                     ui.notify("Upload to Aignostics Platform completed.", type="positive")
                     submit_form.submission_submit_button.enable()
                     submit_form.submission_upload_button.disable()
+                    _submit()
 
                 @ui.refreshable
                 def _upload_ui(metadata: list[dict[str, Any]]) -> None:
                     """Upload UI."""
                     with ui.column(align_items="start"):
-                        ui.label(f"1. Upload {len(metadata)} slides you prepared to the Aignostics Platform.")
+                        ui.label("Upload and submit your slides for analysis.")
                         upload_complete = True
                         for row in metadata or []:
                             upload_complete = upload_complete and row["file_upload_progress"] == 1
@@ -809,11 +845,6 @@ class PageBuilder(BasePageBuilder):
                                 with ui.circular_progress(value=row["file_upload_progress"], show_value=False):
                                     ui.button(icon="cloud_upload").props("flat round").disable()
                                 ui.label(f"{row['source']} ({row['file_size_human']})").classes("w-4/5")
-                        if upload_complete:
-                            ui.label(
-                                f"2. All uploads completed successfully. Click submit to run "
-                                f"{submit_form.application_version_id} on {len(metadata)} slides."
-                            )
 
                 def _update_upload_progress() -> None:
                     """Update the upload progress for each file."""
@@ -832,28 +863,14 @@ class PageBuilder(BasePageBuilder):
                                         break
                         _upload_ui.refresh(submit_form.metadata)
 
-                def _submit() -> None:
-                    """Submit the application run."""
-                    ui.notify("Submitting application run ...", type="info")
-                    try:
-                        run = service.application_run_submit_from_metadata(
-                            str(submit_form.application_version_id),
-                            submit_form.metadata or [],
-                        )
-                    except Exception as e:  # noqa: BLE001
-                        ui.notify(f"Failed to submit application run: {e}.", type="warning")
-                        return
-                    ui.notify(f"Application run submitted with id '{run.application_run_id}'.", type="positive")
-                    ui.navigate.to(f"/application/run/{run.application_run_id}")
-
-                with ui.step("Submission"):
+                with ui.step("Slide Submission"):
                     _upload_ui([])
                     upload_message_queue = Manager().Queue()
                     ui.timer(0.1, callback=_update_upload_progress)
 
                     with ui.stepper_navigation():
                         submit_form.submission_upload_button = ui.button(
-                            "Upload",
+                            "Upload and Submit",
                             on_click=_upload,
                             icon="check",
                         ).mark("BUTTON_SUBMISSION_UPLOAD")
@@ -862,6 +879,7 @@ class PageBuilder(BasePageBuilder):
                             on_click=_submit,
                             icon="check",
                         )
+                        submit_form.submission_submit_button.set_visibility(False)
                         submit_form.submission_submit_button.mark("BUTTON_SUBMISSION_SUBMIT").disable()
                         ui.button("Back", on_click=stepper.previous).props("flat")
 
@@ -906,8 +924,8 @@ class PageBuilder(BasePageBuilder):
                 ui.notify(f"Canceling application run with id '{run_id}' ...", type="info")
                 try:
                     service.application_run_cancel(run_id)
-                    ui.notify("Application run cancelled!", type="positive")
                     ui.navigate.reload()
+                    ui.notify("Application run cancelled!", type="positive")
                     return True
                 except Exception as e:  # noqa: BLE001
                     ui.notify(f"Failed to cancel application run: {e}.", type="warning")
@@ -934,11 +952,14 @@ class PageBuilder(BasePageBuilder):
                         selected_folder.value = str(Path.home())
 
                     ui.label("Select a folder to download all results for this application run.")
-                    ui.button("Use Home", on_click=_select_home, icon="home").mark("BUTTON_DOWNLOAD_DESTINATION_HOME")
-                    ui.space()
-                    ui.button("Select Download Folder", on_click=_select_download_destination, icon="folder_open").mark(
-                        "BUTTON_DOWNLOAD_DESTINATION_SELECT"
-                    )
+                    with ui.row().classes("w-full"):
+                        ui.button("Use Home", on_click=_select_home, icon="home").mark(
+                            "BUTTON_DOWNLOAD_DESTINATION_HOME"
+                        )
+                        ui.space()
+                        ui.button(
+                            "Select Download Folder", on_click=_select_download_destination, icon="folder_open"
+                        ).mark("BUTTON_DOWNLOAD_DESTINATION_SELECT")
 
                 download_item_status = ui.label("")
                 download_item_status.set_visibility(False)
@@ -1004,7 +1025,7 @@ class PageBuilder(BasePageBuilder):
                     ui.notify("Download completed.", type="positive")
 
                 ui.separator()
-                with ui.row(align_items="end").classes("w-full"):
+                with ui.row(align_items="end").classes("w-full justify-end"):
                     ui.button("Close", on_click=download_run_dialog.close, color="secondary").props("outline").mark(
                         "DIALOG_BUTTON_DOWNLOAD_CLOSE"
                     )

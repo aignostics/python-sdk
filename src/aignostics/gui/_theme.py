@@ -15,7 +15,7 @@ class PageBuilder(BasePageBuilder):
 
 
 def theme() -> None:
-    """Set theme."""
+    """Theming incl. colors and fonts."""
     from nicegui import app, ui  # noqa: PLC0415
 
     ui.colors(
@@ -33,23 +33,23 @@ def theme() -> None:
     )
 
     ui.add_head_html("""
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Dives+Akuru&display=swap" rel="stylesheet">
         <style type="text/tailwindcss">
             @layer components {
                 .blue-box {
                     @apply bg-blue-500 p-12 text-center shadow-lg rounded-lg text-white;
                 }
             }
+            @font-face{
+                font-family: "cabin";
+                src: url('/assets/cabin-v27-latin-regular.woff2') format('woff2');
+                font-weight: normal;
+                font-style: normal;
+            }
             ::-webkit-scrollbar {
                 display: none;
-            }
-            .q-drawer-container {
-                background-color: red
-            }
-            .bg-red-300 {
-                background-color: #EEADB1 !important;
-            }
-            .bg-green-300 {
-                background-color: #9EDBCA !important;
             }
             .bg-aignostics-light {
                 background-color: #ECEDE9 !important;
@@ -57,7 +57,7 @@ def theme() -> None:
             .bg-aignostics-dark {
                 background-color: #000000 !important;
             }
-            .q-stepper, .q-drawer, .q-footer {
+            .q-stepper, .q-drawer {
                 background-color: #F0F0F0 !important;
             }
             .q-drawer.q-dark {
@@ -65,10 +65,18 @@ def theme() -> None:
             }
             html *
             {
-                font-family: "Nexa Text", Arial, sans-serif;
+                font-family: "Cabin";
             }
             header {
                 color: white
+            }
+            footer {
+                padding-top:0px; padding-left: 0px; height: 30px; background-color: white
+            }
+            .nicegui-markdown {
+                ol {
+                    padding-left: 15px;
+                }
             }
         </style>
     """)

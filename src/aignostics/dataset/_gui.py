@@ -42,20 +42,45 @@ class PageBuilder(BasePageBuilder):
                 # No need to do anything here
                 pass
             with ui.row(align_items="start").classes("full-width"):
-                ui.markdown("""
-                    ##### Download DICOM datasets from IDC Portal of NCI
-                    1. Click 🔍 Explore Portal to find DICOM datasets of interest.
-                    2. Find a collection, patient case, study, series, or instance of interest,
-                        and copy one or multiple IDs into the field below.
-                    3. If you don't want to explore, simply click on "Example Dataset".
-                    4. Use ⌂ Home or 📁 select a download folder and hit ↓ download.
-                    5. Run Applications via the ☰ menu, select an application, and the folder
-                    """).classes("w-3/5")
+                ui.markdown(
+                    """
+                    ### Download public DICOM datasets
+                    Explore the IDC Portal from NCI to find datasets of interest and upload them to the Launchpad
+                    to test Aignostics applications.
+                    """
+                ).classes("w-3/5")
                 ui.space()
                 with ui.column().classes("w-1/5"):
                     ui.image("/assets/NIH-IDC-logo.svg").classes("w-25").style("margin-top:1.25rem")
                     with ui.link(target=PORTAL_URL, new_tab=True):
                         ui.button("Explore Portal", icon="search")
+
+            with ui.row(align_items="start").classes("w-full"):
+                ui.markdown("""
+                    ##### Pick a Dataset
+                    1. Click “Explore Portal” on the right and find a DICOM dataset of interest
+                    2. Copy the UID into the field below
+                    """).classes("w-2/5")
+                ui.space()
+                ui.label("OR").style("margin-top: 2rem; font-size: 2rem; color: grey")
+                ui.space()
+                ui.markdown("""
+                    ##### Quick Start
+                    1. Click “Use Example Dataset” below to automatically populate a pre-selected DICOM dataset
+                    """).classes("w-2/5")
+
+            with ui.row(align_items="start").classes("w-full"):
+                ui.markdown(
+                    """
+                    Once your dataset UID is added, click "Use Home" or “Select Download Folder” and select a
+                    folder on your computer for the dataset to be stored.
+                    Once you've chosen, the “Download” button should light up and you can download your
+                    selected dataset.
+
+                    When you're ready to begin image analysis, open ☰ menu and click “Run Applications” to return to
+                    the main menu.
+                    """
+                )
 
             def _on_source_input_change(e: ValueChangeEventArguments) -> None:
                 """On change event."""
@@ -192,6 +217,11 @@ class PageBuilder(BasePageBuilder):
                         color="secondary",
                     ).mark("BUTTON_EXAMPLE_DATASET")
                     ui.space()
+                    ui.button("Use Home", on_click=_select_home, icon="home").mark("BUTTON_DOWNLOAD_DESTINATION_HOME")
+                    ui.button("Select Download Folder", on_click=_select_destination, icon="folder").mark(
+                        "BUTTON_DOWNLOAD_DESTINATION"
+                    )
+                    ui.space()
                     with ui.row(align_items="center"):
                         download_form.download_button = ui.button("Download", icon="cloud_download").mark(
                             "BUTTON_DOWNLOAD"
@@ -204,11 +234,6 @@ class PageBuilder(BasePageBuilder):
                         with download_form.download_progress:
                             ui.button(icon="cloud_download").props("flat round").disable()
                         download_form.download_progress.visible = False
-                    ui.space()
-                    ui.button("Use Home", on_click=_select_home, icon="home").mark("BUTTON_DOWNLOAD_DESTINATION_HOME")
-                    ui.button("Select Download Folder", on_click=_select_destination, icon="folder").mark(
-                        "BUTTON_DOWNLOAD_DESTINATION"
-                    )
 
             download_message_queue = Manager().Queue()
 

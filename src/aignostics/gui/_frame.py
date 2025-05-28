@@ -27,7 +27,46 @@ def frame(  # noqa: PLR0915
     """
     from nicegui import app, context, ui  # noqa: PLC0415
 
+    from aignostics.system import Service as SystemService  # noqa: PLC0415
+
     theme()
+
+    launchpad_healthy: bool = bool(SystemService().health())
+
+    # Determine health periodically and update the UI accordingly
+    @ui.refreshable
+    def health_icon() -> None:
+        if launchpad_healthy:
+            ui.icon("check_circle", color="positive")
+        else:
+            ui.icon("error", color="negative")
+
+    @ui.refreshable
+    def health_link() -> None:
+        with (
+            ui.link(target="/system").style("background-color: white; text-decoration: none; color: black"),
+            ui.row().classes("items-center"),
+        ):
+            if launchpad_healthy:
+                ui.icon("check_circle", color="positive")
+                ui.label("Launchpad is healthy")
+            else:
+                ui.icon("error", color="negative")
+                ui.label("Launchpad is unhealthy")
+
+    def _update_health() -> None:
+        nonlocal launchpad_healthy
+        launchpad_healthy = bool(SystemService().health())
+        health_icon.refresh()
+        health_link.refresh()
+        ui.run_javascript("document.getElementById('betterstack').src = document.getElementById('betterstack').src;")
+
+    ui.timer(interval=60, callback=_update_health, immediate=False)
+
+    # Set background color based on dark mode
+    ui.query("body").classes(
+        replace="bg-aignostics-light dark:bg-aignostics-dark"
+    )  # https://github.com/zauberzeug/nicegui/pull/448#issuecomment-1492442558
 
     # Create right_drawer reference before using it
     right_drawer = ui.right_drawer(fixed=True)
@@ -91,6 +130,13 @@ def frame(  # noqa: PLR0915
                     )
         ui.space()
         with ui.list():
+            with ui.item(on_click=lambda _: ui.navigate.to("/qupath")).props("clickable"):
+                with ui.item_section().props("avatar"):
+                    ui.icon("visibility", color="primary")
+                with ui.item_section():
+                    ui.label("QuPath").tailwind.font_weight(
+                        "bold" if context.client.page.path == "/qupath" else "normal"
+                    )
             with ui.item(on_click=lambda _: ui.navigate.to("/bucket")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("cloud", color="primary")
@@ -121,14 +167,14 @@ def frame(  # noqa: PLR0915
                 with ui.item_section().props("avatar"):
                     ui.icon("check_circle", color="primary")
                 with ui.item_section():
-                    ui.link("Show Service Status", "https://status.aignostics.com", new_tab=True).mark(
+                    ui.link("Check Platform Status", "https://status.aignostics.com", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
             with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                 with ui.item_section().props("avatar"):
-                    ui.icon("settings", color="primary")
+                    health_icon()
                 with ui.item_section():
-                    ui.label("Check Inspector").tailwind.font_weight(
+                    ui.label("Check Launchpad Status").tailwind.font_weight(
                         "bold" if context.client.page.path == "/system" else "normal"
                     )
             ui.separator()
@@ -139,9 +185,7 @@ def frame(  # noqa: PLR0915
                     ui.label("Quit Launcher")
 
     with (
-        ui.footer()
-        .style("background-color: #F0F0F0 !important")
-        .style("padding-top:0px; padding-left: 0px; height: 30px"),
+        ui.footer().style("padding-top:0px; padding-left: 0px; height: 30px; background-color: white"),
         ui.row(align_items="center").classes("justify-center w-full"),
     ):
         ui.html(
@@ -149,15 +193,7 @@ def frame(  # noqa: PLR0915
             'width="250" height="30" frameborder="0" scrolling="no" '
             'style="color-scheme: dark"></iframe>'
         ).style("margin-left: 0px;")
-        ui.run_javascript(
-            "setTimeout(function() { "
-            'var x = document.getElementById("betterstack"); '
-            'x.contentWindow.document.body.style.backgroundColor = "#FF0000"; '
-            "}, 20000);"
-        )
-        ui.query("body").classes(
-            replace="bg-aignostics-light dark:bg-aignostics-dark"
-        )  # https://github.com/zauberzeug/nicegui/pull/448#issuecomment-1492442558
+        health_link()
         ui.space()
         ui.html(
             '🔬<a style="color: black; text-decoration: underline" target="_blank" href="https://github.com/aignostics/python-sdk/">'

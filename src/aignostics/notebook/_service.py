@@ -21,6 +21,7 @@ class _Runner:
     _output: str = ""
     _server_url: str | None = None
     _server_ready: Event = Event()
+    _started = False
 
     def __init__(self) -> None:
         atexit.register(self.stop)
@@ -31,6 +32,8 @@ class _Runner:
         Returns:
             Health: The health of the service.
         """
+        if not self._started:
+            return Health(status=Health.Code.UP)
         return Health(
             status=Health.Code.UP,
             components={
@@ -54,6 +57,7 @@ class _Runner:
         Raises:
             RuntimeError: If the Marimo server fails to start or if the URL isn't detected within 10 seconds.
         """
+        self._started = True
         if self.is_marimo_server_running():
             logger.warning("Marimo server is already running")
             if self._server_url is not None:

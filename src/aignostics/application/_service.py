@@ -316,7 +316,7 @@ class Service(BaseService):
         """Generate metadata from the source directory.
 
         Steps:
-        1. Recursively files ending with .tiff, .tif and .dcm in the source directory
+        1. Recursively files ending with .tiff, .tif, .svs and .dcm in the source directory
         2. Creates a dict with the following columns
             - reference (str): The reference of the file, by default equivalent to the absolute file name
             - source (str): The absolute filename
@@ -350,7 +350,7 @@ class Service(BaseService):
         application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)  # noqa: F841
 
         metadata = []
-        file_extensions = [".tiff", ".tif", ".dcm"]
+        file_extensions = [".tiff", ".tif", ".svs", ".dcm"]
 
         try:
             for extension in file_extensions:
@@ -361,31 +361,37 @@ class Service(BaseService):
                         while chunk := f.read(1024):
                             hash_sum.update(chunk)  # type: ignore[no-untyped-call]
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
-                    image_metadata = WSIService().get_metadata(file_path)
-                    width = image_metadata["dimensions"]["width"]
-                    height = image_metadata["dimensions"]["height"]
-                    mpp = image_metadata["resolution"]["mpp_x"]
-                    file_size_human = image_metadata["file"]["size_human"]
-                    reference = file_path.absolute()
-                    entry = {
-                        "reference": str(reference),
-                        "source": str(file_path),
-                        "checksum_base64_crc32c": checksum,
-                        "resolution_mpp": mpp,
-                        "width_px": width,
-                        "height_px": height,
-                        "staining_method": None,
-                        "tissue": None,
-                        "disease": None,
-                        "file_size_human": file_size_human,
-                        "file_upload_progress": 0.0,
-                        "platform_bucket_url": None,
-                    }
+                    try:
+                        image_metadata = WSIService().get_metadata(file_path)
+                        width = image_metadata["dimensions"]["width"]
+                        height = image_metadata["dimensions"]["height"]
+                        mpp = image_metadata["resolution"]["mpp_x"]
+                        file_size_human = image_metadata["file"]["size_human"]
+                        reference = file_path.absolute()
+                        entry = {
+                            "reference": str(reference),
+                            "reference_short": str(reference.name),
+                            "source": str(file_path),
+                            "checksum_base64_crc32c": checksum,
+                            "resolution_mpp": mpp,
+                            "width_px": width,
+                            "height_px": height,
+                            "staining_method": None,
+                            "tissue": None,
+                            "disease": None,
+                            "file_size_human": file_size_human,
+                            "file_upload_progress": 0.0,
+                            "platform_bucket_url": None,
+                        }
 
-                    if mappings:
-                        Service._apply_mappings_to_entry(entry, mappings)
+                        if mappings:
+                            Service._apply_mappings_to_entry(entry, mappings)
 
-                    metadata.append(entry)
+                        metadata.append(entry)
+                    except Exception:
+                        message = f"Failed to process file '{file_path}'"
+                        logger.exception(message)
+                        continue
 
             logger.debug("Generated metadata for %d files", len(metadata))
             return metadata

@@ -105,3 +105,11 @@ class Health(BaseModel):
         if self.status == _HealthStatus.DOWN and self.reason:
             return f"{self.status.value}: {self.reason}"
         return self.status.value
+
+    def __bool__(self) -> bool:
+        """Convert health status to a boolean value.
+
+        Returns:
+            bool: True if the status is UP, False otherwise.
+        """
+        return self.status == _HealthStatus.UP
