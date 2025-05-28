@@ -127,15 +127,33 @@ def launch() -> None:
 
 
 @cli.command()
+def info() -> None:
+    """Get info about QuPath installation."""
+    try:
+        info = Service().get_qupath_info()
+        if not info:
+            console.print(
+                "QuPath is not installed. Use 'uvx aignostics qupath install' to install it.", style="warning"
+            )
+            sys.exit(2)
+        console.print_json(data=info)
+    except Exception as e:
+        message = f"Failed to get QuPath info: {e!s}."
+        logger.exception(message)
+        console.print(message, style="error")
+        sys.exit(1)
+
+
+@cli.command()
 def settings() -> None:
     """Show settings configured for Paquo based QuPath integration."""
-    console.print(Service().get_paquo_settings())
+    console.print_json(data=Service().get_paquo_settings())
 
 
 @cli.command()
 def defaults() -> None:
     """Show default settings of Paquo based QuPath integration."""
-    console.print(Service().get_paquo_defaults())
+    console.print_json(data=Service().get_paquo_defaults())
 
 
 @cli.command()

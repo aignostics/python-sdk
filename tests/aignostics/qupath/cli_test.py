@@ -1,6 +1,7 @@
 """Tests to verify the CLI functionality of the QuPath module."""
 
 import os
+import platform
 import re
 import signal
 
@@ -33,7 +34,54 @@ def test_cli_settings(runner: CliRunner) -> None:
 
 
 @pytest.mark.sequential
-def test_cli_install_and_launch(runner: CliRunner) -> None:
+def test_cli_install_and_launch_embedded(runner: CliRunner) -> None:
+    """Check expected column returned."""
+    # Uninstall QuPath if it exists to have a clean state for the test
+    result = runner.invoke(cli, ["qupath", "uninstall"])
+    was_installed = result.exit_code == 0
+
+    # Step 1: Check QuPath info fails if not installed
+    result = runner.invoke(cli, ["qupath", "info"])
+    assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in result.output.replace(
+        "\n", ""
+    )
+    assert result.exit_code == 2
+
+    # Step 2: Check QuPath install succeeds
+    result = runner.invoke(cli, ["qupath", "install"])
+    assert "QuPath v0.5.1 installed successfully" in result.output.replace("\n", "")
+    assert result.exit_code == 0
+
+    # Step 3: Check QuPath can now launch successfully
+    result = runner.invoke(cli, ["qupath", "info"])
+    assert '"version": "0.5.1"' in result.output.replace("\n", "")
+    assert result.exit_code == 0
+
+    # Step 4: Check QuPath install succeeds (idempotent operation)
+    result = runner.invoke(cli, ["qupath", "install"])
+    assert "QuPath v0.5.1 installed successfully" in result.output.replace("\n", "")
+    assert result.exit_code == 0
+
+    # Step 5: Uninstall QuPath
+    result = runner.invoke(cli, ["qupath", "uninstall"])
+    assert "QuPath uninstalled successfully." in result.output.replace("\n", "")
+    assert result.exit_code == 0
+
+    # Step 6: Check QuPath info fails if not installed
+    result = runner.invoke(cli, ["qupath", "info"])
+    assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in result.output.replace(
+        "\n", ""
+    )
+    assert result.exit_code == 2
+
+    # Step 7: Reinstall QuPath if it was installed before
+    if was_installed:
+        result = runner.invoke(cli, ["qupath", "install"])
+
+
+@pytest.mark.sequential
+@pytest.mark.skipif(platform != "Darwin")
+def test_cli_install_and_launch_ui(runner: CliRunner) -> None:
     """Check expected column returned."""
     # Uninstall QuPath if it exists to have a clean state for the test
     result = runner.invoke(cli, ["qupath", "uninstall"])

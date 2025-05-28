@@ -2,6 +2,7 @@
 
 import logging
 import os
+import platform
 import re
 from asyncio import sleep
 
@@ -47,6 +48,42 @@ def silent_logging(caplog) -> None:
 
 
 @pytest.mark.sequential
+async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None) -> None:
+    """Test that the user can install and launch QuPath via the GUI."""
+    gui_register_pages()
+
+    result = runner.invoke(cli, ["qupath", "uninstall"])
+    was_installed = result.exit_code == 0
+
+    # Step 1: Check we are on the QuPath page
+    await user.open("/qupath")
+    await user.should_see("Manage your QuPath Installation")
+
+    # Step 2: Check we indicate QuPath is not installed
+    await user.should_see("QuPath is not installed at the intended installation path")
+    await user.should_see("Launchpad is unhealthy")
+    await user.should_see(marker="BUTTON_QUPATH_INSTALL")
+
+    # Step 3: Install QuPath
+    user.find("BUTTON_QUPATH_INSTALL").click()
+    app_dir = appdirs.user_data_dir(__project_name__)
+    await _assert_notified(
+        user,
+        f"QuPath installed successfully to '{app_dir}",
+        wait_seconds=35,
+    )
+
+    # Step 4: Check we indicate QuPath is installed
+    await user.should_see(f"QuPath is installed and ready to execute at '{app_dir}")
+    await user.should_see("Launchpad is healthy")
+    await user.should_see(marker="BUTTON_QUPATH_LAUNCH")
+
+    if not was_installed:
+        result = runner.invoke(cli, ["qupath", "uninstall"])
+
+
+@pytest.mark.sequential
+@pytest.mark.skipif(platform != "Darwin")
 async def test_gui_qupath_install_and_launch(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
     gui_register_pages()

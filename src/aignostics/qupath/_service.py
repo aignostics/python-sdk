@@ -204,6 +204,23 @@ class Service(BaseService):
         return Path(appdirs.user_data_dir(__project_name__))
 
     @staticmethod
+    def get_qupath_info() -> dict[str, str | None] | None:
+        """Get information about the QuPath installation.
+
+        Returns:
+            str: Information about the QuPath installation.
+        """
+        executable = Service.find_qupath()
+        if executable:
+            from paquo.java import qupath_version  # noqa: PLC0415
+
+            return {
+                "executable_path": str(executable),
+                "version": str(qupath_version) if qupath_version else None,
+            }
+        return None
+
+    @staticmethod
     def _download_qupath(  # noqa: C901, PLR0912, PLR0915
         version: str,
         path: Path,
