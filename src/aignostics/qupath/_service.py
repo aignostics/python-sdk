@@ -107,7 +107,6 @@ class Service(BaseService):
             path = Service.find_qupath()
             if not path:
                 message = "QuPath executable not found."
-                logger.error(message)
                 return Health(status=Health.Code.DOWN, reason=message)
         except Exception as e:
             message = f"Exception while checking health of QuPath application {e!s}"
@@ -155,7 +154,6 @@ class Service(BaseService):
             app_dir, _, _, _ = paquo_find_qupath(**to_kwargs(settings))
         except ValueError as e:
             message = f"No QuPath installation found: {e!s}"
-            logger.warning(message)
             return None
         system = platform.system()
 

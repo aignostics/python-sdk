@@ -140,7 +140,7 @@ marimo = [
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
-qupath = ["ijson>=3.3.0", "geopandas>=1.0.1", "paquo>=0.8.1"]
+qupath = ["ijson>=3.3.0", "geopandas>=1.0.1", "paquo>=0.8.1", "py7zip>=0.6.2"]
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",
