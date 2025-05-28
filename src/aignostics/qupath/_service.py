@@ -494,7 +494,7 @@ class Service(BaseService):
             )
             application_pathname = Service._extract_qupath(
                 archive_path=archive_path, installation_path=path, system=platform.system()
-            )  # type: ignore[no-untyped-call]
+            )
             if extract_progress:
                 extract_progress(archive_path, application_pathname)
             application_path = Path(application_pathname)
