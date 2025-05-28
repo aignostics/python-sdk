@@ -1,6 +1,22 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.15..0.2.16) - 2025-05-28
+(https://github.com/aignostics/python-sdk/compare/v0.2.16..0.2.17) - 2025-05-28
+
+
+- *(QuPath)* Launch embedded, and test - ([d3be0d9](https://github.com/aignostics/python-sdk/commit/d3be0d95159ef0539c27922519eb1b9f534c02dd))
+
+
+- *(QuPath)* Linux - ([6fdabea](https://github.com/aignostics/python-sdk/commit/6fdabea0c2e44dfd9aa777187fb73e1f6099cca8))
+- QuPath dir layout on Linux - ([77a0a8f](https://github.com/aignostics/python-sdk/commit/77a0a8ff57af68e460a251f5cf5a8e319d73a06b))
+- QuPath install on Linux - ([c225d48](https://github.com/aignostics/python-sdk/commit/c225d4837a64f2ec2b5afabbedba069a84bc1559))
+
+
+- *(QuPath)* Tests for CLI and GUI, (un)install and launch - ([9474dfa](https://github.com/aignostics/python-sdk/commit/9474dfa956fe4f69fffa79d6daee72a7b90c9330))
+- Skipif tests on GHA where we don't have a graphical display for QuPath UI - ([e9e90cb](https://github.com/aignostics/python-sdk/commit/e9e90cb1943fb24fbd63eeaf77fe28e9e879c764))
+- Debug qupath install on linux - ([ca2d743](https://github.com/aignostics/python-sdk/commit/ca2d7436cfc886320909e0182c73b1c345bc18f6))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.15..v0.2.16) - 2025-05-28
 
 
 - Lint - ([9abaf64](https://github.com/aignostics/python-sdk/commit/9abaf64d95f49991fd8e98ea0f20c86923f8b206))
