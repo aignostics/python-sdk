@@ -311,6 +311,7 @@ class Service(BaseService):
     def generate_metadata_from_source_directory(
         application_version_id: str,
         source_directory: Path,
+        with_gui_metadata: bool = False,
         mappings: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Generate metadata from the source directory.
@@ -331,6 +332,7 @@ class Service(BaseService):
             application_version_id (str): The ID of the application version.
                 If application id is given, the latest version of that application is used.
             source_directory (Path): The source directory to generate metadata from.
+            with_gui_metadata (bool): If True, include additional metadata for GUI.
             mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
                 The regular expression is matched against the reference attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
@@ -383,6 +385,11 @@ class Service(BaseService):
                             "file_upload_progress": 0.0,
                             "platform_bucket_url": None,
                         }
+                        if not with_gui_metadata:
+                            entry.pop("reference_short", None)
+                            entry.pop("source", None)
+                            entry.pop("file_size_human", None)
+                            entry.pop("file_upload_progress", None)
 
                         if mappings:
                             Service._apply_mappings_to_entry(entry, mappings)
@@ -427,9 +434,9 @@ class Service(BaseService):
         application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)
         for row in metadata:
             reference = row["reference"]
-            source_file_path = Path(row["source"])
+            source_file_path = Path(row["reference"])
             if not source_file_path.is_file():
-                logger.warning("Source file '%s' does not exist.", row["source"])
+                logger.warning("Source file '%s' does not exist.", row["referebce"])
                 return False
             object_key = (
                 f"{psutil.Process().username()}/{upload_prefix}/"
@@ -589,9 +596,9 @@ class Service(BaseService):
                                 "width_px": int(row["width_px"]),
                                 "media_type": (
                                     "image/tiff"
-                                    if row["source"].lower().endswith((".tif", ".tiff"))
+                                    if row["reference"].lower().endswith((".tif", ".tiff"))
                                     else "application/dicom"
-                                    if row["source"].lower().endswith(".dcm")
+                                    if row["reference"].lower().endswith(".dcm")
                                     else "application/octet-stream"
                                 ),
                                 "resolution_mpp": float(row["resolution_mpp"]),

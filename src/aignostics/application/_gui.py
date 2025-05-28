@@ -32,6 +32,9 @@ class PageBuilder(BasePageBuilder):
         from nicegui import app, background_tasks, binding, context, ui  # noq  # noqa: PLC0415
         from nicegui import run as nicegui_run  # noqa: PLC0415
 
+        if find_spec("paquo"):
+            from aignostics.qupath import Service as QuPathService  # noqa: PLC0415
+
         @binding.bindable_dataclass
         class SubmitForm:
             """Submit form."""
@@ -449,6 +452,7 @@ class PageBuilder(BasePageBuilder):
                             Service.generate_metadata_from_source_directory,
                             str(submit_form.application_version_id),
                             submit_form.source,
+                            True,
                             [".*:staining_method=H&E"],
                         )
                         if submit_form.metadata_grid.options["rowData"] is None:
@@ -634,7 +638,8 @@ class PageBuilder(BasePageBuilder):
                             submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                         _upload_ui.refresh(submit_form.metadata)
                         submit_form.submission_upload_button.enable()
-                        ui.notify("Prepared upload UI.", type="info")
+                        if "pytest" in sys.modules:
+                            ui.notify("Prepared upload UI.", type="info")
                         stepper.next()
 
                     async def _delete_selected() -> None:
@@ -837,7 +842,7 @@ class PageBuilder(BasePageBuilder):
                 def _upload_ui(metadata: list[dict[str, Any]]) -> None:
                     """Upload UI."""
                     with ui.column(align_items="start"):
-                        ui.label("Upload and submit your slides for analysis.")
+                        ui.label(f"Upload and submit your {len(metadata)} slide(s) for analysis.")
                         upload_complete = True
                         for row in metadata or []:
                             upload_complete = upload_complete and row["file_upload_progress"] == 1
@@ -1034,7 +1039,7 @@ class PageBuilder(BasePageBuilder):
                         "DIALOG_BUTTON_DOWNLOAD_RUN"
                     )
 
-            with ui.dialog() as qupath_project_create_dialog, ui.card().style(WIDTH_1200px):
+            with ui.dialog() as qupath_project_create_dialog, ui.card().style(WIDTH_1200px):  # noqa: F841
                 ui.button("Select QuPath folder")
                 with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
                     ui.button("Close", on_click=download_run_dialog.close)
@@ -1099,11 +1104,14 @@ class PageBuilder(BasePageBuilder):
 
             if run_data and run_data.status.value == ApplicationRunStatus.COMPLETED:
                 with ui.row().classes("w-full justify-end"):
-                    if find_spec("paquo"):
+                    if find_spec("paquo") and QuPathService.find_qupath():
                         ui.button(
                             "Open in QuPath Microscopy Viewer",
                             icon="zoom_in",
-                            on_click=qupath_project_create_dialog.open,
+                            on_click=lambda: (
+                                ui.notify("Opening QuPath ...", type="info"),  # type: ignore[func-returns-value]
+                                QuPathService.launch_qupath(),
+                            ),
                         )
                     if find_spec("marimo"):
                         ui.button(

@@ -2,6 +2,7 @@
 
 from collections.abc import Generator
 from contextlib import contextmanager
+from importlib.util import find_spec
 from typing import Any
 
 from aignostics.utils import __version__
@@ -12,7 +13,7 @@ FLAT_COLOR_WHITE = "flat color=white"
 
 
 @contextmanager
-def frame(  # noqa: PLR0915
+def frame(  # noqa: C901, PLR0915
     navigation_title: str, navigation_icon: str | None = None, left_sidebar: bool = False
 ) -> Generator[Any, Any, Any]:
     """Custom page frame to share the same styling and behavior across all pages.
@@ -130,13 +131,14 @@ def frame(  # noqa: PLR0915
                     )
         ui.space()
         with ui.list():
-            with ui.item(on_click=lambda _: ui.navigate.to("/qupath")).props("clickable"):
-                with ui.item_section().props("avatar"):
-                    ui.icon("visibility", color="primary")
-                with ui.item_section():
-                    ui.label("QuPath").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/qupath" else "normal"
-                    )
+            if find_spec("paquo"):
+                with ui.item(on_click=lambda _: ui.navigate.to("/qupath")).props("clickable"):
+                    with ui.item_section().props("avatar"):
+                        ui.icon("visibility", color="primary")
+                    with ui.item_section():
+                        ui.label("QuPath").tailwind.font_weight(
+                            "bold" if context.client.page.path == "/qupath" else "normal"
+                        )
             with ui.item(on_click=lambda _: ui.navigate.to("/bucket")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("cloud", color="primary")

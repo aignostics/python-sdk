@@ -115,11 +115,9 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Pa
     latest_version_id = latest_version.application_version_id
 
     # Submit run
-    csv_content = (
-        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    )
-    csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
+    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
@@ -188,7 +186,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
         user.find(marker="BUTTON_APPLICATION_VERSION_NEXT").click()
 
         # Check the file picker opens and closes
-        await user.should_see("Select a folder with whole slide images you want to analyze")
+        await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
         user.find(marker="BUTTON_WSI_SELECT").click()
         await user.should_see("Ok")
         await user.should_see("Cancel")
@@ -205,22 +203,19 @@ async def test_gui_download_dataset_via_application_to_run_cancel(
 
         # Generate remaining metadata, going to upload UI
         await user.should_see(
-            "Check extracted and provide missing metadata.",
+            "The Launchpad has found all compatible slide files in your selected folder.",
             retries=100,
         )
         user.find(marker="BUTTON_PYTEST_META").click()
-        await _assert_notified(user, "Your metadata is now valid!")
+        await _assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
         user.find(marker="BUTTON_METADATA_NEXT").click()
         await _assert_notified(user, "Prepared upload UI.")
-        await user.should_see("1. Upload 1 slides you prepared to the Aignostics Platform.")
+        await user.should_see("Upload and submit your 1 slide(s) for analysis.")
 
-        # Trigger upload
+        # Trigger upload and submission
         user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
         await _assert_notified(user, "Uploading whole slide images to Aignostics Platform ...")
         await _assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=30)
-
-        # Trigger submission
-        user.find(marker="BUTTON_SUBMISSION_SUBMIT").click()
         await _assert_notified(user, "Submitting application run ...")
         await _assert_notified(user, "Application run submitted with id", wait_seconds=10)
 

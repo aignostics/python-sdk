@@ -376,7 +376,7 @@ def run_upload(
 
     total_bytes = 0
     for i, entry in enumerate(metadata_dict):
-        source = entry["source"]
+        source = entry["reference"]
         source_file_path = Path(source)
         if not source_file_path.is_file():
             logger.warning("Source file '%s' (row %d) does not exist", source_file_path, i)
@@ -403,8 +403,7 @@ def run_upload(
         def update_progress(bytes_uploaded: int, source: Path, platform_bucket_url: str) -> None:
             progress.update(task, advance=bytes_uploaded, description=f"{source.name}")
             for entry in metadata_dict:
-                if entry["source"] == str(source):
-                    entry["file_upload_progress"] = float(entry["file_upload_progress"]) + bytes_uploaded
+                if entry["reference"] == str(source):
                     entry["platform_bucket_url"] = platform_bucket_url
                     break
             write_metadata_dict_to_csv(
