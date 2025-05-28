@@ -4,8 +4,13 @@ import contextlib
 import os
 import platform
 import queue
+import re
+import shutil
 import subprocess
+import tarfile
+import tempfile
 import tomllib
+import zipfile
 from collections.abc import Callable
 from enum import StrEnum
 from importlib.resources import files
@@ -283,6 +288,169 @@ class Service(BaseService):
             return filepath
 
     @staticmethod
+    def _extract_qupath(  # noqa: C901, PLR0912, PLR0915
+        archive_path: Path, installation_path: Path, overwrite: bool = False, system: str | None = None
+    ) -> Path:
+        """Extract downloaded QuPath installation archive to the specified destination directory.
+
+        Args:
+            archive_path (Path): Path to the downloaded QuPath archive.
+            installation_path (Path): Path to the directory where QuPath should be extracted.
+            overwrite (bool): If True, will overwrite existing files in the installation path.
+            system (str | None): The system platform. If None, it will use platform.system().
+
+        Raises:
+            ValueError: If there is broken input.
+            RuntimeError: If an unexpected error happens.
+
+        Returns:
+            Path: The path to the extracted QuPath application directory.
+        """
+        m = re.match(
+            r"QuPath-v?(?P<version>[0-9]+[.][0-9]+[.][0-9]+(-rc[0-9]+|-m[0-9]+)?)",
+            archive_path.name,
+        )
+        if not m:
+            message = f"file: {archive_path.name} does not match expected QuPath filename pattern"
+            logger.error(message)
+            raise ValueError(message)
+
+        if system is None:
+            system = platform.system()
+
+        if system in {"Linux", "Windows"}:
+            app_dir = f"QuPath-{m.group('version')}"
+        elif system == "Darwin":
+            app_dir = f"QuPath-{m.group('version')}.app"
+        else:
+            message = f"unsupported platform.system() == {system!r}"
+            raise ValueError(message)
+
+        if not installation_path.is_dir():
+            message = f"installation path '{installation_path!r}' is not a directory"
+            logger.error(message)
+            raise ValueError(message)
+
+        destination = installation_path / app_dir
+
+        if destination.is_dir() and not overwrite:
+            message = "QuPath installation directory already exists at '{destination_dir!r}'. "
+            logger.warning(message)
+            return destination
+
+        if system == "Linux":
+            if archive_path.suffix != ".tar.xz":
+                message = f"archive '{archive_path!r}' does not end with `.tar.xz`"
+                logger.error(message)
+                raise ValueError(message)
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                with tarfile.open(archive_path, mode="r:xz") as tf:
+                    tf.extractall(tmp_dir)  # nosec: B202  # noqa: S202
+                    for path in Path(tmp_dir).iterdir():
+                        name = path.name
+                        if name.startswith("QuPath") and path.is_dir():
+                            break
+                        message = f"expected QuPath directory, got {name!r}"
+                        logger.error(message)
+                        raise RuntimeError(message)
+                extract_dir = Path(tmp_dir) / name
+                if (extract_dir / "QuPath").is_dir():
+                    # in some cases there is a nested QuPath directory
+                    extract_dir /= "QuPath"
+                shutil.move(extract_dir, installation_path)
+            return destination
+
+        if system == "Darwin":
+            if archive_path.suffix != ".pkg":
+                message = f"archive '{archive_path!r}' does not end with `.pkg`"
+                logger.error(message)
+                raise ValueError(message)
+            if shutil.which("7z") is None:
+                message = "7z is required to extract QuPath on macOS, run: `brew install p7zip`"
+                logger.error(message)
+                raise ValueError(message)
+
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                expanded_pkg_dir = Path(tmp_dir) / "expanded_pkg"  # pkgutil will create the directory
+                try:
+                    subprocess.run(  # noqa: S603
+                        ["pkgutil", "--expand", str(archive_path.resolve()), str(expanded_pkg_dir.resolve())],  # noqa: S607
+                        capture_output=True,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as e:
+                    stderr_output = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
+                    message = f"Failed to expand .pkg file: {e!s}\nstderr:\n{stderr_output}"
+                    logger.exception(message)
+                    raise RuntimeError(message) from e
+
+                payload_path = None
+                for path in Path(tmp_dir).rglob("Payload*"):
+                    if path.is_file() and (path.name == "Payload" or path.name.startswith("Payload")):
+                        payload_path = path
+                        break
+                if not payload_path:
+                    message = "No Payload file found in the expanded .pkg"
+                    logger.error(message)
+                    raise RuntimeError(message)
+                payload_extract_dir = Path(tmp_dir) / "payload_contents"
+                payload_extract_dir.mkdir(parents=True, exist_ok=True)
+                try:
+                    subprocess.run(  # noqa: S603
+                        [  # noqa: S607
+                            "sh",
+                            "-c",
+                            f"cd '{payload_extract_dir.resolve!s}' && cat '{payload_path!s}' | gunzip -dc | cpio -i",
+                        ],
+                        capture_output=True,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as e:
+                    stderr_output = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
+                    message = f"Failed to expand .pkg file: {e!s}\nstderr:\n{stderr_output}"
+                    logger.exception(message)
+                    raise RuntimeError(message) from e
+
+                for root, dirs, _ in os.walk(payload_extract_dir):
+                    for name in dirs:
+                        if name.startswith("QuPath") and name.endswith(".app"):
+                            app_path = Path(root) / name
+                            shutil.move(app_path, installation_path)
+                            return installation_path
+
+                message = "No QuPath application found in the extracted contents"
+                logger.error(message)
+                raise RuntimeError(message)
+
+        if system == "Windows":
+            if archive_path.suffix != ".zip":
+                message = f"archive '{archive_path!r}' does not end with `.zip`"
+                logger.error(message)
+                raise ValueError(message)
+
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                tmp_path = Path(tmp_dir)
+                with zipfile.ZipFile(archive_path, mode="r") as zf:
+                    zf.extractall(tmp_path)  # nosec: B202  # noqa: S202
+                    for item in tmp_path.iterdir():
+                        if item.name.startswith("QuPath") and item.is_dir():
+                            pth = item
+                            break
+                        if item.name.startswith("QuPath") and item.suffix == ".exe" and item.is_file():
+                            pth = tmp_path
+                            break
+                    else:
+                        message = "No QuPath extracted?"
+                        logger.error(message)
+                        raise RuntimeError(message)
+                shutil.move(str(pth), installation_path)
+            return installation_path
+
+        message = f"unsupported platform.system() == {system!r}"
+        logger.error(message)
+        raise RuntimeError(message)
+
+    @staticmethod
     def install_qupath(
         version: str = "0.5.1",
         path: Path | None = None,
@@ -307,8 +475,6 @@ class Service(BaseService):
         Returns:
             Path: The path to the executable of the installed QuPath application.
         """
-        from paquo._utils import extract_qupath  # noqa: PLC0415, PLC2701
-
         path = Service.get_installation_path()
 
         if not path.exists():
@@ -326,7 +492,9 @@ class Service(BaseService):
                 install_progress_queue=progress_queue,
                 system=None,
             )
-            application_pathname = extract_qupath(file=archive_path, destination=path, system=platform.system())  # type: ignore[no-untyped-call]
+            application_pathname = Service._extract_qupath(
+                archive_path=archive_path, installation_path=path, system=platform.system()
+            )  # type: ignore[no-untyped-call]
             if extract_progress:
                 extract_progress(archive_path, application_pathname)
             application_path = Path(application_pathname)
