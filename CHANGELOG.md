@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.12..0.2.13) - 2025-05-27
+(https://github.com/aignostics/python-sdk/compare/v0.2.13..0.2.14) - 2025-05-28
+
+
+- Adapt tests - ([6060f9e](https://github.com/aignostics/python-sdk/commit/6060f9ee25c9800f71c4b0204d49aa7eb6bc5def))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.12..v0.2.13) - 2025-05-27
 
 
 - Styling of ui theme - ([b87ffb6](https://github.com/aignostics/python-sdk/commit/b87ffb67df666ea0f987b341321c6c560f1113f2))
@@ -97,3 +103,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
