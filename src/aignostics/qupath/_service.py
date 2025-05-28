@@ -211,7 +211,7 @@ class Service(BaseService):
         install_progress_queue: queue.Queue[InstallProgress] | None = None,
         system: str | None = None,
     ) -> Path:
-        """Download qupath from GitHub.
+        """Download QuPath from GitHub.
 
         Args:
             version (str): Version of QuPath to download.
@@ -327,8 +327,10 @@ class Service(BaseService):
         if system is None:
             system = platform.system()
 
-        if system in {"Linux", "Windows"}:
+        if system == "Windows":
             return installation_path / Path(f"QuPath-{version}")
+        if system == "Linux":
+            return installation_path / Path("QuPath")
         if system == "Darwin":
             arch = "arm64" if platform.machine() == "arm64" else "x64"
             return installation_path / Path(f"QuPath-{version}-{arch}.app")
