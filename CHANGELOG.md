@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.16..0.2.17) - 2025-05-28
+(https://github.com/aignostics/python-sdk/compare/v0.2.17..0.2.18) - 2025-05-28
+
+
+- Skip ... - ([8e1b2dc](https://github.com/aignostics/python-sdk/commit/8e1b2dca099316599ccc52eb6b9c5fa0d4e5b4cd))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.16..v0.2.17) - 2025-05-28
 
 
 - *(QuPath)* Launch embedded, and test - ([d3be0d9](https://github.com/aignostics/python-sdk/commit/d3be0d95159ef0539c27922519eb1b9f534c02dd))
