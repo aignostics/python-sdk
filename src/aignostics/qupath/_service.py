@@ -374,7 +374,7 @@ class Service(BaseService):
                 return destination
 
         if system == "Linux":
-            if archive_path.suffix != ".tar.xz":
+            if not archive_path.name.endswith(".tar.xz"):
                 message = f"archive '{archive_path!r}' does not end with `.tar.xz`"
                 logger.error(message)
                 raise ValueError(message)

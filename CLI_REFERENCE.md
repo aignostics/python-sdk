@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.11 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.16 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -23,6 +23,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `application`: List and inspect applications on...
 * `bucket`: Operations on cloud bucket on Aignostics...
 * `dataset`: Download datasets from National Institute...
+* `qupath`: Interact with QuPath application.
 * `system`: Determine health, info and further...
 * `wsi`: Operations on whole slide images.
 
@@ -168,7 +169,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748295858202.6802]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748462646380.398]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -224,7 +225,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748295858202.76]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748462646380.4841]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -631,6 +632,103 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL DESTINATION_DIRECT
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+## `aignostics qupath`
+
+Interact with QuPath application.
+
+**Usage**:
+
+```console
+$ aignostics qupath [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `install`: Install Paquo.
+* `launch`: Launch QuPath application.
+* `settings`: Show settings configured for Paquo based...
+* `defaults`: Show default settings of Paquo based...
+* `uninstall`: Uninstall QuPath application.
+
+### `aignostics qupath install`
+
+Install Paquo.
+
+**Usage**:
+
+```console
+$ aignostics qupath install [OPTIONS]
+```
+
+**Options**:
+
+* `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.5.1]
+* `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/helmut/Library/Application Support/aignostics]
+* `--reinstall / --no-reinstall`: Reinstall QuPath even if it is already installed. This will overwrite the existing installation.  [default: reinstall]
+* `--help`: Show this message and exit.
+
+### `aignostics qupath launch`
+
+Launch QuPath application.
+
+**Usage**:
+
+```console
+$ aignostics qupath launch [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics qupath settings`
+
+Show settings configured for Paquo based QuPath integration.
+
+**Usage**:
+
+```console
+$ aignostics qupath settings [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics qupath defaults`
+
+Show default settings of Paquo based QuPath integration.
+
+**Usage**:
+
+```console
+$ aignostics qupath defaults [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics qupath uninstall`
+
+Uninstall QuPath application.
+
+**Usage**:
+
+```console
+$ aignostics qupath uninstall [OPTIONS]
+```
+
+**Options**:
+
+* `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.5.1]
+* `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/helmut/Library/Application Support/aignostics]
 * `--help`: Show this message and exit.
 
 ## `aignostics system`
