@@ -75,11 +75,11 @@ def frame(  # noqa: C901, PLR0915
 
     with ui.header(elevated=True).classes("items-center justify-between"):
         with ui.link(target="/"):
-            ui.image("/assets/logo.png").style("width: 110px")
+            ui.image("/assets/logo.png").style("width: 110px; margin-left: 10px")
         ui.space()
         if navigation_icon is not None:
             ui.icon(navigation_icon)
-        ui.label(navigation_title)
+        ui.label(navigation_title).classes("text-xl font-bold")
         ui.space()
 
         dark = ui.dark_mode(app.storage.general.get("dark_mode", False))

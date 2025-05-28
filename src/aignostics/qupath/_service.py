@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+import time
 import tomllib
 import zipfile
 from collections.abc import Callable
@@ -29,7 +30,9 @@ from ._settings import Settings
 
 logger = get_logger(__name__)
 
-DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+DOWNLOAD_CHUNK_SIZE = 10 * 1024 * 1024
+LAUNCH_MAX_WAIT_TIME = 30  # seconds, maximum wait time for QuPath to start
+QUPATH_VERSION = "0.5.1"
 
 
 class InstallProgressState(StrEnum):
@@ -183,6 +186,15 @@ class Service(BaseService):
         return qupath
 
     @staticmethod
+    def is_qupath_installed() -> bool:
+        """Check if QuPath is installed.
+
+        Returns:
+            bool: True if QuPath is installed, False otherwise.
+        """
+        return Service.find_qupath() is not None
+
+    @staticmethod
     def get_installation_path() -> Path:
         """Get the installation directory of QuPath.
 
@@ -288,6 +300,42 @@ class Service(BaseService):
             return filepath
 
     @staticmethod
+    def get_app_dir(version: str, installation_path: Path, system: str | None = None) -> Path:
+        """Get the version of QuPath from the archive filename.
+
+        Args:
+            version (str): Version of QuPath to uninstall.
+            installation_path (Path): Path to the installation directory.
+            system (str | None): The system platform. If None, it will use platform.system().
+
+        Returns:
+            str: The version of QuPath extracted from the
+
+        Raises:
+            ValueError: If the version does not match the expected pattern or if the system is unsupported.
+        """
+        m = re.match(
+            r"v?(?P<version>[0-9]+[.][0-9]+[.][0-9]+(-rc[0-9]+|-m[0-9]+)?)",
+            version,
+        )
+        if not m:
+            message = f"version '{version}' does not match expected QuPath version pattern"
+            logger.error(message)
+            raise ValueError(message)
+        version = m.group("version")
+
+        if system is None:
+            system = platform.system()
+
+        if system in {"Linux", "Windows"}:
+            return installation_path / Path(f"QuPath-{version}")
+        if system == "Darwin":
+            arch = "arm64" if platform.machine() == "arm64" else "x64"
+            return installation_path / Path(f"QuPath-{version}-{arch}.app")
+        message = f"unsupported platform.system() == {system!r}"
+        raise ValueError(message)
+
+    @staticmethod
     def _extract_qupath(  # noqa: C901, PLR0912, PLR0915
         archive_path: Path, installation_path: Path, overwrite: bool = False, system: str | None = None
     ) -> Path:
@@ -306,37 +354,24 @@ class Service(BaseService):
         Returns:
             Path: The path to the extracted QuPath application directory.
         """
-        m = re.match(
-            r"QuPath-v?(?P<version>[0-9]+[.][0-9]+[.][0-9]+(-rc[0-9]+|-m[0-9]+)?)",
-            archive_path.name,
+        destination = Service.get_app_dir(
+            version=QUPATH_VERSION,
+            installation_path=installation_path,
+            system=system,
         )
-        if not m:
-            message = f"file: {archive_path.name} does not match expected QuPath filename pattern"
-            logger.error(message)
-            raise ValueError(message)
 
-        if system is None:
-            system = platform.system()
-
-        if system in {"Linux", "Windows"}:
-            app_dir = f"QuPath-{m.group('version')}"
-        elif system == "Darwin":
-            app_dir = f"QuPath-{m.group('version')}.app"
-        else:
-            message = f"unsupported platform.system() == {system!r}"
-            raise ValueError(message)
-
-        if not installation_path.is_dir():
-            message = f"installation path '{installation_path!r}' is not a directory"
-            logger.error(message)
-            raise ValueError(message)
-
-        destination = installation_path / app_dir
-
-        if destination.is_dir() and not overwrite:
-            message = "QuPath installation directory already exists at '{destination_dir!r}'. "
-            logger.warning(message)
-            return destination
+        if destination.is_dir():
+            if overwrite:
+                with tempfile.TemporaryDirectory() as nirvana:
+                    message = (
+                        f"QuPath installation directory already exists at '{destination!s}', moving to nirvana ..."
+                    )
+                    logger.warning(message)
+                    shutil.move(str(destination), nirvana)
+            else:
+                message = f"QuPath installation directory already exists at '{destination!s}', breaking. "
+                logger.warning(message)
+                return destination
 
         if system == "Linux":
             if archive_path.suffix != ".tar.xz":
@@ -350,7 +385,7 @@ class Service(BaseService):
                         name = path.name
                         if name.startswith("QuPath") and path.is_dir():
                             break
-                        message = f"expected QuPath directory, got {name!r}"
+                        message = f"expected QuPath directory, got {name}"
                         logger.error(message)
                         raise RuntimeError(message)
                 extract_dir = Path(tmp_dir) / name
@@ -358,15 +393,12 @@ class Service(BaseService):
                     # in some cases there is a nested QuPath directory
                     extract_dir /= "QuPath"
                 shutil.move(extract_dir, installation_path)
+            archive_path.unlink(missing_ok=True)  # remove the archive after extraction
             return destination
 
         if system == "Darwin":
             if archive_path.suffix != ".pkg":
-                message = f"archive '{archive_path!r}' does not end with `.pkg`"
-                logger.error(message)
-                raise ValueError(message)
-            if shutil.which("7z") is None:
-                message = "7z is required to extract QuPath on macOS, run: `brew install p7zip`"
+                message = f"archive '{archive_path!s}' does not end with `.pkg`"
                 logger.error(message)
                 raise ValueError(message)
 
@@ -400,7 +432,7 @@ class Service(BaseService):
                         [  # noqa: S607
                             "sh",
                             "-c",
-                            f"cd '{payload_extract_dir.resolve!s}' && cat '{payload_path!s}' | gunzip -dc | cpio -i",
+                            f"cd '{payload_extract_dir.resolve()!s}' && cat '{payload_path!s}' | gunzip -dc | cpio -i",
                         ],
                         capture_output=True,
                         check=True,
@@ -416,7 +448,8 @@ class Service(BaseService):
                         if name.startswith("QuPath") and name.endswith(".app"):
                             app_path = Path(root) / name
                             shutil.move(app_path, installation_path)
-                            return installation_path
+                            archive_path.unlink(missing_ok=True)  # remove the archive after extraction
+                            return destination
 
                 message = "No QuPath application found in the extracted contents"
                 logger.error(message)
@@ -424,7 +457,7 @@ class Service(BaseService):
 
         if system == "Windows":
             if archive_path.suffix != ".zip":
-                message = f"archive '{archive_path!r}' does not end with `.zip`"
+                message = f"archive '{archive_path!s}' does not end with `.zip`"
                 logger.error(message)
                 raise ValueError(message)
 
@@ -443,17 +476,19 @@ class Service(BaseService):
                         message = "No QuPath extracted?"
                         logger.error(message)
                         raise RuntimeError(message)
-                shutil.move(str(pth), installation_path)
-            return installation_path
+            shutil.move(str(pth), installation_path)
+            archive_path.unlink(missing_ok=True)  # remove the archive after extraction
+            return destination
 
         message = f"unsupported platform.system() == {system!r}"
         logger.error(message)
         raise RuntimeError(message)
 
     @staticmethod
-    def install_qupath(
-        version: str = "0.5.1",
+    def install_qupath(  # noqa: PLR0913, PLR0917
+        version: str = QUPATH_VERSION,
         path: Path | None = None,
+        reinstall: bool = True,
         download_progress: Callable | None = None,  # type: ignore[type-arg]
         extract_progress: Callable | None = None,  # type: ignore[type-arg]
         progress_queue: queue.Queue[InstallProgress] | None = None,
@@ -464,6 +499,7 @@ class Service(BaseService):
             version (str): Version of QuPath to install. Defaults to "0.5.1".
             path (Path | None): Path to install QuPath to.
                 If not specified, the home directory of the user will be used.
+            reinstall (bool): If True, will reinstall QuPath even if it is already installed.
             download_progress (Callable | None): Callback function for download progress.
             extract_progress (Callable | None): Callback function for extraction progress.
             progress_queue (queue.Queue[InstallProgress] | None): Queue for download progress updates, if applicable.
@@ -475,13 +511,14 @@ class Service(BaseService):
         Returns:
             Path: The path to the executable of the installed QuPath application.
         """
-        path = Service.get_installation_path()
+        if path is None:
+            path = Service.get_installation_path()
 
         if not path.exists():
             try:
                 path.mkdir(parents=True, exist_ok=True)
             except OSError as e:
-                message = f"Failed to create directory {path}: {e!s}"
+                message = f"Failed to create installation directory '{path}': {e!s}"
                 logger.exception(message)
                 raise RuntimeError(message) from e
         try:
@@ -492,36 +529,48 @@ class Service(BaseService):
                 install_progress_queue=progress_queue,
                 system=None,
             )
-            application_pathname = Service._extract_qupath(
-                archive_path=archive_path, installation_path=path, system=platform.system()
+            message = f"QuPath archive downloaded to '{archive_path!s}'."
+            logger.debug(message)
+
+            application_path = Service._extract_qupath(
+                archive_path=archive_path, installation_path=path, overwrite=reinstall, system=platform.system()
             )
-            if extract_progress:
-                extract_progress(archive_path, application_pathname)
-            application_path = Path(application_pathname)
             if not application_path.is_dir():
-                message = f"QuPath directory not found as expected: {application_path}"
+                message = f"QuPath directory not found as expected at '{application_path!s}'."
                 logger.error(message)
                 raise RuntimeError(message)  # noqa: TRY301
+            message = f"QuPath application extracted to '{application_path!s}'."
+            logger.debug(message)
+
             if extract_progress:
                 application_size = 0
                 for file_path in application_path.glob("**/*"):
                     if file_path.is_file():
                         application_size += file_path.stat().st_size
+                message = f"Total size of QuPath application: '{application_size}' bytes"
+                logger.debug(message)
                 extract_progress(application_path, application_size=application_size)
+
             qupath_executable = Service.find_qupath()
             if not qupath_executable:
                 message = "QuPath executable not found after installation."
                 logger.error(message)
                 raise RuntimeError(message)  # noqa: TRY301
+            message = f"QuPath executable found at '{qupath_executable!s}'."
+            logger.debug(message)
+
             qupath_executable.chmod(0o755)  # Make sure the executable is runnable
-            return qupath_executable
+            message = f"Set permissions set to 755 for QuPath executable at '{qupath_executable!s}'."
+            logger.debug(message)
+
+            return application_path
         except Exception as e:
-            message = f"Failed to download QuPath version {version} to {path}: {e!s}"
+            message = f"Failed to install QuPath v{version} to '{path!s}': {e!s}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
     @staticmethod
-    def launch_qupath() -> bool:
+    def launch_qupath() -> int | None:  # noqa: C901
         """Launch QuPath application.
 
         Returns:
@@ -529,11 +578,13 @@ class Service(BaseService):
 
         """
         application_path = Service.find_qupath()
-        message = f"QuPath executable found at: {application_path}"
-        logger.debug(message)
         if not application_path:
             logger.error("QuPath executable not found.")
-            return False
+            return None
+
+        message = f"QuPath executable found at: {application_path}"
+        logger.debug(message)
+
         match platform.system():
             case "Linux":
                 command = [str(application_path)]
@@ -545,7 +596,81 @@ class Service(BaseService):
                 message = f"Unsupported platform: {platform.system()}"
                 logger.error(message)
                 raise NotImplementedError(message)
-        subprocess.Popen(command, start_new_session=True)  # noqa: S603
+        try:
+            process = subprocess.Popen(  # noqa: S603
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                start_new_session=True,
+            )
+            if not process.stdout:
+                logger.error("QuPath process has no stdout.")
+                return None
+
+            start_time = time.time()
+            while True:
+                waited = time.time() - start_time
+                if time.time() - start_time > LAUNCH_MAX_WAIT_TIME:
+                    message = f"Timed out after {waited:.2f} seconds waiting for QuPath to start"
+                    logger.error(message)
+                    return None
+
+                # Check if there's any output available
+                output = process.stdout.readline() if process.stdout.readable() else ""
+                exit_code = process.poll()
+
+                # Exit if process has terminated with no output
+                if not output and exit_code is not None:
+                    message = f"QuPath process has terminated with exit code '{exit_code}'."
+                    logger.debug(message)
+                    break
+
+                # Process output if available
+                if output:
+                    logger.debug(output.strip())
+                    if "qupath.lib.gui.QuPathApp - Starting QuPath with parameters" in output:
+                        logger.debug("QuPath started successfully.")
+                        return process.pid
+
+                # Small sleep to prevent CPU hogging
+                time.sleep(0.1)
+            return None
+        except Exception as exc:
+            message = f"Failed to launch QuPath: {exc!s}"
+            logger.exception(message)
+            return None
+
+    @staticmethod
+    def uninstall_qupath(
+        version: str = QUPATH_VERSION,
+        path: Path | None = None,
+    ) -> bool:
+        """Uninstall QuPath application.
+
+        Args:
+            version (str): Version of QuPath to uninstall. Defaults to "0.5.1".
+            path (Path | None): Path to the directory where QuPath is installed.
+                If not specified, the default installation path will be used.
+
+        Returns:
+            bool: True if QuPath was uninstalled successfully, False if it was not installed at that location.
+
+        Raises:
+            ValueError: If the QuPath application directory is a file unexpectedly or does not exist.
+        """
+        if path is None:
+            path = Service.get_installation_path()
+        app_dir = Service.get_app_dir(version=version, installation_path=path)
+        if not app_dir.exists():
+            message = f"QuPath application directory '{app_dir!s}' does not exist."
+            logger.warning(message)
+            return False
+        if app_dir.is_file():
+            message = f"QuPath application directory '{app_dir!s}' is a file unexpectedly."
+            logger.error(message)
+            raise ValueError(message)
+        shutil.rmtree(app_dir, ignore_errors=False)
         return True
 
 

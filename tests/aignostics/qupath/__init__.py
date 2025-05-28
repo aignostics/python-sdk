@@ -1,0 +1,1 @@
+"""Tests of QuPath module."""
