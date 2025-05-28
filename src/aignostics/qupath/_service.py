@@ -385,7 +385,8 @@ class Service(BaseService):
                         name = path.name
                         if name.startswith("QuPath") and path.is_dir():
                             break
-                        message = f"expected QuPath directory, got {name}"
+                    else:
+                        message = "No QuPath directory found in the extracted contents."
                         logger.error(message)
                         raise RuntimeError(message)
                 extract_dir = Path(tmp_dir) / name
@@ -473,7 +474,7 @@ class Service(BaseService):
                             pth = tmp_path
                             break
                     else:
-                        message = "No QuPath extracted?"
+                        message = "No QuPath directory or .exe found in the extracted contents."
                         logger.error(message)
                         raise RuntimeError(message)
             shutil.move(str(pth), installation_path)
