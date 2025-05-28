@@ -344,7 +344,6 @@ omit = [
     "*/_notebook.py",
     "*/_pydicom_handler.py",
     "*/_openslide_handler.py",
-    "*/qupath/*",
 ]
 branch = true
 parallel = true

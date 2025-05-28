@@ -41,20 +41,19 @@ def test_cli_install_and_launch(runner: CliRunner) -> None:
 
     # Step 1: Check QuPath launch fails if not installed
     result = runner.invoke(cli, ["qupath", "launch"])
-    assert all(
-        index in result.output.replace("\n", "")
-        for index in ["QuPath is not installed. Use 'uvx aignostics qupath install' to install it."]
+    assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in result.output.replace(
+        "\n", ""
     )
     assert result.exit_code == 2
 
     # Step 2: Check QuPath install succeeds
     result = runner.invoke(cli, ["qupath", "install"])
-    assert all(index in result.output.replace("\n", "") for index in ["QuPath v0.5.1 installed successfully"])
+    assert "QuPath v0.5.1 installed successfully" in result.output.replace("\n", "")
     assert result.exit_code == 0
 
     # Step 3: Check QuPath can now launch successfully
     result = runner.invoke(cli, ["qupath", "launch"])
-    assert all(index in result.output.replace("\n", "") for index in ["QuPath launched successfully"])
+    assert "QuPath launched successfully" in result.output.replace("\n", "")
     assert result.exit_code == 0
     pid_match = re.search(r"QuPath launched successfully with process id '(\d+)'.", result.output.replace("\n", ""))
     assert pid_match is not None, "PID not found in launch output"
@@ -72,19 +71,18 @@ def test_cli_install_and_launch(runner: CliRunner) -> None:
 
     # Step 4: Check QuPath install succeeds (idempotent operation)
     result = runner.invoke(cli, ["qupath", "install"])
-    assert all(index in result.output.replace("\n", "") for index in ["QuPath v0.5.1 installed successfully"])
+    assert "QuPath v0.5.1 installed successfully" in result.output.replace("\n", "")
     assert result.exit_code == 0
 
     # Step 5: Uninstall QuPath
     result = runner.invoke(cli, ["qupath", "uninstall"])
-    assert all(index in result.output.replace("\n", "") for index in ["QuPath uninstalled successfully."])
+    assert "QuPath uninstalled successfully." in result.output.replace("\n", "")
     assert result.exit_code == 0
 
     # Step 6: Check QuPath launch fails if not installed
     result = runner.invoke(cli, ["qupath", "launch"])
-    assert all(
-        index in result.output.replace("\n", "")
-        for index in ["QuPath is not installed. Use 'uvx aignostics qupath install' to install it."]
+    assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in result.output.replace(
+        "\n", ""
     )
     assert result.exit_code == 2
 
