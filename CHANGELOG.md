@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.14..0.2.15) - 2025-05-28
+(https://github.com/aignostics/python-sdk/compare/v0.2.15..0.2.16) - 2025-05-28
+
+
+- Lint - ([9abaf64](https://github.com/aignostics/python-sdk/commit/9abaf64d95f49991fd8e98ea0f20c86923f8b206))
+- Install qupath without external dependency - ([2ca0721](https://github.com/aignostics/python-sdk/commit/2ca0721778cf309cdf261426bc27d4ba17fc4d8d))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.14..v0.2.15) - 2025-05-28
 
 
 - Change log message - ([272686d](https://github.com/aignostics/python-sdk/commit/272686d048d97b71bc044b16d768cde18b7ed2ee))
