@@ -1,7 +1,6 @@
 """Tests to verify the CLI functionality of the QuPath module."""
 
 import os
-import platform
 import re
 import signal
 
@@ -80,7 +79,7 @@ def test_cli_install_and_launch_embedded(runner: CliRunner) -> None:
 
 
 @pytest.mark.sequential
-@pytest.mark.skipif(platform != "Darwin")
+@pytest.mark.skipif(os.getenv("GITHUB_ACTIONS"))
 def test_cli_install_and_launch_ui(runner: CliRunner) -> None:
     """Check expected column returned."""
     # Uninstall QuPath if it exists to have a clean state for the test
