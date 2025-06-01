@@ -14,9 +14,11 @@ from PIL import Image
 
 from aignostics.utils import gui_register_pages
 
+CONTENT_LENGTH_FALLBACK = 32066  # Fallback image size in bytes
+
 
 def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
-    """Test that the thumbnail fails on missing file."""
+    """Test that the thumbnail falls back on missing file."""
     gui_register_pages()
     client = TestClient(app)
 
@@ -25,13 +27,12 @@ def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
     test_file_path = resources_dir / "not-found.dcm"
 
     response = client.get(f"/thumbnail?source={test_file_path.absolute()}")
-    assert response.status_code == 400
-    detail_message = response.json()["detail"]
-    assert detail_message.startswith("Bad request or invalid image input: File does not exist: ")
+    assert response.status_code == 200
+    assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
 def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
-    """Test that the thumbnail fails on unsupported_filetype."""
+    """Test that the thumbnail falls back on unsupported_filetype."""
     gui_register_pages()
     client = TestClient(app)
 
@@ -40,11 +41,8 @@ def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
     test_file_path = resources_dir / "unsupported.any"
 
     response = client.get(f"/thumbnail?source={test_file_path.absolute()}")
-    assert response.status_code == 400
-    detail_message = response.json()["detail"]
-    assert detail_message.startswith(
-        "Bad request or invalid image input: Unsupported file type: .any. Supported types are .dcm, .tiff, and .tif."
-    )
+    assert response.status_code == 200
+    assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
 def test_serve_thumbnail_for_dicom_thumbnail(user: User) -> None:
@@ -118,10 +116,8 @@ def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User) -> None:
     client = TestClient(app)
 
     response = client.get("/tiff?url=bla")
-    assert response.status_code == 400
-    assert response.json() == {
-        "detail": "Bad request or invalid tiff input: URL must start with 'http://localhost' or 'https://'."
-    }
+    assert response.status_code == 200
+    assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
 @contextlib.contextmanager
@@ -191,7 +187,7 @@ def test_serve_tiff_to_jpeg(user: User) -> None:
 
 
 def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
-    """Test that the tiff route fails as expected on broken tiff.
+    """Test that the tiff route falls back as expected on broken tiff.
 
     - Spin up local webserver serving 4711 random bytes
     - Open the tiff and check the response
@@ -208,16 +204,12 @@ def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
         test_file_url = f"{base_url}/broken.tiff"
         response = client.get(f"/tiff?url={test_file_url}")
 
-    assert response.status_code == 400
-    detail_message = response.json()["detail"]
-    assert detail_message.startswith(
-        "Bad request or invalid tiff input: Unidentified image error while trying to process as TIFF: "
-        "cannot identify image file"
-    )
+    assert response.status_code == 200
+    assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
 def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
-    """Test that the tiff route fails as expected on tiff not found.
+    """Test that the tiff route falls back as expected on tiff not found.
 
     - Spin up local webserver
     - Open the unavailable tiff and check the response
@@ -234,17 +226,12 @@ def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
         test_file_url = f"{base_url}/not-found.tiff"
         response = client.get(f"/tiff?url={test_file_url}")
 
-    assert response.status_code == 400
-    detail_message = response.json()["detail"]
-    assert detail_message.startswith(
-        "Bad request or invalid tiff input: HTTP error while fetching TIFF from URL: 404 Client Error: "
-        "File not found for url: http://localhost:"
-    )
-    assert detail_message.endswith("/not-found.tiff.")
+    assert response.status_code == 200
+    assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
 def test_serve_tiff_to_jpeg_fails_on_tiff_url_broken(user: User) -> None:
-    """Test that the tiff route fails as expected on invalid url as arg.
+    """Test that the tiff route falls back as expected on invalid url as arg.
 
     - Open the broken url and check the response
 
@@ -254,8 +241,5 @@ def test_serve_tiff_to_jpeg_fails_on_tiff_url_broken(user: User) -> None:
 
     response = client.get("/tiff?url=https://")
 
-    assert response.status_code == 400
-    assert response.json() == {
-        "detail": "Bad request or invalid tiff input: URL error prevented fetching TIFF: "
-        "Invalid URL 'https://': No host supplied."
-    }
+    assert response.status_code == 200
+    assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
