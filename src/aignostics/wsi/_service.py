@@ -50,9 +50,6 @@ class Service(BaseService):
             ValueError: If the file type is not supported (.dcm, .tiff, or .tif).
             RuntimeError: If there is an error generating the thumbnail.
         """
-        from openslide import OpenSlideUnsupportedFormatError  # noqa: PLC0415
-        from PIL import Image as PILImage  # noqa: PLC0415
-
         from ._openslide_handler import OpenSlideHandler  # noqa: PLC0415
 
         if path.exists() is False:
@@ -64,15 +61,7 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message)
         try:
-            try:
-                return OpenSlideHandler.from_file(path).get_thumbnail()
-            except OpenSlideUnsupportedFormatError:
-                # If OpenSlide fails, try using PIL directly
-                img_file = PILImage.open(path)
-                # Create a thumbnail with max size 256x256 while maintaining aspect ratio
-                img_file.thumbnail((256, 256))
-                # Convert to RGB mode if needed (for PNG compatibility)
-                return img_file.convert("RGB") if img_file.mode not in {"RGB", "RGBA"} else img_file.copy()
+            return OpenSlideHandler.from_file(path).get_thumbnail()
         except Exception as e:
             message = f"Error processing file {path}: {e!s}"
             logger.exception(message)
