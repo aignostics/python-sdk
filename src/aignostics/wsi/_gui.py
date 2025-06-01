@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-from fastapi import HTTPException, Response
+from fastapi import Response
+from fastapi.responses import RedirectResponse
 
 from aignostics.utils import BasePageBuilder, get_logger
 
@@ -16,6 +17,8 @@ class PageBuilder(BasePageBuilder):
     def register_pages() -> None:
         from nicegui import app  # noqa: PLC0415
 
+        app.add_static_files("/wsi_assets", Path(__file__).parent / "assets")
+
         @app.get("/thumbnail")
         def thumbnail(source: str) -> Response:
             """Serve a thumbnail for a given source reference.
@@ -24,21 +27,16 @@ class PageBuilder(BasePageBuilder):
                 source (str): The source of the slide pointing to a file on the filesystem.
 
             Returns:
-                fastapi.Response: HTTP response containing the thumbnail image.
-
-            Raises:
-                HTTPException: If the file does not exist or if thumbnail generation fails.
+                fastapi.Response: HTTP response containing the thumbnail or fallback image.
             """
             try:
                 return Response(content=Service().get_thumbnail_bytes(Path(source)), media_type="image/png")
-            except ValueError as e:
+            except ValueError:
                 logger.warning("Error generating thumbnail on bad request or invalid image input")
-                raise HTTPException(status_code=400, detail=f"Bad request or invalid image input: {e!s}") from e
-            except RuntimeError as e:
+                return RedirectResponse("/wsi_assets/fallback.png")
+            except RuntimeError:
                 logger.exception("Internal server error when generating thumbnail")
-                raise HTTPException(
-                    status_code=500, detail=f"Internal server error when generating thumbnail: {e!s}"
-                ) from e
+                return RedirectResponse("/wsi_assets/fallback.png")
 
         @app.get("/tiff")
         def tiff(url: str) -> Response:
@@ -48,16 +46,13 @@ class PageBuilder(BasePageBuilder):
                 url (str): The URL of the tiff.
 
             Returns:
-                fastapi.Response: HTTP response containing the thumbnail image.
-
-            Raises:
-                HTTPException: If the file does not exist or if thumbnail generation fails.
+                fastapi.Response: HTTP response containing the converted tiff or fallback image
             """
             try:
                 return Response(content=Service().get_tiff_as_jpg(url), media_type="image/jpeg")
-            except ValueError as e:
+            except ValueError:
                 logger.warning("Error generating jpeg on bad request or invalid tiff input")
-                raise HTTPException(status_code=400, detail=f"Bad request or invalid tiff input: {e!s}") from e
-            except RuntimeError as e:
+                return RedirectResponse("/wsi_assets/fallback.png")
+            except RuntimeError:
                 logger.exception("Internal server error when generating jpeg")
-                raise HTTPException(status_code=500, detail=f"Internal server error when generating jpeg: {e!s}") from e
+                return RedirectResponse("/wsi_assets/fallback.png")

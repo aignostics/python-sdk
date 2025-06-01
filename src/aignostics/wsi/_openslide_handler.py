@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import openslide
+from openslide import ImageSlide, OpenSlide, open_slide
 from PIL.Image import Image
 
 TIFF_IMAGE_DESCRIPTION = "tiff.ImageDescription"
@@ -15,10 +16,21 @@ class OpenSlideHandler:
 
     def __init__(self, path: str) -> None:
         self.path = Path(path)
-        self.slide = openslide.OpenSlide(str(path))
+        self.slide: OpenSlide | ImageSlide = open_slide(str(path))
 
     @classmethod
     def from_file(cls, path: str | Path) -> "OpenSlideHandler":
+        """Create an OpenSlideHandler from a file path.
+
+        Args:
+            path (str | Path): The path to the WSI file.
+
+        Returns:
+            OpenSlideHandler: An instance of OpenSlideHandler initialized with the given path.
+
+        Raises:
+            OpenSlideError: If the file cannot be opened as a WSI.
+        """
         return cls(str(path))
 
     def _detect_format(self) -> str | None:
@@ -55,6 +67,9 @@ class OpenSlideHandler:
 
         Returns:
             Image: Thumbnail image of the slide.
+
+        Raises:
+            OpenSlideError: If the slide cannot be opened or if thumbnail generation fails.
         """
         return self.slide.get_thumbnail((256, 256))
 
