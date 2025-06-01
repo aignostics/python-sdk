@@ -5,6 +5,7 @@ import os
 import platform
 import re
 from asyncio import sleep
+from collections.abc import Generator
 
 import appdirs
 import pytest
@@ -34,7 +35,7 @@ async def _assert_notified(user: User, expected_notification: str, wait_seconds=
 
 
 @pytest.fixture
-def silent_logging(caplog) -> None:
+def silent_logging(caplog) -> Generator[None, None, None]:
     """Suppress logging output during test execution.
 
     Args:

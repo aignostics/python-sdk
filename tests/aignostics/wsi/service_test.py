@@ -5,6 +5,7 @@ import http.server
 import logging
 import os
 import threading
+from collections.abc import Generator
 from io import BytesIO
 from pathlib import Path
 
@@ -20,7 +21,7 @@ CONTENT_LENGTH_FALLBACK = 32066  # Fallback image size in bytes
 
 
 @pytest.fixture
-def silent_logging(caplog) -> None:
+def silent_logging(caplog) -> Generator[None, None, None]:
     """Suppress logging output during test execution.
 
     Args:

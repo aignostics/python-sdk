@@ -6,6 +6,7 @@ import platform
 import re
 import signal
 from asyncio import sleep
+from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import patch
 
@@ -61,7 +62,7 @@ async def _assert_notified(user: User, expected_notification: str, wait_seconds=
 
 
 @pytest.fixture
-def silent_logging(caplog) -> None:
+def silent_logging(caplog) -> Generator[None, None, None]:
     """Suppress logging output during test execution.
 
     Args:

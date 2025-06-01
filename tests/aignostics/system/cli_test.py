@@ -2,6 +2,7 @@
 
 import logging
 import os
+from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -21,7 +22,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture
-def silent_logging(caplog) -> None:
+def silent_logging(caplog) -> Generator[None, None, None]:
     """Suppress logging output during test execution.
 
     Args:
