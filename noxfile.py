@@ -178,7 +178,8 @@ def _generate_attributions(session: nox.Session, licenses_json_path: Path) -> No
 
     licenses_data = json.loads(licenses_json_path.read_text(encoding="utf-8"))
 
-    attributions += "This project includes code from the following third-party open source projects:\n\n"
+    attributions += "We gratefully acknowledge the following open source projects and libraries "
+    attributions += "that this project builds upon. Thank you to all these wonderful contributors!\n\n"
 
     attributions += """
 

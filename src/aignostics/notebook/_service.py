@@ -12,6 +12,8 @@ from aignostics.utils import BaseService, Health, get_logger
 
 logger = get_logger(__name__)
 
+MARIMO_SERVER_STARTUP_TIMEOUT = 30
+
 
 class _Runner:
     """Runner class of the Marimo module."""
@@ -21,6 +23,7 @@ class _Runner:
     _output: str = ""
     _server_url: str | None = None
     _server_ready: Event = Event()
+    _started = False
 
     def __init__(self) -> None:
         atexit.register(self.stop)
@@ -31,6 +34,8 @@ class _Runner:
         Returns:
             Health: The health of the service.
         """
+        if not self._started:
+            return Health(status=Health.Code.UP)
         return Health(
             status=Health.Code.UP,
             components={
@@ -45,15 +50,19 @@ class _Runner:
             },
         )
 
-    def start(self) -> str:
+    def start(self, timeout: int = MARIMO_SERVER_STARTUP_TIMEOUT) -> str:
         """Start the Marimo server.
+
+        Args:
+            timeout (int): Maximum time to wait for the server to start and URL to be detected.
 
         Returns:
             str: The URL of the started Marimo server.
 
         Raises:
-            RuntimeError: If the Marimo server fails to start or if the URL isn't detected within 10 seconds.
+            RuntimeError: If the Marimo server fails to start or if the URL isn't detected within given timeout.
         """
+        self._started = True
         if self.is_marimo_server_running():
             logger.warning("Marimo server is already running")
             if self._server_url is not None:
@@ -64,8 +73,9 @@ class _Runner:
             raise RuntimeError(message)
 
         notebook_path = Path(__file__).parent / "_notebook.py"
+        notebook_path = notebook_path.resolve()
         if not notebook_path.is_file():
-            message = f"Notebook file not found at '{notebook_path.absolute()}'"
+            message = f"Notebook file not found at '{notebook_path!s}'"
             logger.error(message)
             raise RuntimeError(message)
 
@@ -73,6 +83,7 @@ class _Runner:
         self._server_url = None
         self._server_ready.clear()
 
+        logger.debug("Starting Marimo server with notebook at: %s", notebook_path)
         self._marimo_server = Popen(  # noqa: S603
             [
                 sys.executable,
@@ -83,7 +94,7 @@ class _Runner:
                 "--skip-update-check",
                 "--no-sandbox",
                 "--no-token",
-                notebook_path.absolute(),
+                str(notebook_path),
             ],
             stdout=PIPE,
             stderr=STDOUT,
@@ -95,8 +106,8 @@ class _Runner:
         self._monitor_thread = Thread(target=self._capture_output, args=(self._marimo_server,), daemon=True)
         self._monitor_thread.start()
 
-        # Wait up to 10 seconds for the server URL to be detected
-        if not self._server_ready.wait(timeout=10.0):
+        # Wait up to timeout seconds for the server URL to be detected
+        if not self._server_ready.wait(timeout=timeout):
             self.stop()  # Kill the process if it didn't start properly
             message = "Marimo server didn't start within 10 seconds (URL not detected)"
             logger.error(message)

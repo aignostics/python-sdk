@@ -5,10 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from openslide import OpenSlideError, OpenSlideUnsupportedFormatError
-from PIL import Image as PILImage
-from PIL import UnidentifiedImageError
-from PIL.Image import Image
 
 from aignostics.utils import BaseService, Health, get_logger
 
@@ -52,18 +48,21 @@ class Service(BaseService):
         handler = OpenSlideHandler.from_file(path)
         return handler.get_metadata()
 
-    def _get_openslide_thumbnail(self, path: Path) -> Image:  # noqa: PLR6301
+    def _get_openslide_thumbnail(self, path: Path) -> "PIL.Image.Image":  # type: ignore # noqa: F821, PLR6301
         """Get thumbnail of a wsi file via OpenSlide.
 
         Args:
             path (Path): Path to the wsi file.
 
         Returns:
-            Image: Thumbnail of the wsi file.
+            PIL.Image.Image: Thumbnail of the wsi file.
 
         Raises:
             OpenSlideError: If there is an error processing the wsi file with OpenSlide.
         """
+        from openslide import OpenSlideError, OpenSlideUnsupportedFormatError  # noqa: PLC0415
+        from PIL import Image as PILImage  # noqa: PLC0415
+
         from ._openslide_handler import OpenSlideHandler  # noqa: PLC0415
 
         try:
@@ -86,14 +85,14 @@ class Service(BaseService):
                 return img_file.convert("RGB") if img_file.mode not in {"RGB", "RGBA"} else img_file.copy()
             raise
 
-    def get_thumbnail(self, path: Path) -> Image:
+    def get_thumbnail(self, path: Path) -> "PIL.Image.Image":  # type: ignore # noqa: F821
         """Get thumbnail as PIL image.
 
         Args:
             path (Path): Path to the image.
 
         Returns:
-            Image.Image: Thumbnail of the image.
+            PIL.Image.Image: Thumbnail of the image.
 
         Raises:
             ValueError: If the file type is not supported (.dcm, .tiff, or .tif).
@@ -102,7 +101,7 @@ class Service(BaseService):
             message = f"File does not exist: {path}"
             logger.warning(message)
             raise ValueError(message)
-        if path.suffix.lower() in {".dcm", ".tiff", ".tif"}:
+        if path.suffix.lower() in {".dcm", ".tiff", ".tif", ".svs"}:
             return self._get_openslide_thumbnail(path)
         message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
         logger.warning(message)
@@ -149,6 +148,9 @@ class Service(BaseService):
             ValueError: If URL format is invalid or if there's an error opening the tiff.
             RuntimeError: If there's an unexpected internal error.
         """
+        from PIL import Image as PILImage  # noqa: PLC0415
+        from PIL import UnidentifiedImageError  # noqa: PLC0415
+
         if not url.startswith(("http://localhost", "https://")):
             error_msg = "URL must start with 'http://localhost' or 'https://'."
             logger.warning(error_msg)

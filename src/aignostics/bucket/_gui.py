@@ -1,5 +1,7 @@
 """GUI of bucket module."""
 
+from pathlib import Path
+
 from aignostics.gui import frame
 
 from ..utils import BasePageBuilder  # noqa: TID252
@@ -10,6 +12,8 @@ class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
         from nicegui import app, binding, ui  # noqa: PLC0415
+
+        app.add_static_files("/bucket_assets", Path(__file__).parent / "assets")
 
         @binding.bindable_dataclass
         class BucketForm:
@@ -39,7 +43,7 @@ class PageBuilder(BasePageBuilder):
                         5. You can manually delete data at any time using the form below.
                         """).classes("w-3/5")
                 ui.space()
-                ui.image("/assets/Google-Cloud-logo.svg").classes("w-1/5").style("margin-top:1.25rem")
+                ui.image("/bucket_assets/Google-Cloud-logo.png").classes("w-1/5").style("margin-top:1.25rem")
 
             def _get_rows() -> list[dict[str, str]]:
                 objs = Service().find(detail=True)

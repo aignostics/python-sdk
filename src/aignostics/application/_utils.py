@@ -1,6 +1,12 @@
-"""Utility functions for printing of application resources, and reading/writing metadata CSV files."""
+"""Utility functions for application module.
+
+1. Printing of application resources
+2. Reading/writing metadata CSV files
+3. Mime type handling.
+"""
 
 import csv
+import mimetypes
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
@@ -9,10 +15,11 @@ from aignostics.platform import (
     ApplicationRun,
     ApplicationRunData,
     ApplicationRunStatus,
+    InputArtifactData,
+    OutputArtifactData,
+    OutputArtifactElement,
 )
 from aignostics.utils import console, get_logger
-
-from ._service import Service
 
 logger = get_logger(__name__)
 
@@ -148,6 +155,8 @@ def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
         service (Service): The Service instance to use
 
     """
+    from ._service import Service  # noqa: PLC0415
+
     console.print("[bold]Application Runs:[/bold]")
     console.print("=" * 80)
 
@@ -263,3 +272,44 @@ def application_run_status_to_str(
     message = f"Unknown application status: {status.value}"
     logger.error(message)
     raise RuntimeError(message)
+
+
+def get_mime_type_for_artifact(artifact: OutputArtifactData | InputArtifactData | OutputArtifactElement) -> str:
+    """Get the MIME type for a given artifact.
+
+    Args:
+        artifact (OutputArtifact | InputArtifact | OutputArtifactElement): The artifact to get the MIME type for.
+
+    Returns:
+        str: The MIME type of the artifact.
+    """
+    if isinstance(artifact, InputArtifactData):
+        return str(artifact.mime_type)
+    if isinstance(artifact, OutputArtifactData):
+        return str(artifact.mime_type)
+    metadata = artifact.metadata or {}
+    return str(metadata.get("media_type", metadata.get("mime_type", "application/octet-stream")))
+
+
+def get_file_extension_for_artifact(artifact: OutputArtifactData) -> str:
+    """Get the file extension for a given artifact.
+
+    Returns .bin if no known extension is found for mime type.
+
+    Args:
+        artifact (OutputArtifact): The artifact to get the extension for.
+
+    Returns:
+        str: The file extension of the artifact.
+    """
+    mimetypes.init()
+    mimetypes.add_type("application/vnd.apache.parquet", ".parquet")
+    mimetypes.add_type("application/geo+json", ".json")
+
+    file_extension = mimetypes.guess_extension(get_mime_type_for_artifact(artifact))
+    if file_extension == ".geojson":
+        file_extension = ".json"
+    if not file_extension:
+        file_extension = ".bin"
+    logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
+    return file_extension

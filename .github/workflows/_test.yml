@@ -32,6 +32,10 @@ jobs:
       - name: Install Python, venv and dependencies
         run: uv sync --all-extras --frozen --link-mode=copy
 
+      # Need xdisplay for testing QuPath app integration
+      - name: Setup display
+        uses: pyvista/setup-headless-display-action@v3
+  
       - name: Release version check
         if: startsWith(github.ref, 'refs/tags/v')
         run: |

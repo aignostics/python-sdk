@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, cast
 
 import requests
-from boto3 import Session
 from botocore.client import BaseClient, Config
 from botocore.exceptions import ClientError
 
@@ -57,6 +56,8 @@ class Service(BaseService):
         Returns:
             BaseClient: A Boto3 S3 client instance.
         """
+        from boto3 import Session  # noqa: PLC0415
+
         # https://www.kmp.tw/post/accessgcsusepythonboto3/
         session = Session(
             aws_access_key_id=self._settings.hmac_access_key_id.get_secret_value(),

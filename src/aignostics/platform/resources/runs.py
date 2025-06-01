@@ -319,7 +319,9 @@ class Runs:
             raise ValueError(message)
         if not for_application_version:
             res = paginate(
-                self._api.list_application_runs_v1_runs_get, page_size=page_size, sort=[sort] if sort else None
+                self._api.list_application_runs_v1_runs_get,
+                page_size=page_size,
+                sort=[sort] if sort else None,
             )
         else:
             res = paginate(

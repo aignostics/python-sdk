@@ -57,6 +57,11 @@ The Launchpad is available for Mac OS X, Windows, and Linux, and can be installe
 4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images 
    with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other computational pathology applications.
 
+> [!Note]
+> The Launchpad features a growing ecosystem of extensions that seamlessly integrate with standard digital pathology tools. To use the Launchpad with all available extensions, run `uvx --with aignostics[qupath,marimo] aignostics launchpad`. Currently available extensions are:
+> 1. **QuPath extension**: View your application results in [QuPath](https://qupath.github.io/) with a single click. The Launchpad creates QuPath projects on-the-fly.
+> 2. **Marimo extension**: Analyze your application results using [Marimo](https://marimo.io/) notebooks embedded in the Launchpad. You don't have to leave the Launchpad to do real data science.
+
 ### CLI: Manage datasets and application runs from your terminal
 
 The Python SDK includes the **Aignostics CLI**, a Command-Line Interface that allows you to

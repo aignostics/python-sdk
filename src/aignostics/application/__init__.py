@@ -12,7 +12,7 @@ from importlib.util import find_spec
 
 # advertise PageBuilder to enable auto-discovery
 if find_spec("nicegui"):
-    from ._gui import PageBuilder
+    from ._gui._page_builder import PageBuilder
 
     __all__ += [
         "PageBuilder",

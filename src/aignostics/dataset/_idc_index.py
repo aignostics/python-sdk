@@ -45,9 +45,7 @@ import time
 from importlib.metadata import distribution, version
 from pathlib import Path
 
-import duckdb
 import idc_index_data
-import pandas as pd
 import platformdirs
 import psutil
 import requests
@@ -96,6 +94,8 @@ class IDCClient:
         return cls._client
 
     def __init__(self):
+        import pandas as pd
+
         # Read main index file
         file_path = idc_index_data.IDC_INDEX_PARQUET_FILEPATH
         logger.debug(f"Reading index file v{idc_index_data.__version__}")
@@ -368,6 +368,7 @@ class IDCClient:
         Args:
             index (str): Name of the index to be downloaded.
         """
+        import pandas as pd
 
         if index_name not in self.indices_overview:
             logger.error(f"Index {index_name} is not available and can not be fetched.")
@@ -445,6 +446,8 @@ class IDCClient:
         Returns:
             pandas.DataFrame: The requested clinical table.
         """
+        import pandas as pd
+        
         if self.clinical_data_dir is None:
             logger.error(
                 "Clinical data directory is not available. Please fetch clinical_index first."
@@ -501,6 +504,7 @@ class IDCClient:
         Raises:
             ValueError: If `outputFormat` is not one of 'dict', 'df', 'list'.
         """
+        import duckdb
 
         if not isinstance(collection_id, str) and not isinstance(collection_id, list):
             raise TypeError("collection_id must be a string or list of strings")
@@ -553,6 +557,7 @@ class IDCClient:
             ValueError: If `outputFormat` is not one of 'dict', 'df', 'list'.
             ValueError: If any of the `patientId` does not exist.
         """
+        import duckdb
 
         if not isinstance(patientId, str) and not isinstance(patientId, list):
             raise TypeError("patientId must be a string or list of strings")
@@ -735,6 +740,7 @@ class IDCClient:
             string containing the bucket URL of the file corresponding to the SOPInstanceUID,
             or None if the SOPInstanceUID is not recognized
         """
+        import pandas as pd
 
         # sm_instance_index is required to complete this operation - install it!
         self.fetch_index("sm_instance_index")
@@ -903,6 +909,9 @@ class IDCClient:
             ValueError: If the manifest file does not exist, if any URL in the manifest file is invalid, or if any URL is inaccessible in both AWS and GCP.
             Exception: If the manifest contains URLs from both AWS and GCP.
         """
+        import pandas as pd
+        import duckdb
+        
         logger.debug("manifest validation is requested: " + str(validate_manifest))
 
         logger.debug("Parsing the manifest. Please wait..")
@@ -1333,6 +1342,9 @@ class IDCClient:
             float: Download size in MB
             list_of_directories: list of directories need to tracked for progress bar
         """
+        import pandas as pd
+        import duckdb
+
         logger.info("Parsing the s5cmd sync dry run output...")
 
         stdout_df = pd.DataFrame(stdout.splitlines(), columns=["s5cmd_output"])
@@ -1679,6 +1691,7 @@ Destination folder is not empty and sync size is less than total size.
         Returns:
             List of citations in the requested format.
         """
+        import pandas as pd
 
         manifest_df = pd.read_csv(
             manifestFile,
@@ -1808,6 +1821,8 @@ Destination folder is not empty and sync size is less than total size.
             dirTemplate (str): Download directory hierarchy template. This variable defines the folder hierarchy for the organizing the downloaded files in downloadDirectory. Defaults to index.DOWNLOAD_HIERARCHY_DEFAULT set to %collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID. The template string can be built using a combination of selected metadata attributes (PatientID, collection_id, Modality, StudyInstanceUID, SeriesInstanceUID) that must be prefixed by '%'. The following special characters can be used as separators: '-' (hyphen), '/' (slash for subdirectories), '_' (underscore). When set to None all files will be downloaded to the download directory with no subdirectories.
             source_bucket_location: string selecting the provider of the bucket from which the files will be downloaded, allowing to select between Google ('gcs') and AWS ('aws') storage. Defaults to 'aws'.
         """
+        import pandas as pd
+        import duckdb
 
         if source_bucket_location not in ["aws", "gcs"]:
             raise ValueError("source_bucket_location must be either 'aws' or 'gcs'")
@@ -2230,6 +2245,7 @@ Temporary download manifest is generated and is passed to self._s5cmd_run
         Raises:
             duckdb.Error: any exception that duckdb.query() raises
         """
+        import duckdb
 
         logger.debug("Executing SQL query: " + sql_query)
         # TODO: find a more elegant way to automate the following:  https://www.perplexity.ai/search/write-python-code-that-iterate-XY9ppywbQFSRnOpgbwx_uQ

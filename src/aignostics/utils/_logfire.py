@@ -20,12 +20,21 @@ class LogfireSettings(OpaqueSettings):
         extra="ignore",
     )
 
+    enabled: Annotated[
+        bool,
+        Field(
+            description="Enable remote log collection via logfire",
+            default=False,
+        ),
+    ]
+
     token: Annotated[
         SecretStr | None,
         BeforeValidator(strip_to_none_before_validator),
         PlainSerializer(func=OpaqueSettings.serialize_sensitive_info, return_type=str, when_used="always"),
         Field(description="Logfire token. Leave empty to disable logfire.", examples=["YOUR_TOKEN"], default=None),
     ]
+
     instrument_system_metrics: Annotated[
         bool,
         Field(description="Enable system metrics instrumentation", default=False),
@@ -43,7 +52,7 @@ def logfire_initialize(modules: list["str"]) -> bool:
     """
     settings = load_settings(LogfireSettings)
 
-    if settings.token is None:
+    if not settings.enabled or settings.token is None:
         return False
 
     logfire.configure(

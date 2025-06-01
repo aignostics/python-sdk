@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "0.2.13"
+version = "0.2.21"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -75,8 +75,8 @@ requires-python = ">=3.11, <4.0"
 dependencies = [
     # From Template
     "fastapi[standard,all]>=0.115.12",
-    "logfire[system-metrics]>=3.16.0",
-    "nicegui[native]>=2.17.0",
+    "logfire[system-metrics]>=3.16.1",
+    "nicegui[native]>=2.18.0",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
     "opentelemetry-instrumentation-jinja2>=0.53b0",
@@ -89,20 +89,20 @@ dependencies = [
     "pydantic-settings>=2.9.1",
     "pywin32>=310 ; sys_platform == 'win32'",
     "sentry-sdk>=2.29.1",
-    "typer>=0.15.4",
+    "typer>=0.16.0",
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
-    "boto3>=1.38.22",
-    "dicom-validator>=0.6.2",
-    "dicomweb-client[gcp]>=0.59.3",
-    "google-cloud-storage>=3.1.0",
+    "boto3>=1.38.27",
+    "dicom-validator>=0.7.1",
+    "dicomweb-client[gcp]>=0.59.2",
+    "google-cloud-storage>=2.12.0",
     "google-crc32c>=1.7.1",
     "highdicom>=0.25.1",
     "httpx>=0.28.1",
     "humanize>=4.12.3",
     "jsf>=0.11.2",
-    "jsonschema>=4.23.0",
+    "jsonschema>=4.24.0",
     "openslide-bin>=4.0.0.8",
     "openslide-python>=1.4.2",
     "pyjwt[crypto]>=2.10.1",
@@ -130,13 +130,14 @@ dependencies = [
     "s5cmd",
     "sphinx-click",
     "tqdm",
+    "ijson>=3.4.0",
 ]
 
 [project.optional-dependencies]
 jupyter = ["jupyter>=1.1.1"]
 marimo = [
     "cloudpathlib>=0.21.1",
-    "marimo>=0.13.11",
+    "marimo>=0.13.15",
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
@@ -151,25 +152,25 @@ dev = [
     "furo>=2024.8.6",
     "git-cliff>=2.8.0",
     "matplotlib>=3.10.1",
-    "mypy>=1.5.0",
+    "mypy>=1.16.0",
     "nox[uv]>=2025.5.1",
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
     "pyright>=1.1.401",
     "pytest>=8.3.5",
-    "pytest-asyncio>=0.26.0",
+    "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.1.1",
-    "pytest-docker>=3.2.1",
+    "pytest-docker>=3.2.2",
     "pytest-env>=1.1.5",
     "pytest-md-report>=0.7.0",
-    "pytest-regressions>=2.7.0",
+    "pytest-regressions>=2.8.0",
     "pytest-selenium>=4.1.0",
     "pytest-subprocess>=1.5.3",
     "pytest-timeout>=2.4.0",
     "pytest-watcher>=0.4.3",
-    "pytest-xdist[psutil]>=3.6.1",
-    "ruff>=0.11.10",
+    "pytest-xdist[psutil]>=3.7.0",
+    "ruff>=0.11.12",
     "scalene>=1.5.51",
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2024.10.3",
@@ -354,7 +355,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "0.2.13"
+current_version = "0.2.21"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"

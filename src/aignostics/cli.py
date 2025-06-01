@@ -1,11 +1,9 @@
 """CLI (Command Line Interface) of Aignostics Python SDK."""
 
 import sys
-import warnings
 from importlib.util import find_spec
 
 import typer
-from tqdm import TqdmExperimentalWarning
 
 from .constants import MODULES_TO_INSTRUMENT
 from .utils import __is_running_in_container__, __version__, boot, console, get_logger, prepare_cli
@@ -14,8 +12,6 @@ boot(MODULES_TO_INSTRUMENT)
 logger = get_logger(__name__)
 
 cli = typer.Typer(help="Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.")
-
-warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 
 if find_spec("nicegui") and find_spec("webview") and not __is_running_in_container__:
 

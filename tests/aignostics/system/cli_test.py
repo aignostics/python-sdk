@@ -1,12 +1,15 @@
 """Tests to verify the CLI functionality of the system module."""
 
+import logging
 import os
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from aignostics.utils import __project_name__
 
 THE_VALUE = "THE_VALUE"
 
@@ -15,6 +18,20 @@ THE_VALUE = "THE_VALUE"
 def runner() -> CliRunner:
     """Provide a CLI test runner fixture."""
     return CliRunner()
+
+
+@pytest.fixture
+def silent_logging(caplog) -> None:
+    """Suppress logging output during test execution.
+
+    Args:
+        caplog (pytest.LogCaptureFixture): The pytest fixture for capturing log messages.
+
+    Yields:
+        None: This fixture doesn't yield any value.
+    """
+    with caplog.at_level(logging.CRITICAL + 1):
+        yield
 
 
 @pytest.mark.scheduled
@@ -124,3 +141,221 @@ def test_cli_whoami(runner: CliRunner) -> None:
     """Check install command runs successfully."""
     result = runner.invoke(cli, ["system", "whoami"])
     assert result.exit_code == 0
+
+
+@pytest.mark.sequential
+def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path) -> None:
+    """Check set, unset, and get commands."""
+    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+        (tmp_path / ".env").touch()
+        result = runner.invoke(cli, ["system", "config", "unset", "test_key"])
+
+        # Get a value
+        result = runner.invoke(cli, ["system", "config", "get", "test_key"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        # Set a value
+        result = runner.invoke(cli, ["system", "config", "set", "test_key", "test_value"])
+        assert result.exit_code == 0
+        assert "Configuration 'TEST_KEY' set to 'test_value'." in result.output
+
+        # Get the value again
+        result = runner.invoke(cli, ["system", "config", "get", "test_key"])
+        assert result.exit_code == 0
+        assert "test_value" in result.output
+
+        # Unset the value
+        result = runner.invoke(cli, ["system", "config", "unset", "test_key"])
+        assert result.exit_code == 0
+        assert "Configuration 'TEST_KEY' unset." in result.output
+
+        # Get the value after unset
+        result = runner.invoke(cli, ["system", "config", "get", "test_key"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+    @pytest.mark.sequential
+    def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
+        """Check disable/enable remote diagnostics."""
+        with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+            (tmp_path / ".env").touch()
+            result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
+
+            # Check not set
+            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
+            assert result.exit_code == 0
+            assert "None" in result.output
+
+            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
+            assert result.exit_code == 0
+            assert "None" in result.output
+
+            # Enable
+            result = runner.invoke(cli, ["system", "config", "remote-diagnostics-enable"])
+            assert result.exit_code == 0
+            assert "Remote diagnostics enabled." in result.output
+
+            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
+            assert result.exit_code == 0
+            assert "1" in result.output
+
+            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
+            assert result.exit_code == 0
+            assert "1" in result.output
+
+            # Disable
+            result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
+
+            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
+            assert result.exit_code == 0
+            assert "None" in result.output
+
+            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
+            assert result.exit_code == 0
+            assert "None" in result.output
+
+
+@pytest.mark.sequential
+def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> None:  # noqa: PLR0915
+    """Check disable/enable remote diagnostics."""
+    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+        # Set up a mock .env file
+        (tmp_path / ".env").touch()
+
+        # Set up a mock cert file
+        cert_file = tmp_path / "cert"
+        cert_file.touch()
+
+        result = runner.invoke(cli, ["system", "config", "http-proxy-disable"])
+
+        # Check not set
+        result = runner.invoke(cli, ["system", "config", "get", "HTTP_PROXY"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        # Enable
+        result = runner.invoke(cli, ["system", "config", "http-proxy-enable"])
+        assert result.exit_code == 0
+        assert "HTTP proxy enabled." in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTP_PROXY"])
+        assert result.exit_code == 0
+        assert "http://proxy.charite.de:8080" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTPS_PROXY"])
+        assert result.exit_code == 0
+        assert "http://proxy.charite.de:8080" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_NO_VERIFY"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_CERT_FILE"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "REQUESTS_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        # Enable with SSL cert file
+
+        result = runner.invoke(cli, ["system", "config", "http-proxy-enable", "--ssl-cert-file", str(cert_file)])
+        assert result.exit_code == 0
+        assert "HTTP proxy enabled." in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTP_PROXY"])
+        assert result.exit_code == 0
+        assert "http://proxy.charite.de:8080" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTPS_PROXY"])
+        assert result.exit_code == 0
+        assert "http://proxy.charite.de:8080" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_NO_VERIFY"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_CERT_FILE"])
+        assert result.exit_code == 0
+        assert str(cert_file.resolve()) in result.output.replace("\n", "")
+
+        result = runner.invoke(cli, ["system", "config", "get", "REQUESTS_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert str(cert_file.resolve()) in result.output.replace("\n", "")
+
+        result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert str(cert_file.resolve()) in result.output.replace("\n", "")
+
+        # Enable with no verify
+
+        result = runner.invoke(cli, ["system", "config", "http-proxy-enable", "--no-ssl-verify"])
+        assert result.exit_code == 0
+        assert "HTTP proxy enabled." in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTP_PROXY"])
+        assert result.exit_code == 0
+        assert "http://proxy.charite.de:8080" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTPS_PROXY"])
+        assert result.exit_code == 0
+        assert "http://proxy.charite.de:8080" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_NO_VERIFY"])
+        assert result.exit_code == 0
+        assert "1" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_CERT_FILE"])
+        assert result.exit_code == 0
+        assert result.output == "\n"
+
+        result = runner.invoke(cli, ["system", "config", "get", "REQUESTS_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert result.output == "\n"
+
+        result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert result.output == "\n"
+
+        # Enable with no verify and ssl cert file conclicts
+
+        result = runner.invoke(
+            cli, ["system", "config", "http-proxy-enable", "--no-ssl-verify", "--ssl-cert-file", str(cert_file)]
+        )
+        assert result.exit_code == 2
+        assert "Cannot set both 'ssl_cert_file' and 'ssl_disable_verify'. Please choose one." in result.output
+
+        # Disable
+        result = runner.invoke(cli, ["system", "config", "http-proxy-disable"])
+        assert result.exit_code == 0
+        assert "HTTP proxy disabled." in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTP_PROXY"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "HTTPS_PROXY"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_NO_VERIFY"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "SSL_CERT_FILE"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "REQUESTS_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
+        assert result.exit_code == 0
+        assert "None" in result.output

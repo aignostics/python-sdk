@@ -6,24 +6,10 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.console import Group
-from rich.live import Live
-from rich.panel import Panel
-from rich.progress import (
-    BarColumn,
-    FileSizeColumn,
-    Progress,
-    TaskID,
-    TaskProgressColumn,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-    TotalFileSizeColumn,
-    TransferSpeedColumn,
-)
 
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException
+from aignostics.system import Service as SystemService
 from aignostics.utils import console, get_logger
 
 from ._service import DownloadProgress, DownloadProgressState, Service
@@ -370,13 +356,24 @@ def run_upload(
     2. Uploads the files referenced in the CSV file to the Aignostics platform.
     3. Incrementally updates the CSV file with upload progress and the signed URLs for the uploaded files.
     """
+    from rich.progress import (  # noqa: PLC0415
+        BarColumn,
+        FileSizeColumn,
+        Progress,
+        TaskProgressColumn,
+        TextColumn,
+        TimeRemainingColumn,
+        TotalFileSizeColumn,
+        TransferSpeedColumn,
+    )
+
     metadata_dict = read_metadata_csv_to_dict(metadata_csv_file=metadata_csv_file)
     if not metadata_dict:
         sys.exit(2)
 
     total_bytes = 0
     for i, entry in enumerate(metadata_dict):
-        source = entry["source"]
+        source = entry["reference"]
         source_file_path = Path(source)
         if not source_file_path.is_file():
             logger.warning("Source file '%s' (row %d) does not exist", source_file_path, i)
@@ -403,8 +400,7 @@ def run_upload(
         def update_progress(bytes_uploaded: int, source: Path, platform_bucket_url: str) -> None:
             progress.update(task, advance=bytes_uploaded, description=f"{source.name}")
             for entry in metadata_dict:
-                if entry["source"] == str(source):
-                    entry["file_upload_progress"] = float(entry["file_upload_progress"]) + bytes_uploaded
+                if entry["reference"] == str(source):
                     entry["platform_bucket_url"] = platform_bucket_url
                     break
             write_metadata_dict_to_csv(
@@ -543,7 +539,7 @@ def run_cancel(
 
 
 @result_app.command("download")
-def result_download(
+def result_download(  # noqa: PLR0913, PLR0917
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to download results for")],
     destination_directory: Annotated[
         Path,
@@ -556,7 +552,7 @@ def result_download(
             readable=True,
             resolve_path=True,
         ),
-    ],
+    ] = SystemService.get_user_data_directory("results"),  # noqa: B008
     create_subdirectory_for_run: Annotated[
         bool,
         typer.Option(
@@ -575,20 +571,46 @@ def result_download(
             help="Wait for run completion and download results incrementally",
         ),
     ] = True,
+    qupath_project: Annotated[
+        bool,
+        typer.Option(
+            help="Create a QuPath project referencing input slides and results. \n"
+            "The QuPath project will be created in a subfolder of the destination directory. \n"
+            "This option requires the QuPath extension for Launchpad: "
+            'start the Launchpad with `uvx --with "aignostics[qupath]" aignostics ...` \n'
+            "This options requires installation of the QuPath application: "
+            'Run uvx --with "aignostics[qupath]" aignostics qupath install'
+        ),
+    ] = False,
 ) -> None:
     """Download results of a run."""
     logger.debug(
         "Downloading results for run with ID '%s' to '%s' with options: "
-        "create_subdirectory_for_run=%s, create_subdirectory_per_item=%s, wait_for_completion=%s",
+        "create_subdirectory_for_run=%s, create_subdirectory_per_item=%s, wait_for_completion=%s, qupath_project=%r",
         run_id,
         destination_directory,
         create_subdirectory_for_run,
         create_subdirectory_per_item,
         wait_for_completion,
+        qupath_project,
+    )
+    from rich.console import Group  # noqa: PLC0415
+    from rich.live import Live  # noqa: PLC0415
+    from rich.panel import Panel  # noqa: PLC0415
+    from rich.progress import (  # noqa: PLC0415
+        BarColumn,
+        FileSizeColumn,
+        Progress,
+        TaskID,
+        TaskProgressColumn,
+        TextColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn,
+        TotalFileSizeColumn,
+        TransferSpeedColumn,
     )
 
     try:
-        progress: DownloadProgress = DownloadProgress()
         download_tasks: dict[str, TaskID] = {}
 
         main_download_progress_ui = Progress(
@@ -613,15 +635,13 @@ def result_download(
         panel = Panel(
             Group(main_download_progress_ui, artifact_download_progress_ui),
             title=f"Run {run_id}",
-            subtitle=progress.status,
+            subtitle="",
             highlight=True,
         )
         with Live(panel):
-            main_task = main_download_progress_ui.add_task(
-                description=progress.status, total=None, extra_description=""
-            )
+            main_task = main_download_progress_ui.add_task(description="", total=None, extra_description="")
 
-            def update_progress() -> None:
+            def update_progress(progress: DownloadProgress) -> None:
                 """Update progress bar for file downloads."""
                 if progress.run:
                     panel.title = f"Run {progress.run.application_run_id} of {progress.run.application_version_id}"
@@ -670,12 +690,12 @@ def result_download(
                     )
 
             destination_directory = Service().application_run_download(
-                progress=progress,
                 run_id=run_id,
                 destination_directory=destination_directory,
                 create_subdirectory_for_run=create_subdirectory_for_run,
                 create_subdirectory_per_item=create_subdirectory_per_item,
                 wait_for_completion=wait_for_completion,
+                qupath_project=qupath_project,
                 download_progress_callable=update_progress,
             )
 

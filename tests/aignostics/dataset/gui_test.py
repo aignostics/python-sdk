@@ -12,13 +12,14 @@ from aignostics.utils import gui_register_pages
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
 
-async def _assert_notified(user: User, expected_notification: str, wait_seconds=5):
+async def _assert_notified(user: User, expected_notification: str, wait_seconds=5) -> str:
     """Check if the user receives a notification within the specified time."""
     for _ in range(wait_seconds):
-        if user.notify.contains(expected_notification):
-            break
+        matching_messages = [msg for msg in user.notify.messages if expected_notification in msg]
+        if matching_messages:
+            return matching_messages[0]
         await sleep(1)
-    assert user.notify.contains(expected_notification)
+    pytest.fail(f"No notification containing '{expected_notification}' was found within {wait_seconds} seconds")
 
 
 async def test_gui_idc_shows(user: User) -> None:
@@ -30,8 +31,8 @@ async def test_gui_idc_shows(user: User) -> None:
 
 async def test_gui_idc_downloads(user: User, tmpdir) -> None:
     """Test that the user can download a dataset to a temporary directory."""
-    # Mock Path.home() to return the tmpdir for this test
-    with patch("pathlib.Path.home", return_value=Path(tmpdir)):
+    # Mock get_user_data_directory to return the tmpdir for this test
+    with patch("aignostics.system.Service.get_user_data_directory", return_value=Path(tmpdir)):
         gui_register_pages()
         await user.open("/dataset/idc")
         user.find(marker="BUTTON_EXAMPLE_DATASET").click()
@@ -46,7 +47,7 @@ async def test_gui_idc_downloads(user: User, tmpdir) -> None:
         user.find(marker="BUTTON_FILEPICKER_CANCEL").click()
         await user.should_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
-        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_HOME").click()
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
         await user.should_not_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
         user.find(marker="BUTTON_DOWNLOAD").click()
@@ -89,13 +90,13 @@ async def test_gui_idc_download_fails_with_invalid_inputs(
     user: User, tmpdir, source_input: str, expected_notification: str
 ) -> None:
     """Test that the download fails with appropriate notification when invalid IDs are provided."""
-    with patch("pathlib.Path.home", return_value=Path(tmpdir)):
+    with patch("aignostics.system.Service.get_user_data_directory", return_value=Path(tmpdir)):
         gui_register_pages()
         await user.open("/dataset/idc")
         user.find(marker="SOURCE_INPUT").clear()
         user.find(marker="SOURCE_INPUT").type(source_input)
 
-        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_HOME").click()
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
         await user.should_not_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
         user.find(marker="BUTTON_DOWNLOAD").click()

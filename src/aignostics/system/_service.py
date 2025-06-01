@@ -8,17 +8,23 @@ import typing as t
 from http import HTTPStatus
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
-from typing import Any, NotRequired, TypedDict, cast
+from typing import Any, NotRequired, TypedDict
 from urllib.request import getproxies
 
+import appdirs
+from dotenv import set_key as dotenv_set_key
+from dotenv import unset_key as dotenv_unset_key
 from pydantic_settings import BaseSettings
 from requests import get
+from showinfm.showinfm import show_in_file_manager
 
 from ..utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
     BaseService,
     Health,
     __env__,
+    __env_file__,
+    __is_running_in_read_only_environment__,
     __project_name__,
     __project_path__,
     __repository_url__,
@@ -109,6 +115,18 @@ class Service(BaseService):
             return Health(status=Health.Code.DOWN, reason=message)
 
         return Health(status=Health.Code.UP)
+
+    @staticmethod
+    def health_static() -> Health:
+        """Determine health of the system.
+
+        - This method is static and does not require an instance of the service.
+        - It is used to determine the health of the system without needing to pass the service.
+
+        Returns:
+            Health: The health of the system.
+        """
+        return Service().health()
 
     def health(self) -> Health:
         """Determine aggregate health of the system.
@@ -276,7 +294,7 @@ class Service(BaseService):
             "settings": {},
         }
 
-        runtime = cast("RuntimeDict", rtn["runtime"])
+        runtime = rtn["runtime"]
         if include_environ:
             if filter_secrets:
                 runtime["environ"] = {
@@ -333,3 +351,98 @@ class Service(BaseService):
                 return json.load(f)  # type: ignore[no-any-return]
         except (FileNotFoundError, json.JSONDecodeError) as e:
             raise OpenAPISchemaError(e) from e
+
+    @staticmethod
+    def get_user_data_directory(scope: str | None = None) -> Path:
+        """Get the data directory for the service. Directory created if it does not exist.
+
+        Args:
+            scope (str | None): Optional scope for the data directory.
+
+        Returns:
+            Path: The data directory path.
+        """
+        directory = Path(appdirs.user_data_dir(__project_name__))
+        if scope:
+            directory /= scope
+        if not __is_running_in_read_only_environment__:
+            directory.mkdir(parents=True, exist_ok=True)
+        return directory
+
+    @staticmethod
+    def open_user_data_directory(scope: str | None = None) -> Path:
+        """Open the user data directory in the file manager of the respective system platform.
+
+        Args:
+            scope (str | None): Optional scope for the data directory.
+
+        Returns:
+            Path: The data directory path.
+        """
+        directory = Service.get_user_data_directory(scope)
+        show_in_file_manager(str(directory))
+        return directory
+
+    @staticmethod
+    def _get_env_files_paths() -> list[Path]:
+        """Get the paths of the environment files.
+
+        Returns:
+            list[Path]: List of environment file paths.
+        """
+        return __env_file__
+
+    @staticmethod
+    def dotenv_get(key: str) -> str | None:
+        """Get value of key in environment.
+
+        Args:
+            key (str): The key to add.
+
+        Returns:
+            str | None: The value of the key if it exists, None otherwise.
+        """
+        return os.getenv(key, None)
+
+    @staticmethod
+    def dotenv_set(key: str, value: str) -> None:
+        """Set key-value pair in primary .env file, unset in alternative .env files.
+
+        Args:
+            key (str): The key to add.
+            value (str): The value to add.
+
+        Raises:
+            ValueError: If the primary .env file does not exist.
+
+        """
+        Service.dotenv_unset(key)
+
+        dotenv_path = Service._get_env_files_paths()[0]  # Primary .env file
+        if not dotenv_path.is_file():
+            message = f"Primary .env file '{dotenv_path!s}' does not exist, canceling update of .env files"
+            logger.error(message)
+            raise ValueError(message)
+
+        dotenv_set_key(dotenv_path=str(dotenv_path.resolve()), key_to_set=key, value_to_set=value, quote_mode="never")
+        os.environ[key] = value
+
+    @staticmethod
+    def dotenv_unset(key: str) -> int:
+        """Unset key-value pair in all .env files.
+
+        Args:
+            key (str): The key to remove.
+
+        Returns:
+            int: The number of times the key has been removed across files.
+        """
+        removed_count = 0
+        for dotenv_path in Service._get_env_files_paths():
+            if not dotenv_path.is_file():
+                message = f"File '{dotenv_path!s}' does not exist, skipping update"
+                logger.warning(message)
+                continue
+            dotenv_unset_key(dotenv_path=str(dotenv_path.resolve()), key_to_unset=key, quote_mode="never")
+        os.environ.pop(key, None)
+        return removed_count

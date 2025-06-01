@@ -1,6 +1,53 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.12..0.2.13) - 2025-05-27
+(https://github.com/aignostics/python-sdk/compare/v0.2.18..v0.2.19) - 2025-05-28
+
+
+- Skip ... - ([8948d3b](https://github.com/aignostics/python-sdk/commit/8948d3bfcd92d9f5c5c7bb7cfc2a451e4fd648d1))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.17..v0.2.18) - 2025-05-28
+
+
+- Skip ... - ([8e1b2dc](https://github.com/aignostics/python-sdk/commit/8e1b2dca099316599ccc52eb6b9c5fa0d4e5b4cd))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.16..v0.2.17) - 2025-05-28
+
+
+- *(QuPath)* Launch embedded, and test - ([d3be0d9](https://github.com/aignostics/python-sdk/commit/d3be0d95159ef0539c27922519eb1b9f534c02dd))
+
+
+- *(QuPath)* Linux - ([6fdabea](https://github.com/aignostics/python-sdk/commit/6fdabea0c2e44dfd9aa777187fb73e1f6099cca8))
+- QuPath dir layout on Linux - ([77a0a8f](https://github.com/aignostics/python-sdk/commit/77a0a8ff57af68e460a251f5cf5a8e319d73a06b))
+- QuPath install on Linux - ([c225d48](https://github.com/aignostics/python-sdk/commit/c225d4837a64f2ec2b5afabbedba069a84bc1559))
+
+
+- *(QuPath)* Tests for CLI and GUI, (un)install and launch - ([9474dfa](https://github.com/aignostics/python-sdk/commit/9474dfa956fe4f69fffa79d6daee72a7b90c9330))
+- Skipif tests on GHA where we don't have a graphical display for QuPath UI - ([e9e90cb](https://github.com/aignostics/python-sdk/commit/e9e90cb1943fb24fbd63eeaf77fe28e9e879c764))
+- Debug qupath install on linux - ([ca2d743](https://github.com/aignostics/python-sdk/commit/ca2d7436cfc886320909e0182c73b1c345bc18f6))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.15..v0.2.16) - 2025-05-28
+
+
+- Lint - ([9abaf64](https://github.com/aignostics/python-sdk/commit/9abaf64d95f49991fd8e98ea0f20c86923f8b206))
+- Install qupath without external dependency - ([2ca0721](https://github.com/aignostics/python-sdk/commit/2ca0721778cf309cdf261426bc27d4ba17fc4d8d))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.14..v0.2.15) - 2025-05-28
+
+
+- Change log message - ([272686d](https://github.com/aignostics/python-sdk/commit/272686d048d97b71bc044b16d768cde18b7ed2ee))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.13..v0.2.14) - 2025-05-28
+
+
+- Adapt tests - ([6060f9e](https://github.com/aignostics/python-sdk/commit/6060f9ee25c9800f71c4b0204d49aa7eb6bc5def))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.12..v0.2.13) - 2025-05-27
 
 
 - Styling of ui theme - ([b87ffb6](https://github.com/aignostics/python-sdk/commit/b87ffb67df666ea0f987b341321c6c560f1113f2))

@@ -15,7 +15,7 @@ class PageBuilder(BasePageBuilder):
 
 
 def theme() -> None:
-    """Set theme."""
+    """Theming incl. colors and fonts."""
     from nicegui import app, ui  # noqa: PLC0415
 
     ui.colors(
@@ -30,6 +30,7 @@ def theme() -> None:
         warning="#FFCC00",
         brand_white="#EFF0F1",
         brand_background_light="#E7E6E8",
+        brand_logo="#AFA3DD",
     )
 
     ui.add_head_html("""
@@ -39,17 +40,17 @@ def theme() -> None:
                     @apply bg-blue-500 p-12 text-center shadow-lg rounded-lg text-white;
                 }
             }
+            @font-face{
+                font-family: "cabin";
+                src: url('/assets/cabin-v27-latin-regular.woff2') format('woff2');
+                font-weight: normal;
+                font-style: normal;
+            }
             ::-webkit-scrollbar {
                 display: none;
             }
-            .q-drawer-container {
-                background-color: red
-            }
-            .bg-red-300 {
-                background-color: #EEADB1 !important;
-            }
-            .bg-green-300 {
-                background-color: #9EDBCA !important;
+            .bg-warning {
+                color: black !important;
             }
             .bg-aignostics-light {
                 background-color: #ECEDE9 !important;
@@ -57,7 +58,7 @@ def theme() -> None:
             .bg-aignostics-dark {
                 background-color: #000000 !important;
             }
-            .q-stepper, .q-drawer, .q-footer {
+            .q-stepper, .q-drawer {
                 background-color: #F0F0F0 !important;
             }
             .q-drawer.q-dark {
@@ -65,12 +66,25 @@ def theme() -> None:
             }
             html *
             {
-                font-family: "Nexa Text", Arial, sans-serif;
+                font-family: "Cabin";
             }
             header {
                 color: white
             }
+            footer {
+                padding-top:0px; padding-left: 0px; height: 30px; background-color: white
+            }
+            .nicegui-markdown {
+                ol {
+                    padding-left: 20px;
+                }
+            }
         </style>
     """)
+
+    ui.add_body_html(
+        '<script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/'
+        'dotlottie-player.mjs" type="module"></script>'
+    )
 
     ui.dark_mode(app.storage.general.get("dark_mode", False))

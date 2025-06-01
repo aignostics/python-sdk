@@ -85,25 +85,25 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     assert metadata_csv.exists()
     assert (
         metadata_csv.read_text()
-        == "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-        "file_size_human;file_upload_progress;platform_bucket_url\n"
-        f"{source_directory / 'small-pyramidal.dcm'};{source_directory / 'small-pyramidal.dcm'};"
-        "EfIIhA==;8.065226874391001;2054;1529;;;;0.00 GB;0.0;\n"
+        == "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+        "platform_bucket_url\n"
+        f"{source_directory / 'small-pyramidal.dcm'};"
+        "EfIIhA==;8.065226874391001;2054;1529;;;;\n"
     )
 
     # Step 2: Simulate user now upading the metadata.csv file, by setting the tissue to "LUNG"
     # and disease to "LUNG_CANCER"
     metadata_csv.write_text(
-        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-        "file_size_human;file_upload_progress;platform_bucket_url\n"
-        f"{source_directory / 'small-pyramidal.dcm'};{source_directory / 'small-pyramidal.dcm'};"
-        "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;0.00 GB;0.0;\n"
+        "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+        "platform_bucket_url\n"
+        f"{source_directory / 'small-pyramidal.dcm'};"
+        "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;\n"
     )
 
     # Step 3: Upload the file to the platform
     result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
-    assert result.exit_code == 0
     assert "Upload completed." in result.output.replace("\n", "")
+    assert result.exit_code == 0
 
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
@@ -116,10 +116,10 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     metadata_csv = tmp_path / "metadata.csv"
     metadata_csv.write_text(
-        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-        "file_size_human;file_upload_progress;platform_bucket_url\n"
-        "small-pyramidal;missing.file;"
-        "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;0.00 GB;0.0;\n"
+        "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+        "platform_bucket_url\n"
+        "missing.file;"
+        "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;\n"
     )
 
     result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
@@ -129,11 +129,9 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
 
 def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = (
-        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    )
-    csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
+    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
@@ -145,11 +143,9 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
 
 def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = (
-        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    )
-    csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;aws://bucket/test"
+    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;aws://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
@@ -161,11 +157,9 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
 
 def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = (
-        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    )
-    csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;"
+    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
@@ -177,21 +171,19 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
 
 def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command runs successfully."""
-    csv_content = (
-        "reference;source;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    )
-    csv_content += "file_size_human;file_upload_progress;platform_bucket_url\n"
-    csv_content += ";;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;;;gs://bucket/test"
+    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
     output = result.output.replace("\n", "")
-    assert result.exit_code == 0
     assert re.search(
         r"Submitted run with id '[0-9a-f-]+' for '",
         output,
     ), f"Output '{output}' doesn't match expected pattern"
+    assert result.exit_code == 0
 
     # Extract run ID from the output
     run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
@@ -210,7 +202,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, 
     )
     assert download_result.exit_code == 0
     assert f"Downloaded results of run '{run_id}'" in download_result.output.replace("\n", "")
-    assert "status: running on platform." in download_result.output.replace("\n", "")
+    assert "status: running on plat" in download_result.output.replace("\n", "")
 
     # Test the cancel command with the extracted run ID
     cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])

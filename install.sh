@@ -35,6 +35,7 @@ echo "Environment: $ENV"
 # Defaul environment is "local"
 LINUX_APT_TOOLS=(
     "curl;curl;https://curl.se/;"
+    "7z;p7zip-rar;https://www.7-zip.org/;"
 )
 
 BREW_TOOLS=(
@@ -56,6 +57,7 @@ BREW_TOOLS=(
 
 MAC_BREW_TOOLS=(
     "pinentry-mac;pinentry-mac;https://github.com/GPGTools/pinentry;local"
+    "7zip;p7zip;https://www.7-zip.org/;local"
 )
 
 LINUX_BREW_TOOLS=(

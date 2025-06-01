@@ -6,18 +6,9 @@ from typing import Annotated
 
 import requests
 import typer
-from rich.progress import (
-    BarColumn,
-    FileSizeColumn,
-    Progress,
-    TaskProgressColumn,
-    TextColumn,
-    TimeRemainingColumn,
-    TotalFileSizeColumn,
-    TransferSpeedColumn,
-)
 
 from aignostics.platform import generate_signed_url as platform_generate_signed_url
+from aignostics.system import Service as SystemService
 from aignostics.utils import console, get_logger
 
 logger = get_logger(__name__)
@@ -124,7 +115,18 @@ def idc_download(
             " IDs matched against collection_id, PatientId, StudyInstanceUID, SeriesInstanceUID or SOPInstanceUID."
         ),
     ],
-    target: Annotated[str, typer.Argument(help="target directory for download")] = str(Path.cwd()),
+    target: Annotated[
+        Path,
+        typer.Argument(
+            help="target directory for download",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            writable=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ] = SystemService.get_user_data_directory("datasets/idc"),  # noqa: B008
     target_layout: Annotated[
         str, typer.Option(help="layout of the target directory. See default for available elements for use")
     ] = TARGET_LAYOUT_DEFAULT,
@@ -200,9 +202,31 @@ def aignostics_download(
             help="URL to download, e.g. gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
         ),
     ],
-    destination_directory: Annotated[str, typer.Argument(help="Destination directory to download to")],
+    destination_directory: Annotated[
+        Path,
+        typer.Argument(
+            help="Destination directory to download to",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            writable=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ] = SystemService.get_user_data_directory("datasets/aignostics"),  # noqa: B008
 ) -> None:
     """Download from bucket to folder via a signed URL."""
+    from rich.progress import (  # noqa: PLC0415
+        BarColumn,
+        FileSizeColumn,
+        Progress,
+        TaskProgressColumn,
+        TextColumn,
+        TimeRemainingColumn,
+        TotalFileSizeColumn,
+        TransferSpeedColumn,
+    )
+
     # Get filename from URL
     filename = source_url.split("/")[-1]
 

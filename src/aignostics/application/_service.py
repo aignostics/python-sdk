@@ -1,12 +1,12 @@
 """Service of the application module."""
 
 import base64
-import mimetypes
 import re
 import time
 from collections.abc import Callable, Generator
 from enum import StrEnum
 from http import HTTPStatus
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
@@ -29,18 +29,23 @@ from aignostics.platform import (
     ItemResult,
     ItemStatus,
     NotFoundException,
-    OutputArtifact,
+    OutputArtifactData,
 )
 from aignostics.utils import BaseService, Health, get_logger
 from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
+from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
+
+has_paquo_extra = find_spec("paquo")
+if has_paquo_extra:
+    from aignostics.qupath import AddProgress as QuPathAddProgress
+    from aignostics.qupath import AnnotateProgress as QuPathAnnotateProgress
+    from aignostics.qupath import Service as QuPathService
+
 
 logger = get_logger(__name__)
 
-mimetypes.init()
-mimetypes.add_type("application/vnd.apache.parquet", ".parquet")
-mimetypes.add_type("application/geo+json", ".json")
 
 APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5
 APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
@@ -51,19 +56,24 @@ APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 class DownloadProgressState(StrEnum):
     """Enum for download progress states."""
 
+    INITIALIZING = "Initializing ..."
+    QUPATH_ADD_INPUT = "Adding input slides to QuPath project ..."
     CHECKING = "Checking run status ..."
     WAITING = "Waiting for item completing ..."
     DOWNLOADING = "Downloading artifact ..."
+    QUPATH_ADD_RESULTS = "Adding result images to QuPath project ..."
+    QUPATH_ANNOTATE_INPUT_WITH_RESULTS = "Annotating input slides in QuPath project with results ..."
+    COMPLETED = "Completed."
 
 
 class DownloadProgress(BaseModel):
-    status: DownloadProgressState = DownloadProgressState.CHECKING
+    status: DownloadProgressState = DownloadProgressState.INITIALIZING
     run: ApplicationRunData | None = None
     item: ItemResult | None = None
     item_count: int | None = None
     item_index: int | None = None
     item_reference: str | None = None
-    artifact: OutputArtifact | None = None
+    artifact: OutputArtifactData | None = None
     artifact_count: int | None = None
     artifact_index: int | None = None
     artifact_path: Path | None = None
@@ -71,6 +81,10 @@ class DownloadProgress(BaseModel):
     artifact_size: int | None = None
     artifact_downloaded_chunk_size: int = 0
     artifact_downloaded_size: int = 0
+    if has_paquo_extra:
+        qupath_add_input_progress: QuPathAddProgress | None = None
+        qupath_add_results_progress: QuPathAddProgress | None = None
+        qupath_annotate_input_with_results_progress: QuPathAnnotateProgress | None = None
 
     @computed_field  # type: ignore
     @property
@@ -88,15 +102,26 @@ class DownloadProgress(BaseModel):
 
     @computed_field  # type: ignore
     @property
-    def item_progress_normalized(self) -> float:
+    def item_progress_normalized(self) -> float:  # noqa: PLR0911
         """Compute normalized item progress in range 0..1.
 
         Returns:
             float: The normalized item progress in range 0..1.
         """
-        if (not self.total_artifact_count) or self.total_artifact_index is None:
-            return 0.0
-        return min(1, float(self.total_artifact_index + 1) / float(self.total_artifact_count))
+        if self.status == DownloadProgressState.DOWNLOADING:
+            if (not self.total_artifact_count) or self.total_artifact_index is None:
+                return 0.0
+            return min(1, float(self.total_artifact_index + 1) / float(self.total_artifact_count))
+        if has_paquo_extra:
+            if self.status == DownloadProgressState.QUPATH_ADD_INPUT and self.qupath_add_input_progress:
+                return self.qupath_add_input_progress.progress_normalized
+            if self.status == DownloadProgressState.QUPATH_ADD_RESULTS and self.qupath_add_results_progress:
+                return self.qupath_add_results_progress.progress_normalized
+            if self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS:
+                if (not self.item_count) or (not self.item_index):
+                    return 0.0
+                return min(1, float(self.item_index + 1) / float(self.item_count))
+        return 0.0
 
     @computed_field  # type: ignore
     @property
@@ -106,9 +131,17 @@ class DownloadProgress(BaseModel):
         Returns:
             float: The normalized artifact progress in range 0..1.
         """
-        if not self.artifact_size:
-            return 0.0
-        return min(1, float(self.artifact_downloaded_size) / float(self.artifact_size))
+        if self.status == DownloadProgressState.DOWNLOADING:
+            if not self.artifact_size:
+                return 0.0
+            return min(1, float(self.artifact_downloaded_size) / float(self.artifact_size))
+        if (
+            has_paquo_extra
+            and self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
+            and self.qupath_annotate_input_with_results_progress
+        ):
+            return self.qupath_annotate_input_with_results_progress.progress_normalized
+        return 0.0
 
 
 class Service(BaseService):
@@ -221,7 +254,7 @@ class Service(BaseService):
             "Expected format: application_id:vX.Y.Z"
             raise ValueError(message)
 
-        application_id = application_version_id.split(":")[0]
+        application_id = application_version_id.split(":", maxsplit=1)[0]
 
         application = self.application(application_id)
         for version in self.application_versions(application):
@@ -311,12 +344,13 @@ class Service(BaseService):
     def generate_metadata_from_source_directory(
         application_version_id: str,
         source_directory: Path,
+        with_gui_metadata: bool = False,
         mappings: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Generate metadata from the source directory.
 
         Steps:
-        1. Recursively files ending with .tiff, .tif and .dcm in the source directory
+        1. Recursively files ending with .tiff, .tif, .svs and .dcm in the source directory
         2. Creates a dict with the following columns
             - reference (str): The reference of the file, by default equivalent to the absolute file name
             - source (str): The absolute filename
@@ -331,6 +365,7 @@ class Service(BaseService):
             application_version_id (str): The ID of the application version.
                 If application id is given, the latest version of that application is used.
             source_directory (Path): The source directory to generate metadata from.
+            with_gui_metadata (bool): If True, include additional metadata for GUI.
             mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
                 The regular expression is matched against the reference attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
@@ -350,7 +385,7 @@ class Service(BaseService):
         application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)  # noqa: F841
 
         metadata = []
-        file_extensions = [".tiff", ".tif", ".dcm"]
+        file_extensions = [".tiff", ".tif", ".svs", ".dcm"]
 
         try:
             for extension in file_extensions:
@@ -361,31 +396,42 @@ class Service(BaseService):
                         while chunk := f.read(1024):
                             hash_sum.update(chunk)  # type: ignore[no-untyped-call]
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
-                    image_metadata = WSIService().get_metadata(file_path)
-                    width = image_metadata["dimensions"]["width"]
-                    height = image_metadata["dimensions"]["height"]
-                    mpp = image_metadata["resolution"]["mpp_x"]
-                    file_size_human = image_metadata["file"]["size_human"]
-                    reference = file_path.absolute()
-                    entry = {
-                        "reference": str(reference),
-                        "source": str(file_path),
-                        "checksum_base64_crc32c": checksum,
-                        "resolution_mpp": mpp,
-                        "width_px": width,
-                        "height_px": height,
-                        "staining_method": None,
-                        "tissue": None,
-                        "disease": None,
-                        "file_size_human": file_size_human,
-                        "file_upload_progress": 0.0,
-                        "platform_bucket_url": None,
-                    }
+                    try:
+                        image_metadata = WSIService().get_metadata(file_path)
+                        width = image_metadata["dimensions"]["width"]
+                        height = image_metadata["dimensions"]["height"]
+                        mpp = image_metadata["resolution"]["mpp_x"]
+                        file_size_human = image_metadata["file"]["size_human"]
+                        reference = file_path.absolute()
+                        entry = {
+                            "reference": str(reference),
+                            "reference_short": str(reference.name),
+                            "source": str(file_path),
+                            "checksum_base64_crc32c": checksum,
+                            "resolution_mpp": mpp,
+                            "width_px": width,
+                            "height_px": height,
+                            "staining_method": None,
+                            "tissue": None,
+                            "disease": None,
+                            "file_size_human": file_size_human,
+                            "file_upload_progress": 0.0,
+                            "platform_bucket_url": None,
+                        }
+                        if not with_gui_metadata:
+                            entry.pop("reference_short", None)
+                            entry.pop("source", None)
+                            entry.pop("file_size_human", None)
+                            entry.pop("file_upload_progress", None)
 
-                    if mappings:
-                        Service._apply_mappings_to_entry(entry, mappings)
+                        if mappings:
+                            Service._apply_mappings_to_entry(entry, mappings)
 
-                    metadata.append(entry)
+                        metadata.append(entry)
+                    except Exception:
+                        message = f"Failed to process file '{file_path}'"
+                        logger.exception(message)
+                        continue
 
             logger.debug("Generated metadata for %d files", len(metadata))
             return metadata
@@ -421,9 +467,9 @@ class Service(BaseService):
         application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)
         for row in metadata:
             reference = row["reference"]
-            source_file_path = Path(row["source"])
+            source_file_path = Path(row["reference"])
             if not source_file_path.is_file():
-                logger.warning("Source file '%s' does not exist.", row["source"])
+                logger.warning("Source file '%s' does not exist.", row["referebce"])
                 return False
             object_key = (
                 f"{psutil.Process().username()}/{upload_prefix}/"
@@ -484,7 +530,6 @@ class Service(BaseService):
 
     @staticmethod
     def application_runs_static(limit: int | None = None, completed_only: bool = False) -> list[dict[str, Any]]:
-        logger.debug("here")
         return [
             {
                 "application_run_id": run.application_run_id,
@@ -583,9 +628,9 @@ class Service(BaseService):
                                 "width_px": int(row["width_px"]),
                                 "media_type": (
                                     "image/tiff"
-                                    if row["source"].lower().endswith((".tif", ".tiff"))
+                                    if row["reference"].lower().endswith((".tif", ".tiff"))
                                     else "application/dicom"
-                                    if row["source"].lower().endswith(".dcm")
+                                    if row["reference"].lower().endswith(".dcm")
                                     else "application/octet-stream"
                                 ),
                                 "resolution_mpp": float(row["resolution_mpp"]),
@@ -641,24 +686,33 @@ class Service(BaseService):
         self.application_run(run_id).cancel()
 
     @staticmethod
-    def _update_progress(
-        progress: DownloadProgress,
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-    ) -> None:
-        if download_progress_callable:
-            download_progress_callable()
-        if download_progress_queue:
-            download_progress_queue.put_nowait(progress)
-
-    def application_run_download(  # noqa: PLR0913, PLR0917
-        self,
-        progress: DownloadProgress,
+    def application_run_download_static(  # noqa: PLR0913, PLR0917
         run_id: str,
         destination_directory: Path,
         create_subdirectory_for_run: bool = True,
         create_subdirectory_per_item: bool = True,
         wait_for_completion: bool = True,
+        qupath_project: bool = False,
+        download_progress_queue: Any | None = None,  # noqa: ANN401
+    ) -> Path:
+        return Service().application_run_download(
+            run_id,
+            destination_directory,
+            create_subdirectory_for_run,
+            create_subdirectory_per_item,
+            wait_for_completion,
+            qupath_project,
+            download_progress_queue,
+        )
+
+    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
+        self,
+        run_id: str,
+        destination_directory: Path,
+        create_subdirectory_for_run: bool = True,
+        create_subdirectory_per_item: bool = True,
+        wait_for_completion: bool = True,
+        qupath_project: bool = False,
         download_progress_queue: Any | None = None,  # noqa: ANN401
         download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
     ) -> Path:
@@ -673,6 +727,9 @@ class Service(BaseService):
                 if not set, all items will be downloaded to the same directory but prefixed
                 with the item reference and underscore.
             wait_for_completion (bool): Whether to wait for run completion. Defaults to True.
+            qupath_project (bool): If True, create QuPath project referencing input slides and results.
+                This requires QuPath to be installed. The QuPath project will be created in a subfolder
+                of the destination directory.
             download_progress_queue (Queue | None): Queue for GUI progress updates.
             download_progress_callable (Callable | None): Callback for CLI progress updates.
 
@@ -684,6 +741,14 @@ class Service(BaseService):
             RuntimeError: If run details cannot be retrieved or download fails.
             Exception: If run cannot be retrieved, destination directory cannot be created, or download fails.
         """
+        if qupath_project and not has_paquo_extra:
+            message = "QuPath project creation requested, but 'paquo' extra is not installed."
+            message += 'Start launchpad with `uvx --with "aignostics[qupath]" ....'
+            logger.warning(message)
+            raise ValueError(message)
+        progress = DownloadProgress()
+        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+
         application_run = self.application_run(run_id)
         final_destination_directory = destination_directory
         try:
@@ -706,7 +771,29 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message) from e
 
+        if qupath_project:
+
+            def update_qupath_add_input_progress(qupath_add_input_progress: QuPathAddProgress) -> None:
+                progress.status = DownloadProgressState.QUPATH_ADD_INPUT
+                progress.qupath_add_input_progress = qupath_add_input_progress
+                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+
+            logger.debug("Adding input slides to QuPath project ...")
+            image_paths = []
+            for item in application_run.results():
+                image_path = Path(item.reference)
+                if image_path.is_file():
+                    image_paths.append(image_path.resolve())
+            added = QuPathService.add(
+                final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
+            )
+            message = f"Added '{added}' input slides to QuPath project."
+            logger.info(message)
+
         logger.debug("Downloading results for run '%s' to '%s'", run_id, final_destination_directory)
+
+        progress.status = DownloadProgressState.CHECKING
+        Service._update_progress(progress, download_progress_callable, download_progress_queue)
 
         downloaded_items: set[str] = set()  # Track downloaded items to avoid re-downloading
         while True:
@@ -750,7 +837,80 @@ class Service(BaseService):
             Service._update_progress(progress, download_progress_callable, download_progress_queue)
             time.sleep(APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS)
 
+        if qupath_project:
+            logger.debug("Adding result images to QuPath project ...")
+
+            def update_qupath_add_results_progress(qupath_add_results_progress: QuPathAddProgress) -> None:
+                progress.status = DownloadProgressState.QUPATH_ADD_RESULTS
+                progress.qupath_add_results_progress = qupath_add_results_progress
+                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+
+            added = QuPathService.add(
+                final_destination_directory / "qupath",
+                [final_destination_directory],
+                update_qupath_add_results_progress,
+            )
+            message = f"Added {added} result images to QuPath project."
+            logger.info(message)
+            logger.debug("Annotating input slides with polygons from results ...")
+
+            def update_qupath_annotate_input_with_results_progress(
+                qupath_annotate_input_with_results_progress: QuPathAnnotateProgress,
+            ) -> None:
+                progress.status = DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
+                progress.qupath_annotate_input_with_results_progress = qupath_annotate_input_with_results_progress
+                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+
+            total_annotations = 0
+            results = list(application_run.results())
+            progress.item_count = len(results)
+            for item_index, item in enumerate(application_run.results()):
+                progress.item_index = item_index
+                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+
+                image_path = Path(item.reference)
+                if not image_path.is_file():
+                    continue
+                for artifact in item.output_artifacts:
+                    if (
+                        get_mime_type_for_artifact(artifact) == "application/geo+json"
+                        and artifact.name == "cell_classification:geojson_polygons"
+                    ):
+                        if create_subdirectory_per_item:
+                            reference_path = Path(item.reference)
+                            stem_name = reference_path.stem
+                            artifact_path = final_destination_directory / stem_name / f"{artifact.name}.json"
+                        else:
+                            artifact_path = final_destination_directory / f"{artifact.name}.json"
+                        message = f"Annotating input slide '{image_path}' with artifact '{artifact_path}' ..."
+                        logger.debug(message)
+                        added = QuPathService.annotate(
+                            final_destination_directory / "qupath",
+                            image_path,
+                            artifact_path,
+                            update_qupath_annotate_input_with_results_progress,
+                        )
+                        message = f"Added {added} annotations to input slide '{image_path}' from '{artifact_path}'."
+                        logger.info(message)
+                        total_annotations += added
+            message = f"Added {added} annotations to input slides."
+            logger.info(message)
+
+        progress.status = DownloadProgressState.COMPLETED
+        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+
         return final_destination_directory
+
+    @staticmethod
+    def _update_progress(
+        progress: DownloadProgress,
+        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
+        download_progress_queue: Any | None = None,  # noqa: ANN401
+    ) -> None:
+        if download_progress_callable:
+            download_progress_callable(progress)
+        if download_progress_queue:
+            download_progress_queue.put_nowait(progress)
 
     def _download_available_items(  # noqa: PLR0913, PLR0917
         self,
@@ -847,13 +1007,7 @@ class Service(BaseService):
             logger.error(message)
             raise ValueError(message)
 
-        file_extension = mimetypes.guess_extension(
-            metadata.get("media_type", metadata.get("mime_type", "application/octet-stream")),
-        )
-        if file_extension == ".geojson":
-            file_extension = ".json"
-        logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
-        artifact_path = destination_directory / f"{prefix}{artifact.name}{file_extension}"
+        artifact_path = destination_directory / f"{prefix}{artifact.name}{get_file_extension_for_artifact(artifact)}"
 
         if artifact_path.exists():
             checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
@@ -875,32 +1029,10 @@ class Service(BaseService):
         )
 
     @staticmethod
-    def application_run_download_static(  # noqa: PLR0913, PLR0917
-        progress: DownloadProgress,
-        run_id: str,
-        destination_directory: Path,
-        create_subdirectory_for_run: bool = True,
-        create_subdirectory_per_item: bool = True,
-        wait_for_completion: bool = True,
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    ) -> Path:
-        return Service().application_run_download(
-            progress,
-            run_id,
-            destination_directory,
-            create_subdirectory_for_run,
-            create_subdirectory_per_item,
-            wait_for_completion,
-            download_progress_queue,
-            download_progress_callable,
-        )
-
-    @staticmethod
     def _download_file_with_progress(  # noqa: PLR0913, PLR0917
         progress: DownloadProgress,
         signed_url: str,
-        destination_directory: Path,
+        artifact_path: Path,
         metadata_checksum: str,
         download_progress_queue: Any | None = None,  # noqa: ANN401
         download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
@@ -910,9 +1042,9 @@ class Service(BaseService):
         Args:
             progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
             signed_url (str): The signed URL to download from.
-            destination_directory (Path): Path to save the file.
+            artifact_path (Path): Path to save the file.
             metadata_checksum (str): Expected CRC32C checksum in base64.
-            download_progress_queue (Queue | None): Queue for GUI progress updates.
+            download_progress_queue (Any | None): Queue for GUI progress updates.
             download_progress_callable (Callable | None): Callback for CLI progress updates.
 
         Raises:
@@ -922,12 +1054,12 @@ class Service(BaseService):
         logger.debug(
             "Downloading artifact '%s' to '%s' with expected checksum '%s' for item reference '%s'",
             progress.artifact.name if progress.artifact else "unknown",
-            destination_directory,
+            artifact_path,
             metadata_checksum,
-            progress.item_reference if progress.item else "unknown",
+            progress.item_reference or "unknown",
         )
         progress.artifact_download_url = signed_url
-        progress.artifact_path = destination_directory
+        progress.artifact_path = artifact_path
         progress.artifact_downloaded_size = 0
         progress.artifact_downloaded_chunk_size = 0
         progress.artifact_size = None
@@ -939,7 +1071,7 @@ class Service(BaseService):
             stream.raise_for_status()
             progress.artifact_size = int(stream.headers.get("content-length", 0))
             Service._update_progress(progress, download_progress_callable, download_progress_queue)
-            with open(destination_directory, mode="wb") as file:
+            with open(artifact_path, mode="wb") as file:
                 for chunk in stream.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
                     if chunk:
                         file.write(chunk)
@@ -950,7 +1082,7 @@ class Service(BaseService):
 
         downloaded_checksum = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
         if downloaded_checksum != metadata_checksum:
-            destination_directory.unlink()  # Remove corrupted file
-            msg = f"Checksum mismatch for {destination_directory}: {downloaded_checksum} != {metadata_checksum}"
+            artifact_path.unlink()  # Remove corrupted file
+            msg = f"Checksum mismatch for {artifact_path}: {downloaded_checksum} != {metadata_checksum}"
             logger.error(msg)
             raise ValueError(msg)

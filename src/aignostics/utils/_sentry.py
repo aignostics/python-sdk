@@ -121,6 +121,14 @@ class SentrySettings(OpaqueSettings):
         extra="ignore",
     )
 
+    enabled: Annotated[
+        bool,
+        Field(
+            description="Enable remote error and profile collection via Sentry",
+            default=False,
+        ),
+    ]
+
     dsn: Annotated[
         SecretStr | None,
         BeforeValidator(strip_to_none_before_validator),
@@ -184,7 +192,7 @@ def sentry_initialize() -> bool:
     """
     settings = load_settings(SentrySettings)
 
-    if settings.dsn is None:
+    if not settings.enabled or settings.dsn is None:
         return False
 
     sentry_sdk.init(

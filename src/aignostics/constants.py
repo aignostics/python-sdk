@@ -1,5 +1,6 @@
 """Static configuration of Aignostics Python SDK."""
 
+import os
 from pathlib import Path
 
 # Configuration required by oe-python-template
@@ -9,3 +10,5 @@ NOTEBOOK_FOLDER = Path(__file__).parent.parent.parent / "examples"
 NOTEBOOK_APP = Path(__file__).parent.parent.parent / "examples" / "notebook.py"
 
 # Project specific configuration
+os.environ["MATPLOTLIB"] = "false"
+os.environ["NICEGUI_STORAGE_PATH"] = str(Path.home().resolve() / ".aignostics" / ".nicegui")

@@ -6,16 +6,6 @@ from typing import Annotated
 
 import humanize
 import typer
-from rich.progress import (
-    BarColumn,
-    FileSizeColumn,
-    Progress,
-    TaskProgressColumn,
-    TextColumn,
-    TimeRemainingColumn,
-    TotalFileSizeColumn,
-    TransferSpeedColumn,
-)
 
 from aignostics.utils import console, get_logger
 
@@ -56,6 +46,16 @@ def upload(
 ) -> None:
     """Upload file or directory to bucket in Aignostics platform."""
     import psutil  # noqa: PLC0415
+    from rich.progress import (  # noqa: PLC0415
+        BarColumn,
+        FileSizeColumn,
+        Progress,
+        TaskProgressColumn,
+        TextColumn,
+        TimeRemainingColumn,
+        TotalFileSizeColumn,
+        TransferSpeedColumn,
+    )
 
     console.print(f"Uploading {source} to bucket...")
 

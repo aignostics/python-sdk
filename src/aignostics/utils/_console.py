@@ -7,6 +7,7 @@ console = Console(
     theme=Theme({
         "logging.level.info": "purple4",
         "debug": "light_cyan3",
+        "success": "green",
         "info": "purple4",
         "warning": "yellow1",
         "error": "red1",
