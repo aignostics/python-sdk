@@ -1,5 +1,19 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+(https://github.com/aignostics/python-sdk/compare/v0.2.22..0.2.23) - 2025-06-01
+
+
+- *(wsi)* Simplify further - ([c679a2f](https://github.com/aignostics/python-sdk/commit/c679a2fe1f66e20b88d114a7f1f80e56040efef6))
+- *(wsi)* Simplify, and fallback image - ([e494f84](https://github.com/aignostics/python-sdk/commit/e494f84fd9a7a2a5bcc699085570e3f946b33638))
+
+
+- *(wsi)* Adapt tests given fallback - ([8d34608](https://github.com/aignostics/python-sdk/commit/8d346088e0a7e2ab03282de93fd4cb83b4270ef7))
+- Make gui test more reliable - ([17880af](https://github.com/aignostics/python-sdk/commit/17880afa3f4a84d1a6173293f2ea3c59f2cd8a1b))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
 (https://github.com/aignostics/python-sdk/compare/v0.2.12..v0.2.13) - 2025-05-27
 
 
