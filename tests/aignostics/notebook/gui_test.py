@@ -26,6 +26,7 @@ async def _assert_notified(user: User, expected_notification: str, wait_seconds=
     pytest.fail(f"No notification containing '{expected_notification}' was found within {wait_seconds} seconds")
 
 
+@pytest.mark.sequential
 @pytest.fixture
 def silent_logging(caplog) -> None:
     """Suppress logging output during test execution.
@@ -46,4 +47,14 @@ async def test_gui_marimo_extension(user: User, runner: CliRunner, silent_loggin
 
     # Step 1: Check we are on the Notebook page
     await user.open("/notebook")
+    await user.should_see("Manage your Marimo Extension")
+
+    await user.should_see(marker="BUTTON_NOTEBOOK_LAUNCH")
+    user.find(marker="BUTTON_NOTEBOOK_LAUNCH").click()
+    await _assert_notified(user, "Launching Python Notebook...", wait_seconds=5)
+
+    await user.should_see(marker="BUTTON_NOTEBOOK_BACK")
+    await user.should_not_see("Manage your Marimo Extension")
+    user.find(marker="BUTTON_NOTEBOOK_BACK").click()
+
     await user.should_see("Marimo Extension")

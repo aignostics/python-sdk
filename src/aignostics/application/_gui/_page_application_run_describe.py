@@ -4,7 +4,7 @@ from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote as urlencode
+from urllib.parse import quote
 
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
@@ -87,7 +87,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             return False
 
     @ui.refreshable
-    def download_run_dialog_content(qupath_project: bool = False) -> None:  # noqa: C901, PLR0915
+    def download_run_dialog_content(qupath_project: bool = False, marimo: bool = False) -> None:  # noqa: C901, PLR0915
         if qupath_project:
             ui.markdown(
                 "##### Visualize results in QuPath with one click \n"
@@ -96,6 +96,13 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                 "3. A QuPath project will be created in a subfolder of the application run folder. \n"
                 "4. The QuPath project will reference the input slides and resulting image heatmaps. \n"
                 "5. Detected cells will be added as annotations to input slides. \n"
+            )
+        elif marimo:
+            ui.markdown(
+                "##### Open results in Marimo with one click \n"
+                "1. Use data directory of Launchpad or select a custom folder. \n"
+                "2. A subfolder with the application run will be created and all results downloaded there. \n"
+                "3. A Marimo notebook will be started pointing to the subfolder. \n"
             )
         else:
             ui.markdown(
@@ -223,6 +230,10 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     ui.notify("Download and QuPath project creation completed.", type="positive")
                     download_item_status.set_text("Opening QuPath ...")
                     await open_qupath(project=results_folder / "qupath", button=download_button)
+                elif marimo:
+                    ui.notify("Download and Notebook preparation completed.", type="positive")
+                    download_item_status.set_text("Opening Notebook ...")
+                    open_marimo(results_folder=results_folder, button=download_button)
                 else:
                     ui.notify("Download completed.", type="positive")
                 show_in_file_manager(str(results_folder))
@@ -238,10 +249,20 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
 
         ui.separator()
         with ui.row(align_items="end").classes("w-full justify-end"):
+            if qupath_project:
+                label = "Visualize with QuPath"
+                icon = "zoom_in"
+            elif marimo:
+                label = "Analyze with Notebook"
+                icon = "analytics"
+            else:
+                label = "Download all results"
+                icon = "cloud_download"
+
             download_button = (
                 ui.button(
-                    "Download all results" if not qupath_project else "Visualize with QuPath",
-                    icon="cloud_download" if not qupath_project else "zoom_in",
+                    label,
+                    icon=icon,
                     on_click=start_download,
                 )
                 .props("color=primary")
@@ -254,9 +275,9 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
     with ui.dialog() as download_run_dialog, ui.card().style(WIDTH_1200px):
         download_run_dialog_content()
 
-    def download_run_dialog_open(qupath_project: bool = False) -> None:
+    def download_run_dialog_open(qupath_project: bool = False, marimo: bool = False) -> None:
         """Open the CSV dialog."""
-        download_run_dialog_content.refresh(qupath_project=qupath_project)
+        download_run_dialog_content.refresh(qupath_project=qupath_project, marimo=marimo)
         download_run_dialog.open()
 
     @ui.refreshable
@@ -315,7 +336,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         if url:
             try:
                 with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
-                    ui.image("/tiff?url=" + urlencode(url))
+                    ui.image("/tiff?url=" + quote(url))
             except Exception as e:  # noqa: BLE001
                 ui.notify(f"Failed to load CSV: {e!s}", type="negative")
 
@@ -361,11 +382,11 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             button.enable()
             button.props(remove="loading")
 
-    def open_marimo() -> None:
-        marimo_button.disable()
-        marimo_button.props(add="loading")
-        ui.navigate.to(f"/notebook/{run.application_run_id}")
-        marimo_button.enable()
+    def open_marimo(results_folder: Path, button: ui.button | None = None) -> None:
+        if button:
+            button.disable()
+            button.props(add="loading")
+        ui.navigate.to(f"/notebook/{run.application_run_id}?results_folder={quote(results_folder.as_posix())}")
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
@@ -399,11 +420,15 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                             ):
                                 ui.tooltip("Open results in QuPath Microscopy Viewer")
                         if find_spec("marimo"):
-                            with ui.button(
-                                "Marimo",
-                                icon="analytics",
-                                on_click=open_marimo,
-                            ).props("push") as marimo_button:
+                            with (
+                                ui.button(
+                                    "Marimo",
+                                    icon="analytics",
+                                    on_click=lambda _: download_run_dialog_open(qupath_project=False, marimo=True),
+                                )
+                                .mark("BUTTON_OPEN_NOTEBOOK")
+                                .props("push")
+                            ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
                 if run_data.status.value == ApplicationRunStatus.RUNNING:
                     ui.button(
@@ -434,7 +459,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     ):
                         image_file: Path | None = Path(item.reference).resolve()
                         if image_file and image_file.is_file():
-                            image_url = "/thumbnail?source=" + urlencode(image_file.as_posix())
+                            image_url = "/thumbnail?source=" + quote(image_file.as_posix())
                         else:
                             image_file = None
                             image_url = "/application_assets/image-not-found.png"

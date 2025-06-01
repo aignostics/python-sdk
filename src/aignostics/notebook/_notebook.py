@@ -8,22 +8,13 @@
 
 import marimo
 
-__generated_with = "0.13.10"
+__generated_with = "0.13.15"
 app = marimo.App(width="full")
 
 
 @app.cell
-def _(mo):
-    query_params = mo.query_params()
-    print(query_params)
-
-    print("Hallo Test Omid")
-    return
-
-
-@app.cell
 def _():
-    """E2E Demo using DICOM data from National Cancer Institute
+    """Aignostics Notebook
 
     Notes:
     - See https://colab.research.google.com/github/ImagingDataCommons/IDC-Tutorials/blob/master/notebooks/pathomics/microscopy_dicom_ann_intro.ipynb#scrollTo=fMRsnFlzinO5
@@ -39,14 +30,6 @@ def _():
     from aignostics import dataset
     from wsidicom import WsiDicom
 
-    load_dotenv()
-
-    os.environ
-
-    print(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "default"))
-
-    print(Path.cwd())
-
     mo.sidebar([
         mo.md("# aignostics"),
         mo.nav_menu(
@@ -61,23 +44,17 @@ def _():
             orientation="vertical",
         ),
     ])
-
-    mo.vstack([
-        mo.ui.file_browser( # type: ignore
-            GSPath("gs://aignx-storage-service-dev/sample_data_formatted"), # type: ignore
-            filetypes=[".dcm", ".tif", ".tiff", ".svs", ".json"],
-            multiple=True,
-            restrict_navigation=True,
-        )
-    ])  # type: ignore
     return Path, WsiDicom, dataset, mo, plt
-ex
+
 
 @app.cell
 def _(Path, mo):
+    query_params = mo.query_params()
+    application_run_id = query_params["application_run_id"]
+    print(f"Application run id '{application_run_id}'")
     mo.vstack([
         mo.ui.file_browser(
-            Path("tmp"),
+            Path(query_params["results_folder"]),
             filetypes=[".dcm", ".tif", ".tiff", ".svs"],
             multiple=True,
             restrict_navigation=True,

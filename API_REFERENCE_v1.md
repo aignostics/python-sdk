@@ -9,13 +9,14 @@ highlight_theme: darkula
 ---
 
 
-
-
-
-
-
-
-
+                             94668)                                                                                                                                                   
+components:
+  schemas:
+    ApplicationReadResponse:
+      properties:
+        application_id:
+          description: Application ID
+          examples:
           - h-e-tme
           title: Application Id
           type: string
@@ -386,21 +387,7 @@ highlight_theme: darkula
       description: 'Application run payload. It describes which application version
         is chosen, and which user data
 
-> 2025-06-01 16:54:19 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.2.20 (project root /Users/helmut/Code/python-sdk, pid 53273), parent 'Python' (pid 53258)     boot.py:87
-
-> components:
-
->   schemas:
-
->     ApplicationReadResponse:
-
->       properties:
-
->         application_id:
-
->           description: Application ID
-
->           examples:
+> 2025-06-01 22:11:44 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.2.23 (project root /Users/helmut/Code/python-sdk, pid 94682), parent 'Python' (pid   boot.py:87
 
         should be processed.'
       properties:

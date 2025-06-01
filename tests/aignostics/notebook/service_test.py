@@ -14,6 +14,7 @@ from aignostics.notebook._service import Service, _get_runner, _Runner
 from aignostics.utils import gui_register_pages
 
 
+@pytest.mark.sequential
 def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
     """Test the server can be started and stopped with real process.
 
@@ -99,7 +100,7 @@ def test_serve_notebook(user: User) -> None:
     gui_register_pages()
     client = TestClient(app)
 
-    response = client.get("/notebook/4711")
+    response = client.get("/notebook/4711?results_folder=/tmp")
     assert response.status_code == 200
     content = response.content.decode("utf-8")
     assert "iframe" in content
@@ -111,7 +112,7 @@ def test_serve_notebook(user: User) -> None:
     # Extract the URL from the iframe src attribute
     notebook_url = iframe_html.group(1)
     assert "localhost" in notebook_url, f"localhost not found in iframe src: {notebook_url}"
-    assert "run_id=4711" in notebook_url, f"run_id not found in iframe src: {notebook_url}"
+    assert "application_run_id=4711" in notebook_url, f"run_id not found in iframe src: {notebook_url}"
 
 
 def test_startup_timeout() -> None:

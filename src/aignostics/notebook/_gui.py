@@ -1,8 +1,10 @@
 """Notebook GUI."""
 
 from pathlib import Path
+from urllib.parse import quote
 
 from aignostics.gui import frame, theme
+from aignostics.system import Service as SystemService
 from aignostics.utils import BasePageBuilder, get_logger
 
 logger = get_logger(__name__)
@@ -24,6 +26,14 @@ class PageBuilder(BasePageBuilder):
                 # Nothing to do here, just to show the page
                 pass
 
+            def launch_marimo() -> None:
+                """Launch QuPath."""
+                launch_button.props(add="loading")
+                ui.notify("Launching Python Notebook...", color="blue")
+                ui.navigate.to(
+                    f"/notebook/all?results_folder={quote(SystemService.get_user_data_directory('results').as_posix())}"
+                )
+
             ui.markdown(
                 """
                     ### Manage your Marimo Extension
@@ -36,7 +46,12 @@ class PageBuilder(BasePageBuilder):
                             "Marimo is installed and ready to execute. "
                             "Go to a completed application result and click the Notebook button."
                         )
-
+                        with ui.row().classes("w-full justify-between items-center"):
+                            launch_button = ui.button(
+                                "Open",
+                                on_click=launch_marimo,
+                                icon="visibility",
+                            ).mark("BUTTON_NOTEBOOK_LAUNCH")
                     ui.markdown(
                         """
                             ###### What is Marimo?
@@ -73,23 +88,25 @@ class PageBuilder(BasePageBuilder):
                     ui.space()
 
         @ui.page("/notebook/{application_run_id}")
-        def page_application_run_marimo(application_run_id: str) -> None:
+        def page_application_run_marimo(application_run_id: str, results_folder: str) -> None:
             """Inspect Application Run in Marimo."""
             theme()
 
             with ui.row().classes("w-full justify-end"):
                 ui.button(
-                    "Back to Application Run",
+                    "Back to Application Run" if application_run_id != "all" else "Back to Marimo Extension",
                     icon="arrow_back",
                     on_click=lambda _, application_run_id=application_run_id: ui.navigate.to(
-                        f"/application/run/{application_run_id}"
+                        f"/application/run/{application_run_id}" if application_run_id != "all" else "/notebook"
                     ),
-                )
+                ).mark("BUTTON_NOTEBOOK_BACK")
 
             try:
                 server_url = Service().start()
                 ui.html(
-                    f'<iframe src="{server_url}?run_id={application_run_id}" width="100%" height="100%"></iframe>'
+                    f'<iframe src="{server_url}?application_run_id={application_run_id}'
+                    f'&results_folder={quote(results_folder)}" '
+                    'width="100%" height="100%"></iframe>'
                 ).classes("w-full h-[calc(100vh-5rem)]")
             except Exception:
                 message = "Failed to start Marimo server."
