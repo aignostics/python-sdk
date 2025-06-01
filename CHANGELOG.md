@@ -1,11 +1,5 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.23..0.2.24) - 2025-06-01
-
-
-- *(Marimo)* Open Marimo notebook pointing to run results - ([aca931b](https://github.com/aignostics/python-sdk/commit/aca931bd1dda310848796511f54bae78da52e1c8))
-
-
 (https://github.com/aignostics/python-sdk/compare/v0.2.22..v0.2.23) - 2025-06-01
 
 
