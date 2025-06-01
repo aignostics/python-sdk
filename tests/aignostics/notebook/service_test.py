@@ -14,7 +14,6 @@ from aignostics.notebook._service import Service, _get_runner, _Runner
 from aignostics.utils import gui_register_pages
 
 
-@pytest.mark.sequential
 def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
     """Test the server can be started and stopped with real process.
 
