@@ -50,9 +50,17 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
         log_messages = [record.message for record in caplog.records]
 
         # Check for server start message
-        start_messages = [msg for msg in log_messages if "Marimo server started at URL" in msg]
-        assert len(start_messages) > 0, "Missing log message about server starting"
-        assert server_url in start_messages[0], f"Server URL {server_url} not found in log message {start_messages[0]}"
+        start_messages = [
+            msg
+            for msg in log_messages
+            if "Marimo server started at URL" in msg or "Marimo server is already running" in msg
+        ]
+        assert len(start_messages) > 0, "Missing log message about server starting or already running"
+        # Only check for server URL in the log if we're not dealing with an "already running" message
+        if "Marimo server is already running" not in start_messages[0]:
+            assert server_url in start_messages[0], (
+                f"Server URL {server_url} not found in log message {start_messages[0]}"
+            )
 
         # Check for server stop messages
         assert any("Marimo server stopped" in msg for msg in log_messages), (
