@@ -2,11 +2,13 @@
 
 import contextlib
 import http.server
+import logging
 import os
 import threading
 from io import BytesIO
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from nicegui import app
 from nicegui.testing import User
@@ -17,8 +19,22 @@ from aignostics.utils import gui_register_pages
 CONTENT_LENGTH_FALLBACK = 32066  # Fallback image size in bytes
 
 
+@pytest.fixture
+def silent_logging(caplog) -> None:
+    """Suppress logging output during test execution.
+
+    Args:
+        caplog (pytest.LogCaptureFixture): The pytest fixture for capturing log messages.
+
+    Yields:
+        None: This fixture doesn't yield any value.
+    """
+    with caplog.at_level(logging.CRITICAL + 1):
+        yield
+
+
 def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
-    """Test that the thumbnail falls back on missing file."""
+    """Test that the thumbnail fails on missing file."""
     gui_register_pages()
     client = TestClient(app)
 
@@ -45,7 +61,7 @@ def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
-def test_serve_thumbnail_for_dicom_thumbnail(user: User) -> None:
+def test_serve_thumbnail_for_dicom_thumbnail(user: User, silent_logging) -> None:
     """Test that the thumbnail route works for non-pyramidal dicom thumbnail file."""
     gui_register_pages()
     client = TestClient(app)

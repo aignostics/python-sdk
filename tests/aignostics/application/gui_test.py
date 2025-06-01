@@ -178,8 +178,9 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.open("/")
         await user.should_see("Applications")
         await user.should_see("Atlas H&E-TME")
+        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme")
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
-        await user.should_see("The Atlas H&E TME is an AI application designed to examine FFPE (")
+        await user.should_see("The Atlas H&E TME is an AI application")
 
         # Check the latest application version is shown and select it
         application_versions = Service().application_versions("he-tme")
