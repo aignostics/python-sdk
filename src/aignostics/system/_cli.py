@@ -4,14 +4,13 @@ import json
 import sys
 from enum import StrEnum
 from importlib.util import find_spec
-from pathlib import Path
 from typing import Annotated
 
 import typer
 import yaml
 
 from ..constants import API_VERSIONS  # noqa: TID252
-from ..utils import __project_name__, console, get_logger  # noqa: TID252
+from ..utils import console, get_logger  # noqa: TID252
 from ._service import Service
 
 logger = get_logger(__name__)
@@ -160,7 +159,7 @@ cli.add_typer(config_app, name="config", help="Configure application settings.")
 @config_app.command()
 def get(key: Annotated[str, typer.Argument(help="Configuration key to get value for")]) -> None:
     """Set a configuration key to a value."""
-    console.print(Service().dotenv_get(key.upper()))
+    console.print(Service.dotenv_get(key.upper()))
 
 
 @config_app.command()
@@ -170,7 +169,11 @@ def set(  # noqa: A001
 ) -> None:
     """Set a configuration key to a value."""
     key = key.upper()
-    Service().dotenv_set(key, value)
+    try:
+        Service.dotenv_set(key, value)
+    except ValueError as e:
+        console.print(f"Invalid configuration: {e!s}", style="error")
+        sys.exit(2)
     console.print(f"Configuration '{key}' set to '{value}'.", style="success")
 
 
@@ -180,24 +183,30 @@ def unset(
 ) -> None:
     """Set a configuration key to a value."""
     key = key.upper()
-    Service().dotenv_unset(key)
+    Service.dotenv_unset(key)
     console.print(f"Configuration '{key}' unset.", style="success")
 
 
 @config_app.command()
 def remote_diagnostics_enable() -> None:
     """Enable remote diagnostics via Sentry and Logfire. Data stored in EU data centers."""
-    Service().dotenv_set(f"{__project_name__.upper()}_SENTRY_ENABLED", "1")
-    Service().dotenv_set(f"{__project_name__.upper()}_LOGFIRE_ENABLED", "1")
-    console.print("Remote diagnostics enabled.", style="success")
+    try:
+        Service.remote_diagnostics_enable()
+        console.print("Remote diagnostics enabled.", style="success")
+    except ValueError as e:
+        console.print(f"Invalid diagnostics configuration: {e!s}", style="error")
+        sys.exit(2)
 
 
 @config_app.command()
 def remote_diagnostics_disable() -> None:
     """Disable remote diagnostics."""
-    Service().dotenv_unset(f"{__project_name__.upper()}_SENTRY_ENABLED")
-    Service().dotenv_unset(f"{__project_name__.upper()}_LOGFIRE_ENABLED")
-    console.print("Remote diagnostics disabled.", style="success")
+    try:
+        Service.remote_diagnostics_disable()
+        console.print("Remote diagnostics disabled.", style="success")
+    except ValueError as e:
+        console.print(f"Invalid diagnostics configuration: {e!s}", style="error")
+        sys.exit(2)
 
 
 @config_app.command()
@@ -209,42 +218,22 @@ def http_proxy_enable(
     no_ssl_verify: Annotated[bool, typer.Option(help="Disable SSL verification")] = False,
 ) -> None:
     """Enable HTTP proxy."""
-    url = f"{scheme}://{host}:{port}"
-    Service().dotenv_set("HTTP_PROXY", url)
-    Service().dotenv_set("HTTPS_PROXY", url)
-    if ssl_cert_file is not None and no_ssl_verify:
-        message = "Cannot set both 'ssl_cert_file' and 'ssl_disable_verify'. Please choose one."
-        console.print(message, style="warning")
+    try:
+        Service().http_proxy_enable(
+            host=host, port=port, scheme=scheme, ssl_cert_file=ssl_cert_file, no_ssl_verify=no_ssl_verify
+        )
+        console.print("HTTP proxy enabled.", style="success")
+    except ValueError as e:
+        console.print(f"Invalid HTTP proxy configuration: {e!s}", style="error")
         sys.exit(2)
-    if no_ssl_verify:
-        Service().dotenv_set("SSL_NO_VERIFY", "1")
-        Service().dotenv_set("SSL_CERT_FILE", "")
-        Service().dotenv_set("REQUESTS_CA_BUNDLE", "")
-        Service().dotenv_set("CURL_CA_BUNDLE", "")
-    else:
-        Service().dotenv_unset("SSL_NO_VERIFY")
-        Service().dotenv_unset("SSL_CERT_FILE")
-        Service().dotenv_unset("REQUESTS_CA_BUNDLE")
-        Service().dotenv_unset("CURL_CA_BUNDLE")
-        if ssl_cert_file:
-            file = Path(ssl_cert_file).resolve()
-            if not file.is_file():
-                message = f"SSL certificate file '{ssl_cert_file}' does not exist."
-                console.print(message, style="error")
-                sys.exit(2)
-            Service().dotenv_set("SSL_CERT_FILE", str(ssl_cert_file))
-            Service().dotenv_set("REQUESTS_CA_BUNDLE", str(ssl_cert_file))
-            Service().dotenv_set("CURL_CA_BUNDLE", str(ssl_cert_file))
-    console.print("HTTP proxy enabled.", style="success")
 
 
 @config_app.command()
 def http_proxy_disable() -> None:
     """Disable HTTP proxy."""
-    Service().dotenv_unset("HTTP_PROXY")
-    Service().dotenv_unset("HTTPS_PROXY")
-    Service().dotenv_unset("SSL_CERT_FILE")
-    Service().dotenv_unset("SSL_NO_VERIFY")
-    Service().dotenv_unset("REQUESTS_CA_BUNDLE")
-    Service().dotenv_unset("CURL_CA_BUNDLE")
-    console.print("HTTP proxy disabled.", style="success")
+    try:
+        Service.http_proxy_disable()
+        console.print("HTTP proxy disabled.", style="success")
+    except ValueError as e:
+        console.print(f"Invalid HTTP proxy configuration: {e!s}", style="error")
+        sys.exit(2)

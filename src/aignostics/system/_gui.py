@@ -1,5 +1,7 @@
 """Homepage (index) of GUI."""
 
+from pathlib import Path
+
 from aignostics.gui import frame
 from aignostics.utils import BaseService, locate_subclasses
 
@@ -10,9 +12,10 @@ from ._service import Service
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
-        from nicegui import run, ui  # noqa: PLC0415
+        from nicegui import app, run, ui  # noqa: PLC0415
 
         locate_subclasses(BaseService)  # Ensure settings are loaded
+        app.add_static_files("/system_assets", Path(__file__).parent / "assets")
 
         ui.add_head_html("""
             <style>
@@ -27,35 +30,67 @@ class PageBuilder(BasePageBuilder):
 
         @ui.page("/system")
         async def page_system() -> None:
-            """System page."""
-            with frame("Launchpad Status", left_sidebar=False):
+            """System info and settings page."""
+            with frame("Info and Settings", left_sidebar=False):
                 pass
-            ui.label("Health").classes("text-h6")
-            properties = {
-                "content": {"json": Service().health().model_dump()},
-                "mode": "tree",
-                "readOnly": True,
-                "mainMenuBar": False,
-                "navigationBar": False,
-                "statusBar": False,
-            }
-            ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_INFO")
 
-            ui.label("Info").classes("text-h6")
-            spinner = ui.spinner("dots", size="lg", color="red")
-            properties = {
-                "content": {"json": "Loading ..."},
-                "mode": "tree",
-                "readOnly": True,
-                "mainMenuBar": False,
-                "navigationBar": False,
-                "statusBar": False,
-            }
-            editor = ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_INFO")
-            editor.set_visibility(False)
-            info = await run.cpu_bound(Service().info, True, True)
-            properties["content"] = {"json": info}
-            editor.update()
-            editor.run_editor_method(":expand", "path => true")
-            spinner.delete()
-            editor.set_visibility(True)
+            with ui.row().classes("w-full justify-between items-start"):
+                with ui.column().classes("w-1/5 mt-20"):
+                    ui.space()
+                    ui.html(
+                        '<dotlottie-player src="/system_assets/system.lottie" '
+                        'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                    )
+                    ui.space()
+                ui.space()
+                with ui.column().classes("w-3/5"):
+                    with ui.tabs().classes("w-full") as tabs:
+                        tab_health = ui.tab("health")
+                        tab_info = ui.tab("Info")
+                        tab_settings = ui.tab("settings")
+                    with ui.tab_panels(tabs, value=tab_health).classes("w-full"):
+                        with ui.tab_panel(tab_health):
+                            properties = {
+                                "content": {"json": Service().health().model_dump()},
+                                "mode": "tree",
+                                "readOnly": True,
+                                "mainMenuBar": False,
+                                "navigationBar": False,
+                                "statusBar": False,
+                            }
+                            ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_INFO")
+                        with ui.tab_panel(tab_info):
+                            spinner = ui.spinner("dots", size="lg", color="red")
+                            properties = {
+                                "content": {"json": "Loading ..."},
+                                "mode": "tree",
+                                "readOnly": True,
+                                "mainMenuBar": False,
+                                "navigationBar": False,
+                                "statusBar": False,
+                            }
+                            editor = ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_INFO")
+                            editor.set_visibility(False)
+                            info = await run.cpu_bound(Service().info, True, True)
+                            properties["content"] = {"json": info}
+                            editor.update()
+                            editor.run_editor_method(":expand", "path => true")
+                            spinner.delete()
+                            editor.set_visibility(True)
+                        with (
+                            ui.tab_panel(tab_settings),
+                            ui.card().classes("w-full"),
+                            ui.row().classes("items-center justify-between"),
+                        ):
+                            ui.switch(
+                                value=Service.remote_diagnostics_enabled(),
+                                on_change=lambda e: (
+                                    Service.remote_diagnostics_enable()
+                                    if e.value
+                                    else Service.remote_diagnostics_disable(),
+                                    ui.notify("Restart the app to apply changes.", color="warning"),  # type: ignore[func-returns-value]
+                                    None,
+                                )[0],
+                            )
+                            ui.label("Remote Diagnostics")

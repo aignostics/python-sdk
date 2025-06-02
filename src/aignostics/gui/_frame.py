@@ -44,9 +44,9 @@ def frame(  # noqa: C901, PLR0915
     @ui.refreshable
     def health_icon() -> None:
         if launchpad_healthy:
-            ui.icon("check_circle", color="positive")
+            ui.icon("settings", color="positive")
         elif launchpad_healthy is not None:
-            ui.icon("error", color="negative")
+            ui.icon("settings", color="negative")
 
     @ui.refreshable
     def health_link() -> None:
@@ -215,7 +215,7 @@ def frame(  # noqa: C901, PLR0915
                 with ui.item_section().props("avatar"):
                     health_icon()
                 with ui.item_section():
-                    ui.label("Check Launchpad Status").tailwind.font_weight(
+                    ui.label("Info and Settings").tailwind.font_weight(
                         "bold" if context.client.page.path == "/system" else "normal"
                     )
 

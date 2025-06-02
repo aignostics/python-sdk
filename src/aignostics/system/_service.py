@@ -446,3 +446,88 @@ class Service(BaseService):
             dotenv_unset_key(dotenv_path=str(dotenv_path.resolve()), key_to_unset=key, quote_mode="never")
         os.environ.pop(key, None)
         return removed_count
+
+    @staticmethod
+    def remote_diagnostics_enabled() -> bool:
+        """Check if remote diagnostics are enabled.
+
+        Returns:
+            bool: True if remote diagnostics are enabled, False otherwise.
+        """
+        return (
+            Service.dotenv_get(f"{__project_name__.upper()}_SENTRY_ENABLED") == "1"
+            and Service.dotenv_get(f"{__project_name__.upper()}_LOGFIRE_ENABLED") == "1"
+        )
+
+    @staticmethod
+    def remote_diagnostics_enable() -> None:
+        """Enable remote diagnostics via Sentry and Logfire. Data stored in EU data centers.
+
+        Raises:
+            ValueError: If the environment variable cannot be set.
+        """
+        Service.dotenv_set(f"{__project_name__.upper()}_SENTRY_ENABLED", "1")
+        Service.dotenv_set(f"{__project_name__.upper()}_LOGFIRE_ENABLED", "1")
+
+    @staticmethod
+    def remote_diagnostics_disable() -> None:
+        """Disable remote diagnostics."""
+        Service.dotenv_unset(f"{__project_name__.upper()}_SENTRY_ENABLED")
+        Service.dotenv_unset(f"{__project_name__.upper()}_LOGFIRE_ENABLED")
+
+    @staticmethod
+    def http_proxy_enable(
+        host: str,
+        port: int,
+        scheme: str,
+        ssl_cert_file: str | None = None,
+        no_ssl_verify: bool = False,
+    ) -> None:
+        """Enable HTTP proxy.
+
+        Args:
+            host (str): The host of the proxy server.
+            port (int): The port of the proxy server.
+            scheme (str): The scheme of the proxy server (e.g., "http", "https").
+            ssl_cert_file (str | None): Path to the SSL certificate file, if any.
+            no_ssl_verify (bool): Whether to disable SSL verification
+
+        Raises:
+            ValueError: If both 'ssl_cert_file' and 'ssl_disable_verify' are set.
+        """
+        url = f"{scheme}://{host}:{port}"
+        Service.dotenv_set("HTTP_PROXY", url)
+        Service.dotenv_set("HTTPS_PROXY", url)
+        if ssl_cert_file is not None and no_ssl_verify:
+            message = "Cannot set both 'ssl_cert_file' and 'ssl_disable_verify'. Please choose one."
+            logger.warning(message)
+            raise ValueError(message)
+        if no_ssl_verify:
+            Service.dotenv_set("SSL_NO_VERIFY", "1")
+            Service.dotenv_set("SSL_CERT_FILE", "")
+            Service.dotenv_set("REQUESTS_CA_BUNDLE", "")
+            Service.dotenv_set("CURL_CA_BUNDLE", "")
+        else:
+            Service.dotenv_unset("SSL_NO_VERIFY")
+            Service.dotenv_unset("SSL_CERT_FILE")
+            Service.dotenv_unset("REQUESTS_CA_BUNDLE")
+            Service.dotenv_unset("CURL_CA_BUNDLE")
+            if ssl_cert_file:
+                file = Path(ssl_cert_file).resolve()
+                if not file.is_file():
+                    message = f"SSL certificate file '{ssl_cert_file}' does not exist."
+                    logger.warning(message)
+                    raise ValueError(message)
+                Service.dotenv_set("SSL_CERT_FILE", str(ssl_cert_file))
+                Service.dotenv_set("REQUESTS_CA_BUNDLE", str(ssl_cert_file))
+                Service.dotenv_set("CURL_CA_BUNDLE", str(ssl_cert_file))
+
+    @staticmethod
+    def http_proxy_disable() -> None:
+        """Disable HTTP proxy."""
+        Service.dotenv_unset("HTTP_PROXY")
+        Service.dotenv_unset("HTTPS_PROXY")
+        Service.dotenv_unset("SSL_CERT_FILE")
+        Service.dotenv_unset("SSL_NO_VERIFY")
+        Service.dotenv_unset("REQUESTS_CA_BUNDLE")
+        Service.dotenv_unset("CURL_CA_BUNDLE")

@@ -176,45 +176,46 @@ def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path) -> None:
         assert result.exit_code == 0
         assert "None" in result.output
 
-    @pytest.mark.sequential
-    def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
-        """Check disable/enable remote diagnostics."""
-        with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
-            (tmp_path / ".env").touch()
-            result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
 
-            # Check not set
-            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
-            assert result.exit_code == 0
-            assert "None" in result.output
+@pytest.mark.sequential
+def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
+    """Check disable/enable remote diagnostics."""
+    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+        (tmp_path / ".env").touch()
+        result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
 
-            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
-            assert result.exit_code == 0
-            assert "None" in result.output
+        # Check not set
+        result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
+        assert result.exit_code == 0
+        assert "None" in result.output
 
-            # Enable
-            result = runner.invoke(cli, ["system", "config", "remote-diagnostics-enable"])
-            assert result.exit_code == 0
-            assert "Remote diagnostics enabled." in result.output
+        result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
+        assert result.exit_code == 0
+        assert "None" in result.output
 
-            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
-            assert result.exit_code == 0
-            assert "1" in result.output
+        # Enable
+        result = runner.invoke(cli, ["system", "config", "remote-diagnostics-enable"])
+        assert result.exit_code == 0
+        assert "Remote diagnostics enabled." in result.output
 
-            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
-            assert result.exit_code == 0
-            assert "1" in result.output
+        result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
+        assert result.exit_code == 0
+        assert "1" in result.output
 
-            # Disable
-            result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
+        result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
+        assert result.exit_code == 0
+        assert "1" in result.output
 
-            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
-            assert result.exit_code == 0
-            assert "None" in result.output
+        # Disable
+        result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
 
-            result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
-            assert result.exit_code == 0
-            assert "None" in result.output
+        result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_SENTRY_ENABLED"])
+        assert result.exit_code == 0
+        assert "None" in result.output
+
+        result = runner.invoke(cli, ["system", "config", "get", __project_name__ + "_LOGFIRE_ENABLED"])
+        assert result.exit_code == 0
+        assert "None" in result.output
 
 
 @pytest.mark.sequential
@@ -330,7 +331,9 @@ def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> No
             cli, ["system", "config", "http-proxy-enable", "--no-ssl-verify", "--ssl-cert-file", str(cert_file)]
         )
         assert result.exit_code == 2
-        assert "Cannot set both 'ssl_cert_file' and 'ssl_disable_verify'. Please choose one." in result.output
+        assert "Cannot set both 'ssl_cert_file' and 'ssl_disable_verify'. Please choose one." in result.output.replace(
+            "\n", ""
+        )
 
         # Disable
         result = runner.invoke(cli, ["system", "config", "http-proxy-disable"])
