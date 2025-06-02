@@ -1,6 +1,7 @@
 """Service of the application module."""
 
 import base64
+import platform
 import re
 import time
 from collections.abc import Callable, Generator
@@ -29,7 +30,7 @@ from aignostics.platform import (
     ItemResult,
     ItemStatus,
     NotFoundException,
-    OutputArtifactData,
+    OutputArtifactElement,
 )
 from aignostics.utils import BaseService, Health, get_logger
 from aignostics.wsi import Service as WSIService
@@ -73,7 +74,7 @@ class DownloadProgress(BaseModel):
     item_count: int | None = None
     item_index: int | None = None
     item_reference: str | None = None
-    artifact: OutputArtifactData | None = None
+    artifact: OutputArtifactElement | None = None
     artifact_count: int | None = None
     artifact_index: int | None = None
     artifact_path: Path | None = None
@@ -876,12 +877,15 @@ class Service(BaseService):
                         get_mime_type_for_artifact(artifact) == "application/geo+json"
                         and artifact.name == "cell_classification:geojson_polygons"
                     ):
+                        artifact_name = artifact.name
+                        if platform.system() == "Windows":
+                            artifact_name = artifact_name.replace("/", "_").replace("\\", "_").replace(":", "_")
                         if create_subdirectory_per_item:
                             reference_path = Path(item.reference)
                             stem_name = reference_path.stem
-                            artifact_path = final_destination_directory / stem_name / f"{artifact.name}.json"
+                            artifact_path = final_destination_directory / stem_name / f"{artifact_name}.json"
                         else:
-                            artifact_path = final_destination_directory / f"{artifact.name}.json"
+                            artifact_path = final_destination_directory / f"{artifact_name}.json"
                         message = f"Annotating input slide '{image_path}' with artifact '{artifact_path}' ..."
                         logger.debug(message)
                         added = QuPathService.annotate(
@@ -943,6 +947,8 @@ class Service(BaseService):
                 progress.status = DownloadProgressState.DOWNLOADING
                 progress.item_index = item_index
                 progress.item = item
+                progress.item_reference = item.reference
+
                 progress.artifact_count = len(item.output_artifacts)
                 Service._update_progress(progress, download_progress_callable, download_progress_queue)
 
@@ -1007,7 +1013,10 @@ class Service(BaseService):
             logger.error(message)
             raise ValueError(message)
 
-        artifact_path = destination_directory / f"{prefix}{artifact.name}{get_file_extension_for_artifact(artifact)}"
+        artifact_name = artifact.name
+        if platform.system() == "Windows":
+            artifact_name = artifact_name.replace("/", "_").replace("\\", "_").replace(":", "_")
+        artifact_path = destination_directory / f"{prefix}{artifact_name}{get_file_extension_for_artifact(artifact)}"
 
         if artifact_path.exists():
             checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
