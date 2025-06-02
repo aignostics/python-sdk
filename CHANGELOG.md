@@ -1,5 +1,11 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+(https://github.com/aignostics/python-sdk/compare/v0.2.28..0.2.29) - 2025-06-02
+
+
+- *(Windows)* : in windows filenames - ([06fef93](https://github.com/aignostics/python-sdk/commit/06fef932dc28bdb5b0052a144701b61d3eca540a))
+
+
 (https://github.com/aignostics/python-sdk/compare/v0.2.26..v0.2.27) - 2025-06-01
 
 
