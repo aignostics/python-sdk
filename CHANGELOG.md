@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.26..0.2.27) - 2025-06-01
+(https://github.com/aignostics/python-sdk/compare/v0.2.26..v0.2.27) - 2025-06-01
 
 
 - Test of notebook, race - ([b5771a9](https://github.com/aignostics/python-sdk/commit/b5771a9f16b489499fc53da12a6e3d9e578c9f87))
