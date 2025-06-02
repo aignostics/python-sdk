@@ -18,6 +18,7 @@ from ._constants import (
     __version__,
 )
 from ._di import load_modules, locate_implementations, locate_subclasses
+from ._fs import sanitize_path, sanitize_path_component
 from ._health import Health
 from ._log import LogSettings, get_logger
 from ._logfire import LogfireSettings
@@ -59,6 +60,8 @@ __all__ = [
     "locate_implementations",
     "locate_subclasses",
     "prepare_cli",
+    "sanitize_path",
+    "sanitize_path_component",
     "strip_to_none_before_validator",
 ]
 

@@ -1,5 +1,12 @@
-2025-06-01 22:11:44 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.2.23 (project root /Users/helmut/Code/python-sdk, pid 94682), parent 'Python' (pid   boot.py:87
-                             94668)                                                                                                                                                   
+2025-06-02 20:28:33 INFO     aignostics.aignostics.utils.boot ⭐ Booting aignostics v0.2.29 (project root /Users/helmut/Code/python-sdk, pid 60229), parent 'Python' (pid   boot.py:87
+                             60204)                                                                                                                                                   
+                    DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443                                              connectionpool.py:1049
+Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
+                    DEBUG    urllib3.connectionpool https://logfire-eu.pydantic.dev:443 "GET /v1/info HTTP/1.1" 200 None                                         connectionpool.py:544
+                    DEBUG    urllib3.connectionpool https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0                                         connectionpool.py:544
+https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
+                    DEBUG    urllib3.connectionpool https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0                                         connectionpool.py:544
+https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
 components:
   schemas:
     ApplicationReadResponse:
@@ -1092,3 +1099,9 @@ paths:
       - Public
 servers:
 - url: /api
+                    DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443                                              connectionpool.py:1049
+Starting new HTTPS connection (1): logfire-eu.pydantic.dev:443
+                    DEBUG    urllib3.connectionpool https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0                                         connectionpool.py:544
+https://logfire-eu.pydantic.dev:443 "POST /v1/traces HTTP/1.1" 200 0
+                    DEBUG    urllib3.connectionpool https://logfire-eu.pydantic.dev:443 "POST /v1/metrics HTTP/1.1" 200 2                                        connectionpool.py:544
+https://logfire-eu.pydantic.dev:443 "POST /v1/metrics HTTP/1.1" 200 2

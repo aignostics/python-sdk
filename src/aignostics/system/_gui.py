@@ -34,21 +34,12 @@ class PageBuilder(BasePageBuilder):
             with frame("Info and Settings", left_sidebar=False):
                 pass
 
-            with ui.row().classes("w-full justify-between items-start"):
-                with ui.column().classes("w-1/5 mt-20"):
-                    ui.space()
-                    ui.html(
-                        '<dotlottie-player src="/system_assets/system.lottie" '
-                        'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
-                    )
-                    ui.space()
-                ui.space()
-                with ui.column().classes("w-3/5"):
+            with ui.row().classes("w-full gap-4 flex-nowrap"):
+                with ui.column().classes("w-3/5 flex-shrink-0"):
                     with ui.tabs().classes("w-full") as tabs:
-                        tab_health = ui.tab("health")
+                        tab_health = ui.tab("Health")
                         tab_info = ui.tab("Info")
-                        tab_settings = ui.tab("settings")
+                        tab_settings = ui.tab("Settings")
                     with ui.tab_panels(tabs, value=tab_health).classes("w-full"):
                         with ui.tab_panel(tab_health):
                             properties = {
@@ -94,3 +85,9 @@ class PageBuilder(BasePageBuilder):
                                 )[0],
                             )
                             ui.label("Remote Diagnostics")
+                with ui.column().classes("w-2/5 flex-shrink-0 flex items-center justify-start mt-[200px]"):
+                    ui.html(
+                        '<dotlottie-player src="/system_assets/system.lottie" '
+                        'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                    )

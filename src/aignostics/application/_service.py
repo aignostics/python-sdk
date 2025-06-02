@@ -29,9 +29,9 @@ from aignostics.platform import (
     ItemResult,
     ItemStatus,
     NotFoundException,
-    OutputArtifactData,
+    OutputArtifactElement,
 )
-from aignostics.utils import BaseService, Health, get_logger
+from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
@@ -73,7 +73,7 @@ class DownloadProgress(BaseModel):
     item_count: int | None = None
     item_index: int | None = None
     item_reference: str | None = None
-    artifact: OutputArtifactData | None = None
+    artifact: OutputArtifactElement | None = None
     artifact_count: int | None = None
     artifact_index: int | None = None
     artifact_path: Path | None = None
@@ -705,7 +705,7 @@ class Service(BaseService):
             download_progress_queue,
         )
 
-    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
+    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
         self,
         run_id: str,
         destination_directory: Path,
@@ -876,12 +876,19 @@ class Service(BaseService):
                         get_mime_type_for_artifact(artifact) == "application/geo+json"
                         and artifact.name == "cell_classification:geojson_polygons"
                     ):
+                        artifact_name = artifact.name
                         if create_subdirectory_per_item:
                             reference_path = Path(item.reference)
                             stem_name = reference_path.stem
-                            artifact_path = final_destination_directory / stem_name / f"{artifact.name}.json"
+                            artifact_path = (
+                                final_destination_directory
+                                / stem_name
+                                / f"{sanitize_path_component(artifact_name)}.json"
+                            )
                         else:
-                            artifact_path = final_destination_directory / f"{artifact.name}.json"
+                            artifact_path = (
+                                final_destination_directory / f"{sanitize_path_component(artifact_name)}.json"
+                            )
                         message = f"Annotating input slide '{image_path}' with artifact '{artifact_path}' ..."
                         logger.debug(message)
                         added = QuPathService.annotate(
@@ -943,6 +950,8 @@ class Service(BaseService):
                 progress.status = DownloadProgressState.DOWNLOADING
                 progress.item_index = item_index
                 progress.item = item
+                progress.item_reference = item.reference
+
                 progress.artifact_count = len(item.output_artifacts)
                 Service._update_progress(progress, download_progress_callable, download_progress_queue)
 
@@ -1007,7 +1016,10 @@ class Service(BaseService):
             logger.error(message)
             raise ValueError(message)
 
-        artifact_path = destination_directory / f"{prefix}{artifact.name}{get_file_extension_for_artifact(artifact)}"
+        artifact_path = (
+            destination_directory
+            / f"{prefix}{sanitize_path_component(artifact.name)}{get_file_extension_for_artifact(artifact)}"
+        )
 
         if artifact_path.exists():
             checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]

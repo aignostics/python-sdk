@@ -13,4 +13,5 @@ async def test_gui_system(user: User) -> None:
     await user.open("/system")
     await user.should_see("Health")
     await user.should_see("Info")
+    await user.should_see("Settings")
     await user.should_see(__project_name__)
