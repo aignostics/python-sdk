@@ -272,11 +272,11 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             ui.space()
             ui.button("Close", on_click=download_run_dialog.close).props("flat")
 
-    with ui.dialog() as download_run_dialog, ui.card().style(WIDTH_1200px):
+    with ui.dialog().props(add="persistent") as download_run_dialog, ui.card().style(WIDTH_1200px):
         download_run_dialog_content()
 
     def download_run_dialog_open(qupath_project: bool = False, marimo: bool = False) -> None:
-        """Open the CSV dialog."""
+        """Open the run dialog."""
         download_run_dialog_content.refresh(qupath_project=qupath_project, marimo=marimo)
         download_run_dialog.open()
 
