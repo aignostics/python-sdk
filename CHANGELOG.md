@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.27..0.2.30) - 2025-06-02
+(https://github.com/aignostics/python-sdk/compare/v0.2.27..v0.2.30) - 2025-06-02
 
 
 - *(Windows)* Sanitize paths so they don't contain a colon if not drive letter - ([37dce20](https://github.com/aignostics/python-sdk/commit/37dce20076ef238f3baafbcc53186e50a44c0b60))
