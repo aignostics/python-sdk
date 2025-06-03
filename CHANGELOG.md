@@ -1,5 +1,11 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+(https://github.com/aignostics/python-sdk/compare/v0.2.31..0.2.32) - 2025-06-03
+
+
+- *(header,run_describe)* Simplify a bit to make space - ([f2af6c0](https://github.com/aignostics/python-sdk/commit/f2af6c0a19217551b250e442d0a282a9e4c8d5ef))
+
+
 (https://github.com/aignostics/python-sdk/compare/v0.2.27..v0.2.30) - 2025-06-02
 
 
