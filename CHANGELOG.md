@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.31..0.2.32) - 2025-06-03
+(https://github.com/aignostics/python-sdk/compare/v0.2.32..0.2.33) - 2025-06-03
+
+
+- *(application)* Don't allow to close download dialog by clicking outside - ([3524d4b](https://github.com/aignostics/python-sdk/commit/3524d4b54849a60270d48213dde94de7909defcc))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.31..v0.2.32) - 2025-06-03
 
 
 - *(header,run_describe)* Simplify a bit to make space - ([f2af6c0](https://github.com/aignostics/python-sdk/commit/f2af6c0a19217551b250e442d0a282a9e4c8d5ef))
