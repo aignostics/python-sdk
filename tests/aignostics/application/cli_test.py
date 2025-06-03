@@ -360,15 +360,15 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
         f"Expected 9 files in {item_out_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
     )
     expected_files = [
-        ("tissue_segmentation:csv_class_information.csv", 342, 10),
-        ("cell_classification:geojson_polygons.json", 16058196, 10),
-        ("readout_generation:cell_readouts.csv", 2234724, 10),
-        ("tissue_qc:csv_class_information.csv", 232, 10),
-        ("tissue_segmentation:geojson_polygons.json", 270932, 10),
-        ("tissue_qc:geojson_polygons.json", 180522, 10),
-        ("tissue_qc:segmentation_map_image.tiff", 464908, 10),
-        ("readout_generation:slide_readouts.csv", 348957, 10),
-        ("tissue_segmentation:segmentation_map_image.tiff", 521530, 10),
+        ("tissue_segmentation_csv_class_information.csv", 342, 10),
+        ("cell_classification_geojson_polygons.json", 16058196, 10),
+        ("readout_generation_cell_readouts.csv", 2234724, 10),
+        ("tissue_qc_csv_class_information.csv", 232, 10),
+        ("tissue_segmentation_geojson_polygons.json", 270932, 10),
+        ("tissue_qc_geojson_polygons.json", 180522, 10),
+        ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
+        ("readout_generation_slide_readouts.csv", 348957, 10),
+        ("tissue_segmentation_segmentation_map_image.tiff", 521530, 10),
     ]
     for filename, expected_size, tolerance_percent in expected_files:
         file_path = item_out_dir / filename

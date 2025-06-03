@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.29 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.30 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -169,7 +169,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748888912133.808]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748980376861.0718]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -225,7 +225,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748888912133.8857]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1748980376861.1628]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -676,7 +676,7 @@ $ aignostics qupath install [OPTIONS]
 
 **Options**:
 
-* `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.5.1]
+* `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.6.0-rc5]
 * `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/helmut/Library/Application Support/aignostics]
 * `--reinstall / --no-reinstall`: Reinstall QuPath even if it is already installed. This will overwrite the existing installation.  [default: reinstall]
 * `--platform-system TEXT`: Override the system to assume for the installation. This is useful for testing purposes.  [default: Darwin]
@@ -697,6 +697,7 @@ $ aignostics qupath launch [OPTIONS]
 
 * `--project DIRECTORY`: Path to QuPath project directory.
 * `--image TEXT`: Path to image. Must be part of QuPath project
+* `--script FILE`: Path to QuPath script to run on launch. Must be part of QuPath project.
 * `--help`: Show this message and exit.
 
 ### `aignostics qupath info`
@@ -753,7 +754,7 @@ $ aignostics qupath uninstall [OPTIONS]
 
 **Options**:
 
-* `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.5.1]
+* `--version TEXT`: Version of QuPath to install. If not specified, all versions will be uninstalled.
 * `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/helmut/Library/Application Support/aignostics]
 * `--platform-system TEXT`: Override the system to assume for the installation. This is useful for testing purposes.  [default: Darwin]
 * `--platform-machine TEXT`: Override the machine architecture to assume for the installation. This is useful for testing purposes.  [default: arm64]

@@ -26,11 +26,11 @@ def test_path_input_returns_path() -> None:
     assert str(result) == "test/path"
 
 
-def test_non_windows_no_colon_replacement() -> None:
-    """Test that on non-Windows systems, colons are not replaced."""
+def test_colon_replacement_on_all_platforms() -> None:
+    """Test that colons are replaced on all platforms."""
     with patch("platform.system", return_value="Linux"):
         result = sanitize_path("test:path:with:colons")
-        assert result == "test:path:with:colons"
+        assert result == "test_path_with_colons"
 
 
 def test_windows_colon_replacement_enabled() -> None:
@@ -38,16 +38,9 @@ def test_windows_colon_replacement_enabled() -> None:
     with patch("platform.system", return_value="Windows"):
         result = sanitize_path("test:path:with:colons")
         assert result == "test_path_with_colons"
-
-
-def test_windows_colon_replacement_disabled() -> None:
-    """Test that colon replacement can be disabled on Windows."""
-    with (
-        patch("platform.system", return_value="Windows"),
-        patch("pathlib.PureWindowsPath.is_reserved", return_value=False),
-    ):
-        result = sanitize_path("test:path:with:colons", windows_replace_colon_with_underscore=False)
-        assert result == "test:path:with:colons"
+    with patch("platform.system", return_value="Linux"):
+        result = sanitize_path("test:path:with:colons")
+        assert result == "test_path_with_colons"
 
 
 def test_windows_drive_letter_preserved() -> None:
@@ -164,11 +157,11 @@ def test_windows_complex_path_with_drive() -> None:
 
 
 # Tests for sanitize_path_component function
-def test_sanitize_path_component_non_windows() -> None:
-    """Test that sanitize_path_component returns unchanged on non-Windows."""
+def test_sanitize_path_component_all_platforms() -> None:
+    """Test that sanitize_path_component replaces colons on all platforms."""
     with patch("platform.system", return_value="Linux"):
         result = sanitize_path_component("test:component:with:colons")
-        assert result == "test:component:with:colons"
+        assert result == "test_component_with_colons"
 
 
 def test_sanitize_path_component_windows_replaces_all_colons() -> None:

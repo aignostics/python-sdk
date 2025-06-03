@@ -162,7 +162,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
 
             def update_download_progress() -> None:
                 """Update the progress indicator with values from the queue."""
-                if not progress_queue.empty():
+                while not progress_queue.empty():
                     progress = progress_queue.get()
                     download_item_status.set_text(
                         progress.status

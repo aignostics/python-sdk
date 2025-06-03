@@ -596,7 +596,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             global upload_message_queue  # noqa: PLW0602
             if submit_form.metadata is None:
                 return
-            if not upload_message_queue.empty():
+            while not upload_message_queue.empty():
                 message = upload_message_queue.get()
                 if message and isinstance(message, dict) and "reference" in message:
                     for row in submit_form.metadata:

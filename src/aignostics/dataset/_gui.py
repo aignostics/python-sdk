@@ -258,7 +258,7 @@ class PageBuilder(BasePageBuilder):
                 if download_form.download_progress is None:
                     return
 
-                if download_message_queue and not download_message_queue.empty():
+                while download_message_queue and not download_message_queue.empty():
                     new_value = download_message_queue.get()
                     download_form.download_progress.set_value(new_value)
 

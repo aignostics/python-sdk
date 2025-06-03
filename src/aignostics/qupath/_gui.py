@@ -30,7 +30,7 @@ class PageBuilder(BasePageBuilder):
             async def install_qupath() -> None:
                 def update_install_progress() -> None:
                     """Update the progress indicator with values from the queue."""
-                    if not progress_queue.empty():
+                    while not progress_queue.empty():
                         progress: InstallProgress = progress_queue.get()
                         if progress.status is InstallProgressState.DOWNLOADING:
                             if progress.archive_path and progress.archive_size:
@@ -101,7 +101,8 @@ class PageBuilder(BasePageBuilder):
 
                 launch_button.props(remove="loading")
 
-            installed_path = Service().find_qupath()
+            version = Service().get_version()
+            expected_version = Service().get_expected_version()
 
             ui.markdown(
                 """
@@ -111,12 +112,18 @@ class PageBuilder(BasePageBuilder):
             with ui.row().classes("w-full justify-start"):
                 with ui.column().classes("w-2/5"):
                     with ui.card().classes("w-full"):
-                        if installed_path:
-                            install_info = ui.label(
-                                "QuPath is installed and ready to execute. "
-                                "Go to a completed application result and click the QuPath button, "
-                                "or open directly from here."
-                            )
+                        if version:
+                            if version.version == expected_version:
+                                install_info = ui.label(
+                                    f"QuPath {expected_version} is installed and ready to execute. "
+                                    "Go to a completed application result and click the QuPath button, "
+                                    "or open directly from here."
+                                )
+                            else:
+                                install_info = ui.label(
+                                    f"QuPath {version.version} is installed, but version {expected_version} "
+                                    "is expected. Please update to the latest version by reinstalling."
+                                )
                         else:
                             install_info = ui.label(
                                 "Install QuPath to enable visualizing your Whole Slide Image and application results "
@@ -133,11 +140,11 @@ class PageBuilder(BasePageBuilder):
                                 on_click=launch_qupath,
                                 icon="visibility",
                             ).mark("BUTTON_QUPATH_LAUNCH")
-                            if not installed_path:
+                            if not version:
                                 launch_button.disable()
                             ui.space()
                             install_button = ui.button(
-                                "Install" if not installed_path else "Reinstall",
+                                "Install" if not version else "Reinstall",
                                 on_click=install_qupath,
                                 icon="install_desktop",
                             ).mark("BUTTON_QUPATH_INSTALL")
@@ -146,7 +153,7 @@ class PageBuilder(BasePageBuilder):
                                 on_click=uninstall_qupath,
                                 icon="extension_off",
                             ).mark("BUTTON_QUPATH_INSTALL")
-                            if not installed_path:
+                            if not version:
                                 uninstall_button.disable()
 
                     ui.markdown(
@@ -174,9 +181,13 @@ class PageBuilder(BasePageBuilder):
                 ui.space()
                 with ui.column().classes("w-2/5"), ui.row().classes("w-1/2 justify-center content-center"):
                     ui.space()
-                    animation = (
-                        "/qupath_assets/microscope.lottie" if installed_path else "/qupath_assets/download.lottie"
-                    )
+                    if version:
+                        if version.version == expected_version:
+                            animation = "/qupath_assets/microscope.lottie"
+                        else:
+                            animation = "/qupath_assets/update.lottie"
+                    else:
+                        animation = "/qupath_assets/download.lottie"
                     ui.html(
                         f"<dotlottie-player "
                         f'src="{animation}" '
