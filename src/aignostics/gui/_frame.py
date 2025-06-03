@@ -130,10 +130,6 @@ def frame(  # noqa: C901, PLR0915
             ui.button(icon="local_library").props(FLAT_COLOR_WHITE)
             ui.tooltip("Open manual")
 
-        with ui.link(target="https://platform.aignostics.com/support", new_tab=True):
-            ui.button(icon="help").props(FLAT_COLOR_WHITE)
-            ui.tooltip("Contact support")
-
         with ui.button(on_click=lambda _: right_drawer.toggle(), icon="menu").props(FLAT_COLOR_WHITE):
             ui.tooltip("Open menu")
 
@@ -185,6 +181,13 @@ def frame(  # noqa: C901, PLR0915
                     ui.label("Manage Cloud Bucket").tailwind.font_weight(
                         "bold" if context.client.page.path == "/bucket" else "normal"
                     )
+            with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
+                with ui.item_section().props("avatar"):
+                    health_icon()
+                with ui.item_section():
+                    ui.label("Info and Settings").tailwind.font_weight(
+                        "bold" if context.client.page.path == "/system" else "normal"
+                    )
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("domain", color="primary")
@@ -211,14 +214,6 @@ def frame(  # noqa: C901, PLR0915
                     ui.link("Check Platform Status", "https://status.aignostics.com", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
-            with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
-                with ui.item_section().props("avatar"):
-                    health_icon()
-                with ui.item_section():
-                    ui.label("Info and Settings").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/system" else "normal"
-                    )
-
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("handshake", color="primary")
@@ -226,7 +221,6 @@ def frame(  # noqa: C901, PLR0915
                     ui.link(
                         "Attributions", "https://aignostics.readthedocs.io/en/latest/attributions.html", new_tab=True
                     ).mark("LINK_ATTRIBUTIONS")
-
             if app.native.main_window:
                 ui.separator()
                 with ui.item(on_click=app.shutdown).props("clickable"):
@@ -234,7 +228,6 @@ def frame(  # noqa: C901, PLR0915
                         ui.icon("logout", color="primary")
                     with ui.item_section():
                         ui.label("Quit Launcher")
-
     with (
         ui.footer().style("padding-top:0px; padding-left: 0px; height: 30px; background-color: white"),
         ui.row(align_items="center").classes("justify-start w-full"),

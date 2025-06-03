@@ -390,7 +390,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
-            with ui.expansion(icon="info", text=f"Run {run.application_run_id}"):
+            with ui.expansion(text=f"Run {run.application_run_id}"):
                 ui.markdown(
                     f"""
                     * Application Version: {run_data.application_version_id}
