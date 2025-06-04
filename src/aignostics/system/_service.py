@@ -424,7 +424,7 @@ class Service(BaseService):
             logger.error(message)
             raise ValueError(message)
 
-        dotenv_set_key(dotenv_path=str(dotenv_path.resolve()), key_to_set=key, value_to_set=value, quote_mode="never")
+        dotenv_set_key(dotenv_path=str(dotenv_path.resolve()), key_to_set=key, value_to_set=value, quote_mode="auto")
         os.environ[key] = value
 
     @staticmethod
@@ -443,7 +443,7 @@ class Service(BaseService):
                 message = f"File '{dotenv_path!s}' does not exist, skipping update"
                 logger.warning(message)
                 continue
-            dotenv_unset_key(dotenv_path=str(dotenv_path.resolve()), key_to_unset=key, quote_mode="never")
+            dotenv_unset_key(dotenv_path=str(dotenv_path.resolve()), key_to_unset=key, quote_mode="auto")
         os.environ.pop(key, None)
         return removed_count
 
