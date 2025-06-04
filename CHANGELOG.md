@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.32..0.2.33) - 2025-06-03
+(https://github.com/aignostics/python-sdk/compare/v0.2.33..0.2.34) - 2025-06-04
+
+
+- Workaround missing scheme in proxy config - ([9474f0d](https://github.com/aignostics/python-sdk/commit/9474f0dca775508e5e9caac8f9f68b8348987c66))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.32..v0.2.33) - 2025-06-03
 
 
 - *(application)* Don't allow to close download dialog by clicking outside - ([3524d4b](https://github.com/aignostics/python-sdk/commit/3524d4b54849a60270d48213dde94de7909defcc))
