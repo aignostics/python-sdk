@@ -75,8 +75,8 @@ requires-python = ">=3.11, <4.0"
 dependencies = [
     # From Template
     "fastapi[standard,all]>=0.115.12",
-    "logfire[system-metrics]>=3.16.1",
-    "nicegui[native]>=2.18.0",
+    "logfire[system-metrics]>=3.17.0",
+    "nicegui[native]>=2.19.0",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
     "opentelemetry-instrumentation-jinja2>=0.53b0",
@@ -93,7 +93,7 @@ dependencies = [
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
-    "boto3>=1.38.27",
+    "boto3>=1.38.30",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "google-cloud-storage>=2.12.0",
@@ -122,7 +122,7 @@ dependencies = [
     'duckdb>=0.10.0,<=1.2.1',
     "idc-index-data==21.0.0",
     "packaging",
-    "pandas<=2.2.4",
+    "pandas<=2.3.0",
     "platformdirs",
     "psutil",
     "pyarrow",
@@ -150,7 +150,7 @@ dev = [
     "detect-secrets>=1.5.0",
     "enum-tools>=0.13.0",
     "furo>=2024.8.6",
-    "git-cliff>=2.8.0",
+    "git-cliff>=2.9.1",
     "matplotlib>=3.10.1",
     "mypy>=1.16.0",
     "nox[uv]>=2025.5.1",
@@ -158,7 +158,7 @@ dev = [
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
     "pyright>=1.1.401",
-    "pytest>=8.3.5",
+    "pytest>=8.4.0",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.1.1",
     "pytest-docker>=3.2.2",
@@ -184,7 +184,7 @@ dev = [
     "swagger-plugin-for-sphinx>=5.1.0",
     "tomli>=2.1.0",
     "types-pyyaml>=6.0.12.20250516",
-    "types-requests>=2.32.0.20250515",
+    "types-requests>=2.32.0.20250602",
     "watchdog>=6.0.0",
 ]
 
@@ -216,6 +216,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "h11>=0.16.0",                      # CVE-2025-47287
     "rfc3987; sys_platform == 'never'", # GPLv3
     "tornado>=6.5.0",                   # CVE-2025-47287
+    "jupyter-core>=5.8.1",              # CVE-2025-30167
 ]
 
 [tool.ruff]
