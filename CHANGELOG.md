@@ -1,6 +1,9 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.34..0.2.35) - 2025-06-05
+(https://github.com/aignostics/python-sdk/compare/v0.2.34..0.2.36) - 2025-06-05
+
+
+- Generate - ([9021d73](https://github.com/aignostics/python-sdk/commit/9021d73dfdd6ff3e85cc17f633bddbf2f5c4170d))
 
 
 - *(jupyter)* CVE-2025-30167 rel. jupyter-core - ([5a595a3](https://github.com/aignostics/python-sdk/commit/5a595a3a5a2cf1d49490d7190d070a59e3590453))
@@ -153,3 +156,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
