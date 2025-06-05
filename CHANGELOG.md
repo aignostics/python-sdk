@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.33..0.2.34) - 2025-06-04
+(https://github.com/aignostics/python-sdk/compare/v0.2.34..0.2.35) - 2025-06-05
+
+
+- *(jupyter)* CVE-2025-30167 rel. jupyter-core - ([5a595a3](https://github.com/aignostics/python-sdk/commit/5a595a3a5a2cf1d49490d7190d070a59e3590453))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.33..v0.2.34) - 2025-06-04
 
 
 - Workaround missing scheme in proxy config - ([9474f0d](https://github.com/aignostics/python-sdk/commit/9474f0dca775508e5e9caac8f9f68b8348987c66))
@@ -147,5 +153,3 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
-
-
