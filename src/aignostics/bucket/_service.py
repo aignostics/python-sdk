@@ -97,7 +97,7 @@ class Service(BaseService):
         url = self._get_s3_client().generate_presigned_url(
             ClientMethod="put_object",
             Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
-            ExpiresIn=3600,
+            ExpiresIn=3600,  # in seconds
         )
         return cast("str", url)
 
@@ -163,7 +163,7 @@ class Service(BaseService):
         url = self._get_s3_client().generate_presigned_url(
             ClientMethod="get_object",
             Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
-            ExpiresIn=3600,
+            ExpiresIn=24 * 60 * 60,  # in seconds
         )
         return cast("str", url)
 
