@@ -27,7 +27,7 @@ def _():
     import matplotlib.pyplot as plt
     from cloudpathlib import GSPath
     from dotenv import load_dotenv
-    from aignostics import dataset
+    from aignostics import dataset, WSI_SUPPORTED_FILE_EXTENSIONS
     from wsidicom import WsiDicom
 
     mo.sidebar([
@@ -44,7 +44,6 @@ def _():
             orientation="vertical",
         ),
     ])
-    return Path, WsiDicom, dataset, mo, plt
 
 
 @app.cell
@@ -55,7 +54,7 @@ def _(Path, mo):
     mo.vstack([
         mo.ui.file_browser(
             Path(query_params["results_folder"]),
-            filetypes=[".dcm", ".tif", ".tiff", ".svs"],
+            filetypes=list(WSI_SUPPORTED_FILE_EXTENSIONS),
             multiple=True,
             restrict_navigation=True,
         )

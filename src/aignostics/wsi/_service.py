@@ -6,13 +6,12 @@ from typing import Any
 
 import requests
 
+from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.utils import BaseService, Health, get_logger
 
 logger = get_logger(__name__)
 
 TIMEOUT = 60  # 1 minutes
-
-FILE_TYPES_SUPPORTED = {".dcm", ".tiff", ".tif", ".svs"}
 
 
 class Service(BaseService):
@@ -47,7 +46,7 @@ class Service(BaseService):
             PIL.Image.Image: Thumbnail of the image.
 
         Raises:
-            ValueError: If the file type is not supported (.dcm, .tiff, or .tif).
+            ValueError: If the file type is not supported.
             RuntimeError: If there is an error generating the thumbnail.
         """
         from ._openslide_handler import OpenSlideHandler  # noqa: PLC0415
@@ -56,8 +55,8 @@ class Service(BaseService):
             message = f"File does not exist: {path}"
             logger.warning(message)
             raise ValueError(message)
-        if path.suffix.lower() not in FILE_TYPES_SUPPORTED:
-            message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
+        if path.suffix.lower() not in WSI_SUPPORTED_FILE_EXTENSIONS:
+            message = f"Unsupported file type: {path.suffix}. Supported types are {WSI_SUPPORTED_FILE_EXTENSIONS!s}"
             logger.warning(message)
             raise ValueError(message)
         try:
@@ -106,8 +105,8 @@ class Service(BaseService):
             message = f"File does not exist: {path}"
             logger.warning(message)
             raise ValueError(message)
-        if path.suffix.lower() not in FILE_TYPES_SUPPORTED:
-            message = f"Unsupported file type: {path.suffix}. Supported types are .dcm, .tiff, and .tif."
+        if path.suffix.lower() not in WSI_SUPPORTED_FILE_EXTENSIONS:
+            message = f"Unsupported file type: {path.suffix}. Supported types are {WSI_SUPPORTED_FILE_EXTENSIONS}."
             logger.warning(message)
             raise ValueError(message)
         try:

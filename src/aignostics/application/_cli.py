@@ -300,7 +300,7 @@ def run_prepare(
 ) -> None:
     """Prepare metadata CSV file required for submitting a run.
 
-    (1) Scans source_directory for whole slide images (.tif, .tiff and .dcm.
+    (1) Scans source_directory for whole slide images.
     (2) Extracts metadata from whole slide images such as width, height, mpp.
     (3) Creates CSV file with columns as required by the given application version.
     (4) Optionally applies mappings to amend the metadata CSV file for columns

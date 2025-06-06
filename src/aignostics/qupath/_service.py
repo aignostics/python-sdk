@@ -25,6 +25,7 @@ import requests
 from packaging.version import Version
 from pydantic import BaseModel, computed_field
 
+from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.utils import BaseService, Health, __project_name__, get_logger
 
 from ._settings import Settings
@@ -35,7 +36,6 @@ QUPATH_VERSION = "0.6.0-rc5"
 DOWNLOAD_CHUNK_SIZE = 10 * 1024 * 1024
 LAUNCH_MAX_WAIT_TIME = 60  # seconds, maximum wait time for QuPath to start
 
-IMAGE_SUFFIXES = {".dcm", ".tiff", ".tif", ".svs"}
 PROJECT_FILENAME = "project.qpproj"
 ANNOTATIONS_BATCH_SIZE = 500000
 
@@ -152,17 +152,22 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        application_path = Service.find_qupath()
-        version = Service.get_version()
-        return {
-            "qupath": {
-                "application_path": str(application_path) if application_path else "Not found",
-                "version": dict(version) if version else None,
-            },
+        settings = self._settings.model_dump()
+        settings.update({
             "paquo": {
-                "settings": self.get_paquo_settings(),
+                "current": self.get_paquo_settings(),
                 "defaults": self.get_paquo_defaults(),
             },
+        })
+        app_path = Service.find_qupath()
+        version = Service.get_version()
+        return {
+            "app": {
+                "path": str(app_path) if app_path else None,
+                "version": dict(version) if version else None,
+                "expected_version": Service.get_expected_version(),
+            },
+            "settings": settings,
         }
 
     def health(self) -> Health:
@@ -1085,7 +1090,7 @@ class Service(BaseService):
                 progress.status = AddProgressState.FINDING_IMAGES
                 progress_callable(progress)
 
-            supported_extensions = IMAGE_SUFFIXES
+            supported_extensions = WSI_SUPPORTED_FILE_EXTENSIONS
 
             def is_supported_image(file_path: Path) -> bool:
                 return file_path.is_file() and file_path.suffix.lower() in supported_extensions

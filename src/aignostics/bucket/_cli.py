@@ -59,11 +59,9 @@ def upload(
 
     console.print(f"Uploading {source} to bucket...")
 
-    # Create a counter for total bytes
     total_bytes = 0
     files_count = 0
 
-    # First, calculate total size and count files
     if source.is_file():
         total_bytes = source.stat().st_size
         files_count = 1
@@ -75,14 +73,9 @@ def upload(
 
     console.print(f"Found {files_count} files with total size of {humanize.naturalsize(total_bytes)}")
 
-    # Generate base prefix with placeholders replaced
     username = psutil.Process().username()
     timestamp = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d_%H%M%S")
-
-    # Replace placeholders in the destination_prefix
     base_prefix = destination_prefix.format(username=username, timestamp=timestamp)
-
-    # Remove leading/trailing slashes for consistency
     base_prefix = base_prefix.strip("/")
 
     with Progress(
@@ -98,18 +91,14 @@ def upload(
         TransferSpeedColumn(),
         TextColumn("[progress.description]{task.description}"),
     ) as progress:
-        # Create a task for overall progress
         task = progress.add_task(f"Uploading to {base_prefix}/...", total=total_bytes)
 
-        # Callback function to update progress
         def update_progress(bytes_uploaded: int, file: Path) -> None:
             relpath = file.relative_to(source)
             progress.update(task, advance=bytes_uploaded, description=f"{relpath}")
 
-        # Upload with progress reporting
         results = Service().upload(source, base_prefix, update_progress)
 
-    # Print results summary
     if results["success"]:
         console.print(f"[green]Successfully uploaded {len(results['success'])} files:[/green]")
         for key in results["success"]:

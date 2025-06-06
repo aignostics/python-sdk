@@ -13,6 +13,7 @@ from nicegui.testing import User
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from aignostics.qupath._service import QUPATH_VERSION
 from aignostics.utils import __project_name__, gui_register_pages
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
@@ -76,7 +77,7 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
     )
 
     # Step 4: Check we indicate QuPath is installed
-    await user.should_see("QuPath 0.6.0-rc5 is installed and ready to execute.")
+    await user.should_see(f"QuPath {QUPATH_VERSION} is installed and ready to execute.")
     await sleep(5)  # Health UI updated in background
     await user.should_see("Launchpad is healthy")
     await user.should_see(marker="BUTTON_QUPATH_LAUNCH")
@@ -114,7 +115,7 @@ async def test_gui_qupath_install_and_launch(user: User, runner: CliRunner, sile
     )
 
     # Step 4: Check we indicate QuPath is installed
-    await user.should_see("QuPath 0.6.0-rc5 is installed and ready to execute.")
+    await user.should_seef(f"QuPath {QUPATH_VERSION} is installed and ready to execute.")
     await user.should_see(marker="BUTTON_QUPATH_LAUNCH")
 
     # Step 5: Check we can launch QuPath

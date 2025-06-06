@@ -1,36 +1,22 @@
 """Tests to verify the CLI functionality of the QuPath module."""
 
+import json
 import os
 import platform
 import re
 import signal
 
-import appdirs
 import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
-from aignostics.utils import __project_name__
+from aignostics.qupath._service import QUPATH_VERSION
 
 
 @pytest.fixture
 def runner() -> CliRunner:
     """Provide a CLI test runner fixture."""
     return CliRunner()
-
-
-def test_cli_defaults(runner: CliRunner) -> None:
-    """Check expected output and exit code."""
-    result = runner.invoke(cli, ["qupath", "defaults"])
-    assert all(index in result.output.replace("\n", "") for index in ["qupath_search_dirs"])
-    assert result.exit_code == 0
-
-
-def test_cli_settings(runner: CliRunner) -> None:
-    """Check expected output and exit code."""
-    result = runner.invoke(cli, ["qupath", "settings"])
-    assert all(index in result.output.replace("\n", "") for index in [appdirs.user_data_dir(__project_name__)])
-    assert result.exit_code == 0
 
 
 @pytest.mark.sequential
@@ -56,7 +42,7 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
             uninstall_args.extend(["--platform-machine", platform_config["machine"]])
 
         result = runner.invoke(cli, install_args)
-        assert "QuPath v0.6.0-rc5 installed successfully" in result.output.replace("\n", "")
+        assert f"QuPath v{QUPATH_VERSION} installed successfully" in result.output.replace("\n", "")
         assert result.exit_code == 0
 
         result = runner.invoke(cli, uninstall_args)
@@ -75,26 +61,28 @@ def test_cli_install_and_launch_headless(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["qupath", "uninstall"])
     was_installed = result.exit_code == 0
 
-    # Step 1: Check QuPath info fails if not installed
-    result = runner.invoke(cli, ["qupath", "info"])
-    assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in result.output.replace(
-        "\n", ""
-    )
-    assert result.exit_code == 2
+    # Step 1: System info determines QuPath is not installed
+    result = runner.invoke(cli, ["system", "info"])
+    output_data = json.loads(result.output)
+    assert output_data["qupath"]["app"]["path"] is None
+    assert output_data["qupath"]["app"]["version"] is None
+    assert result.exit_code == 0
 
     # Step 2: Check QuPath install succeeds
     result = runner.invoke(cli, ["qupath", "install"])
-    assert "QuPath v0.6.0-rc5 installed successfully" in result.output.replace("\n", "")
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in result.output.replace("\n", "")
     assert result.exit_code == 0
 
     # Step 3: Check QuPath can now launch successfully
-    result = runner.invoke(cli, ["qupath", "info"])
-    assert '"version": "0.6.0-rc5"' in result.output.replace("\n", "")
+    result = runner.invoke(cli, ["system", "info"])
+    output_data = json.loads(result.output)
+    assert output_data["qupath"]["app"]["path"] is not None
+    assert output_data["qupath"]["app"]["version"]["version"] == QUPATH_VERSION
     assert result.exit_code == 0
 
     # Step 4: Check QuPath install succeeds (idempotent operation)
     result = runner.invoke(cli, ["qupath", "install"])
-    assert "QuPath v0.6.0-rc5 installed successfully" in result.output.replace("\n", "")
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in result.output.replace("\n", "")
     assert result.exit_code == 0
 
     # Step 5: Uninstall QuPath
@@ -103,11 +91,11 @@ def test_cli_install_and_launch_headless(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
     # Step 6: Check QuPath info fails if not installed
-    result = runner.invoke(cli, ["qupath", "info"])
-    assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in result.output.replace(
-        "\n", ""
-    )
-    assert result.exit_code == 2
+    result = runner.invoke(cli, ["system", "info"])
+    output_data = json.loads(result.output)
+    assert output_data["qupath"]["app"]["path"] is None
+    assert output_data["qupath"]["app"]["version"] is None
+    assert result.exit_code == 0
 
     # Step 7: Reinstall QuPath if it was installed before
     if was_installed:
@@ -133,7 +121,7 @@ def test_cli_install_and_launch_ui(runner: CliRunner) -> None:
 
     # Step 2: Check QuPath install succeeds
     result = runner.invoke(cli, ["qupath", "install"])
-    assert "QuPath v0.6.0-rc5 installed successfully" in result.output.replace("\n", "")
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in result.output.replace("\n", "")
     assert result.exit_code == 0
 
     # Step 3: Check QuPath can now launch successfully
@@ -156,7 +144,7 @@ def test_cli_install_and_launch_ui(runner: CliRunner) -> None:
 
     # Step 4: Check QuPath install succeeds (idempotent operation)
     result = runner.invoke(cli, ["qupath", "install"])
-    assert "QuPath v0.6.0-rc5 installed successfully" in result.output.replace("\n", "")
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in result.output.replace("\n", "")
     assert result.exit_code == 0
 
     # Step 5: Uninstall QuPath

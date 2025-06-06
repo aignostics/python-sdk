@@ -38,6 +38,12 @@ class OpaqueSettings(BaseSettings):
             return input_value.get_secret_value()
         return str(input_value)
 
+    @staticmethod
+    def serialize_path_resolve(input_value: Path, _info: FieldSerializationInfo) -> str | None:
+        if not input_value:
+            return None
+        return str(input_value.resolve())
+
 
 def load_settings(settings_class: type[T]) -> T:
     """

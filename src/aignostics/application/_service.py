@@ -15,6 +15,7 @@ import requests
 from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
+from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -154,13 +155,13 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self) -> dict[str, Any]:  # noqa: PLR6301
+    def info(self) -> dict[str, Any]:
         """Determine info of this service.
 
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {}
+        return {"settings": self._settings.model_dump()}
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
@@ -350,7 +351,7 @@ class Service(BaseService):
         """Generate metadata from the source directory.
 
         Steps:
-        1. Recursively files ending with .tiff, .tif, .svs and .dcm in the source directory
+        1. Recursively files ending with supported extensions in the source directory
         2. Creates a dict with the following columns
             - reference (str): The reference of the file, by default equivalent to the absolute file name
             - source (str): The absolute filename
@@ -385,10 +386,9 @@ class Service(BaseService):
         application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)  # noqa: F841
 
         metadata = []
-        file_extensions = [".tiff", ".tif", ".svs", ".dcm"]
 
         try:
-            for extension in file_extensions:
+            for extension in list(WSI_SUPPORTED_FILE_EXTENSIONS):
                 for file_path in source_directory.glob(f"**/*{extension}"):
                     # Generate CRC32C checksum with google_crc32c and encode as base64
                     hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]

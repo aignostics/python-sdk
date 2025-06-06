@@ -24,13 +24,13 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self) -> dict[str, Any]:  # noqa: PLR6301
+    def info(self) -> dict[str, Any]:
         """Determine info of this service.
 
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {}
+        return {"settings": self._settings.model_dump()}
 
     def _determine_api_public_health(self) -> Health:
         """Determine healthiness and reachability of Aignostics Platform API.
