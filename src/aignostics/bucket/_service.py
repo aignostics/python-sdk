@@ -28,13 +28,13 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)
 
-    def info(self) -> dict[str, Any]:  # noqa: PLR6301
+    def info(self) -> dict[str, Any]:
         """Determine info of this service.
 
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {}
+        return {"settings": self._settings.model_dump()}
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
@@ -97,7 +97,7 @@ class Service(BaseService):
         url = self._get_s3_client().generate_presigned_url(
             ClientMethod="put_object",
             Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
-            ExpiresIn=3600,
+            ExpiresIn=self._settings.upload_signed_url_expiration_seconds,
         )
         return cast("str", url)
 
@@ -163,7 +163,7 @@ class Service(BaseService):
         url = self._get_s3_client().generate_presigned_url(
             ClientMethod="get_object",
             Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
-            ExpiresIn=3600,
+            ExpiresIn=self._settings.download_signed_url_expiration_seconds,
         )
         return cast("str", url)
 

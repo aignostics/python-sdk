@@ -34,7 +34,7 @@ class OpaqueSettings(BaseSettings):
     def serialize_sensitive_info(input_value: SecretStr, info: FieldSerializationInfo) -> str | None:
         if not input_value:
             return None
-        if info.context.get(UNHIDE_SENSITIVE_INFO, False):  # type: ignore
+        if info.context and info.context.get(UNHIDE_SENSITIVE_INFO, False):
             return input_value.get_secret_value()
         return str(input_value)
 

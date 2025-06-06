@@ -1,4 +1,4 @@
-"""Tests to verify the CLI functionality of the system module."""
+"""Tests to verify the CLI functionality of the dataset module."""
 
 import logging
 import re

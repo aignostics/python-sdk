@@ -1,4 +1,4 @@
-"""Tests to verify the GUI functionality of the idc module."""
+"""Tests to verify the GUI functionality of the dataset module."""
 
 from asyncio import sleep
 from pathlib import Path
