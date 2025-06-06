@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.34..0.2.36) - 2025-06-05
+(https://github.com/aignostics/python-sdk/compare/v0.2.34..v0.2.36) - 2025-06-05
 
 
 - Generate - ([9021d73](https://github.com/aignostics/python-sdk/commit/9021d73dfdd6ff3e85cc17f633bddbf2f5c4170d))
@@ -156,3 +156,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
