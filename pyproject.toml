@@ -93,7 +93,7 @@ dependencies = [
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
-    "boto3>=1.38.30",
+    "boto3>=1.38.33",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "google-cloud-storage>=2.12.0",
@@ -119,7 +119,7 @@ dependencies = [
     # "pywebview[qt6]>=5.4; sys_platform == 'linux'",
     # idc-index
     "click",
-    'duckdb>=0.10.0,<=1.2.1',
+    'duckdb>=0.10.0,<=1.4.0',
     "idc-index-data==21.0.0",
     "packaging",
     "pandas<=2.3.0",
@@ -214,8 +214,8 @@ allow-direct-references = true
 
 [tool.uv]
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
-    "h11>=0.16.0",                      # CVE-2025-47287
     "rfc3987; sys_platform == 'never'", # GPLv3
+    "h11>=0.16.0",                      # CVE-2025-43859
     "tornado>=6.5.0",                   # CVE-2025-47287
     "jupyter-core>=5.8.1",              # CVE-2025-30167
 ]
