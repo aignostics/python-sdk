@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.43..0.2.44) - 2025-06-09
+(https://github.com/aignostics/python-sdk/compare/v0.2.43..v0.2.44) - 2025-06-09
 
 
 - Encoding for win32 on package publish - ([dce9f28](https://github.com/aignostics/python-sdk/commit/dce9f28094b9315b395ef81d39f29fa4a303bb68))
