@@ -1,5 +1,11 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+(https://github.com/aignostics/python-sdk/compare/v0.2.41..0.2.42) - 2025-06-09
+
+
+- Release workflow - ([ccaef74](https://github.com/aignostics/python-sdk/commit/ccaef740ed807288ebb9b705af0cd160635949cb))
+
+
 (https://github.com/aignostics/python-sdk/compare/v0.2.39..v0.2.40) - 2025-06-09
 
 
