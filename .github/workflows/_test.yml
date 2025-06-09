@@ -3,10 +3,32 @@ name: "Test"
 on:
   workflow_call:
     # No inputs needed at this time
+  
+env:
+  # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
+  PYTHONIOENCODING: "utf8"
 
 jobs:
+
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest]
+        experimental: [false]
+        include:
+          - runner: ubuntu-24.04-arm
+            experimental: true
+          - runner: macos-latest
+            experimental: true
+          - runner: macos-13
+            experimental: true
+          - runner: windows-latest
+            experimental: true
+          - runner: windows-11-arm
+            experimental: true
     permissions:
       attestations: write
       contents: read
@@ -26,10 +48,12 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Install dev tools
+        if: ${{ matrix.runner == 'ubuntu-latest' || matrix.runner == 'ubuntu-24.04-arm' }}
         shell: bash
         run: .github/workflows/_install_dev_tools.bash
 
       - name: Install Python, venv and dependencies
+        shell: bash
         run: uv sync --all-extras --frozen --link-mode=copy
 
       # Need xdisplay for testing QuPath app integration
@@ -38,6 +62,7 @@ jobs:
   
       - name: Release version check
         if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
         run: |
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
@@ -48,6 +73,7 @@ jobs:
 
       - name: Print development version info
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        shell: bash
         run: |
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
@@ -67,11 +93,13 @@ jobs:
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access
+        shell: bash
         run: |
           echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Validate installation
+        shell: bash
         run: |
             OUTPUT=$(uv run --no-dev aignostics --help)
             if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
@@ -80,14 +108,16 @@ jobs:
             fi
 
       - name: Smoke tests
+        shell: bash
         run: |
           uv run --no-dev aignostics --help
           uv run --all-extras aignostics system info
           uv run --all-extras aignostics system health
           uv run --all-extras aignostics application list
           uv run --all-extras aignostics application run list --verbose --limit 1
-      
+
       - name: Test / regular
+        shell: bash
         run: |
           set +e
           make test
@@ -116,6 +146,7 @@ jobs:
           exit $EXIT_CODE
 
       - name: Test / long running
+        shell: bash
         run: |
           set +e
           make test_long_running
@@ -142,12 +173,12 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           exit $EXIT_CODE
-      
+
       - name: Upload test results
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:
-          name: test-results
+          name: test-results-${{ matrix.runner }}
           path: |
             reports/mypy_junit.xml
             reports/junit.xml
@@ -155,23 +186,23 @@ jobs:
             reports/coverage.md
             reports/coverage_html
             aignostics.log
-          retention-days: 30
+          retention-days: 7
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: aignostics/python-sdk
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
         uses: codecov/test-results-action@f2dba722c67b86c6caa034178c6e4d35335f6706 # v1.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: SonarQube Scan
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
         uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d # v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

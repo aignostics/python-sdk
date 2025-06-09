@@ -1,8 +1,9 @@
 """Logfire integration for logging and instrumentation."""
 
+import os
+from importlib.util import find_spec
 from typing import Annotated
 
-import logfire
 from pydantic import BeforeValidator, Field, PlainSerializer, SecretStr
 from pydantic_settings import SettingsConfigDict
 
@@ -52,8 +53,11 @@ def logfire_initialize(modules: list["str"]) -> bool:
     """
     settings = load_settings(LogfireSettings)
 
-    if not settings.enabled or settings.token is None:
+    if not find_spec("logfire") or not settings.enabled or settings.token is None:
+        os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
         return False
+
+    import logfire  # noqa: PLC0415
 
     logfire.configure(
         send_to_logfire="if-token-present",

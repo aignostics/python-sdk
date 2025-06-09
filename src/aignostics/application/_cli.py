@@ -9,8 +9,7 @@ import typer
 
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException
-from aignostics.system import Service as SystemService
-from aignostics.utils import console, get_logger
+from aignostics.utils import console, get_logger, get_user_data_directory
 
 from ._service import DownloadProgress, DownloadProgressState, Service
 from ._utils import (
@@ -300,7 +299,7 @@ def run_prepare(
 ) -> None:
     """Prepare metadata CSV file required for submitting a run.
 
-    (1) Scans source_directory for whole slide images (.tif, .tiff and .dcm.
+    (1) Scans source_directory for whole slide images.
     (2) Extracts metadata from whole slide images such as width, height, mpp.
     (3) Creates CSV file with columns as required by the given application version.
     (4) Optionally applies mappings to amend the metadata CSV file for columns
@@ -552,7 +551,7 @@ def result_download(  # noqa: PLR0913, PLR0917
             readable=True,
             resolve_path=True,
         ),
-    ] = SystemService.get_user_data_directory("results"),  # noqa: B008
+    ] = get_user_data_directory("results"),  # noqa: B008
     create_subdirectory_for_run: Annotated[
         bool,
         typer.Option(

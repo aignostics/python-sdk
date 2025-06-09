@@ -2,7 +2,7 @@
 
 import os
 
-from .constants import MODULES_TO_INSTRUMENT
+from .constants import MODULES_TO_INSTRUMENT, WSI_SUPPORTED_FILE_EXTENSIONS
 from .utils.boot import boot
 
 # Add scheme to HTTP proxy environment variables if missing
@@ -12,3 +12,5 @@ for proxy_var in ["HTTP_PROXY", "HTTPS_PROXY"]:
         os.environ[proxy_var] = f"http://{proxy_url}"
 
 boot(modules_to_instrument=MODULES_TO_INSTRUMENT)
+
+__all__ = ["WSI_SUPPORTED_FILE_EXTENSIONS"]

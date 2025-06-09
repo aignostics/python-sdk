@@ -6,15 +6,13 @@ import warnings
 from pathlib import Path
 
 from ._log import logging_initialize
-from ._logfire import logfire_initialize
-from ._sentry import sentry_initialize
 
 _boot_called = False
 
-# Import vendored dependencies
-vendored_dir = Path(__file__).parent.absolute() / ".vendored"
-if vendored_dir.is_dir() and str(vendored_dir) not in sys.path:
-    sys.path.insert(0, str(vendored_dir))
+# Import third party dependencies
+third_party_dir = Path(__file__).parent.absolute() / ".." / "third_party"
+if third_party_dir.is_dir() and str(third_party_dir) not in sys.path:
+    sys.path.insert(0, str(third_party_dir))
 
 warnings.filterwarnings(action="ignore", category=SyntaxWarning, module="showinfm")
 
@@ -31,8 +29,16 @@ def boot(modules_to_instrument: list[str]) -> None:
     if _boot_called:
         return
     _boot_called = True
+
+    from ._sentry import sentry_initialize  # noqa: PLC0415
+
     sentry_initialize()
+
+    log_to_logfire = False
+    from ._logfire import logfire_initialize  # noqa: PLC0415
+
     log_to_logfire = logfire_initialize(modules_to_instrument)
+
     logging_initialize(log_to_logfire)
     _amend_library_path()
     _parse_env_args()

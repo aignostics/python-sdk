@@ -6,11 +6,13 @@ from contextlib import contextmanager
 from importlib.util import find_spec
 from typing import Any
 
-from aignostics.utils import __version__
+from aignostics.utils import __version__, open_user_data_directory
 
 from ._theme import theme
 
 FLAT_COLOR_WHITE = "flat color=white"
+
+HEALTH_UPDATE_INTERVAL = 30
 
 
 @contextmanager
@@ -69,7 +71,7 @@ def frame(  # noqa: C901, PLR0915
     async def _health_load_and_render() -> None:
         nonlocal launchpad_healthy
         with contextlib.suppress(Exception):
-            launchpad_healthy = bool(await run.io_bound(SystemService.health_static))
+            launchpad_healthy = bool(await run.cpu_bound(SystemService.health_static))
         health_icon.refresh()
         health_link.refresh()
 
@@ -80,7 +82,7 @@ def frame(  # noqa: C901, PLR0915
         )
         ui.run_javascript("document.getElementById('betterstack').src = document.getElementById('betterstack').src;")
 
-    ui.timer(interval=60, callback=_update_health, immediate=True)
+    ui.timer(interval=HEALTH_UPDATE_INTERVAL, callback=_update_health, immediate=True)
 
     # Set background color based on dark mode
     ui.query("body").classes(
@@ -121,9 +123,7 @@ def frame(  # noqa: C901, PLR0915
             icon="dark_mode",
         ).set_visibility(False)
 
-        ui.button(icon="folder_special", on_click=lambda _: SystemService.open_user_data_directory()).props(
-            "flat color=purple-400"
-        )
+        ui.button(icon="folder_special", on_click=lambda _: open_user_data_directory()).props("flat color=purple-400")
         ui.tooltip("Open data directory of Launchpad")
 
         with ui.link(target="https://aignostics.readthedocs.org/", new_tab=True):
@@ -158,7 +158,7 @@ def frame(  # noqa: C901, PLR0915
                     )
         ui.space()
         with ui.list():
-            if find_spec("paquo"):
+            if find_spec("ijson"):
                 with ui.item(on_click=lambda _: ui.navigate.to("/qupath")).props("clickable"):
                     with ui.item_section().props("avatar"):
                         ui.icon("visibility", color="primary")

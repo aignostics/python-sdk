@@ -3,13 +3,11 @@
 import contextlib
 import logging as python_logging
 import os
-import typing as t
-from logging import FileHandler
+from logging import Handler
 from pathlib import Path
 from typing import Annotated, Literal
 
 import click
-import logfire
 from pydantic import AfterValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
@@ -55,12 +53,14 @@ def _validate_file_name(file_name: str | None) -> str | None:
 
     file_path = Path(file_name)
     if file_path.exists():
-        if not file_path.is_file() and not file_path.is_symlink():
-            message = f"File name {file_path.absolute()} is not a file or symlink"
+        if file_path.is_dir():
+            message = f"File name {file_path.absolute()} exists but is a directory"
             raise ValueError(message)
         if not os.access(file_path, os.W_OK):
-            message = f"File {file_path.absolute()} is not writable"
-            raise ValueError(message)
+            if file_path.exists():
+                message = f"File {file_path.absolute()} is not writable"
+                raise ValueError(message)
+            return file_name  # This was a race condition, file was deleted in the meantime
     else:
         try:
             file_path.touch(exist_ok=True)
@@ -127,7 +127,7 @@ def logging_initialize(log_to_logfire: bool = False) -> None:
     """Initialize logging configuration."""
     log_filter = CustomFilter()
 
-    handlers = []
+    handlers: list[Handler] = []
 
     settings = load_settings(LogSettings)
 
@@ -154,13 +154,20 @@ def logging_initialize(log_to_logfire: bool = False) -> None:
             enable_link_path=True,
         )
         rich_handler.addFilter(log_filter)
-        handlers.append(t.cast("FileHandler", rich_handler))
+        handlers.append(rich_handler)
 
     if log_to_logfire:
-        logfire_handler = logfire.LogfireLoggingHandler()
-        logfire_handler.addFilter(log_filter)
-        handlers.append(t.cast("FileHandler", logfire_handler))
+        from importlib.util import find_spec  # noqa: PLC0415
 
+        if find_spec("logfire"):
+            import logfire  # noqa: PLC0415
+
+            logfire_handler = logfire.LogfireLoggingHandler()
+            logfire_handler.addFilter(log_filter)
+            handlers.append(logfire_handler)
+
+    if not handlers:
+        handlers = [python_logging.NullHandler()]
     python_logging.basicConfig(
         level=settings.level,
         format="%(name)s %(message)s",

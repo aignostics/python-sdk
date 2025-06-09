@@ -5,8 +5,75 @@ on:
     # No inputs needed at this time
 
 jobs:
+
+  build_native:
+
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest]
+        experimental: [false]
+        include:
+          - runner: ubuntu-24.04-arm
+            experimental: true
+          - runner: macos-latest
+            experimental: true
+          - runner: macos-13
+            experimental: true
+          - runner: windows-latest
+            experimental: true
+          - runner: windows-11-arm
+            experimental: true
+
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
+        with:
+          version: "0.6.3"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install Python, venv and dependencies
+        shell: bash
+        run: uv sync --all-extras --frozen --link-mode=copy
+
+      - name: Validate installation
+        shell: bash
+        run: |
+            OUTPUT=$(uv run --all-extras --no-dev aignostics --help)
+            if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
+            echo "Output does not contain 'built with love in Berlin'"
+            exit 1
+            fi
+
+      - name: Build native distribution into dist_native/
+        shell: bash
+        run: make dist_native
+
+      - name: Upload dist_native artifacts
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        with:
+          name: dist_native-${{ matrix.runner }}
+          path: dist_native/
+          retention-days: 1
+
   package_publish:
     runs-on: ubuntu-latest
+    needs: build_native
     permissions:
       contents: write
       packages: read
@@ -27,7 +94,15 @@ jobs:
         shell: bash
         run: .github/workflows/_install_dev_tools.bash
 
+      - name: Download native distribution artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          pattern: dist_native-*
+          path: dist_native_all/
+          merge-multiple: true
+
       - name: Docs
+        shell: bash
         run: make docs
 
       - name: Generate release notes
@@ -41,29 +116,35 @@ jobs:
           GITHUB_REPO: ${{ github.repository }}
 
       - name: Print the release notes
+        shell: bash
         run: cat "${{ steps.git-cliff.outputs.changelog }}"
 
       - name: Build distribution into dist/
+        shell: bash
         run: make dist
 
 
       - name: Publish distribution to Python Package Index at pypi.org
+        shell: bash
         run: uv publish -t ${{ secrets.UV_PUBLISH_TOKEN }}
 
 
       - name: Have audit checks publish to reports/ for auditing
+        shell: bash
         run: make audit
 
       - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          gh release create ${{ github.ref_name }} ./dist/* ./reports/* \
+          gh release create ${{ github.ref_name }} ./dist/* ./reports/* ./dist_native_all/* \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
       - name: Allow other workflows to trigger on release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           gh api repos/aignostics/python-sdk/dispatches \
             -f event_type=release_created_programatically

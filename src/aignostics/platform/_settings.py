@@ -6,7 +6,15 @@ from pathlib import Path
 from typing import Annotated, TypeVar
 
 import appdirs
-from pydantic import Field, PlainSerializer, SecretStr, computed_field, model_validator
+from pydantic import (
+    Field,
+    FieldSerializationInfo,
+    PlainSerializer,
+    SecretStr,
+    computed_field,
+    field_serializer,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from aignostics.utils import OpaqueSettings, __project_name__, load_settings
@@ -47,22 +55,22 @@ class Settings(OpaqueSettings):
     client credentials, token storage, and other SDK behaviors.
 
     Attributes:
+        api_root (str): Base URL of the Aignostics API.
+        audience (str): OAuth audience claim.
+        authorization_backoff_seconds (int): Backoff time for authorization retries in seconds.
+        authorization_base_url (str): Authorization endpoint for OAuth flows.
+        cache_dir (str): Directory for caching tokens and other data.
         client_id_device (SecretStr): Client ID for device authorization flow.
         client_id_interactive (SecretStr): Client ID for interactive authorization flow.
-        api_root (str): Base URL of the Aignostics API.
-        scope (str): OAuth scopes required by the SDK.
-        scope_elements (list[str]): OAuth scopes split into individual elements.
-        audience (str): OAuth audience claim.
-        authorization_base_url (str): Authorization endpoint for OAuth flows.
-        token_url (str): Token endpoint for OAuth flows.
-        redirect_uri (str): Redirect URI for OAuth authorization code flow.
         device_url (str): Device authorization endpoint for device flow.
         jws_json_url (str): URL for JWS key set.
+        redirect_uri (str): Redirect URI for OAuth authorization code flow.
         refresh_token (SecretStr | None): OAuth refresh token if available.
-        cache_dir (str): Directory for caching tokens and other data.
-        token_file (Path): Path to the token storage file.
         request_timeout_seconds (int): Timeout for API requests in seconds.
-        authorization_backoff_seconds (int): Backoff time for authorization retries in seconds.
+        scope (str): OAuth scopes required by the SDK.
+        scope_elements (list[str]): OAuth scopes split into individual elements.
+        token_file (Path): Path to the token storage file.
+        token_url (str): Token endpoint for OAuth flows.
     """
 
     model_config = SettingsConfigDict(
@@ -117,7 +125,13 @@ class Settings(OpaqueSettings):
     device_url: str
     jws_json_url: str
 
-    refresh_token: SecretStr | None = None
+    refresh_token: Annotated[
+        SecretStr | None,
+        PlainSerializer(
+            func=OpaqueSettings.serialize_sensitive_info, return_type=str, when_used="always"
+        ),  # allow to unhide sensitive info from CLI or if user presents valid token via API
+        Field(description="Refresh token for OAuth authentication", min_length=10, max_length=1000, default=None),
+    ] = None
 
     cache_dir: str = appdirs.user_cache_dir(__project_name__)
 
@@ -130,6 +144,10 @@ class Settings(OpaqueSettings):
             Path: The path to the file where the authentication token is stored.
         """
         return Path(self.cache_dir) / ".token"
+
+    @field_serializer("token_file")
+    def serialize_token_file(self, token_file: Path, _info: FieldSerializationInfo) -> str:  # noqa: PLR6301
+        return str(token_file.resolve())
 
     request_timeout_seconds: int = 30
     authorization_backoff_seconds: int = 3

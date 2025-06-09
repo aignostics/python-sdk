@@ -1,7 +1,7 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all act audit bump clean dist docs docker_build install lint pre_commit_run_all profile setup setup test test_coverage_reset test_long_running test_scheduled test_sequential update_from_template gui_watch
+.PHONY: all act audit bump clean dist dist_native docs docker_build install lint pre_commit_run_all profile setup setup test test_coverage_reset test_long_running test_scheduled test_sequential update_from_template gui_watch
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
@@ -61,6 +61,7 @@ clean:
 	rm -rf .venv
 	rm -rf dist && mkdir -p dist && touch dist/.keep
 	rm -rf dist_vercel/wheels && mkdir -p dist_vercel/wheels && touch dist_vercel/wheels/.keep
+	rm -rf dist_native && mkdir -p dist_native && touch dist_native/.keep
 	rm -rf .coverage
 	rm -rf reports && mkdir -p reports && touch reports/.keep
 	uv run make -C docs clean
@@ -78,6 +79,12 @@ gui_watch:
 
 profile:
 	uv run --all-extras python -m scalene runner/scalene.py
+
+# Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
+dist_native:
+	uv sync --no-dev --all-extras
+	uv run pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
+	uv sync --all-extras
 
 # Project specific targets
 ## codegen
@@ -113,6 +120,7 @@ help:
 	@echo "  clean                 - Clean build artifacts and caches"
 	@echo "  codegen               - Generate API code"
 	@echo "  dist                  - Build wheel and sdist into dist/"
+	@echo "  dist_native		   - Build native app variant of Aignostics Launchpad into dist/native/
 	@echo "  docs [pdf]            - Build documentation (add pdf for PDF format)"
 	@echo "  docker_build          - Build Docker image aignostics"
 	@echo "  gui_watch             - Open GUI in browser and update on changes in source code"

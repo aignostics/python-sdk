@@ -1,4 +1,4 @@
-"""Tests of the idc service."""
+"""Tests of the dataset service."""
 
 import subprocess
 from unittest import mock

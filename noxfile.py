@@ -25,11 +25,13 @@ PYTHON_VERSION = "3.13"
 TEST_PYTHON_VERSIONS = ["3.11", "3.12", "3.13"]
 
 
-def _setup_venv(session: nox.Session, all_extras: bool = True) -> None:
+def _setup_venv(session: nox.Session, all_extras: bool = True, no_dev: bool = False) -> None:
     """Install dependencies for the given session using uv."""
     args = ["uv", "sync", "--frozen"]
     if all_extras:
         args.append("--all-extras")
+    if no_dev:
+        args.append("--no-dev")
     session.run_install(
         *args,
         env={
@@ -77,7 +79,7 @@ def lint(session: nox.Session) -> None:
 @nox.session(python=[PYTHON_VERSION])
 def audit(session: nox.Session) -> None:
     """Run security audit and license checks."""
-    _setup_venv(session, True)
+    _setup_venv(session)
 
     # pip-audit to check for vulnerabilities
     session.run("pip-audit", "-f", "json", "-o", "reports/vulnerabilities.json")
@@ -92,6 +94,11 @@ def audit(session: nox.Session) -> None:
         "--with-url",
         "--with-description",
     ]
+
+    pip_licenses_base_args.extend([
+        "--ignore-packages",
+        "pyinstaller",  # https://pyinstaller.org/en/stable/license.html
+    ])
 
     # Filter by .license-types-allowed file if it exists
     allowed_licenses = []

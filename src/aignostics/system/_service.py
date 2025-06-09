@@ -3,6 +3,7 @@
 import json
 import os
 import platform
+import re
 import sys
 import typing as t
 from http import HTTPStatus
@@ -11,12 +12,10 @@ from socket import AF_INET, SOCK_DGRAM, socket
 from typing import Any, NotRequired, TypedDict
 from urllib.request import getproxies
 
-import appdirs
 from dotenv import set_key as dotenv_set_key
 from dotenv import unset_key as dotenv_unset_key
 from pydantic_settings import BaseSettings
 from requests import get
-from showinfm.showinfm import show_in_file_manager
 
 from ..utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
@@ -24,7 +23,6 @@ from ..utils import (  # noqa: TID252
     Health,
     __env__,
     __env_file__,
-    __is_running_in_read_only_environment__,
     __project_name__,
     __project_path__,
     __repository_url__,
@@ -197,7 +195,56 @@ class Service(BaseService):
             return None
 
     @staticmethod
-    def info(include_environ: bool = False, filter_secrets: bool = True) -> dict[str, Any]:
+    def _is_secret_key(key: str) -> bool:
+        """Determine if a key name indicates it contains secret information.
+
+        This function uses two different matching strategies:
+        1. Word boundary matching for terms like "id" and "auth" to avoid false positives
+        2. Simple string matching for unambiguous secret terms like "token", "key", "secret", "password"
+
+        Args:
+            key: The key name to check
+
+        Returns:
+            bool: True if the key likely contains secret information
+        """
+        key_lower = key.lower()
+
+        # Terms that require word boundary matching to avoid false positives
+        # (e.g., "id" shouldn't match "valid" or "middle")
+        word_boundary_terms = ["id"]
+
+        # Terms that can use simple string matching as they're unambiguous
+        string_match_terms = [
+            "auth",
+            "bearer",
+            "cert",
+            "credential",
+            "hash",
+            "jwt",
+            "key",
+            "nonce",
+            "oauth",
+            "password",
+            "private",
+            "salt",
+            "secret",
+            "seed",
+            "session",
+            "signature",
+            "token",
+        ]
+
+        # Check word boundary terms using regex
+        for term in word_boundary_terms:
+            # Use regex to match word boundaries (non-alphanumeric characters)
+            pattern = rf"(?:^|[^a-zA-Z]){re.escape(term)}(?:[^a-zA-Z]|$)"
+            if re.search(pattern, key_lower):
+                return True  # Check simple string match terms
+        return any(term in key_lower for term in string_match_terms)
+
+    @staticmethod
+    def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:
         """
         Get info about configuration of service.
 
@@ -206,6 +253,10 @@ class Service(BaseService):
             Pydantic BaseSettings in this package.
         - Info exposed by implementations of BaseService in other modules is
             automatically included into the info dict.
+
+        Args:
+            include_environ (bool): Whether to include environment variables in the info.
+            mask_secrets (bool): Whether to mask information in environment variables identified as secrets
 
         Returns:
             dict[str, Any]: Service configuration.
@@ -218,6 +269,11 @@ class Service(BaseService):
         swap = psutil.swap_memory()
         cpu_percent = psutil.cpu_percent(interval=MEASURE_INTERVAL_SECONDS)
         cpu_times_percent = psutil.cpu_times_percent(interval=MEASURE_INTERVAL_SECONDS)
+        cpu_freq = None
+        try:
+            cpu_freq = psutil.cpu_freq()
+        except RuntimeError:
+            logger.warning("Failed to get CPU frequency.")  # Happens on macOS VM on GHA
 
         rtn: InfoDict = {
             "package": {
@@ -252,9 +308,9 @@ class Service(BaseService):
                             "processor": platform.processor(),
                             "count": os.cpu_count(),
                             "frequency": {
-                                "current": psutil.cpu_freq().max,
-                                "min": psutil.cpu_freq().max,
-                                "max": psutil.cpu_freq().max,
+                                "current": cpu_freq.current if cpu_freq else None,
+                                "min": cpu_freq.min if cpu_freq else None,
+                                "max": cpu_freq.max if cpu_freq else None,
                             },
                         },
                         "memory": {
@@ -296,17 +352,9 @@ class Service(BaseService):
 
         runtime = rtn["runtime"]
         if include_environ:
-            if filter_secrets:
+            if mask_secrets:
                 runtime["environ"] = {
-                    k: v
-                    for k, v in sorted(os.environ.items())
-                    if not (
-                        "token" in k.lower()
-                        or "key" in k.lower()
-                        or "secret" in k.lower()
-                        or "password" in k.lower()
-                        or "auth" in k.lower()
-                    )
+                    k: "*********" if Service._is_secret_key(k) else v for k, v in sorted(os.environ.items())
                 }
             else:
                 runtime["environ"] = dict(sorted(os.environ.items()))
@@ -316,7 +364,7 @@ class Service(BaseService):
             settings_instance = load_settings(settings_class)
             env_prefix = settings_instance.model_config.get("env_prefix", "")
             settings_dict = json.loads(
-                settings_instance.model_dump_json(context={UNHIDE_SENSITIVE_INFO: not filter_secrets})
+                settings_instance.model_dump_json(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})
             )
             for key, value in settings_dict.items():
                 flat_key = f"{env_prefix}{key}".upper()
@@ -351,37 +399,6 @@ class Service(BaseService):
                 return json.load(f)  # type: ignore[no-any-return]
         except (FileNotFoundError, json.JSONDecodeError) as e:
             raise OpenAPISchemaError(e) from e
-
-    @staticmethod
-    def get_user_data_directory(scope: str | None = None) -> Path:
-        """Get the data directory for the service. Directory created if it does not exist.
-
-        Args:
-            scope (str | None): Optional scope for the data directory.
-
-        Returns:
-            Path: The data directory path.
-        """
-        directory = Path(appdirs.user_data_dir(__project_name__))
-        if scope:
-            directory /= scope
-        if not __is_running_in_read_only_environment__:
-            directory.mkdir(parents=True, exist_ok=True)
-        return directory
-
-    @staticmethod
-    def open_user_data_directory(scope: str | None = None) -> Path:
-        """Open the user data directory in the file manager of the respective system platform.
-
-        Args:
-            scope (str | None): Optional scope for the data directory.
-
-        Returns:
-            Path: The data directory path.
-        """
-        directory = Service.get_user_data_directory(scope)
-        show_in_file_manager(str(directory))
-        return directory
 
     @staticmethod
     def _get_env_files_paths() -> list[Path]:

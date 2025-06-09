@@ -6,7 +6,12 @@ from unittest.mock import patch
 import pytest
 
 from aignostics.utils import get_logger
-from aignostics.utils._fs import sanitize_path, sanitize_path_component
+from aignostics.utils._fs import (
+    get_user_data_directory,
+    open_user_data_directory,
+    sanitize_path,
+    sanitize_path_component,
+)
 
 log = get_logger(__name__)
 
@@ -23,7 +28,7 @@ def test_path_input_returns_path() -> None:
     input_path = Path("test/path")
     result = sanitize_path(input_path)
     assert isinstance(result, Path)
-    assert str(result) == "test/path"
+    assert str(result) == str(Path("test/path"))
 
 
 def test_colon_replacement_on_all_platforms() -> None:
@@ -215,3 +220,213 @@ def test_sanitize_path_uses_sanitize_path_component_for_non_drive_path() -> None
     with patch("platform.system", return_value="Windows"):
         result = sanitize_path("folder:name:with:colons")
         assert result == "folder_name_with_colons"
+
+
+# Tests for get_user_data_directory function
+def test_get_user_data_directory_without_scope(tmp_path) -> None:
+    """Test get_user_data_directory returns correct path without scope."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = get_user_data_directory()
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+
+def test_get_user_data_directory_with_scope(tmp_path) -> None:
+    """Test get_user_data_directory returns correct path with scope."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = get_user_data_directory("models")
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project" / "models")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+
+def test_get_user_data_directory_with_nested_scope(tmp_path) -> None:
+    """Test get_user_data_directory returns correct path with nested scope."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = get_user_data_directory("cache/models")
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project" / "cache" / "models")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+
+def test_get_user_data_directory_read_only_environment_no_mkdir(tmp_path) -> None:
+    """Test get_user_data_directory doesn't create directory in read-only environment."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", True),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = get_user_data_directory("cache")
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project" / "cache")
+        mock_mkdir.assert_not_called()
+
+
+def test_get_user_data_directory_empty_scope(tmp_path) -> None:
+    """Test get_user_data_directory handles empty scope string."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = get_user_data_directory("")
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+
+def test_get_user_data_directory_none_scope(tmp_path) -> None:
+    """Test get_user_data_directory handles None scope."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = get_user_data_directory(None)
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+
+# Tests for open_user_data_directory function
+def test_open_user_data_directory_without_scope(tmp_path) -> None:
+    """Test open_user_data_directory opens correct directory without scope."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+        patch("aignostics.utils._fs.show_in_file_manager") as mock_show_in_file_manager,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = open_user_data_directory()
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+        mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project"))
+
+
+def test_open_user_data_directory_with_scope(tmp_path) -> None:
+    """Test open_user_data_directory opens correct directory with scope."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+        patch("aignostics.utils._fs.show_in_file_manager") as mock_show_in_file_manager,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = open_user_data_directory("logs")
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project" / "logs")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+        mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project" / "logs"))
+
+
+def test_open_user_data_directory_with_nested_scope(tmp_path) -> None:
+    """Test open_user_data_directory opens correct directory with nested scope."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+        patch("aignostics.utils._fs.show_in_file_manager") as mock_show_in_file_manager,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = open_user_data_directory("cache/models")
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project" / "cache" / "models")
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+        mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project" / "cache" / "models"))
+
+
+def test_open_user_data_directory_read_only_environment(tmp_path) -> None:
+    """Test open_user_data_directory works in read-only environment."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", True),
+        patch("pathlib.Path.mkdir") as mock_mkdir,
+        patch("aignostics.utils._fs.show_in_file_manager") as mock_show_in_file_manager,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+
+        result = open_user_data_directory("data")
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project" / "data")
+        mock_mkdir.assert_not_called()  # Should not create directory in read-only environment
+        mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project" / "data"))
+
+
+def test_open_user_data_directory_show_in_file_manager_exception(tmp_path) -> None:
+    """Test open_user_data_directory handles show_in_file_manager exceptions gracefully."""
+    with (
+        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.__project_name__", "test_project"),
+        patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
+        patch("pathlib.Path.mkdir") as _mock_mkdir,
+        patch("aignostics.utils._fs.show_in_file_manager") as mock_show_in_file_manager,
+    ):
+        mock_user_data_dir.return_value = str(tmp_path / "test_project")
+        mock_show_in_file_manager.side_effect = Exception("File manager not available")
+
+        # The function should still return the path even if file manager fails
+        result = open_user_data_directory()
+
+        mock_user_data_dir.assert_called_once_with("test_project")
+        assert isinstance(result, Path)
+        assert str(result) == str(tmp_path / "test_project")

@@ -1,21 +1,16 @@
 """Tests to verify the CLI functionality of the bucket module."""
 
+import json
 import os
 import uuid
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from tests.conftest import normalize_output
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
-
-
-@pytest.fixture
-def runner() -> CliRunner:
-    """Provide a CLI test runner fixture."""
-    return CliRunner()
 
 
 def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0912, PLR0915
@@ -98,7 +93,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir1/file{i}.txt"
         else:
             file_path = f"{test_prefix}/dir2/file{i}.txt"
-        assert file_path in result.output
+        assert file_path in result.output.replace("\\\\", "\\")
 
     # Step 5: Delete the files one by one
     for i in range(1, 10):
@@ -110,7 +105,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir2/file{i}.txt"
         result = runner.invoke(cli, ["bucket", "delete", file_path])
         assert result.exit_code == 0
-        assert f"Deleted object with key '{file_path}'" in result.output
+        assert f"Deleted object with key '{file_path}'" in normalize_output(result.stdout)
 
     # Step 6: Verify the files are no longer found
     result = runner.invoke(cli, ["bucket", "find"])
@@ -122,13 +117,13 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir1/file{i}.txt"
         else:
             file_path = f"{test_prefix}/dir2/file{i}.txt"
-        assert file_path not in result.output
+        assert file_path not in normalize_output(result.stdout).replace("\\\\", "\\")
 
     # Step 7: Try to delete a file that doesn't exist
     non_existent_file = f"{test_prefix}/file1.txt"
     result = runner.invoke(cli, ["bucket", "delete", non_existent_file])
     assert result.exit_code == 0
-    assert f"Object with key '{non_existent_file}' not found" in result.output
+    assert f"Object with key '{non_existent_file}' not found" in normalize_output(result.stdout)
 
 
 def test_cli_bucket_purge(runner: CliRunner) -> None:
@@ -136,3 +131,21 @@ def test_cli_bucket_purge(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["bucket", "purge"])
     assert result.exit_code == 0
     assert MESSAGE_NOT_YET_IMPLEMENTED in result.output
+
+
+def test_cli_bucket_info_settings(runner: CliRunner) -> None:
+    """Check settings in system info with proper defaults."""
+    result = runner.invoke(cli, ["system", "info"])
+    assert result.exit_code == 0
+
+    # Parse the JSON output
+    output_data = json.loads(result.output)
+
+    # Verify the bucket settings defaults
+    assert output_data["bucket"]["settings"]["protocol"] == "gs"
+    assert output_data["bucket"]["settings"]["region_name"] == "EUROPE-WEST3"
+    assert output_data["bucket"]["settings"]["name"].startswith("aignostics-platform")
+    assert output_data["bucket"]["settings"]["upload_signed_url_expiration_seconds"] == 7200
+    assert output_data["bucket"]["settings"]["download_signed_url_expiration_seconds"] == 604800
+    assert output_data["bucket"]["settings"]["hmac_access_key_id"] == "**********"
+    assert output_data["bucket"]["settings"]["hmac_secret_access_key"] == "**********"  # noqa: S105

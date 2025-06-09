@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.34..0.2.36) - 2025-06-05
+(https://github.com/aignostics/python-sdk/compare/v0.2.38..0.2.39) - 2025-06-06
+
+
+- *(platform)* Refresh token repl - ([0ab8f66](https://github.com/aignostics/python-sdk/commit/0ab8f66b2b26cca7de13112ef1753267ec6f845d))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.34..v0.2.36) - 2025-06-05
 
 
 - Generate - ([9021d73](https://github.com/aignostics/python-sdk/commit/9021d73dfdd6ff3e85cc17f633bddbf2f5c4170d))
@@ -156,5 +162,3 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
-
-

@@ -9,8 +9,7 @@ from typing import Any
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
-from aignostics.system import Service as SystemService
-from aignostics.utils import GUILocalFilePicker, get_logger
+from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
 from .._service import Service  # noqa: TID252
 from .._utils import get_mime_type_for_artifact  # noqa: TID252
@@ -48,6 +47,8 @@ submit_form = SubmitForm()
 
 upload_message_queue = Manager().Queue()
 
+service = Service()
+
 
 async def _page_application_describe(application_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
     """Describe Application.
@@ -55,8 +56,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     Args:
         application_id (str): The application ID.
     """
-    service = Service()
-    application = service.application(application_id)
+    spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
+    application = await nicegui_run.io_bound(service.application, application_id)
+    spinner.set_visibility(False)
 
     if application is None:
         await _frame(
@@ -126,7 +128,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         from nicegui import ui  # noqa: PLC0415
 
         result = await GUILocalFilePicker(
-            str(SystemService.get_user_data_directory("datasets") if data else Path.home()), multiple=False
+            str(get_user_data_directory("datasets") if data else Path.home()), multiple=False
         )  # type: ignore
         if result and len(result) > 0:
             path = Path(result[0])
@@ -201,6 +203,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 if submit_form.metadata_grid.options["rowData"] is None:
                     msg = "nicegui_run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
                     logger.error(msg)
+                    submit_form.wsi_next_button.set_visibility(True)
+                    submit_form.wsi_spinner.set_visibility(False)
                     raise RuntimeError(msg)  # noqa: TRY301
                 submit_form.wsi_next_button.set_visibility(True)
                 submit_form.wsi_spinner.set_visibility(False)
@@ -212,6 +216,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 )
                 stepper.next()
             except Exception as e:
+                logger.exception("Error generating metadata from source directory")
                 ui.notify(f"Error generating metadata: {e!s}", type="warning")
                 raise
         else:
@@ -385,6 +390,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 _upload_ui.refresh(submit_form.metadata)
                 submit_form.submission_upload_button.enable()
                 if "pytest" in sys.modules:
+                    message = f"Prepared upload UI with metadata '{submit_form.metadata}' for pytest."
+                    logger.debug(message)
                     ui.notify("Prepared upload UI.", type="info")
                 stepper.next()
 

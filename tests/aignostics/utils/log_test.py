@@ -1,5 +1,7 @@
 """Tests for logging configuration and utilities."""
 
+import logging
+import platform
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -59,17 +61,19 @@ def test_validate_file_name_existing_readonly() -> None:
 
 def test_validate_file_name_directory() -> None:
     """Test validation of a path that points to a directory."""
-    with tempfile.TemporaryDirectory() as temp_dir, pytest.raises(ValueError, match=r"is not a file"):
+    with tempfile.TemporaryDirectory() as temp_dir, pytest.raises(ValueError, match=r"exists but is a directory"):
         _validate_file_name(temp_dir)
 
 
+@pytest.mark.skipif(
+    platform.system() == "Windows",
+    reason="This test is designed for Unix-like systems where permissions can be set to non-writable.",
+)
 def test_validate_file_name_cannot_create() -> None:
     """Test validation of a file that cannot be created due to permissions."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir_path = Path(temp_dir)
-        # Make temp dir read-only
         temp_dir_path.chmod(0o555)
-
         try:
             test_file = temp_dir_path / "test_log.log"
             with pytest.raises(ValueError, match=r"cannot be created"):
@@ -125,4 +129,7 @@ def test_logging_initialize_with_defaults() -> None:
         mock_basic_config.assert_called_once()
         call_kwargs = mock_basic_config.call_args.kwargs
         assert call_kwargs["level"] == "INFO"
-        assert call_kwargs["handlers"] == []
+        # Check that handlers contains exactly one NullHandler
+        handlers = call_kwargs["handlers"]
+        assert len(handlers) == 1
+        assert isinstance(handlers[0], logging.NullHandler)

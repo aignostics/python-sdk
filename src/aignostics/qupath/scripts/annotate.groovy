@@ -7,15 +7,49 @@ import qupath.lib.objects.classes.PathClass
 import java.awt.Color
 import java.io.File
 
-def jsonPath = "/Users/helmut/Library/Application Support/aignostics/results/28b5b479-46da-4ee5-990e-ab0e200c7a40/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627/cell_classification_geojson_polygons.json"
+// Parse command line arguments
+if (args.length < 2) {
+    println("Usage: annotate.groovy <image_name> <geojson_path>")
+    println("Arguments provided: " + args.join(", "))
+    return
+}
 
-// Check if file exists
+def imageName = args[0]
+def jsonPath = args[1]
+
+println("Script arguments:")
+println("  Image name: " + imageName)
+println("  GeoJSON path: " + jsonPath)
+
+// Check we are in a project
+def project = getProject()
+if (project == null) {
+    println("No project found! Did you launch this script with -p?")
+    return
+}
+
+// Load the image data
+println("Looking for image: " + imageName)
+def imageEntry = project.getImageList().find { entry ->
+    entry.getImageName().contains(imageName)
+}
+if (imageEntry == null) {
+    println("Image not found in project. Available images:")
+    project.getImageList().each { entry ->
+        println("  - " + entry.getImageName())
+    }
+    return
+}
+println("Found image: " + imageEntry.getImageName())
+def imageData = imageEntry.readImageData()
+
+// Open the geojson
+println("Loading annotations from: " + jsonPath)
 def jsonFile = new File(jsonPath)
 if (!jsonFile.exists()) {
     println("File not found: " + jsonPath)
     return
 }
-
 def gson = GsonTools.getInstance(true)
 def json = jsonFile.text
 
@@ -24,7 +58,6 @@ def type = new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getTyp
 def geoJsonData = gson.fromJson(json, type)
 
 // Get current image plane
-def imageData = getCurrentImageData()
 def plane = ImagePlane.getDefaultPlane()
 
 // Create list for new objects
@@ -35,25 +68,25 @@ def features = geoJsonData.features
 features.each { feature ->
     def geometry = feature.geometry
     def properties = feature.properties ?: [:]
-    
+
     if (geometry.type == "Polygon") {
         // Get exterior ring coordinates and convert to Point2 objects
         def coordinates = geometry.coordinates[0]
         def points = coordinates.collect { coord ->
             return new Point2(coord[0] as double, coord[1] as double)
         }
-        
+
         // Create polygon ROI
         def roi = ROIs.createPolygonROI(points, plane)
-        
+
         // Create annotation object instead of detection
         def pathObject = PathObjects.createAnnotationObject(roi)
-        
+
         // Set classification if available
         if (properties.classification) {
             def className = properties.classification.name
             def colorArray = properties.classification.color
-            
+
             // Create PathClass with color
             def pathClass = PathClass.fromString(className)
             if (colorArray && colorArray.size() >= 3) {
@@ -62,18 +95,24 @@ features.each { feature ->
             }
             pathObject.setPathClass(pathClass)
         }
-        
+
         // Add other properties as metadata
         properties.each { key, value ->
             if (key != "classification") {
                 pathObject.getMetadata().put(key.toString(), value.toString())
             }
         }
-        
+
         newObjects.add(pathObject)
     }
 }
 
 // Add objects to hierarchy
-addObjects(newObjects)
+println("Adding annotations ...")
+imageData.getHierarchy().addObjects(newObjects)
 println("Added " + newObjects.size() + " annotations from GeoJSON")
+
+// Save image
+println("Saving image ...")
+imageEntry.saveImageData(imageData)
+println("Saved image.")

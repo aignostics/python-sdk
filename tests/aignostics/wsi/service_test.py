@@ -2,14 +2,11 @@
 
 import contextlib
 import http.server
-import logging
 import os
 import threading
-from collections.abc import Generator
 from io import BytesIO
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 from nicegui import app
 from nicegui.testing import User
@@ -18,20 +15,6 @@ from PIL import Image
 from aignostics.utils import gui_register_pages
 
 CONTENT_LENGTH_FALLBACK = 32066  # Fallback image size in bytes
-
-
-@pytest.fixture
-def silent_logging(caplog) -> Generator[None, None, None]:
-    """Suppress logging output during test execution.
-
-    Args:
-        caplog (pytest.LogCaptureFixture): The pytest fixture for capturing log messages.
-
-    Yields:
-        None: This fixture doesn't yield any value.
-    """
-    with caplog.at_level(logging.CRITICAL + 1):
-        yield
 
 
 def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
@@ -174,7 +157,7 @@ def _local_http_server(directory: Path) -> str:
             print("Warning: Server thread did not terminate within timeout")
 
 
-def test_serve_tiff_to_jpeg(user: User) -> None:
+def test_serve_tiff_to_jpeg(user: User, silent_logging) -> None:
     """Test that the tiff route serves the expected jpeg.
 
     - Spin up local webserver serving tests/resources/single-channel-ome.tiff

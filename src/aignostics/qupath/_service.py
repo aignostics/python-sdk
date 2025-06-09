@@ -1,7 +1,7 @@
 """Service of the QuPath module."""
 
 import contextlib
-import os
+import json
 import platform
 import queue
 import re
@@ -10,19 +10,19 @@ import subprocess
 import tarfile
 import tempfile
 import time
-import tomllib
 import zipfile
 from collections.abc import Callable
 from enum import StrEnum
-from importlib.resources import files
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import urlparse, urlsplit
 
 import appdirs
 import ijson
+import psutil
 import requests
 from packaging.version import Version
+from psutil import Process, wait_procs
 from pydantic import BaseModel, computed_field
 
 from aignostics.utils import BaseService, Health, __project_name__, get_logger
@@ -33,9 +33,8 @@ logger = get_logger(__name__)
 
 QUPATH_VERSION = "0.6.0-rc5"
 DOWNLOAD_CHUNK_SIZE = 10 * 1024 * 1024
-LAUNCH_MAX_WAIT_TIME = 60  # seconds, maximum wait time for QuPath to start
+QUPATH_LAUNCH_MAX_WAIT_TIME = 30  # seconds, maximum wait time for QuPath to start
 
-IMAGE_SUFFIXES = {".dcm", ".tiff", ".tif", ".svs"}
 PROJECT_FILENAME = "project.qpproj"
 ANNOTATIONS_BATCH_SIZE = 500000
 
@@ -81,8 +80,6 @@ class AddProgressState(StrEnum):
     """Enum for download progress states."""
 
     INITIALIZING = "Initializing ..."
-    CREATING_PROJECT = "Creating project ..."
-    FINDING_IMAGES = "Finding images ..."
     ADDING_IMAGES = "Adding images ..."
     COMPLETED = "Completed."
 
@@ -110,8 +107,6 @@ class AnnotateProgressState(StrEnum):
     """Enum for download progress states."""
 
     INITIALIZING = "Initializing ..."
-    OPENING_PROJECT = "Opening project ..."
-    FINDING_IMAGE = "Finding image ..."
     COUNTING = "Counting annotations ..."
     ANNOTATING = "Annotating image ..."
     COMPLETED = "Completed."
@@ -137,6 +132,68 @@ class AnnotateProgress(BaseModel):
         return min(1, float(self.annotation_index) / float(self.annotation_count))
 
 
+class QuPathImageHierarchy(BaseModel):
+    """Hierarchy information for a QuPath image."""
+
+    total: int
+    detections: int
+    annotations: int
+    has_root_object: bool
+
+
+class QuPathImage(BaseModel):
+    """Information about a single image in a QuPath project."""
+
+    id: str
+    name: str
+    description: str
+
+    unique_name: str
+    original_image_name: str
+    uris: list[str]
+
+    @computed_field  # type: ignore
+    @property
+    def path(self) -> str | None:
+        """Get the path to the image data.
+
+        Iterates over URIs and uses the first file URI found to extract the filename.
+
+        Returns:
+            Path: The path to the image data.
+        """
+        for uri in self.uris:
+            parsed_uri = urlparse(uri)
+            if parsed_uri.scheme == "file":
+                return str(Path(parsed_uri.path).resolve())
+        return None
+
+    height: int
+    width: int
+    downsample_levels: list[float]
+
+    num_channels: int
+    num_timepoints: int
+    num_zslices: int
+
+    hierarchy: QuPathImageHierarchy
+
+    entry_path: str
+    thumbnail_path: str
+    server_path: str
+    data_path: str
+    server_type: str
+    server_builder: str
+
+
+class QuPathProject(BaseModel):
+    """Information about a QuPath project."""
+
+    uri: str
+    version: str
+    images: list[QuPathImage]
+
+
 class Service(BaseService):
     """Service of the bucket module."""
 
@@ -152,17 +209,16 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        application_path = Service.find_qupath()
+        settings = self._settings.model_dump()
+        executable = Service.find_qupath_executable()
         version = Service.get_version()
         return {
-            "qupath": {
-                "application_path": str(application_path) if application_path else "Not found",
+            "app": {
+                "path": str(executable) if executable else None,
                 "version": dict(version) if version else None,
+                "expected_version": Service.get_expected_version(),
             },
-            "paquo": {
-                "settings": self.get_paquo_settings(),
-                "defaults": self.get_paquo_defaults(),
-            },
+            "settings": settings,
         }
 
     def health(self) -> Health:
@@ -204,52 +260,25 @@ class Service(BaseService):
         return Health(status=Health.Code.UP)
 
     @staticmethod
-    def get_paquo_defaults() -> dict[str, Any]:
-        """Get settings for this service.
-
-        Returns:
-            str: Default settings in TOML format.
-        """
-        from paquo._config import settings  # noqa: PLC0415, PLC2701
-
-        toml = files("paquo").joinpath(".paquo.defaults.toml").read_text(encoding=str(settings.ENCODING_FOR_DYNACONF))
-        return tomllib.loads(toml)
-
-    @staticmethod
-    def get_paquo_settings() -> dict[str, Any]:
-        """Get settings for this service.
-
-        Returns:
-            str: Default settings in TOML format.
-        """
-        from paquo._config import settings  # noqa: PLC0415, PLC2701
-
-        return dict(settings.to_dict(internal=False))
-
-    @staticmethod
-    def _app_dir_from_qupath_dir_for_platform_override(qupath_dir: Path, platform_system: str) -> Path:
+    def _get_app_dir_from_qupath_dir(qupath_dir: Path, platform_system: str | None) -> Path:
         """Get the QuPath application directory based on the platform system.
 
         Args:
             qupath_dir (Path): The QuPath installation directory.
-            platform_system (str): The system platform (e.g., "Linux", "Darwin", "Windows").
+            platform_system (str | None): The system platform (e.g., "Linux", "Darwin", "Windows").
+                Will be auto-determined if not given
 
         Returns:
             str: The path to the QuPath application directory.
 
         Raises:
-            FileNotFoundError: If the QuPath application directory does not exist.
+            FileNotFoundError: If the QuPath application directory is not a directory.
         """
-        if platform_system == "Linux":
-            app_dir = qupath_dir / "lib" / "app"
+        platform_system = platform_system or platform.system()
+        platform_paths = {"Linux": "lib/app", "Darwin": "Contents/app", "Windows": "app"}
+        app_dir = qupath_dir / platform_paths[platform_system]
 
-        elif platform_system == "Darwin":
-            app_dir = qupath_dir / "Contents" / "app"
-
-        elif platform_system == "Windows":
-            app_dir = qupath_dir / "app"
-
-        if not (app_dir.is_dir()):
+        if not app_dir.is_dir():
             message = f"QuPath installation directory is not a directory: s{app_dir!s}"
             raise FileNotFoundError(message)
 
@@ -288,30 +317,26 @@ class Service(BaseService):
         Returns:
             QuPathVersion | None: The version of QuPath if installed, otherwise None.
         """
-        path = Service.find_qupath(platform_system=platform_system)
-        # Open the QuPath with --version and read version info.
+        exectuable = Service.find_qupath_executable(platform_system=platform_system)
 
-        if not path:
-            logger.warning("QuPath executable not found.")
+        if not exectuable:
             return None
 
         try:
             result = subprocess.run(  # noqa: S603
-                [str(path), "--version"],
+                [str(exectuable), "--version"],
                 capture_output=True,
                 text=True,
                 check=True,
-                timeout=10,
+                timeout=QUPATH_LAUNCH_MAX_WAIT_TIME,
             )
 
             output = result.stdout.strip()
             logger.debug("QuPath version output: %s", output)
 
-            # Handle version patterns with or without "-rc" suffix
-            # First try to match the standard "Version:" pattern
             version_match = re.search(r"Version:\s+([0-9]+\.[0-9]+\.[0-9]+(?:-rc[0-9]+)?)", output)
 
-            # If standard pattern fails, try to match "QuPath vX.X.X" pattern
+            # If standard pattern fails, try to match "QuPath vX.X.X" pattern, for Win32
             if not version_match:
                 version_match = re.search(r"QuPath\s+v([0-9]+\.[0-9]+\.[0-9]+(?:-rc[0-9]+)?)", output)
 
@@ -332,68 +357,77 @@ class Service(BaseService):
         return None
 
     @staticmethod
-    def find_qupath(
-        platform_system: str | None = None,
-    ) -> Path | None:
-        """Check if QuPath is installed.
+    def _find_qupath_app_dir(platform_system: str | None) -> Path | None:
+        """Find QuPath application directory.
+
+        Args:
+            platform_system (str | None): The system platform.
+
+        Returns:
+            Path | None: Path to QuPath app directory if found, None otherwise.
+        """
+        for d in Service.get_installation_path().iterdir():
+            if d.is_dir() and re.match(r"(?i)qupath.*", d.name):
+                try:
+                    return Service._get_app_dir_from_qupath_dir(d, platform_system)
+                except FileNotFoundError:
+                    continue
+        return None
+
+    @staticmethod
+    def _find_qupath_exe_from_app_dir(app_dir: Path, system: str) -> Path | None:
+        """Get QuPath executable from app directory based on platform.
+
+        Args:
+            app_dir (Path): Path to QuPath app directory.
+            system (str): The system platform.
+
+        Returns:
+            Path | None: Path to QuPath executable if found, None otherwise.
+        """
+        try:
+            if system == "Linux":
+                return next(app_dir.parent.parent.joinpath("bin").glob("QuPath*"))
+            if system == "Darwin":
+                return next(app_dir.parent.joinpath("MacOS").glob("QuPath*"))
+            if system == "Windows":
+                app_exes = list(app_dir.parent.glob("QuPath*.exe"))
+                if len(app_exes) != 2:  # noqa: PLR2004
+                    logger.warning(
+                        "Expected to find exactly 2 QuPath executables, got %s. "
+                        "Please ensure you have the correct QuPath installation.",
+                        app_exes,
+                    )
+                    return None
+                return next(qp for qp in app_exes if "console" in qp.stem)
+        except StopIteration:
+            return None
+        return None
+
+    @staticmethod
+    def find_qupath_executable(platform_system: str | None = None) -> Path | None:
+        """Find path to QuPath executable.
 
         Args:
             platform_system (str | None): The system platform. If None, it will use platform.system().
 
-        Raises:
-            ValueError: If the QuPath executable is not found or if the installation is invalid.
-
         Returns:
             Path | None: Path to the QuPath executable if found, otherwise None.
         """
-        from paquo._config import settings, to_kwargs  # noqa: PLC0415, PLC2701
-        from paquo.jpype_backend import find_qupath as paquo_find_qupath  # noqa: PLC0415
+        system = platform_system or platform.system()
+        app_dir = Service._find_qupath_app_dir(platform_system)
 
-        system = platform.system() if platform_system is None else platform_system
-
-        try:
-            app_dir, _, _, _ = paquo_find_qupath(**to_kwargs(settings))
-        except ValueError as e:
-            # Unluckily paquo does not stringently allow to override the system,
-            # so we have to do it ourselves.
-            if (platform_system is not None) and (platform_system != platform.system()):
-                qupath_dirs = [
-                    d
-                    for d in Service.get_installation_path().iterdir()
-                    if d.is_dir() and re.match(r"(?i)qupath.*", d.name)
-                ]
-                if not qupath_dirs:
-                    message = f"No QuPath directory found at {Service.get_installation_path()!s}"
-                    logger.debug(message)
-                    raise ValueError(message) from e
-
-                app_dir = Service._app_dir_from_qupath_dir_for_platform_override(
-                    qupath_dir=qupath_dirs[0],
-                    platform_system=platform_system,
-                )
-            else:
-                # We don't log, to not spam the logs because this is a common case
-                return None
-
-        if system == "Linux":
-            (qupath,) = Path(app_dir).parent.parent.joinpath("bin").glob("QuPath*")
-
-        elif system == "Darwin":
-            (qupath,) = Path(app_dir).parent.joinpath("MacOS").glob("QuPath*")
-
-        elif system == "Windows":
-            qp_exes = list(Path(app_dir).parent.glob("QuPath*.exe"))
-            if len(qp_exes) != 2:  # noqa: PLR2004
-                message = (
-                    f"Expected to find exactly 2 QuPath executables, got {qp_exes}. "
-                    "Please ensure you have the correct QuPath installation."
-                )
-                raise ValueError(message)
-            (qupath,) = (qp for qp in qp_exes if "console" in qp.stem)
-
-        if not qupath.is_file():
+        if app_dir is None:
             return None
-        return qupath
+
+        app_exe = Service._find_qupath_exe_from_app_dir(app_dir, system)
+
+        if not app_exe or not app_exe.is_file():
+            if app_exe:
+                logger.warning("Expected to find file at %s.", app_exe)
+            return None
+
+        return app_exe
 
     @staticmethod
     def is_qupath_installed() -> bool:
@@ -402,7 +436,7 @@ class Service(BaseService):
         Returns:
             bool: True if QuPath is installed, False otherwise.
         """
-        return Service.find_qupath() is not None
+        return Service.find_qupath_executable() is not None
 
     @staticmethod
     def get_installation_path() -> Path:
@@ -411,7 +445,7 @@ class Service(BaseService):
         Returns:
             Path: The directory QuPath will be installed into.
         """
-        return Path(appdirs.user_data_dir(__project_name__))
+        return Path(appdirs.user_data_dir(__project_name__)).resolve()
 
     @staticmethod
     def _download_qupath(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
@@ -603,7 +637,15 @@ class Service(BaseService):
                         f"QuPath installation directory already exists at '{destination!s}', moving to nirvana ..."
                     )
                     logger.warning(message)
-                    shutil.move(destination, nirvana)
+                    try:
+                        shutil.move(destination, nirvana)
+                    except PermissionError as e:
+                        message = (
+                            f"Failed to move existing QuPath directory '{destination!s}' "
+                            f"to nirvana in '{nirvana!s}': {e!s}"
+                        )
+                        logger.exception(message)
+                        raise RuntimeError(message) from e
             else:
                 message = f"QuPath installation directory already exists at '{destination!s}', breaking. "
                 logger.warning(message)
@@ -712,19 +754,19 @@ class Service(BaseService):
                 logger.error(message)
                 raise ValueError(message)
 
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                tmp_path = Path(tmp_dir) / destination.name
-                with zipfile.ZipFile(archive_path, mode="r") as zf:
-                    zf.extractall(tmp_path)  # nosec: B202  # noqa: S202
-                    for item in tmp_path.iterdir():
-                        if item.name.startswith("QuPath") and item.is_file() and item.suffix == ".exe":
-                            pth = tmp_path
-                            break
-                    else:
-                        message = "No QuPath directory or .exe found in the extracted contents."
-                        logger.error(message)
-                        raise RuntimeError(message)
-                shutil.move(pth, installation_path)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(archive_path, mode="r") as zf:
+                zf.extractall(destination)  # nosec: B202  # noqa: S202
+                # Verify that QuPath executable exists in the extracted content
+                qupath_exe_found = False
+                for item in destination.rglob("*"):
+                    if item.name.startswith("QuPath") and item.is_file() and item.suffix == ".exe":
+                        qupath_exe_found = True
+                        break
+                if not qupath_exe_found:
+                    message = "No QuPath .exe found in the extracted contents."
+                    logger.error(message)
+                    raise RuntimeError(message)
             archive_path.unlink(missing_ok=True)  # remove the archive after extraction
             return destination
 
@@ -808,18 +850,18 @@ class Service(BaseService):
                 logger.debug(message)
                 extract_progress(application_path, application_size=application_size)
 
-            qupath_executable = Service.find_qupath(
+            executable = Service.find_qupath_executable(
                 platform_system=platform_system,
             )
-            if not qupath_executable:
+            if not executable:
                 message = "QuPath executable not found after installation."
                 logger.error(message)
                 raise RuntimeError(message)  # noqa: TRY301
-            message = f"QuPath executable found at '{qupath_executable!s}'."
+            message = f"QuPath executable found at '{executable!s}'."
             logger.debug(message)
 
-            qupath_executable.chmod(0o755)  # Make sure the executable is runnable
-            message = f"Set permissions set to 755 for QuPath executable at '{qupath_executable!s}'."
+            executable.chmod(0o755)  # Make sure the executable is runnable
+            message = f"Set permissions set to 755 for QuPath executable at '{executable!s}'."
             logger.debug(message)
 
             return application_path
@@ -829,13 +871,14 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     @staticmethod
-    def launch_qupath(  # noqa: C901, PLR0912
+    def execute_qupath(  # noqa: C901, PLR0912, PLR0915, PLR0911
         quiet: bool = True,
         project: Path | None = None,
         image: str | Path | None = None,
         script: str | Path | None = None,
+        script_args: list[str] | None = None,
     ) -> int | None:
-        """Launch QuPath application.
+        """Execute QuPath application.
 
         Args:
             quiet (bool): If True, will launch QuPath in quiet mode (no GUI).
@@ -843,21 +886,22 @@ class Service(BaseService):
             image: str | Path | None: Path to the image file to open in QuPath. If project path given as well,
                 this must be the name of the image within project as str.
             script (str | Path | None): Path to the script to run in QuPath. If None, no script will be run.
+            script_args (list[str] | None): Arguments to pass to the script. Only used when script is provided.
 
         Returns:
-            bool: True if QuPath was launched successfully, False otherwise.
+            int | None: Pid if QuPath was launched successfully, None otherwise.
 
         """
-        application_path = Service.find_qupath()
-        if not application_path:
+        executable = Service.find_qupath_executable()
+        if not executable:
             logger.error("QuPath executable not found.")
             return None
 
-        message = f"QuPath executable found at: {application_path}"
+        message = f"QuPath executable found at: {executable}"
         logger.debug(message)
 
         if platform.system() in {"Linux", "Darwin", "Windows"}:
-            command = [str(application_path)]
+            command = [str(executable)]
             if script:
                 command.extend(["script"])
             if quiet and not script:
@@ -868,6 +912,9 @@ class Service(BaseService):
                 command.extend(["-p", str(project.resolve() / PROJECT_FILENAME)])
             if script:
                 command.extend([str(script)])
+                if script_args:
+                    for arg in script_args:
+                        command.extend(["-a", arg])
         else:
             message = f"Unsupported platform: {platform.system()}"
             logger.error(message)
@@ -889,22 +936,26 @@ class Service(BaseService):
             start_time = time.time()
             while True:
                 waited = time.time() - start_time
-                if time.time() - start_time > LAUNCH_MAX_WAIT_TIME:
+                if time.time() - start_time > QUPATH_LAUNCH_MAX_WAIT_TIME:
                     message = f"Timed out after {waited:.2f} seconds waiting for QuPath to start"
                     logger.error(message)
                     return None
 
-                # Check if there's any output available
                 output = process.stdout.readline() if process.stdout.readable() else ""
                 exit_code = process.poll()
 
-                # Exit if process has terminated with no output
                 if not output and exit_code is not None:
+                    if script:
+                        if exit_code == 0:
+                            logger.debug("QuPath script completed successfully.")
+                            return process.pid
+                        message = f"QuPath script failed with exit code '{exit_code}'."
+                        logger.error(message)
+                        return None
                     message = f"QuPath process has terminated with exit code '{exit_code}'."
-                    logger.debug(message)
+                    logger.error(message)
                     break
 
-                # Process output if available
                 if output:
                     logger.debug(output.strip())
                     if "qupath.lib.gui.QuPathApp - Starting QuPath with parameters" in output:
@@ -920,6 +971,52 @@ class Service(BaseService):
             return None
 
     @staticmethod
+    def get_qupath_processes() -> list[Process]:
+        """Get PIDs of QuPath processes started from our managed installation.
+
+        Returns:
+            list[Process]: List of processes handles of running QuPath instances.
+                Processes not started from installation part are ignored.
+        """
+        installation_path = Service.get_installation_path()
+        processes = []
+        for proc in psutil.process_iter(attrs={"pid", "exe"}):
+            try:
+                exe_path = proc.exe()
+                if exe_path and str(installation_path) in exe_path:
+                    processes.append(Process(proc.pid))
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        return processes
+
+    @staticmethod
+    def terminate_qupath_processes(wait_before_kill: int = 3) -> int:
+        """Terminate QuPath processes.
+
+        Args:
+            wait_before_kill (int): Time in seconds to wait before forcefully killing processes.
+
+        Returns:
+            int: Number of processes terminated.
+
+        """
+        procs = Service.get_qupath_processes()
+        for p in procs:
+            try:
+                p.terminate()
+            except psutil.NoSuchProcess:
+                logger.debug("Process %s already terminated.", p.pid)
+                continue
+        _, alive = wait_procs(procs, timeout=wait_before_kill)
+        for p in alive:
+            try:
+                p.kill()
+            except psutil.NoSuchProcess:
+                logger.debug("Process %s already terminated.", p.pid)
+                continue
+        return len(procs)
+
+    @staticmethod
     def uninstall_qupath(
         version: str | None = None,
         path: Path | None = None,
@@ -927,6 +1024,9 @@ class Service(BaseService):
         platform_machine: str | None = None,
     ) -> bool:
         """Uninstall QuPath application.
+
+        Notice:
+            Terminates managed QuPath processes before uninstalling.
 
         Args:
             version (str): Specific version of QuPath to uninstall. Defaults to None,
@@ -937,25 +1037,29 @@ class Service(BaseService):
             platform_machine (str | None): The machine architecture. If None, it will use platform.machine().
 
         Returns:
-            bool: True if QuPath was uninstalled successfully, False if it was not installed at that location.
+            bool: True if QuPath was uninstalled successfully.
 
         Raises:
-            ValueError: If the QuPath application directory is a file unexpectedly or does not exist.
+            ValueError: If the QuPath application directory is a file unexpectedly.
         """
         if path is None:
             path = Service.get_installation_path()
+
+        Service.terminate_qupath_processes()
 
         if not version:
             removed = False
             for qupath in path.glob("QuPath*"):
                 if qupath.is_dir():
-                    removed = True
-                    logger.debug("Removing QuPath directory: %s", qupath)
+                    logger.debug("Removing QuPath directory '%s'", qupath)
+                else:
+                    logger.debug("Removing QuPath archive '%s'", qupath)
+                try:
                     shutil.rmtree(qupath, ignore_errors=False)
-                if qupath.is_file():
                     removed = True
-                    logger.debug("Removing QuPath archive: %s", qupath)
-                    shutil.rmtree(qupath, ignore_errors=False)
+                except Exception as e:  # noqa: BLE001
+                    message = f"Failed to remove '{qupath!s}': {e!s}"
+                    logger.warning(message)
             return removed
 
         app_dir = Service.get_app_dir(
@@ -972,49 +1076,37 @@ class Service(BaseService):
             message = f"QuPath application directory '{app_dir!s}' is a file unexpectedly."
             logger.error(message)
             raise ValueError(message)
-        shutil.rmtree(app_dir, ignore_errors=False)
-        return True
+        try:
+            logger.debug("Removing '%s'", app_dir)
+            shutil.rmtree(app_dir, ignore_errors=False)
+            return True
+        except Exception as e:  # noqa: BLE001
+            message = f"Failed to remove '{app_dir!s}': {e!s}"
+            logger.warning(message)
+        return False
 
     @staticmethod
-    def _check_project_path(project: Path) -> Path:
-        """Check if the project path is valid and return the resolved path to the project file.
+    def _find_groovy_script(script_name: str) -> Path:
+        """Find the Groovy script file in the scripts directory.
 
         Args:
-            project (Path): Path to the QuPath project directory.
+            script_name (str): Name of the Groovy script file to find.
 
         Returns:
-            Path: The resolved path to the QuPath project file.
+            Path: The path to the Groovy script file.
 
         Raises:
-            ValueError: If QuPath is not installed or the project path is invalid.
+            ValueError: If the script file does not exist.
         """
-        if not Service.is_qupath_installed():
-            message = "QuPath is not installed. Please install it first."
+        script_path = Path(__file__).parent / "scripts" / f"{script_name}.groovy"
+        if not script_path.is_file():
+            message = f"Groovy script '{script_name}' not found at: {script_path}"
             logger.error(message)
             raise ValueError(message)
-
-        if project.is_file():
-            message = f"Project path '{project!s}' is a file, expected a directory."
-            logger.error(message)
-            raise ValueError(message)
-
-        if project.is_dir():
-            project_path = project / PROJECT_FILENAME
-            if any(project.iterdir()) and not project_path.is_file():
-                message = (
-                    f"Project directory '{project!s}' is not empty and does not contain a valid QuPath project file."
-                )
-                logger.error(message)
-                raise ValueError(message)
-
-        if not project.exists():
-            project.mkdir(parents=True, exist_ok=True)
-            project_path = project.resolve() / PROJECT_FILENAME
-
-        return project_path
+        return script_path
 
     @staticmethod
-    def add(  # noqa: C901, PLR0915
+    def add(
         project: Path,
         paths: list[Path],
         progress_callable: Callable | None = None,  # type: ignore[type-arg]
@@ -1034,99 +1126,55 @@ class Service(BaseService):
             ValueError: If QuPath is not installed or the project path is invalid.
             RuntimeError: If there is an unexpected error adding images to the project.
         """
+        message = f"Adding images to QuPath project at '{project!s}' from paths: {paths!r}"
+        logger.debug(message)
+
         if progress_callable:
             progress = AddProgress()
             progress_callable(progress)
 
-        project_path = Service._check_project_path(project)
-
-        from unittest.mock import patch  # noqa: PLC0415
-
-        from paquo.images import QuPathImageType  # noqa: PLC0415
-        from paquo.java import LogManager  # noqa: PLC0415
-        from paquo.projects import QuPathProject  # noqa: PLC0415
-
-        if LogManager:
-            LogManager.setWarn()
-
         if progress_callable:
-            progress.status = AddProgressState.CREATING_PROJECT
+            progress.status = AddProgressState.ADDING_IMAGES
             progress_callable(progress)
 
-        # Patch the uri property to use getURIs() instead of getServerURIs(),
-        # as getServerURIs is deprecated in 0.5.1 and gone with 0.6.x
-        def mock_uri_property(self) -> str:  # type: ignore[no-untyped-def]  # noqa: ANN001
-            """Mock uri property that uses getURIs() instead of getServerURIs().
+        # We communicate via file I/O with the Groovy script running within QuPath
+        with (
+            tempfile.NamedTemporaryFile(mode="w", suffix=".json", encoding="utf-8") as paths_file,
+            tempfile.NamedTemporaryFile(mode="w", suffix=".json", encoding="utf-8") as output_file,
+        ):
+            try:
+                json.dump([str(path.resolve()) for path in paths], paths_file.file)
+                paths_file.flush()
 
-            Args:
-                self: The QuPathImageEntry instance.
+                pid = Service.execute_qupath(
+                    script=Service._find_groovy_script("add"),
+                    script_args=[str(project), str(paths_file.name), str(output_file.name)],
+                )
 
-            Returns:
-                str: The URI string from the first available URI.
+                if not pid:
+                    message = "Failed to execute QuPath script for adding images."
+                    logger.error(message)
+                    raise RuntimeError(message)  # noqa: TRY301
 
-            Raises:
-                RuntimeError: If no server URIs are available.
-                NotImplementedError: If multiple URIs are found (not supported).
-            """
-            uris = self.java_object.getURIs()
-            if len(uris) == 0:
-                msg = "no server"
-                raise RuntimeError(msg)  # pragma: no cover
-            if len(uris) > 1:
-                msg = "unsupported in paquo as of now"
-                raise NotImplementedError(msg)
-            return str(uris[0].toString())
+                with Path(output_file.name).open("r", encoding="utf-8") as f:
+                    result_data = json.load(f)
+                added_count = int(result_data.get("added_count", 0))
+                errors = result_data.get("errors", [])
+                for error in errors:
+                    logger.warning("QuPath add script error: %s", error)
 
-        with patch("paquo.images.QuPathProjectImageEntry.uri", new_callable=lambda: property(mock_uri_property)):
-            with QuPathProject(project_path, mode="a") as qp:
-                logger.debug("Finding images for QuPath project at '%s'", project_path)
+                if progress_callable:
+                    progress.status = AddProgressState.COMPLETED
+                    progress_callable(progress)
 
-            if progress_callable:
-                progress.status = AddProgressState.FINDING_IMAGES
-                progress_callable(progress)
-
-            supported_extensions = IMAGE_SUFFIXES
-
-            def is_supported_image(file_path: Path) -> bool:
-                return file_path.is_file() and file_path.suffix.lower() in supported_extensions
-
-            files_to_process = []
-            for path in paths:
-                if path.is_dir():
-                    files_to_process = [file for file in path.glob("**/*") if is_supported_image(file)]
-                elif is_supported_image(path):
-                    files_to_process = [path]
-
-            if progress_callable:
-                progress.status = AddProgressState.ADDING_IMAGES
-                progress.image_count = len(files_to_process)
-                progress_callable(progress)
-
-            added_count = 0
-            for file_path in files_to_process:
-                logger.debug("Adding image: %s", file_path)
-                try:
-                    qp.add_image(
-                        file_path,
-                        image_type=QuPathImageType.BRIGHTFIELD_H_E,
-                    )
-                    added_count += 1
-                    if progress_callable:
-                        progress.image_index = added_count
-                        progress_callable(progress)
-
-                except Exception as e:  # noqa: BLE001
-                    message = f"Failed to add image '{file_path!s}' to project '{project!s}': '{e!s}'"
-                    logger.warning(message)
-
-            if progress_callable:
-                progress.status = AddProgressState.COMPLETED
-                progress_callable(progress)
-
-            return added_count
+                return added_count
+            except Exception as e:
+                message = f"Failed to add images to QuPath project: {e!s}"
+                logger.exception(message)
+                raise RuntimeError(message) from e
 
     @staticmethod
-    def annotate(  # noqa: C901
+    def annotate(
         project: Path,
         image: Path,
         annotations: Path,
@@ -1144,14 +1192,12 @@ class Service(BaseService):
             int: The number of annotations added to the image.
 
         Raises:
-            ValueError: If QuPath is not installed, the project path is invalid orthe annotation path is invalid.
+            ValueError: If QuPath is not installed, the project path is invalid or the annotation path is invalid.
             RuntimeError: If there is an error annotating the image.
         """
         if progress_callable:
             progress = AnnotateProgress()
             progress_callable(progress)
-
-        Service._check_project_path(project)
 
         if not image.is_file():
             message = f"Image path '{image!s}' is not a valid file."
@@ -1169,14 +1215,6 @@ class Service(BaseService):
             progress_callable(progress)
 
         if progress_callable:
-            progress.status = AnnotateProgressState.OPENING_PROJECT
-            progress_callable(progress)
-
-        if progress_callable:
-            progress.status = AnnotateProgressState.FINDING_IMAGE
-            progress_callable(progress)
-
-        if progress_callable:
             progress.status = AnnotateProgressState.COUNTING
             progress_callable(progress)
 
@@ -1191,128 +1229,15 @@ class Service(BaseService):
             progress.status = AnnotateProgressState.ANNOTATING
             progress_callable(progress)
 
-        # Generate and execute Groovy script to import annotations
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            script_path = Path(tmp_dir) / "annotate.groovy"
-
-            # Generate Groovy script content based on the template
-            groovy_script_content = f"""import qupath.lib.io.GsonTools
-import qupath.lib.objects.PathObjects
-import qupath.lib.regions.ImagePlane
-import qupath.lib.roi.ROIs
-import qupath.lib.geom.Point2
-import qupath.lib.objects.classes.PathClass
-import java.awt.Color
-import java.io.File
-
-// Check we are in a project
-def project = getProject()
-if (project == null) {{
-    println("No project found! Did you launch this script with -p?")
-    return
-}}
-
-// Load the image data
-def imageName = "{image.name}"
-println("Looking for image: " + imageName)
-def imageEntry = project.getImageList().find {{ entry ->
-    entry.getImageName().contains(imageName)
-}}
-if (imageEntry == null) {{
-    println("Image not found in project. Available images:")
-    project.getImageList().each {{ entry ->
-        println("  - " + entry.getImageName())
-    }}
-    return
-}}
-println("Found image: " + imageEntry.getImageName())
-def imageData = imageEntry.readImageData()
-
-// Open the geojson
-def jsonPath = "{annotations.as_posix()}"
-println("Loading annotations from: " + jsonPath)
-def jsonFile = new File(jsonPath)
-if (!jsonFile.exists()) {{
-    println("File not found: " + jsonPath)
-    return
-}}
-def gson = GsonTools.getInstance(true)
-def json = jsonFile.text
-
-// Parse as GeoJSON
-def type = new com.google.gson.reflect.TypeToken<Map<String, Object>>(){{}}.getType()
-def geoJsonData = gson.fromJson(json, type)
-
-// Get current image plane
-def plane = ImagePlane.getDefaultPlane()
-
-// Create list for new objects
-def newObjects = []
-
-// Process GeoJSON features
-def features = geoJsonData.features
-features.each {{ feature ->
-    def geometry = feature.geometry
-    def properties = feature.properties ?: [:]
-
-    if (geometry.type == "Polygon") {{
-        // Get exterior ring coordinates and convert to Point2 objects
-        def coordinates = geometry.coordinates[0]
-        def points = coordinates.collect {{ coord ->
-            return new Point2(coord[0] as double, coord[1] as double)
-        }}
-
-        // Create polygon ROI
-        def roi = ROIs.createPolygonROI(points, plane)
-
-        // Create annotation object instead of detection
-        def pathObject = PathObjects.createAnnotationObject(roi)
-
-        // Set classification if available
-        if (properties.classification) {{
-            def className = properties.classification.name
-            def colorArray = properties.classification.color
-
-            // Create PathClass with color
-            def pathClass = PathClass.fromString(className)
-            if (colorArray && colorArray.size() >= 3) {{
-                def color = new Color(colorArray[0] as int, colorArray[1] as int, colorArray[2] as int)
-                pathClass = PathClass.fromString(className, color.getRGB())
-            }}
-            pathObject.setPathClass(pathClass)
-        }}
-
-        // Add other properties as metadata
-        properties.each {{ key, value ->
-            if (key != "classification") {{
-                pathObject.getMetadata().put(key.toString(), value.toString())
-            }}
-        }}
-
-        newObjects.add(pathObject)
-    }}
-}}
-
-// Add objects to hierarchy
-println("Adding annotations ...")
-imageData.getHierarchy().addObjects(newObjects)
-println("Added " + newObjects.size() + " annotations from GeoJSON")
-
-// Save image
-println("Saving image ...")
-imageEntry.saveImageData(imageData)
-println("Saved image.")
-
-"""
-
-            # Write the Groovy script to temporary file
-            script_path.write_text(groovy_script_content, encoding="utf-8")
-
-            message = f"Generated Groovy script at: {script_path}"
-            logger.debug(message)
-
-            # Launch QuPath with the generated script
-            Service.launch_qupath(project=project, script=script_path)
+        pid = Service.execute_qupath(
+            project=project,
+            script=Service._find_groovy_script("annotate"),
+            script_args=[image.name, str(annotations.as_posix())],
+        )
+        if not pid:
+            message = "Failed to execute QuPath script for annotations."
+            logger.error(message)
+            raise RuntimeError(message)
 
         if progress_callable:
             progress.status = AnnotateProgressState.COMPLETED
@@ -1321,80 +1246,38 @@ println("Saved image.")
         return annotation_count
 
     @staticmethod
-    def inspect(project: Path) -> dict[str, Any]:
-        """Inspect QuPath project.
+    def inspect(project: Path) -> QuPathProject:
+        """Inspect QuPath project using a Groovy script.
 
         Args:
             project (Path): Path to the QuPath project directory.
 
         Returns:
-            dict[str,Any]: The QuPath project.
+            QuPathProject: The QuPath project information.
 
         Raises:
             ValueError: If QuPath is not installed or the project path is invalid.
-            RuntimeError: If there is an error adding images to the project.
+            RuntimeError: If there is an error inspecting the project.
         """
-        if not Service.is_qupath_installed():
-            message = "QuPath is not installed. Please install it first."
-            logger.error(message)
-            raise RuntimeError(message)
+        # We communicate via file I/O with the Groovy script running within QuPath
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", encoding="utf-8") as temp_file:
+            output_file = Path(temp_file.name).resolve()
 
-        if not project.exists():
-            message = f"Project path '{project!s}' does not exist."
-            logger.error(message)
-            raise ValueError(message)
+            pid = Service.execute_qupath(
+                quiet=True,
+                project=project,
+                script=Service._find_groovy_script("inspect"),
+                script_args=[str(output_file)],
+            )
 
-        if project.is_file():
-            message = f"Project path '{project!s}' is a file, expected a directory."
-            logger.error(message)
-            raise ValueError(message)
-
-        if project.is_dir():
-            project_file = project.resolve() / PROJECT_FILENAME
-            if not project_file.is_file():
-                # If the project file does not exist, we create a new one
-                message = f"Not a QuPath project directory at '{project}'"
+            if not pid:
+                message = "Failed to execute QuPath inspect script"
                 logger.error(message)
-                raise ValueError(message)
+                raise RuntimeError(message)
 
-        rtn = dict[str, Any]()
+            if not output_file.is_file():
+                message = f"QuPath script output file '{output_file!s}' does not exist."
+                logger.error(message)
+                raise RuntimeError(message)
 
-        from paquo.java import LogManager  # noqa: PLC0415
-        from paquo.projects import QuPathProject  # noqa: PLC0415
-
-        if LogManager:
-            LogManager.setWarn()
-
-        qp = QuPathProject(path=project_file, mode="r")
-        rtn["project_path"] = str(qp.path)
-        rtn["version"] = qp.version
-        rtn["timestamp_creation"] = qp.timestamp_creation
-        rtn["timestamp_modification"] = qp.timestamp_modification
-        rtn["images"] = []
-        if qp.images:
-            logger.debug("Found images in project: %s", qp.images)
-            # If there are images, we only return the first one
-            # to avoid overwhelming the output with too much data.
-            for image in qp.images:
-                logger.debug("Found image: %s", image)
-                rtn["images"].append({
-                    "entry_id": image.entry_id,
-                    "entry_path": str(image.entry_path),
-                    "uri": image.uri,
-                    "image_name": image.image_name,
-                    "image_type": image.image_type,
-                    "description": image.description,
-                    "num_channels": image.num_channels,
-                    "num_timepoints": image.num_timepoints,
-                    "num_zslices": image.num_z_slices,
-                    "downsample_levels": image.downsample_levels,
-                    "height": image.height,
-                    "width": image.width,
-                    "hierarchy": str(image.hierarchy),
-                    "metadata": str(image.metadata),
-                    "properties": str(image.properties),
-                })
-        return rtn
-
-
-os.environ["PAQUO_QUPATH_SEARCH_DIRS"] = str(Service.get_installation_path())
+            return QuPathProject.model_validate_json(output_file.read_text(encoding="utf-8"))

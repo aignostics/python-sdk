@@ -9,6 +9,8 @@ from ._log import get_logger
 
 logger = get_logger(__name__)
 
+WINDOW_SIZE = (1200, 768)  # Default window size for the GUI
+
 
 class BasePageBuilder(ABC):
     """Base class for all page builders."""
@@ -73,6 +75,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         show = True
 
     gui_register_pages()
+
     ui.run(
         title=title,
         favicon=icon,
@@ -84,7 +87,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         frameless=native and platform.system() == "Darwin",
         show_welcome_message=native is False,
         show=show,
-        window_size=(1200, 768) if native else None,
+        window_size=WINDOW_SIZE if native else None,
     )
 
 

@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.35 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.39 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -48,13 +48,18 @@ Run Python notebook server based on Marimo.
 **Usage**:
 
 ```console
-$ aignostics notebook [OPTIONS]
+$ aignostics notebook [OPTIONS] [NOTEBOOK]
 ```
+
+**Arguments**:
+
+* `[NOTEBOOK]`: Path to the notebook file to run. If not provided, a default notebook will be used.  [default: /Users/helmut/Code/python-sdk/src/aignostics/notebook/_notebook.py]
 
 **Options**:
 
 * `--host TEXT`: Host to bind the server to  [default: 127.0.0.1]
 * `--port INTEGER`: Port to bind the server to  [default: 8001]
+* `--override-if-exists / --no-override-if-exists`: Override the notebook in the user data directory if it already exists.  [default: no-override-if-exists]
 * `--help`: Show this message and exit.
 
 ## `aignostics application`
@@ -169,7 +174,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749120730850.872]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749488333181.501]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -177,7 +182,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 Prepare metadata CSV file required for submitting a run.
 
-(1) Scans source_directory for whole slide images (.tif, .tiff and .dcm.
+(1) Scans source_directory for whole slide images.
 (2) Extracts metadata from whole slide images such as width, height, mpp.
 (3) Creates CSV file with columns as required by the given application version.
 (4) Optionally applies mappings to amend the metadata CSV file for columns
@@ -225,7 +230,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749120730850.973]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749488333181.582]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -656,13 +661,13 @@ $ aignostics qupath [OPTIONS] COMMAND [ARGS]...
 
 * `install`: Install QuPath application.
 * `launch`: Launch QuPath application.
-* `info`: Get info about QuPath installation.
-* `settings`: Show settings configured for Paquo based...
-* `defaults`: Show default settings of Paquo based...
+* `processes`: List running QuPath processes.
+* `terminate`: Terminate running QuPath processes.
 * `uninstall`: Uninstall QuPath application.
 * `add`: Add image(s) to QuPath project.
 * `annotate`: Add image(s) to QuPath project.
 * `inspect`: Inspect project.
+* `run-script`: Run a QuPath Groovy script with optional...
 
 ### `aignostics qupath install`
 
@@ -700,42 +705,33 @@ $ aignostics qupath launch [OPTIONS]
 * `--script FILE`: Path to QuPath script to run on launch. Must be part of QuPath project.
 * `--help`: Show this message and exit.
 
-### `aignostics qupath info`
+### `aignostics qupath processes`
 
-Get info about QuPath installation.
+List running QuPath processes.
+
+Notice: This will not list processes that are not started from the installation directory.
 
 **Usage**:
 
 ```console
-$ aignostics qupath info [OPTIONS]
+$ aignostics qupath processes [OPTIONS]
 ```
 
 **Options**:
 
+* `-j, --json`: Output the running QuPath processes as JSON.  [required]
 * `--help`: Show this message and exit.
 
-### `aignostics qupath settings`
+### `aignostics qupath terminate`
 
-Show settings configured for Paquo based QuPath integration.
+Terminate running QuPath processes.
+
+Notice: This will not terminate processes that are not started from the installation directory.
 
 **Usage**:
 
 ```console
-$ aignostics qupath settings [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-### `aignostics qupath defaults`
-
-Show default settings of Paquo based QuPath integration.
-
-**Usage**:
-
-```console
-$ aignostics qupath defaults [OPTIONS]
+$ aignostics qupath terminate [OPTIONS]
 ```
 
 **Options**:
@@ -817,6 +813,27 @@ $ aignostics qupath inspect [OPTIONS] PROJECT
 
 * `--help`: Show this message and exit.
 
+### `aignostics qupath run-script`
+
+Run a QuPath Groovy script with optional arguments.
+
+**Usage**:
+
+```console
+$ aignostics qupath run-script [OPTIONS] SCRIPT
+```
+
+**Arguments**:
+
+* `SCRIPT`: Path to the Groovy script file to execute.  [required]
+
+**Options**:
+
+* `-p, --project DIRECTORY`: Path to the QuPath project directory.
+* `-i, --image TEXT`: Name of the image in the project or path to image file.
+* `-a, --args TEXT`: Arguments to pass to the script. Can be specified multiple times.
+* `--help`: Show this message and exit.
+
 ## `aignostics system`
 
 Determine health, info and further utillities.
@@ -865,7 +882,7 @@ Determine and print system info.
 
 Args:
     include_environ (bool): Include environment variables.
-    filter_secrets (bool): Filter secrets from the output.
+    mask_secrets (bool): Mask values for variables identified as secrets.
     output_format (OutputFormat): Output format (JSON or YAML).
 
 **Usage**:
@@ -877,7 +894,7 @@ $ aignostics system info [OPTIONS]
 **Options**:
 
 * `--include-environ / --no-include-environ`: Include environment variables  [default: no-include-environ]
-* `--filter-secrets / --no-filter-secrets`: Filter secrets  [default: filter-secrets]
+* `--mask-secrets / --no-mask-secrets`: Mask secrets  [default: mask-secrets]
 * `--output-format [yaml|json]`: Output format  [default: json]
 * `--help`: Show this message and exit.
 

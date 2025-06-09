@@ -4,8 +4,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from aignostics.gui import frame, theme
-from aignostics.system import Service as SystemService
-from aignostics.utils import BasePageBuilder, get_logger
+from aignostics.utils import BasePageBuilder, get_logger, get_user_data_directory
 
 logger = get_logger(__name__)
 
@@ -30,9 +29,7 @@ class PageBuilder(BasePageBuilder):
                 """Launch QuPath."""
                 launch_button.props(add="loading")
                 ui.notify("Launching Python Notebook...", color="blue")
-                ui.navigate.to(
-                    f"/notebook/all?results_folder={quote(SystemService.get_user_data_directory('results').as_posix())}"
-                )
+                ui.navigate.to(f"/notebook/all?results_folder={quote(get_user_data_directory('results').as_posix())}")
 
             ui.markdown(
                 """

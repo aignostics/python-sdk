@@ -171,7 +171,7 @@ class Service(BaseService):
         Raises:
             ValueError: If the target directory does not exist.
         """
-        from ._idc_index import IDCClient  # noqa: PLC0415
+        from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
         queue.put_nowait(0.01)
 
@@ -218,7 +218,7 @@ class Service(BaseService):
             # Create command for the subprocess
             script_content = f"""
 import sys
-from aignostics.dataset._idc_index import IDCClient
+from aignostics.third_party.idc_index import IDCClient
 
 client = IDCClient.client()
 client.fetch_index("sm_instance_index")

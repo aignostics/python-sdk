@@ -15,6 +15,7 @@ import requests
 from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
+from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -37,8 +38,8 @@ from aignostics.wsi import Service as WSIService
 from ._settings import Settings
 from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
 
-has_paquo_extra = find_spec("paquo")
-if has_paquo_extra:
+has_qupath_extra = find_spec("ijson")
+if has_qupath_extra:
     from aignostics.qupath import AddProgress as QuPathAddProgress
     from aignostics.qupath import AnnotateProgress as QuPathAnnotateProgress
     from aignostics.qupath import Service as QuPathService
@@ -81,7 +82,7 @@ class DownloadProgress(BaseModel):
     artifact_size: int | None = None
     artifact_downloaded_chunk_size: int = 0
     artifact_downloaded_size: int = 0
-    if has_paquo_extra:
+    if has_qupath_extra:
         qupath_add_input_progress: QuPathAddProgress | None = None
         qupath_add_results_progress: QuPathAddProgress | None = None
         qupath_annotate_input_with_results_progress: QuPathAnnotateProgress | None = None
@@ -112,7 +113,7 @@ class DownloadProgress(BaseModel):
             if (not self.total_artifact_count) or self.total_artifact_index is None:
                 return 0.0
             return min(1, float(self.total_artifact_index + 1) / float(self.total_artifact_count))
-        if has_paquo_extra:
+        if has_qupath_extra:
             if self.status == DownloadProgressState.QUPATH_ADD_INPUT and self.qupath_add_input_progress:
                 return self.qupath_add_input_progress.progress_normalized
             if self.status == DownloadProgressState.QUPATH_ADD_RESULTS and self.qupath_add_results_progress:
@@ -136,7 +137,7 @@ class DownloadProgress(BaseModel):
                 return 0.0
             return min(1, float(self.artifact_downloaded_size) / float(self.artifact_size))
         if (
-            has_paquo_extra
+            has_qupath_extra
             and self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
             and self.qupath_annotate_input_with_results_progress
         ):
@@ -154,13 +155,13 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self) -> dict[str, Any]:  # noqa: PLR6301
+    def info(self) -> dict[str, Any]:
         """Determine info of this service.
 
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {}
+        return {"settings": self._settings.model_dump()}
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
@@ -350,7 +351,7 @@ class Service(BaseService):
         """Generate metadata from the source directory.
 
         Steps:
-        1. Recursively files ending with .tiff, .tif, .svs and .dcm in the source directory
+        1. Recursively files ending with supported extensions in the source directory
         2. Creates a dict with the following columns
             - reference (str): The reference of the file, by default equivalent to the absolute file name
             - source (str): The absolute filename
@@ -385,10 +386,9 @@ class Service(BaseService):
         application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)  # noqa: F841
 
         metadata = []
-        file_extensions = [".tiff", ".tif", ".svs", ".dcm"]
 
         try:
-            for extension in file_extensions:
+            for extension in list(WSI_SUPPORTED_FILE_EXTENSIONS):
                 for file_path in source_directory.glob(f"**/*{extension}"):
                     # Generate CRC32C checksum with google_crc32c and encode as base64
                     hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
@@ -741,8 +741,8 @@ class Service(BaseService):
             RuntimeError: If run details cannot be retrieved or download fails.
             Exception: If run cannot be retrieved, destination directory cannot be created, or download fails.
         """
-        if qupath_project and not has_paquo_extra:
-            message = "QuPath project creation requested, but 'paquo' extra is not installed."
+        if qupath_project and not has_qupath_extra:
+            message = "QuPath project creation requested, but 'qupath' extra is not installed."
             message += 'Start launchpad with `uvx --with "aignostics[qupath]" ....'
             logger.warning(message)
             raise ValueError(message)

@@ -8,8 +8,7 @@ import requests
 import typer
 
 from aignostics.platform import generate_signed_url as platform_generate_signed_url
-from aignostics.system import Service as SystemService
-from aignostics.utils import console, get_logger
+from aignostics.utils import console, get_logger, get_user_data_directory
 
 logger = get_logger(__name__)
 
@@ -41,7 +40,7 @@ def browse() -> None:
 @idc_app.command()
 def indices() -> None:
     """List available columns in given of the IDC Portal."""
-    from ._idc_index import IDCClient  # noqa: PLC0415
+    from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
     client = IDCClient.client()
     console.print(list(client.indices_overview.keys()))
@@ -58,7 +57,7 @@ def columns(
     ] = "sm_instance_index",
 ) -> None:
     """List available columns in given of the IDC Portal."""
-    from ._idc_index import IDCClient  # noqa: PLC0415
+    from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
     client = IDCClient.client()
     client.fetch_index(index)
@@ -95,7 +94,7 @@ WHERE
     """Query IDC index. For example queries see https://github.com/ImagingDataCommons/IDC-Tutorials/blob/master/notebooks/labs/idc_rsna2023.ipynb."""
     import pandas as pd  # noqa: PLC0415
 
-    from ._idc_index import IDCClient  # noqa: PLC0415
+    from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
     client = IDCClient.client()
     for idx in [idx.strip() for idx in indices.split(",") if idx.strip()]:
@@ -126,7 +125,7 @@ def idc_download(
             readable=True,
             resolve_path=True,
         ),
-    ] = SystemService.get_user_data_directory("datasets/idc"),  # noqa: B008
+    ] = get_user_data_directory("datasets/idc"),  # noqa: B008
     target_layout: Annotated[
         str, typer.Option(help="layout of the target directory. See default for available elements for use")
     ] = TARGET_LAYOUT_DEFAULT,
@@ -137,7 +136,7 @@ def idc_download(
     Raises:
         typer.Exit: If the target directory does not exist.
     """
-    from ._idc_index import IDCClient  # noqa: PLC0415
+    from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
     client = IDCClient.client()
     logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
@@ -213,7 +212,7 @@ def aignostics_download(
             readable=True,
             resolve_path=True,
         ),
-    ] = SystemService.get_user_data_directory("datasets/aignostics"),  # noqa: B008
+    ] = get_user_data_directory("datasets/aignostics"),  # noqa: B008
 ) -> None:
     """Download from bucket to folder via a signed URL."""
     from rich.progress import (  # noqa: PLC0415

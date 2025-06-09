@@ -94,5 +94,7 @@ data/**
 dist_vercel
 setup.sh.secret
 __marimo__
+dist_native/**
+!dist_native/.keep
 notes.md
 CLAUDE.md

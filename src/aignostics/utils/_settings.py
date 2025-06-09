@@ -34,9 +34,15 @@ class OpaqueSettings(BaseSettings):
     def serialize_sensitive_info(input_value: SecretStr, info: FieldSerializationInfo) -> str | None:
         if not input_value:
             return None
-        if info.context.get(UNHIDE_SENSITIVE_INFO, False):  # type: ignore
+        if info.context and info.context.get(UNHIDE_SENSITIVE_INFO, False):
             return input_value.get_secret_value()
         return str(input_value)
+
+    @staticmethod
+    def serialize_path_resolve(input_value: Path, _info: FieldSerializationInfo) -> str | None:
+        if not input_value:
+            return None
+        return str(input_value.resolve())
 
 
 def load_settings(settings_class: type[T]) -> T:

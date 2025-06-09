@@ -1,11 +1,13 @@
 """Notebook server utilities."""
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
-from ..constants import NOTEBOOK_APP, NOTEBOOK_FOLDER  # noqa: TID252
 from ._health import Health
 from ._log import get_logger
+from ._fs import get_user_data_directory
+import shutil
 
 logger = get_logger(__name__)
 
@@ -35,8 +37,12 @@ def register_health_endpoint(router: Any) -> Callable[..., Health]:  # noqa: ANN
     return result
 
 
-def create_marimo_app() -> Any:  # noqa: ANN401
+def create_marimo_app(notebook: Path, override_if_exists: False) -> Any:  # noqa: ANN401
     """Create a FastAPI app with marimo notebook server.
+
+    Args:
+        notebook (Path): Path to the notebook. Notebook will be copied into the user data directory.
+        override_if_exists (bool): Whether to override the notebook in the user data directory if it already exists.
 
     Returns:
         FastAPI: FastAPI app with marimo notebook server.
@@ -49,15 +55,14 @@ def create_marimo_app() -> Any:  # noqa: ANN401
     from fastapi import APIRouter, FastAPI  # noqa: PLC0415
 
     server = marimo.create_asgi_app(include_code=True)
-    if not NOTEBOOK_FOLDER.is_dir():
-        logger.critical(
-            "Directory %s does not exist. Please create the directory and add your notebooks.",
-            NOTEBOOK_FOLDER,
-        )
-        message = f"Directory {NOTEBOOK_FOLDER} does not exist. Please create and add your notebooks."
-        raise ValueError(message)
-    server = server.with_app(path="/", root=str(NOTEBOOK_APP))
-    #            .with_dynamic_directory(path="/dashboard", directory=str(self._settings.directory))
+    directory = get_user_data_directory("notebooks")
+    notebook_destination = directory / notebook.name
+    if notebook_destination.exists() and not override_if_exists:
+        logger.debug(f"Notebook already exists at {notebook_destination}, using existing file")
+    else:
+        notebook_destination.write_bytes(notebook.read_bytes())
+        logger.info(f"Copied notebook from {notebook} to {notebook_destination}")
+    server = server.with_app(path="/", root=str(notebook_destination.resolve()))
     app = FastAPI()
     router = APIRouter(tags=["marimo"])
     register_health_endpoint(router)

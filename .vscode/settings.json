@@ -33,19 +33,21 @@
         "**/.venv/**",
         "**/dist-packages/**",
         "**/dist_vercel/.vercel/**",
+        "**/dist_native/**",
         "**/site-packages/**",
     ],
     "python.analysis.ignore": [
-        "**/.vendored/**",
+        "**/third_party/**",
         "dist/**",
         "dist_vercel/**",
+        "dist_native/**",
         "template/**",
         "tests/**",
         "codegen/**",
         "_notebook.py",
         "e2e.py",
         "src/aignostics/wsi/_pydicom_handler.py",
-        "src/aignostics/dataset/_idc_index.py",
+        "src/aignostics/third_party/idc_index.py",
         "src/aignostics/notebook/_notebook.py"
     ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
@@ -87,5 +89,8 @@
         "connectionId": "aignostics",
         "projectKey": "aignostics_python-sdk"
     },
-    "makefile.configureOnOpen": false
+    "makefile.configureOnOpen": false,
+    "python.analysis.extraPaths": [
+        "./src/aignostics/utils/_"
+    ]
 }

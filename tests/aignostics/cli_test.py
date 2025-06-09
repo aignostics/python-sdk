@@ -13,15 +13,10 @@ from aignostics.cli import cli
 from aignostics.utils import (
     __version__,
 )
+from tests.conftest import normalize_output
 
 BUILT_WITH_LOVE = "built with love in Berlin"
 THE_VALUE = "THE_VALUE"
-
-
-@pytest.fixture
-def runner() -> CliRunner:
-    """Provide a CLI test runner fixture."""
-    return CliRunner()
 
 
 def test_cli_built_with_love(runner) -> None:
@@ -35,25 +30,36 @@ def test_cli_built_with_love(runner) -> None:
 def test_cli_fails_on_invalid_setting_with_env_arg() -> None:
     """Check system fails on boot with invalid setting using subprocess."""
     # Run the CLI as a subprocess with environment variable
+    cmd = [
+        sys.executable,
+        "-m",
+        "aignostics.cli",
+        "system",
+        "info",
+        "--env",
+        "AIGNOSTICS_LOG_LEVEL=FAIL",
+    ]
+
     result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "aignostics.cli",
-            "system",
-            "info",
-            "--env",
-            "AIGNOSTICS_LOG_LEVEL=FAIL",
-        ],
+        cmd,
         capture_output=True,
         text=True,
         check=False,
+        shell=False,
+        encoding="utf-8",
     )
+
+    # Debug output for Windows issues
+    print(f"DEBUG: Command: {cmd}")
+    print(f"DEBUG: sys.executable: {sys.executable}")
+    print(f"DEBUG: Return code: {result.returncode}")
 
     # Check the return code (78 indicates validation failed)
     assert result.returncode == 78
-    # Check that the error message is in the stderr
-    assert "Input should be 'CRITICAL'" in result.stdout
+    # Check that the error message is in the stdout or stderr (handle None case for Windows)
+    stdout_text = normalize_output(result.stdout or "")
+    stderr_text = normalize_output(result.stderr or "")
+    assert "Input should be 'CRITICAL'" in stdout_text or "Input should be 'CRITICAL'" in stderr_text
 
 
 @pytest.mark.sequential

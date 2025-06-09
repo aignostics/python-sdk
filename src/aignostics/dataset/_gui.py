@@ -6,7 +6,7 @@ from pathlib import Path
 from showinfm.showinfm import show_in_file_manager
 
 from aignostics.gui import frame
-from aignostics.system import Service as SystemService
+from aignostics.utils import get_user_data_directory
 
 from ..utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
 from ._service import TARGET_LAYOUT_DEFAULT, Service
@@ -145,7 +145,7 @@ class PageBuilder(BasePageBuilder):
                 ):
                     return
 
-                download_form.destination = SystemService.get_user_data_directory("datasets/idc")
+                download_form.destination = get_user_data_directory("datasets/idc")
                 download_form.destination_label.set_text(str(download_form.destination))
                 download_form.destination_open_button.enable()
                 if download_form.source is not None:
@@ -183,7 +183,7 @@ class PageBuilder(BasePageBuilder):
                         TARGET_LAYOUT_DEFAULT,
                         False,
                     )
-                except ValueError as e:
+                except Exception as e:  # noqa: BLE001
                     nicegui.ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
                     download_form.download_button.props(remove="loading")
                     download_form.download_progress.visible = False

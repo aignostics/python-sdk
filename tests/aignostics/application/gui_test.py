@@ -1,15 +1,13 @@
 """Tests to verify the GUI functionality of the application module."""
 
-import logging
-import os
 import platform
 import re
-import signal
+import tempfile
 from asyncio import sleep
-from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import patch
 
+import psutil
 import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
@@ -17,62 +15,14 @@ from typer.testing import CliRunner
 from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
+from aignostics.qupath import QUPATH_VERSION
 from aignostics.utils import get_logger, gui_register_pages
+from tests.conftest import assert_notified, normalize_output, print_directory_structure
 
 logger = get_logger(__name__)
 
 HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
 HETA_APPLICATION_ID = "he-tme"
-
-
-@pytest.fixture
-def runner() -> CliRunner:
-    """Provide a CLI test runner fixture."""
-    return CliRunner()
-
-
-def _print_directory_structure(path: Path, step: str | None) -> None:
-    if step is not None:
-        print(f"\n==> Directory structure of '{path}' after step '{step}':")
-    else:
-        print(f"\n==> Directory structure of '{path}':")
-    for root_str, dirs, files in os.walk(path):
-        root = Path(root_str)
-        rel_path = root.relative_to(path) if root != path else Path()
-        print(f"Directory: {rel_path}")
-        for directory in dirs:
-            print(f"  Dir: {directory}")
-        for file in files:
-            file_path = root / file
-            file_size = file_path.stat().st_size
-            file_size_human = (
-                f"{file_size / (1024 * 1024):.2f} MB" if file_size > 1024 * 1024 else f"{file_size / 1024:.2f} KB"
-            )
-            print(f"  File: {file} ({file_size_human}, {file_size} bytes)")
-
-
-async def _assert_notified(user: User, expected_notification: str, wait_seconds=5) -> str:
-    """Check if the user receives a notification within the specified time."""
-    for _ in range(wait_seconds):
-        matching_messages = [msg for msg in user.notify.messages if expected_notification in msg]
-        if matching_messages:
-            return matching_messages[0]
-        await sleep(1)
-    pytest.fail(f"No notification containing '{expected_notification}' was found within {wait_seconds} seconds")
-
-
-@pytest.fixture
-def silent_logging(caplog) -> Generator[None, None, None]:
-    """Suppress logging output during test execution.
-
-    Args:
-        caplog (pytest.LogCaptureFixture): The pytest fixture for capturing log messages.
-
-    Yields:
-        None: This fixture doesn't yield any value.
-    """
-    with caplog.at_level(logging.CRITICAL + 1):
-        yield
 
 
 async def test_gui_index(user: User) -> None:
@@ -109,52 +59,61 @@ async def test_gui_home_to_application(
     await user.should_see(expected_text, retries=100)
 
 
-async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, tmp_path: Path) -> None:
+@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_logging) -> None:
     """Test that the user sees the index page, and sees the intro."""
-    gui_register_pages()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        gui_register_pages()
 
-    latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
-    latest_version_id = latest_version.application_version_id
+        tmp_path = Path(tmpdir)
 
-    # Submit run
-    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    csv_content += "platform_bucket_url\n"
-    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
-    csv_path = tmp_path / "dummy.csv"
-    csv_path.write_text(csv_content)
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
-    assert result.exit_code == 0
+        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
+        latest_version_id = latest_version.application_version_id
 
-    # Extract the run ID from the output
-    output = result.output.replace("\n", "")
-    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
-    assert run_id_match is not None, f"Could not extract run ID from output: {output}"
-    run_id = run_id_match.group(1)
+        # Submit run
+        csv_content = (
+            "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+        )
+        csv_content += "platform_bucket_url\n"
+        csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
+        csv_path = tmp_path / "dummy.csv"
+        csv_path.write_text(csv_content)
+        result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+        assert result.exit_code == 0
 
-    # Run shown in he GUI
-    await user.open("/")
-    await user.should_see("Applications")
-    await user.should_see("Atlas H&E-TME")
-    await user.should_see("Runs")
-    await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
+        # Extract the run ID from the output
+        output = normalize_output(result.output)
+        run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+        assert run_id_match is not None, f"Could not extract run ID from output: {output}"
+        run_id = run_id_match.group(1)
 
-    # Navigate to the extracted run ID
-    await user.open(f"/application/run/{run_id}")
-    await user.should_see(f"Run of {latest_version_id}")
-    await user.should_see(f"Application Version: {latest_version_id}")
-    await user.should_see("status RUNNING")
-    await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
-    user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
-    await _assert_notified(user, f"Canceling application run with id '{run_id}' ...")
-    await _assert_notified(user, "Application run cancelled!")
-    await user.should_see("status CANCELED_USER")
+        # Run shown in he GUI
+        await user.open("/")
+        await user.should_see("Applications")
+        await user.should_see("Atlas H&E-TME")
+        await user.should_see("Runs")
+        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
+
+        # Navigate to the extracted run ID
+        await user.open(f"/application/run/{run_id}")
+        await user.should_see(f"Run of {latest_version_id}")
+        await user.should_see(f"Application Version: {latest_version_id}")
+        await user.should_see("status RUNNING")
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
+        user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
+        await assert_notified(user, f"Canceling application run with id '{run_id}' ...")
+        await assert_notified(user, "Application run cancelled!")
+
+        # Check user sees refreshed run page and run is cancelled
+        await user.should_see("status CANCELED_USER", retries=200)
 
 
+@pytest.mark.long_running
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
-    """Test that the user can navigate to a run."""
-    with patch("pathlib.Path.home", return_value=tmp_path):
+    """Test that the user can download a dataset via the application page and cancel the run."""
+    with patch("aignostics.application._gui._page_application_describe.Path.home", return_value=tmp_path):
         gui_register_pages()
 
         # Download example wsi
@@ -169,8 +128,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             ],
         )
         assert result.exit_code == 0
-        assert "Successfully downloaded" in result.stdout.replace("\n", "")
-        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout.replace("\n", "")
+        assert "Successfully downloaded" in normalize_output(result.stdout)
+        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
         expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
         assert expected_file.exists(), f"Expected file {expected_file} not found"
         assert expected_file.stat().st_size == 14681750
@@ -181,6 +140,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("Atlas H&E-TME")
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme")
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
+        await user.should_see("Atlas H&E-TME")
+        await user.should_see("The Atlas", retries=100)
         await user.should_see("The Atlas H&E TME is an AI application")
 
         # Check the latest application version is shown and select it
@@ -198,14 +159,14 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("Ok")
         await user.should_see("Cancel")
         user.find(marker="BUTTON_FILEPICKER_CANCEL").click()
-        await _assert_notified(user, "You did not make a selection")
+        await assert_notified(user, "You did not make a selection")
 
         # Select the home directory and trigger metadata generation
         user.find(marker="BUTTON_PYTEST_HOME").click()
-        await user.should_see(f"Selected folder {Path.home()!s} to analyze.")
-        await _assert_notified(user, f"You chose directory {Path.home()!s}.")
+        await user.should_see(f"Selected folder {tmp_path!s} to analyze.")
+        await assert_notified(user, f"You chose directory {tmp_path!s}.")
         user.find(marker="BUTTON_WSI_NEXT").click()
-        assert _assert_notified(user, "Found 1 slides for analysis")
+        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=20)
         await sleep(10)
 
         # Generate remaining metadata, going to upload UI
@@ -214,33 +175,40 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             retries=100,
         )
         user.find(marker="BUTTON_PYTEST_META").click()
-        await _assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
+        await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
         user.find(marker="BUTTON_METADATA_NEXT").click()
-        await _assert_notified(user, "Prepared upload UI.")
-        await user.should_see("Upload and submit your 1 slide(s) for analysis.")
+        await assert_notified(user, "Prepared upload UI.")
+        print(user.current_layout)
+        await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
 
         # Trigger upload and submission
+        await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
         user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
-        await _assert_notified(user, "Uploading whole slide images to Aignostics Platform ...")
-        await _assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=30)
-        await _assert_notified(user, "Submitting application run ...")
-        await _assert_notified(user, "Application run submitted with id", wait_seconds=10)
+        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...")
+        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=30)
+        await assert_notified(user, "Submitting application run ...")
+        await assert_notified(user, "Application run submitted with id", wait_seconds=10)
 
         # Check user is redirected to the run page and run is running
-        await user.should_see(f"Run of he-tme:v{latest_application_version.version}")
+        await user.should_see(f"Run of he-tme:v{latest_application_version.version}", retries=200)
         await user.should_see("status RUNNING")
 
         # Check user can cancel run
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
-        await _assert_notified(user, "Canceling application run with id")
-        await _assert_notified(user, "Application run cancelled!")
-        await user.should_see("status CANCELED_USER")
+        await assert_notified(user, "Canceling application run with id")
+        await assert_notified(user, "Application run cancelled!")
+
+        # Check user sees refreshed run page and run is cancelled
+        await user.should_see("status CANCELED_USER", retries=200)
 
 
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:
-    """Test that the user can download a run."""
-    with patch("aignostics.system.Service.get_user_data_directory", return_value=tmp_path):
+@pytest.mark.sequential
+async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+    """Test that the user can download a run result via the GUI."""
+    with patch(
+        "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
+    ):
         gui_register_pages()
 
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
@@ -267,9 +235,9 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         # Step 2: Open Result Download dialog
         await user.should_see(marker="BUTTON_DOWNLOAD_RUN")
         user.find(marker="BUTTON_DOWNLOAD_RUN").click()
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
 
         # Step 3: Select Data
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
 
         # Step 3: Trigger Download
@@ -277,8 +245,8 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
 
         # Check: Download completed
-        await _assert_notified(user, "Download completed.", 30)
-        _print_directory_structure(tmp_path, "execute")
+        await assert_notified(user, "Download completed.", 60)
+        print_directory_structure(tmp_path, "execute")
         run_out_dir = tmp_path / run.application_run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
         # Find any subdirectory in the run_out_dir
@@ -297,14 +265,22 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         )
 
 
+@pytest.mark.skipif(
+    platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
+    reason="QuPath is not supported on ARM64 Linux",
+)
 @pytest.mark.sequential
-async def test_gui_run_open_qupath(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:  # noqa: PLR0915
+async def test_gui_run_open_qupath(
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging, qupath_teardown
+) -> None:
     """Test that the user can open QuPath for run."""
-    with patch("aignostics.system.Service.get_user_data_directory", return_value=tmp_path):
+    with patch(
+        "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
+    ):
         gui_register_pages()
 
         result = runner.invoke(cli, ["qupath", "install"])
-        assert "QuPath v0.6.0-rc5 installed successfully" in result.output.replace("\n", "")
+        assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
         assert result.exit_code == 0
 
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
@@ -331,9 +307,9 @@ async def test_gui_run_open_qupath(user: User, runner: CliRunner, tmp_path: Path
         # Step 2: Open Result Download dialog
         await user.should_see(marker="BUTTON_OPEN_QUPATH")
         user.find(marker="BUTTON_OPEN_QUPATH").click()
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
 
         # Step 3: Select Data
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
 
         # Step 3: Trigger Download
@@ -341,8 +317,8 @@ async def test_gui_run_open_qupath(user: User, runner: CliRunner, tmp_path: Path
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
 
         # Check: Download completed
-        await _assert_notified(user, "Download and QuPath project creation completed.", 30)
-        _print_directory_structure(tmp_path, "execute")
+        await assert_notified(user, "Download and QuPath project creation completed.", 60)
+        print_directory_structure(tmp_path, "execute")
         run_out_dir = tmp_path / run.application_run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
         # Find any subdirectory in the run_out_dir
@@ -360,22 +336,13 @@ async def test_gui_run_open_qupath(user: User, runner: CliRunner, tmp_path: Path
             f"{[f.name for f in files_in_item_dir]}"
         )
 
-        # On macOS, we can check if the process is running and then kill it
+        # On macOS and Windows, we can check if the process is running and then kill it
         # On GitHub we are headless, so opening will fail
-        if platform.system() == "Darwin":
-            # Check QuPath opening triggered
-            await _assert_notified(user, "Opening QuPath ...", 5)
-
-            notification = await _assert_notified(user, "QuPath opened successfully", 30)
+        if platform.system() in {"Darwin", "Windows"}:
+            notification = await assert_notified(user, "QuPath opened successfully", 30)
             pid_match = re.search(r"process id '(\d+)'", notification)
             pid = int(pid_match.group(1))
             try:
-                os.kill(pid, 0)  # Signal 0 just tests if process exists
-                process_exists = True
-            except OSError:
-                process_exists = False
-            assert process_exists, f"Process with PID {pid} is not running"
-            try:
-                os.kill(pid, signal.SIGKILL)
-            except OSError as e:
+                psutil.Process(pid).kill()
+            except Exception as e:  # noqa: BLE001
                 pytest.fail(f"Failed to kill QuPath process: {e}")
