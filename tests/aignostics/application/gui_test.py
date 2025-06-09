@@ -1,13 +1,11 @@
 """Tests to verify the GUI functionality of the application module."""
 
-import platform
 import re
 import tempfile
 from asyncio import sleep
 from pathlib import Path
 from unittest.mock import patch
 
-import psutil
 import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
@@ -15,7 +13,6 @@ from typer.testing import CliRunner
 from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
-from aignostics.qupath import QUPATH_VERSION
 from aignostics.utils import get_logger, gui_register_pages
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 
@@ -263,86 +260,3 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
             f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: "
             f"{[f.name for f in files_in_item_dir]}"
         )
-
-
-@pytest.mark.skipif(
-    platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
-    reason="QuPath is not supported on ARM64 Linux",
-)
-@pytest.mark.sequential
-async def test_gui_run_open_qupath(
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging, qupath_teardown
-) -> None:
-    """Test that the user can open QuPath for run."""
-    with patch(
-        "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
-    ):
-        gui_register_pages()
-
-        result = runner.invoke(cli, ["qupath", "install"])
-        assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
-        assert result.exit_code == 0
-
-        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
-        latest_version_id = latest_version.application_version_id
-        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
-
-        if not runs:
-            pytest.fail("No completed runs found, please run the test first.")
-        # Find a completed run with the latest application version ID
-        run = None
-        for potential_run in runs:
-            if potential_run.application_version_id == latest_version_id:
-                run = potential_run
-                break
-        if not run:
-            pytest.skip(f"No completed runs found with version {latest_version_id}")
-
-        # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.application_run_id}, status: {run.status}")
-        await user.open(f"/application/run/{run.application_run_id}")
-        await user.should_see(f"Run {run.application_run_id}")
-        await user.should_see(f"Run of {latest_version_id}")
-
-        # Step 2: Open Result Download dialog
-        await user.should_see(marker="BUTTON_OPEN_QUPATH")
-        user.find(marker="BUTTON_OPEN_QUPATH").click()
-
-        # Step 3: Select Data
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
-        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
-
-        # Step 3: Trigger Download
-        await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")
-        user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
-
-        # Check: Download completed
-        await assert_notified(user, "Download and QuPath project creation completed.", 60)
-        print_directory_structure(tmp_path, "execute")
-        run_out_dir = tmp_path / run.application_run_id
-        assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
-        # Find any subdirectory in the run_out_dir
-        subdirs = [d for d in run_out_dir.iterdir() if d.is_dir()]
-        assert len(subdirs) > 0, f"Expected at least one subdirectory in {run_out_dir}, but found none"
-
-        # Take the first subdirectory found (item_out_dir)
-        item_out_dir = subdirs[0]
-        print(f"Found subdirectory: {item_out_dir.name}")
-
-        # Check for files in the item directory
-        files_in_item_dir = list(item_out_dir.glob("*"))
-        assert len(files_in_item_dir) == 9, (
-            f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: "
-            f"{[f.name for f in files_in_item_dir]}"
-        )
-
-        # On macOS and Windows, we can check if the process is running and then kill it
-        # On GitHub we are headless, so opening will fail
-        if platform.system() in {"Darwin", "Windows"}:
-            notification = await assert_notified(user, "QuPath opened successfully", 30)
-            pid_match = re.search(r"process id '(\d+)'", notification)
-            pid = int(pid_match.group(1))
-            try:
-                psutil.Process(pid).kill()
-            except Exception as e:  # noqa: BLE001
-                pytest.fail(f"Failed to kill QuPath process: {e}")

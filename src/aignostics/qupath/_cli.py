@@ -404,7 +404,6 @@ def inspect(
 ) -> None:
     """Inspect project."""
     try:
-        console.print(f"Inspecting project in folder '{project}'...")
         info = Service().inspect(project=project)
         console.print_json(data=info.model_dump())
     except Exception as e:
