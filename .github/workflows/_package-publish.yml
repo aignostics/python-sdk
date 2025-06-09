@@ -103,7 +103,24 @@ jobs:
         with:
           pattern: dist_native-*
           path: dist_native_all/
-          merge-multiple: true
+          merge-multiple: false
+
+      - name: Create zip archives for native executables
+        shell: bash
+        run: |
+          mkdir -p dist_native_zipped/
+          cd dist_native_all/
+          for dir in */; do
+            if [ -d "$dir" ]; then
+              platform_name=${dir%/}
+              echo "Creating zip for platform: $platform_name"
+              cd "$dir"
+              zip -r "../../dist_native_zipped/$platform_name.zip" .
+              cd ..
+            fi
+          done
+          cd ..
+          ls -la dist_native_zipped/
 
       - name: Docs
         shell: bash
@@ -142,7 +159,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          gh release create ${{ github.ref_name }} ./dist/* ./reports/* ./dist_native_all/* \
+          gh release create ${{ github.ref_name }} ./dist/* ./reports/* ./dist_native_zipped/* \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
       - name: Allow other workflows to trigger on release
