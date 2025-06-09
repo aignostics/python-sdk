@@ -28,6 +28,7 @@ jobs:
         run: .github/workflows/_install_dev_tools.bash
 
       - name: Install Python, venv and dependencies
+        shell: bash
         run: uv sync --all-extras --frozen --link-mode=copy
 
       - name: Create .env file
@@ -45,16 +46,19 @@ jobs:
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access
+        shell: bash
         run: |
           echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Audit
+        shell: bash
         run: make audit
 
       - name: Test / scheduled
         env:
           BETTERSTACK_HEARTBEAT_URL: "${{ secrets.BETTERSTACK_HEARTBEAT_URL }}"
+        shell: bash
         run: |
           set +e
           make test_scheduled

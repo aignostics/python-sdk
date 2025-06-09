@@ -1,6 +1,7 @@
 """CLI of bucket module."""
 
 import datetime
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -118,7 +119,7 @@ def ls(
     detail: Annotated[bool, typer.Option(help="Show details")] = False,
 ) -> None:
     """List objects in bucket on Aignostics Platform."""
-    console.print(Service().ls(detail=detail))
+    console.print_json(json=json.dumps(Service().ls(detail=detail), default=str))
 
 
 @cli.command()
@@ -126,7 +127,7 @@ def find(
     detail: Annotated[bool, typer.Option(help="Show details")] = False,
 ) -> None:
     """Find objects in bucket on Aignostics Platform."""
-    console.print(Service().find(detail=detail))
+    console.print_json(json=json.dumps(Service().find(detail=detail), default=str))
 
 
 @cli.command()

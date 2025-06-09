@@ -9,8 +9,7 @@ import typer
 
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException
-from aignostics.system import Service as SystemService
-from aignostics.utils import console, get_logger
+from aignostics.utils import console, get_logger, get_user_data_directory
 
 from ._service import DownloadProgress, DownloadProgressState, Service
 from ._utils import (
@@ -552,7 +551,7 @@ def result_download(  # noqa: PLR0913, PLR0917
             readable=True,
             resolve_path=True,
         ),
-    ] = SystemService.get_user_data_directory("results"),  # noqa: B008
+    ] = get_user_data_directory("results"),  # noqa: B008
     create_subdirectory_for_run: Annotated[
         bool,
         typer.Option(

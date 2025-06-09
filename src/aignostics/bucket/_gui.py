@@ -10,8 +10,8 @@ from ._service import Service
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
-    def register_pages() -> None:
-        from nicegui import app, binding, ui  # noqa: PLC0415
+    def register_pages() -> None:  # noqa: C901, PLR0915
+        from nicegui import app, binding, run, ui  # noqa: PLC0415
 
         app.add_static_files("/bucket_assets", Path(__file__).parent / "assets")
 
@@ -21,11 +21,12 @@ class PageBuilder(BasePageBuilder):
 
             grid: ui.aggrid | None = None
             delete_button: ui.button | None = None
+            spinner: ui.spinner | None = None
 
         bucket_form = BucketForm()
 
         @ui.page("/bucket")
-        async def page_index() -> None:  # noqa: RUF029
+        async def page_index() -> None:  # noqa: C901, PLR0915
             """Index page of bucket module."""
             with frame("Manage Cloud Bucket on Aignostics Platform", left_sidebar=False):
                 # Nothing to do here, just to show the page
@@ -39,14 +40,29 @@ class PageBuilder(BasePageBuilder):
                         3. The bucket is private and only accessible to you and restricted staff of Aignostics.
                         2. The bucket is securely hosted on Google Cloud in EU.
                         3. All data is encrypted in transit and at rest.
-                        4. Any data is automatically deleted after 7 days.
+                        4. Any data is automatically deleted after 30 days.
                         5. You can manually delete data at any time using the form below.
                         """).classes("w-3/5")
                 ui.space()
                 ui.image("/bucket_assets/Google-Cloud-logo.png").classes("w-1/5").style("margin-top:1.25rem")
 
-            def _get_rows() -> list[dict[str, str]]:
-                objs = Service().find(detail=True)
+            async def _get_rows() -> list[dict[str, str]]:
+                if bucket_form.spinner is not None:
+                    bucket_form.spinner.set_visibility(True)
+                if bucket_form.grid is not None:
+                    bucket_form.grid.set_visibility(False)
+                if bucket_form.delete_button is not None:
+                    bucket_form.delete_button.set_visibility(False)
+                objs = await run.io_bound(
+                    Service.find_static,
+                    detail=True,
+                )
+                if bucket_form.spinner is not None:
+                    bucket_form.spinner.set_visibility(False)
+                if bucket_form.grid is not None:
+                    bucket_form.grid.set_visibility(True)
+                if bucket_form.delete_button is not None:
+                    bucket_form.delete_button.set_visibility(True)
                 return [
                     {
                         "key": obj["key"],  # type: ignore
@@ -65,17 +81,21 @@ class PageBuilder(BasePageBuilder):
                     ui.notify("No objects selected.", type="warning")
                     return
                 ui.notify(f"Deleting {len(selected_rows)} objects ...", type="info")
+                bucket_form.delete_button.props(add="loading")
                 try:
-                    Service().delete_objects(
+                    await run.io_bound(
+                        Service.delete_objects_static,
                         [row["key"] for row in selected_rows],
                     )
                 except Exception as e:  # noqa: BLE001
                     ui.notify(f"Error deleting objects: {e}", color="red", type="warning")
+                    bucket_form.delete_button.props(remove="loading")
                     return
                 ui.notify(f"Deleted {len(selected_rows)} objects.", type="positive")
+                bucket_form.delete_button.props(remove="loading")
                 bucket_form.delete_button.set_text("Delete")
                 bucket_form.delete_button.disable()
-                bucket_form.grid.options["rowData"] = _get_rows()
+                bucket_form.grid.options["rowData"] = await _get_rows()
                 bucket_form.grid.update()
 
             async def _handle_grid_selection_changed() -> None:
@@ -88,6 +108,11 @@ class PageBuilder(BasePageBuilder):
                 else:
                     bucket_form.delete_button.set_text("Delete")
                     bucket_form.delete_button.disable()
+
+            bucket_form.spinner = ui.spinner(size="lg").classes(
+                "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
+            )
+            bucket_form.spinner.set_visibility(False)
 
             bucket_form.grid = (
                 ui.aggrid({
@@ -108,7 +133,7 @@ class PageBuilder(BasePageBuilder):
                             "field": "size",
                         },
                     ],
-                    "rowData": _get_rows(),
+                    "rowData": await _get_rows(),
                     "rowSelection": "multiple",
                     "enableCellTextSelection": "true",
                     "autoSizeStrategy": {
@@ -127,6 +152,7 @@ class PageBuilder(BasePageBuilder):
             bucket_form.delete_button = (
                 ui.button(
                     "Delete",
+                    icon="delete",
                     on_click=_delete_selected,
                 )
                 .mark("BUTTON_DELETE_OBJECTS")

@@ -18,12 +18,10 @@ from ._constants import (
     __version__,
 )
 from ._di import load_modules, locate_implementations, locate_subclasses
-from ._fs import sanitize_path, sanitize_path_component
+from ._fs import get_user_data_directory, open_user_data_directory, sanitize_path, sanitize_path_component
 from ._health import Health
 from ._log import LogSettings, get_logger
-from ._logfire import LogfireSettings
 from ._process import ProcessInfo, get_process_info
-from ._sentry import SentrySettings
 from ._service import BaseService
 from ._settings import UNHIDE_SENSITIVE_INFO, OpaqueSettings, load_settings, strip_to_none_before_validator
 from .boot import boot
@@ -33,11 +31,8 @@ __all__ = [
     "BaseService",
     "Health",
     "LogSettings",
-    "LogSettings",
-    "LogfireSettings",
     "OpaqueSettings",
     "ProcessInfo",
-    "SentrySettings",
     "__author_email__",
     "__author_name__",
     "__base__url__",
@@ -55,10 +50,12 @@ __all__ = [
     "console",
     "get_logger",
     "get_process_info",
+    "get_user_data_directory",
     "load_modules",
     "load_settings",
     "locate_implementations",
     "locate_subclasses",
+    "open_user_data_directory",
     "prepare_cli",
     "sanitize_path",
     "sanitize_path_component",
@@ -66,6 +63,16 @@ __all__ = [
 ]
 
 from importlib.util import find_spec
+
+if find_spec("logfire"):
+    from ._logfire import LogfireSettings, logfire_initialize
+
+    __all__ += ["LogfireSettings", "logfire_initialize"]
+
+if find_spec("sentry"):
+    from ._sentry import SentrySettings
+
+    __all__ += ["SentrySettings"]
 
 if find_spec("nicegui"):
     from ._gui import BasePageBuilder, GUILocalFilePicker, gui_register_pages, gui_run

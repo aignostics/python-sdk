@@ -65,7 +65,7 @@ def health(
 @cli.command()
 def info(
     include_environ: Annotated[bool, typer.Option(help="Include environment variables")] = False,
-    filter_secrets: Annotated[bool, typer.Option(help="Filter secrets")] = True,
+    mask_secrets: Annotated[bool, typer.Option(help="Mask secrets")] = True,
     output_format: Annotated[
         OutputFormat, typer.Option(help="Output format", case_sensitive=False)
     ] = OutputFormat.JSON,
@@ -74,10 +74,10 @@ def info(
 
     Args:
         include_environ (bool): Include environment variables.
-        filter_secrets (bool): Filter secrets from the output.
+        mask_secrets (bool): Mask values for variables identified as secrets.
         output_format (OutputFormat): Output format (JSON or YAML).
     """
-    info = _service.info(include_environ=include_environ, filter_secrets=filter_secrets)
+    info = _service.info(include_environ=include_environ, mask_secrets=mask_secrets)
     match output_format:
         case OutputFormat.JSON:
             console.print_json(data=info)

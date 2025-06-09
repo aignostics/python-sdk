@@ -12,8 +12,10 @@ from ._utils import application_id_to_icon, run_status_to_icon_and_color
 logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
-RUNS_LIMIT = 500
+RUNS_LIMIT = 100
 STORAGE_TAB_RUNS_COMPLETED_ONLY = "runs_completed_only"
+
+service = Service()
 
 
 async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
@@ -26,7 +28,6 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 ) -> None:
     if args is None:
         args = {}
-    service = Service()
     with frame(  # noqa: PLR1702
         navigation_title=navigation_title,
         navigation_icon=navigation_icon,
@@ -65,11 +66,11 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
         async def application_runs_load_and_render(runs_column: ui.column, completed_only: bool = False) -> None:
             with runs_column:
                 try:
-                    runs = await nicegui_run.io_bound(
+                    runs = await nicegui_run.cpu_bound(
                         Service.application_runs_static, limit=RUNS_LIMIT, completed_only=completed_only
                     )
                     if runs is None:
-                        message = "nicegui_run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
+                        message = "nicegui_run.cpu_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
                         logger.error(message)
                         raise RuntimeError(message)  # noqa: TRY301
                     runs_column.clear()

@@ -38,8 +38,8 @@ from aignostics.wsi import Service as WSIService
 from ._settings import Settings
 from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
 
-has_paquo_extra = find_spec("paquo")
-if has_paquo_extra:
+has_qupath_extra = find_spec("ijson")
+if has_qupath_extra:
     from aignostics.qupath import AddProgress as QuPathAddProgress
     from aignostics.qupath import AnnotateProgress as QuPathAnnotateProgress
     from aignostics.qupath import Service as QuPathService
@@ -82,7 +82,7 @@ class DownloadProgress(BaseModel):
     artifact_size: int | None = None
     artifact_downloaded_chunk_size: int = 0
     artifact_downloaded_size: int = 0
-    if has_paquo_extra:
+    if has_qupath_extra:
         qupath_add_input_progress: QuPathAddProgress | None = None
         qupath_add_results_progress: QuPathAddProgress | None = None
         qupath_annotate_input_with_results_progress: QuPathAnnotateProgress | None = None
@@ -113,7 +113,7 @@ class DownloadProgress(BaseModel):
             if (not self.total_artifact_count) or self.total_artifact_index is None:
                 return 0.0
             return min(1, float(self.total_artifact_index + 1) / float(self.total_artifact_count))
-        if has_paquo_extra:
+        if has_qupath_extra:
             if self.status == DownloadProgressState.QUPATH_ADD_INPUT and self.qupath_add_input_progress:
                 return self.qupath_add_input_progress.progress_normalized
             if self.status == DownloadProgressState.QUPATH_ADD_RESULTS and self.qupath_add_results_progress:
@@ -137,7 +137,7 @@ class DownloadProgress(BaseModel):
                 return 0.0
             return min(1, float(self.artifact_downloaded_size) / float(self.artifact_size))
         if (
-            has_paquo_extra
+            has_qupath_extra
             and self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
             and self.qupath_annotate_input_with_results_progress
         ):
@@ -741,8 +741,8 @@ class Service(BaseService):
             RuntimeError: If run details cannot be retrieved or download fails.
             Exception: If run cannot be retrieved, destination directory cannot be created, or download fails.
         """
-        if qupath_project and not has_paquo_extra:
-            message = "QuPath project creation requested, but 'paquo' extra is not installed."
+        if qupath_project and not has_qupath_extra:
+            message = "QuPath project creation requested, but 'qupath' extra is not installed."
             message += 'Start launchpad with `uvx --with "aignostics[qupath]" ....'
             logger.warning(message)
             raise ValueError(message)

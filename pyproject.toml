@@ -130,7 +130,6 @@ dependencies = [
     "s5cmd",
     "sphinx-click",
     "tqdm",
-    "ijson>=3.4.0",
 ]
 
 [project.optional-dependencies]
@@ -141,7 +140,7 @@ marimo = [
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
-qupath = ["ijson>=3.3.0", "geopandas>=1.0.1", "paquo>=0.8.1"]
+qupath = ["ijson>=3.4.0"]
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",
@@ -157,6 +156,7 @@ dev = [
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
+    "pyinstaller>=6.14.0",
     "pyright>=1.1.401",
     "pytest>=8.4.0",
     "pytest-asyncio>=1.0.0",
@@ -165,6 +165,7 @@ dev = [
     "pytest-env>=1.1.5",
     "pytest-md-report>=0.7.0",
     "pytest-regressions>=2.8.0",
+    "pytest-retry>=1.7.0",
     "pytest-selenium>=4.1.0",
     "pytest-subprocess>=1.5.3",
     "pytest-timeout>=2.4.0",
@@ -229,8 +230,7 @@ extend-exclude = [
     "notebook.py",
     "_notebook.py",
     "template/*.py",
-    "bottle.py",
-    "_idc_index.py",
+    "**/third_party/*.py",
     "examples/*.py",
     "codegen",
 ]
@@ -292,7 +292,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["_notebook.py", "bottle.py", "_idc_index.py", "_pydicom_handler.py"]
+exclude = ["_notebook.py", "bottle.py", "idc_index.py", "_pydicom_handler.py"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -341,8 +341,7 @@ sigterm = true
 relative_files = true
 source = ["src"]
 omit = [
-    "*/.vendored/*",
-    "*/_idc_index.py",
+    "*/third_party/*",
     "*/_notebook.py",
     "*/_pydicom_handler.py",
     "*/_openslide_handler.py",
@@ -404,6 +403,11 @@ filename = "docs/source/conf.py"
 
 [[tool.bumpversion.files]]
 filename = "examples/notebook.py"
+
+[[tool.bumpversion.files]]
+filename = "aignostics.spec"
+search = "version='{current_version}'"
+replace = "version='{new_version}'"
 
 [tool.git-cliff.remote.github]
 owner = "aignostics"

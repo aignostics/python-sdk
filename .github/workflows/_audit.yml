@@ -29,9 +29,11 @@ jobs:
         run: .github/workflows/_install_dev_tools.bash
 
       - name: Install Python, venv and dependencies
+        shell: bash
         run: uv sync --all-extras --frozen --link-mode=copy
 
       - name: Audit
+        shell: bash
         run: make audit
         
       - name: Upload audit results

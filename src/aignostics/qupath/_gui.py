@@ -21,7 +21,7 @@ class PageBuilder(BasePageBuilder):
         app.add_static_files("/qupath_assets", Path(__file__).parent / "assets")
 
         @ui.page("/qupath")
-        def page_index() -> None:  # noqa: C901, PLR0915
+        async def page_index() -> None:  # noqa: C901, PLR0915
             """QuPath Extension."""
             with frame("QuPath Extension", left_sidebar=False):
                 # Nothing to do here, just to show the page
@@ -85,7 +85,7 @@ class PageBuilder(BasePageBuilder):
                 launch_button.props(add="loading")
 
                 try:
-                    pid = await run.cpu_bound(Service.launch_qupath)
+                    pid = await run.cpu_bound(Service.execute_qupath)
                     if pid:
                         message = f"QuPath launched successfully with process id '{pid}'."
                         logger.info(message)
@@ -101,8 +101,12 @@ class PageBuilder(BasePageBuilder):
 
                 launch_button.props(remove="loading")
 
-            version = Service().get_version()
-            expected_version = Service().get_expected_version()
+            spinner = ui.spinner(size="lg").classes(
+                "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
+            )
+            version = await run.io_bound(Service.get_version)
+            spinner.delete()
+            expected_version = Service.get_expected_version()
 
             ui.markdown(
                 """

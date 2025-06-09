@@ -5,18 +5,12 @@ import os
 import uuid
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from tests.conftest import normalize_output
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
-
-
-@pytest.fixture
-def runner() -> CliRunner:
-    """Provide a CLI test runner fixture."""
-    return CliRunner()
 
 
 def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0912, PLR0915
@@ -99,7 +93,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir1/file{i}.txt"
         else:
             file_path = f"{test_prefix}/dir2/file{i}.txt"
-        assert file_path in result.output
+        assert file_path in result.output.replace("\\\\", "\\")
 
     # Step 5: Delete the files one by one
     for i in range(1, 10):
@@ -111,7 +105,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir2/file{i}.txt"
         result = runner.invoke(cli, ["bucket", "delete", file_path])
         assert result.exit_code == 0
-        assert f"Deleted object with key '{file_path}'" in result.output
+        assert f"Deleted object with key '{file_path}'" in normalize_output(result.stdout)
 
     # Step 6: Verify the files are no longer found
     result = runner.invoke(cli, ["bucket", "find"])
@@ -123,13 +117,13 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir1/file{i}.txt"
         else:
             file_path = f"{test_prefix}/dir2/file{i}.txt"
-        assert file_path not in result.output
+        assert file_path not in normalize_output(result.stdout).replace("\\\\", "\\")
 
     # Step 7: Try to delete a file that doesn't exist
     non_existent_file = f"{test_prefix}/file1.txt"
     result = runner.invoke(cli, ["bucket", "delete", non_existent_file])
     assert result.exit_code == 0
-    assert f"Object with key '{non_existent_file}' not found" in result.output
+    assert f"Object with key '{non_existent_file}' not found" in normalize_output(result.stdout)
 
 
 def test_cli_bucket_purge(runner: CliRunner) -> None:

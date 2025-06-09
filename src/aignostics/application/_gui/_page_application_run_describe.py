@@ -11,8 +11,7 @@ from nicegui import ui  # noq
 from showinfm.showinfm import show_in_file_manager
 
 from aignostics.platform import ApplicationRunStatus, ItemStatus
-from aignostics.system import Service as SystemService
-from aignostics.utils import GUILocalFilePicker, get_logger
+from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
 from .._service import DownloadProgressState, Service  # noqa: TID252
 from .._utils import get_mime_type_for_artifact  # noqa: TID252
@@ -28,16 +27,23 @@ logger = get_logger(__name__)
 WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 
+service = Service()
+
 
 async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
+    """Describe Application.
+
+    Args:
+        application_run_id (str): The ID of the application run to describe.
+    """
     import pandas as pd  # noqa: PLC0415
 
-    if find_spec("paquo"):
+    if find_spec("ijson"):
         from aignostics.qupath import Service as QuPathService  # noqa: PLC0415
 
-    """Describe Application."""
-    service = Service()
-    run = service.application_run(application_run_id)
+    spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
+    run = await nicegui_run.io_bound(service.application_run, application_run_id)
+    spinner.set_visibility(False)
     run_data = run.details()
 
     if run and run_data:
@@ -67,7 +73,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         ui.label(f"Failed to get run '{application_run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
         return
 
-    def _cancel(run_id: str) -> bool:
+    async def _cancel(run_id: str) -> bool:
         """Cancel the application run.
 
         Args:
@@ -78,11 +84,16 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         """
         ui.notify(f"Canceling application run with id '{run_id}' ...", type="info")
         try:
-            service.application_run_cancel(run_id)
+            cancel_button.disable()
+            cancel_button.props(add="loading")
+            await nicegui_run.io_bound(service.application_run_cancel, run_id)
+            cancel_button.props(remove="loading")
             ui.navigate.reload()
             ui.notify("Application run cancelled!", type="positive")
             return True
         except Exception as e:  # noqa: BLE001
+            cancel_button.enable()
+            cancel_button.props(remove="loading")
             ui.notify(f"Failed to cancel application run: {e}.", type="warning")
             return False
 
@@ -129,7 +140,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
 
             async def _select_data() -> None:  # noqa: RUF029
                 """Open a file picker dialog and show notifier when closed again."""
-                selected_folder.value = str(SystemService.get_user_data_directory("results"))
+                selected_folder.value = str(get_user_data_directory("results"))
                 download_button.enable()
 
             with ui.row().classes("w-full"):
@@ -226,10 +237,14 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     qupath_project=qupath_project,
                     download_progress_queue=progress_queue,
                 )
+                if not results_folder:
+                    message = "Download returned without results folder."
+                    raise ValueError(message)  # noqa: TRY301
                 if qupath_project:
-                    ui.notify("Download and QuPath project creation completed.", type="positive")
-                    download_item_status.set_text("Opening QuPath ...")
-                    await open_qupath(project=results_folder / "qupath", button=download_button)
+                    if results_folder:
+                        ui.notify("Download and QuPath project creation completed.", type="positive")
+                        download_item_status.set_text("Opening QuPath ...")
+                        await open_qupath(project=results_folder / "qupath", button=download_button)
                 elif marimo:
                     ui.notify("Download and Notebook preparation completed.", type="positive")
                     download_item_status.set_text("Opening Notebook ...")
@@ -365,7 +380,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                 button.disable()
                 button.props(add="loading")
             ui.notify("Opening QuPath ...", type="info")
-            pid = await nicegui_run.cpu_bound(QuPathService.launch_qupath, project=project, image=image)
+            pid = await nicegui_run.cpu_bound(QuPathService.execute_qupath, project=project, image=image)
             if pid:
                 message = f"QuPath opened successfully with process id '{pid}'."
                 logger.info(message)
@@ -408,7 +423,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                             .props("push")
                         ):
                             ui.tooltip("Download all results of this run")
-                        if find_spec("paquo") and QuPathService.find_qupath():
+                        if find_spec("ijson") and QuPathService.is_qupath_installed():
                             with (
                                 ui.button(
                                     "QuPath",
@@ -431,7 +446,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                             ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
                 if run_data.status.value == ApplicationRunStatus.RUNNING:
-                    ui.button(
+                    cancel_button = ui.button(
                         "Cancel",
                         color="red",
                         on_click=lambda: _cancel(run.application_run_id),
@@ -475,7 +490,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                                     ui.tooltip(f"Item {item.item_id}, status {item.status.value.upper()}")
                             ui.space()
                             with ui.button_group().props():
-                                if find_spec("paquo") and QuPathService.find_qupath():
+                                if find_spec("ijson") and QuPathService.is_qupath_installed():
                                     with ui.button(
                                         icon="zoom_in",
                                         color="primary",
@@ -537,7 +552,9 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                                                         ui.button(
                                                             text="Download",
                                                             icon="cloud_download",
-                                                            on_click=lambda _, url=url: ui.download.from_url(url),
+                                                            on_click=lambda _, url=url: ui.navigate.to(
+                                                                url, new_tab=True
+                                                            ),
                                                         )
                                                     if metadata:
                                                         ui.button(

@@ -29,6 +29,7 @@ def _():
     from dotenv import load_dotenv
     from aignostics import dataset, WSI_SUPPORTED_FILE_EXTENSIONS
     from wsidicom import WsiDicom
+    from aignostics.utils import get_user_data_directory
 
     mo.sidebar([
         mo.md("# aignostics"),
@@ -49,11 +50,11 @@ def _():
 @app.cell
 def _(Path, mo):
     query_params = mo.query_params()
-    application_run_id = query_params["application_run_id"]
+    application_run_id = query_params.get("application_run_id","Not set")
     print(f"Application run id '{application_run_id}'")
     mo.vstack([
         mo.ui.file_browser(
-            Path(query_params["results_folder"]),
+            Path(query_params.get("results_folder", get_user_data_directory("results"))),
             filetypes=list(WSI_SUPPORTED_FILE_EXTENSIONS),
             multiple=True,
             restrict_navigation=True,

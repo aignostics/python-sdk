@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from nicegui import app
 from nicegui.testing import User
 
-from aignostics.notebook._service import Service, _get_runner, _Runner
+from aignostics.notebook._service import MARIMO_SERVER_STARTUP_TIMEOUT, Service, _get_runner, _Runner
 from aignostics.utils import gui_register_pages
 
 
@@ -29,8 +29,7 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
     Args:
         caplog: Fixture to capture log messages.
     """
-    # Set log level to INFO to capture the relevant messages
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.DEBUG)
     service = None
 
     try:
@@ -53,7 +52,7 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
         start_messages = [
             msg
             for msg in log_messages
-            if "Marimo server started at URL" in msg or "Marimo server is already running" in msg
+            if "Marimo server started successfully with URL" in msg or "Marimo server is already running" in msg
         ]
         assert len(start_messages) > 0, "Missing log message about server starting or already running"
         # Only check for server URL in the log if we're not dealing with an "already running" message
@@ -102,24 +101,69 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
                 service.stop()
 
 
-def test_serve_notebook(user: User) -> None:
-    """Test notebook serving."""
+def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
+    """Test notebook serving.
+
+    Args:
+        user: The test user fixture.
+        caplog: Fixture to capture log messages.
+
+    Raises:
+        AssertionError: If the test assertions fail.
+    """
+    # Set up logging to capture DEBUG level and above
+    caplog.set_level(logging.DEBUG)
+
     gui_register_pages()
     client = TestClient(app)
 
-    response = client.get("/notebook/4711?results_folder=/tmp")
-    assert response.status_code == 200
-    content = response.content.decode("utf-8")
-    assert "iframe" in content
-    assert "iframe src" in content
-    # Look for the encoded iframe in the innerHTML property
-    iframe_html = re.search(r'innerHTML":"&lt;iframe src=\\"([^"]+)\\"', content)
-    assert iframe_html is not None, f"iframe src not found in response: {content}"
+    try:
+        response = client.get("/notebook/4711?results_folder=/tmp")
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "iframe" in content
+        assert "iframe src" in content
 
-    # Extract the URL from the iframe src attribute
-    notebook_url = iframe_html.group(1)
-    assert "localhost" in notebook_url, f"localhost not found in iframe src: {notebook_url}"
-    assert "application_run_id=4711" in notebook_url, f"run_id not found in iframe src: {notebook_url}"
+        # Look for the encoded iframe in the innerHTML property
+        iframe_html = re.search(r'innerHTML":"&lt;iframe src=\\"([^"]+)\\"', content)
+
+        # Enhanced error message with logs if assertion fails
+        if iframe_html is None:
+            log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
+            error_msg = (
+                f"iframe src not found in response.\n"
+                f"Response content: {content[:1000]}{'...' if len(content) > 1000 else ''}\n"
+                f"Captured logs:\n{log_messages}"
+            )
+            pytest.fail(error_msg)
+
+        # Extract the URL from the iframe src attribute
+        notebook_url = iframe_html.group(1)
+
+        # Enhanced error messages with logs for remaining assertions
+        if not any(host in notebook_url for host in ("localhost", "127.0.0.1")):
+            log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
+            error_msg = (
+                f"localhost and 127.0.0.1 not found in iframe src: {notebook_url}\n"
+                f"Full response content: {content[:1000]}{'...' if len(content) > 1000 else ''}\n"
+                f"Captured logs:\n{log_messages}"
+            )
+            pytest.fail(error_msg)
+
+        if "application_run_id=4711" not in notebook_url:
+            log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
+            error_msg = (
+                f"run_id not found in iframe src: {notebook_url}\n"
+                f"Full response content: {content[:1000]}{'...' if len(content) > 1000 else ''}\n"
+                f"Captured logs:\n{log_messages}"
+            )
+            pytest.fail(error_msg)
+
+    except Exception as e:
+        # If any unexpected exception occurs, capture and include logs
+        log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
+        error_msg = f"Test failed with exception: {e}\nCaptured logs:\n{log_messages}"
+        raise AssertionError(error_msg) from e
 
 
 def test_startup_timeout() -> None:
@@ -151,7 +195,12 @@ def test_startup_timeout() -> None:
         # because start() will set it internally
 
         # Verify that a timeout raises RuntimeError
-        with pytest.raises(RuntimeError, match="didn't start within 10 seconds"):
+        with pytest.raises(
+            RuntimeError,
+            match=re.escape(
+                f"Marimo server didn't start within '{MARIMO_SERVER_STARTUP_TIMEOUT}' seconds (URL not detected)."
+            ),
+        ):
             runner.start()
 
         # Verify that stop was called to kill the server after timeout
@@ -177,7 +226,9 @@ def test_missing_url() -> None:
         mock_popen.return_value = mock_process
 
         # Verify that missing URL raises RuntimeError
-        with pytest.raises(RuntimeError, match="URL was not set despite server ready"):
+        with pytest.raises(
+            RuntimeError, match=re.escape("Server URL was not set despite server ready event being triggered.")
+        ):
             runner.start()
 
 
@@ -196,9 +247,9 @@ def test_stop_nonrunning_server() -> None:
         runner.stop()
 
         # Verify that appropriate log messages were produced
-        mock_logger.debug.assert_any_call("Marimo server is not running")
-        mock_logger.debug.assert_any_call("Monitor thread is not running")
-        mock_logger.info.assert_called_with("Service stopped")
+        mock_logger.debug.assert_any_call("Marimo server is not running.")
+        mock_logger.debug.assert_any_call("Monitor thread is not running.")
+        mock_logger.info.assert_called_with("Service stopped.")
 
 
 def test_capture_output_no_stdout() -> None:
@@ -231,7 +282,7 @@ def test_server_url_detection() -> None:
         "\t➜\tURL:\thttps://0.0.0.0:5000",
     ]
 
-    url_pattern = re.compile(r"\s*➜\s+URL:\s+(https?://\S+)")
+    url_pattern = re.compile(r"URL:\s+((?:http|https)://[^\s]{1,100})")
 
     for output in sample_outputs:
         match = url_pattern.search(output)

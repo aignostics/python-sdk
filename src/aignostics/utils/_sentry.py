@@ -2,12 +2,11 @@
 
 import re
 import urllib.parse
+from importlib.util import find_spec
 from typing import Annotated
 
-import sentry_sdk
 from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer, SecretStr
 from pydantic_settings import SettingsConfigDict
-from sentry_sdk.integrations.typer import TyperIntegration
 
 from ._constants import __env__, __env_file__, __project_name__, __version__
 from ._settings import OpaqueSettings, load_settings, strip_to_none_before_validator
@@ -192,8 +191,11 @@ def sentry_initialize() -> bool:
     """
     settings = load_settings(SentrySettings)
 
-    if not settings.enabled or settings.dsn is None:
+    if not find_spec("sentry_sdk") or not settings.enabled or settings.dsn is None:
         return False
+
+    import sentry_sdk  # noqa: PLC0415
+    from sentry_sdk.integrations.typer import TyperIntegration  # noqa: PLC0415
 
     sentry_sdk.init(
         release=f"{__project_name__}@{__version__}",  # https://docs.sentry.io/platforms/python/configuration/releases/,

@@ -3,8 +3,16 @@
 import platform
 from pathlib import Path, PureWindowsPath
 
+import appdirs
+from showinfm.showinfm import show_in_file_manager
+
+from ._constants import __is_running_in_read_only_environment__, __project_name__
+from ._log import get_logger
+
 # Constants
 _WIN_DRIVE_MIN_LENGTH = 2  # Minimum length for a Windows drive path (e.g. C:)
+
+logger = get_logger(__name__)
 
 
 def sanitize_path_component(component: str) -> str:
@@ -70,3 +78,50 @@ def sanitize_path(path: str | Path) -> str | Path:
     if is_path_object:
         return Path(path_str)
     return path_str
+
+
+def get_user_data_directory(scope: str | None = None) -> Path:
+    """Get the data directory for the service. Directory created if it does not exist.
+
+    Args:
+        scope (str | None): Optional scope for the data directory.
+
+    Returns:
+        Path: The data directory path.
+    """
+    directory = Path(appdirs.user_data_dir(__project_name__))
+    if scope:
+        directory /= scope
+    if not __is_running_in_read_only_environment__:
+        directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+def open_user_data_directory(scope: str | None = None) -> Path:
+    """Open the user data directory in the file manager of the respective system platform.
+
+    Args:
+        scope (str | None): Optional scope for the data directory.
+
+    Returns:
+        Path: The data directory path.
+    """
+    directory = get_user_data_directory(scope)
+
+    try:
+        show_in_file_manager(str(directory.resolve()))
+    except (OSError, RuntimeError, FileNotFoundError) as error:
+        logger.warning(
+            "Failed to open user data directory in file manager: %s. Directory path: %s",
+            str(error),
+            str(directory),
+        )
+    except Exception as error:  # noqa: BLE001
+        # Catch any other unexpected exceptions to ensure function still returns directory path
+        logger.warning(
+            "Unexpected error opening user data directory in file manager: %s. Directory path: %s",
+            str(error),
+            str(directory),
+        )
+
+    return directory

@@ -2,7 +2,6 @@
 
 import logging
 import os
-from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -11,28 +10,9 @@ from typer.testing import CliRunner
 
 from aignostics.cli import cli
 from aignostics.utils import __project_name__
+from tests.conftest import normalize_output
 
 THE_VALUE = "THE_VALUE"
-
-
-@pytest.fixture
-def runner() -> CliRunner:
-    """Provide a CLI test runner fixture."""
-    return CliRunner()
-
-
-@pytest.fixture
-def silent_logging(caplog) -> Generator[None, None, None]:
-    """Suppress logging output during test execution.
-
-    Args:
-        caplog (pytest.LogCaptureFixture): The pytest fixture for capturing log messages.
-
-    Yields:
-        None: This fixture doesn't yield any value.
-    """
-    with caplog.at_level(logging.CRITICAL + 1):
-        yield
 
 
 @pytest.mark.scheduled
@@ -52,9 +32,16 @@ def test_cli_info(runner: CliRunner) -> None:
 
 
 @pytest.mark.sequential
-def test_cli_info_secrets(runner: CliRunner) -> None:
-    """Check secrets only shown if requested."""
-    with runner.isolated_filesystem():
+def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture) -> None:
+    """Check secrets only shown if requested.
+
+    This test verifies that secrets are properly masked by default and only shown
+    when explicitly requested. We use safe assertion patterns to avoid exposing
+    secret values in test failure output and disable logging to prevent secret
+    exposure in logs.
+    """
+    # Disable all logging to prevent secrets from appearing in logs
+    with runner.isolated_filesystem(), caplog.at_level(logging.CRITICAL + 1):
         # Set environment variable for the test
         env = os.environ.copy()
         env["AIGNOSTICS_SYSTEM_TOKEN"] = THE_VALUE
@@ -64,15 +51,19 @@ def test_cli_info_secrets(runner: CliRunner) -> None:
         env["AIGNOSTICS_CLIENT_ID_INTERACTIVE"] = THE_VALUE
         # end custon
 
-        # Run the CLI with the runner
+        # Run the CLI with the runner - secrets should be masked by default
         result = runner.invoke(cli, ["system", "info"], env=env)
         assert result.exit_code == 0
-        assert THE_VALUE not in result.output
+        # Verify secrets are properly masked (safe assertion - no secret exposure)
+        secret_is_masked = THE_VALUE not in result.output
+        assert secret_is_masked, "Secret value found in masked output - this is a security issue"
 
-        # Run the CLI with the runner
-        result = runner.invoke(cli, ["system", "info", "--no-filter-secrets"], env=env)
+        # Run the CLI with --no-mask-secrets flag - secrets should be visible
+        result = runner.invoke(cli, ["system", "info", "--no-mask-secrets"], env=env)
         assert result.exit_code == 0
-        assert THE_VALUE in result.output
+        # Check for secrets presence without exposing them in assertion failures
+        secret_found = THE_VALUE in result.output
+        assert secret_found, "Expected secret value to be present in unmasked output, but it was not found"
 
 
 @patch("aignostics.utils._gui.gui_register_pages")
@@ -285,15 +276,15 @@ def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> No
 
         result = runner.invoke(cli, ["system", "config", "get", "SSL_CERT_FILE"])
         assert result.exit_code == 0
-        assert str(cert_file.resolve()) in result.output.replace("\n", "")
+        assert str(cert_file.resolve()) in normalize_output(result.stdout)
 
         result = runner.invoke(cli, ["system", "config", "get", "REQUESTS_CA_BUNDLE"])
         assert result.exit_code == 0
-        assert str(cert_file.resolve()) in result.output.replace("\n", "")
+        assert str(cert_file.resolve()) in normalize_output(result.stdout)
 
         result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
         assert result.exit_code == 0
-        assert str(cert_file.resolve()) in result.output.replace("\n", "")
+        assert str(cert_file.resolve()) in normalize_output(result.stdout)
 
         # Enable with no verify
 

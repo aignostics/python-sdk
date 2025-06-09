@@ -26,15 +26,15 @@ async def _page_index() -> None:
             """
             3. For analysis and visualization of results, launch """
             + ("Marimo Notebook" if find_spec("marimo") else "")
-            + (" and " if find_spec("marimo") and find_spec("paquo") else "")
-            + ("QuPath Microscopy viewer" if find_spec("paquo") else "")
+            + (" and " if find_spec("marimo") and find_spec("ijson") else "")
+            + ("QuPath Microscopy viewer" if find_spec("ijson") else "")
             + " with one click."
-            if find_spec("marimo") or find_spec("paquo")
+            if find_spec("marimo") or find_spec("ijson")
             else ""
         )
         + """
             """
-        + ("4" if find_spec("marimo") or find_spec("paquo") else "3")
+        + ("4" if find_spec("marimo") or find_spec("ijson") else "3")
         + """. Trial with public data? Open **☰** Menu and download datasets from
                 Image Data Commons (IDC) by National Cancer Institute (NCI).
         """

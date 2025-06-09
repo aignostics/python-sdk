@@ -15,8 +15,8 @@ from ._settings import Settings
 logger = get_logger(__name__)
 
 BUCKET_PROTOCOL = "gs"
-ENDPOINT_URL_DEFAULT = "https://storage.googleapis.com"
 SIGNATURE_VERSION = "s3v4"
+ENDPOINT_URL_DEFAULT = "https://storage.googleapis.com"
 
 
 class Service(BaseService):
@@ -198,7 +198,7 @@ class Service(BaseService):
         elif source_path.is_dir():
             for file_path in source_path.glob("**/*"):
                 if file_path.is_file():
-                    rel_path = file_path.relative_to(source_path)
+                    rel_path = file_path.relative_to(source_path).as_posix()
                     object_key = f"{destination_prefix}/{rel_path}"
 
                     if self.upload_file(file_path, object_key, callback):
@@ -271,6 +271,18 @@ class Service(BaseService):
 
         return result
 
+    @staticmethod
+    def find_static(detail: bool = False) -> list[str | dict[str, Any]]:
+        """List objects recursively in the bucket, static method version.
+
+        Args:
+            detail (bool): If True, return detailed information including object type, else return only paths.
+
+        Returns:
+            list[Union[str, dict[str, Any]]]: List of objects in the bucket with optional detail.
+        """
+        return Service().find(detail=detail)
+
     def find(self, detail: bool = False) -> list[str | dict[str, Any]]:  # noqa: C901
         """List objects recursively in the bucket.
 
@@ -309,7 +321,7 @@ class Service(BaseService):
                         # Determine if this item is a "directory" (ends with /)
                         item_key = item["Key"]
                         item_type = "directory" if item_key.endswith("/") else "file"
-                        item_path = f"{item_key}"
+                        item_path = item_key
 
                         result.append({
                             "key": item_path,
@@ -323,16 +335,28 @@ class Service(BaseService):
                 # Process directories (common prefixes) for non-detailed view
                 for prefix in common_prefixes:
                     if prefix.get("Prefix") not in {None, ""}:
-                        prefix_path = f"{prefix['Prefix']}"
+                        prefix_path = prefix["Prefix"]
                         result.append(prefix_path)
 
                 # Process files for non-detailed view
                 for item in contents:
                     if item.get("Key") not in {None, ""}:
-                        item_path = f"{item['Key']}"
+                        item_path = item["Key"]
                         result.append(item_path)
 
         return result
+
+    @staticmethod
+    def delete_objects_static(keys: list[str]) -> bool:
+        """Delete objects recursively in the bucket, static method version.
+
+        Args:
+            keys (list[str]): List of keys to delete.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        return Service().delete_objects(keys)
 
     def delete_objects(self, keys: list[str]) -> bool:
         """Delete  objects.
