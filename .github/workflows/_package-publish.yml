@@ -4,6 +4,10 @@ on:
   workflow_call:
     # No inputs needed at this time
 
+env:
+  # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
+  PYTHONIOENCODING: "utf8"
+
 jobs:
 
   build_native:
