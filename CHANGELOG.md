@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.39..0.2.40) - 2025-06-09
+(https://github.com/aignostics/python-sdk/compare/v0.2.39..v0.2.40) - 2025-06-09
 
 
 - *(native)* Include version in macOS bundle - ([7155bbb](https://github.com/aignostics/python-sdk/commit/7155bbb34ebd6656ce68b0231616a21dbcc4eb6c))
