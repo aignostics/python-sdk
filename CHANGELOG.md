@@ -1,5 +1,11 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+(https://github.com/aignostics/python-sdk/compare/v0.2.45..0.2.46) - 2025-06-09
+
+
+- Zip on release - ([638f993](https://github.com/aignostics/python-sdk/commit/638f993d2e95e539203bca7da22ed2cb9d6ba2ae))
+
+
 (https://github.com/aignostics/python-sdk/compare/v0.2.43..v0.2.44) - 2025-06-09
 
 
