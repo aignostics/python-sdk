@@ -1,6 +1,16 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.41..0.2.42) - 2025-06-09
+(https://github.com/aignostics/python-sdk/compare/v0.2.42..0.2.43) - 2025-06-09
+
+
+- *(QuPath)* Check QuPath is launched in install to inspect test - ([526417c](https://github.com/aignostics/python-sdk/commit/526417cad780449ba80f894ac55889fe43491114))
+- *(QuPath)* E2E test from install via run to inspect - ([f35a89d](https://github.com/aignostics/python-sdk/commit/f35a89d26e9a2408e43c67d638866500b3a2c2c2))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.41..v0.2.42) - 2025-06-09
 
 
 - Release workflow - ([ccaef74](https://github.com/aignostics/python-sdk/commit/ccaef740ed807288ebb9b705af0cd160635949cb))
