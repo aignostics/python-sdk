@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.38..0.2.39) - 2025-06-06
+(https://github.com/aignostics/python-sdk/compare/v0.2.39..0.2.40) - 2025-06-09
+
+
+- *(native)* Include version in macOS bundle - ([7155bbb](https://github.com/aignostics/python-sdk/commit/7155bbb34ebd6656ce68b0231616a21dbcc4eb6c))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.38..v0.2.39) - 2025-06-06
 
 
 - *(platform)* Refresh token repl - ([0ab8f66](https://github.com/aignostics/python-sdk/commit/0ab8f66b2b26cca7de13112ef1753267ec6f845d))
@@ -162,3 +168,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
