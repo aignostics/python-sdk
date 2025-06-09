@@ -1,14 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.42..0.2.43) - 2025-06-09
+(https://github.com/aignostics/python-sdk/compare/v0.2.43..0.2.44) - 2025-06-09
+
+
+- Encoding for win32 on package publish - ([dce9f28](https://github.com/aignostics/python-sdk/commit/dce9f28094b9315b395ef81d39f29fa4a303bb68))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.42..v0.2.43) - 2025-06-09
 
 
 - *(QuPath)* Check QuPath is launched in install to inspect test - ([526417c](https://github.com/aignostics/python-sdk/commit/526417cad780449ba80f894ac55889fe43491114))
 - *(QuPath)* E2E test from install via run to inspect - ([f35a89d](https://github.com/aignostics/python-sdk/commit/f35a89d26e9a2408e43c67d638866500b3a2c2c2))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 (https://github.com/aignostics/python-sdk/compare/v0.2.41..v0.2.42) - 2025-06-09
 
