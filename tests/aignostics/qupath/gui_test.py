@@ -110,17 +110,17 @@ async def test_gui_qupath_install_and_launch(
     # Step 5: Check we can launch QuPath
     await user.should_see(marker="BUTTON_QUPATH_LAUNCH")
     user.find("BUTTON_QUPATH_LAUNCH").click()
-    message = await assert_notified(
+    notification = await assert_notified(
         user,
         "QuPath launched successfully with process id",
         wait_seconds=35,
     )
-    pid_match = re.search(r"process id '(\d+)'", message)
+    pid_match = re.search(r"process id '(\d+)'", notification)
     if pid_match:
         pid = int(pid_match.group(1))
-        assert pid > 0, "Process ID should be a positive integer"
+        assert psutil.Process(pid).is_running(), "QuPath process is not running"
     else:
-        pytest.fail(f"Could not extract process ID from notification: {message}")
+        pytest.fail(f"Could not extract process ID from notification: {notification}")
     try:
         psutil.Process(pid).kill()
     except Exception as e:  # noqa: BLE001
@@ -134,7 +134,7 @@ async def test_gui_qupath_install_and_launch(
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.long_running
+@pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
@@ -205,24 +205,26 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
             f"{[f.name for f in files_in_item_dir]}"
         )
 
-        # On macOS and Windows, we can check if the process is running and then kill it
-        # On GitHub we are headless, so opening will fail
-        if platform.system() in {"Darwin", "Windows"}:
-            notification = await assert_notified(user, "QuPath opened successfully", 30)
-            pid_match = re.search(r"process id '(\d+)'", notification)
+        # Check QuPath is running
+        notification = await assert_notified(user, "QuPath opened successfully", 30)
+        pid_match = re.search(r"process id '(\d+)'", notification)
+        if pid_match:
             pid = int(pid_match.group(1))
-            try:
-                psutil.Process(pid).kill()
-            except Exception as e:  # noqa: BLE001
-                pytest.fail(f"Failed to kill QuPath process: {e}")
+            assert psutil.Process(pid).is_running(), "QuPath process is not running"
+        else:
+            pytest.fail(f"Could not extract process ID from notification: {notification}")
+        try:
+            psutil.Process(pid).kill()
+        except Exception as e:  # noqa: BLE001
+            pytest.fail(f"Failed to kill QuPath process: {e}")
 
         # Step 5: Inspect QuPath results
         result = runner.invoke(cli, ["qupath", "inspect", str(run_out_dir / "qupath")])
         assert result.exit_code == 0
 
+        # Check images have been annotated in the QuPath project created
         project_info = json.loads(result.output)
         annotations_total = 0
-        # iterate over images list within info
         for image in project_info["images"]:
             hierarchy = image.get("hierarchy", {})
             total = hierarchy.get("total", 0)
