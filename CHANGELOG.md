@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.46..0.2.47) - 2025-06-10
+(https://github.com/aignostics/python-sdk/compare/v0.2.47..0.2.48) - 2025-06-10
+
+
+- Fix api docs generation - ([f3ea12d](https://github.com/aignostics/python-sdk/commit/f3ea12d87c4e629f40af4df08fc61bc64e460353))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.46..v0.2.47) - 2025-06-10
 
 
 - *(test)* No warn on kill; output qupath inspect results - ([adbf0b4](https://github.com/aignostics/python-sdk/commit/adbf0b4ebee9ef17bb9a6478c70a988d87571097))
