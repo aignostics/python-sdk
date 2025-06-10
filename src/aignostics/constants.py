@@ -11,4 +11,4 @@ NOTEBOOK_DEFAULT = Path(__file__).parent / "notebook" / "_notebook.py"
 # Project specific configuration
 os.environ["MATPLOTLIB"] = "false"
 os.environ["NICEGUI_STORAGE_PATH"] = str(Path.home().resolve() / ".aignostics" / ".nicegui")
-WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}
+WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs", ".zip"}
