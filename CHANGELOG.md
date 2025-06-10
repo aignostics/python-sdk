@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.47..0.2.48) - 2025-06-10
+(https://github.com/aignostics/python-sdk/compare/v0.2.48..0.2.49) - 2025-06-10
+
+
+- *(application)* Dump zip with application schemata - ([8989c03](https://github.com/aignostics/python-sdk/commit/8989c03b5ab561defa3eb8154a00591c44afb876))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.47..v0.2.48) - 2025-06-10
 
 
 - Fix api docs generation - ([f3ea12d](https://github.com/aignostics/python-sdk/commit/f3ea12d87c4e629f40af4df08fc61bc64e460353))
