@@ -343,8 +343,8 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
     Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
 
     formats = {
-        "yaml": {"ext": "yaml", "args": ["--output-format=yaml"]},
-        "json": {"ext": "json", "args": ["--output-format=json"]},
+        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", "AIGNOSTICS_LOG_CONSOLE_ENABLED=false"]},
+        "json": {"ext": "json", "args": ["--output-format=json", "--env", "AIGNOSTICS_LOG_CONSOLE_ENABLED=false"]},
     }
 
     for version in API_VERSIONS:

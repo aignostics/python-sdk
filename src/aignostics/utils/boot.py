@@ -39,9 +39,9 @@ def boot(modules_to_instrument: list[str]) -> None:
 
     log_to_logfire = logfire_initialize(modules_to_instrument)
 
+    _parse_env_args()
     logging_initialize(log_to_logfire)
     _amend_library_path()
-    _parse_env_args()
     _log_boot_message()
 
 

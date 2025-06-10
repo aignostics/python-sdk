@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.44 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.47 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -174,7 +174,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749500198650.745]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749549471649.2742]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -230,7 +230,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749500198650.8447]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749549471649.3582]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
