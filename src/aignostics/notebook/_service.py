@@ -182,9 +182,9 @@ class _Runner:
         if self._marimo_server is not None:
             logger.debug("Stopping Marimo server...")
             self._marimo_server.terminate()
-            self._marimo_server.wait(1)
+            self._marimo_server.wait(2)
             if self._marimo_server.returncode is None:
-                logger.warning("Marimo server did not terminate in time, killing it...")
+                logger.debug("Marimo server did not terminate in time, killing it...")
                 self._marimo_server.kill()
             self._marimo_server = None
             logger.info("Marimo server stopped.")

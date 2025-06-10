@@ -223,6 +223,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         assert result.exit_code == 0
 
         # Check images have been annotated in the QuPath project created
+        print(result.output)
         project_info = json.loads(result.output)
         annotations_total = 0
         for image in project_info["images"]:
