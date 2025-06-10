@@ -7,7 +7,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
+from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
@@ -46,6 +48,18 @@ def test_cli_application_describe_not_found(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "describe", "unknown"])
     assert result.exit_code == 2
     assert "Application with ID 'unknown' not found." in normalize_output(result.output)
+
+
+def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> None:
+    """Check application dump schemata works as expected."""
+    result = runner.invoke(
+        cli, ["application", "dump-schemata", HETA_APPLICATION_ID, "--destination", str(tmp_path), "--zip"]
+    )
+    application_version = ApplicationService().application_version(HETA_APPLICATION_ID, True)
+    assert result.exit_code == 0
+    assert "Zipped 11 files" in normalize_output(result.output)
+    zip_file = sanitize_path(Path(tmp_path / f"{application_version.application_version_id}_schemata.zip"))
+    assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
 def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner, tmp_path: Path) -> None:

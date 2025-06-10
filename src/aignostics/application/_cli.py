@@ -1,7 +1,9 @@
 """CLI of application module."""
 
+import json
 import sys
 import time
+import zipfile
 from pathlib import Path
 from typing import Annotated
 
@@ -9,7 +11,7 @@ import typer
 
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException
-from aignostics.utils import console, get_logger, get_user_data_directory
+from aignostics.utils import console, get_logger, get_user_data_directory, sanitize_path
 
 from ._service import DownloadProgress, DownloadProgressState, Service
 from ._utils import (
@@ -94,6 +96,102 @@ def application_list(
     if app_count == 0:
         logger.info("No applications available.")
         console.print("No applications available.")
+
+
+@cli.command("dump-schemata")
+def application_dump_schemata(  # noqa: C901
+    id: Annotated[  # noqa: A002
+        str,
+        typer.Argument(
+            help="Id of the application or application_version to dump the output schema for. "
+            "If application id is given the latest version of the application will be used."
+        ),
+    ],
+    destination: Annotated[
+        Path,
+        typer.Option(
+            help="Path pointing to directory where the input and output schemata will be dumped.",
+            exists=False,
+            file_okay=False,
+            dir_okay=True,
+            writable=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ] = Path().cwd(),  # noqa: B008,
+    zip: Annotated[  # noqa: A002
+        bool,
+        typer.Option(
+            help="If set, the schema files will be zipped into a single file, with the schema files deleted.",
+        ),
+    ] = False,
+) -> None:
+    """Output the input schema of the application in JSON format."""
+    try:
+        application_version = Service().application_version(id, True)
+        application = Service().application(application_version.application_id)
+    except (NotFoundException, ValueError) as e:
+        message = f"Failed to load application version with ID '{id}', check your input: : {e!s}."
+        logger.warning(message)
+        console.print(f"[warning]Warning:[/warning] {message}")
+        sys.exit(2)
+    except (Exception, RuntimeError) as e:
+        message = f"Failed to load application version with ID '{id}': {e!s}."
+        logger.exception(message)
+        console.print(f"[warning]Error:[/warning] {message}")
+        sys.exit(1)
+    try:
+        destination.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        console.print(f"[error]Error:[/error] Failed to create directory '{destination}': {e}")
+        sys.exit(1)
+
+    created_files: list[Path] = []
+
+    for input_artifact in application_version.input_artifacts:
+        if input_artifact.metadata_schema:
+            file_path: Path = sanitize_path(
+                Path(destination / f"{application_version.application_version_id}_input_{input_artifact.name}.json")
+            )  # type: ignore
+            file_path.write_text(data=json.dumps(input_artifact.metadata_schema, indent=2), encoding="utf-8")
+            created_files.append(file_path)
+
+    for output_artifact in application_version.output_artifacts:
+        if output_artifact.metadata_schema:
+            file_path = sanitize_path(
+                Path(destination / f"{application_version.application_version_id}_output_{output_artifact.name}.json")
+            )  # type: ignore
+            file_path.write_text(data=json.dumps(output_artifact.metadata_schema, indent=2), encoding="utf-8")
+            created_files.append(file_path)
+
+    md_file_path: Path = sanitize_path(Path(destination / f"{application_version.application_version_id}_schemata.md"))  # type: ignore
+    with md_file_path.open("w", encoding="utf-8") as md_file:
+        md_file.write(f"# Schemata for Aignostics Application {application.name}\n")
+        md_file.write(f"* ID: {application.application_id}\n")
+        md_file.write(f"* Version ID: {application_version.application_version_id}\n")
+        md_file.write(f"\n## Description: \n{application.description}\n\n")
+        md_file.write("\n## Input Artifacts\n")
+        for input_artifact in application_version.input_artifacts:
+            md_file.write(
+                f"- {input_artifact.name}: "
+                f"{application_version.application_version_id}_input_{input_artifact.name}.json\n"
+            )
+        md_file.write("\n## Output Artifacts\n")
+        for output_artifact in application_version.output_artifacts:
+            md_file.write(
+                f"- {output_artifact.name}: "
+                f"{application_version.application_version_id}_output_{output_artifact.name}.json\n"
+            )
+    created_files.append(md_file_path)
+
+    if zip:
+        zip_filename = sanitize_path(Path(destination / f"{application_version.application_version_id}_schemata.zip"))
+        with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in created_files:
+                zipf.write(file_path, arcname=file_path.name)
+        console.print(f"Zipped {len(created_files)} files to [bold]{zip_filename}[/bold]")
+        for file_path in created_files:
+            file_path.unlink()
 
 
 @cli.command("describe")
