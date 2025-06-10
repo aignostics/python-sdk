@@ -91,7 +91,7 @@ try {
     
     // Define supported file extensions (matching WSI_SUPPORTED_FILE_EXTENSIONS from Python)
     def supportedExtensions = [
-        ".dcm", ".svs", ".tif", ".tiff"
+        ".dcm", ".svs", ".tif", ".tiff", ".zip"
     ] as Set
     
     // Helper function to check if file is supported
