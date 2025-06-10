@@ -631,6 +631,8 @@ class Service(BaseService):
                                     if row["reference"].lower().endswith((".tif", ".tiff"))
                                     else "application/dicom"
                                     if row["reference"].lower().endswith(".dcm")
+                                    else "application/zip"
+                                    if row["reference"].lower().endswith(".zip")
                                     else "application/octet-stream"
                                 ),
                                 "resolution_mpp": float(row["resolution_mpp"]),
