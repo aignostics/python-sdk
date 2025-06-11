@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 
 QUPATH_VERSION = "0.6.0-rc5"
 DOWNLOAD_CHUNK_SIZE = 10 * 1024 * 1024
-QUPATH_LAUNCH_MAX_WAIT_TIME = 30  # seconds, maximum wait time for QuPath to start
+QUPATH_LAUNCH_MAX_WAIT_TIME = 9999  # seconds, maximum wait time for QuPath to start
 
 PROJECT_FILENAME = "project.qpproj"
 ANNOTATIONS_BATCH_SIZE = 500000
