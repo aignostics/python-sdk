@@ -120,7 +120,7 @@ help:
 	@echo "  clean                 - Clean build artifacts and caches"
 	@echo "  codegen               - Generate API code"
 	@echo "  dist                  - Build wheel and sdist into dist/"
-	@echo "  dist_native		   - Build native app variant of Aignostics Launchpad into dist/native/
+	@echo "  dist_native		   - Build native app variant of Aignostics Launchpad into dist/native/"
 	@echo "  docs [pdf]            - Build documentation (add pdf for PDF format)"
 	@echo "  docker_build          - Build Docker image aignostics"
 	@echo "  gui_watch             - Open GUI in browser and update on changes in source code"
