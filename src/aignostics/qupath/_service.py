@@ -33,7 +33,8 @@ logger = get_logger(__name__)
 
 QUPATH_VERSION = "0.6.0-rc5"
 DOWNLOAD_CHUNK_SIZE = 10 * 1024 * 1024
-QUPATH_LAUNCH_MAX_WAIT_TIME = 9999  # seconds, maximum wait time for QuPath to start
+QUPATH_LAUNCH_MAX_WAIT_TIME = 30  # seconds, maximum wait time for QuPath to start
+QUPATH_SCRIPT_MAX_EXECUTION_TIME = 60 * 60 * 2  # seconds, maximum wait time for QuPath to run a script
 
 PROJECT_FILENAME = "project.qpproj"
 ANNOTATIONS_BATCH_SIZE = 500000
@@ -936,8 +937,13 @@ class Service(BaseService):
             start_time = time.time()
             while True:
                 waited = time.time() - start_time
-                if time.time() - start_time > QUPATH_LAUNCH_MAX_WAIT_TIME:
-                    message = f"Timed out after {waited:.2f} seconds waiting for QuPath to start"
+                if script:
+                    if waited > QUPATH_SCRIPT_MAX_EXECUTION_TIME:
+                        message = f"Timed out after {waited:.2f} seconds waiting for QuPath script to complete"
+                        logger.error(message)
+                        return None
+                elif waited > QUPATH_LAUNCH_MAX_WAIT_TIME:
+                    message = f"Timed out after {waited:.2f} seconds waiting for QuPath to launch"
                     logger.error(message)
                     return None
 
