@@ -1,6 +1,18 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.48..0.2.49) - 2025-06-10
+(https://github.com/aignostics/python-sdk/compare/v0.2.49..0.2.50) - 2025-06-11
+
+
+- *(QuPath)* Proper handling of script max execution time - ([0fa1fe0](https://github.com/aignostics/python-sdk/commit/0fa1fe0e586dbf4eadacf49ba24282655cd84743))
+
+
+- Timeout - ([26b39fe](https://github.com/aignostics/python-sdk/commit/26b39fe87d6589ffe71155a6e0d1c35e2b9a017d))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.48..v0.2.49) - 2025-06-10
 
 
 - *(application)* Dump zip with application schemata - ([8989c03](https://github.com/aignostics/python-sdk/commit/8989c03b5ab561defa3eb8154a00591c44afb876))
