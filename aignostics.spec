@@ -70,5 +70,5 @@ app = BUNDLE(
     name='aignostics.app',
     icon='logo.ico',
     bundle_identifier='com.aignostics.launchpad',
-    version='0.2.50'
+    version='0.2.51'
 )
