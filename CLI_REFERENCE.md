@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.47 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.52 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -79,6 +79,7 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `list`: List available applications.
+* `dump-schemata`: Output the input schema of the application...
 * `describe`: Describe application.
 * `run`: List, submit and manage application runs
 
@@ -95,6 +96,26 @@ $ aignostics application list [OPTIONS]
 **Options**:
 
 * `--verbose / --no-verbose`: Show application details  [default: no-verbose]
+* `--help`: Show this message and exit.
+
+### `aignostics application dump-schemata`
+
+Output the input schema of the application in JSON format.
+
+**Usage**:
+
+```console
+$ aignostics application dump-schemata [OPTIONS] ID
+```
+
+**Arguments**:
+
+* `ID`: Id of the application or application_version to dump the output schema for. If application id is given the latest version of the application will be used.  [required]
+
+**Options**:
+
+* `--destination DIRECTORY`: Path pointing to directory where the input and output schemata will be dumped.  [default: /Users/helmut/Code/python-sdk]
+* `--zip / --no-zip`: If set, the schema files will be zipped into a single file, with the schema files deleted.  [default: no-zip]
 * `--help`: Show this message and exit.
 
 ### `aignostics application describe`
@@ -174,7 +195,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749549471649.2742]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749752104391.826]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -230,7 +251,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749549471649.3582]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749752104391.9028]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
