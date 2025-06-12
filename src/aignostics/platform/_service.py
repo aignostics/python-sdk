@@ -6,7 +6,7 @@ from typing import Any
 import urllib3
 
 from aignostics.platform import Client
-from aignostics.utils import BaseService, Health, __version__, get_logger
+from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, __version__, get_logger
 
 from ._settings import Settings
 
@@ -24,13 +24,16 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self) -> dict[str, Any]:
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
+
+        Args:
+            mask_secrets (bool): Whether to mask sensitive information in the output.
 
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {"settings": self._settings.model_dump()}
+        return {"settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})}
 
     def _determine_api_public_health(self) -> Health:
         """Determine healthiness and reachability of Aignostics Platform API.

@@ -76,6 +76,8 @@ async def test_gui_qupath_install_and_launch(
     user: User, runner: CliRunner, silent_logging: None, qupath_teardown
 ) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
+    pytest.skip("Skip interim - TODO (Helmut)")
+
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code

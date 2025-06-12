@@ -169,28 +169,46 @@ try {
             
             // Add image to project
             println("Calling addImage... ")
+            def addImageStart = System.currentTimeMillis()
             def entry = project.addImage(builder)
+            def addImageDuration = (System.currentTimeMillis() - addImageStart) / 1000.0
+            println("addImage took ${addImageDuration} seconds")
 
             println("Calling setImageName... "+imageFile.getName())
+            def setImageNameStart = System.currentTimeMillis()
             entry.setImageName(imageFile.getName())
+            def setImageNameDuration = (System.currentTimeMillis() - setImageNameStart) / 1000.0
+            println("setImageName took ${setImageNameDuration} seconds")
 
             // Set a particular image type
             println("Calling readImageData... ")
+            def readImageDataStart = System.currentTimeMillis()
             def imageData = entry.readImageData()
+            def readImageDataDuration = (System.currentTimeMillis() - readImageDataStart) / 1000.0
+            println("readImageData took ${readImageDataDuration} seconds")
 
             println("Calling setImageType... ")
+            def setImageTypeStart = System.currentTimeMillis()
             imageData.setImageType(ImageData.ImageType.BRIGHTFIELD_H_DAB)
+            def setImageTypeDuration = (System.currentTimeMillis() - setImageTypeStart) / 1000.0
+            println("setImageType took ${setImageTypeDuration} seconds")
 
-            println("Calling setImageData... ")
+            println("Calling saveImageData... ")
+            def saveImageDataStart = System.currentTimeMillis()
             entry.saveImageData(imageData)
+            def saveImageDataDuration = (System.currentTimeMillis() - saveImageDataStart) / 1000.0
+            println("saveImageData took ${saveImageDataDuration} seconds")
 
             // Write a thumbnail if we can
             println("Calling getThumbnailRGB... ")
             var img = ProjectCommands.getThumbnailRGB(imageData.getServer());
+            def setThumbnailStart = System.currentTimeMillis()
             entry.setThumbnail(img)
+            def setThumbnailDuration = (System.currentTimeMillis() - setThumbnailStart) / 1000.0
+            println("setThumbnail took ${setThumbnailDuration} seconds")
             
             addedCount++
-            println("Done for image " + addedCount + " " + imageFile.getName())
+            println("Adding image completed for image " + addedCount + ", " + imageFile.getName())
             
         } catch (Exception e) {
             def errorMsg = "Error adding image '" + imageFile.getAbsolutePath() + "': " + e.getMessage()

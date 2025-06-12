@@ -59,8 +59,11 @@ atexit.register(_cleanup_processes)
 class Service(BaseService):
     """Service of the IDC module."""
 
-    def info(self) -> dict[str, Any]:  # noqa: PLR6301
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
+
+        Args:
+            mask_secrets (bool): Whether to mask sensitive information in the output.
 
         Returns:
             dict[str,Any]: The info of this service.

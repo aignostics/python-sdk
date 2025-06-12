@@ -244,7 +244,7 @@ class Service(BaseService):
         return any(term in key_lower for term in string_match_terms)
 
     @staticmethod
-    def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:
+    def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:  # type: ignore[override]
         """
         Get info about configuration of service.
 
@@ -377,7 +377,7 @@ class Service(BaseService):
         for service_class in locate_subclasses(BaseService):
             if service_class is not Service:
                 service = service_class()
-                result_dict[service.key()] = service.info()
+                result_dict[service.key()] = service.info(mask_secrets=mask_secrets)
 
         logger.info("Service info: %s", result_dict)
         return result_dict

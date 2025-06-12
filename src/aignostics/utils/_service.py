@@ -32,8 +32,19 @@ class BaseService(ABC):
 
     @abstractmethod
     def health(self) -> Health:
-        """Get health of this service. Override in subclass."""
+        """Get health of this service. Override in subclass.
+
+        Returns:
+            Health: Health status of the service.
+        """
 
     @abstractmethod
-    def info(self) -> dict[str, Any]:
-        """Get info of this service. Override in subclass."""
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
+        """Get info of this service. Override in subclass.
+
+        Args:
+            mask_secrets: Whether to mask sensitive information in the output.
+
+        Returns:
+            dict[str, Any]: Information about the service.
+        """

@@ -32,7 +32,7 @@ from aignostics.platform import (
     NotFoundException,
     OutputArtifactElement,
 )
-from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
+from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
@@ -155,13 +155,16 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self) -> dict[str, Any]:
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
+
+        Args:
+            mask_secrets (bool): If True, mask sensitive information in the output.
 
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {"settings": self._settings.model_dump()}
+        return {"settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})}
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.

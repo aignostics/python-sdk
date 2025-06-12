@@ -25,7 +25,7 @@ from packaging.version import Version
 from psutil import Process, wait_procs
 from pydantic import BaseModel, computed_field
 
-from aignostics.utils import BaseService, Health, __project_name__, get_logger
+from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, __project_name__, get_logger
 
 from ._settings import Settings
 
@@ -204,13 +204,16 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)
 
-    def info(self) -> dict[str, Any]:
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
+
+        Args:
+            mask_secrets (bool): Whether to mask sensitive information in the output.
 
         Returns:
             dict[str,Any]: The info of this service.
         """
-        settings = self._settings.model_dump()
+        settings = self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})
         executable = Service.find_qupath_executable()
         version = Service.get_version()
         return {
