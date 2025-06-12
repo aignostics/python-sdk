@@ -1,6 +1,18 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.50..0.2.51) - 2025-06-11
+(https://github.com/aignostics/python-sdk/compare/v0.2.51..0.2.52) - 2025-06-12
+
+
+- *(unmask)* Unmask secrets on request in all services - ([8c3e6e6](https://github.com/aignostics/python-sdk/commit/8c3e6e6a9f7b1dde8515458c0304387cf831fe61))
+
+
+- *(Makefile)* Typo - ([3b1ac6b](https://github.com/aignostics/python-sdk/commit/3b1ac6b9c6be8e60a63ad16253dd45041193afdb))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.50..v0.2.51) - 2025-06-11
 
 
 - Move to long running for install to inspect test - ([a61fe3f](https://github.com/aignostics/python-sdk/commit/a61fe3f12c8483c994606822ebab1072d6d70a1a))
