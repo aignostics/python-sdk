@@ -33,6 +33,7 @@ dependencies = [
     { name = "httpx" },
     { name = "humanize" },
     { name = "idc-index-data" },
+    { name = "ijson" },
     { name = "jsf" },
     { name = "jsonschema" },
     { name = "logfire", extra = ["system-metrics"] },
@@ -80,9 +81,6 @@ marimo = [
     { name = "marimo" },
     { name = "matplotlib" },
     { name = "shapely" },
-]
-qupath = [
-    { name = "ijson" },
 ]
 
 [package.dev-dependencies]
@@ -149,7 +147,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "humanize", specifier = ">=4.12.3" },
     { name = "idc-index-data", specifier = "==21.0.0" },
-    { name = "ijson", marker = "extra == 'qupath'", specifier = ">=3.4.0" },
+    { name = "ijson", specifier = ">=3.4.0" },
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", specifier = ">=4.24.0" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1" },

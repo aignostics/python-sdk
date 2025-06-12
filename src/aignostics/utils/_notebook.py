@@ -37,7 +37,7 @@ def register_health_endpoint(router: Any) -> Callable[..., Health]:  # noqa: ANN
     return result
 
 
-def create_marimo_app(notebook: Path, override_if_exists: False) -> Any:  # noqa: ANN401
+def create_marimo_app(notebook: Path, override_if_exists: bool) -> Any:  # noqa: ANN401
     """Create a FastAPI app with marimo notebook server.
 
     Args:

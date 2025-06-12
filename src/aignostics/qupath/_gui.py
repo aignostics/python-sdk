@@ -1,5 +1,6 @@
 """GUI of QuPath module."""
 
+import platform
 from multiprocessing import Manager
 from pathlib import Path
 
@@ -26,6 +27,16 @@ class PageBuilder(BasePageBuilder):
             with frame("QuPath Extension", left_sidebar=False):
                 # Nothing to do here, just to show the page
                 pass
+
+            if platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"}:
+                ui.markdown(
+                    """
+                    ### Manage your QuPath Extension
+
+                    QuPath is not supported on ARM64 Linux.
+                """
+                )
+                return
 
             async def install_qupath() -> None:
                 def update_install_progress() -> None:

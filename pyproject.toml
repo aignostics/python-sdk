@@ -101,6 +101,7 @@ dependencies = [
     "highdicom>=0.25.1",
     "httpx>=0.28.1",
     "humanize>=4.12.3",
+    "ijson>=3.4.0",
     "jsf>=0.11.2",
     "jsonschema>=4.24.0",
     "openslide-bin>=4.0.0.8",
@@ -140,7 +141,7 @@ marimo = [
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
-qupath = ["ijson>=3.4.0"]
+qupath = [] # Making this a default extra
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",

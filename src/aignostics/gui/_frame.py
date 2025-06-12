@@ -1,6 +1,7 @@
 """Layout including sidebar and menu."""
 
 import contextlib
+import platform
 from collections.abc import Generator
 from contextlib import contextmanager
 from importlib.util import find_spec
@@ -140,7 +141,7 @@ def frame(  # noqa: C901, PLR0915
         yield
 
     # Populate the right_drawer we created earlier
-    with right_drawer, ui.column(align_items="stretch").classes("h-full"):
+    with right_drawer, ui.column(align_items="stretch").classes("h-full"):  # noqa: PLR1702
         with ui.list():
             with ui.item(on_click=lambda _: ui.navigate.to("/")).props("clickable"):
                 with ui.item_section().props("avatar"):
@@ -158,14 +159,15 @@ def frame(  # noqa: C901, PLR0915
                     )
         ui.space()
         with ui.list():
-            if find_spec("ijson"):
-                with ui.item(on_click=lambda _: ui.navigate.to("/qupath")).props("clickable"):
-                    with ui.item_section().props("avatar"):
-                        ui.icon("visibility", color="primary")
-                    with ui.item_section():
-                        ui.label("QuPath Extension").tailwind.font_weight(
-                            "bold" if context.client.page.path == "/qupath" else "normal"
-                        )
+            if find_spec("ijson"):  # noqa: SIM102
+                if not (platform.system() == "Linux" and platform.machine() == "aarch64"):
+                    with ui.item(on_click=lambda _: ui.navigate.to("/qupath")).props("clickable"):
+                        with ui.item_section().props("avatar"):
+                            ui.icon("visibility", color="primary")
+                        with ui.item_section():
+                            ui.label("QuPath Extension").tailwind.font_weight(
+                                "bold" if context.client.page.path == "/qupath" else "normal"
+                            )
             if find_spec("marimo"):
                 with ui.item(on_click=lambda _: ui.navigate.to("/notebook")).props("clickable"):
                     with ui.item_section().props("avatar"):
