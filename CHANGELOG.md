@@ -1,6 +1,15 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.51..0.2.52) - 2025-06-12
+(https://github.com/aignostics/python-sdk/compare/v0.2.52..0.2.53) - 2025-06-12
+
+
+- Generate - ([bebf86e](https://github.com/aignostics/python-sdk/commit/bebf86e6286e1780ae350673ba6bf5ca057381f7))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.51..v0.2.52) - 2025-06-12
 
 
 - *(unmask)* Unmask secrets on request in all services - ([8c3e6e6](https://github.com/aignostics/python-sdk/commit/8c3e6e6a9f7b1dde8515458c0304387cf831fe61))
@@ -8,9 +17,6 @@
 
 - *(Makefile)* Typo - ([3b1ac6b](https://github.com/aignostics/python-sdk/commit/3b1ac6b9c6be8e60a63ad16253dd45041193afdb))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 (https://github.com/aignostics/python-sdk/compare/v0.2.50..v0.2.51) - 2025-06-11
 
