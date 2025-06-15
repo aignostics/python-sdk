@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.53 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.60 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -23,7 +23,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `application`: List and inspect applications on...
 * `bucket`: Operations on cloud bucket on Aignostics...
 * `dataset`: Download datasets from National Institute...
-* `platform`: Operations for interaction with Aignostics...
+* `user`: User operations such as login, logout and...
 * `qupath`: Interact with QuPath application.
 * `system`: Determine health, info and further...
 * `wsi`: Operations on whole slide images.
@@ -196,7 +196,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750011855404.29]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750023076779.5352]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -252,7 +252,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750011855404.3699]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750023076779.614]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -665,14 +665,14 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 * `--help`: Show this message and exit.
 
-## `aignostics platform`
+## `aignostics user`
 
-Operations for interaction with Aignostics Platform.
+User operations such as login, logout and whoami.
 
 **Usage**:
 
 ```console
-$ aignostics platform [OPTIONS] COMMAND [ARGS]...
+$ aignostics user [OPTIONS] COMMAND [ARGS]...
 ```
 
 **Options**:
@@ -685,7 +685,7 @@ $ aignostics platform [OPTIONS] COMMAND [ARGS]...
 * `login`: (Re)login.
 * `whoami`: Print user info.
 
-### `aignostics platform logout`
+### `aignostics user logout`
 
 Logout if authenticated.
 
@@ -694,21 +694,21 @@ Logout if authenticated.
 **Usage**:
 
 ```console
-$ aignostics platform logout [OPTIONS]
+$ aignostics user logout [OPTIONS]
 ```
 
 **Options**:
 
 * `--help`: Show this message and exit.
 
-### `aignostics platform login`
+### `aignostics user login`
 
 (Re)login.
 
 **Usage**:
 
 ```console
-$ aignostics platform login [OPTIONS]
+$ aignostics user login [OPTIONS]
 ```
 
 **Options**:
@@ -716,14 +716,14 @@ $ aignostics platform login [OPTIONS]
 * `--relogin / --no-relogin`: Re-login  [default: no-relogin]
 * `--help`: Show this message and exit.
 
-### `aignostics platform whoami`
+### `aignostics user whoami`
 
 Print user info.
 
 **Usage**:
 
 ```console
-$ aignostics platform whoami [OPTIONS]
+$ aignostics user whoami [OPTIONS]
 ```
 
 **Options**:

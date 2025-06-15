@@ -10,11 +10,9 @@ from aignostics.utils import console, get_logger
 
 from ._service import Service
 
-MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
-
 logger = get_logger(__name__)
 
-cli = typer.Typer(name="platform", help="Operations for interaction with Aignostics Platform.")
+cli = typer.Typer(name="user", help="User operations such as login, logout and whoami.")
 
 service: Service | None = None
 
