@@ -16,7 +16,19 @@ logger = get_logger(__name__)
 
 cli = typer.Typer(name="platform", help="Operations for interaction with Aignostics Platform.")
 
-service = Service()
+service: Service | None = None
+
+
+def _get_service() -> Service:
+    """Get the service instance, initializing it if necessary.
+
+    Returns:
+        Service: The service instance.
+    """
+    global service  # noqa: PLW0603
+    if service is None:
+        service = Service()
+    return service
 
 
 @cli.command("logout")
@@ -25,6 +37,7 @@ def logout() -> None:
 
     - Deletes the cached authentication token if existing.
     """
+    service = _get_service()
     try:
         if service.logout():
             console.print("Successfully logged out.")
@@ -43,6 +56,7 @@ def login(
     relogin: Annotated[bool, typer.Option(help="Re-login")] = False,
 ) -> None:
     """(Re)login."""
+    service = _get_service()
     try:
         if service.login(relogin=relogin):
             console.print("Successfully logged in.")
@@ -61,6 +75,7 @@ def whoami(
     relogin: Annotated[bool, typer.Option(help="Re-login")] = False,
 ) -> None:
     """Print user info."""
+    service = _get_service()
     try:
         user_info = service.get_user_info(relogin=relogin)
         if user_info is None:
