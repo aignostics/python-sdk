@@ -212,3 +212,147 @@ def test_custom_cache_dir(mock_env_vars) -> None:
     )
     assert settings.cache_dir == custom_cache_dir
     assert settings.token_file == Path(custom_cache_dir) / ".token"
+
+
+def test_issuer_computed_field_production(mock_env_vars) -> None:
+    """Test issuer computed field with production authorization base URL."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root=API_ROOT_PRODUCTION,
+    )
+    # Production authorization_base_url is https://aignostics-platform.eu.auth0.com/authorize
+    # So issuer should be https://aignostics-platform.eu.auth0.com/
+    expected_issuer = "https://aignostics-platform.eu.auth0.com/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_staging(mock_env_vars) -> None:
+    """Test issuer computed field with staging authorization base URL."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root=API_ROOT_STAGING,
+    )
+    # Staging authorization_base_url is https://todo (placeholder)
+    # So issuer should be https://todo/
+    expected_issuer = "https://todo/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_dev(mock_env_vars) -> None:
+    """Test issuer computed field with dev authorization base URL."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root=API_ROOT_DEV,
+    )
+    # Dev authorization_base_url is https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize
+    # So issuer should be https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/
+    expected_issuer = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_custom_url(mock_env_vars) -> None:
+    """Test issuer computed field with custom authorization base URL."""
+    # Avoid triggering api_root-based validator by setting all required fields manually
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        authorization_base_url="https://custom.example.com/auth/oauth2/authorize",
+        audience="test-audience",
+        token_url="https://custom.example.com/auth/oauth2/token",  # noqa: S106
+        redirect_uri="https://custom.example.com/callback",
+        device_url="https://custom.example.com/auth/oauth2/device",
+        jws_json_url="https://custom.example.com/auth/.well-known/jwks.json",
+    )
+    expected_issuer = "https://custom.example.com/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_malformed_url_no_scheme(mock_env_vars) -> None:
+    """Test issuer computed field with malformed URL (no scheme) falls back gracefully."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        authorization_base_url="example.com/oauth2/auth",
+        audience="test-audience",
+        token_url="https://example.com/oauth2/token",  # noqa: S106
+        redirect_uri="https://example.com/callback",
+        device_url="https://example.com/oauth2/device",
+        jws_json_url="https://example.com/.well-known/jwks.json",
+    )
+    # Should fall back to rsplit logic which removes the last path segment
+    expected_issuer = "example.com/oauth2/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_malformed_url_no_domain(mock_env_vars) -> None:
+    """Test issuer computed field with malformed URL (no domain) falls back gracefully."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        authorization_base_url="https:///oauth2/auth",
+        audience="test-audience",
+        token_url="https://example.com/oauth2/token",  # noqa: S106
+        redirect_uri="https://example.com/callback",
+        device_url="https://example.com/oauth2/device",
+        jws_json_url="https://example.com/.well-known/jwks.json",
+    )
+    # Should fall back to rsplit logic which removes the last path segment
+    expected_issuer = "https:///oauth2/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_url_with_port(mock_env_vars) -> None:
+    """Test issuer computed field with URL containing port number."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        authorization_base_url="https://localhost:8080/oauth2/auth",
+        audience="test-audience",
+        token_url="https://localhost:8080/oauth2/token",  # noqa: S106
+        redirect_uri="https://localhost:8080/callback",
+        device_url="https://localhost:8080/oauth2/device",
+        jws_json_url="https://localhost:8080/.well-known/jwks.json",
+    )
+    expected_issuer = "https://localhost:8080/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_url_with_subdirectory(mock_env_vars) -> None:
+    """Test issuer computed field with URL containing multiple path segments."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        authorization_base_url="https://example.com/auth/v1/oauth2/authorize",
+        audience="test-audience",
+        token_url="https://example.com/auth/v1/oauth2/token",  # noqa: S106
+        redirect_uri="https://example.com/callback",
+        device_url="https://example.com/auth/v1/oauth2/device",
+        jws_json_url="https://example.com/auth/v1/.well-known/jwks.json",
+    )
+    expected_issuer = "https://example.com/"
+    assert settings.issuer == expected_issuer
+
+
+def test_issuer_computed_field_url_with_query_params(mock_env_vars) -> None:
+    """Test issuer computed field with URL containing query parameters."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        authorization_base_url="https://example.com/oauth2/auth?param=value",
+        audience="test-audience",
+        token_url="https://example.com/oauth2/token",  # noqa: S106
+        redirect_uri="https://example.com/callback",
+        device_url="https://example.com/oauth2/device",
+        jws_json_url="https://example.com/.well-known/jwks.json",
+    )
+    expected_issuer = "https://example.com/"
+    assert settings.issuer == expected_issuer

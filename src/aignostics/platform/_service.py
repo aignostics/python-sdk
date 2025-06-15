@@ -96,6 +96,7 @@ class UserInfo(BaseModel):
 
     id: str  # token.sub
     org_id: str  # token.org_id
+    org_name: str | None  # token.org_name
     role: str  # token.CLAIM_ROLE
     token: TokenInfo
     profile: UserProfile | None = None
@@ -114,6 +115,7 @@ class UserInfo(BaseModel):
         return cls(
             id=claims["sub"],
             org_id=claims["org_id"],
+            org_name=claims.get("org_name"),
             role=claims[CLAIM_ROLE],
             token=TokenInfo.from_claims(claims),
             profile=UserProfile.from_userinfo(userinfo) if userinfo else None,

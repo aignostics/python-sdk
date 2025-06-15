@@ -7,6 +7,9 @@ from contextlib import contextmanager
 from importlib.util import find_spec
 from typing import Any
 
+from humanize import naturaldelta
+from nicegui import app, ui
+
 from aignostics.utils import __version__, open_user_data_directory
 
 from ._theme import theme
@@ -37,7 +40,7 @@ def frame(  # noqa: C901, PLR0915
     Yields:
         Generator[Any, Any, Any]: The context manager for the page frame.
     """
-    from nicegui import app, background_tasks, context, run, ui  # noqa: PLC0415
+    from nicegui import background_tasks, context, run  # noqa: PLC0415
 
     from aignostics.platform import Service as PlatformService  # noqa: PLC0415
     from aignostics.platform import UserInfo  # noqa: PLC0415
@@ -53,22 +56,22 @@ def frame(  # noqa: C901, PLR0915
         spinner = ui.spinner().props("flat color=purple-400")
         if user_info and user_info.profile:
             spinner.set_visibility(False)
-            with ui.avatar():
-                if user_info.profile.picture:
-                    with (
-                        ui.image(user_info.profile.picture)
-                        .on("click", _user_info_ui_relogin)
-                        .style("width: 30px; height: 30px; border-radius: 50%")
-                    ):
-                        ui.tooltip(user_info.profile.email or user_info.id)
-                else:
-                    with (
-                        ui.icon("account_circle", color="primary")
-                        .on("click", _user_info_ui_relogin)
-                        .style("width: 30px; height: 30px; border-radius: 50%")
-                        .props(FLAT_COLOR_WHITE)
-                    ):
-                        ui.tooltip(user_info.profile.email or user_info.id)
+            icon = "img:" + user_info.profile.picture if user_info.profile.picture else "account_circle"
+            with (
+                ui.dropdown_button(icon=icon)
+                .style("width: 30px; height: 30px; border-radius: 50%")
+                .props(FLAT_COLOR_WHITE),
+                ui.card(),
+            ):
+                ui.label(f"{user_info.profile.name} ({user_info.profile.email})")
+                ui.label(f"Organisation: {user_info.org_name or user_info.org_id}")
+                ui.label(f"Role: {user_info.role}")
+                ui.label(f"Token Expiry: {naturaldelta(user_info.token.expires_in)}")
+                ui.separator()
+                with ui.row().classes("items-center justify-between"):
+                    ui.button("Re-authenticate", icon="switch_account", on_click=_user_info_ui_relogin).props(
+                        add="style=fab-mini"
+                    )
 
     async def _user_info_ui_load() -> None:
         nonlocal user_info
@@ -172,12 +175,12 @@ def frame(  # noqa: C901, PLR0915
             icon="dark_mode",
         ).set_visibility(False)
 
+        _user_info_ui()
+
         with ui.button(icon="folder_special", on_click=lambda _: open_user_data_directory()).props(
             "flat color=purple-400"
         ):
             ui.tooltip("Open data directory of Launchpad")
-
-        _user_info_ui()
 
         with ui.button(on_click=lambda _: right_drawer.toggle(), icon="menu").props(FLAT_COLOR_WHITE):
             ui.tooltip("Open menu")

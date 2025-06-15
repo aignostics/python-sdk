@@ -180,10 +180,14 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         key = jwk_client.get_signing_key_from_jwt(token).key
 
         # Verify and decode the token using the public key
-        return t.cast(
+        decoded = t.cast(
             "dict[str, str]",
             jwt.decode(token, key=key, algorithms=["RS256"], audience=settings().audience),
         )
+        if "iss" in decoded and decoded["iss"] != settings().issuer:
+            message = f"Token issuer mismatch: expected {settings().issuer}, got {decoded['iss']}"
+            raise RuntimeError(message)
+        return decoded
     except jwt.exceptions.PyJWTError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
 

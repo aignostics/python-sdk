@@ -4,6 +4,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Annotated, TypeVar
+from urllib.parse import urlparse
 
 import appdirs
 from pydantic import (
@@ -120,6 +121,36 @@ class Settings(OpaqueSettings):
 
     audience: str
     authorization_base_url: str
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def issuer(self) -> str:
+        """Get the issuer URL based on the authorization base root.
+
+        Extracts the scheme and domain from the authorization base URL to create
+        a failsafe issuer URL in the format scheme://domain/
+
+        Returns:
+            str: Issuer URL in the format scheme://domain/
+        """
+        try:
+            parsed = urlparse(self.authorization_base_url)
+            if parsed.scheme and parsed.netloc:
+                return f"{parsed.scheme}://{parsed.netloc}/"
+            # Fallback to original logic if URL parsing fails
+            logger.warning(
+                "Failed to parse authorization_base_url '%s', falling back to rsplit method",
+                self.authorization_base_url,
+            )
+            return self.authorization_base_url.rsplit("/", 1)[0] + "/"
+        except (ValueError, AttributeError):
+            # Ultimate fallback if everything fails
+            logger.exception(
+                "Error parsing authorization_base_url '%s', falling back to rsplit method",
+                self.authorization_base_url,
+            )
+            return self.authorization_base_url.rsplit("/", 1)[0] + "/"
+
     token_url: str
     redirect_uri: str
     device_url: str
@@ -158,6 +189,7 @@ class Settings(OpaqueSettings):
 
         This validator sets the appropriate authentication URLs and parameters
         based on the target environment (production, staging, or development).
+        If auth-related fields are already provided, they will not be overridden.
 
         Args:
             values: The input data dictionary to validate.
@@ -166,10 +198,19 @@ class Settings(OpaqueSettings):
             The updated values dictionary with all environment-specific fields populated.
 
         Raises:
-            ValueError: If the API root URL is not recognized.
+            ValueError: If the API root URL is not recognized and auth fields are missing.
         """
         # See https://github.com/pydantic/pydantic/issues/9789
         api_root = values.get("api_root", API_ROOT_PRODUCTION)
+
+        # Check if all required auth fields are already provided
+        auth_fields = ["audience", "authorization_base_url", "token_url", "redirect_uri", "device_url", "jws_json_url"]
+        all_auth_fields_provided = all(field in values for field in auth_fields)
+
+        # If all auth fields are provided, don't override them
+        if all_auth_fields_provided:
+            return values
+
         match api_root:
             case "https://platform.aignostics.com":
                 values["audience"] = AUDIENCE_PRODUCTION

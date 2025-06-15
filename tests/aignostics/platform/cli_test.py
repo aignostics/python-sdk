@@ -126,6 +126,7 @@ class TestUserInfo:
         claims = {
             "sub": "user123",
             "org_id": "org456",
+            "org_name": "Test Organization",
             "https://aignostics-platform-samia/role": "admin",
             "iss": "https://test.auth0.com/",
             "iat": 1609459200,
@@ -144,6 +145,7 @@ class TestUserInfo:
 
         assert user_info.id == "user123"
         assert user_info.org_id == "org456"
+        assert user_info.org_name == "Test Organization"
         assert user_info.role == "admin"
         assert user_info.token.issuer == "https://test.auth0.com/"
         assert user_info.profile is not None
@@ -157,6 +159,7 @@ class TestUserInfo:
         claims = {
             "sub": "user456",
             "org_id": "org789",
+            "org_name": "Another Organization",
             "https://aignostics-platform-samia/role": "user",
             "iss": "https://test.auth0.com/",
             "iat": 1609459200,
@@ -170,7 +173,32 @@ class TestUserInfo:
 
         assert user_info.id == "user456"
         assert user_info.org_id == "org789"
+        assert user_info.org_name == "Another Organization"
         assert user_info.role == "user"
+        assert user_info.token.issuer == "https://test.auth0.com/"
+        assert user_info.profile is None
+
+    @staticmethod
+    def test_user_info_from_claims_and_userinfo_no_org_name() -> None:
+        """Test UserInfo creation when org_name is not provided in claims."""
+        claims = {
+            "sub": "user789",
+            "org_id": "org999",
+            "https://aignostics-platform-samia/role": "viewer",
+            "iss": "https://test.auth0.com/",
+            "iat": 1609459200,
+            "exp": 1609462800,
+            "scope": "openid",
+            "aud": "test-audience",
+            "azp": "test-client-id",
+        }
+
+        user_info = UserInfo.from_claims_and_userinfo(claims, None)
+
+        assert user_info.id == "user789"
+        assert user_info.org_id == "org999"
+        assert user_info.org_name is None
+        assert user_info.role == "viewer"
         assert user_info.token.issuer == "https://test.auth0.com/"
         assert user_info.profile is None
 
@@ -271,6 +299,7 @@ class TestPlatformCLI:
         mock_user_info = UserInfo(
             id="user123",
             org_id="org456",
+            org_name="Test Organization",
             role="admin",
             token=mock_token_info,
         )
@@ -283,6 +312,7 @@ class TestPlatformCLI:
             output = normalize_output(result.output)
             assert "user123" in output
             assert "org456" in output
+            assert "Test Organization" in output
             assert "admin" in output
 
     @staticmethod
@@ -299,6 +329,7 @@ class TestPlatformCLI:
         mock_user_info = UserInfo(
             id="user123",
             org_id="org456",
+            org_name="Test Organization",
             role="admin",
             token=mock_token_info,
         )
@@ -358,6 +389,7 @@ class TestPlatformCLI:
         mock_user_info = UserInfo(
             id="user123",
             org_id="org456",
+            org_name="Test Organization",
             role="admin",
             token=mock_token_info,
             profile=mock_user_profile,
@@ -371,7 +403,40 @@ class TestPlatformCLI:
             output = normalize_output(result.output)
             assert "user123" in output
             assert "org456" in output
+            assert "Test Organization" in output
             assert "admin" in output
             assert "John Doe" in output
             assert "john.doe@example.com" in output
             assert "johnny" in output
+
+    @staticmethod
+    def test_whoami_success_with_no_org_name(runner: CliRunner) -> None:
+        """Test successful whoami command when org_name is None."""
+        # Create mock token info
+        mock_token_info = TokenInfo(
+            issuer="https://test.auth0.com/",
+            issued_at=1609459200,
+            expires_at=1609462800,
+            scope=["openid", "profile"],
+            audience=["test-audience"],
+            authorized_party="test-client-id",
+        )
+        mock_user_info = UserInfo(
+            id="user789",
+            org_id="org999",
+            org_name=None,
+            role="viewer",
+            token=mock_token_info,
+        )
+
+        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+            result = runner.invoke(cli, ["platform", "whoami"])
+
+            assert result.exit_code == 0
+            # Check that JSON output contains expected fields, org_name should be null
+            output = normalize_output(result.output)
+            assert "user789" in output
+            assert "org999" in output
+            assert "viewer" in output
+            # org_name should be null in JSON output
+            assert '"org_name": null' in output or '"org_name":null' in output
