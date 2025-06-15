@@ -74,6 +74,8 @@ def frame(  # noqa: C901, PLR0915
         nonlocal user_info
         with contextlib.suppress(Exception):
             user_info = await run.cpu_bound(PlatformService.get_user_info)
+        await ui.context.client.connected()
+        app.storage.tab["user_info"] = user_info
         _user_info_ui.refresh()
 
     ui.timer(interval=USERINFO_UPDATE_INTERVAL, callback=_user_info_ui_load, immediate=True)
@@ -82,9 +84,12 @@ def frame(  # noqa: C901, PLR0915
         """Relogin to the platform."""
         nonlocal user_info
         user_info = None
+        await ui.context.client.connected()
+        app.storage.tab["user_info"] = user_info
         _user_info_ui.refresh()
         with contextlib.suppress(Exception):
             user_info = await run.cpu_bound(PlatformService.get_user_info, relogin=True)
+            app.storage.tab["user_info"] = user_info
         _user_info_ui.refresh()
 
     @ui.refreshable

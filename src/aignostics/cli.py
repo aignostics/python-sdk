@@ -66,6 +66,7 @@ if __name__ == "__main__":  # pragma: no cover
     try:
         cli()
     except Exception as e:  # noqa: BLE001
-        logger.critical("Fatal error occurred: %s", e)
-        console.print(f"Fatal error occurred: {e}", style="error")
+        message = f"An error occurred while running the CLI: {e!s}"
+        logger.critical(message)
+        console.print(message, style="error")
         sys.exit(1)

@@ -2,7 +2,7 @@
 
 from importlib.util import find_spec
 
-from nicegui import Client, ui  # noq
+from nicegui import Client, app, ui  # noq
 
 from aignostics.utils import get_logger
 
@@ -19,7 +19,14 @@ async def _page_index(client: Client) -> None:
     await _frame("Analyze your Whole Slide Images with AI", left_sidebar=True)
 
     with ui.row().classes("p-4 pt-2 pr-0"), ui.column():
-        ui.label("Welcome to the Aignostics Launchpad").classes("text-4xl mb-2")
+        await ui.context.client.connected()
+        ui.label("Welcome to the Aignostics Launchpad").bind_text_from(
+            app.storage.tab,
+            "user_info",
+            lambda user_info: (
+                f"Welcome {user_info.profile.given_name if user_info.profile else ''} to the Aignostics Launchpad"
+            ),
+        ).classes("text-4xl mb-2")
         ui.label(
             "Using the Launchpad, you can run Aignostics Atlas applications on your whole slide images, "
             "monitor progress, and download results for analysis."
