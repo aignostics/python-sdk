@@ -60,16 +60,16 @@ def frame(  # noqa: C901, PLR0915
             with (
                 ui.dropdown_button(icon=icon)
                 .style("width: 30px; height: 30px; border-radius: 50%")
+                .classes("mr-3")
                 .props(FLAT_COLOR_WHITE),
                 ui.card(),
             ):
                 ui.label(f"{user_info.profile.name} ({user_info.profile.email})")
-                ui.label(f"Organisation: {user_info.org_name or user_info.org_id}")
-                ui.label(f"Role: {user_info.role}")
-                ui.label(f"Token Expiry: {naturaldelta(user_info.token.expires_in)}")
+                ui.label(f"{user_info.role.capitalize()} at {user_info.org_name or user_info.org_id}")
+                ui.label(f"Authentication valid for {naturaldelta(user_info.token.expires_in)}")
                 ui.separator()
                 with ui.row().classes("items-center justify-between"):
-                    ui.button("Re-authenticate", icon="switch_account", on_click=_user_info_ui_relogin).props(
+                    ui.button("Re-authenticate now", icon="switch_account", on_click=_user_info_ui_relogin).props(
                         add="style=fab-mini"
                     )
 
