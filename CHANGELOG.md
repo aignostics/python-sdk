@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.54..0.2.55) - 2025-06-15
+(https://github.com/aignostics/python-sdk/compare/v0.2.55..0.2.56) - 2025-06-15
+
+
+- *(platform,gui)* Org name - ([ca075d9](https://github.com/aignostics/python-sdk/commit/ca075d9bc803722c5faae5af2e8f21a8b558e03a))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.54..v0.2.55) - 2025-06-15
 
 
 - Welcome user by name in launchpad - ([ac666f9](https://github.com/aignostics/python-sdk/commit/ac666f932f53531770dd3a852b37a80d3b453dd6))
