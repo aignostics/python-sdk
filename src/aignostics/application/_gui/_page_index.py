@@ -26,7 +26,7 @@ async def _page_index(client: Client) -> None:
         ).classes("text-2xl")
         with ui.row().classes("w-full h-screen flex"):
             with ui.column().classes("flex-1 pr-0"):
-                ui.label("Have your sides ready to go?").classes("text-xl")
+                ui.label("Have your slides ready to go?").classes("text-xl")
                 ui.label(
                     "Select the relevant application from the left sidebar to upload your images to get started."
                 ).classes("text")

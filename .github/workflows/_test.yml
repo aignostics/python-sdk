@@ -58,7 +58,7 @@ jobs:
 
       # Need xdisplay for testing QuPath app integration
       - name: Setup display
-        uses: pyvista/setup-headless-display-action@v3
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
   
       - name: Release version check
         if: startsWith(github.ref, 'refs/tags/v')
