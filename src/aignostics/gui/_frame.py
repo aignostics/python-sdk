@@ -19,6 +19,8 @@ FLAT_COLOR_WHITE = "flat color=white"
 HEALTH_UPDATE_INTERVAL = 30
 USERINFO_UPDATE_INTERVAL = 60 * 60
 
+PROFILE_EDIT_URL = "https://platform.aignostics.com/dashboard/account/profile"
+
 
 @contextmanager
 def frame(  # noqa: C901, PLR0915
@@ -74,9 +76,13 @@ def frame(  # noqa: C901, PLR0915
                         ui.label(f"{user_info.role.capitalize()} at {user_info.org_name or user_info.org_id}")
                         ui.label(f"Authentication valid for {naturaldelta(user_info.token.expires_in)}")
                 ui.separator()
-                with ui.row().classes("items-center justify-between"):
-                    ui.button("Re-authenticate now", icon="switch_account", on_click=_user_info_ui_relogin).props(
-                        add="style=fab-mini"
+                with ui.row().classes("items-center justify-between full-width"):
+                    ui.button("Re-authenticate now", icon="switch_account", on_click=_user_info_ui_relogin)
+                    ui.space()
+                    ui.button(
+                        "Edit Profile",
+                        icon="edit",
+                        on_click=lambda _: ui.navigate.to(PROFILE_EDIT_URL, new_tab=True),
                     )
 
     async def _user_info_ui_load() -> None:
