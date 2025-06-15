@@ -129,12 +129,6 @@ def test_cli_install(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
-def test_cli_whoami(runner: CliRunner) -> None:
-    """Check install command runs successfully."""
-    result = runner.invoke(cli, ["system", "whoami"])
-    assert result.exit_code == 0
-
-
 @pytest.mark.sequential
 def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path) -> None:
     """Check set, unset, and get commands."""

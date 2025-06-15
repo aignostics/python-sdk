@@ -19,6 +19,7 @@ from aignostics.platform._authentication import (
     _perform_authorization_code_with_pkce_flow,
     _perform_device_flow,
     get_token,
+    remove_cached_token,
     verify_and_decode_token,
 )
 from aignostics.platform._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
@@ -460,3 +461,160 @@ class TestPortAvailability:
             assert _ensure_local_port_is_available(8000, max_retries=3) is False
             assert mock_bind.call_count == 4  # Initial attempt + 3 retries
             assert mock_sleep.call_count == 3
+
+
+class TestRemoveCachedToken:
+    """Test cases for the remove_cached_token function."""
+
+    @staticmethod
+    def test_remove_cached_token_exists(mock_settings) -> None:
+        """Test removing a cached token when the token file exists."""
+        with (
+            patch.object(Path, "exists", return_value=True),
+            patch.object(Path, "unlink") as mock_unlink,
+        ):
+            result = remove_cached_token()
+
+            assert result is True
+            mock_unlink.assert_called_once_with(missing_ok=True)
+
+    @staticmethod
+    def test_remove_cached_token_not_exists(mock_settings) -> None:
+        """Test removing a cached token when the token file does not exist."""
+        with patch.object(Path, "exists", return_value=False):
+            result = remove_cached_token()
+
+            assert result is False
+
+    @staticmethod
+    def test_remove_cached_token_unlink_error(mock_settings) -> None:
+        """Test that remove_cached_token handles unlink errors gracefully."""
+        with (
+            patch.object(Path, "exists", return_value=True),
+            patch.object(Path, "unlink", side_effect=OSError("Permission denied")) as mock_unlink,
+            pytest.raises(OSError, match="Permission denied"),
+        ):
+            remove_cached_token()
+            mock_unlink.assert_called_once_with(missing_ok=True)
+
+
+class TestSentryIntegration:
+    """Test cases for Sentry integration in the authentication module."""
+
+    @staticmethod
+    def test_get_token_calls_sentry_set_user(mock_settings) -> None:
+        """Test that get_token calls sentry_sdk.set_user with correct user information extracted from token claims."""
+        # Mock token claims with the required fields
+        mock_claims = {
+            "sub": "user123",
+            "org_id": "org456",
+            "aud": "test-audience",
+            "test-audience/role": "admin",
+            "exp": int(time.time()) + 3600,
+        }
+
+        # Create a mock for sentry_sdk
+        mock_sentry_sdk = MagicMock()
+
+        with (
+            patch("aignostics.platform._authentication.sentry_sdk", mock_sentry_sdk),
+            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch(
+                "aignostics.platform._authentication.verify_and_decode_token",
+                return_value=mock_claims,
+            ),
+            patch.object(Path, "exists", return_value=False),  # Force authentication
+            patch.object(Path, "write_text"),
+        ):
+            token = get_token(use_cache=True)
+
+            # Verify the token was returned
+            assert token == "test.token"  # noqa: S105 - Test credential
+
+            # Verify sentry_sdk.set_user was called with correct user information
+            mock_sentry_sdk.set_user.assert_called_once_with({
+                "id": "user123",
+                "org_id": "org456",
+                "role": "admin",
+            })
+
+    @staticmethod
+    def test_get_token_sentry_unavailable(mock_settings) -> None:
+        """Test that get_token works correctly when sentry_sdk is not available."""
+        # Mock token claims
+        mock_claims = {
+            "sub": "user123",
+            "org_id": "org456",
+            "aud": "test-audience",
+            "test-audience/role": "admin",
+            "exp": int(time.time()) + 3600,
+        }
+
+        with (
+            patch("aignostics.platform._authentication.sentry_sdk", None),  # Simulate sentry_sdk not available
+            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch(
+                "aignostics.platform._authentication.verify_and_decode_token",
+                return_value=mock_claims,
+            ),
+            patch.object(Path, "exists", return_value=False),  # Force authentication
+            patch.object(Path, "write_text"),
+        ):
+            token = get_token(use_cache=True)
+
+            # Verify the token was returned successfully even without Sentry
+            assert token == "test.token"  # noqa: S105 - Test credential
+
+    @staticmethod
+    def test_get_token_sentry_missing_sub_claim(mock_settings) -> None:
+        """Test that get_token handles missing 'sub' claim gracefully when informing Sentry."""
+        # Mock token claims without 'sub' field
+        mock_claims = {
+            "org_id": "org456",
+            "aud": "test-audience",
+            "test-audience/role": "admin",
+            "exp": int(time.time()) + 3600,
+        }
+
+        # Create a mock for sentry_sdk
+        mock_sentry_sdk = MagicMock()
+
+        with (
+            patch("aignostics.platform._authentication.sentry_sdk", mock_sentry_sdk),
+            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch(
+                "aignostics.platform._authentication.verify_and_decode_token",
+                return_value=mock_claims,
+            ),
+            patch.object(Path, "exists", return_value=False),  # Force authentication
+            patch.object(Path, "write_text"),
+        ):
+            token = get_token(use_cache=True)
+
+            # Verify the token was returned successfully
+            assert token == "test.token"  # noqa: S105 - Test credential
+
+            # Verify sentry_sdk.set_user was not called due to missing 'sub' claim
+            mock_sentry_sdk.set_user.assert_not_called()
+
+    @staticmethod
+    def test_get_token_sentry_handles_token_verification_error(mock_settings) -> None:
+        """Test that get_token fails when token verification fails, and Sentry is not informed."""
+        # Create a mock for sentry_sdk
+        mock_sentry_sdk = MagicMock()
+
+        with (
+            patch("aignostics.platform._authentication.sentry_sdk", mock_sentry_sdk),
+            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch(
+                "aignostics.platform._authentication.verify_and_decode_token",
+                side_effect=RuntimeError("Token verification failed"),
+            ),
+            patch.object(Path, "exists", return_value=False),  # Force authentication
+            patch.object(Path, "write_text"),
+            pytest.raises(RuntimeError, match="Token verification failed"),
+        ):
+            get_token(use_cache=True)
+
+            # Verify sentry_sdk.set_user was not called because authentication failed
+            mock_sentry_sdk.set_user.assert_not_called()

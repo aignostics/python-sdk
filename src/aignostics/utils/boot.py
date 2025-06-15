@@ -2,7 +2,6 @@
 
 import os
 import sys
-import warnings
 from pathlib import Path
 
 from ._log import logging_initialize
@@ -13,8 +12,6 @@ _boot_called = False
 third_party_dir = Path(__file__).parent.absolute() / ".." / "third_party"
 if third_party_dir.is_dir() and str(third_party_dir) not in sys.path:
     sys.path.insert(0, str(third_party_dir))
-
-warnings.filterwarnings(action="ignore", category=SyntaxWarning, module="showinfm")
 
 
 def boot(modules_to_instrument: list[str]) -> None:

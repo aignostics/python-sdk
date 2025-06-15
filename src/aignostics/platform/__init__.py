@@ -18,6 +18,7 @@ from aignx.codegen.models import OutputArtifactReadResponse as OutputArtifactDat
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from aignx.codegen.models import RunReadResponse as ApplicationRunData
 
+from ._cli import cli
 from ._client import Client
 from ._constants import (
     API_ROOT_DEV,
@@ -43,7 +44,7 @@ from ._constants import (
     TOKEN_URL_STAGING,
 )
 from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
-from ._service import Service
+from ._service import Service, TokenInfo, UserInfo
 from ._settings import Settings, settings
 from ._utils import calculate_file_crc32c, download_file, generate_signed_url, mime_type_to_file_ending
 from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, ApplicationRun
@@ -94,7 +95,10 @@ __all__ = [
     "OutputArtifactElement",
     "Service",
     "Settings",
+    "TokenInfo",
+    "UserInfo",
     "calculate_file_crc32c",
+    "cli",
     "download_file",
     "generate_signed_url",
     "mime_type_to_file_ending",

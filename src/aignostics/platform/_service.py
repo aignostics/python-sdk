@@ -1,16 +1,93 @@
 """Service of the platform module."""
 
+import time
 from http import HTTPStatus
 from typing import Any
 
 import urllib3
+from pydantic import BaseModel, computed_field
 
-from aignostics.platform import Client
 from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, __version__, get_logger
 
+from ._authentication import CLAIM_ROLE, get_token, remove_cached_token, userinfo, verify_and_decode_token
+from ._client import Client
 from ._settings import Settings
 
 logger = get_logger(__name__)
+
+
+class TokenInfo(BaseModel):
+    """Class to store token information."""
+
+    issuer: str  # iss
+    issued_at: int  # iat
+    expires_at: int  # exp
+    scope: list[str]  # scope
+    audience: list[str]  # aud
+    authorized_party: str  # azp
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def expires_in(self) -> int:
+        """Calculate seconds until token expires.
+
+        Returns:
+            int: Number of seconds until the token expires. Negative if already expired.
+        """
+        return self.expires_at - int(time.time())
+
+    @classmethod
+    def from_claims(cls, claims: dict[str, Any]) -> "TokenInfo":
+        """Create TokenInfo from JWT claims.
+
+        Args:
+            claims: JWT token claims dictionary.
+
+        Returns:
+            TokenInfo: Token information extracted from claims.
+        """
+        return cls(
+            issuer=claims["iss"],
+            issued_at=claims["iat"],
+            expires_at=claims["exp"],
+            scope=claims["scope"].split(),
+            audience=claims["aud"] if isinstance(claims["aud"], list) else [claims["aud"]],
+            authorized_party=claims["azp"],
+        )
+
+
+class UserInfo(BaseModel):
+    """Class to store info about the user."""
+
+    id: str  # token.sub
+    org_id: str  # token.org_id
+    role: str  # token.CLAIM_ROLE
+    name: str | None = None  # userinfo.name
+    email: str | None = None  # userinfo.email
+    picture: str | None = None  # userinfo.picture
+    token: TokenInfo
+
+    @classmethod
+    def from_claims_and_userinfo(cls, claims: dict[str, Any], userinfo: dict[str, Any] | None = None) -> "UserInfo":
+        """Create UserInfo from JWT claims and optional auth0 userinfo.
+
+        Args:
+            claims (dict[str, Any]): JWT token claims dictionary.
+            userinfo (dict[str, Any] | None): Optional user information dictionary from auth0.
+
+        Returns:
+            UserInfo: User information extracted from claims.
+        """
+        token_info = TokenInfo.from_claims(claims)
+        return cls(
+            id=claims["sub"],
+            org_id=claims["org_id"],
+            role=claims[CLAIM_ROLE],
+            token=token_info,
+            name=userinfo.get("name") if userinfo else None,
+            email=userinfo.get("email") if userinfo else None,
+            picture=userinfo.get("picture") if userinfo else None,
+        )
 
 
 # Services derived from BaseService and exported by modules via their __init__.py are automatically registered
@@ -33,7 +110,11 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {"settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})}
+        user_info = self.get_user_info(relogin=mask_secrets)
+        return {
+            "settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets}),
+            "userinfo": user_info.model_dump() if user_info else None,
+        }
 
     def _determine_api_public_health(self) -> Health:
         """Determine healthiness and reachability of Aignostics Platform API.
@@ -99,3 +180,63 @@ class Service(BaseService):
                 "api_authenticated": self._determine_api_authenticated_health(),
             },
         )
+
+    @staticmethod
+    def logout() -> bool:
+        """Logout if authenticated.
+
+        Deletes the cached authentication token if existing.
+
+        Returns:
+            bool: True if successfully logged out, False if not logged in.
+        """
+        logger.debug("Logging out...")
+        rtn = remove_cached_token()
+        logger.debug("Logout successful: %s", rtn)
+        return rtn
+
+    @staticmethod
+    def login(relogin: bool = False) -> bool:
+        """Login.
+
+        Args:
+            relogin (bool): If True, forces a re-login even if a token is cached.
+
+        Returns:
+            bool: True if successfully logged in, False if login failed
+        """
+        if relogin:
+            Service.logout()
+        try:
+            _ = get_token(use_cache=True)
+            return True
+        except RuntimeError as e:
+            message = f"Error during login: {e!s}"
+            logger.exception(message)
+            return False
+
+    @staticmethod
+    def get_user_info(relogin: bool = False) -> UserInfo | None:
+        """Get user information from authentication token.
+
+        Args:
+            relogin (bool): If True, forces a re-login even if a token is cached.
+
+        Returns:
+            UserInfo | None: User information if successfully authenticated, None if login failed.
+        """
+        if relogin:
+            Service.logout()
+        try:
+            token = get_token(use_cache=True)
+            claims = verify_and_decode_token(token)
+            try:
+                info = userinfo(token)
+            except RuntimeError as e:
+                message = f"Error retrieving user info: {e!s}"
+                logger.exception(message)
+            return UserInfo.from_claims_and_userinfo(claims, info)
+        except RuntimeError as e:
+            message = f"Error during login: {e!s}"
+            logger.exception(message)
+            return None

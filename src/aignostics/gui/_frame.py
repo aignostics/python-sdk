@@ -14,6 +14,7 @@ from ._theme import theme
 FLAT_COLOR_WHITE = "flat color=white"
 
 HEALTH_UPDATE_INTERVAL = 30
+USERINFO_UPDATE_INTERVAL = 60
 
 
 @contextmanager
@@ -38,11 +39,53 @@ def frame(  # noqa: C901, PLR0915
     """
     from nicegui import app, background_tasks, context, run, ui  # noqa: PLC0415
 
+    from aignostics.platform import Service as PlatformService  # noqa: PLC0415
+    from aignostics.platform import UserInfo  # noqa: PLC0415
     from aignostics.system import Service as SystemService  # noqa: PLC0415
 
     theme()
 
+    user_info: UserInfo | None = None
     launchpad_healthy: bool | None = None
+
+    @ui.refreshable
+    def _user_info_ui() -> None:
+        spinner = ui.spinner().props("flat color=purple-400")
+        if user_info:
+            spinner.set_visibility(False)
+            with ui.avatar():
+                if user_info.picture:
+                    with (
+                        ui.image(user_info.picture)
+                        .on("click", _user_info_ui_relogin)
+                        .style("width: 30px; height: 30px; border-radius: 50%")
+                    ):
+                        ui.tooltip(user_info.email or user_info.id)
+                else:
+                    with (
+                        ui.icon("account_circle", color="primary")
+                        .on("click", _user_info_ui_relogin)
+                        .style("width: 30px; height: 30px; border-radius: 50%")
+                        .props(FLAT_COLOR_WHITE)
+                    ):
+                        ui.tooltip(user_info.email or user_info.id)
+
+    async def _user_info_ui_load() -> None:
+        nonlocal user_info
+        with contextlib.suppress(Exception):
+            user_info = await run.cpu_bound(PlatformService.get_user_info)
+        _user_info_ui.refresh()
+
+    ui.timer(interval=USERINFO_UPDATE_INTERVAL, callback=_user_info_ui_load, immediate=True)
+
+    async def _user_info_ui_relogin() -> None:
+        """Relogin to the platform."""
+        nonlocal user_info
+        user_info = None
+        _user_info_ui.refresh()
+        with contextlib.suppress(Exception):
+            user_info = await run.cpu_bound(PlatformService.get_user_info, relogin=True)
+        _user_info_ui.refresh()
 
     @ui.refreshable
     def health_icon() -> None:
@@ -124,12 +167,12 @@ def frame(  # noqa: C901, PLR0915
             icon="dark_mode",
         ).set_visibility(False)
 
-        ui.button(icon="folder_special", on_click=lambda _: open_user_data_directory()).props("flat color=purple-400")
-        ui.tooltip("Open data directory of Launchpad")
+        with ui.button(icon="folder_special", on_click=lambda _: open_user_data_directory()).props(
+            "flat color=purple-400"
+        ):
+            ui.tooltip("Open data directory of Launchpad")
 
-        with ui.link(target="https://aignostics.readthedocs.org/", new_tab=True):
-            ui.button(icon="local_library").props(FLAT_COLOR_WHITE)
-            ui.tooltip("Open manual")
+        _user_info_ui()
 
         with ui.button(on_click=lambda _: right_drawer.toggle(), icon="menu").props(FLAT_COLOR_WHITE):
             ui.tooltip("Open menu")

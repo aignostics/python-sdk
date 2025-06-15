@@ -146,12 +146,6 @@ def install() -> None:
     console.print("Installation complete!")
 
 
-@cli.command("whoami")
-def whoami() -> None:
-    """Print user info."""
-    console.print("TK (whoami)")
-
-
 config_app = typer.Typer()
 cli.add_typer(config_app, name="config", help="Configure application settings.")
 

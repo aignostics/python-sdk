@@ -281,10 +281,11 @@ def run_execute(  # noqa: PLR0913, PLR0917
         list[str],
         typer.Argument(
             help="Mapping to use for amending metadata CSV file. "
-            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'. "
+            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'."
             "The regular expression is matched against the reference attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
-            "You can use the mapping option multiple times to set values for multiple files. ",
+            "You can use the mapping option multiple times to set values for multiple files. "
+            'Example: ".*:staining_method:H&E,tissue:LIVER,disease:LIVER_CANCER"',
         ),
     ],
     create_subdirectory_for_run: Annotated[

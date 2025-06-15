@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.52 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.53 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -23,6 +23,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `application`: List and inspect applications on...
 * `bucket`: Operations on cloud bucket on Aignostics...
 * `dataset`: Download datasets from National Institute...
+* `platform`: Operations for interaction with Aignostics...
 * `qupath`: Interact with QuPath application.
 * `system`: Determine health, info and further...
 * `wsi`: Operations on whole slide images.
@@ -189,13 +190,13 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 * `APPLICATION_VERSION_ID`: Id of application version to execute. If application id is given, the latest version of that application is used.  [required]
 * `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and references.  [required]
 * `SOURCE_DIRECTORY`: Source directory to scan for whole slide images  [required]
-* `MAPPING...`: Mapping to use for amending metadata CSV file. Each mapping is of the form &#x27;&lt;regexp&gt;:&lt;key&gt;:&lt;value&gt;,&lt;key&gt;:&lt;value&gt;,...&#x27;. The regular expression is matched against the reference attribute of the entry. The key/value pairs are applied to the entry if the pattern matches. You can use the mapping option multiple times to set values for multiple files.   [required]
+* `MAPPING...`: Mapping to use for amending metadata CSV file. Each mapping is of the form &#x27;&lt;regexp&gt;:&lt;key&gt;:&lt;value&gt;,&lt;key&gt;:&lt;value&gt;,...&#x27;.The regular expression is matched against the reference attribute of the entry. The key/value pairs are applied to the entry if the pattern matches. You can use the mapping option multiple times to set values for multiple files. Example: &quot;.*:staining_method:H&amp;E,tissue:LIVER,disease:LIVER_CANCER&quot;  [required]
 
 **Options**:
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749752104391.826]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750000562683.6218]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -251,7 +252,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1749752104391.9028]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750000562683.712]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -664,6 +665,72 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 * `--help`: Show this message and exit.
 
+## `aignostics platform`
+
+Operations for interaction with Aignostics Platform.
+
+**Usage**:
+
+```console
+$ aignostics platform [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `logout`: Logout if authenticated.
+* `login`: (Re)login.
+* `whoami`: Print user info.
+
+### `aignostics platform logout`
+
+Logout if authenticated.
+
+- Deletes the cached authentication token if existing.
+
+**Usage**:
+
+```console
+$ aignostics platform logout [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics platform login`
+
+(Re)login.
+
+**Usage**:
+
+```console
+$ aignostics platform login [OPTIONS]
+```
+
+**Options**:
+
+* `--relogin / --no-relogin`: Re-login  [default: no-relogin]
+* `--help`: Show this message and exit.
+
+### `aignostics platform whoami`
+
+Print user info.
+
+**Usage**:
+
+```console
+$ aignostics platform whoami [OPTIONS]
+```
+
+**Options**:
+
+* `--relogin / --no-relogin`: Re-login  [default: no-relogin]
+* `--help`: Show this message and exit.
+
 ## `aignostics qupath`
 
 Interact with QuPath application.
@@ -876,7 +943,6 @@ $ aignostics system [OPTIONS] COMMAND [ARGS]...
 * `serve`: Start the web server, hosting the...
 * `openapi`: Dump the OpenAPI specification.
 * `install`: Complete installation.
-* `whoami`: Print user info.
 * `config`: Configure application settings.
 
 ### `aignostics system health`
@@ -973,20 +1039,6 @@ Complete installation.
 
 ```console
 $ aignostics system install [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
-### `aignostics system whoami`
-
-Print user info.
-
-**Usage**:
-
-```console
-$ aignostics system whoami [OPTIONS]
 ```
 
 **Options**:

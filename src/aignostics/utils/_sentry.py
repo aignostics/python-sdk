@@ -170,15 +170,15 @@ class SentrySettings(OpaqueSettings):
         Field(
             ge=0.0,
             description="Traces Sample Rate (https://docs.sentry.io/platforms/python/configuration/sampling/#configuring-the-transaction-sample-rate)",
-            default=1.0,
+            default=0.1,
         ),
     ]
     profiles_sample_rate: Annotated[
         float,
         Field(
             ge=0.0,
-            description="Traces Sample Rate (https://docs.sentry.io/platforms/python/tracing/#configure)",
-            default=1.0,
+            description="Profiles Sample Rate (https://docs.sentry.io/platforms/python/tracing/#configure)",
+            default=0.1,
         ),
     ]
 

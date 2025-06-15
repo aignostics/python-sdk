@@ -131,6 +131,7 @@ dependencies = [
     "s5cmd",
     "sphinx-click",
     "tqdm",
+    "auth0-python>=4.10.0",
 ]
 
 [project.optional-dependencies]

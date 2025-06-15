@@ -11,13 +11,20 @@ from urllib.error import HTTPError
 
 import jwt
 import requests
+from auth0.authentication import Users
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
 from aignostics.platform._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
 from aignostics.platform._settings import settings
 
+try:
+    import sentry_sdk
+except ImportError:
+    sentry_sdk = None  # type: ignore[assignment]
+
 CALLBACK_PORT_RETRY_COUNT = 10
+CLAIM_ROLE = "https://aignostics-platform-samia/role"
 
 
 class AuthenticationResult(BaseModel):
@@ -25,6 +32,43 @@ class AuthenticationResult(BaseModel):
 
     token: str | None = None
     error: str | None = None
+
+
+def _inform_sentry_about_user(token: str) -> None:
+    """Inform Sentry about the authenticated user from the JWT token.
+
+    Args:
+        token: The JWT access token to extract user information from.
+
+    Raises:
+        RuntimeError: If the token does not contain the 'sub' claim or if verification fails.
+    """
+    if sentry_sdk is None:
+        return  # type: ignore[unreachable]
+
+    def _raise_missing_sub_claim_error() -> None:
+        """Raises RuntimeError for missing 'sub' claim in token.
+
+        Raises:
+            RuntimeError: If the 'sub' claim is missing from the token.
+        """
+        message = "Token does not contain 'sub' claim, cannot set Sentry user info."
+        raise RuntimeError(message)
+
+    try:
+        claims = verify_and_decode_token(token)
+        user_id = claims.get("sub", None)
+        if user_id is None:
+            _raise_missing_sub_claim_error()
+        sentry_sdk.set_user({
+            "id": user_id,
+            "org_id": claims.get("org_id", None),
+            "role": claims.get(CLAIM_ROLE, None),
+        })
+    except (jwt.InvalidTokenError, RuntimeError):
+        # Don't fail authentication if Sentry user setup fails
+        # Only catch specific exceptions related to token processing
+        pass
 
 
 def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
@@ -41,31 +85,53 @@ def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
     Raises:
         RuntimeError: If token retrieval fails.
     """
+    token = None
+
+    # Try to get token from cache first
     if use_cache and settings().token_file.exists():
         stored_token = Path(settings().token_file).read_text(encoding="utf-8")
         # Parse stored string "token:expiry_timestamp"
         parts = stored_token.split(":")
-        token, expiry_str = parts
+        cached_token, expiry_str = parts
         expiry = datetime.fromtimestamp(int(expiry_str), tz=UTC)
 
         # Check if token is still valid (with some buffer time)
         if datetime.now(tz=UTC) + timedelta(minutes=5) < expiry:
-            return token
+            token = cached_token
 
-    # If we end up here, we:
-    # 1. Do not want to use the cached token
-    # 2. The cached token is expired
-    # 3. No token was cached yet
-    new_token = _authenticate(use_device_flow)
-    claims = verify_and_decode_token(new_token)
+    # If no valid cached token, authenticate to get a new one
+    if token is None:
+        # If we end up here, we:
+        # 1. Do not want to use the cached token
+        # 2. The cached token is expired
+        # 3. No token was cached yet
+        token = _authenticate(use_device_flow)
+        claims = verify_and_decode_token(token)
 
-    # Store new token with expiry
-    if use_cache:
-        timestamp = claims["exp"]
-        settings().token_file.parent.mkdir(parents=True, exist_ok=True)
-        Path(settings().token_file).write_text(f"{new_token}:{timestamp}", encoding="utf-8")
+        # Store new token with expiry
+        if use_cache:
+            timestamp = claims["exp"]
+            settings().token_file.parent.mkdir(parents=True, exist_ok=True)
+            Path(settings().token_file).write_text(f"{token}:{timestamp}", encoding="utf-8")
 
-    return new_token
+    # Inform Sentry about the authenticated user (regardless of token source)
+    _inform_sentry_about_user(token)
+
+    return token
+
+
+def remove_cached_token() -> bool:
+    """Removes the cached authentication token.
+
+    Deletes the token file if it exists, effectively logging out the user.
+
+    Returns:
+        bool: True if the token file was successfully removed, False if it did not exist.
+    """
+    if settings().token_file.exists():
+        settings().token_file.unlink(missing_ok=True)
+        return True
+    return False
 
 
 def _authenticate(use_device_flow: bool) -> str:
@@ -111,8 +177,8 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     jwk_client = jwt.PyJWKClient(settings().jws_json_url)
     try:
         # Get the public key from the JWK client
-
         key = jwk_client.get_signing_key_from_jwt(token).key
+
         # Verify and decode the token using the public key
         return t.cast(
             "dict[str, str]",
@@ -120,6 +186,25 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         )
     except jwt.exceptions.PyJWTError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
+
+
+def userinfo(token: str) -> dict[str, str]:
+    """Fetches user information from the Auth0 API using the provided token.
+
+    Args:
+        token (str): The JWT access token.
+
+    Returns:
+        dict[str, str]: The user information.
+
+    Raises:
+        RuntimeError: If fetching user information fails.
+    """
+    try:
+        return Users("aignostics-platform.eu.auth0.com").userinfo(access_token=token)  # type: ignore[no-any-return]
+    except Exception as e:
+        message = f"Failed to fetch user information: {e!s}"
+        raise RuntimeError(message) from e
 
 
 def _can_open_browser() -> bool:

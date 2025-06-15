@@ -8,16 +8,16 @@ from aignostics.utils import BasePageBuilder
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
-        from nicegui import app, ui  # noq  # noqa: PLC0415
+        from nicegui import Client, app, ui  # noq  # noqa: PLC0415
 
         app.add_static_files("/application_assets", Path(__file__).parent / "assets")
 
         @ui.page("/")
-        async def page_index() -> None:
+        async def page_index(client: Client) -> None:
             """Index page of application module, serving as the homepage of Aignostics Launchpad."""
             from ._page_index import _page_index  # noqa: PLC0415
 
-            await _page_index()
+            await _page_index(client)
 
         @ui.page("/application/{application_id}")
         async def page_application_describe(application_id: str) -> None:

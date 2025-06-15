@@ -32,6 +32,9 @@ from aignostics.platform import (
     NotFoundException,
     OutputArtifactElement,
 )
+from aignostics.platform import (
+    Service as PlatformService,
+)
 from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
@@ -46,7 +49,6 @@ if has_qupath_extra:
 
 
 logger = get_logger(__name__)
-
 
 APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5
 APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
@@ -150,6 +152,7 @@ class Service(BaseService):
 
     _settings: Settings
     _client: Client | None = None
+    _platform_service: PlatformService | None = None
 
     def __init__(self) -> None:
         """Initialize service."""
@@ -191,6 +194,22 @@ class Service(BaseService):
         else:
             logger.debug("Reusing platform client.")
         return self._client
+
+    def _get_platform_service(self) -> PlatformService:
+        """Get the platform service.
+
+        Returns:
+            PlatformService: The platform service.
+
+        Raises:
+            Exception: If the client cannot be created.
+        """
+        if self._platform_service is None:
+            logger.debug("Creating platform service.")
+            self._platform_service = PlatformService()
+        else:
+            logger.debug("Reusing platform service.")
+        return self._platform_service
 
     def applications(self) -> list[Application]:
         """Get a list of all applications.

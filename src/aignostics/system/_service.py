@@ -458,7 +458,7 @@ class Service(BaseService):
         for dotenv_path in Service._get_env_files_paths():
             if not dotenv_path.is_file():
                 message = f"File '{dotenv_path!s}' does not exist, skipping update"
-                logger.warning(message)
+                logger.debug(message)
                 continue
             dotenv_unset_key(dotenv_path=str(dotenv_path.resolve()), key_to_unset=key, quote_mode="auto")
         os.environ.pop(key, None)

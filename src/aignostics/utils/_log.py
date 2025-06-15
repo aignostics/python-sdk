@@ -3,6 +3,7 @@
 import contextlib
 import logging as python_logging
 import os
+from logging import Filter as LogggingFilter
 from logging import Handler
 from pathlib import Path
 from typing import Annotated, Literal
@@ -106,21 +107,23 @@ class LogSettings(BaseSettings):
     ]
 
 
-class CustomFilter(python_logging.Filter):
-    """Custom filter for log records."""
+class CustomFilter(LogggingFilter):
+    """Filter to exclude specific dependencies or their messages from logging."""
 
-    @staticmethod
-    def filter(_record: python_logging.LogRecord) -> bool:
+    def filter(self, record: python_logging.LogRecord) -> bool:  # noqa: PLR6301
         """
-        Filter log records based on custom criteria.
+        Filter out log records from specific dependencies.
 
         Args:
             record: The log record to filter.
 
         Returns:
-            bool: True if record should be logged, False otherwise.
+            bool: True if the record should be logged, False otherwise.
         """
-        return True
+        excluded_dependencies = {"showinfm"}
+        if record.name in excluded_dependencies:
+            return False
+        return not (record.name == "dotenv.main" and record.getMessage().endswith("key doesn't exist."))
 
 
 def logging_initialize(log_to_logfire: bool = False) -> None:
