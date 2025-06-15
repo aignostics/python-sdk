@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.59..0.2.60) - 2025-06-15
+(https://github.com/aignostics/python-sdk/compare/v0.2.60..0.2.61) - 2025-06-15
+
+
+- *(user)* Rename from platform to user in cli - ([4df6942](https://github.com/aignostics/python-sdk/commit/4df6942850a11704376e4fcc4a0ff90a9d7175aa))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.59..v0.2.60) - 2025-06-15
 
 
 - *(userinfo)* Allow to edit profile - ([06604c2](https://github.com/aignostics/python-sdk/commit/06604c2253f3e9c66c7af9c2b14c45a635976c0c))
