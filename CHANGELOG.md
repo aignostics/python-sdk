@@ -1,13 +1,19 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.52..0.2.53) - 2025-06-12
+(https://github.com/aignostics/python-sdk/compare/v0.2.53..0.2.54) - 2025-06-15
+
+
+- *(platform)* Graceful fail on user info not accessible - ([f8bb5a8](https://github.com/aignostics/python-sdk/commit/f8bb5a8194c8970d6420d4f748e33b4fd570ef88))
+
+
+- *(platform)* Refactor user profile - ([e2d4f51](https://github.com/aignostics/python-sdk/commit/e2d4f51a19f08320e4f66b5d284546a501f4fda3))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.52..v0.2.53) - 2025-06-12
 
 
 - Generate - ([bebf86e](https://github.com/aignostics/python-sdk/commit/bebf86e6286e1780ae350673ba6bf5ca057381f7))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 (https://github.com/aignostics/python-sdk/compare/v0.2.51..v0.2.52) - 2025-06-12
 
