@@ -75,8 +75,8 @@ requires-python = ">=3.11, <4.0"
 dependencies = [
     # From Template
     "fastapi[standard,all]>=0.115.12",
-    "logfire[system-metrics]>=3.17.0",
-    "nicegui[native]>=2.19.0",
+    "logfire[system-metrics]>=3.19.0",
+    "nicegui[native]>=2.20.0",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
     "opentelemetry-instrumentation-jinja2>=0.53b0",
@@ -88,12 +88,13 @@ dependencies = [
     "psutil>=7.0.0",
     "pydantic-settings>=2.9.1",
     "pywin32>=310 ; sys_platform == 'win32'",
-    "sentry-sdk>=2.29.1",
+    "sentry-sdk>=2.30.0",
     "typer>=0.16.0",
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
-    "boto3>=1.38.33",
+    "auth0-python>=4.10.0",
+    "boto3>=1.38.36",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "google-cloud-storage>=2.12.0",
@@ -131,7 +132,6 @@ dependencies = [
     "s5cmd",
     "sphinx-click",
     "tqdm",
-    "auth0-python>=4.10.0",
 ]
 
 [project.optional-dependencies]
