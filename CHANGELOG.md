@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.56..0.2.57) - 2025-06-15
+(https://github.com/aignostics/python-sdk/compare/v0.2.57..0.2.58) - 2025-06-15
+
+
+- *(gui)* Polish user info - ([e5eca02](https://github.com/aignostics/python-sdk/commit/e5eca02b084860c4957f28d13580962e83af1758))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.56..v0.2.57) - 2025-06-15
 
 
 - *(platform)* Lazyload srvice in cli - ([28f1819](https://github.com/aignostics/python-sdk/commit/28f18195c06c2d69a569b4a44b9dcc2e1b07421b))
