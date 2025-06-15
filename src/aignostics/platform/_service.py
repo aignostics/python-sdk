@@ -230,6 +230,7 @@ class Service(BaseService):
         try:
             token = get_token(use_cache=True)
             claims = verify_and_decode_token(token)
+            info = None
             try:
                 info = userinfo(token)
             except RuntimeError as e:
