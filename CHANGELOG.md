@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.53..0.2.54) - 2025-06-15
+(https://github.com/aignostics/python-sdk/compare/v0.2.54..0.2.55) - 2025-06-15
+
+
+- Welcome user by name in launchpad - ([ac666f9](https://github.com/aignostics/python-sdk/commit/ac666f932f53531770dd3a852b37a80d3b453dd6))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.53..v0.2.54) - 2025-06-15
 
 
 - *(platform)* Graceful fail on user info not accessible - ([f8bb5a8](https://github.com/aignostics/python-sdk/commit/f8bb5a8194c8970d6420d4f748e33b4fd570ef88))
