@@ -17,7 +17,7 @@ from ._theme import theme
 FLAT_COLOR_WHITE = "flat color=white"
 
 HEALTH_UPDATE_INTERVAL = 30
-USERINFO_UPDATE_INTERVAL = 60
+USERINFO_UPDATE_INTERVAL = 60 * 60
 
 
 @contextmanager
@@ -64,9 +64,15 @@ def frame(  # noqa: C901, PLR0915
                 .props(FLAT_COLOR_WHITE),
                 ui.card(),
             ):
-                ui.label(f"{user_info.profile.name} ({user_info.profile.email})")
-                ui.label(f"{user_info.role.capitalize()} at {user_info.org_name or user_info.org_id}")
-                ui.label(f"Authentication valid for {naturaldelta(user_info.token.expires_in)}")
+                with ui.row():
+                    if user_info.profile.picture:
+                        ui.image(user_info.profile.picture).style("width: 90px; height: 90px")
+                    else:
+                        ui.icon("account_circle", size="90px").classes("text-gray-500")
+                    with ui.column():
+                        ui.label(f"{user_info.profile.name} ({user_info.profile.email})")
+                        ui.label(f"{user_info.role.capitalize()} at {user_info.org_name or user_info.org_id}")
+                        ui.label(f"Authentication valid for {naturaldelta(user_info.token.expires_in)}")
                 ui.separator()
                 with ui.row().classes("items-center justify-between"):
                     ui.button("Re-authenticate now", icon="switch_account", on_click=_user_info_ui_relogin).props(
