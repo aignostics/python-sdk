@@ -51,16 +51,16 @@ def frame(  # noqa: C901, PLR0915
     @ui.refreshable
     def _user_info_ui() -> None:
         spinner = ui.spinner().props("flat color=purple-400")
-        if user_info:
+        if user_info and user_info.profile:
             spinner.set_visibility(False)
             with ui.avatar():
-                if user_info.picture:
+                if user_info.profile.picture:
                     with (
-                        ui.image(user_info.picture)
+                        ui.image(user_info.profile.picture)
                         .on("click", _user_info_ui_relogin)
                         .style("width: 30px; height: 30px; border-radius: 50%")
                     ):
-                        ui.tooltip(user_info.email or user_info.id)
+                        ui.tooltip(user_info.profile.email or user_info.id)
                 else:
                     with (
                         ui.icon("account_circle", color="primary")
@@ -68,7 +68,7 @@ def frame(  # noqa: C901, PLR0915
                         .style("width: 30px; height: 30px; border-radius: 50%")
                         .props(FLAT_COLOR_WHITE)
                     ):
-                        ui.tooltip(user_info.email or user_info.id)
+                        ui.tooltip(user_info.profile.email or user_info.id)
 
     async def _user_info_ui_load() -> None:
         nonlocal user_info

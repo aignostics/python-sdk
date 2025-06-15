@@ -102,7 +102,7 @@ class Settings(OpaqueSettings):
         Field(description="URL of the API root", default=API_ROOT_PRODUCTION),
     ]
 
-    scope: str = "offline_access profile email openid"
+    scope: str = "offline_access, profile, email, openid"
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -116,7 +116,7 @@ class Settings(OpaqueSettings):
         """
         if not self.scope:
             return []
-        return [element.strip() for element in self.scope.split()]
+        return [element.strip() for element in self.scope.split(",")]
 
     audience: str
     authorization_base_url: str

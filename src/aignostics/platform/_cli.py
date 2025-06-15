@@ -1,5 +1,6 @@
 """CLI of platform module."""
 
+import json
 import sys
 from typing import Annotated
 
@@ -65,7 +66,7 @@ def whoami(
         if user_info is None:
             console.print("Failed to log you in.", style="warning")
             sys.exit(1)
-        console.print_json(data=user_info.model_dump())
+        console.print_json(data=json.loads(user_info.model_dump_json()))
     except Exception as e:
         message = f"Error while getting user info: {e!s}"
         logger.exception(message)

@@ -85,8 +85,8 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.jws_json_url == JWS_JSON_URL_PRODUCTION
 
     # Test other properties
-    assert settings.scope == "offline_access"
-    assert settings.scope_elements == ["offline_access"]
+    assert settings.scope == "offline_access, profile, email, openid"
+    assert settings.scope_elements == ["offline_access", "profile", "email", "openid"]
     assert settings.cache_dir == appdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.request_timeout_seconds == 30

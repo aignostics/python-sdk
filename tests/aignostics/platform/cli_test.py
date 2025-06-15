@@ -1,12 +1,178 @@
 """Tests to verify the CLI functionality of the platform module."""
 
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
-from aignostics.platform._service import TokenInfo, UserInfo
+from aignostics.platform._service import TokenInfo, UserInfo, UserProfile
 from tests.conftest import normalize_output
+
+
+class TestUserProfile:
+    """Test cases for UserProfile model."""
+
+    @staticmethod
+    def test_user_profile_from_userinfo_full_data() -> None:
+        """Test UserProfile creation from complete userinfo."""
+        userinfo = {
+            "name": "John Doe",
+            "given_name": "John",
+            "family_name": "Doe",
+            "nickname": "johnny",
+            "email": "john.doe@example.com",
+            "email_verified": True,
+            "picture": "https://example.com/avatar.jpg",
+            "updated_at": "2024-01-15T10:30:00Z",
+        }
+
+        profile = UserProfile.from_userinfo(userinfo)
+
+        assert profile.name == "John Doe"
+        assert profile.given_name == "John"
+        assert profile.family_name == "Doe"
+        assert profile.nickname == "johnny"
+        assert profile.email == "john.doe@example.com"
+        assert profile.email_verified is True
+        assert profile.picture == "https://example.com/avatar.jpg"
+        # Pydantic automatically converts the ISO string to a datetime object
+        assert profile.updated_at == datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC)
+
+    @staticmethod
+    def test_user_profile_from_userinfo_partial_data() -> None:
+        """Test UserProfile creation from partial userinfo."""
+        userinfo = {
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com",
+            "email_verified": False,
+        }
+
+        profile = UserProfile.from_userinfo(userinfo)
+
+        assert profile.name == "Jane Smith"
+        assert profile.given_name is None
+        assert profile.family_name is None
+        assert profile.nickname is None
+        assert profile.email == "jane.smith@example.com"
+        assert profile.email_verified is False
+        assert profile.picture is None
+        assert profile.updated_at is None
+
+    @staticmethod
+    def test_user_profile_from_userinfo_empty_data() -> None:
+        """Test UserProfile creation from empty userinfo."""
+        userinfo = {}
+
+        profile = UserProfile.from_userinfo(userinfo)
+
+        assert profile.name is None
+        assert profile.given_name is None
+        assert profile.family_name is None
+        assert profile.nickname is None
+        assert profile.email is None
+        assert profile.email_verified is None
+        assert profile.picture is None
+        assert profile.updated_at is None
+
+
+class TestTokenInfo:
+    """Test cases for TokenInfo model."""
+
+    @staticmethod
+    def test_token_info_from_claims() -> None:
+        """Test TokenInfo creation from JWT claims."""
+        claims = {
+            "iss": "https://test.auth0.com/",
+            "iat": 1609459200,
+            "exp": 1609462800,
+            "scope": "openid profile email",
+            "aud": "test-audience",
+            "azp": "test-client-id",
+        }
+
+        token_info = TokenInfo.from_claims(claims)
+
+        assert token_info.issuer == "https://test.auth0.com/"
+        assert token_info.issued_at == 1609459200
+        assert token_info.expires_at == 1609462800
+        assert token_info.scope == ["openid", "profile", "email"]
+        assert token_info.audience == ["test-audience"]
+        assert token_info.authorized_party == "test-client-id"
+
+    @staticmethod
+    def test_token_info_from_claims_with_audience_list() -> None:
+        """Test TokenInfo creation from JWT claims with audience as list."""
+        claims = {
+            "iss": "https://test.auth0.com/",
+            "iat": 1609459200,
+            "exp": 1609462800,
+            "scope": "openid profile",
+            "aud": ["audience1", "audience2"],
+            "azp": "test-client-id",
+        }
+
+        token_info = TokenInfo.from_claims(claims)
+
+        assert token_info.audience == ["audience1", "audience2"]
+
+
+class TestUserInfo:
+    """Test cases for UserInfo model."""
+
+    @staticmethod
+    def test_user_info_from_claims_and_userinfo_with_profile() -> None:
+        """Test UserInfo creation with both claims and userinfo."""
+        claims = {
+            "sub": "user123",
+            "org_id": "org456",
+            "https://aignostics-platform-samia/role": "admin",
+            "iss": "https://test.auth0.com/",
+            "iat": 1609459200,
+            "exp": 1609462800,
+            "scope": "openid profile",
+            "aud": "test-audience",
+            "azp": "test-client-id",
+        }
+        userinfo = {
+            "name": "John Doe",
+            "email": "john.doe@example.com",
+            "email_verified": True,
+        }
+
+        user_info = UserInfo.from_claims_and_userinfo(claims, userinfo)
+
+        assert user_info.id == "user123"
+        assert user_info.org_id == "org456"
+        assert user_info.role == "admin"
+        assert user_info.token.issuer == "https://test.auth0.com/"
+        assert user_info.profile is not None
+        assert user_info.profile.name == "John Doe"
+        assert user_info.profile.email == "john.doe@example.com"
+        assert user_info.profile.email_verified is True
+
+    @staticmethod
+    def test_user_info_from_claims_and_userinfo_without_profile() -> None:
+        """Test UserInfo creation with only claims, no userinfo."""
+        claims = {
+            "sub": "user456",
+            "org_id": "org789",
+            "https://aignostics-platform-samia/role": "user",
+            "iss": "https://test.auth0.com/",
+            "iat": 1609459200,
+            "exp": 1609462800,
+            "scope": "openid",
+            "aud": "test-audience",
+            "azp": "test-client-id",
+        }
+
+        user_info = UserInfo.from_claims_and_userinfo(claims, None)
+
+        assert user_info.id == "user456"
+        assert user_info.org_id == "org789"
+        assert user_info.role == "user"
+        assert user_info.token.issuer == "https://test.auth0.com/"
+        assert user_info.profile is None
 
 
 class TestPlatformCLI:
@@ -79,7 +245,7 @@ class TestPlatformCLI:
             result = runner.invoke(cli, ["platform", "login"])
 
             assert result.exit_code == 1
-            assert "Failed to log in" in normalize_output(result.output)
+            assert "Failed to log you in" in normalize_output(result.output)
 
     @staticmethod
     def test_login_error(runner: CliRunner) -> None:
@@ -98,8 +264,8 @@ class TestPlatformCLI:
             issuer="https://test.auth0.com/",
             issued_at=1609459200,
             expires_at=1609462800,
-            scope="openid profile",
-            audience="test-audience",
+            scope=["openid", "profile"],
+            audience=["test-audience"],
             authorized_party="test-client-id",
         )
         mock_user_info = UserInfo(
@@ -126,8 +292,8 @@ class TestPlatformCLI:
             issuer="https://test.auth0.com/",
             issued_at=1609459200,
             expires_at=1609462800,
-            scope="openid profile",
-            audience="test-audience",
+            scope=["openid", "profile"],
+            audience=["test-audience"],
             authorized_party="test-client-id",
         )
         mock_user_info = UserInfo(
@@ -152,7 +318,7 @@ class TestPlatformCLI:
             result = runner.invoke(cli, ["platform", "whoami"])
 
             assert result.exit_code == 1
-            assert "You are not logged in." in normalize_output(result.output)
+            assert "Failed to log you in." in normalize_output(result.output)
 
     @staticmethod
     def test_whoami_error(runner: CliRunner) -> None:
@@ -161,4 +327,51 @@ class TestPlatformCLI:
             result = runner.invoke(cli, ["platform", "whoami"])
 
             assert result.exit_code == 1
-            assert "Error while determining who you are: Test error" in normalize_output(result.output)
+            assert "Error while getting user info: Test error" in normalize_output(result.output)
+
+    @staticmethod
+    def test_whoami_success_with_user_profile(runner: CliRunner) -> None:
+        """Test successful whoami command with complete user profile."""
+        # Create mock token info
+        mock_token_info = TokenInfo(
+            issuer="https://test.auth0.com/",
+            issued_at=1609459200,
+            expires_at=1609462800,
+            scope=["openid", "profile", "email"],
+            audience=["test-audience"],
+            authorized_party="test-client-id",
+        )
+
+        # Create mock user profile
+        mock_user_profile = UserProfile(
+            name="John Doe",
+            given_name="John",
+            family_name="Doe",
+            nickname="johnny",
+            email="john.doe@example.com",
+            email_verified=True,
+            picture="https://example.com/avatar.jpg",
+            updated_at=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
+        )
+
+        # Create mock user info with profile
+        mock_user_info = UserInfo(
+            id="user123",
+            org_id="org456",
+            role="admin",
+            token=mock_token_info,
+            profile=mock_user_profile,
+        )
+
+        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+            result = runner.invoke(cli, ["platform", "whoami"])
+
+            assert result.exit_code == 0
+            # Check that JSON output contains expected fields from both user info and profile
+            output = normalize_output(result.output)
+            assert "user123" in output
+            assert "org456" in output
+            assert "admin" in output
+            assert "John Doe" in output
+            assert "john.doe@example.com" in output
+            assert "johnny" in output

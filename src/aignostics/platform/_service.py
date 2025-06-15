@@ -1,6 +1,7 @@
 """Service of the platform module."""
 
 import time
+from datetime import datetime
 from http import HTTPStatus
 from typing import Any
 
@@ -56,16 +57,48 @@ class TokenInfo(BaseModel):
         )
 
 
+class UserProfile(BaseModel):
+    """Class to store info about the user."""
+
+    name: str | None = None  # userinfo.name
+    given_name: str | None = None  # userinfo.given_name
+    family_name: str | None = None  # userinfo.family_name
+    nickname: str | None = None  # userinfo.nickname
+    email: str | None = None  # userinfo.email
+    email_verified: bool | None = None  # userinfo.email_verified
+    picture: str | None = None  # userinfo.picture
+    updated_at: datetime | None = None  # userinfo.updated_at
+
+    @classmethod
+    def from_userinfo(cls, userinfo: dict[str, Any]) -> "UserProfile":
+        """Create UserProfile from auth0 userinfo.
+
+        Args:
+            userinfo (dict[str, Any] | None): User information dictionary from auth0.
+
+        Returns:
+            UserProfile: User information extracted from auth0 userinfo.
+        """
+        return cls(
+            name=userinfo.get("name"),
+            given_name=userinfo.get("given_name"),
+            family_name=userinfo.get("family_name"),
+            nickname=userinfo.get("nickname"),
+            email=userinfo.get("email"),
+            email_verified=userinfo.get("email_verified"),
+            picture=userinfo.get("picture"),
+            updated_at=userinfo.get("updated_at"),
+        )
+
+
 class UserInfo(BaseModel):
     """Class to store info about the user."""
 
     id: str  # token.sub
     org_id: str  # token.org_id
     role: str  # token.CLAIM_ROLE
-    name: str | None = None  # userinfo.name
-    email: str | None = None  # userinfo.email
-    picture: str | None = None  # userinfo.picture
     token: TokenInfo
+    profile: UserProfile | None = None
 
     @classmethod
     def from_claims_and_userinfo(cls, claims: dict[str, Any], userinfo: dict[str, Any] | None = None) -> "UserInfo":
@@ -78,15 +111,12 @@ class UserInfo(BaseModel):
         Returns:
             UserInfo: User information extracted from claims.
         """
-        token_info = TokenInfo.from_claims(claims)
         return cls(
             id=claims["sub"],
             org_id=claims["org_id"],
             role=claims[CLAIM_ROLE],
-            token=token_info,
-            name=userinfo.get("name") if userinfo else None,
-            email=userinfo.get("email") if userinfo else None,
-            picture=userinfo.get("picture") if userinfo else None,
+            token=TokenInfo.from_claims(claims),
+            profile=UserProfile.from_userinfo(userinfo) if userinfo else None,
         )
 
 

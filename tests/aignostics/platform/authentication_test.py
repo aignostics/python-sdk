@@ -509,7 +509,7 @@ class TestSentryIntegration:
             "sub": "user123",
             "org_id": "org456",
             "aud": "test-audience",
-            "test-audience/role": "admin",
+            "https://aignostics-platform-samia/role": "admin",
             "exp": int(time.time()) + 3600,
         }
 
