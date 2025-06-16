@@ -30,10 +30,10 @@ cli = typer.Typer(
 
 def _find_matching_objects(source_pattern: str) -> list[dict[str, str]]:
     """Find objects in bucket matching the given pattern.
-    
+
     Args:
         source_pattern: Regular expression pattern to match object keys against.
-        
+
     Returns:
         List of dictionaries containing object key and signed download URL.
     """
@@ -57,12 +57,12 @@ def _download_single_file(
     file_progress: "Progress",
 ) -> Path | None:
     """Download a single file and return the output path on success, None on failure.
-    
+
     Args:
         obj: Dictionary containing object key and signed download URL.
         destination: Destination directory for the downloaded file.
         file_progress: Rich Progress instance for tracking individual file progress.
-        
+
     Returns:
         Path to the downloaded file on success, None on failure.
     """
@@ -149,9 +149,7 @@ def _download_with_progress(matched: list[dict[str, str]], destination: Path, so
 
     # Create main task for overall progress
     main_task = main_progress.add_task(
-        f"Downloading {len(matched)} files",
-        total=len(matched),
-        extra_description=f"matching '{source_pattern}'"
+        f"Downloading {len(matched)} files", total=len(matched), extra_description=f"matching '{source_pattern}'"
     )
 
     # Create progress group
