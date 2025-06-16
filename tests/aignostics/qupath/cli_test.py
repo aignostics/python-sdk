@@ -110,8 +110,8 @@ def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown) -> 
 
 
 @pytest.mark.skipif(
-    platform.system() == "Linux",
-    reason="unsupported test for Linux platform",
+    platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
+    reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.sequential
