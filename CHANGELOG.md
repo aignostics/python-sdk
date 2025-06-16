@@ -1,6 +1,16 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.60..0.2.61) - 2025-06-15
+(https://github.com/aignostics/python-sdk/compare/v0.2.61..0.2.62) - 2025-06-16
+
+
+- Lint - ([6408db4](https://github.com/aignostics/python-sdk/commit/6408db45e3308fc0a996bbf5ded88b73e461acaf))
+
+
+- *(QuPath)* Run test on linux - ([8e0c81e](https://github.com/aignostics/python-sdk/commit/8e0c81e1eae380c62b35c3048f10065910ebc819))
+- Download from bucket cli - ([ecb7f23](https://github.com/aignostics/python-sdk/commit/ecb7f23cafd0a48e18ee3e9aea707cb7e91620bf))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.60..v0.2.61) - 2025-06-15
 
 
 - *(user)* Rename from platform to user in cli - ([4df6942](https://github.com/aignostics/python-sdk/commit/4df6942850a11704376e4fcc4a0ff90a9d7175aa))
