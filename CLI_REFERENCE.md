@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.60 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.62 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -196,7 +196,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750023076779.5352]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750197829503.505]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -252,7 +252,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750023076779.614]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750197829503.5952]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -407,9 +407,9 @@ $ aignostics bucket [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `upload`: Upload file or directory to bucket in...
-* `ls`: List objects in bucket on Aignostics...
 * `find`: Find objects in bucket on Aignostics...
-* `delete`: Find objects in bucket on Aignostics...
+* `download`: Download objects from bucket in Aignostics...
+* `delete`: Delete objects in bucket on Aignostics...
 * `purge`: Purge all objects in bucket on Aignostics...
 
 ### `aignostics bucket upload`
@@ -431,21 +431,6 @@ $ aignostics bucket upload [OPTIONS] SOURCE
 * `--destination-prefix TEXT`: Destination layout. Supports {username}, {timestamp}. E.g. you might want to use &quot;{username}/myproject/&quot;  [default: {username}]
 * `--help`: Show this message and exit.
 
-### `aignostics bucket ls`
-
-List objects in bucket on Aignostics Platform.
-
-**Usage**:
-
-```console
-$ aignostics bucket ls [OPTIONS]
-```
-
-**Options**:
-
-* `--detail / --no-detail`: Show details  [default: no-detail]
-* `--help`: Show this message and exit.
-
 ### `aignostics bucket find`
 
 Find objects in bucket on Aignostics Platform.
@@ -453,30 +438,61 @@ Find objects in bucket on Aignostics Platform.
 **Usage**:
 
 ```console
-$ aignostics bucket find [OPTIONS]
-```
-
-**Options**:
-
-* `--detail / --no-detail`: Show details  [default: no-detail]
-* `--help`: Show this message and exit.
-
-### `aignostics bucket delete`
-
-Find objects in bucket on Aignostics Platform.
-
-**Usage**:
-
-```console
-$ aignostics bucket delete [OPTIONS] KEY
+$ aignostics bucket find [OPTIONS] [WHAT]...
 ```
 
 **Arguments**:
 
-* `KEY`: key of object in object  [required]
+* `[WHAT]...`: Patterns or keys to match object keys against - all if not specified.
 
 **Options**:
 
+* `--what-is-key / --no-what-is-key`: Specify if &#x27;what&#x27; is a single object key. If not specified, &#x27;what&#x27; is treated as a regex pattern.  [default: no-what-is-key]
+* `--detail / --no-detail`: Show details  [default: no-detail]
+* `--signed-urls`: Include signed download URLs
+* `--help`: Show this message and exit.
+
+### `aignostics bucket download`
+
+Download objects from bucket in Aignostics platform to local directory.
+
+Raises:
+    typer.Exit: If pattern is invalid regex or no objects found.
+
+**Usage**:
+
+```console
+$ aignostics bucket download [OPTIONS] [WHAT]...
+```
+
+**Arguments**:
+
+* `[WHAT]...`: Patterns or keys to match object keys against - all if not specified.
+
+**Options**:
+
+* `--what-is-key / --no-what-is-key`: Specify if &#x27;what&#x27; is a single object key. If not specified, &#x27;what&#x27; is treated as a regex pattern.  [default: no-what-is-key]
+* `--destination DIRECTORY`: Destination directory to download the matching objects to.  [default: /Users/helmut/Library/Application Support/aignostics/bucket_downloads]
+* `--help`: Show this message and exit.
+
+### `aignostics bucket delete`
+
+Delete objects in bucket on Aignostics Platform.
+
+**Usage**:
+
+```console
+$ aignostics bucket delete [OPTIONS] WHAT...
+```
+
+**Arguments**:
+
+* `WHAT...`: Patterns or keys to match object keys against.  [required]
+
+**Options**:
+
+* `--what-is-key / --no-what-is-key`: Specify if &#x27;what&#x27; is a single object key. If not specified, &#x27;what&#x27; is treated as a regex pattern.  [default: no-what-is-key]
+* `--dry-run / --no-dry-run`: If set, only determines number of items that would be deleted, without actually deleting.  [default: dry-run]
 * `--help`: Show this message and exit.
 
 ### `aignostics bucket purge`
@@ -491,6 +507,7 @@ $ aignostics bucket purge [OPTIONS]
 
 **Options**:
 
+* `--dry-run / --no-dry-run`: If set, only determines number of items that would be deleted, without actually deleting.  [default: dry-run]
 * `--help`: Show this message and exit.
 
 ## `aignostics dataset`

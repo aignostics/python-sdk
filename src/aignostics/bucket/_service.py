@@ -1,22 +1,83 @@
 """Service of the bucket module."""
 
+import hashlib
+import re
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any, cast
 
+import humanize
 import requests
 from botocore.client import BaseClient, Config
 from botocore.exceptions import ClientError
+from pydantic import BaseModel, computed_field
 
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger
+from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, get_user_data_directory
 
 from ._settings import Settings
+
+UPLOAD_CHUNK_SIZE = 1024 * 1024
+DOWNLOAD_CHUNK_SIZE = 1024 * 1024 * 10
+ETAG_CHUNK_SIZE = 1024 * 1024 * 100
 
 logger = get_logger(__name__)
 
 BUCKET_PROTOCOL = "gs"
 SIGNATURE_VERSION = "s3v4"
 ENDPOINT_URL_DEFAULT = "https://storage.googleapis.com"
+
+
+class DownloadProgress(BaseModel):
+    overall_total: int
+    overall_downloaded: int
+    overall_failed: int
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def overall_processed(self) -> int:
+        return self.overall_failed + self.overall_downloaded
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def overall_current(self) -> int:
+        return min(self.overall_total, self.overall_processed + 1)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def overall_progress_normalized(self) -> float:
+        if self.overall_total == 0:
+            return 0.0
+        return float(self.overall_processed) / float(self.overall_total)
+
+    current_file_key: str
+    current_file_downloaded: int
+    current_file_size: int
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def current_file_progress_normalized(self) -> float:
+        if self.current_file_size == 0:
+            return 0.0
+        return float(self.current_file_downloaded) / float(self.current_file_size)
+
+
+class DownloadResult(BaseModel):
+    downloaded: list[Path]
+    failed: list[str]
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def downloaded_count(self) -> int:
+        return len(self.downloaded)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def failed_count(self) -> int:
+        return len(self.failed)
+
+    @property
+    def total_count(self) -> int:
+        return self.downloaded_count + self.failed_count
 
 
 class Service(BaseService):
@@ -130,7 +191,7 @@ class Service(BaseService):
 
                 def read_in_chunks() -> Generator[bytes, None, None]:
                     while True:
-                        chunk = f.read(1048576)  # ~1MB chunks
+                        chunk = f.read(UPLOAD_CHUNK_SIZE)
                         if not chunk:
                             break
                         if callback:
@@ -151,24 +212,6 @@ class Service(BaseService):
         except (OSError, requests.RequestException):
             logger.exception("Error uploading file '%s' to object key '%s'", source_path, object_key)
             return False
-
-    def create_signed_download_url(self, object_key: str, bucket_name: str | None = None) -> str:
-        """Generates a signed URL to download a Google Cloud Storage object.
-
-        Args:
-            object_key (str): The key of the object to generate a signed URL for.
-            bucket_name (str | None): The name of the bucket to generate a signed URL for.
-                If None, use the default bucket.
-
-        Returns:
-            str: A signed URL that can be used to download from the bucket and key.
-        """
-        url = self._get_s3_client().generate_presigned_url(
-            ClientMethod="get_object",
-            Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
-            ExpiresIn=self._settings.download_signed_url_expiration_seconds,
-        )
-        return cast("str", url)
 
     def upload(
         self,
@@ -213,175 +256,372 @@ class Service(BaseService):
 
         return results
 
-    def ls(self, detail: bool = False) -> list[str | dict[str, Any]]:
-        """List objects directly in the bucket (non-recursive).
-
-        Args:
-            detail (bool): If True, return detailed information including object type, else return only paths.
-
-        Returns:
-            list[Union[str, dict[str, Any]]]: List of objects directly in the bucket with optional detail.
-        """
-        s3c = self._get_s3_client()
-        response = s3c.list_objects_v2(Bucket=self._settings.name, Prefix="", Delimiter="/")
-
-        result: list[str | dict[str, Any]] = []
-        contents = response.get("Contents", [])
-        common_prefixes = response.get("CommonPrefixes", [])
-
-        if detail:
-            # Process directories (common prefixes)
-            for prefix in common_prefixes:
-                if prefix.get("Prefix") not in {None, ""}:
-                    prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
-                    result.append({
-                        "key": prefix_path,
-                        "size": 0,
-                        "last_modified": None,
-                        "etag": "",
-                        "storage_class": "",
-                        "type": "directory",
-                    })
-
-            # Process files
-            for item in contents:
-                if item.get("Key") not in {None, ""}:
-                    # Determine if this item is a "directory" (ends with /)
-                    item_key = item["Key"]
-                    item_type = "directory" if item_key.endswith("/") else "file"
-                    item_path = f"{self._settings.name}/{item_key}"
-
-                    result.append({
-                        "key": item_path,
-                        "size": item.get("Size", 0),
-                        "last_modified": item.get("LastModified"),
-                        "etag": item.get("ETag", "").strip('"'),
-                        "storage_class": item.get("StorageClass", ""),
-                        "type": item_type,
-                    })
-        else:
-            # Process directories (common prefixes) for non-detailed view
-            for prefix in common_prefixes:
-                if prefix.get("Prefix") not in {None, ""}:
-                    prefix_path = f"{self._settings.name}/{prefix['Prefix']}"
-                    result.append(prefix_path)
-
-            # Process files for non-detailed view
-            for item in contents:
-                if item.get("Key") not in {None, ""}:
-                    item_path = f"{self._settings.name}/{item['Key']}"
-                    result.append(item_path)
-
-        return result
-
     @staticmethod
-    def find_static(detail: bool = False) -> list[str | dict[str, Any]]:
+    def find_static(
+        what: list[str] | None = None,
+        what_is_key: bool = False,
+        detail: bool = False,
+        include_signed_urls: bool = False,
+    ) -> list[str | dict[str, Any]]:
         """List objects recursively in the bucket, static method version.
 
         Args:
+            what (list[str] | None): Patterns or keys to match object keys against - all if not specified.
+            what_is_key (bool): If True, treat the pattern as a key, else as a regex.
             detail (bool): If True, return detailed information including object type, else return only paths.
+            include_signed_urls (bool): If True, include signed download URLs in the results.
 
         Returns:
             list[Union[str, dict[str, Any]]]: List of objects in the bucket with optional detail.
-        """
-        return Service().find(detail=detail)
 
-    def find(self, detail: bool = False) -> list[str | dict[str, Any]]:  # noqa: C901
-        """List objects recursively in the bucket.
+        Raises:
+            ValueError: If the provided regex pattern is invalid.
+        """
+        return Service().find(what, what_is_key, detail, include_signed_urls)
+
+    def find(  # noqa: C901
+        self,
+        what: list[str] | None,
+        what_is_key: bool = False,
+        detail: bool = False,
+        include_signed_urls: bool = False,
+    ) -> list[str | dict[str, Any]]:
+        """List objects recursively in the bucket, with optional pattern matching.
 
         Args:
+            what (list[str] | None): Patterns or keys to match object keys against - all if not specified.
+            what_is_key (bool): If True, treat entries in what as exact keys, else as regex patterns.
             detail (bool): If True, return detailed information including object type, else return only paths.
+            include_signed_urls (bool): If True, include signed download URLs in the results.
 
         Returns:
             list[Union[str, dict[str, Any]]]: List of objects in the bucket with optional detail.
+
+        Raises:
+            ValueError: If any provided regex pattern is invalid.
         """
+        if not what:
+            what = [".*"]  # Default to match all objects if no patterns provided
+
+        # Normalize keys by removing bucket prefix if present (when treating as exact keys)
+        if what_is_key:
+            bucket_prefix = f"{self._settings.name}/"
+            what = [key.removeprefix(bucket_prefix) for key in what]
+
+        compiled_patterns: list[re.Pattern[str]] = []
+        if not what_is_key:
+            for pattern in what:
+                try:
+                    compiled_patterns.append(re.compile(pattern))
+                except re.error as e:
+                    msg = f"Invalid regex pattern '{pattern}': {e}"
+                    logger.warning(msg)
+                    raise ValueError(msg) from e
+
         s3c = self._get_s3_client()
         paginator = s3c.get_paginator("list_objects_v2")
         pages = paginator.paginate(Bucket=self._settings.name)
 
         result: list[str | dict[str, Any]] = []
+
         for page in pages:
             contents = page.get("Contents", [])
-            common_prefixes = page.get("CommonPrefixes", [])
 
-            if detail:
-                # Process directories (common prefixes)
-                for prefix in common_prefixes:
-                    if prefix.get("Prefix") not in {None, ""}:
-                        prefix_path = f"{prefix['Prefix']}"
-                        result.append({
-                            "key": prefix_path,
-                            "size": 0,
-                            "last_modified": None,
-                            "etag": "",
-                            "storage_class": "",
-                            "type": "directory",
-                        })
+            for item in contents:
+                item_key = item["Key"]
 
-                # Process files
-                for item in contents:
-                    if item.get("Key") not in {None, ""}:
-                        # Determine if this item is a "directory" (ends with /)
-                        item_key = item["Key"]
-                        item_type = "directory" if item_key.endswith("/") else "file"
-                        item_path = item_key
+                # Check if item matches criteria
+                matches = (
+                    item_key in what if what_is_key else any(pattern.match(item_key) for pattern in compiled_patterns)
+                )
+                if not matches:
+                    continue
 
-                        result.append({
-                            "key": item_path,
-                            "size": item.get("Size", 0),
-                            "last_modified": item.get("LastModified"),
-                            "etag": item.get("ETag", "").strip('"'),
-                            "storage_class": item.get("StorageClass", ""),
-                            "type": item_type,
-                        })
-            else:
-                # Process directories (common prefixes) for non-detailed view
-                for prefix in common_prefixes:
-                    if prefix.get("Prefix") not in {None, ""}:
-                        prefix_path = prefix["Prefix"]
-                        result.append(prefix_path)
-
-                # Process files for non-detailed view
-                for item in contents:
-                    if item.get("Key") not in {None, ""}:
-                        item_path = item["Key"]
-                        result.append(item_path)
+                if detail:
+                    size_bytes = item.get("Size", 0)
+                    item_data = {
+                        "key": item_key,
+                        "size": size_bytes,
+                        "size_human": humanize.naturalsize(size_bytes),
+                        "last_modified": item.get("LastModified"),
+                        "etag": item.get("ETag", "").strip('"'),
+                        "storage_class": item.get("StorageClass", ""),
+                    }
+                    if include_signed_urls:
+                        item_data["signed_download_url"] = self.create_signed_download_url(item_key)
+                    result.append(item_data)
+                elif include_signed_urls:
+                    result.append({
+                        "key": item_key,
+                        "signed_download_url": self.create_signed_download_url(item_key),
+                    })
+                else:
+                    result.append(item_key)
 
         return result
 
+    def create_signed_download_url(self, object_key: str, bucket_name: str | None = None) -> str:
+        """Generates a signed URL to download a Google Cloud Storage object.
+
+        Args:
+            object_key (str): The key of the object to generate a signed URL for.
+            bucket_name (str | None): The name of the bucket to generate a signed URL for.
+                If None, use the default bucket.
+
+        Returns:
+            str: A signed URL that can be used to download from the bucket and key.
+        """
+        url = self._get_s3_client().generate_presigned_url(
+            ClientMethod="get_object",
+            Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
+            ExpiresIn=self._settings.download_signed_url_expiration_seconds,
+        )
+        return cast("str", url)
+
     @staticmethod
-    def delete_objects_static(keys: list[str]) -> bool:
-        """Delete objects recursively in the bucket, static method version.
+    def _download_object(
+        object_key: str,
+        signed_url: str,
+        destination: Path,
+        etag: str | None = None,
+        progress_callback: Callable[[int], None] | None = None,
+    ) -> Path | None:
+        """Download a single file from the bucket with content-based caching.
 
         Args:
-            keys (list[str]): List of keys to delete.
+            object_key (str): The key of the object to download.
+            signed_url (str): The signed URL for downloading the object.
+            destination (Path): The directory where the file should be saved.
+            etag (str | None): The ETag of the object for cache validation.
+            progress_callback (Callable[[int], None] | None): Optional callback for download progress.
 
         Returns:
-            bool: True if successful, False otherwise.
+            Path | None: The path to the downloaded file if successful, None otherwise.
         """
-        return Service().delete_objects(keys)
+        filename = object_key.rsplit("/", 1)[-1]
+        output_path = destination / filename
 
-    def delete_objects(self, keys: list[str]) -> bool:
-        """Delete  objects.
+        # Check if we should download based on ETag comparison
+        if etag:
+            should_download = True
+            if output_path.exists():
+                try:
+                    # Calculate hash of existing file and compare with ETag
+                    hash_md5 = hashlib.md5()  # noqa: S324
+                    with open(output_path, "rb") as f:
+                        for chunk in iter(lambda: f.read(ETAG_CHUNK_SIZE), b""):
+                            hash_md5.update(chunk)
+                    file_hash = hash_md5.hexdigest()
+                    should_download = file_hash != etag
+                except OSError:
+                    # If we can't read the file, download it
+                    should_download = True
+
+            if not should_download:
+                logger.debug("File %s is up to date (ETag: %s), skipping download", output_path, etag)
+                return output_path
+
+        try:
+            response = requests.get(signed_url, stream=True, timeout=60)
+            response.raise_for_status()
+
+            with open(output_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=DOWNLOAD_CHUNK_SIZE):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+                        if progress_callback:
+                            progress_callback(len(chunk))
+
+            logger.info("Successfully downloaded object with key '%s' to '%s'", object_key, output_path)
+            return output_path
+
+        except requests.RequestException:
+            logger.exception("Failed to download %s", object_key)
+            return None
+
+    @staticmethod
+    def download_static(
+        what: list[str] | None = None,
+        destination: Path = get_user_data_directory("bucket_downloads"),  # noqa: B008
+        what_is_key: bool = False,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
+    ) -> DownloadResult:
+        """Download files matching a pattern from the bucket, static method version.
 
         Args:
-            keys (list[str]): List of keys to delete.
+            what (list[str] | None): Patterns or keys to match object keys against - all if not specified.
+            what_is_key (bool): If True, treat the pattern as a key, else as a regex.
+            destination (Path): Destination directory for downloaded files.
+            progress_callback (Callable[[DownloadProgress], None] | None): Optional callback for download progress.
 
         Returns:
-            bool: True if successful, False otherwise.
+            DownloadResult: Result containing lists of successfully downloaded and failed objects.
+
+        Raises:
+            ValueError: If any provided regex pattern is invalid.
         """
-        s3c = self._get_s3_client()
-        for key in keys:
-            logger.debug("Deleting key: %s", key)
-            # Strip bucket prefix if present in key
-            pruned_key = key.removeprefix(f"{self._settings.name}/")
+        return Service().download(what, destination, what_is_key, progress_callback)
+
+    def download(
+        self,
+        what: list[str] | None = None,
+        destination: Path = get_user_data_directory("bucket_downloads"),  # noqa: B008
+        what_is_key: bool = False,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
+    ) -> DownloadResult:
+        """Download files matching a pattern from the bucket.
+
+        Args:
+            what (list[str] | None): Patterns or keys to match object keys against - all if not specified.
+            what_is_key (bool): If True, treat the pattern as a key, else as a regex.
+            destination (Path): Destination directory for downloaded files.
+            progress_callback (Callable[[DownloadProgress], None] | None): Optional callback for download progress.
+
+        Returns:
+            DownloadResult: Result containing lists of successfully downloaded and failed objects.
+
+        Raises:
+            ValueError: If any provided regex pattern is invalid.
+        """
+        destination.mkdir(parents=True, exist_ok=True)
+
+        matched_objects = self.find(what, what_is_key, detail=True, include_signed_urls=True)
+
+        if not matched_objects:
+            return DownloadResult(downloaded=[], failed=[])
+
+        logger.debug(
+            "Found %d objects matching '%s' in bucket, downloading to '%s'...",
+            len(matched_objects),
+            what,
+            destination,
+        )
+
+        progress = DownloadProgress(
+            overall_total=len(matched_objects),
+            overall_downloaded=0,
+            overall_failed=0,
+            current_file_key="",
+            current_file_downloaded=0,
+            current_file_size=0,
+        )
+
+        successful_downloads: list[Path] = []
+        failed_downloads: list[str] = []
+
+        for obj in matched_objects:
+            obj_dict = cast("dict[str, str]", obj)
+            object_key = obj_dict["key"]
+            signed_url = obj_dict["signed_download_url"]
+
+            progress = progress.model_copy(
+                update={
+                    "current_file_key": object_key,
+                    "current_file_downloaded": 0,
+                }
+            )
+
             try:
-                s3c.delete_object(Bucket=self._settings.name, Key=pruned_key)
+                head_response = requests.head(signed_url, timeout=30)
+                head_response.raise_for_status()
+                file_size = int(head_response.headers.get("content-length", 0))
+            except requests.RequestException:
+                file_size = 0
+
+            progress = progress.model_copy(update={"current_file_size": file_size})
+
+            if progress_callback:
+                progress_callback(progress)
+
+            def file_progress_callback(bytes_downloaded: int) -> None:
+                nonlocal progress
+                progress = progress.model_copy(
+                    update={"current_file_downloaded": progress.current_file_downloaded + bytes_downloaded}
+                )
+                if progress_callback:
+                    progress_callback(progress)
+
+            result_path = self._download_object(
+                object_key, signed_url, destination, obj_dict.get("etag"), file_progress_callback
+            )
+
+            if result_path:
+                successful_downloads.append(result_path)
+                progress = progress.model_copy(update={"overall_downloaded": progress.overall_downloaded + 1})
+            else:
+                failed_downloads.append(object_key)
+                progress = progress.model_copy(update={"overall_failed": progress.overall_failed + 1})
+
+            progress = progress.model_copy(
+                update={
+                    "current_file_key": "",
+                    "current_file_downloaded": 0,
+                    "current_file_size": 0,
+                }
+            )
+
+            if progress_callback:
+                progress_callback(progress)
+
+        return DownloadResult(
+            downloaded=successful_downloads,
+            failed=failed_downloads,
+        )
+
+    @staticmethod
+    def delete_static(what: list[str] | None, what_is_key: bool = False, dry_run: bool = True) -> int:
+        """Delete objects, static variant.
+
+        Args:
+            what (list[str] | None): Patterns or keys to match object keys against - all if not specified.
+            what_is_key (bool): If True, treat the entries as exact keys, else as regex patterns.
+            dry_run (bool): If True, perform a dry run without actual deletion.
+
+        Returns:
+            int: Number of objects deleted.
+
+        Raises:
+            ValueError: If any provided regex pattern is invalid.
+        """
+        return Service().delete(what, what_is_key, dry_run)
+
+    def delete(self, what: list[str] | None, what_is_key: bool = False, dry_run: bool = True) -> int:
+        """Delete objects.
+
+        Args:
+            what (list[str] | None): Patterns or keys to match object keys against - all if not specified.
+            what_is_key (bool): If True, treat the entries as exact keys, else as regex patterns.
+            dry_run (bool): If True, perform a dry run without actual deletion.
+
+        Returns:
+            int: Number of objects deleted.
+
+        Raises:
+            ValueError: If any provided regex pattern is invalid.
+        """
+        matched_objects = self.find(what, what_is_key=what_is_key, detail=False)
+        keys_to_delete = [obj for obj in matched_objects if isinstance(obj, str)]
+
+        if not keys_to_delete:
+            logger.warning("No objects found to delete")
+            return 0
+
+        if dry_run:
+            logger.info("Would delete %d objects", len(keys_to_delete))
+            return len(keys_to_delete)
+
+        s3c = self._get_s3_client()
+        deleted_count = 0
+        for key in keys_to_delete:
+            logger.debug("Deleting key: %s", key)
+            try:
+                s3c.delete_object(Bucket=self._settings.name, Key=key)
+                deleted_count += 1
             except ClientError as e:
                 if e.response["Error"]["Code"] == "NoSuchKey":
                     logger.warning("Object with key '%s' not found", key)
-                    return False
-                logger.exception("Error deleting object with key '%s'", key)
-                return False
-        logger.info("Deleted %d objects", len(keys))
-        return True
+                else:
+                    logger.exception("Error deleting object with key '%s'", key)
+
+        logger.info("Deleted %d objects", deleted_count)
+        return deleted_count

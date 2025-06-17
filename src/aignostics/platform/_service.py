@@ -145,7 +145,7 @@ class Service(BaseService):
         user_info = self.get_user_info(relogin=mask_secrets)
         return {
             "settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets}),
-            "userinfo": user_info.model_dump() if user_info else None,
+            "userinfo": user_info.model_dump(mode="json") if user_info else None,
         }
 
     def _determine_api_public_health(self) -> Health:

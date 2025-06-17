@@ -180,9 +180,12 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         key = jwk_client.get_signing_key_from_jwt(token).key
 
         # Verify and decode the token using the public key
+        # Reg. verify_iat see https://github.com/jpadilla/pyjwt/issues/814, https://github.com/aignostics/python-sdk/actions/runs/15687051813/job/44192774617
         decoded = t.cast(
             "dict[str, str]",
-            jwt.decode(token, key=key, algorithms=["RS256"], audience=settings().audience),
+            jwt.decode(
+                token, key=key, algorithms=["RS256"], audience=settings().audience, options={"verify_iat": False}
+            ),
         )
         if "iss" in decoded and decoded["iss"] != settings().issuer:
             message = f"Token issuer mismatch: expected {settings().issuer}, got {decoded['iss']}"

@@ -12,6 +12,7 @@ from typer.testing import CliRunner
 
 from aignostics.cli import cli
 from aignostics.utils import gui_register_pages
+from tests.conftest import assert_notified
 
 
 async def test_gui_bucket_shows(user: User) -> None:
@@ -21,7 +22,7 @@ async def test_gui_bucket_shows(user: User) -> None:
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
 
-async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:
+async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:  # noqa: PLR0915
     """E2E flow testing all bucket CLI commands.
 
     1. Creates 1 file in a subdir of size 100kb
@@ -64,11 +65,20 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
         f"File path '{test_prefix}/dir1/file.txt' not found in grid data: {row_data}"
     )
 
-    # Step 5: Delete the files using GUI
+    # Step 5: Download the files using GUI
+    await user.should_see(marker="BUTTON_DOWNLOAD_OBJECTS")
+    download_button = user.find(marker="BUTTON_DOWNLOAD_OBJECTS")
+    download_button_item = download_button.elements.pop()
+    assert not download_button_item.enabled
+
     await user.should_see(marker="BUTTON_DELETE_OBJECTS")
     delete_button = user.find(marker="BUTTON_DELETE_OBJECTS")
     delete_button_item = delete_button.elements.pop()
     assert not delete_button_item.enabled
+
+    download_button_item.enable()
+    assert download_button_item.enabled
+
     delete_button_item.enable()
     assert delete_button_item.enabled
 
@@ -81,10 +91,20 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     grid_item.get_selected_rows = mocked_get_selected_rows
 
     # Click the delete button to trigger the deletion
+    await user.should_see(marker="BUTTON_DOWNLOAD_OBJECTS")
+    user.find(marker="BUTTON_DOWNLOAD_OBJECTS").click()
+
+    await assert_notified(user, "Downloaded 1 objects.")
+
+    # Step 6: Delete the files using GUI
+    assert grid_item.get_selected_rows is not None
+    grid_item.get_selected_rows = mocked_get_selected_rows
+
+    # Click the delete button to trigger the deletion
     await user.should_see(marker="BUTTON_DELETE_OBJECTS")
     user.find(marker="BUTTON_DELETE_OBJECTS").click()
 
-    # Step 6: Verify file is no longer there
+    # Step 7: Verify file is no longer there
     found = True
     for _ in range(10):
         result = runner.invoke(cli, ["bucket", "find"])
