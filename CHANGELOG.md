@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.61..0.2.62) - 2025-06-16
+(https://github.com/aignostics/python-sdk/compare/v0.2.61..v0.2.62) - 2025-06-16
 
 
 - Lint - ([6408db4](https://github.com/aignostics/python-sdk/commit/6408db45e3308fc0a996bbf5ded88b73e461acaf))
