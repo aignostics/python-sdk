@@ -123,7 +123,7 @@ class PageBuilder(BasePageBuilder):
                         )
                     else:
                         download_form.destination = path
-                        download_form.destination_label.set_text(str(path))
+                        download_form.destination_label.set_text(str(download_form.destination))
                         download_form.destination_open_button.enable()
                         ui.notify(f"You chose directory {download_form.destination}.", type="info")
                 else:

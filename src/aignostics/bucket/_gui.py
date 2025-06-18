@@ -4,11 +4,15 @@ from multiprocessing import Manager
 from pathlib import Path
 
 import humanize
+from showinfm.showinfm import show_in_file_manager
 
 from aignostics.gui import frame
+from aignostics.utils import get_user_data_directory
 
-from ..utils import BasePageBuilder  # noqa: TID252
+from ..utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
 from ._service import DownloadProgress, Service
+
+MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
 
 class PageBuilder(BasePageBuilder):
@@ -27,6 +31,9 @@ class PageBuilder(BasePageBuilder):
             grid: ui.aggrid | None = None
             delete_button: ui.button | None = None
             download_button: ui.button | None = None
+            destination: Path | None = None
+            destination_label: ui.label | None = None
+            destination_open_button: ui.button | None = None
             spinner: ui.spinner | None = None
             download_progress_card: ui.card | None = None
             overall_progress: ui.linear_progress | None = None
@@ -122,9 +129,14 @@ class PageBuilder(BasePageBuilder):
                 # Validation
                 if bucket_form.grid is None or bucket_form.download_button is None:
                     return
+
                 selected_rows = await bucket_form.grid.get_selected_rows()
                 if not selected_rows:
                     ui.notify("No objects selected.", type="warning")
+                    return
+
+                if not bucket_form.destination:
+                    ui.notify("No destination selected.", type="warning")
                     return
 
                 # Setup UI for download
@@ -150,7 +162,8 @@ class PageBuilder(BasePageBuilder):
                 try:
                     result = await run.io_bound(
                         Service().download,
-                        [row["key"] for row in selected_rows],
+                        what=[row["key"] for row in selected_rows],
+                        destination=bucket_form.destination,
                         what_is_key=True,
                         progress_callback=progress_callback,
                     )
@@ -209,27 +222,23 @@ class PageBuilder(BasePageBuilder):
                         )
                         bucket_form.file_progress_label.set_text(file_text)
 
-            async def _handle_grid_selection_changed() -> None:
-                if bucket_form.grid is None or bucket_form.delete_button is None or bucket_form.download_button is None:
-                    return
-                rows = await bucket_form.grid.get_selected_rows()
-                if rows:
-                    bucket_form.delete_button.set_text(f"Delete {len(rows)} objects")
-                    bucket_form.delete_button.enable()
-                    bucket_form.download_button.set_text(f"Download {len(rows)} objects")
-                    bucket_form.download_button.enable()
-                else:
-                    bucket_form.delete_button.set_text("Delete")
-                    bucket_form.delete_button.disable()
-                    bucket_form.download_button.set_text("Download")
-                    bucket_form.download_button.disable()
-
             async def _update_button_states() -> None:
                 """Update button states based on grid selection."""
-                if not bucket_form.grid or not bucket_form.delete_button or not bucket_form.download_button:
+                if (
+                    not bucket_form.grid
+                    or not bucket_form.delete_button
+                    or not bucket_form.download_button
+                    or not bucket_form.destination_open_button
+                ):
                     return
+
+                if bucket_form.destination:
+                    bucket_form.destination_open_button.enable()
+                else:
+                    bucket_form.destination_open_button.disable()
+
                 selected_rows = await bucket_form.grid.get_selected_rows()
-                if selected_rows:
+                if selected_rows and bucket_form.destination:
                     bucket_form.delete_button.enable()
                     bucket_form.delete_button.set_text(f"Delete {len(selected_rows)} objects")
                     bucket_form.download_button.enable()
@@ -277,8 +286,56 @@ class PageBuilder(BasePageBuilder):
                 .classes("full-width")
                 .style("height: 310px")
                 .mark("GRID_BUCKET")
-                .on("selectionChanged", _handle_grid_selection_changed)
+                .on("selectionChanged", _update_button_states)
             )
+
+            async def _select_data() -> None:
+                """Open a file picker dialog and show notifier when closed again."""
+                if (
+                    bucket_form.destination_label is None
+                    or bucket_form.destination_open_button is None
+                    or bucket_form.download_button is None
+                ):
+                    return
+
+                bucket_form.destination = get_user_data_directory("datasets/idc")
+                bucket_form.destination_label.set_text(f"Download to {bucket_form.destination!s}")
+                await _update_button_states()
+
+            async def _select_destination() -> None:
+                """Open a file picker dialog and show notifier when closed again."""
+                if (
+                    bucket_form.destination_label is None
+                    or bucket_form.destination_open_button is None
+                    or bucket_form.download_button is None
+                ):
+                    return
+
+                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore
+                if result and len(result) > 0:
+                    path = Path(result[0])
+                    if not path.is_dir():
+                        bucket_form.destination = None
+                        bucket_form.destination_label.set_text(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
+                        bucket_form.destination_open_button.disable()
+                        ui.notify(
+                            "The selected path is not a directory. Please select a valid directory.", type="warning"
+                        )
+                    else:
+                        bucket_form.destination = path
+                        bucket_form.destination_label.set_text(f"Download to {bucket_form.destination!s}")
+                        bucket_form.destination_open_button.enable()
+                        ui.notify(f"You chose directory {bucket_form.destination}.", type="info")
+                else:
+                    bucket_form.destination = None
+                    bucket_form.destination_label.set_text(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
+                    bucket_form.destination_open_button.disable()
+                    ui.notify("You did not make a selection. You must choose a download folder.", type="warning")
+                await _update_button_states()
+
+            def _open_destination() -> None:
+                """Open the destination directory in the file explorer."""
+                show_in_file_manager(str(bucket_form.destination))
 
             with ui.row().classes("w-full gap-4"):
                 bucket_form.download_button = (
@@ -293,6 +350,17 @@ class PageBuilder(BasePageBuilder):
                 )
                 bucket_form.download_button.disable()
 
+                with ui.button("Data", on_click=_select_data, icon="folder_special", color="purple-400").mark(
+                    "BUTTON_DOWNLOAD_DESTINATION_DATA"
+                ):
+                    ui.tooltip("Use Launchpad datasets directory")
+
+                with ui.button("Custom", on_click=_select_destination, icon="folder").mark(
+                    "BUTTON_DOWNLOAD_DESTINATION"
+                ):
+                    ui.tooltip("Select a custom directory")
+
+                ui.space()
                 bucket_form.delete_button = (
                     ui.button(
                         "Delete",
@@ -304,6 +372,18 @@ class PageBuilder(BasePageBuilder):
                     .classes("w-1/5")
                 )
                 bucket_form.delete_button.disable()
+
+            with ui.row(align_items="center").classes("w-2/5"):
+                ui.space()
+                bucket_form.destination_label = ui.label(
+                    MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED
+                    if bucket_form.destination is None
+                    else str(f"Download to {bucket_form.destination}")
+                ).classes("max-w-72")
+                bucket_form.destination_open_button = ui.button(
+                    icon="folder_open", on_click=_open_destination, color="secondary"
+                )
+                bucket_form.destination_open_button.mark("BUTTON_OPEN_DESTINATION").disable()
 
             # Progress card for downloads (initially hidden)
             with ui.card().classes("w-full") as progress_card:
@@ -317,6 +397,8 @@ class PageBuilder(BasePageBuilder):
                 bucket_form.file_progress = ui.linear_progress(value=0, show_value=False).classes("w-full")
 
             bucket_form.download_progress_card.set_visibility(False)
+
+            await _select_data()
 
             ui.timer(
                 interval=1,
