@@ -137,6 +137,8 @@ def find(
         result = Service().find(what, what_is_key, detail, signed_urls)
         console.print_json(json=json.dumps(result, default=str))
     except ValueError as e:
+        msg = f"Failed to find objects matching {what or 'all'}: {e!s}"
+        logger.exception(msg)
         console.print(f"[red]Error:[/red] {e}")
         sys.exit(2)
 
@@ -166,11 +168,7 @@ def download(
         ),
     ] = get_user_data_directory("bucket_downloads"),  # noqa: B008
 ) -> None:
-    """Download objects from bucket in Aignostics platform to local directory.
-
-    Raises:
-        typer.Exit: If pattern is invalid regex or no objects found.
-    """
+    """Download objects from bucket in Aignostics platform to local directory."""
     service = Service()
 
     try:
@@ -179,8 +177,10 @@ def download(
             console.print(f"[warning]No objects found matching {what or 'all'}[/warning]")
             return
     except ValueError as e:
+        msg = f"Failed to find objects matching {what or 'all'} on download to {destination}: {e!s}"
+        logger.exception(msg)
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1) from e
+        sys.exit(2)
 
     from rich.console import Group  # noqa: PLC0415
     from rich.live import Live  # noqa: PLC0415
@@ -247,8 +247,14 @@ def download(
             file_progress.remove_task(current_file_task)
             current_file_task = None
 
-    with Live(progress_group, console=console, refresh_per_second=10):
-        result = service.download(what, destination, what_is_key, progress_callback)
+    try:
+        with Live(progress_group, console=console, refresh_per_second=10, transient=True):
+            result = service.download(what, destination, what_is_key, progress_callback)
+    except ValueError as e:
+        msg = f"Failed to download objects matching {what or 'all'} to {destination}: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e!s}")
+        sys.exit(2)
 
     for downloaded_path in result.downloaded:
         console.print(f"[green]✓[/green] Downloaded: {downloaded_path.name}")
@@ -290,6 +296,8 @@ def delete(
         else:
             console.print(f"[yellow]⚠[/yellow] No objects found matching pattern {what}")
     except ValueError as e:
+        msg = f"Failed to delete objects matching {what}: {e!s}"
+        logger.exception(msg)
         console.print(f"[red]Error:[/red] {e}")
         sys.exit(2)
 
@@ -302,9 +310,15 @@ def purge(
     ] = True,
 ) -> None:
     """Purge all objects in bucket on Aignostics Platform."""
-    deleted_count = Service().delete(what=None, what_is_key=False, dry_run=dry_run)
-    if deleted_count > 0:
-        action = "Would purge bucket by deleting" if dry_run else "Purged bucket by deleting"
-        console.print(f"[green]✓[/green] {action} {deleted_count} object(s)")
-    else:
-        console.print("[yellow]⚠[/yellow] No objects found to purge.")
+    try:
+        deleted_count = Service().delete(what=None, what_is_key=False, dry_run=dry_run)
+        if deleted_count > 0:
+            action = "Would purge bucket by deleting" if dry_run else "Purged bucket by deleting"
+            console.print(f"[green]✓[/green] {action} {deleted_count} object(s)")
+        else:
+            console.print("[yellow]⚠[/yellow] No objects found to purge.")
+    except ValueError as e:
+        msg = f"Failed to purge bucket: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(2)

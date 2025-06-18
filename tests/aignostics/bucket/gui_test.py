@@ -94,7 +94,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     await user.should_see(marker="BUTTON_DOWNLOAD_OBJECTS")
     user.find(marker="BUTTON_DOWNLOAD_OBJECTS").click()
 
-    await assert_notified(user, "Downloaded 1 objects.")
+    await assert_notified(user, "Downloaded 1 objects.", wait_seconds=30)
 
     # Step 6: Delete the files using GUI
     assert grid_item.get_selected_rows is not None

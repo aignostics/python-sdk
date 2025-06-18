@@ -16,15 +16,15 @@ from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_log
 
 from ._settings import Settings
 
+BUCKET_PROTOCOL = "gs"
+SIGNATURE_VERSION = "s3v4"
+ENDPOINT_URL_DEFAULT = "https://storage.googleapis.com"
+
 UPLOAD_CHUNK_SIZE = 1024 * 1024
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024 * 10
 ETAG_CHUNK_SIZE = 1024 * 1024 * 100
 
 logger = get_logger(__name__)
-
-BUCKET_PROTOCOL = "gs"
-SIGNATURE_VERSION = "s3v4"
-ENDPOINT_URL_DEFAULT = "https://storage.googleapis.com"
 
 
 class DownloadProgress(BaseModel):
@@ -165,7 +165,7 @@ class Service(BaseService):
         )
         return cast("str", url)
 
-    def upload_file(
+    def _upload_file(
         self, source_path: Path, object_key: str, callback: Callable[[int, Path], None] | None = None
     ) -> bool:
         """Upload a file to the bucket using a signed URL.
@@ -236,7 +236,7 @@ class Service(BaseService):
 
         if source_path.is_file():
             object_key = f"{destination_prefix}/{source_path.name}"
-            if self.upload_file(source_path, object_key, callback):
+            if self._upload_file(source_path, object_key, callback):
                 results["success"].append(object_key)
             else:
                 results["failed"].append(object_key)
@@ -247,7 +247,7 @@ class Service(BaseService):
                     rel_path = file_path.relative_to(source_path).as_posix()
                     object_key = f"{destination_prefix}/{rel_path}"
 
-                    if self.upload_file(file_path, object_key, callback):
+                    if self._upload_file(file_path, object_key, callback):
                         results["success"].append(object_key)
                     else:
                         results["failed"].append(object_key)
@@ -379,7 +379,7 @@ class Service(BaseService):
         return cast("str", url)
 
     @staticmethod
-    def _download_object(
+    def _download_object_from_signed_url(
         object_key: str,
         signed_url: str,
         destination: Path,
@@ -541,7 +541,7 @@ class Service(BaseService):
                 if progress_callback:
                     progress_callback(progress)
 
-            result_path = self._download_object(
+            result_path = self._download_object_from_signed_url(
                 object_key, signed_url, destination, obj_dict.get("etag"), file_progress_callback
             )
 
@@ -600,28 +600,28 @@ class Service(BaseService):
             ValueError: If any provided regex pattern is invalid.
         """
         matched_objects = self.find(what, what_is_key=what_is_key, detail=False)
-        keys_to_delete = [obj for obj in matched_objects if isinstance(obj, str)]
+        object_keys_to_delete = [obj for obj in matched_objects if isinstance(obj, str)]
 
-        if not keys_to_delete:
+        if not object_keys_to_delete:
             logger.warning("No objects found to delete")
             return 0
 
         if dry_run:
-            logger.info("Would delete %d objects", len(keys_to_delete))
-            return len(keys_to_delete)
+            logger.info("Would delete %d objects", len(object_keys_to_delete))
+            return len(object_keys_to_delete)
 
         s3c = self._get_s3_client()
         deleted_count = 0
-        for key in keys_to_delete:
-            logger.debug("Deleting key: %s", key)
+        for object_key in object_keys_to_delete:
+            logger.debug("Deleting object with key: %s", object_key)
             try:
-                s3c.delete_object(Bucket=self._settings.name, Key=key)
+                s3c.delete_object(Bucket=self._settings.name, Key=object_key)
                 deleted_count += 1
             except ClientError as e:
                 if e.response["Error"]["Code"] == "NoSuchKey":
-                    logger.warning("Object with key '%s' not found", key)
+                    logger.warning("Object with key '%s' not found", object_key)
                 else:
-                    logger.exception("Error deleting object with key '%s'", key)
+                    logger.exception("Error deleting object with key '%s'", object_key)
 
         logger.info("Deleted %d objects", deleted_count)
         return deleted_count
