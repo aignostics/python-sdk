@@ -1,5 +1,11 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+(https://github.com/aignostics/python-sdk/compare/v0.2.63..0.2.64) - 2025-06-18
+
+
+- *(bucket)* Allow to select destination in bucket download gui - ([44a6611](https://github.com/aignostics/python-sdk/commit/44a66119bdab63d389f7b4d489e8b0e2a4222977))
+
+
 (https://github.com/aignostics/python-sdk/compare/v0.2.61..v0.2.62) - 2025-06-16
 
 
