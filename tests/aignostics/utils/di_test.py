@@ -3,6 +3,7 @@
 import sys
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 import typer
 
 from aignostics.utils._cli import (
@@ -44,7 +45,8 @@ def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: M
 
     # Verify
     assert cli.info.epilog == TEST_EPILOG
-    assert cli.info.no_args_is_help is True
+    # TODO(Helmut): Reactivate when typer bug fixed
+    # assert cli.info.no_args_is_help is True
 
 
 @patch("aignostics.utils._cli.Path")
@@ -151,6 +153,7 @@ def test_no_args_is_help_recursively_sets_no_args_is_help_on_groups() -> None:
     mock_group.no_args_is_help = True
 
 
+@pytest.mark.skip(reason="https://github.com/fastapi/typer/pull/1240")
 def test_no_args_is_help_recursively_calls_itself_on_nested_typers() -> None:
     """Test that _no_args_is_help_recursively calls itself on nested typer instances."""
     # Setup
