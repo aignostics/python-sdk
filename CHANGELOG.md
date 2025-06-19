@@ -1,6 +1,12 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.66..0.2.67) - 2025-06-19
+(https://github.com/aignostics/python-sdk/compare/v0.2.67..0.2.68) - 2025-06-19
+
+
+- *(di)* Adapt to typer workaround - ([a5a50bc](https://github.com/aignostics/python-sdk/commit/a5a50bc3c38ff7de3b7fedd6ddeb8664b7fde17b))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.66..v0.2.67) - 2025-06-19
 
 
 - *(cli)* Adapt tests - ([69a3803](https://github.com/aignostics/python-sdk/commit/69a38030b2a413f09e981844d4c67c21fc3ec1a4))
