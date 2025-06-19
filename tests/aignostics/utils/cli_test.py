@@ -28,6 +28,15 @@ class MockTyper:
     def add_typer(self, cli: "MockTyper") -> None:
         """Mock method to add a typer instance."""
 
+    def callback(self, *, invoke_without_command: bool = False) -> "callable":  # noqa: PLR6301
+        """Mock callback method that returns a decorator function."""
+
+        def decorator(func: "callable") -> "callable":
+            """Decorator function that just returns the original function."""
+            return func
+
+        return decorator
+
 
 class MockCommand:
     """Mock Command class for testing."""
@@ -87,6 +96,7 @@ def test_prepare_cli_sets_epilog(mock_typer: MockTyper) -> None:
         assert mock_typer.info.epilog == TEST_EPILOG
 
 
+@pytest.mark.skip(reason="https://github.com/fastapi/typer/pull/1240")
 def test_prepare_cli_sets_no_args_is_help(mock_typer: MockTyper) -> None:
     """Test that prepare_cli correctly sets no_args_is_help."""
     with patch(LOCATE_IMPLEMENTATIONS_PATH, return_value=[]):
