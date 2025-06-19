@@ -1,11 +1,5 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.64..0.2.65) - 2025-06-19
-
-
-- *(deps)* Bump urllib3 given CVEs CVE-2025-50181 and CVE-2025-50182 - ([f395d9a](https://github.com/aignostics/python-sdk/commit/f395d9a8f9a6a38fd7d5da9c52542a97bc36274b))
-
-
 (https://github.com/aignostics/python-sdk/compare/v0.2.63..v0.2.64) - 2025-06-18
 
 
