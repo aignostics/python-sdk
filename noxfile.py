@@ -82,8 +82,12 @@ def audit(session: nox.Session) -> None:
     _setup_venv(session)
 
     # pip-audit to check for vulnerabilities
-    session.run("pip-audit", "-f", "json", "-o", "reports/vulnerabilities.json")
-    _format_json_with_jq(session, "reports/vulnerabilities.json")
+    try:
+        session.run("pip-audit", "-f", "json", "-o", "reports/vulnerabilities.json")
+    except CommandFailed:
+        _format_json_with_jq(session, "reports/vulnerabilities.json")
+        session.log("pip-audit failed with JSON output, retrying with default format")
+        session.run("pip-audit")
 
     # pip-licenses to check for compliance
     pip_licenses_base_args = [

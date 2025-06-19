@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "0.2.64"
+version = "0.2.65"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -75,7 +75,7 @@ requires-python = ">=3.11, <4.0"
 dependencies = [
     # From Template
     "fastapi[standard,all]>=0.115.13",
-    "logfire[system-metrics]>=3.21.0",
+    "logfire[system-metrics]>=3.21.1",
     "nicegui[native]>=2.20.0",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
@@ -94,11 +94,11 @@ dependencies = [
     # Custom
     "appdirs>=1.4.4",
     "auth0-python>=4.10.0",
-    "boto3>=1.38.38",
+    "boto3>=1.38.39",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "duckdb>=0.10.0,<=1.4.0",
-    "google-cloud-storage>=2.12.0",
+    "google-cloud-storage>=3.1.1",
     "google-crc32c>=1.7.1",
     "highdicom>=0.25.1",
     "httpx>=0.28.1",
@@ -124,7 +124,7 @@ dependencies = [
     "shapely>=2.1.1",
     "show-in-file-manager>=1.1.5",
     "tqdm>=4.67.1",
-    "urllib3>=2.2.3",
+    "urllib3>=2.5.0",
     "wsidicom>=0.27.1",
 ]
 
@@ -132,7 +132,7 @@ dependencies = [
 jupyter = ["jupyter>=1.1.1"]
 marimo = [
     "cloudpathlib>=0.21.1",
-    "marimo>=0.13.15",
+    "marimo>=0.14.0",
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
@@ -153,10 +153,10 @@ dev = [
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
     "pyinstaller>=6.14.0",
-    "pyright>=1.1.401",
-    "pytest>=8.4.0",
+    "pyright>=1.1.402",
+    "pytest>=8.4.1",
     "pytest-asyncio>=1.0.0",
-    "pytest-cov>=6.1.1",
+    "pytest-cov>=6.2.1",
     "pytest-docker>=3.2.2",
     "pytest-env>=1.1.5",
     "pytest-md-report>=0.7.0",
@@ -167,7 +167,7 @@ dev = [
     "pytest-timeout>=2.4.0",
     "pytest-watcher>=0.4.3",
     "pytest-xdist[psutil]>=3.7.0",
-    "ruff>=0.11.12",
+    "ruff>=0.12.0",
     "scalene>=1.5.51",
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2024.10.3",
@@ -182,7 +182,7 @@ dev = [
     "swagger-plugin-for-sphinx>=5.1.0",
     "tomli>=2.1.0",
     "types-pyyaml>=6.0.12.20250516",
-    "types-requests>=2.32.0.20250602",
+    "types-requests>=2.32.4.20250611",
     "watchdog>=6.0.0",
 ]
 
@@ -215,6 +215,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "h11>=0.16.0",                      # CVE-2025-43859
     "tornado>=6.5.0",                   # CVE-2025-47287
     "jupyter-core>=5.8.1",              # CVE-2025-30167
+    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182
 ]
 
 [tool.ruff]
@@ -352,7 +353,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "0.2.64"
+current_version = "0.2.65"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"

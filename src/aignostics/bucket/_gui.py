@@ -299,7 +299,7 @@ class PageBuilder(BasePageBuilder):
                     return
 
                 bucket_form.destination = get_user_data_directory("datasets/idc")
-                bucket_form.destination_label.set_text(f"Download to {bucket_form.destination!s}")
+                bucket_form.destination_label.set_text(f"Will download to {bucket_form.destination!s}")
                 await _update_button_states()
 
             async def _select_destination() -> None:
@@ -323,7 +323,7 @@ class PageBuilder(BasePageBuilder):
                         )
                     else:
                         bucket_form.destination = path
-                        bucket_form.destination_label.set_text(f"Download to {bucket_form.destination!s}")
+                        bucket_form.destination_label.set_text(f"Will download to {bucket_form.destination!s}")
                         bucket_form.destination_open_button.enable()
                         ui.notify(f"You chose directory {bucket_form.destination}.", type="info")
                 else:
@@ -338,29 +338,44 @@ class PageBuilder(BasePageBuilder):
                 show_in_file_manager(str(bucket_form.destination))
 
             with ui.row().classes("w-full gap-4"):
-                bucket_form.download_button = (
-                    ui.button(
-                        "Download",
-                        icon="download",
-                        on_click=_download_selected,
-                    )
-                    .mark("BUTTON_DOWNLOAD_OBJECTS")
-                    .props("color=primary")
-                    .classes("w-1/5")
-                )
-                bucket_form.download_button.disable()
+                with ui.column().classes("w-1/2"):
+                    with ui.row().classes("w-full"):
+                        bucket_form.download_button = (
+                            ui.button(
+                                "Download",
+                                icon="download",
+                                on_click=_download_selected,
+                            )
+                            .mark("BUTTON_DOWNLOAD_OBJECTS")
+                            .props("color=primary")
+                        )
+                        bucket_form.download_button.disable()
 
-                with ui.button("Data", on_click=_select_data, icon="folder_special", color="purple-400").mark(
-                    "BUTTON_DOWNLOAD_DESTINATION_DATA"
-                ):
-                    ui.tooltip("Use Launchpad datasets directory")
+                        ui.space()
 
-                with ui.button("Custom", on_click=_select_destination, icon="folder").mark(
-                    "BUTTON_DOWNLOAD_DESTINATION"
-                ):
-                    ui.tooltip("Select a custom directory")
+                        with ui.button("Data", on_click=_select_data, icon="folder_special", color="purple-400").mark(
+                            "BUTTON_DOWNLOAD_DESTINATION_DATA"
+                        ):
+                            ui.tooltip("Use Launchpad datasets directory")
+
+                        with ui.button("Custom", on_click=_select_destination, icon="folder").mark(
+                            "BUTTON_DOWNLOAD_DESTINATION"
+                        ):
+                            ui.tooltip("Select a custom directory")
+                    with ui.row(align_items="center").classes("w-full"):
+                        bucket_form.destination_label = ui.label(
+                            MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED
+                            if bucket_form.destination is None
+                            else str(f"Will download to {bucket_form.destination}")
+                        )
+                        ui.space()
+                        bucket_form.destination_open_button = ui.button(
+                            icon="folder_open", on_click=_open_destination, color="secondary"
+                        )
+                        bucket_form.destination_open_button.mark("BUTTON_OPEN_DESTINATION").disable()
 
                 ui.space()
+
                 bucket_form.delete_button = (
                     ui.button(
                         "Delete",
@@ -372,18 +387,6 @@ class PageBuilder(BasePageBuilder):
                     .classes("w-1/5")
                 )
                 bucket_form.delete_button.disable()
-
-            with ui.row(align_items="center").classes("w-2/5"):
-                ui.space()
-                bucket_form.destination_label = ui.label(
-                    MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED
-                    if bucket_form.destination is None
-                    else str(f"Download to {bucket_form.destination}")
-                ).classes("max-w-72")
-                bucket_form.destination_open_button = ui.button(
-                    icon="folder_open", on_click=_open_destination, color="secondary"
-                )
-                bucket_form.destination_open_button.mark("BUTTON_OPEN_DESTINATION").disable()
 
             # Progress card for downloads (initially hidden)
             with ui.card().classes("w-full") as progress_card:

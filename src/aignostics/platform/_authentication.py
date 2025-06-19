@@ -18,11 +18,6 @@ from requests_oauthlib import OAuth2Session
 from aignostics.platform._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
 from aignostics.platform._settings import settings
 
-try:
-    import sentry_sdk
-except ImportError:
-    sentry_sdk = None  # type: ignore[assignment]
-
 CALLBACK_PORT_RETRY_COUNT = 10
 CLAIM_ROLE = "https://aignostics-platform-samia/role"
 
@@ -43,6 +38,11 @@ def _inform_sentry_about_user(token: str) -> None:
     Raises:
         RuntimeError: If the token does not contain the 'sub' claim or if verification fails.
     """
+    try:
+        import sentry_sdk  # noqa: PLC0415
+    except ImportError:
+        sentry_sdk = None  # type: ignore[assignment]
+
     if sentry_sdk is None:
         return  # type: ignore[unreachable]
 

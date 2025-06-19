@@ -4,13 +4,14 @@ import hashlib
 import re
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import humanize
 import requests
-from botocore.client import BaseClient, Config
-from botocore.exceptions import ClientError
 from pydantic import BaseModel, computed_field
+
+if TYPE_CHECKING:
+    from botocore.client import BaseClient
 
 from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, get_user_data_directory
 
@@ -111,7 +112,7 @@ class Service(BaseService):
             components={},
         )
 
-    def _get_s3_client(self, endpoint_url: str = ENDPOINT_URL_DEFAULT) -> BaseClient:
+    def _get_s3_client(self, endpoint_url: str = ENDPOINT_URL_DEFAULT) -> "BaseClient":
         """Get a Boto3 S3 client instance for cloud bucket on Aignostics Platform.
 
         Args:
@@ -121,6 +122,7 @@ class Service(BaseService):
             BaseClient: A Boto3 S3 client instance.
         """
         from boto3 import Session  # noqa: PLC0415
+        from botocore.client import Config  # noqa: PLC0415
 
         # https://www.kmp.tw/post/accessgcsusepythonboto3/
         session = Session(
@@ -599,6 +601,8 @@ class Service(BaseService):
         Raises:
             ValueError: If any provided regex pattern is invalid.
         """
+        from botocore.exceptions import ClientError  # noqa: PLC0415
+
         matched_objects = self.find(what, what_is_key=what_is_key, detail=False)
         object_keys_to_delete = [obj for obj in matched_objects if isinstance(obj, str)]
 

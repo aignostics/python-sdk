@@ -7,14 +7,20 @@ from pathlib import Path
 import typer
 
 from .constants import MODULES_TO_INSTRUMENT, NOTEBOOK_DEFAULT
-from .utils import __is_running_in_container__, __version__, boot, console, get_logger, prepare_cli
+from .utils import (
+    __is_running_in_container__,
+    __version__,
+    boot,
+    console,
+    get_logger,
+    prepare_cli,
+)
 
 boot(MODULES_TO_INSTRUMENT)
 logger = get_logger(__name__)
 
 cli = typer.Typer(
     help="Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.",
-    no_args_is_help=True,
 )
 
 if find_spec("nicegui") and find_spec("webview") and not __is_running_in_container__:
@@ -61,6 +67,7 @@ if find_spec("marimo"):
 
 
 prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")
+
 
 if __name__ == "__main__":  # pragma: no cover
     try:

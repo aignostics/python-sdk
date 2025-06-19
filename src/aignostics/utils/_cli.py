@@ -21,7 +21,6 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
             cli.add_typer(_cli)
 
     cli.info.epilog = epilog
-    cli.info.no_args_is_help = True
     if not any(arg.endswith("typer") for arg in Path(sys.argv[0]).parts):
         for command in cli.registered_commands:
             command.epilog = cli.info.epilog
@@ -32,6 +31,17 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
 
     # add no_args_is_help for all subcommands
     _no_args_is_help_recursively(cli)
+
+
+def no_args_is_help_workaround(ctx: typer.Context) -> None:
+    """Workaround for Typer bug, see https://github.com/fastapi/typer/pull/1240.
+
+    Raises:
+        typer.Exit: If no subcommand is invoked, prints the help message and exits.
+    """
+    if ctx.invoked_subcommand is None:
+        print(ctx.get_help())
+        raise typer.Exit
 
 
 def _add_epilog_recursively(cli: typer.Typer, epilog: str) -> None:
@@ -60,9 +70,18 @@ def _no_args_is_help_recursively(cli: typer.Typer) -> None:
     Args:
         cli (typer.Typer): Typer instance
     """
+    # Apply workaround to the main CLI app itself
+    if not hasattr(cli, "no_args_callback_added"):
+        cli.callback(invoke_without_command=True)(no_args_is_help_workaround)
+        cli.no_args_callback_added = True  # type: ignore[attr-defined]
+
+    # Apply workaround to all subcommands recursively
     for group in cli.registered_groups:
         if isinstance(group, typer.models.TyperInfo):
-            group.no_args_is_help = True
             typer_instance = group.typer_instance
             if (typer_instance is not cli) and typer_instance:
+                # Add the callback workaround to each subcommand typer
+                if not hasattr(typer_instance, "no_args_callback_added"):
+                    typer_instance.callback(invoke_without_command=True)(no_args_is_help_workaround)
+                    typer_instance.no_args_callback_added = True  # type: ignore[attr-defined]
                 _no_args_is_help_recursively(typer_instance)

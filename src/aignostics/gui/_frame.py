@@ -8,7 +8,6 @@ from importlib.util import find_spec
 from typing import Any
 
 from humanize import naturaldelta
-from nicegui import app, ui
 
 from aignostics.utils import __version__, open_user_data_directory
 
@@ -42,7 +41,7 @@ def frame(  # noqa: C901, PLR0915
     Yields:
         Generator[Any, Any, Any]: The context manager for the page frame.
     """
-    from nicegui import background_tasks, context, run  # noqa: PLC0415
+    from nicegui import app, background_tasks, context, run, ui  # noqa: PLC0415
 
     from aignostics.platform import Service as PlatformService  # noqa: PLC0415
     from aignostics.platform import UserInfo  # noqa: PLC0415

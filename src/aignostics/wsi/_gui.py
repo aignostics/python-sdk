@@ -1,11 +1,14 @@
 """WSI API."""
 
-from pathlib import Path
+from __future__ import annotations
 
-from fastapi import Response
-from fastapi.responses import RedirectResponse
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from aignostics.utils import BasePageBuilder, get_logger
+
+if TYPE_CHECKING:
+    from fastapi import Response
 
 from ._service import Service
 
@@ -29,6 +32,9 @@ class PageBuilder(BasePageBuilder):
             Returns:
                 fastapi.Response: HTTP response containing the thumbnail or fallback image.
             """
+            from fastapi import Response  # noqa: PLC0415
+            from fastapi.responses import RedirectResponse  # noqa: PLC0415
+
             try:
                 return Response(content=Service().get_thumbnail_bytes(Path(source)), media_type="image/png")
             except ValueError:
@@ -48,6 +54,9 @@ class PageBuilder(BasePageBuilder):
             Returns:
                 fastapi.Response: HTTP response containing the converted tiff or fallback image
             """
+            from fastapi import Response  # noqa: PLC0415
+            from fastapi.responses import RedirectResponse  # noqa: PLC0415
+
             try:
                 return Response(content=Service().get_tiff_as_jpg(url), media_type="image/jpeg")
             except ValueError:
