@@ -493,9 +493,9 @@ class Service(BaseService):
             if not source_file_path.is_file():
                 logger.warning("Source file '%s' does not exist.", row["referebce"])
                 return False
+            username = psutil.Process().username().replace("\\", "_")
             object_key = (
-                f"{psutil.Process().username()}/{upload_prefix}/"
-                f"{application_version.application_version_id}/{source_file_path.name}"
+                f"{username}/{upload_prefix}/{application_version.application_version_id}/{source_file_path.name}"
             )
             platform_bucket_url = (
                 f"{BucketService().get_bucket_protocol()}://{BucketService().get_bucket_name()}/{object_key}"

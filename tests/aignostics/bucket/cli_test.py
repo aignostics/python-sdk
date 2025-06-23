@@ -31,7 +31,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
 
     # Get username for path verification
     the_uuid = str(uuid.uuid4())[:8]  # Use first 8 characters of a random UUID
-    username = psutil.Process().username()
+    username = psutil.Process().username().replace("\\", "_")
     test_prefix = f"{the_uuid}/{username}/test-cli"
 
     # Step 1: Create test files in the temporary directory
@@ -87,12 +87,10 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir1/file{i}.txt"
         else:
             file_path = f"{test_prefix}/dir2/file{i}.txt"
-        assert file_path in result.output.replace("\\\\", "\\")
+        assert file_path in normalize_output(result.stdout)
 
     # Step 4: Download the files to a subdirectory and verify they match content-wise
-    result = runner.invoke(
-        cli, ["bucket", "download", test_prefix.replace("\\\\", "\\"), "--destination", tmpdir / "downloaded"]
-    )
+    result = runner.invoke(cli, ["bucket", "download", test_prefix, "--destination", tmpdir / "downloaded"])
     assert result.exit_code == 0
     assert "Summary: 9 downloaded, 0 failed, 9 total" in result.output
 
@@ -138,7 +136,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
             file_path = f"{test_prefix}/dir1/file{i}.txt"
         else:
             file_path = f"{test_prefix}/dir2/file{i}.txt"
-        assert file_path not in normalize_output(result.stdout).replace("\\\\", "\\")
+        assert file_path not in normalize_output(result.stdout)
 
     # Step 8: Try to delete a file that doesn't exist
     non_existent_file = f"{test_prefix}/file1.txt"

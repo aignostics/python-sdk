@@ -44,7 +44,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     assert "All files uploaded successfully!" in result.output
 
     # Prep
-    test_prefix = test_prefix.format(username=psutil.Process().username())
+    test_prefix = test_prefix.format(username=psutil.Process().username().replace("\\", "_"))
 
     # Step 3: Check the file is there
     result = runner.invoke(cli, ["bucket", "find"])

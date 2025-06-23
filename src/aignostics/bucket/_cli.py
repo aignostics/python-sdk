@@ -77,7 +77,7 @@ def upload(
 
     console.print(f"Found {files_count} files with total size of {humanize.naturalsize(total_bytes)}")
 
-    username = psutil.Process().username()
+    username = psutil.Process().username().replace("\\", "_")
     timestamp = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d_%H%M%S")
     base_prefix = destination_prefix.format(username=username, timestamp=timestamp)
     base_prefix = base_prefix.strip("/")
