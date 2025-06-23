@@ -207,7 +207,7 @@ def userinfo(token: str) -> dict[str, str]:
         RuntimeError: If fetching user information fails.
     """
     try:
-        return Users("aignostics-platform.eu.auth0.com").userinfo(access_token=token)  # type: ignore[no-any-return]
+        return Users(settings().tenant_domain).userinfo(access_token=token)  # type: ignore[no-any-return]
     except Exception as e:
         message = f"Failed to fetch user information: {e!s}"
         raise RuntimeError(message) from e

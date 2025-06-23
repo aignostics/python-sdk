@@ -104,7 +104,7 @@ def frame(  # noqa: C901, PLR0915
         with contextlib.suppress(Exception):
             user_info = await run.cpu_bound(PlatformService.get_user_info, relogin=True)
             app.storage.tab["user_info"] = user_info
-        _user_info_ui.refresh()
+        ui.navigate.reload()
 
     @ui.refreshable
     def health_icon() -> None:

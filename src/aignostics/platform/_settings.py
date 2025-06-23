@@ -156,6 +156,24 @@ class Settings(OpaqueSettings):
     device_url: str
     jws_json_url: str
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def tenant_domain(self) -> str:
+        """Get the tenant domain from the authorization base URL.
+
+        Returns:
+            str: The domain part of the authorization base URL.
+
+        Raises:
+            ValueError: If the authorization base URL is invalid or does not contain a netloc.
+        """
+        parsed = urlparse(self.authorization_base_url)
+        if parsed.netloc:
+            return parsed.netloc
+        message = f"Invalid authorization_base_url: {self.authorization_base_url}"
+        logger.error(message)
+        raise ValueError(message)
+
     refresh_token: Annotated[
         SecretStr | None,
         PlainSerializer(

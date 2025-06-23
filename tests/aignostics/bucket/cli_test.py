@@ -90,7 +90,9 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
         assert file_path in result.output.replace("\\\\", "\\")
 
     # Step 4: Download the files to a subdirectory and verify they match content-wise
-    result = runner.invoke(cli, ["bucket", "download", test_prefix, "--destination", tmpdir / "downloaded"])
+    result = runner.invoke(
+        cli, ["bucket", "download", test_prefix.replace("\\\\", "\\"), "--destination", tmpdir / "downloaded"]
+    )
     assert result.exit_code == 0
     assert "Summary: 9 downloaded, 0 failed, 9 total" in result.output
 
