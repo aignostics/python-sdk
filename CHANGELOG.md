@@ -1,6 +1,15 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-(https://github.com/aignostics/python-sdk/compare/v0.2.67..0.2.68) - 2025-06-19
+(https://github.com/aignostics/python-sdk/compare/v0.2.68..0.2.69) - 2025-06-23
+
+
+- *(platform/user)* Reload on reauth - ([e3af366](https://github.com/aignostics/python-sdk/commit/e3af3668c667e9c585b3d07345e0d7908fafe7a0))
+
+
+- *(win32)* Username - ([a746dd0](https://github.com/aignostics/python-sdk/commit/a746dd023487cd989d0f5f2b37119d2221d1eae0))
+
+
+(https://github.com/aignostics/python-sdk/compare/v0.2.67..v0.2.68) - 2025-06-19
 
 
 - *(di)* Adapt to typer workaround - ([a5a50bc](https://github.com/aignostics/python-sdk/commit/a5a50bc3c38ff7de3b7fedd6ddeb8664b7fde17b))
