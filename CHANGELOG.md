@@ -1,5 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+# [0.2.70](https://github.com/aignostics/python-sdk/compare/v0.2.69..0.2.70) - 2025-06-24
+
+### 📚 Documentation
+
+- Enhance structure and layout of Changelog - ([6ba9998](https://github.com/aignostics/python-sdk/commit/6ba9998eb1178f0530604852df28b04d11e49852))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(bucket)* Grant more time for bucket gui workflow in test - ([6ba9998](https://github.com/aignostics/python-sdk/commit/6ba9998eb1178f0530604852df28b04d11e49852))
+- *(deps)* Update dependencies for GitHub actions - ([6ba9998](https://github.com/aignostics/python-sdk/commit/6ba9998eb1178f0530604852df28b04d11e49852))
+
+
 # [v0.2.69](https://github.com/aignostics/python-sdk/compare/v0.2.68..v0.2.69) - 2025-06-23
 
 ### 🐛 Bug Fixes
@@ -150,6 +162,10 @@
 
 - Nicer start page graphics - ([bc025b1](https://github.com/aignostics/python-sdk/commit/bc025b191d284293e756cb15c7cc68acc0ba368c))
 
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([f802e41](https://github.com/aignostics/python-sdk/commit/f802e41fb0f87a91b8cd67e85f70d24c8c37787a))
+
 
 # [v0.2.53](https://github.com/aignostics/python-sdk/compare/v0.2.52..v0.2.53) - 2025-06-12
 
@@ -224,6 +240,10 @@
 
 
 # [v0.2.45](https://github.com/aignostics/python-sdk/compare/v0.2.44..v0.2.45) - 2025-06-09
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump actions in gha and duckdb - ([c731c68](https://github.com/aignostics/python-sdk/commit/c731c68ac789e9e1a015b7223b8edd88e7876c6e))
 
 
 # [v0.2.44](https://github.com/aignostics/python-sdk/compare/v0.2.43..v0.2.44) - 2025-06-09
