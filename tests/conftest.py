@@ -74,7 +74,7 @@ async def assert_notified(user: User, expected_notification: str, wait_seconds: 
         wait_seconds: Maximum time to wait for the notification (default: 5).
 
     Returns:
-        str: The first matching notification message found.
+        str: The oldest matching notification message found.
 
     Raises:
         pytest.fail: If no matching notification is found within the wait time.

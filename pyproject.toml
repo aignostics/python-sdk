@@ -373,7 +373,7 @@ setup_hooks = []
 pre_commit_hooks = [
     "uv sync",
     "git add uv.lock",
-    "git-cliff --tag $BVHOOK_NEW_VERSION",
+    "uv run git-cliff --tag $BVHOOK_NEW_VERSION",
     "rm -f CHANGELOG.md.tmp",
     "git add CHANGELOG.md",
 ]
@@ -435,7 +435,7 @@ https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
 
 {% if version %}\
     {% if previous.version %}\
-          ({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+          # [{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
     {% else %}\
     {% endif %}\
 {% else %}\
@@ -443,6 +443,7 @@ https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
 {% endif %}\
 
 {% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits
     | unique(attribute="message")
     | filter(attribute="scope")
@@ -498,7 +499,7 @@ conventional_commits = true
 # filter out the commits that are not conventional
 filter_unconventional = true
 # process each line of a commit as an individual commit
-split_commits = false
+split_commits = true
 # regex for preprocessing the commit messages
 commit_preprocessors = [
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))" },
@@ -506,6 +507,8 @@ commit_preprocessors = [
 # regex for parsing and grouping commits
 commit_parsers = [
     { message = "^feat", group = "<!-- 0 -->⛰️  Features" },
+    { message = ".*security.*", group = "<!-- 8 -->🛡️ Security" },
+    { message = "^sec", group = "<!-- 8 -->🛡️ Security" },
     { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
     { message = "^doc", group = "<!-- 3 -->📚 Documentation" },
     { message = "^perf", group = "<!-- 4 -->⚡ Performance" },

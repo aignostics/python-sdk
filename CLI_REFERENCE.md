@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.64 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.69 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -196,7 +196,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750311380957.609]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750747820285.639]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -252,7 +252,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750311380957.699]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1750747820285.718]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -1216,7 +1216,7 @@ $ aignostics wsi [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `inspect`: Inspect a wsi file and display its metadata.
-* `dicom`
+* `dicom`: Workaround for Typer bug, see...
 
 ### `aignostics wsi inspect`
 
@@ -1237,6 +1237,11 @@ $ aignostics wsi inspect [OPTIONS] PATH
 * `--help`: Show this message and exit.
 
 ### `aignostics wsi dicom`
+
+Workaround for Typer bug, see https://github.com/fastapi/typer/pull/1240.
+
+Raises:
+    typer.Exit: If no subcommand is invoked, prints the help message and exits.
 
 **Usage**:
 
