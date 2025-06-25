@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -25,10 +26,12 @@ class OutputArtifactScope(str, Enum):
     """
     allowed enum values
     """
-    ITEM = 'item'
-    GLOBAL = 'global'
+    ITEM = 'ITEM'
+    GLOBAL = 'GLOBAL'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of OutputArtifactScope from a JSON string"""
         return cls(json.loads(json_str))
+
+

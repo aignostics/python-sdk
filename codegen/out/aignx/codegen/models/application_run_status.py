@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -25,16 +26,18 @@ class ApplicationRunStatus(str, Enum):
     """
     allowed enum values
     """
-    CANCELED_SYSTEM = 'canceled_system'
-    CANCELED_USER = 'canceled_user'
-    COMPLETED = 'completed'
-    COMPLETED_WITH_ERROR = 'completed_with_error'
-    RECEIVED = 'received'
-    REJECTED = 'rejected'
-    RUNNING = 'running'
-    SCHEDULED = 'scheduled'
+    CANCELED_SYSTEM = 'CANCELED_SYSTEM'
+    CANCELED_USER = 'CANCELED_USER'
+    COMPLETED = 'COMPLETED'
+    COMPLETED_WITH_ERROR = 'COMPLETED_WITH_ERROR'
+    RECEIVED = 'RECEIVED'
+    REJECTED = 'REJECTED'
+    RUNNING = 'RUNNING'
+    SCHEDULED = 'SCHEDULED'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of ApplicationRunStatus from a JSON string"""
         return cls(json.loads(json_str))
+
+

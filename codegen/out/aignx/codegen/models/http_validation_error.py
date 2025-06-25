@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -90,3 +91,5 @@ class HTTPValidationError(BaseModel):
             "detail": [ValidationError.from_dict(_item) for _item in obj["detail"]] if obj.get("detail") is not None else None
         })
         return _obj
+
+

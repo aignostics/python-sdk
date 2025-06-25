@@ -1,7 +1,7 @@
 # Makefile for running common development tasks
 
 # Define all PHONY targets
-.PHONY: all act audit bump clean dist dist_native docs docker_build install lint pre_commit_run_all profile setup setup test test_coverage_reset test_long_running test_scheduled test_sequential update_from_template gui_watch
+.PHONY: all act audit bump clean codegen dist dist_native docs docker_build install lint pre_commit_run_all profile setup setup test test_coverage_reset test_long_running test_scheduled test_sequential update_from_template gui_watch
 
 # Main target i.e. default sessions defined in noxfile.py
 all:

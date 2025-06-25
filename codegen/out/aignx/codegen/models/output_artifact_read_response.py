@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -97,3 +98,5 @@ class OutputArtifactReadResponse(BaseModel):
             "scope": obj.get("scope")
         })
         return _obj
+
+

@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -16,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
@@ -28,17 +29,9 @@ class OutputArtifactResultReadResponse(BaseModel):
     """ # noqa: E501
     output_artifact_id: StrictStr = Field(description="The Id of the artifact. Used internally")
     name: StrictStr = Field(description=" Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.     ")
-    mime_type: Annotated[str, Field(strict=True)] = Field(description="The mime type of the output file")
     metadata: Dict[str, Any] = Field(description="The metadata of the output artifact, provided by the application")
     download_url: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=2083)]]
-    __properties: ClassVar[List[str]] = ["output_artifact_id", "name", "mime_type", "metadata", "download_url"]
-
-    @field_validator('mime_type')
-    def mime_type_validate_regular_expression(cls, value):
-        """Validates the regular expression"""
-        if not re.match(r"^\w+\/\w+[-+.|\w+]+\w+$", value):
-            raise ValueError(r"must validate the regular expression /^\w+\/\w+[-+.|\w+]+\w+$/")
-        return value
+    __properties: ClassVar[List[str]] = ["output_artifact_id", "name", "metadata", "download_url"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -98,8 +91,9 @@ class OutputArtifactResultReadResponse(BaseModel):
         _obj = cls.model_validate({
             "output_artifact_id": obj.get("output_artifact_id"),
             "name": obj.get("name"),
-            "mime_type": obj.get("mime_type"),
             "metadata": obj.get("metadata"),
             "download_url": obj.get("download_url")
         })
         return _obj
+
+

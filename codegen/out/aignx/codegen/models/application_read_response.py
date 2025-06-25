@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -88,3 +89,5 @@ class ApplicationReadResponse(BaseModel):
             "description": obj.get("description")
         })
         return _obj
+
+

@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -82,3 +83,5 @@ class RunCreationResponse(BaseModel):
             "application_run_id": obj.get("application_run_id") if obj.get("application_run_id") is not None else 'Application run id'
         })
         return _obj
+
+

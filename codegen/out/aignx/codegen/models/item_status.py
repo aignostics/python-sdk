@@ -1,3 +1,4 @@
+# coding: utf-8
 
 """
     Aignostics Platform API reference
@@ -25,14 +26,16 @@ class ItemStatus(str, Enum):
     """
     allowed enum values
     """
-    PENDING = 'pending'
-    CANCELED_USER = 'canceled_user'
-    CANCELED_SYSTEM = 'canceled_system'
-    ERROR_USER = 'error_user'
-    ERROR_SYSTEM = 'error_system'
-    SUCCEEDED = 'succeeded'
+    PENDING = 'PENDING'
+    CANCELED_USER = 'CANCELED_USER'
+    CANCELED_SYSTEM = 'CANCELED_SYSTEM'
+    ERROR_USER = 'ERROR_USER'
+    ERROR_SYSTEM = 'ERROR_SYSTEM'
+    SUCCEEDED = 'SUCCEEDED'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of ItemStatus from a JSON string"""
         return cls(json.loads(json_str))
+
+
