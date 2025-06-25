@@ -1,6 +1,21 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.70](https://github.com/aignostics/python-sdk/compare/v0.2.69..0.2.70) - 2025-06-24
+# [0.2.71](https://github.com/aignostics/python-sdk/compare/v0.2.70..0.2.71) - 2025-06-25
+
+### 🐛 Bug Fixes
+
+- *(platform)* Adapt to breaking change in API - ([e869268](https://github.com/aignostics/python-sdk/commit/e8692686bb5d4ed41ee803bc5bf959e24cffc232))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Gha setup-uv dep - ([d600f2a](https://github.com/aignostics/python-sdk/commit/d600f2a73a2c5f48ec506f073e306502197f52d0))
+- Try new api spec without further change - ([da97c97](https://github.com/aignostics/python-sdk/commit/da97c97006c7a2abdb09643590141aaf38fed40f))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.70](https://github.com/aignostics/python-sdk/compare/v0.2.69..v0.2.70) - 2025-06-24
 
 ### 📚 Documentation
 
