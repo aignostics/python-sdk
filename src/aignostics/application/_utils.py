@@ -87,7 +87,7 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
             console.print("  [bold]Output Artifacts:[/bold]")
             for artifact in item.output_artifacts:
                 console.print(f"    - Name: {artifact.name}")
-                console.print(f"      MIME Type: {artifact.mime_type}")
+                console.print(f"      MIME Type: {get_mime_type_for_artifact(artifact)}")
                 console.print(f"      Artifact ID: {artifact.output_artifact_id}")
 
         console.print()

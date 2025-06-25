@@ -16,6 +16,7 @@ from aignostics.utils import console, get_logger, get_user_data_directory, sanit
 from ._service import DownloadProgress, DownloadProgressState, Service
 from ._utils import (
     application_run_status_to_str,
+    get_mime_type_for_artifact,
     print_runs_non_verbose,
     print_runs_verbose,
     read_metadata_csv_to_dict,
@@ -231,13 +232,13 @@ def application_describe(
             console.print("  [bold]Input Artifacts:[/bold]")
             for artifact in version.input_artifacts:
                 console.print(f"    - Name: {artifact.name}")
-                console.print(f"      MIME Type: {artifact.mime_type}")
+                console.print(f"      MIME Type: {get_mime_type_for_artifact(artifact)}")
                 console.print(f"      Schema: {artifact.metadata_schema}")
 
             console.print("  [bold]Output Artifacts:[/bold]")
             for artifact in version.output_artifacts:
                 console.print(f"    - Name: {artifact.name}")
-                console.print(f"      MIME Type: {artifact.mime_type}")
+                console.print(f"      MIME Type: {get_mime_type_for_artifact}")
                 console.print(f"      Scope: {artifact.scope}")
                 console.print(f"      Schema: {artifact.metadata_schema}")
 

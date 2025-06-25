@@ -35,14 +35,14 @@ components:
       type: object
     ApplicationRunStatus:
       enum:
-      - canceled_system
-      - canceled_user
-      - completed
-      - completed_with_error
-      - received
-      - rejected
-      - running
-      - scheduled
+      - CANCELED_SYSTEM
+      - CANCELED_USER
+      - COMPLETED
+      - COMPLETED_WITH_ERROR
+      - RECEIVED
+      - REJECTED
+      - RUNNING
+      - SCHEDULED
       title: ApplicationRunStatus
       type: string
     ApplicationVersionReadResponse:
@@ -60,6 +60,11 @@ components:
         changelog:
           description: Description of the changes relative to the previous version
           title: Changelog
+          type: string
+        created_at:
+          description: The timestamp when the application version was registered
+          format: date-time
+          title: Created At
           type: string
         flow_id:
           anyOf:
@@ -91,6 +96,7 @@ components:
       - changelog
       - input_artifacts
       - output_artifacts
+      - created_at
       title: ApplicationVersionReadResponse
       type: object
     HTTPValidationError:
@@ -120,7 +126,7 @@ components:
             The JSON schema of the metadata can be requested by `/v1/versions/{application_version_id}`.
             The schema is located in `input_artifacts.[].metadata_schema`
           examples:
-          - checksum_crc32c: 752f9554
+          - checksum_base64_crc32c: 752f9554
             height: 2000
             height_mpp: 0.5
             width: 10000
@@ -235,12 +241,12 @@ components:
       type: object
     ItemStatus:
       enum:
-      - pending
-      - canceled_user
-      - canceled_system
-      - error_user
-      - error_system
-      - succeeded
+      - PENDING
+      - CANCELED_USER
+      - CANCELED_SYSTEM
+      - ERROR_USER
+      - ERROR_SYSTEM
+      - SUCCEEDED
       title: ItemStatus
       type: string
     OutputArtifactReadResponse:
@@ -283,13 +289,6 @@ components:
           description: The metadata of the output artifact, provided by the application
           title: Metadata
           type: object
-        mime_type:
-          description: The mime type of the output file
-          examples:
-          - application/vnd.apache.parquet
-          pattern: ^\w+\/\w+[-+.|\w+]+\w+$
-          title: Mime Type
-          type: string
         name:
           description: "\nName of the output from the output schema from the `/v1/versions/{version_id}`\
             \ endpoint.\n    "
@@ -303,15 +302,14 @@ components:
       required:
       - output_artifact_id
       - name
-      - mime_type
       - metadata
       - download_url
       title: OutputArtifactResultReadResponse
       type: object
     OutputArtifactScope:
       enum:
-      - item
-      - global
+      - ITEM
+      - GLOBAL
       title: OutputArtifactScope
       type: string
     PayloadInputArtifact:
@@ -531,9 +529,9 @@ components:
     OAuth2AuthorizationCodeBearer:
       flows:
         authorizationCode:
-          authorizationUrl: https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize
+          authorizationUrl: https://aignostics-platform.eu.auth0.com/authorize
           scopes: {}
-          tokenUrl: https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token
+          tokenUrl: https://aignostics-platform.eu.auth0.com/oauth/token
       type: oauth2
 info:
   description: '
@@ -804,19 +802,19 @@ paths:
         \ in case of HETA application).\nEvery item has a set of standard fields defined\
         \ by the API, plus the metadata, specific to the\nchosen application.\n\n\
         Example payload structure with the comments:\n```\n{\n    application_version_id:\
-        \ \"heta:v1.0.0\",\n    items: [{\n        \"reference\": \"slide_1\"  <--\
-        \ Input ID to connect the input and the output artifact\n        \"input_artifacts\"\
-        : [{\n            \"name\": \"input_slide\"  <-- Name of the artifact defined\
+        \ \"test-app:v0.0.2\",\n    items: [{\n        \"reference\": \"slide_1\"\
+        ,  <-- Input ID to connect the input and the output artifact\n        \"input_artifacts\"\
+        : [{\n            \"name\": \"input_slide\",  <-- Name of the artifact defined\
         \ by the application (For HETA it is\"input_slide\")\n            \"download_url\"\
-        : \"https://...\" <-- signed URL to the input file in the S3 or GCS. Should\
+        : \"https://...\", <-- signed URL to the input file in the S3 or GCS. Should\
         \ be valid for more than 6 days\n            \"metadata\": { <-- The metadata\
         \ fields defined by the application. (The example fields set for a slide files\
-        \ are provided)\n                \"checksum_crc32c\": \"abc12==\",\n     \
-        \           \"mime_type\": \"image/tiff\",\n                \"height\": 100,\n\
-        \                \"weight\": 500,\n                \"mpp\": 0.543\n      \
-        \      }\n        }]\n    }]\n}\n```\n\n### Response\n\nThe endpoint returns\
-        \ the application run UUID. After that the job is scheduled for the\nexecution\
-        \ in the background.\n\nTo check the status of the run call `v1/runs/{application_run_id}`.\n\
+        \ are provided)\n                \"checksum_base64_crc32c\": \"abc12==\",\n\
+        \                \"mime_type\": \"image/tiff\",\n                \"height\"\
+        : 100,\n                \"weight\": 500,\n                \"mpp\": 0.543\n\
+        \            }\n        }]\n    }]\n}\n```\n\n### Response\n\nThe endpoint\
+        \ returns the application run UUID. After that the job is scheduled for the\n\
+        execution in the background.\n\nTo check the status of the run call `v1/runs/{application_run_id}`.\n\
         \n### Rejection\n\nApart from the authentication, authorization and malformed\
         \ input error, the request can be\nrejected when the quota limit is exceeded.\
         \ More details on quotas is described in the\ndocumentation"

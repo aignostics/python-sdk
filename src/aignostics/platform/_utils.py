@@ -20,6 +20,9 @@ from typing import IO, Any
 
 import google_crc32c
 import requests
+from aignx.codegen.models import InputArtifactReadResponse as InputArtifactData
+from aignx.codegen.models import OutputArtifactReadResponse as OutputArtifactData
+from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from tqdm.auto import tqdm
 
 EIGHT_MB = 8_388_608
@@ -49,6 +52,23 @@ def mime_type_to_file_ending(mime_type: str) -> str:
         return ".csv"
     msg = f"Unknown mime type: {mime_type}"
     raise ValueError(msg)
+
+
+def get_mime_type_for_artifact(artifact: OutputArtifactData | InputArtifactData | OutputArtifactElement) -> str:
+    """Get the MIME type for a given artifact.
+
+    Args:
+        artifact (OutputArtifact | InputArtifact | OutputArtifactElement): The artifact to get the MIME type for.
+
+    Returns:
+        str: The MIME type of the artifact.
+    """
+    if isinstance(artifact, InputArtifactData):
+        return str(artifact.mime_type)
+    if isinstance(artifact, OutputArtifactData):
+        return str(artifact.mime_type)
+    metadata = artifact.metadata or {}
+    return str(metadata.get("media_type", metadata.get("mime_type", "application/octet-stream")))
 
 
 # TODO(Andreas,Helmut): discuss

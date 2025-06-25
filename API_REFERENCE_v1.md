@@ -16,8 +16,8 @@ Base URLs:
 - oAuth2 authentication. 
 
     - Flow: authorizationCode
-    - Authorization URL = [https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize](https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize)
-    - Token URL = [https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token](https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token)
+    - Authorization URL = [https://aignostics-platform.eu.auth0.com/authorize](https://aignostics-platform.eu.auth0.com/authorize)
+    - Token URL = [https://aignostics-platform.eu.auth0.com/oauth/token](https://aignostics-platform.eu.auth0.com/oauth/token)
 
 |Scope|Scope Description|
 |---|---|
@@ -198,6 +198,7 @@ assign or unassign a version from your organization, please contact Aignostics s
     "application_id": "string",
     "application_version_id": "h-e-tme:v0.0.1",
     "changelog": "string",
+    "created_at": "2019-08-24T14:15:22Z",
     "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
     "input_artifacts": [
       {
@@ -211,7 +212,7 @@ assign or unassign a version from your organization, please contact Aignostics s
         "metadata_schema": {},
         "mime_type": "application/vnd.apache.parquet",
         "name": "string",
-        "scope": "item"
+        "scope": "ITEM"
       }
     ],
     "version": "string"
@@ -239,6 +240,7 @@ Status Code **200**
 |»» application_id|string|true|none|Application ID|
 |»» application_version_id|string|true|none|Application version ID|
 |»» changelog|string|true|none|Description of the changes relative to the previous version|
+|»» created_at|string(date-time)|true|none|The timestamp when the application version was registered|
 |»» flow_id|any|false|none|Flow ID, used internally by the platform|
 
 *anyOf*
@@ -274,8 +276,8 @@ Status Code **200**
 
 |Property|Value|
 |---|---|
-|scope|item|
-|scope|global|
+|scope|ITEM|
+|scope|GLOBAL|
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -350,7 +352,7 @@ is created by POST /v1/runs, it becomes available for the current endpoint
     "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
     "application_version_id": "string",
     "organization_id": "string",
-    "status": "canceled_system",
+    "status": "CANCELED_SYSTEM",
     "triggered_at": "2019-08-24T14:15:22Z",
     "triggered_by": "string",
     "user_payload": {
@@ -504,14 +506,14 @@ Status Code **200**
 
 |Property|Value|
 |---|---|
-|status|canceled_system|
-|status|canceled_user|
-|status|completed|
-|status|completed_with_error|
-|status|received|
-|status|rejected|
-|status|running|
-|status|scheduled|
+|status|CANCELED_SYSTEM|
+|status|CANCELED_USER|
+|status|COMPLETED|
+|status|COMPLETED_WITH_ERROR|
+|status|RECEIVED|
+|status|REJECTED|
+|status|RUNNING|
+|status|SCHEDULED|
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -547,7 +549,7 @@ const inputBody = '{
         {
           "download_url": "https://example.com/case-no-1-slide.tiff",
           "metadata": {
-            "checksum_crc32c": "752f9554",
+            "checksum_base64_crc32c": "752f9554",
             "height": 2000,
             "height_mpp": 0.5,
             "width": 10000,
@@ -602,9 +604,9 @@ chosen application.
 Example payload structure with the comments:
 ```
 {
-    application_version_id: "heta:v1.0.0",
+    application_version_id: "test-app:v0.0.2",
     items: [{
-        "reference": "slide_1"   Body parameter
+        "reference": "slide_1",   Body parameter
 
 ```json
 {
@@ -615,7 +617,7 @@ Example payload structure with the comments:
         {
           "download_url": "https://example.com/case-no-1-slide.tiff",
           "metadata": {
-            "checksum_crc32c": "752f9554",
+            "checksum_base64_crc32c": "752f9554",
             "height": 2000,
             "height_mpp": 0.5,
             "width": 10000,
@@ -725,7 +727,7 @@ The application is only available to the user who triggered it, regardless of th
   "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
   "application_version_id": "string",
   "organization_id": "string",
-  "status": "canceled_system",
+  "status": "CANCELED_SYSTEM",
   "triggered_at": "2019-08-24T14:15:22Z",
   "triggered_by": "string",
   "user_payload": {
@@ -1052,13 +1054,12 @@ Get the list of the results for the run items
       {
         "download_url": "http://example.com",
         "metadata": {},
-        "mime_type": "application/vnd.apache.parquet",
         "name": "string",
         "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
       }
     ],
     "reference": "string",
-    "status": "pending"
+    "status": "PENDING"
   }
 ]
 ```
@@ -1122,7 +1123,6 @@ Status Code **200**
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |»»»» metadata|object|true|none|The metadata of the output artifact, provided by the application|
-|»»»» mime_type|string|true|none|The mime type of the output file|
 |»»»» name|string|true|none|Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.|
 |»»»» output_artifact_id|string(uuid)|true|none|The Id of the artifact. Used internally|
 |»» reference|string|true|none|The reference of the item from the user payload|
@@ -1132,12 +1132,12 @@ Status Code **200**
 
 |Property|Value|
 |---|---|
-|status|pending|
-|status|canceled_user|
-|status|canceled_system|
-|status|error_user|
-|status|error_system|
-|status|succeeded|
+|status|PENDING|
+|status|CANCELED_USER|
+|status|CANCELED_SYSTEM|
+|status|ERROR_USER|
+|status|ERROR_SYSTEM|
+|status|SUCCEEDED|
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -1184,7 +1184,7 @@ ApplicationReadResponse
 
 
 ```json
-"canceled_system"
+"CANCELED_SYSTEM"
 
 ```
 
@@ -1200,14 +1200,14 @@ ApplicationRunStatus
 
 |Property|Value|
 |---|---|
-|ApplicationRunStatus|canceled_system|
-|ApplicationRunStatus|canceled_user|
-|ApplicationRunStatus|completed|
-|ApplicationRunStatus|completed_with_error|
-|ApplicationRunStatus|received|
-|ApplicationRunStatus|rejected|
-|ApplicationRunStatus|running|
-|ApplicationRunStatus|scheduled|
+|ApplicationRunStatus|CANCELED_SYSTEM|
+|ApplicationRunStatus|CANCELED_USER|
+|ApplicationRunStatus|COMPLETED|
+|ApplicationRunStatus|COMPLETED_WITH_ERROR|
+|ApplicationRunStatus|RECEIVED|
+|ApplicationRunStatus|REJECTED|
+|ApplicationRunStatus|RUNNING|
+|ApplicationRunStatus|SCHEDULED|
 
 ### ApplicationVersionReadResponse
 
@@ -1221,6 +1221,7 @@ ApplicationRunStatus
   "application_id": "string",
   "application_version_id": "h-e-tme:v0.0.1",
   "changelog": "string",
+  "created_at": "2019-08-24T14:15:22Z",
   "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
   "input_artifacts": [
     {
@@ -1234,7 +1235,7 @@ ApplicationRunStatus
       "metadata_schema": {},
       "mime_type": "application/vnd.apache.parquet",
       "name": "string",
-      "scope": "item"
+      "scope": "ITEM"
     }
   ],
   "version": "string"
@@ -1251,6 +1252,7 @@ ApplicationVersionReadResponse
 |application_id|string|true|none|Application ID|
 |application_version_id|string|true|none|Application version ID|
 |changelog|string|true|none|Description of the changes relative to the previous version|
+|created_at|string(date-time)|true|none|The timestamp when the application version was registered|
 |flow_id|any|false|none|Flow ID, used internally by the platform|
 
 anyOf
@@ -1314,7 +1316,7 @@ HTTPValidationError
 {
   "download_url": "https://example.com/case-no-1-slide.tiff",
   "metadata": {
-    "checksum_crc32c": "752f9554",
+    "checksum_base64_crc32c": "752f9554",
     "height": 2000,
     "height_mpp": 0.5,
     "width": 10000,
@@ -1374,7 +1376,7 @@ InputArtifactReadResponse
     {
       "download_url": "https://example.com/case-no-1-slide.tiff",
       "metadata": {
-        "checksum_crc32c": "752f9554",
+        "checksum_base64_crc32c": "752f9554",
         "height": 2000,
         "height_mpp": 0.5,
         "width": 10000,
@@ -1413,13 +1415,12 @@ ItemCreationRequest
     {
       "download_url": "http://example.com",
       "metadata": {},
-      "mime_type": "application/vnd.apache.parquet",
       "name": "string",
       "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
     }
   ],
   "reference": "string",
-  "status": "pending"
+  "status": "PENDING"
 }
 
 ```
@@ -1462,7 +1463,7 @@ continued
 
 
 ```json
-"pending"
+"PENDING"
 
 ```
 
@@ -1478,12 +1479,12 @@ ItemStatus
 
 |Property|Value|
 |---|---|
-|ItemStatus|pending|
-|ItemStatus|canceled_user|
-|ItemStatus|canceled_system|
-|ItemStatus|error_user|
-|ItemStatus|error_system|
-|ItemStatus|succeeded|
+|ItemStatus|PENDING|
+|ItemStatus|CANCELED_USER|
+|ItemStatus|CANCELED_SYSTEM|
+|ItemStatus|ERROR_USER|
+|ItemStatus|ERROR_SYSTEM|
+|ItemStatus|SUCCEEDED|
 
 ### OutputArtifactReadResponse
 
@@ -1497,7 +1498,7 @@ ItemStatus
   "metadata_schema": {},
   "mime_type": "application/vnd.apache.parquet",
   "name": "string",
-  "scope": "item"
+  "scope": "ITEM"
 }
 
 ```
@@ -1524,7 +1525,6 @@ OutputArtifactReadResponse
 {
   "download_url": "http://example.com",
   "metadata": {},
-  "mime_type": "application/vnd.apache.parquet",
   "name": "string",
   "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
 }
@@ -1556,7 +1556,6 @@ continued
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |metadata|object|true|none|The metadata of the output artifact, provided by the application|
-|mime_type|string|true|none|The mime type of the output file|
 |name|string|true|none|Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.|
 |output_artifact_id|string(uuid)|true|none|The Id of the artifact. Used internally|
 
@@ -1568,7 +1567,7 @@ continued
 
 
 ```json
-"item"
+"ITEM"
 
 ```
 
@@ -1584,8 +1583,8 @@ OutputArtifactScope
 
 |Property|Value|
 |---|---|
-|OutputArtifactScope|item|
-|OutputArtifactScope|global|
+|OutputArtifactScope|ITEM|
+|OutputArtifactScope|GLOBAL|
 
 ### PayloadInputArtifact
 
@@ -1723,7 +1722,7 @@ PayloadOutputArtifact
         {
           "download_url": "https://example.com/case-no-1-slide.tiff",
           "metadata": {
-            "checksum_crc32c": "752f9554",
+            "checksum_base64_crc32c": "752f9554",
             "height": 2000,
             "height_mpp": 0.5,
             "width": 10000,
@@ -1782,7 +1781,7 @@ RunCreationResponse
   "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
   "application_version_id": "string",
   "organization_id": "string",
-  "status": "canceled_system",
+  "status": "CANCELED_SYSTEM",
   "triggered_at": "2019-08-24T14:15:22Z",
   "triggered_by": "string",
   "user_payload": {

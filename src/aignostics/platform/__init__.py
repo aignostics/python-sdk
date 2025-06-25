@@ -46,7 +46,13 @@ from ._constants import (
 from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
 from ._service import Service, TokenInfo, UserInfo
 from ._settings import Settings, settings
-from ._utils import calculate_file_crc32c, download_file, generate_signed_url, mime_type_to_file_ending
+from ._utils import (
+    calculate_file_crc32c,
+    download_file,
+    generate_signed_url,
+    get_mime_type_for_artifact,
+    mime_type_to_file_ending,
+)
 from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, ApplicationRun
 
 __all__ = [
@@ -101,6 +107,7 @@ __all__ = [
     "cli",
     "download_file",
     "generate_signed_url",
+    "get_mime_type_for_artifact",
     "mime_type_to_file_ending",
     "settings",
 ]

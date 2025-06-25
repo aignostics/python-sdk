@@ -28,7 +28,12 @@ from aignx.codegen.models import (
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
-from aignostics.platform._utils import calculate_file_crc32c, download_file, mime_type_to_file_ending
+from aignostics.platform._utils import (
+    calculate_file_crc32c,
+    download_file,
+    get_mime_type_for_artifact,
+    mime_type_to_file_ending,
+)
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 
@@ -180,7 +185,7 @@ class ApplicationRun:
         for artifact in item.output_artifacts:
             if artifact.download_url:
                 item_dir.mkdir(exist_ok=True, parents=True)
-                file_ending = mime_type_to_file_ending(artifact.mime_type)
+                file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
                 file_path = item_dir / f"{artifact.name}{file_ending}"
                 checksum = artifact.metadata["checksum_crc32c"]
 

@@ -250,7 +250,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             artifact.name, icon=mime_type_to_icon(get_mime_type_for_artifact(artifact))
                         ).classes("w-full"):
                             ui.label(f"Scope: {artifact.scope}")
-                            ui.label(f"Mime Type: {artifact.mime_type}")
+                            ui.label(f"Mime Type: {get_mime_type_for_artifact(artifact)}")
                             ui.label("Metadata")
                             ui.json_editor({
                                 "content": {"json": artifact.metadata_schema},

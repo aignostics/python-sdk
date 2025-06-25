@@ -169,7 +169,7 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
         assert item_dir.exists(), f"Result folder for item {item.reference} does not exist"
         for artifact in item.output_artifacts:
             assert artifact.download_url is not None, f"{artifact} should provide an download url"
-            file_ending = platform.mime_type_to_file_ending(artifact.mime_type)
+            file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), f"Artifact {artifact} was not downloaded"
             checksum = artifact.metadata["checksum_crc32c"]
