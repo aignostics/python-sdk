@@ -592,7 +592,7 @@ def run_list(
             print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
             message = f"Listed '{len(runs)}' run(s)."
             console.print(message, style="info")
-            logger.info(message, len(runs))
+            logger.info(message)
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
