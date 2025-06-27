@@ -12,6 +12,7 @@ from typing import Any
 
 import google_crc32c
 import requests
+import semver
 from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
@@ -264,21 +265,23 @@ class Service(BaseService):
         # Validate format: application_id:vX.Y.Z (where X.Y.Z is a semver)
         # This checks for proper format like "he-tme:v0.50.0" where "he-tme" is the application id
         # and "v0.50.0" is the version with proper semver format
-        if not re.match(r"^[^:]+:v\d+\.\d+\.\d+$", application_version_id):
+        match = re.match(r"^([^:]+):v(.+)$", application_version_id)
+        if not match or not semver.Version.is_valid(match.group(2)):
             if use_latest_if_no_version_given:
-                latest_version = self.application_version_latest(self.application(application_version_id))
+                application_id = match.group(1) if match else application_version_id
+                latest_version = self.application_version_latest(self.application(application_id))
                 if latest_version:
                     return latest_version
-                message = f"No valid application version found for '{application_version_id}' "
-                message += "and no latest version available."
+                message = (
+                    f"No valid application version found for '{application_version_id}'no latest version available."
+                )
                 logger.warning(message)
                 raise ValueError(message)
             message = f"Invalid application version id format: {application_version_id}. "
-            "Expected format: application_id:vX.Y.Z"
+            message += "Expected format: application_id:vX.Y.Z"
             raise ValueError(message)
 
-        application_id = application_version_id.split(":", maxsplit=1)[0]
-
+        application_id = match.group(1)
         application = self.application(application_id)
         for version in self.application_versions(application):
             if version.application_version_id == application_version_id:

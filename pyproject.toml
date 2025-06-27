@@ -121,6 +121,7 @@ dependencies = [
     "requests>=2.32.3",
     "requests-oauthlib>=2.0.0",
     "s5cmd>=0.2.0",
+    "semver>=3.0.4",
     "shapely>=2.1.1",
     "show-in-file-manager>=1.1.5",
     "tqdm>=4.67.1",
