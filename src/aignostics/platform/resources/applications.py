@@ -9,6 +9,7 @@ import re
 import typing as t
 from operator import itemgetter
 
+import semver
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
@@ -22,7 +23,7 @@ class Versions:
     Provides operations to list and retrieve application versions.
     """
 
-    APPLICATION_VERSION_REGEX = re.compile(r"(?P<application_id>[^:]+):v?(?P<version>[^:]+)")
+    APPLICATION_VERSION_REGEX = re.compile(r"^(?P<application_id>[^:]+):v(?P<version>[^:].+)$")
 
     def __init__(self, api: PublicApi) -> None:
         """Initializes the Versions resource with the API platform.
@@ -51,9 +52,6 @@ class Versions:
             application_id=application_id,
         )
 
-    # TODO(Andreas,Helmut): Discuss. This is getting an application version and returning it.
-    # Can we make this a find_by_id, just getting an application_version_id as a string,
-    # and returning the application version object?
     def details(self, application_version: ApplicationVersion | str) -> ApplicationVersion:
         """Retrieves details for a specific application version.
 
@@ -71,13 +69,14 @@ class Versions:
             application_id = application_version.application_id
             version = application_version.version
         else:
-            # split by colon
-            m = Versions.APPLICATION_VERSION_REGEX.match(application_version)
-            if not m:
+            # Parse and validate the application version ID
+            match = self.APPLICATION_VERSION_REGEX.match(application_version)
+            if not match:
                 msg = f"Invalid application_version_id: {application_version}"
                 raise RuntimeError(msg)
-            application_id = m.group("application_id")
-            version = m.group("version")
+
+            application_id = match.group("application_id")
+            version = match.group("version")
 
         application_versions = self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
             application_id=application_id,
@@ -106,18 +105,17 @@ class Versions:
         if not versions:
             return []
 
-        # Extract semantic versions from the version property
+        # Extract semantic versions using proper semver parsing
         versions_with_semver = []
         for v in versions:
             try:
-                # Split into major, minor, patch components for proper comparison
-                version_parts = [int(x) for x in v.version.split(".")]
-                versions_with_semver.append((v, version_parts))
+                parsed_version = semver.Version.parse(v.version)
+                versions_with_semver.append((v, parsed_version))
             except (ValueError, AttributeError):
                 # If we can't parse the version or version attribute doesn't exist, skip it
                 continue
 
-        # Sort by semantic version (major, minor, patch)
+        # Sort by semantic version (semver objects have built-in comparison)
         if versions_with_semver:
             versions_with_semver.sort(key=itemgetter(1), reverse=True)
             # Return just the version objects, not the tuples
