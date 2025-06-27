@@ -183,7 +183,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, 
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: running" in normalize_output(describe_result.stdout)
+    assert "Status: RUNNING" in normalize_output(describe_result.stdout)
 
     # Test the download command spots the run is still running
     download_result = runner.invoke(
@@ -202,7 +202,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, 
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: canceled_user" in normalize_output(describe_result.stdout)
+    assert "Status: CANCELED_USER" in normalize_output(describe_result.stdout)
 
     download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, str(tmp_path)])
     assert download_result.exit_code == 0
