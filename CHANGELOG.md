@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.73](https://github.com/aignostics/python-sdk/compare/v0.2.72..0.2.73) - 2025-06-27
+# [0.2.74](https://github.com/aignostics/python-sdk/compare/v0.2.73..0.2.74) - 2025-06-27
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application,platform)* Test with v1.0.0-beta.4 of HETA - ([e112b0c](https://github.com/aignostics/python-sdk/commit/e112b0c8de692d17f916cc5219a5024343e56a73))
+
+
+# [v0.2.73](https://github.com/aignostics/python-sdk/compare/v0.2.72..v0.2.73) - 2025-06-27
 
 ### 🐛 Bug Fixes
 
