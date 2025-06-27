@@ -1,6 +1,20 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.72](https://github.com/aignostics/python-sdk/compare/v0.2.71..0.2.72) - 2025-06-25
+# [0.2.73](https://github.com/aignostics/python-sdk/compare/v0.2.72..0.2.73) - 2025-06-27
+
+### 🐛 Bug Fixes
+
+- ⚡️ Use SemVer to check for application ids in launchpad ([#56](https://github.com/orhun/git-cliff/issues/56)) - ([1ee2f76](https://github.com/aignostics/python-sdk/commit/1ee2f768a1985082882c2d8c77c4bb32ed621d7f))
+
+### 🚜 Refactor
+
+- *(application)* Introduce service tests - ([b41f8e8](https://github.com/aignostics/python-sdk/commit/b41f8e8fb387e8de5f69765b0c2cecd6711cb3e8))
+
+
+
+* @ari-nz made their first contribution in [#56](https://github.com/aignostics/python-sdk/pull/56)
+
+# [v0.2.72](https://github.com/aignostics/python-sdk/compare/v0.2.71..v0.2.72) - 2025-06-25
 
 ### ⚙️ Miscellaneous Tasks
 
