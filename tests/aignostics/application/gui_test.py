@@ -18,7 +18,7 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 
 logger = get_logger(__name__)
 
-HETA_APPLICATION_VERSION_ID = "he-tme:v0.51.0"
+HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
 HETA_APPLICATION_ID = "he-tme"
 
 
