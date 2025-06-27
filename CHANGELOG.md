@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.74](https://github.com/aignostics/python-sdk/compare/v0.2.73..0.2.74) - 2025-06-27
+# [0.2.75](https://github.com/aignostics/python-sdk/compare/v0.2.74..0.2.75) - 2025-06-27
+
+### ⚙️ Miscellaneous Tasks
+
+- *(platform)* Allow long running tests for 4h, bump of signed url expire accordingly - ([9808e97](https://github.com/aignostics/python-sdk/commit/9808e97c14e01af23d2ebde1cba93686d90f8881))
+
+
+# [v0.2.74](https://github.com/aignostics/python-sdk/compare/v0.2.73..v0.2.74) - 2025-06-27
 
 ### ⚙️ Miscellaneous Tasks
 
