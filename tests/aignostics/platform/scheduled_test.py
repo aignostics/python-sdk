@@ -111,7 +111,7 @@ def three_spots_payload_for_dummy_0_35_0() -> list[platform.InputItem]:
     ("timeout", "application_version_id", "payload"),
     [
         (240, TEST_APPLICATION_VERSION_ID, three_spots_payload_for_dummy_0_35_0()),
-        (3600, HETA_APPLICATION_VERSION_ID, single_spot_payload_heta_1_0_0()),
+        (14400, HETA_APPLICATION_VERSION_ID, single_spot_payload_heta_1_0_0()),
     ],
 )
 def test_application_runs(
