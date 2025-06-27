@@ -102,11 +102,12 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
         raise ValueError(msg)
 
 
-def generate_signed_url(url: str) -> str:
+def generate_signed_url(url: str, expires_hours: int = 6) -> str:
     """Generates a signed URL for a Google Cloud Storage object.
 
     Args:
         url (str): The fully qualified bucket URL (e.g. gs://bucket/path/to/object).
+        expires_hours (int): The number of hours the signed URL should be valid for.
 
     Returns:
         str: A signed URL that can be used to download the object.
@@ -131,7 +132,9 @@ def generate_signed_url(url: str) -> str:
         msg = f"Blob does not exist: {url}"
         raise ValueError(msg)
 
-    return t.cast("str", blob.generate_signed_url(expiration=datetime.timedelta(hours=1), method="GET", version="v4"))
+    return t.cast(
+        "str", blob.generate_signed_url(expiration=datetime.timedelta(hours=expires_hours), method="GET", version="v4")
+    )
 
 
 def calculate_file_crc32c(file: Path) -> str:
