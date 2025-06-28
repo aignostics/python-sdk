@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.81](https://github.com/aignostics/python-sdk/compare/v0.2.80..0.2.81) - 2025-06-28
+# [0.2.82](https://github.com/aignostics/python-sdk/compare/v0.2.81..0.2.82) - 2025-06-28
+
+### 📚 Documentation
+
+- *(platform)* Description - ([d353ff3](https://github.com/aignostics/python-sdk/commit/d353ff3851984e2870579de95421c344c621aba7))
+
+
+# [v0.2.81](https://github.com/aignostics/python-sdk/compare/v0.2.80..v0.2.81) - 2025-06-28
 
 ### 📚 Documentation
 
