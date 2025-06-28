@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.86](https://github.com/aignostics/python-sdk/compare/v0.2.85..0.2.86) - 2025-06-28
+# [0.2.87](https://github.com/aignostics/python-sdk/compare/v0.2.86..0.2.87) - 2025-06-28
+
+### 🐛 Bug Fixes
+
+- *(dataset)* Missing dependency, while still smaller then pyarrow - ([ff41393](https://github.com/aignostics/python-sdk/commit/ff413933c0c90a98222f731331df8c5e054222ea))
+
+
+# [v0.2.86](https://github.com/aignostics/python-sdk/compare/v0.2.85..v0.2.86) - 2025-06-28
 
 ### 🚜 Refactor
 
