@@ -16,7 +16,9 @@ from aignostics import platform
 from aignostics.platform.resources.runs import ApplicationRun
 
 TEST_APPLICATION_VERSION_ID = "test-app:v0.0.1"
+TEST_APPLICATION_TIMEOUT_SECONDS = 10 * 60  # 10 minutes
 HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
+HETA_APPLICATION_TIMEOUT_SECONDS = 6 * 60 * 60  # 6 hours
 
 
 def single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
@@ -28,7 +30,8 @@ def single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="user_slide",
                     download_url=platform.generate_signed_url(
-                        "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
+                        "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
+                        TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "5onqtA==",
@@ -57,7 +60,8 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="user_slide",
                     download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+                        "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+                        HETA_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
                         "checksum_crc32c": "9l3NNQ==",
@@ -74,7 +78,8 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="user_slide",
                     download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
+                        "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
+                        HETA_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
                         "checksum_crc32c": "w+ud3g==",
@@ -91,7 +96,8 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="user_slide",
                     download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
+                        "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
+                        HETA_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
                         "checksum_crc32c": "Zmx0wA==",
@@ -110,8 +116,18 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
 @pytest.mark.parametrize(
     ("timeout", "application_version_id", "payload"),
     [
-        (240, TEST_APPLICATION_VERSION_ID, three_spots_payload_for_test_v0_0_1(), "checksum_crc32c"),
-        (14400, HETA_APPLICATION_VERSION_ID, single_spot_payload_for_heta_v1_0_0(), "checksum_base64_crc32c"),
+        (
+            TEST_APPLICATION_TIMEOUT_SECONDS,
+            TEST_APPLICATION_VERSION_ID,
+            three_spots_payload_for_test_v0_0_1(),
+            "checksum_crc32c",
+        ),
+        (
+            HETA_APPLICATION_TIMEOUT_SECONDS,
+            HETA_APPLICATION_VERSION_ID,
+            single_spot_payload_for_heta_v1_0_0(),
+            "checksum_base64_crc32c",
+        ),
     ],
 )
 def test_application_runs(

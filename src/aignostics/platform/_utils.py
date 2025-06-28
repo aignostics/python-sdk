@@ -26,6 +26,7 @@ from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtif
 from tqdm.auto import tqdm
 
 EIGHT_MB = 8_388_608
+SIGNED_DOWNLOAD_URL_EXPIRES_SECONDS_DEFAULT = 6 * 60 * 60  # 6 hours
 
 
 def mime_type_to_file_ending(mime_type: str) -> str:
@@ -71,7 +72,6 @@ def get_mime_type_for_artifact(artifact: OutputArtifactData | InputArtifactData 
     return str(metadata.get("media_type", metadata.get("mime_type", "application/octet-stream")))
 
 
-# TODO(Andreas,Helmut): discuss
 def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None:
     """Downloads a file from a signed URL and verifies its integrity.
 
@@ -102,12 +102,12 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
         raise ValueError(msg)
 
 
-def generate_signed_url(url: str, expires_hours: int = 6) -> str:
+def generate_signed_url(url: str, expires_seconds: int = SIGNED_DOWNLOAD_URL_EXPIRES_SECONDS_DEFAULT) -> str:
     """Generates a signed URL for a Google Cloud Storage object.
 
     Args:
         url (str): The fully qualified bucket URL (e.g. gs://bucket/path/to/object).
-        expires_hours (int): The number of hours the signed URL should be valid for.
+        expires_seconds (int): The number of seconds the signed URL should be valid for.
 
     Returns:
         str: A signed URL that can be used to download the object.
@@ -133,7 +133,8 @@ def generate_signed_url(url: str, expires_hours: int = 6) -> str:
         raise ValueError(msg)
 
     return t.cast(
-        "str", blob.generate_signed_url(expiration=datetime.timedelta(hours=expires_hours), method="GET", version="v4")
+        "str",
+        blob.generate_signed_url(expiration=datetime.timedelta(seconds=expires_seconds), method="GET", version="v4"),
     )
 
 
