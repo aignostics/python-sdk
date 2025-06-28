@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.83](https://github.com/aignostics/python-sdk/compare/v0.2.82..0.2.83) - 2025-06-28
+# [0.2.84](https://github.com/aignostics/python-sdk/compare/v0.2.83..0.2.84) - 2025-06-28
+
+### ⚙️ Miscellaneous Tasks
+
+- *(platform)* Give test application more time in tests - ([5a03f74](https://github.com/aignostics/python-sdk/commit/5a03f742479a9ec703be048c25a527e0ee43ade3))
+
+
+# [v0.2.83](https://github.com/aignostics/python-sdk/compare/v0.2.82..v0.2.83) - 2025-06-28
 
 ### 📚 Documentation
 
