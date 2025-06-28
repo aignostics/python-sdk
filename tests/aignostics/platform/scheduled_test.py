@@ -19,7 +19,7 @@ TEST_APPLICATION_VERSION_ID = "test-app:v0.0.1"
 HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
 
 
-def single_spot_payload_heta_1_0_0() -> list[platform.InputItem]:
+def single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
         platform.InputItem(
@@ -111,7 +111,7 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
     ("timeout", "application_version_id", "payload"),
     [
         (240, TEST_APPLICATION_VERSION_ID, three_spots_payload_for_test_v0_0_1()),
-        (14400, HETA_APPLICATION_VERSION_ID, single_spot_payload_heta_1_0_0()),
+        (14400, HETA_APPLICATION_VERSION_ID, single_spot_payload_for_heta_v1_0_0()),
     ],
 )
 def test_application_runs(
@@ -172,6 +172,6 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
             file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), f"Artifact {artifact} was not downloaded"
-            checksum = artifact.metadata["checksum_crc32c"]
+            checksum = artifact.metadata["checksum_base64_crc32c"]
             file_checksum = platform.calculate_file_crc32c(file_path)
             assert file_checksum == checksum, f"Metadata checksum != file checksum {checksum} <> {file_checksum}"
