@@ -114,7 +114,7 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
 @pytest.mark.scheduled
 @pytest.mark.long_running
 @pytest.mark.parametrize(
-    ("timeout", "application_version_id", "payload"),
+    ("timeout", "application_version_id", "payload", "checksum_attribute_key"),
     [
         (
             TEST_APPLICATION_TIMEOUT_SECONDS,
