@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.76](https://github.com/aignostics/python-sdk/compare/v0.2.75..0.2.76) - 2025-06-27
+# [0.2.77](https://github.com/aignostics/python-sdk/compare/v0.2.76..0.2.77) - 2025-06-28
+
+### ⚙️ Miscellaneous Tasks
+
+- *(platform)* Adapt test to app versions - ([873640e](https://github.com/aignostics/python-sdk/commit/873640eb4d2cd026f9438a3cdc90afdc6aa1f231))
+
+
+# [v0.2.76](https://github.com/aignostics/python-sdk/compare/v0.2.75..v0.2.76) - 2025-06-27
 
 ### ⚙️ Miscellaneous Tasks
 

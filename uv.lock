@@ -18,7 +18,7 @@ overrides = [
 
 [[package]]
 name = "aignostics"
-version = "0.2.76"
+version = "0.2.77"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
