@@ -98,6 +98,7 @@ dependencies = [
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "duckdb>=0.10.0,<=1.4.0",
+    "fastparquet>=2024.11.0",
     "google-cloud-storage>=3.1.1",
     "google-crc32c>=1.7.1",
     "highdicom>=0.25.1",
