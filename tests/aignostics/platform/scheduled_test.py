@@ -110,12 +110,16 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
 @pytest.mark.parametrize(
     ("timeout", "application_version_id", "payload"),
     [
-        (240, TEST_APPLICATION_VERSION_ID, three_spots_payload_for_test_v0_0_1()),
-        (14400, HETA_APPLICATION_VERSION_ID, single_spot_payload_for_heta_v1_0_0()),
+        (240, TEST_APPLICATION_VERSION_ID, three_spots_payload_for_test_v0_0_1(), "checksum_crc32c"),
+        (14400, HETA_APPLICATION_VERSION_ID, single_spot_payload_for_heta_v1_0_0(), "checksum_base64_crc32c"),
     ],
 )
 def test_application_runs(
-    timeout: int, application_version_id: str, payload: list[platform.InputItem], request: FixtureRequest
+    timeout: int,
+    application_version_id: str,
+    payload: list[platform.InputItem],
+    checksum_attribute_key: str,
+    request: FixtureRequest,
 ) -> None:
     """Test application runs.
 
@@ -127,6 +131,7 @@ def test_application_runs(
         timeout (int): Timeout for the test in seconds.
         application_version_id (str): The application version ID to use for the test.
         payload (list[ItemCreationRequest]): The payload to use for the application run.
+        checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
         request (FixtureRequest): The pytest request object.
 
     Raises:
@@ -140,10 +145,12 @@ def test_application_runs(
     with tempfile.TemporaryDirectory() as temp_dir:
         application_run.download_to_folder(temp_dir)
         # validate the output
-        _validate_output(application_run, Path(temp_dir))
+        _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
 
-def _validate_output(application_run: ApplicationRun, output_base_folder: Path) -> None:
+def _validate_output(
+    application_run: ApplicationRun, output_base_folder: Path, checksum_attribute_key: str = "checksum_base64_crc32c"
+) -> None:
     """Validate the output of an application run.
 
     This function checks if the application run has completed successfully and verifies the output artifact checksum
@@ -151,6 +158,7 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
     Args:
         application_run (ApplicationRun): The application run to validate.
         output_base_folder (Path): The base folder where the output is stored.
+        checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
     assert application_run.details().status == ApplicationRunStatus.COMPLETED, (
         "Application run did not finish in completed status"
@@ -172,6 +180,6 @@ def _validate_output(application_run: ApplicationRun, output_base_folder: Path) 
             file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), f"Artifact {artifact} was not downloaded"
-            checksum = artifact.metadata["checksum_base64_crc32c"]
+            checksum = artifact.metadata[checksum_attribute_key]
             file_checksum = platform.calculate_file_crc32c(file_path)
             assert file_checksum == checksum, f"Metadata checksum != file checksum {checksum} <> {file_checksum}"
