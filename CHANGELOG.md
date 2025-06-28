@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.85](https://github.com/aignostics/python-sdk/compare/v0.2.84..0.2.85) - 2025-06-28
+# [0.2.86](https://github.com/aignostics/python-sdk/compare/v0.2.85..0.2.86) - 2025-06-28
+
+### 🚜 Refactor
+
+- *(logging)* Revert to cwd for logfile - ([e5c235c](https://github.com/aignostics/python-sdk/commit/e5c235c01456067a14ad03046d40b940e32058ce))
+
+
+# [v0.2.85](https://github.com/aignostics/python-sdk/compare/v0.2.84..v0.2.85) - 2025-06-28
 
 ### 🚜 Refactor
 
