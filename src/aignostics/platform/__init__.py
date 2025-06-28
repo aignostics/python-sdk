@@ -1,9 +1,13 @@
-"""
-This module provides the main client interface for interacting with Aignostics services.
+"""This module provides the low-level client interface for interacting with the API of the Aignostics Platform.
 
-It offers functionality for authentication, data management, and API operations.
-The primary class in this module is the `Client` class, which serves as the entry point
-for all interactions with the Aignostics platform.
+The primary class in this module is the `Client` class, serving as the entry point
+for authenticated API operations. Login and token management are handled
+automatically.
+
+Further operations are encapsulated in the `Service` class, which provides methods
+for manual login, logout and getting information about the authenticated user.
+
+Higher level abstractions are provided in the application module.
 """
 
 from aignx.codegen.exceptions import ApiException, NotFoundException

@@ -214,20 +214,6 @@ class Service(BaseService):
         )
 
     @staticmethod
-    def logout() -> bool:
-        """Logout if authenticated.
-
-        Deletes the cached authentication token if existing.
-
-        Returns:
-            bool: True if successfully logged out, False if not logged in.
-        """
-        logger.debug("Logging out...")
-        rtn = remove_cached_token()
-        logger.debug("Logout successful: %s", rtn)
-        return rtn
-
-    @staticmethod
     def login(relogin: bool = False) -> bool:
         """Login.
 
@@ -246,6 +232,20 @@ class Service(BaseService):
             message = f"Error during login: {e!s}"
             logger.exception(message)
             return False
+
+    @staticmethod
+    def logout() -> bool:
+        """Logout if authenticated.
+
+        Deletes the cached authentication token if existing.
+
+        Returns:
+            bool: True if successfully logged out, False if not logged in.
+        """
+        logger.debug("Logging out...")
+        rtn = remove_cached_token()
+        logger.debug("Logout successful: %s", rtn)
+        return rtn
 
     @staticmethod
     def get_user_info(relogin: bool = False) -> UserInfo | None:
