@@ -10,7 +10,7 @@ from typing import Annotated, Literal
 
 import appdirs
 import click
-from pydantic import AfterValidator, Field
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
 from rich.logging import RichHandler
@@ -96,7 +96,6 @@ class LogSettings(BaseSettings):
     ]
     file_name: Annotated[
         str,
-        AfterValidator(_validate_file_name),
         Field(
             description="Name of the log file",
             default="/dev/stdout"
@@ -108,6 +107,24 @@ class LogSettings(BaseSettings):
         bool,
         Field(description="Enable logging to console", default=False),
     ]
+
+    @field_validator("file_name")
+    @classmethod
+    def validate_file_name_when_enabled(cls, file_name: str, info: ValidationInfo) -> str:
+        """
+        Validate file_name only when file_enabled is True.
+
+        Args:
+            file_name: The file name to validate.
+            info: Validation info containing other field values.
+
+        Returns:
+            str: The validated file name.
+        """
+        # Check if file_enabled is True in the provided data
+        if info.data.get("file_enabled", False):
+            _validate_file_name(file_name)
+        return file_name
 
 
 class CustomFilter(LogggingFilter):
