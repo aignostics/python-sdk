@@ -1,6 +1,14 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.84](https://github.com/aignostics/python-sdk/compare/v0.2.83..0.2.84) - 2025-06-28
+# [0.2.85](https://github.com/aignostics/python-sdk/compare/v0.2.84..0.2.85) - 2025-06-28
+
+### 🚜 Refactor
+
+- *(logging)* Use app dir as default for log file - ([e8a8a75](https://github.com/aignostics/python-sdk/commit/e8a8a750d46021fab4affd9c118fdd460a10659b))
+- *(native)* Significantly reduce size and bootup time - ([e8a8a75](https://github.com/aignostics/python-sdk/commit/e8a8a750d46021fab4affd9c118fdd460a10659b))
+
+
+# [v0.2.84](https://github.com/aignostics/python-sdk/compare/v0.2.83..v0.2.84) - 2025-06-28
 
 ### ⚙️ Miscellaneous Tasks
 
