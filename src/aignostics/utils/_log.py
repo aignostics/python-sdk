@@ -8,6 +8,7 @@ from logging import Handler
 from pathlib import Path
 from typing import Annotated, Literal
 
+import appdirs
 import click
 from pydantic import AfterValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -98,7 +99,9 @@ class LogSettings(BaseSettings):
         AfterValidator(_validate_file_name),
         Field(
             description="Name of the log file",
-            default="/dev/stdout" if __is_running_in_read_only_environment__ else f"{__project_name__}.log",
+            default="/dev/stdout"
+            if __is_running_in_read_only_environment__
+            else appdirs.user_data_dir(__project_name__) + f"/{__project_name__}.log",
         ),
     ]
     console_enabled: Annotated[

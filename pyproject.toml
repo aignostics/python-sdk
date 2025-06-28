@@ -113,7 +113,6 @@ dependencies = [
     "pandas<=2.3.0",
     "platformdirs>=4.3.8",
     "psutil>=7.0.0",
-    "pyarrow>=20.0.0",
     "pyjwt[crypto]>=2.10.1",
     "python-dateutil>=2.9.0.post0",
     # "pywebview[qt6]>=5.4; sys_platform == 'linux'",
@@ -130,10 +129,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+pyinstaller = ["pyinstaller>=6.14.0"]
 jupyter = ["jupyter>=1.1.1"]
 marimo = [
     "cloudpathlib>=0.21.1",
-    "marimo>=0.14.0",
+    "marimo>=0.14.9",
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
@@ -147,13 +147,11 @@ dev = [
     "enum-tools>=0.13.0",
     "furo>=2024.8.6",
     "git-cliff>=2.9.1",
-    "matplotlib>=3.10.1",
-    "mypy>=1.16.0",
+    "mypy>=1.16.1",
     "nox[uv]>=2025.5.1",
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.1.0",
-    "pyinstaller>=6.14.0",
     "pyright>=1.1.402",
     "pytest>=8.4.1",
     "pytest-asyncio>=1.0.0",

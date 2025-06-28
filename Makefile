@@ -82,8 +82,8 @@ profile:
 
 # Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
 dist_native:
-	uv sync --no-dev --all-extras
-	uv run pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
+	uv sync --no-dev --extra pyinstaller --extra qupath --extra marimo
+	uv run --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
 	uv sync --all-extras
 
 # Project specific targets

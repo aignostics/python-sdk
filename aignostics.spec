@@ -4,9 +4,9 @@ from PyInstaller.utils.hooks import collect_all
 from PyInstaller.utils.hooks import copy_metadata
 
 # Build
-## uv run pyi-makespec --windowed --onedir --recursive-copy-metadata="aignostics" --collect-all="nicegui" --collect-all="aignostics" --collect-data="idc_index_data" --name="aignostics" --osx-bundle-identifier com.aignostics.launchpad --icon logo.ico --hidden-import pythonnet src/aignostics.py
+## uv run pyi-makespec --windowed --onedir --copy-metadata="aignostics" --collect-all="nicegui" --collect-all="aignostics" --collect-data="idc_index_data" --name="aignostics" --osx-bundle-identifier com.aignostics.launchpad --icon logo.ico --hidden-import pythonnet src/aignostics.py
 ## Inject
-## uv run pyinstaller --distpath dist/macOS --workpath build/macOS --clean aignostics.spec
+## make dist_native
 
 # START INJECTED
 import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
@@ -16,7 +16,7 @@ datas = []
 binaries = []
 hiddenimports = ['pythonnet']
 datas += collect_data_files('idc_index_data')
-datas += copy_metadata('aignostics', recursive=True)
+datas += copy_metadata('aignostics', recursive=False)
 tmp_ret = collect_all('nicegui')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('aignostics')
@@ -33,8 +33,8 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    noarchive=False,
-    optimize=0,
+    noarchive=True,
+    optimize=2,
 )
 pyz = PYZ(a.pure)
 
@@ -60,7 +60,7 @@ coll = COLLECT(
     exe,
     a.binaries,
     a.datas,
-    strip=False,
+    strip=True,
     upx=True,
     upx_exclude=[],
     name='aignostics',
@@ -70,5 +70,10 @@ app = BUNDLE(
     name='aignostics.app',
     icon='logo.ico',
     bundle_identifier='com.aignostics.launchpad',
-    version='0.2.84'
+    version='0.2.84',
+    info_plist={
+        'NSPrincipalClass': 'NSApplication',
+        'NSAppleScriptEnabled': False,
+        'CFBundleDocumentTypes': []
+    },
 )
