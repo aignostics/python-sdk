@@ -128,13 +128,16 @@ class ApplicationRun:
             application_run_id=self.application_run_id,
         )
 
-    def download_to_folder(self, download_base: Path | str) -> None:
+    def download_to_folder(
+        self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c"
+    ) -> None:
         """Downloads all result artifacts to a folder.
 
         Monitors run progress and downloads results as they become available.
 
         Args:
             download_base (Path | str): Base directory to download results to.
+            checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
         Raises:
             ValueError: If the provided path is not a directory.
@@ -152,7 +155,7 @@ class ApplicationRun:
         while application_run_status == ApplicationRunStatus.RUNNING:
             for item in self.results():
                 if item.status == ItemStatus.SUCCEEDED:
-                    self.ensure_artifacts_downloaded(application_run_dir, item)
+                    self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
             sleep(5)
             application_run_status = self.details().status
             print(self)
@@ -161,12 +164,14 @@ class ApplicationRun:
         for item in self.results():
             match item.status:
                 case ItemStatus.SUCCEEDED:
-                    self.ensure_artifacts_downloaded(application_run_dir, item)
+                    self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 case ItemStatus.ERROR_SYSTEM | ItemStatus.ERROR_USER:
                     print(f"{item.reference} failed with {item.status.value}: {item.error}")
 
     @staticmethod
-    def ensure_artifacts_downloaded(base_folder: Path, item: ItemResultReadResponse) -> None:
+    def ensure_artifacts_downloaded(
+        base_folder: Path, item: ItemResultReadResponse, checksum_attribute_key: str = "checksum_base64_crc32c"
+    ) -> None:
         """Ensures all artifacts for an item are downloaded.
 
         Downloads missing or partially downloaded artifacts and verifies their integrity.
@@ -174,6 +179,7 @@ class ApplicationRun:
         Args:
             base_folder (Path): Base directory to download artifacts to.
             item (ItemResultReadResponse): The item result containing the artifacts to download.
+            checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
         Raises:
             ValueError: If checksums don't match.
@@ -187,7 +193,7 @@ class ApplicationRun:
                 item_dir.mkdir(exist_ok=True, parents=True)
                 file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
                 file_path = item_dir / f"{artifact.name}{file_ending}"
-                checksum = artifact.metadata["checksum_crc32c"]
+                checksum = artifact.metadata[checksum_attribute_key]
 
                 if file_path.exists():
                     file_checksum = calculate_file_crc32c(file_path)

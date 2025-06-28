@@ -159,7 +159,7 @@ def test_application_runs(
     application_run = client.runs.create(application_version_id, items=payload)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        application_run.download_to_folder(temp_dir)
+        application_run.download_to_folder(temp_dir, checksum_attribute_key)
         # validate the output
         _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
