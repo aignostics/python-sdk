@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.78](https://github.com/aignostics/python-sdk/compare/v0.2.77..0.2.78) - 2025-06-28
+# [0.2.79](https://github.com/aignostics/python-sdk/compare/v0.2.78..0.2.79) - 2025-06-28
+
+### 🚜 Refactor
+
+- *(platform)* Test timeout/expires - ([7ab1e75](https://github.com/aignostics/python-sdk/commit/7ab1e75237ec3195a5fc82c40e5ea4439a2722ac))
+
+
+# [v0.2.78](https://github.com/aignostics/python-sdk/compare/v0.2.77..v0.2.78) - 2025-06-28
 
 ### ⚙️ Miscellaneous Tasks
 
