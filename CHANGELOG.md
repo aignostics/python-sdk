@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.90](https://github.com/aignostics/python-sdk/compare/v0.2.89..0.2.90) - 2025-06-29
+# [0.2.91](https://github.com/aignostics/python-sdk/compare/v0.2.90..0.2.91) - 2025-06-29
+
+### 🚜 Refactor
+
+- *(application)* Consistent exception logging and raising - ([2f2acfb](https://github.com/aignostics/python-sdk/commit/2f2acfba3e9aaf95b6037661b44ba1ecec5c0609))
+
+
+# [v0.2.90](https://github.com/aignostics/python-sdk/compare/v0.2.89..v0.2.90) - 2025-06-29
 
 ### ⚙️ Miscellaneous Tasks
 
