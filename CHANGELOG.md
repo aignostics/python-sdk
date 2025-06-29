@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.88](https://github.com/aignostics/python-sdk/compare/v0.2.87..0.2.88) - 2025-06-29
+# [0.2.89](https://github.com/aignostics/python-sdk/compare/v0.2.88..0.2.89) - 2025-06-29
+
+### ⚙️ Miscellaneous Tasks
+
+- Run hooks - ([3c888ad](https://github.com/aignostics/python-sdk/commit/3c888ad07b9add48d0df0610bd4426feb51e8574))
+
+
+# [v0.2.88](https://github.com/aignostics/python-sdk/compare/v0.2.87..v0.2.88) - 2025-06-29
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -704,3 +711,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
