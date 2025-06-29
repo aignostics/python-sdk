@@ -241,9 +241,18 @@ class Service(BaseService):
 
         Raises:
             NotFoundException: If the application with the given ID is not found.
-            Exception: If the application cannot be retrieved.
+            RuntimeError: If the application cannot be retrieved unexpectedly.
         """
-        return self._get_platform_client().application(application_id)
+        try:
+            return self._get_platform_client().application(application_id)
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     def application_version(
         self, application_version_id: str, use_latest_if_no_version_given: bool = False
@@ -260,7 +269,7 @@ class Service(BaseService):
         Raises:
             ValueError: If the application version ID is invalid.
             NotFoundException: If the application with the given ID is not found.
-            Exception: If the application cannot be retrieved.
+            RuntimeError: If the application cannot be retrieved unexpectedly.
         """
         # Validate format: application_id:vX.Y.Z (where X.Y.Z is a semver)
         # This checks for proper format like "he-tme:v0.50.0" where "he-tme" is the application id
@@ -299,9 +308,19 @@ class Service(BaseService):
             list[ApplicationVersion]: A list of all application versions.
 
         Raises:
-            Exception: If version list cannot be retrieved
+            NotFoundException: If the application with the given ID is not found.
+            RuntimeError: If version list cannot be retrieved unexpectedly.
         """
-        return self._get_platform_client().applications.versions.list_sorted(application=application)
+        try:
+            return self._get_platform_client().applications.versions.list_sorted(application=application)
+        except NotFoundException as e:
+            message = f"Application with ID '{application.application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve application versions for application '{application.application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     def application_version_latest(self, application: Application) -> ApplicationVersion | None:
         """Get a latest application version.
@@ -313,7 +332,8 @@ class Service(BaseService):
             ApplicationVersion | None: A list of all application versions.
 
         Raises:
-            Exception: If version list cannot be retrieved
+            NotFoundException: If the application with the given ID is not found.
+            RuntimeError: If version list cannot be retrieved unexpectedly.
         """
         versions = self.application_versions(application)
         return versions[0] if versions else None
@@ -403,12 +423,14 @@ class Service(BaseService):
             Exception: If the metadata cannot be generated.
 
         Raises:
+            NotFoundError: If the application version with the given ID is not found.
             ValueError: If the source directory does not exist or is not a directory.
+            RuntimeError: If the metadata generation fails unexpectedly.
         """
         logger.debug("Generating metadata from source directory: %s", source_directory)
 
         # TODO(Helmut): Use it
-        application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)  # noqa: F841
+        _ = Service().application_version(application_version_id, use_latest_if_no_version_given=True)
 
         metadata = []
 
@@ -453,17 +475,18 @@ class Service(BaseService):
                             Service._apply_mappings_to_entry(entry, mappings)
 
                         metadata.append(entry)
-                    except Exception:
-                        message = f"Failed to process file '{file_path}'"
-                        logger.exception(message)
+                    except Exception as e:  # noqa: BLE001
+                        message = f"Failed to process file '{file_path}': {e}"
+                        logger.warning(message)
                         continue
 
             logger.debug("Generated metadata for %d files", len(metadata))
             return metadata
 
-        except Exception:
-            logger.exception("Failed to generate metadata from source directory: %s", source_directory)
-            raise
+        except Exception as e:
+            message = f"Failed to generate metadata from source directory '{source_directory}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     @staticmethod
     def application_run_upload(
@@ -485,6 +508,11 @@ class Service(BaseService):
 
         Returns:
             bool: True if the upload was successful, False otherwise.
+
+        Raises:
+            NotFoundException: If the application version with the given ID is not found.
+            RuntimeError: If fetching the application version fails unexpectedly.
+            requests.HTTPError: If the upload fails with an HTTP error.
         """
         import psutil  # noqa: PLC0415
 
@@ -555,6 +583,18 @@ class Service(BaseService):
 
     @staticmethod
     def application_runs_static(limit: int | None = None, completed_only: bool = False) -> list[dict[str, Any]]:
+        """Get a list of all application runs, static variant.
+
+        Args:
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            completed_only (bool): If True, only completed runs are retrieved.
+
+        Returns:
+            list[ApplicationRunData]: A list of all application runs.
+
+        Raises:
+            RuntimeError: If the application run list cannot be retrieved.
+        """
         return [
             {
                 "application_run_id": run.application_run_id,
@@ -580,20 +620,25 @@ class Service(BaseService):
             list[ApplicationRunData]: A list of all application runs.
 
         Raises:
-            Exception: If the application run list cannot be retrieved.
+            RuntimeError: If the application run list cannot be retrieved.
         """
         if limit is not None and limit <= 0:
             return []
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
-        run_iterator = self._get_platform_client().runs.list_data(sort="-triggered_at", page_size=page_size)
-        for run in run_iterator:
-            if status is not None and run.status != status:
-                continue
-            runs.append(run)
-            if limit is not None and len(runs) >= limit:
-                break
-        return runs
+        try:
+            run_iterator = self._get_platform_client().runs.list_data(sort="-triggered_at", page_size=page_size)
+            for run in run_iterator:
+                if status is not None and run.status != status:
+                    continue
+                runs.append(run)
+                if limit is not None and len(runs) >= limit:
+                    break
+            return runs
+        except Exception as e:
+            message = f"Failed to retrieve application runs: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     def application_run(self, run_id: str) -> ApplicationRun:
         """Find a run by its ID.
@@ -605,9 +650,14 @@ class Service(BaseService):
             ApplicationRun: The run that can be fetched using the .details() call.
 
         Raises:
-            Exception: If initializing the client fails.
+            RuntimeError: If initializing the client fails or the run cannot be retrieved.
         """
-        return self._get_platform_client().run(run_id)
+        try:
+            return self._get_platform_client().run(run_id)
+        except Exception as e:
+            message = f"Failed to retrieve application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     def application_run_submit_from_metadata(
         self, application_version_id: str, metadata: list[dict[str, Any]]
@@ -623,8 +673,10 @@ class Service(BaseService):
             ApplicationRun: The submitted run.
 
         Raises:
-            ValueError: If platform bucket URL is missing or has unsupported protocol.
-            Exception: If submitting the run failed unexpectedly.
+            NotFoundException: If the application version with the given ID is not found.
+            ValueError: If platform bucket URL is missing or has unsupported protocol,
+                or if the application version ID is invalid.
+            RuntimeError: If submitting the run failed unexpectedly.
         """
         logger.debug("Submitting application run with metadata: %s", metadata)
         items = []
@@ -677,9 +729,14 @@ class Service(BaseService):
                 "Submitted application run with items: %s, application run id %s", items, run.application_run_id
             )
             return run
-        except Exception:
-            logger.exception("Failed to submit application run.")
-            raise
+        except ValueError as e:
+            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except Exception as e:
+            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     def application_run_submit(self, application_version_id: str, items: list[InputItem]) -> ApplicationRun:
         """Submit a run for the given application.
@@ -692,9 +749,20 @@ class Service(BaseService):
             ApplicationRun: The submitted run.
 
         Raises:
-            Exception: If submitting the run failed unexpectedly.
+            NotFoundException: If the application version with the given ID is not found.
+            ValueError: If the application version ID is invalid or items invalid.
+            RuntimeError: If submitting the run failed unexpectedly.
         """
-        return self._get_platform_client().runs.create(application_version=application_version_id, items=items)
+        try:
+            return self._get_platform_client().runs.create(application_version=application_version_id, items=items)
+        except ValueError as e:
+            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except Exception as e:
+            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     def application_run_cancel(self, run_id: str) -> None:
         """Cancel a run by its ID.
@@ -706,9 +774,24 @@ class Service(BaseService):
             Exception: If the client cannot be created.
 
         Raises:
-            Exception: If canceling the run failed unexpectedly.
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid or the run cannot be canceled given its current status.
+            RuntimeError: If canceling the run fails unexpectedly.
         """
-        self.application_run(run_id).cancel()
+        try:
+            self.application_run(run_id).cancel()
+        except ValueError as e:
+            message = f"Failed to cancel application run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to cancel application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
 
     @staticmethod
     def application_run_download_static(  # noqa: PLR0913, PLR0917
@@ -720,6 +803,30 @@ class Service(BaseService):
         qupath_project: bool = False,
         download_progress_queue: Any | None = None,  # noqa: ANN401
     ) -> Path:
+        """Download application run results with progress tracking, static variant.
+
+        Args:
+            run_id (str): The ID of the application run to download.
+            destination_directory (Path): Directory to save downloaded files.
+            create_subdirectory_for_run (bool): Whether to create a subdirectory for the run.
+            create_subdirectory_per_item (bool): Whether to create a subdirectory for each item,
+                if not set, all items will be downloaded to the same directory but prefixed
+                with the item reference and underscore.
+            wait_for_completion (bool): Whether to wait for run completion. Defaults to True.
+            qupath_project (bool): If True, create QuPath project referencing input slides and results.
+                This requires QuPath to be installed. The QuPath project will be created in a subfolder
+                of the destination directory.
+            download_progress_queue (Queue | None): Queue for GUI progress updates.
+
+        Returns:
+            Path: The directory containing downloaded results.
+
+        Raises:
+            ValueError: If the run ID is invalid or destination directory cannot be created.
+            NotFoundException: If the application run with the given ID is not found.
+            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
+            requests.HTTPError: If the download fails with an HTTP error.
+        """
         return Service().application_run_download(
             run_id,
             destination_directory,
@@ -763,8 +870,9 @@ class Service(BaseService):
 
         Raises:
             ValueError: If the run ID is invalid or destination directory cannot be created.
-            RuntimeError: If run details cannot be retrieved or download fails.
-            Exception: If run cannot be retrieved, destination directory cannot be created, or download fails.
+            NotFoundException: If the application run with the given ID is not found.
+            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
+            requests.HTTPError: If the download fails with an HTTP error.
         """
         if qupath_project and not has_qupath_extra:
             message = "QuPath project creation requested, but 'qupath' extra is not installed."
@@ -778,6 +886,10 @@ class Service(BaseService):
         final_destination_directory = destination_directory
         try:
             details = application_run.details()
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
         except ApiException as e:
             if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:  # Don't use UNPROCESSABLE_CONTENT
                 message = f"Run ID '{run_id}' invalid: {e!s}."
