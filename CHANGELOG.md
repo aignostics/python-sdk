@@ -1,6 +1,14 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.87](https://github.com/aignostics/python-sdk/compare/v0.2.86..0.2.87) - 2025-06-28
+# [0.2.88](https://github.com/aignostics/python-sdk/compare/v0.2.87..0.2.88) - 2025-06-29
+
+### ⚙️ Miscellaneous Tasks
+
+- *(native)* Only distribute aignostics.app bundle for MacOS - ([82a085b](https://github.com/aignostics/python-sdk/commit/82a085bd0cc32ef4afe372f28589bb9974da11fe))
+- *(native)* 7z, to preserve attributes - ([82a085b](https://github.com/aignostics/python-sdk/commit/82a085bd0cc32ef4afe372f28589bb9974da11fe))
+
+
+# [v0.2.87](https://github.com/aignostics/python-sdk/compare/v0.2.86..v0.2.87) - 2025-06-28
 
 ### 🐛 Bug Fixes
 
