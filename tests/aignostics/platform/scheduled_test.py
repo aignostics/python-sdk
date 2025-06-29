@@ -16,7 +16,7 @@ from aignostics import platform
 from aignostics.platform.resources.runs import ApplicationRun
 
 TEST_APPLICATION_VERSION_ID = "test-app:v0.0.1"
-TEST_APPLICATION_TIMEOUT_SECONDS = 60 * 60  # 1 hour
+TEST_APPLICATION_TIMEOUT_SECONDS = 2 * 60 * 60  # 1 hour
 HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
 HETA_APPLICATION_TIMEOUT_SECONDS = 6 * 60 * 60  # 6 hours
 
