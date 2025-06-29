@@ -72,7 +72,7 @@ jobs:
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:
           name: dist_native-${{ matrix.runner }}
-          path: dist_native/
+          path: dist_native/aignostics.7z
           retention-days: 1
 
   package_publish:
@@ -108,14 +108,23 @@ jobs:
       - name: Create zip archives for native executables
         shell: bash
         run: |
+          VERSION=$(cat VERSION | tr -d '\n')
           mkdir -p dist_native_zipped/
           cd dist_native_all/
           for dir in */; do
             if [ -d "$dir" ]; then
               platform_name=${dir%/}
-              echo "Creating zip for platform: $platform_name"
+              echo "Processing platform: $platform_name"
               cd "$dir"
-              zip -r "../../dist_native_zipped/$platform_name.zip" .
+              if [ -f "aignostics.7z" ]; then
+                echo "Extracting aignostics.7z for $platform_name"
+                7z x aignostics.7z -o"extracted/"
+                cd extracted/
+                zip -ryX "../../../dist_native_zipped/aignostics-$VERSION-$platform_name.zip" .
+                cd ..
+              else
+                echo "Warning: aignostics.7z not found in $platform_name"
+              fi
               cd ..
             fi
           done

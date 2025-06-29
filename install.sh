@@ -53,6 +53,7 @@ BREW_TOOLS=(
     "trivy;trivy;https://trivy.dev/latest/;"
     "uv;uv;https://docs.astral.sh/uv/;local"
     "xmllint;libxml2;https://en.wikipedia.org/wiki/Libxml2;"
+    "7z;p7zip;https://github.com/p7zip-project/p7zip;"
 )
 
 MAC_BREW_TOOLS=(

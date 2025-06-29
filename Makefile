@@ -83,8 +83,21 @@ profile:
 # Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
 dist_native:
 	uv sync --no-dev --extra pyinstaller --extra qupath --extra marimo
-	uv run --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
+	uv run pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
 	uv sync --all-extras
+	# Create 7z archive preserving symlinks
+	@if command -v 7z >/dev/null 2>&1; then \
+		cd dist_native; \
+		if [ "$$(uname)" = "Darwin" ] && [ -d "aignostics.app" ]; then \
+			echo "Creating 7z archive for macOS app bundle..."; \
+			7z a -t7z -mx=9 -mqs=on aignostics.7z aignostics.app/; \
+		else \
+			echo "Creating 7z archive of dist_native contents..."; \
+			7z a -t7z -mx=9 -mqs=on aignostics.7z . -x!aignostics.7z; \
+		fi; \
+	else \
+		echo "Warning: 7z not available, skipping archive creation"; \
+	fi
 
 # Project specific targets
 ## codegen
