@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "0.2.92"
+version = "0.2.93"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -352,7 +352,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "0.2.92"
+current_version = "0.2.93"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
