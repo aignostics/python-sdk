@@ -290,14 +290,12 @@ def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path)
 
 
 def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Path) -> None:
-    """Check run result download fails on uuid not found."""
+    """Check run result download fails on ID not found."""
     result = runner.invoke(
         cli, ["application", "run", "result", "download", "00000000000000000000000000000000", str(tmp_path)]
     )
-    assert result.exit_code == 1
-    assert "Failed to download results of run with ID '00000000000000000000000000000000'" in result.output.replace(
-        "\n", ""
-    )
+    assert "Run with ID '00000000000000000000000000000000' not found." in result.output.replace("\n", "")
+    assert result.exit_code == 2
 
 
 def test_cli_run_result_delete(runner: CliRunner) -> None:
