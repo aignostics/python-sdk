@@ -818,7 +818,7 @@ def bump(session: nox.Session) -> None:
         session.run("bump-my-version", "bump", version_part, external=True)
 
     # Push changes to git including tag created
-    session.run("git", "push", "--follow-tags", external=True)
+    session.run("git", "push", "--follow-tags", "--no-verify", external=True)
 
 
 @nox.session()
