@@ -318,6 +318,11 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     # start the server
     try:
         with HTTPServer((host, port), OAuthCallbackHandler) as server:
+            # Enable socket reuse to prevent "Address already in use" errors
+            # This allows the socket to be reused immediately after the server closes,
+            # even if the previous connection is in TIME_WAIT state
+            server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
             # Call Auth0 with challenge and redirect to localhost with code after successful authN
             webbrowser.open_new(authorization_url)
             # Extract authorization_code from redirected request, see: OAuthCallbackHandler
@@ -438,6 +443,8 @@ def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_
     def is_port_available() -> bool:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             try:
+                # Enable socket reuse to match the behavior of the actual HTTPServer
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 s.bind(("localhost", port))
                 return True
             except OSError:

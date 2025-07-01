@@ -462,6 +462,50 @@ class TestPortAvailability:
             assert mock_bind.call_count == 4  # Initial attempt + 3 retries
             assert mock_sleep.call_count == 3
 
+    @staticmethod
+    def test_port_availability_uses_socket_reuse() -> None:
+        """Test that _ensure_local_port_is_available uses SO_REUSEADDR socket option."""
+        mock_socket = MagicMock()
+        # Make the mock work as a context manager
+        mock_socket.__enter__ = MagicMock(return_value=mock_socket)
+        mock_socket.__exit__ = MagicMock(return_value=None)
+
+        with patch("socket.socket", return_value=mock_socket):
+            _ensure_local_port_is_available(8000)
+
+            # Verify that SO_REUSEADDR was set
+            mock_socket.setsockopt.assert_called_with(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # Verify bind was attempted
+            mock_socket.bind.assert_called_with(("localhost", 8000))
+
+    @staticmethod
+    def test_authorization_flow_sets_socket_reuse(mock_settings) -> None:
+        """Test that the HTTPServer in authorization flow uses SO_REUSEADDR."""
+        mock_server = MagicMock()
+        mock_socket = MagicMock()
+        mock_server.socket = mock_socket
+
+        # Mock the HTTPServer context manager
+        with (
+            patch("aignostics.platform._authentication.HTTPServer") as mock_http_server,
+            patch("aignostics.platform._authentication._ensure_local_port_is_available", return_value=True),
+            patch("urllib.parse.urlparse") as mock_urlparse,
+            patch("aignostics.platform._authentication.OAuth2Session") as mock_oauth,
+            patch("aignostics.platform._authentication.webbrowser"),
+        ):
+            # Setup mocks
+            mock_urlparse.return_value.hostname = "localhost"
+            mock_urlparse.return_value.port = 8000
+            mock_http_server.return_value.__enter__.return_value = mock_server
+            mock_oauth.return_value.authorization_url.return_value = ("https://test.auth", None)
+
+            # This will fail at the end but we only care about SO_REUSEADDR being set
+            with pytest.raises(RuntimeError):  # Expected due to incomplete auth result
+                _perform_authorization_code_with_pkce_flow()
+
+            # Verify SO_REUSEADDR was set
+            mock_socket.setsockopt.assert_called_with(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
 
 class TestRemoveCachedToken:
     """Test cases for the remove_cached_token function."""
