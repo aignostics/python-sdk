@@ -74,9 +74,9 @@ requires-python = ">=3.11, <4.0"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.115.13",
+    "fastapi[standard,all]>=0.115.14",
     "humanize>=4.12.3",
-    "logfire[system-metrics]>=3.21.1",
+    "logfire[system-metrics]>=3.21.2",
     "nicegui[native]>=2.20.0",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
@@ -89,16 +89,16 @@ dependencies = [
     "packaging>=25.0",
     "platformdirs>=4.3.8",
     "psutil>=7.0.0",
-    "pydantic-settings>=2.9.1",
+    "pydantic-settings>=2.10.1",
     "pywin32>=310 ; sys_platform == 'win32'",
     "pyyaml>=6.0",
-    "sentry-sdk>=2.30.0",
+    "sentry-sdk>=2.32.0",
     "typer>=0.16.0",
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
     "auth0-python>=4.10.0",
-    "boto3>=1.38.39",
+    "boto3>=1.39.0",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "duckdb>=0.10.0,<=1.4.0",
@@ -214,7 +214,8 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "h11>=0.16.0",                      # CVE-2025-43859
     "tornado>=6.5.0",                   # CVE-2025-47287
     "jupyter-core>=5.8.1",              # CVE-2025-30167
-    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182
+    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182,
+    "pillow>=11.3.0",                   # CVE-2025-48379
 ]
 
 [tool.ruff]
