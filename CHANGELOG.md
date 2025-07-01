@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.95](https://github.com/aignostics/python-sdk/compare/v0.2.94..0.2.95) - 2025-07-01
+# [0.2.96](https://github.com/aignostics/python-sdk/compare/v0.2.95..0.2.96) - 2025-07-01
+
+### 🐛 Bug Fixes
+
+- *(platform)* Allow for rapid re-auth - ([b299932](https://github.com/aignostics/python-sdk/commit/b2999322c70e0e7026b2ce185dbfa3e0d129f7af))
+
+
+# [v0.2.95](https://github.com/aignostics/python-sdk/compare/v0.2.94..v0.2.95) - 2025-07-01
 
 ### 🐛 Bug Fixes
 
