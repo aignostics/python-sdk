@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.96](https://github.com/aignostics/python-sdk/compare/v0.2.95..0.2.96) - 2025-07-01
+# [0.2.97](https://github.com/aignostics/python-sdk/compare/v0.2.96..0.2.97) - 2025-07-01
+
+### 🛡️ Security
+
+- *(deps)* Pillow 11.3.0 given CVE-2025-48379 - ([a2c1387](https://github.com/aignostics/python-sdk/commit/a2c1387c71bb6186e41a740e5f5053db18dd0988))
+
+
+# [v0.2.96](https://github.com/aignostics/python-sdk/compare/v0.2.95..v0.2.96) - 2025-07-01
 
 ### 🐛 Bug Fixes
 
