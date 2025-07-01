@@ -24,7 +24,9 @@ async def _page_index(client: Client) -> None:
             app.storage.tab,
             "user_info",
             lambda user_info: (
-                f"Welcome {user_info.profile.given_name if user_info.profile else ''} to the Aignostics Launchpad"
+                f"Welcome "
+                f"{user_info.profile.given_name if hasattr(user_info, 'profile') and user_info.profile else ''} "
+                f"to the Aignostics Launchpad"
             ),
         ).classes("text-4xl mb-2")
         ui.label(

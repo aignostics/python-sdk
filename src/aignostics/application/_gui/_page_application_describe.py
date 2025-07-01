@@ -39,8 +39,7 @@ class SubmitForm:
     metadata_grid: ui.aggrid | None = None
     metadata_exclude_button: ui.button | None = None
     metadata_next_button: ui.button | None = None
-    submission_upload_button: ui.button | None = None
-    submission_submit_button: ui.button | None = None
+    upload_and_submit_button: ui.button | None = None
 
 
 submit_form = SubmitForm()
@@ -376,7 +375,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.metadata_grid.run_grid_method("autoSizeAllColumns")
 
             async def _metadata_next() -> None:
-                if submit_form.metadata_grid is None or submit_form.submission_upload_button is None:
+                if submit_form.metadata_grid is None or submit_form.upload_and_submit_button is None:
                     logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                     return
                 if "pytest" in sys.modules:
@@ -388,7 +387,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 else:
                     submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                 _upload_ui.refresh(submit_form.metadata)
-                submit_form.submission_upload_button.enable()
+                submit_form.upload_and_submit_button.enable()
                 if "pytest" in sys.modules:
                     message = f"Prepared upload UI with metadata '{submit_form.metadata}' for pytest."
                     logger.debug(message)
@@ -568,10 +567,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         async def _upload() -> None:
             """Upload prepared slides."""
             global upload_message_queue  # noqa: PLW0602
-            if submit_form.submission_submit_button is None or submit_form.submission_upload_button is None:
+            if submit_form.upload_and_submit_button is None:
                 logger.error("Submission submit button is not initialized.")
                 return
             ui.notify("Uploading whole slide images to Aignostics Platform ...", type="info")
+            submit_form.upload_and_submit_button.disable()
 
             await nicegui_run.cpu_bound(
                 Service.application_run_upload,
@@ -581,8 +581,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 upload_message_queue,
             )
             ui.notify("Upload to Aignostics Platform completed.", type="positive")
-            submit_form.submission_submit_button.enable()
-            submit_form.submission_upload_button.disable()
             _submit()
 
         @ui.refreshable
@@ -630,12 +628,5 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         "Upload selected slides to Aignostics platform bucket, "
                         "and submit application run when uploaded."
                     )
-                submit_form.submission_upload_button = submission_upload_button
-                submit_form.submission_submit_button = ui.button(
-                    "Submit",
-                    on_click=_submit,
-                    icon="check",
-                )
-                submit_form.submission_submit_button.set_visibility(False)
-                submit_form.submission_submit_button.mark("BUTTON_SUBMISSION_SUBMIT").disable()
+                submit_form.upload_and_submit_button = submission_upload_button
                 ui.button("Back", on_click=stepper.previous).props("flat")

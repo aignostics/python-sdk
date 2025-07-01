@@ -4,6 +4,7 @@ import re
 import tempfile
 from asyncio import sleep
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -15,6 +16,9 @@ from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import get_logger, gui_register_pages
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
+
+if TYPE_CHECKING:
+    from nicegui import ui
 
 logger = get_logger(__name__)
 
@@ -105,7 +109,7 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_loggi
         await user.should_see("status CANCELED_USER", retries=200)
 
 
-@pytest.mark.long_running
+# @pytest.mark.long_running
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
@@ -182,6 +186,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
         user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
         await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...")
+        button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
+        assert not button_submission_upload.enabled, "Upload button should be disabled after click"
         await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=30)
         await assert_notified(user, "Submitting application run ...")
         await assert_notified(user, "Application run submitted with id", wait_seconds=10)
