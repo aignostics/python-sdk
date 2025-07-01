@@ -407,6 +407,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.metadata_grid.update()
                 submit_form.metadata_exclude_button.set_text("Exclude")
                 submit_form.metadata_exclude_button.disable()
+                await _validate()
 
             async def _handle_grid_selection_changed() -> None:
                 if submit_form.metadata_grid is None or submit_form.metadata_exclude_button is None:
