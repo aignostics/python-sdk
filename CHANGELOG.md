@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.97](https://github.com/aignostics/python-sdk/compare/v0.2.96..0.2.97) - 2025-07-01
+# [0.2.98](https://github.com/aignostics/python-sdk/compare/v0.2.97..0.2.98) - 2025-07-01
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Mark test as long running - ([e5a3d9f](https://github.com/aignostics/python-sdk/commit/e5a3d9fe270c37a8ff5812f30909d76fa764fec5))
+
+
+# [v0.2.97](https://github.com/aignostics/python-sdk/compare/v0.2.96..v0.2.97) - 2025-07-01
 
 ### 🛡️ Security
 
