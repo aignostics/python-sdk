@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.94](https://github.com/aignostics/python-sdk/compare/v0.2.93..0.2.94) - 2025-07-01
+# [0.2.95](https://github.com/aignostics/python-sdk/compare/v0.2.94..0.2.95) - 2025-07-01
+
+### 🐛 Bug Fixes
+
+- *(application)* Allow next post excluding slides if remaining slides with valid metadata - ([ee6945b](https://github.com/aignostics/python-sdk/commit/ee6945b8f8013d6ff9779bf9459ade368560256b))
+
+
+# [v0.2.94](https://github.com/aignostics/python-sdk/compare/v0.2.93..v0.2.94) - 2025-07-01
 
 ### ⚙️ Miscellaneous Tasks
 
