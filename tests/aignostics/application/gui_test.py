@@ -109,7 +109,7 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_loggi
         await user.should_see("status CANCELED_USER", retries=200)
 
 
-# @pytest.mark.long_running
+@pytest.mark.long_running
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
