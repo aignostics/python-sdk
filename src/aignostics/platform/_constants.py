@@ -9,14 +9,14 @@ REDIRECT_URI_PRODUCTION = "http://localhost:8989/"
 DEVICE_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/.well-known/jwks.json"
 
-API_ROOT_STAGING = "https://platform-staging.aignostics.com"
+API_ROOT_STAGING = "https://platform-staging.aignostics.ai"
 # TODO (Andreas): hhva: please fill in
-AUDIENCE_STAGING = TODO_URL
-AUTHORIZATION_BASE_URL_STAGING = TODO_URL
-TOKEN_URL_STAGING = TODO_URL
-REDIRECT_URI_STAGING = TODO_URL
-DEVICE_URL_STAGING = TODO_URL
-JWS_JSON_URL_STAGING = TODO_URL
+AUDIENCE_STAGING = "https://aignostics-platform-staging-samia"
+AUTHORIZATION_BASE_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/authorize"
+TOKEN_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/oauth/token"
+REDIRECT_URI_STAGING = "http://localhost:8989/"
+DEVICE_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/oauth/device/code"
+JWS_JSON_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/.well-known/jwks.json"
 
 API_ROOT_DEV = "https://platform-dev.aignostics.com"
 AUDIENCE_DEV = "https://dev-8ouohmmrbuh2h4vu-samia"

@@ -237,7 +237,7 @@ class Settings(OpaqueSettings):
                 values["redirect_uri"] = REDIRECT_URI_PRODUCTION
                 values["device_url"] = DEVICE_URL_PRODUCTION
                 values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
-            case "https://platform-staging.aignostics.com":
+            case "https://platform-staging.aignostics.ai":
                 values["audience"] = AUDIENCE_STAGING
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
                 values["token_url"] = TOKEN_URL_STAGING

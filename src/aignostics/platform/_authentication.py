@@ -278,6 +278,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 # Store the token
                 authentication_result.token = token["access_token"]
                 # Send success response
+                print(f"refresh_token: {token['refresh_token']}")
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
