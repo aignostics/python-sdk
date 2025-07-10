@@ -6,17 +6,15 @@ from pathlib import Path
 
 import typer
 
-from .constants import MODULES_TO_INSTRUMENT, NOTEBOOK_DEFAULT
+from .constants import NOTEBOOK_DEFAULT
 from .utils import (
     __is_running_in_container__,
     __version__,
-    boot,
     console,
     get_logger,
     prepare_cli,
 )
 
-boot(MODULES_TO_INSTRUMENT)
 logger = get_logger(__name__)
 
 cli = typer.Typer(

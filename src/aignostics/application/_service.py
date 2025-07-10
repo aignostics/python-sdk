@@ -305,7 +305,7 @@ class Service(BaseService):
             application (Application): The application to check for versions.
 
         Returns:
-            list[ApplicationVersion]: A list of all application versions.
+            list[ApplicationVersion]: A list of all application versions sorted by semantic versioning (latest first).
 
         Raises:
             NotFoundException: If the application with the given ID is not found.

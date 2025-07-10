@@ -249,6 +249,79 @@ components:
       - SUCCEEDED
       title: ItemStatus
       type: string
+    MeReadResponse:
+      properties:
+        organization:
+          $ref: '#/components/schemas/OrganizationReadResponse'
+        user:
+          $ref: '#/components/schemas/UserReadResponse'
+      required:
+      - user
+      - organization
+      title: MeReadResponse
+      type: object
+    OrganizationReadResponse:
+      description: 'This model corresponds to the response schema returned from
+
+        Auth0 GET /v2/organizations/{id} endpoint, flattens out the metadata out
+
+        and doesn''t return branding or token_quota objects.
+
+        For details, see:
+
+        https://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id'
+      properties:
+        aignostics_bucket_hmac_access_key_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Aignostics Bucket Hmac Access Key Id
+        aignostics_bucket_hmac_secret_access_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Aignostics Bucket Hmac Secret Access Key
+        aignostics_bucket_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Aignostics Bucket Name
+        aignostics_bucket_protocol:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Aignostics Bucket Protocol
+        aignostics_logfire_token:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Aignostics Logfire Token
+        aignostics_sentry_dsn:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Aignostics Sentry Dsn
+        display_name:
+          title: Display Name
+          type: string
+        id:
+          title: Id
+          type: string
+        name:
+          title: Name
+          type: string
+      required:
+      - id
+      - name
+      - display_name
+      - aignostics_bucket_hmac_access_key_id
+      - aignostics_bucket_hmac_secret_access_key
+      - aignostics_bucket_name
+      - aignostics_bucket_protocol
+      - aignostics_logfire_token
+      - aignostics_sentry_dsn
+      title: OrganizationReadResponse
+      type: object
     OutputArtifactReadResponse:
       properties:
         metadata_schema:
@@ -504,6 +577,57 @@ components:
       - items
       title: UserPayload
       type: object
+    UserReadResponse:
+      description: 'This model corresponds to the response schema returned from
+
+        Auth0 GET /v2/users/{id} endpoint.
+
+        For details, see:
+
+        https://auth0.com/docs/api/management/v2/users/get-users-by-id'
+      properties:
+        email:
+          title: Email
+          type: string
+        email_verified:
+          title: Email Verified
+          type: boolean
+        family_name:
+          title: Family Name
+          type: string
+        given_name:
+          title: Given Name
+          type: string
+        id:
+          title: Id
+          type: string
+        name:
+          title: Name
+          type: string
+        nickname:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nickname
+        picture:
+          title: Picture
+          type: string
+        updated_at:
+          format: date-time
+          title: Updated At
+          type: string
+      required:
+      - id
+      - email
+      - email_verified
+      - name
+      - given_name
+      - family_name
+      - nickname
+      - picture
+      - updated_at
+      title: UserReadResponse
+      type: object
     ValidationError:
       properties:
         loc:
@@ -529,9 +653,9 @@ components:
     OAuth2AuthorizationCodeBearer:
       flows:
         authorizationCode:
-          authorizationUrl: https://aignostics-platform.eu.auth0.com/authorize
+          authorizationUrl: https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize
           scopes: {}
-          tokenUrl: https://aignostics-platform.eu.auth0.com/oauth/token
+          tokenUrl: https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token
       type: oauth2
 info:
   description: '
@@ -697,6 +821,21 @@ paths:
       security:
       - OAuth2AuthorizationCodeBearer: []
       summary: List Versions By Application Id
+      tags:
+      - Public
+  /v1/me:
+    get:
+      operationId: get_me_v1_me_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeReadResponse'
+          description: Successful Response
+      security:
+      - OAuth2AuthorizationCodeBearer: []
+      summary: Get Me
       tags:
       - Public
   /v1/runs:

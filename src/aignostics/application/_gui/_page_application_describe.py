@@ -277,9 +277,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     ).bind_value(submit_form, "application_version_id")
                 ui.space()
                 with ui.column(), ui.button(icon="info", on_click=info_dialog.open):
-                    ui.tooltip(
-                        "Show technical information about expected input and output of this application version."
-                    )
+                    ui.tooltip("Show changes and input/ouput schema of this application version.")
             with ui.stepper_navigation():
                 ui.button("Next", on_click=lambda: (application_info.close(), stepper.next())).mark(  # type: ignore[func-returns-value]
                     "BUTTON_APPLICATION_VERSION_NEXT"

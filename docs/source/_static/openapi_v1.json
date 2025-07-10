@@ -763,6 +763,32 @@
           }
         }
       }
+    },
+    "/v1/me": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Get Me",
+        "operationId": "get_me_v1_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeReadResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1076,6 +1102,118 @@
           "SUCCEEDED"
         ],
         "title": "ItemStatus"
+      },
+      "MeReadResponse": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserReadResponse"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationReadResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "organization"
+        ],
+        "title": "MeReadResponse"
+      },
+      "OrganizationReadResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "aignostics_bucket_hmac_access_key_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aignostics Bucket Hmac Access Key Id"
+          },
+          "aignostics_bucket_hmac_secret_access_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aignostics Bucket Hmac Secret Access Key"
+          },
+          "aignostics_bucket_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aignostics Bucket Name"
+          },
+          "aignostics_bucket_protocol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aignostics Bucket Protocol"
+          },
+          "aignostics_logfire_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aignostics Logfire Token"
+          },
+          "aignostics_sentry_dsn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aignostics Sentry Dsn"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "display_name",
+          "aignostics_bucket_hmac_access_key_id",
+          "aignostics_bucket_hmac_secret_access_key",
+          "aignostics_bucket_name",
+          "aignostics_bucket_protocol",
+          "aignostics_logfire_token",
+          "aignostics_sentry_dsn"
+        ],
+        "title": "OrganizationReadResponse",
+        "description": "This model corresponds to the response schema returned from\nAuth0 GET /v2/organizations/{id} endpoint, flattens out the metadata out\nand doesn't return branding or token_quota objects.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id"
       },
       "OutputArtifactReadResponse": {
         "properties": {
@@ -1395,6 +1533,68 @@
         ],
         "title": "UserPayload"
       },
+      "UserReadResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "title": "Email Verified"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "given_name": {
+            "type": "string",
+            "title": "Given Name"
+          },
+          "family_name": {
+            "type": "string",
+            "title": "Family Name"
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nickname"
+          },
+          "picture": {
+            "type": "string",
+            "title": "Picture"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "email_verified",
+          "name",
+          "given_name",
+          "family_name",
+          "nickname",
+          "picture",
+          "updated_at"
+        ],
+        "title": "UserReadResponse",
+        "description": "This model corresponds to the response schema returned from\nAuth0 GET /v2/users/{id} endpoint.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/users/get-users-by-id"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1435,8 +1635,8 @@
         "flows": {
           "authorizationCode": {
             "scopes": {},
-            "authorizationUrl": "https://aignostics-platform.eu.auth0.com/authorize",
-            "tokenUrl": "https://aignostics-platform.eu.auth0.com/oauth/token"
+            "authorizationUrl": "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize",
+            "tokenUrl": "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"
           }
         }
       }

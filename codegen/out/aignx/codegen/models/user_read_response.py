@@ -17,21 +17,26 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
 
-class OutputArtifactResultReadResponse(BaseModel):
+class UserReadResponse(BaseModel):
     """
-    OutputArtifactResultReadResponse
+    This model corresponds to the response schema returned from Auth0 GET /v2/users/{id} endpoint. For details, see: https://auth0.com/docs/api/management/v2/users/get-users-by-id
     """ # noqa: E501
-    output_artifact_id: StrictStr = Field(description="The Id of the artifact. Used internally")
-    name: StrictStr = Field(description=" Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.     ")
-    metadata: Dict[str, Any] = Field(description="The metadata of the output artifact, provided by the application")
-    download_url: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=2083)]]
-    __properties: ClassVar[List[str]] = ["output_artifact_id", "name", "metadata", "download_url"]
+    id: StrictStr
+    email: StrictStr
+    email_verified: StrictBool
+    name: StrictStr
+    given_name: StrictStr
+    family_name: StrictStr
+    nickname: Optional[StrictStr]
+    picture: StrictStr
+    updated_at: datetime
+    __properties: ClassVar[List[str]] = ["id", "email", "email_verified", "name", "given_name", "family_name", "nickname", "picture", "updated_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +56,7 @@ class OutputArtifactResultReadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of OutputArtifactResultReadResponse from a JSON string"""
+        """Create an instance of UserReadResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,16 +77,16 @@ class OutputArtifactResultReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if download_url (nullable) is None
+        # set to None if nickname (nullable) is None
         # and model_fields_set contains the field
-        if self.download_url is None and "download_url" in self.model_fields_set:
-            _dict['download_url'] = None
+        if self.nickname is None and "nickname" in self.model_fields_set:
+            _dict['nickname'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of OutputArtifactResultReadResponse from a dict"""
+        """Create an instance of UserReadResponse from a dict"""
         if obj is None:
             return None
 
@@ -89,10 +94,15 @@ class OutputArtifactResultReadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "output_artifact_id": obj.get("output_artifact_id"),
+            "id": obj.get("id"),
+            "email": obj.get("email"),
+            "email_verified": obj.get("email_verified"),
             "name": obj.get("name"),
-            "metadata": obj.get("metadata"),
-            "download_url": obj.get("download_url")
+            "given_name": obj.get("given_name"),
+            "family_name": obj.get("family_name"),
+            "nickname": obj.get("nickname"),
+            "picture": obj.get("picture"),
+            "updated_at": obj.get("updated_at")
         })
         return _obj
 
