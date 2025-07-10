@@ -1,6 +1,22 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.98](https://github.com/aignostics/python-sdk/compare/v0.2.97..0.2.98) - 2025-07-01
+# [0.2.99](https://github.com/aignostics/python-sdk/compare/v0.2.98..0.2.99) - 2025-07-10
+
+### 🚜 Refactor
+
+- *(boot)* Reduce boot time - ([e8b3250](https://github.com/aignostics/python-sdk/commit/e8b32504fb053fbdb9454e42be6160fb8317da6a))
+
+### 📚 Documentation
+
+- Minor tweaks - ([e8b3250](https://github.com/aignostics/python-sdk/commit/e8b32504fb053fbdb9454e42be6160fb8317da6a))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Update deps - ([e8b3250](https://github.com/aignostics/python-sdk/commit/e8b32504fb053fbdb9454e42be6160fb8317da6a))
+- *(platform)* Update to latest openapi spec - ([e8b3250](https://github.com/aignostics/python-sdk/commit/e8b32504fb053fbdb9454e42be6160fb8317da6a))
+
+
+# [v0.2.98](https://github.com/aignostics/python-sdk/compare/v0.2.97..v0.2.98) - 2025-07-01
 
 ### ⚙️ Miscellaneous Tasks
 
