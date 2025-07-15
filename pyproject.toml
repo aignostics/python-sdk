@@ -215,7 +215,8 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "tornado>=6.5.0",                   # CVE-2025-47287
     "jupyter-core>=5.8.1",              # CVE-2025-30167
     "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182,
-    "pillow>=11.3.0",                   # CVE-2025-48379
+    "pillow>=11.3.0",                   # CVE-2025-48379,
+    "aiohttp>=3.12.14",                 # GHSA-9548-qrrj-x5pj
 ]
 
 [tool.ruff]
