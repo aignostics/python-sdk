@@ -463,7 +463,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.98) - MIT License
+## aignostics (0.2.99) - MIT License
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -1012,7 +1012,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ```
 
-## aiohttp (3.12.11) - Apache-2.0
+## aiohttp (3.12.14) - Apache-2.0
 
 Async http client/server framework (asyncio)
 
@@ -1038,7 +1038,7 @@ Async http client/server framework (asyncio)
 
 ```
 
-## aiosignal (1.3.2) - Apache Software License
+## aiosignal (1.4.0) - Apache Software License
 
 aiosignal: a list of registered asynchronous callbacks
 
@@ -3302,7 +3302,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.39.0) - Apache Software License
+## boto3 (1.39.4) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3500,7 +3500,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.39.0) - Apache Software License
+## botocore (1.39.4) - Apache Software License
 
 Low-level, data-driven core of boto 3.
 
@@ -7267,7 +7267,7 @@ SOFTWARE.
 
 ```
 
-## fastapi (0.115.14) - MIT License
+## fastapi (0.116.0) - MIT License
 
 FastAPI framework, high performance, easy to learn, fast to code, ready for production
 
@@ -7301,12 +7301,46 @@ THE SOFTWARE.
 
 ```
 
-## fastapi-cli (0.0.7) - MIT License
+## fastapi-cli (0.0.8) - MIT License
 
 Run and manage FastAPI apps from the command line with FastAPI CLI. 🚀
 
 * URL: https://github.com/fastapi/fastapi-cli
 * Author(s): =?utf-8?q?Sebasti=C3=A1n_Ram=C3=ADrez?= <tiangolo@gmail.com>
+
+### License Text
+
+```
+The MIT License (MIT)
+
+Copyright (c) 2024 Sebastián Ramírez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+```
+
+## fastapi-cloud-cli (0.1.2) - MIT License
+
+Deploy and manage FastAPI Cloud apps from the command line 🚀
+
+* URL: https://github.com/fastapilabs/fastapi-cloud-cli
+* Author(s): Patrick Arminio <patrick@fastapilabs.com>
 
 ### License Text
 
@@ -8961,7 +8995,7 @@ Google Cloud API client core library
 
 ```
 
-## google-cloud-storage (3.1.1) - Apache Software License
+## google-cloud-storage (3.2.0) - Apache Software License
 
 Google Cloud Storage API client library
 
@@ -9856,7 +9890,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## highdicom (0.25.1) - MIT License
+## highdicom (0.26.0) - MIT License
 
 High-level DICOM abstractions.
 
@@ -12184,7 +12218,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (3.21.2) - MIT License
+## logfire (3.23.0) - MIT License
 
 The best Python observability tool! 🪵🔥
 
@@ -13559,7 +13593,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (2.20.0) - MIT License
+## nicegui (2.21.1) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -27870,11 +27904,45 @@ SOFTWARE.
 
 ```
 
-## rich-toolkit (0.14.7) - MIT License
+## rich-toolkit (0.14.8) - MIT License
 
 Rich toolkit for building command-line applications
 
 * URL: UNKNOWN
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2024 Patrick Arminio
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
+## rignore (0.5.1) - MIT
+
+Python Bindings for the ignore crate
+
+* URL: UNKNOWN
+* Author(s): Patrick Arminio <patrick.arminio@gmail.com>
 
 ### License Text
 
