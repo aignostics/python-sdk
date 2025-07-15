@@ -1,11 +1,11 @@
-name: "Scheduled Test"
+name: "Scheduled Audit"
 
 on:
   workflow_call:
     # No inputs needed at this time
 
 jobs:
-  test-scheduled:
+  audit-scheduled:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,44 +51,9 @@ jobs:
           echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
-      - name: Test / scheduled
-        env:
-          BETTERSTACK_HEARTBEAT_URL: "${{ secrets.BETTERSTACK_HEARTBEAT_URL }}"
+      - name: Audit
         shell: bash
-        run: |
-          set +e
-          make test_scheduled
-          EXIT_CODE=$?
-          # Show test execution in GitHub Job summary
-          found_files=0
-          for file in reports/pytest_*.md; do
-            if [ -f "$file" ]; then
-              cat "$file" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              found_files=1
-            fi
-          done
-          if [ $found_files -eq 0 ]; then
-            echo "# All scheduled tests passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Show test coverage in GitHub Job summary
-          if [ -f "reports/coverage.md" ]; then
-            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Provide heartbeat to bettersqtack for monitoring/alerting if heartbeat url is configured as secret
-          if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
-            if [ $EXIT_CODE -eq 0 ]; then
-              curl -s $BETTERSTACK_HEARTBEAT_URL
-            else
-              curl -s $BETTERSTACK_HEARTBEAT_URL/$EXIT_CODE
-            fi
-          fi
-          exit $EXIT_CODE
+        run: make audit
 
       - name: Upload test results
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
@@ -96,9 +61,11 @@ jobs:
         with:
           name: test-results-scheduled
           path: |
-            reports/junit.xml
-            reports/coverage.xml
-            reports/coverage.md
-            reports/coverage_html
-            aignostics.log
+            reports/mypy_junit.xml
+            reports/sbom.json
+            reports/sbom.spdx
+            reports/licenses.csv
+            reports/licenses.json
+            reports/licenses_grouped.json
+            reports/vulnerabilities.json
           retention-days: 7

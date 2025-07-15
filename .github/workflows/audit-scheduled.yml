@@ -1,0 +1,13 @@
+name: "Scheduled Audit"
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  audit-scheduled:
+    uses: ./.github/workflows/_scheduled-audit.yml
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
