@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.103](https://github.com/aignostics/python-sdk/compare/v0.2.102..0.2.103) - 2025-07-15
+# [0.2.104](https://github.com/aignostics/python-sdk/compare/v0.2.103..0.2.104) - 2025-07-15
+
+### 📚 Documentation
+
+- Update URLs in openapi spec and downstream docs - ([083e992](https://github.com/aignostics/python-sdk/commit/083e9923f71b28c670457354ab90f84088e715ed))
+
+
+# [v0.2.103](https://github.com/aignostics/python-sdk/compare/v0.2.102..v0.2.103) - 2025-07-15
 
 ### ⚙️ Miscellaneous Tasks
 
