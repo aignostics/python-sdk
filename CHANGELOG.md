@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.99](https://github.com/aignostics/python-sdk/compare/v0.2.98..0.2.99) - 2025-07-10
+# [0.2.100](https://github.com/aignostics/python-sdk/compare/v0.2.99..0.2.100) - 2025-07-15
+
+### 🛡️ Security
+
+- *(dep)* Override aiohttp to 3.12.14 given vulnerability GHSA-9548-qrrj-x5pj - ([25f1929](https://github.com/aignostics/python-sdk/commit/25f1929186b82efb7e7015a0acfe6afd35a49bbf))
+
+
+# [v0.2.99](https://github.com/aignostics/python-sdk/compare/v0.2.98..v0.2.99) - 2025-07-10
 
 ### 🚜 Refactor
 
