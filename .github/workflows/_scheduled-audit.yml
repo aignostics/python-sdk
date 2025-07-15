@@ -53,7 +53,19 @@ jobs:
 
       - name: Audit
         shell: bash
-        run: make audit
+        run: |
+          set +e
+          make audit
+          EXIT_CODE=$?
+          # Provide heartbeat to bettersqtack for monitoring/alerting if heartbeat url is configured as secret
+          if [ -n "$BETTERSTACK_AUDIT_HEARTBEAT_URL" ]; then
+            if [ $EXIT_CODE -eq 0 ]; then
+              curl -s $BETTERSTACK_AUDIT_HEARTBEAT_URL
+            else
+              curl -s $BETTERSTACK_AUDIT_HEARTBEAT_URL/$EXIT_CODE
+            fi
+          fi
+          exit $EXIT_CODE
 
       - name: Upload test results
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
