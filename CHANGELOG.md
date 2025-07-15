@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.102](https://github.com/aignostics/python-sdk/compare/v0.2.101..0.2.102) - 2025-07-15
+# [0.2.103](https://github.com/aignostics/python-sdk/compare/v0.2.102..0.2.103) - 2025-07-15
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Monitor scheduled audit in betterstack - ([e9f22f8](https://github.com/aignostics/python-sdk/commit/e9f22f8fd2fbab6219f77759be604c3879424af6))
+
+
+# [v0.2.102](https://github.com/aignostics/python-sdk/compare/v0.2.101..v0.2.102) - 2025-07-15
 
 ### ⚙️ Miscellaneous Tasks
 
