@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.101](https://github.com/aignostics/python-sdk/compare/v0.2.99..0.2.101) - 2025-07-15
+# [0.2.102](https://github.com/aignostics/python-sdk/compare/v0.2.101..0.2.102) - 2025-07-15
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Separate scheduled audit in separate workflow - ([0feb976](https://github.com/aignostics/python-sdk/commit/0feb976c7c1020fa551cc4750ef1b82fe431c486))
+
+
+# [v0.2.101](https://github.com/aignostics/python-sdk/compare/v0.2.99..v0.2.101) - 2025-07-15
 
 ### ⚙️ Miscellaneous Tasks
 
