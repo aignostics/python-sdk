@@ -1,11 +1,25 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.100](https://github.com/aignostics/python-sdk/compare/v0.2.99..0.2.100) - 2025-07-15
+# [0.2.101](https://github.com/aignostics/python-sdk/compare/v0.2.99..0.2.101) - 2025-07-15
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Update ghcr.io/astral-sh/uv docker tag to v0.7.20 ([#59](https://github.com/orhun/git-cliff/issues/59)) - ([987828d](https://github.com/aignostics/python-sdk/commit/987828d3b2b25acfc74938c50f3b8c55e3b7805c))
+- *(deps)* Update ghcr.io/astral-sh/uv docker tag to v0.7.15 ([#54](https://github.com/orhun/git-cliff/issues/54)) - ([65a9b24](https://github.com/aignostics/python-sdk/commit/65a9b247f9fa1821a12d2f95685d70a0e7ae2be1))
+- *(deps)* Bump astral-sh/setup-uv from 6.3.0 to 6.3.1 ([#55](https://github.com/orhun/git-cliff/issues/55)) - ([1ee922e](https://github.com/aignostics/python-sdk/commit/1ee922ee3aefb89256f42652416fc326d9bef383))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([987828d](https://github.com/aignostics/python-sdk/commit/987828d3b2b25acfc74938c50f3b8c55e3b7805c))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([65a9b24](https://github.com/aignostics/python-sdk/commit/65a9b247f9fa1821a12d2f95685d70a0e7ae2be1))
+- Dependabot[bot] <support@github.com> - ([1ee922e](https://github.com/aignostics/python-sdk/commit/1ee922ee3aefb89256f42652416fc326d9bef383))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([1ee922e](https://github.com/aignostics/python-sdk/commit/1ee922ee3aefb89256f42652416fc326d9bef383))
 
 ### 🛡️ Security
 
-- *(dep)* Override aiohttp to 3.12.14 given vulnerability GHSA-9548-qrrj-x5pj - ([25f1929](https://github.com/aignostics/python-sdk/commit/25f1929186b82efb7e7015a0acfe6afd35a49bbf))
+- *(dep)* Override aiohttp to 3.12.14 given vulnerability GHSA-9548-qrrj-x5pj - ([c9cefae](https://github.com/aignostics/python-sdk/commit/c9cefae37c255b05c1453a0a795695f55b7d3c44))
 
+
+
+* @renovate[bot] made their first contribution in [#59](https://github.com/aignostics/python-sdk/pull/59)
+* @dependabot[bot] made their first contribution in [#55](https://github.com/aignostics/python-sdk/pull/55)
 
 # [v0.2.99](https://github.com/aignostics/python-sdk/compare/v0.2.98..v0.2.99) - 2025-07-10
 
