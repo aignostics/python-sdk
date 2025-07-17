@@ -27,9 +27,8 @@ HETA_APPLICATION_ID = "he-tme"
 
 
 @pytest.mark.sequential
-async def test_gui_index(user: User, record_property) -> None:
+async def test_gui_index(user: User) -> None:
     """Test that the user sees the index page, and sees the intro."""
-    record_property("tested-item-id", "AL-1")  # Using Jira work item key
     # hello world
     gui_register_pages()
     await user.open("/")
