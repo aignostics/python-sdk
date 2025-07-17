@@ -50,10 +50,3 @@ jobs:
             reports/vulnerabilities.json
           retention-days: 30
 
-      - name: Report build to Ketryx
-        uses: Ketryx/ketryx-github-action@v1.4.0
-        with:
-          project: ${{ secrets.KETRYX_PROJECT }}
-          api-key: ${{ secrets.KETRYX_API_KEY }}
-          cyclonedx-json-path: |
-            reports/sbom.json
