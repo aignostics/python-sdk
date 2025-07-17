@@ -40,6 +40,14 @@ jobs:
         shell: bash
         run: make audit
 
+      # Show junit content for debugging
+      - name: Debug - List reports directory
+        run: |
+          ls -la reports/
+          find . -name "junit*.xml" -type f
+          echo "Contents of junit files:"
+          cat reports/junit_*.xml | head -20
+
       - name: Report build to Ketryx
         uses: Ketryx/ketryx-github-action@v1.4.0
         with:
