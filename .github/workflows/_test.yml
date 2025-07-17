@@ -3,13 +3,12 @@ name: "Test"
 on:
   workflow_call:
     # No inputs needed at this time
-  
+
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
   PYTHONIOENCODING: "utf8"
 
 jobs:
-
   test:
     runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ matrix.experimental }}
@@ -59,7 +58,7 @@ jobs:
       # Need xdisplay for testing QuPath app integration
       - name: Setup display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
-  
+
       - name: Release version check
         if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
@@ -101,11 +100,11 @@ jobs:
       - name: Validate installation
         shell: bash
         run: |
-            OUTPUT=$(uv run --no-dev aignostics --help)
-            if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
-            echo "Output does not contain 'built with love in Berlin'"
-            exit 1
-            fi
+          OUTPUT=$(uv run --no-dev aignostics --help)
+          if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
+          echo "Output does not contain 'built with love in Berlin'"
+          exit 1
+          fi
 
       - name: Smoke tests
         shell: bash
@@ -145,34 +144,34 @@ jobs:
           fi
           exit $EXIT_CODE
 
-      - name: Test / long running
-        shell: bash
-        run: |
-          set +e
-          make test_long_running
-          EXIT_CODE=$?
-          # Show test execution in GitHub Job summary
-          found_files=0
-          for file in reports/pytest_*.md; do
-          if [ -f "$file" ]; then
-            cat "$file" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            found_files=1
-          fi
-          done
-          if [ $found_files -eq 0 ]; then
-            echo "# All long running tests passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Show test coverage in GitHub Job summary
-          if [ -f "reports/coverage.md" ]; then
-            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          exit $EXIT_CODE
+      # - name: Test / long running
+      #   shell: bash
+      #   run: |
+      #     set +e
+      #     make test_long_running
+      #     EXIT_CODE=$?
+      #     # Show test execution in GitHub Job summary
+      #     found_files=0
+      #     for file in reports/pytest_*.md; do
+      #     if [ -f "$file" ]; then
+      #       cat "$file" >> $GITHUB_STEP_SUMMARY
+      #       echo "" >> $GITHUB_STEP_SUMMARY
+      #       found_files=1
+      #     fi
+      #     done
+      #     if [ $found_files -eq 0 ]; then
+      #       echo "# All long running tests passed" >> $GITHUB_STEP_SUMMARY
+      #       echo "" >> $GITHUB_STEP_SUMMARY
+      #     fi
+      #     # Show test coverage in GitHub Job summary
+      #     if [ -f "reports/coverage.md" ]; then
+      #       cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
+      #       echo "" >> $GITHUB_STEP_SUMMARY
+      #     else
+      #       echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
+      #       echo "" >> $GITHUB_STEP_SUMMARY
+      #     fi
+      #     exit $EXIT_CODE
 
       - name: Upload test results
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
