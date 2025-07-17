@@ -16,8 +16,9 @@ THE_VALUE = "THE_VALUE"
 
 
 @pytest.mark.scheduled
-def test_cli_health(runner: CliRunner) -> None:
+def test_cli_health(runner: CliRunner, record_property) -> None:
     """Check health is true."""
+    record_property("tested-item-id", "RQ-1")
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
     assert "UP" in result.output
