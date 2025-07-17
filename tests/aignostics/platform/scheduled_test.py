@@ -21,6 +21,113 @@ HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
 HETA_APPLICATION_TIMEOUT_SECONDS = 6 * 60 * 60  # 6 hours
 
 
+def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
+    """Generates a payload using a single spot."""
+    return [
+        platform.InputItem(
+            reference="1",
+            input_artifacts=[
+                platform.InputArtifact(
+                    name="user_slide",
+                    download_url=platform.generate_signed_url(
+                        "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
+                        HETA_APPLICATION_TIMEOUT_SECONDS,
+                    ),
+                    metadata={
+                        "checksum_base64_crc32c": "5onqtA==",
+                        "resolution_mpp": 0.26268186053789266,
+                        "width_px": 7447,
+                        "height_px": 7196,
+                        "media_type": "image/tiff",
+                        "staining_method": "H&E",
+                        "specimen": {
+                            "tissue": "LUNG",
+                            "disease": "LUNG_CANCER",
+                        },
+                    },
+                )
+            ],
+        ),
+    ]
+
+
+def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
+    """Generates a payload using three spots."""
+    return [
+        platform.InputItem(
+            reference="1",
+            input_artifacts=[
+                platform.InputArtifact(
+                    name="user_slide",
+                    download_url=platform.generate_signed_url(
+                        "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                    ),
+                    metadata={
+                        "checksum_crc32c": "9l3NNQ==",
+                        "base_mpp": 0.46499982,
+                        "width": 3728,
+                        "height": 3640,
+                    },
+                )
+            ],
+        ),
+        platform.InputItem(
+            reference="2",
+            input_artifacts=[
+                platform.InputArtifact(
+                    name="user_slide",
+                    download_url=platform.generate_signed_url(
+                        "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
+                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                    ),
+                    metadata={
+                        "checksum_crc32c": "w+ud3g==",
+                        "base_mpp": 0.46499982,
+                        "width": 3616,
+                        "height": 3400,
+                    },
+                )
+            ],
+        ),
+        platform.InputItem(
+            reference="3",
+            input_artifacts=[
+                platform.InputArtifact(
+                    name="user_slide",
+                    download_url=platform.generate_signed_url(
+                        "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
+                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                    ),
+                    metadata={
+                        "checksum_crc32c": "Zmx0wA==",
+                        "base_mpp": 0.46499982,
+                        "width": 4016,
+                        "height": 3952,
+                    },
+                )
+            ],
+        ),
+    ]
+
+
+# Test parameters without calling the payload functions at module level
+TEST_PARAMETERS = [
+    (
+        TEST_APPLICATION_TIMEOUT_SECONDS,
+        TEST_APPLICATION_VERSION_ID,
+        "three_spots_test",
+        "checksum_crc32c",
+    ),
+    (
+        HETA_APPLICATION_TIMEOUT_SECONDS,
+        HETA_APPLICATION_VERSION_ID,
+        "single_spot_heta",
+        "checksum_base64_crc32c",
+    ),
+]
+
+
 def single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
@@ -114,26 +221,13 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
 @pytest.mark.scheduled
 @pytest.mark.long_running
 @pytest.mark.parametrize(
-    ("timeout", "application_version_id", "payload", "checksum_attribute_key"),
-    [
-        (
-            TEST_APPLICATION_TIMEOUT_SECONDS,
-            TEST_APPLICATION_VERSION_ID,
-            three_spots_payload_for_test_v0_0_1(),
-            "checksum_crc32c",
-        ),
-        (
-            HETA_APPLICATION_TIMEOUT_SECONDS,
-            HETA_APPLICATION_VERSION_ID,
-            single_spot_payload_for_heta_v1_0_0(),
-            "checksum_base64_crc32c",
-        ),
-    ],
+    ("timeout", "application_version_id", "payload_type", "checksum_attribute_key"),
+    TEST_PARAMETERS,
 )
 def test_application_runs(
     timeout: int,
     application_version_id: str,
-    payload: list[platform.InputItem],
+    payload_type: str,
     checksum_attribute_key: str,
     request: FixtureRequest,
 ) -> None:
@@ -146,7 +240,7 @@ def test_application_runs(
     Args:
         timeout (int): Timeout for the test in seconds.
         application_version_id (str): The application version ID to use for the test.
-        payload (list[ItemCreationRequest]): The payload to use for the application run.
+        payload_type (str): The type of payload to generate ('three_spots_test' or 'single_spot_heta').
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
         request (FixtureRequest): The pytest request object.
 
@@ -154,6 +248,14 @@ def test_application_runs(
         AssertionError: If any of the validation checks fail.
     """
     request.node.add_marker(pytest.mark.timeout(timeout))
+
+    # Generate payload lazily during test execution
+    if payload_type == "three_spots_test":
+        payload = _get_three_spots_payload_for_test_v0_0_1()
+    elif payload_type == "single_spot_heta":
+        payload = _get_single_spot_payload_for_heta_v1_0_0()
+    else:
+        pytest.fail(f"Unknown payload type: {payload_type}")
 
     client = platform.Client(cache_token=False)
     application_run = client.runs.create(application_version_id, items=payload)
