@@ -171,17 +171,6 @@ jobs:
           gh release create ${{ github.ref_name }} ./dist/* ./reports/* ./dist_native_zipped/* \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
-      - name: Report build to Ketryx
-        uses: Ketryx/ketryx-github-action@v1.4.0
-        with:
-          project: ${{ secrets.KETRYX_PROJECT }}
-          api-key: ${{ secrets.KETRYX_API_KEY }}
-          artifact-path: |
-            reports/coverage.xml
-          test-junit-path: reports/junit_*.xml
-          cyclonedx-json-path: |
-            reports/sbom.json
-      
       - name: Allow other workflows to trigger on release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

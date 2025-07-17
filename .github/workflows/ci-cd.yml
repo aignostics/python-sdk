@@ -54,9 +54,21 @@ jobs:
     secrets: inherit
 
 
-  package_publish:
+  ketryx_report:
 
     needs: [lint, audit, test, codeql] 
+
+    uses: ./.github/workflows/_ketryx_report-publish.yml
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  package_publish:
+
+    needs: [ketryx_report] 
 
     uses: ./.github/workflows/_package-publish.yml
     if: (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, '[skip ci]')))
@@ -69,7 +81,7 @@ jobs:
 
   docker_publish:
 
-    needs: [lint, audit, test, codeql]
+    needs: [ketryx_report]
 
     if: (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, '[skip ci]')))
     uses: ./.github/workflows/_docker-publish.yml
