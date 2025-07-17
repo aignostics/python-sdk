@@ -187,15 +187,6 @@ jobs:
             aignostics.log
           retention-days: 7
 
-      - name: Report build to Ketryx
-        uses: Ketryx/ketryx-github-action@v1.4.0
-        with:
-          project: ${{ secrets.KETRYX_PROJECT }}
-          api-key: ${{ secrets.KETRYX_API_KEY }}
-          artifact-path: |
-            reports/coverage.xml
-          test-junit-path: reports/junit.xml
-
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
         if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}

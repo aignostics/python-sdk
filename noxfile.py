@@ -17,7 +17,7 @@ LATEXMK_VERSION_MIN = 4.86
 LICENSES_JSON_PATH = "reports/licenses.json"
 SBOM_CYCLONEDX_PATH = "reports/sbom.json"
 SBOM_SPDX_PATH = "reports/sbom.spdx"
-JUNIT_XML = "--junitxml=reports/junit.xml"
+JUNIT_XML_PREFIX = "--junitxml=reports/junit_"
 CLI_MODULE = "cli"
 API_VERSIONS = ["v1"]
 UTF8 = "utf-8"
@@ -645,7 +645,10 @@ def _run_pytest(
     is_sequential = test_type == "sequential"
 
     # Build base pytest arguments
-    pytest_args = ["pytest", "--disable-warnings", JUNIT_XML]
+    if custom_marker:
+        pytest_args = ["pytest", "--disable-warnings", JUNIT_XML_PREFIX + test_type + "_" + custom_marker + ".xml"]
+    else:
+        pytest_args = ["pytest", "--disable-warnings", JUNIT_XML_PREFIX + test_type + ".xml"]
 
     # Distribute tests across available CPUs if not sequential
     if not is_sequential:
@@ -728,7 +731,7 @@ def test(session: nox.Session) -> None:
     report_type = _get_report_type(session, custom_marker)
 
     # Run parallel tests
-    _run_pytest(session, "not sequential", custom_marker, filtered_posargs, report_type)
+    _run_pytest(session, "not_sequential", custom_marker, filtered_posargs, report_type)
 
     # Run sequential tests
     if "--cov-append" not in filtered_posargs:
