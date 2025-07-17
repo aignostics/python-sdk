@@ -20,14 +20,14 @@ jobs:
         include:
           - runner: ubuntu-24.04-arm
             experimental: true
-          - runner: macos-latest
-            experimental: true
-          - runner: macos-13
-            experimental: true
-          - runner: windows-latest
-            experimental: true
-          - runner: windows-11-arm
-            experimental: true
+#          - runner: macos-latest
+#            experimental: true
+#          - runner: macos-13
+#            experimental: true
+#          - runner: windows-latest
+#            experimental: true
+#          - runner: windows-11-arm
+#            experimental: true
     permissions:
       attestations: write
       contents: read
