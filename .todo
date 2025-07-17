@@ -1,0 +1,13 @@
+NOTES:
+
+- [Muhab, Sandino] Uploading button worked in the client app but not in the web app.
+- [Muhab, David]: on the client app, on the Run list of left side panel it shows: "Failed to list application runs: No connection after 3.0 seconds" (user are not able to copy the error)
+- [Sandino] in the Run list of the application on the left side panel, this error shows: "Failed to list applications: HTTPSConnectionPool(host='platform.aignostics.com', port=443): Max retries exceeded with url: /v1/applications?page=1&page_size=20 (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1028)')))""
+- [General]: If developer makes a change then the hot reload breaks and the new changes doesn't get reflected.
+- [General]: one you end the development, one can not end gracefully: Add a routine to handle the interruption gracefully
+- [Muhab]: When ending the locald development Cache error shows: /Users/muhab/.cache/uv/archive-v0/NPLFzLY4XzGyx_88nGlom/lib/python3.12/site-packages/showinfm/system/linux.py:183: SyntaxWarning: invalid escape sequence '\d'
+  result = re.search("\d", version_string)
+- Upload slides multiple times one can upload unlimited times
+- Sentry: is there some obserabaility, can we set up that?
+- [David]: Some of the tests are failing with "google.api_core.exceptions.Forbidden: 403 GET https://storage.googleapis.com/storage/v1/b/aignx-storage-service-dev/o/sample_data_formatted%2F9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff?fields=name&prettyPrint=false: graphql-feature@pelago-247009.iam.gserviceaccount.com does not have storage.objects.get access to the Google Cloud Storage object. Permission 'storage.objects.get' denied on resource (or it may not exist)."
+- [General]: No one was able to have successful runs

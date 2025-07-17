@@ -20,17 +20,17 @@ async def _page_index(client: Client) -> None:
 
     with ui.row().classes("p-4 pt-2 pr-0"), ui.column():
         await ui.context.client.connected()
-        ui.label("Welcome to the Aignostics Launchpad").bind_text_from(
+        ui.label("Welcome to the Aignostics Launchpad Owned by MOT").bind_text_from(
             app.storage.tab,
             "user_info",
             lambda user_info: (
                 f"Welcome "
                 f"{user_info.profile.given_name if hasattr(user_info, 'profile') and user_info.profile else ''} "
-                f"to the Aignostics Launchpad"
+                f"to the Aignostics Launchpad Name is known"
             ),
         ).classes("text-4xl mb-2")
         ui.label(
-            "Using the Launchpad, you can run Aignostics Atlas applications on your whole slide images, "
+            "Using the Habibi Pad, you can run Aignostics Atlas applications on your whole slide images, "
             "monitor progress, and download results for analysis."
         ).classes("text-2xl")
         with ui.row().classes("w-full h-screen flex"):
@@ -64,6 +64,23 @@ async def _page_index(client: Client) -> None:
                 if find_spec("marimo"):
                     ui.label("Analyze results in Python Notebooks?").classes("text-xl")
                     ui.label('On completed runs click "Marimo" to directly open the notebook.').classes("text")
+
+                # Create modal dialog
+                with ui.dialog() as modal_dialog, ui.card():
+                    ui.label("This is a modal dialog!").classes("text-xl mb-4")
+                    ui.label("You can add any content here - forms, images, text, etc.").classes("mb-4")
+                    with ui.row():
+                        ui.button("Close", on_click=modal_dialog.close).classes(
+                            "bg-gray-500 text-white px-4 py-2 rounded"
+                        )
+                        ui.button("Action", on_click=lambda: ui.notify("Action clicked!")).classes(
+                            "bg-green-500 text-white px-4 py-2 rounded"
+                        )
+
+                # Add button to open modal
+                ui.button("Open Modal", on_click=modal_dialog.open).classes(
+                    "mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+                )
 
             with (
                 ui.carousel(animated=True, arrows=True, navigation=True)
