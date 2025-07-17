@@ -1,10 +1,9 @@
 ---
-itemId: SPEC-SYSTEM-CLI
+itemId: SPEC-CLI
 itemType: Software Item Spec
-itemFulfills: RQ-SYSTEM-CLI-1
+itemFulfills: SWR-SYSTEM-CLI-HEALTH-1
 Module: All
 Layer: CLI
-Regulatory: RUO
 ---
 
 

@@ -1,10 +1,9 @@
 ---
 itemId: SPEC-GUI
 itemType: Software Item Spec
-itemFulfills: RQ-SYSTEM-GUI-1
+itemFulfills: SWR-SYSTEM-GUI-HEALTH-1
 Module: All
 Layer: GUI
-Regulatory: RUO
 ---
 
 

@@ -18,7 +18,7 @@ THE_VALUE = "THE_VALUE"
 @pytest.mark.scheduled
 def test_cli_health_json(runner: CliRunner, record_property) -> None:
     """Check health is true."""
-    record_property("tested-item-id", "TEST_SYSTEM_CLI_HEALTH_YAML")
+    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
     assert '"status": "UP"' in result.output
@@ -27,7 +27,7 @@ def test_cli_health_json(runner: CliRunner, record_property) -> None:
 @pytest.mark.scheduled
 def test_cli_health_yaml(runner: CliRunner, record_property) -> None:
     """Check health is true."""
-    record_property("tested-item-id", "TEST_SYSTEM_CLI_HEALTH_JSON")
+    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
     assert result.exit_code == 0
     assert "status: UP" in result.output

@@ -1,10 +1,9 @@
 ---
 itemId: SPEC-SYSTEM-SERVICE
 itemType: Software Item Spec
-itemFulfills: RQ-SYSTEM-CLI-1, RQ-SYSTEM-GUI-1
+itemFulfills: SWR-SYSTEM-CLI-HEALTH-1, SWR-SYSTEM-GUI-HEALTH-1, SWR-SYSTEM-GUI-SETTINGS-1
 Module: System
 Layer: Service
-Regulatory: RUO
 ---
 
 The system module provides a service to check the health of the system which is accessible via the CLI and the GUI. The service is designed to return the current operational status of the system.
