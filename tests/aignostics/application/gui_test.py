@@ -26,8 +26,10 @@ HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
 HETA_APPLICATION_ID = "he-tme"
 
 
-async def test_gui_index(user: User) -> None:
+async def test_gui_index(user: User, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
+    record_property("tested-item-id", "AL-1")  # Using Jira work item key
+
     gui_register_pages()
     await user.open("/")
     await user.should_see("Atlas H&E-TME")
