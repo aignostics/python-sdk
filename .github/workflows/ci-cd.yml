@@ -58,7 +58,7 @@ jobs:
 
     needs: [lint, audit, test, codeql] 
 
-    uses: ./.github/workflows/_ketryx_report-publish.yml
+    uses: ./.github/workflows/_ketryx_report.yml
     permissions:
       attestations: write
       contents: write
