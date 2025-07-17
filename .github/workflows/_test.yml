@@ -180,7 +180,7 @@ jobs:
           name: test-results-${{ matrix.runner }}
           path: |
             reports/mypy_junit.xml
-            reports/junit.xml
+            reports/junit_*.xml
             reports/coverage.xml
             reports/coverage.md
             reports/coverage_html

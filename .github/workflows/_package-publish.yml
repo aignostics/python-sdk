@@ -153,11 +153,9 @@ jobs:
         shell: bash
         run: make dist
 
-
       - name: Publish distribution to Python Package Index at pypi.org
         shell: bash
         run: uv publish -t ${{ secrets.UV_PUBLISH_TOKEN }}
-
 
       - name: Have audit checks publish to reports/ for auditing
         shell: bash
