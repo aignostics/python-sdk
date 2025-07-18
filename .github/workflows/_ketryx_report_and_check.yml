@@ -38,7 +38,6 @@ jobs:
           api-key: ${{ secrets.KETRYX_API_KEY }}
           build-name: "ci-cd"
           check-dependencies-status: true
-          check-release-status: false
           test-junit-path: reports/junit_*.xml
           cyclonedx-json-path: |
             reports/sbom.json
