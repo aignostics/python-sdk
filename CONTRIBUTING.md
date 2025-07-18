@@ -113,7 +113,7 @@ git push
 Notes:
 1. [pre-commit hooks](https://pre-commit.com/) will run automatically on commit to ensure code quality.
 2. We use the conventional commits format - see the [code style guide](CODE_STYLE.md) for the mandatory commit message format.
-3. If your commit message includes ```skip:ci``` workflows will not be triggered. Further supported skips are ```skip:test:long-running```, ```skip:test:regular```.
+3. If your commit message includes ```skip:ci``` workflows will not be triggered. Further supported skips are ```skip:test:long-running```, ```skip:test:regular```, ```skip:test:matrix-runner```.
 
 ### Publish Release
 
