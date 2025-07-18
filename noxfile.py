@@ -17,7 +17,7 @@ LATEXMK_VERSION_MIN = 4.86
 LICENSES_JSON_PATH = "reports/licenses.json"
 SBOM_CYCLONEDX_PATH = "reports/sbom.json"
 SBOM_SPDX_PATH = "reports/sbom.spdx"
-JUNIT_XML = "--junitxml=reports/junit.xml"
+JUNIT_XML_PREFIX = "--junitxml=reports/junit_"
 CLI_MODULE = "cli"
 API_VERSIONS = ["v1"]
 UTF8 = "utf-8"
@@ -585,6 +585,18 @@ def _extract_custom_marker(posargs: list[str]) -> tuple[str | None, list[str]]:
     return custom_marker, new_posargs
 
 
+def _sanitize_for_filename(text: str) -> str:
+    """Sanitize text for use in filenames by replacing spaces and special chars.
+
+    Args:
+        text: Text to sanitize
+
+    Returns:
+        Sanitized text suitable for filenames
+    """
+    return re.sub(r"[\s\(\)]", "-", text).strip("-")
+
+
 def _get_report_type(session: nox.Session, custom_marker: str | None) -> str:
     """Generate report type string based on marker and Python version.
 
@@ -645,7 +657,16 @@ def _run_pytest(
     is_sequential = test_type == "sequential"
 
     # Build base pytest arguments
-    pytest_args = ["pytest", "--disable-warnings", JUNIT_XML]
+    sanitized_test_type = _sanitize_for_filename(test_type)
+    if custom_marker:
+        sanitized_custom_marker = _sanitize_for_filename(custom_marker)
+        pytest_args = [
+            "pytest",
+            "--disable-warnings",
+            JUNIT_XML_PREFIX + sanitized_test_type + "_" + sanitized_custom_marker + ".xml",
+        ]
+    else:
+        pytest_args = ["pytest", "--disable-warnings", JUNIT_XML_PREFIX + sanitized_test_type + ".xml"]
 
     # Distribute tests across available CPUs if not sequential
     if not is_sequential:

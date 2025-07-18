@@ -76,8 +76,9 @@ def test_is_secret_key_word_boundary_matching_negative_cases() -> None:
         assert not Service._is_secret_key(key), f"Expected '{key}' to NOT be identified as a secret key"
 
 
-def test_is_secret_key_string_match_terms_positive_cases() -> None:
+def test_is_secret_key_string_match_terms_positive_cases(record_property) -> None:
     """Test that string match terms are correctly identified as secrets."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Test all string match terms in various forms
     secret_keys = [
         # Direct matches

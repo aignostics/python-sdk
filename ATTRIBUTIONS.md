@@ -463,7 +463,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.99) - MIT License
+## aignostics (0.2.104) - MIT License
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -3302,7 +3302,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.39.4) - Apache Software License
+## boto3 (1.39.8) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3500,7 +3500,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.39.4) - Apache Software License
+## botocore (1.39.8) - Apache Software License
 
 Low-level, data-driven core of boto 3.
 
@@ -7267,7 +7267,7 @@ SOFTWARE.
 
 ```
 
-## fastapi (0.116.0) - MIT License
+## fastapi (0.116.1) - MIT License
 
 FastAPI framework, high performance, easy to learn, fast to code, ready for production
 
@@ -11244,7 +11244,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## jsonschema (4.24.0) - UNKNOWN
+## jsonschema (4.24.1) - UNKNOWN
 
 An implementation of JSON Schema validation for Python
 
@@ -12218,7 +12218,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (3.23.0) - MIT License
+## logfire (3.24.2) - MIT License
 
 The best Python observability tool! 🪵🔥
 
@@ -12364,7 +12364,7 @@ Copyright 2010-2020 - Ronald Oussoren
 
 ```
 
-## marimo (0.14.9) - Apache Software License
+## marimo (0.14.11) - Apache Software License
 
 A library for making reactive notebooks and apps
 
@@ -13076,7 +13076,7 @@ multidict implementation
 
 ```
 
-## mypy (1.16.1) - MIT License
+## mypy (1.17.0) - MIT License
 
 Optional static typing for Python
 
@@ -26072,7 +26072,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## pyright (1.1.402) - MIT
+## pyright (1.1.403) - MIT
 
 Command line wrapper for pyright
 
@@ -26175,12 +26175,13 @@ SOFTWARE.
 
 ```
 
-## pytest-asyncio (1.0.0) - UNKNOWN
+## pytest-asyncio (1.1.0) - UNKNOWN
 
 Pytest support for asyncio
 
 * URL: https://github.com/pytest-dev/pytest-asyncio
-* Author(s): "Tin Tvrtković <tinchester@gmail.com>" <tinchester@gmail.com>
+* Author(s): Tin Tvrtković <tinchester@gmail.com>
+* Maintainer(s): Michael Seifert <m.seifert@digitalernachschub.de>
 
 ### License Text
 
@@ -26471,7 +26472,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## pytest-docker (3.2.2) - MIT License
+## pytest-docker (3.2.3) - MIT License
 
 Simple pytest fixtures for Docker and Docker Compose based tests
 
@@ -26603,7 +26604,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ```
 
-## pytest-regressions (2.8.0) - MIT License
+## pytest-regressions (2.8.1) - MIT License
 
 Easy to use fixtures to write regression tests.
 
@@ -26810,7 +26811,7 @@ SOFTWARE.
 
 ```
 
-## pytest-xdist (3.7.0) - UNKNOWN
+## pytest-xdist (3.8.0) - UNKNOWN
 
 pytest xdist plugin for distributed testing, most importantly across multiple CPUs
 
@@ -28297,7 +28298,7 @@ C version of reader, parser and emitter for ruamel.yaml derived from libyaml
 
 ```
 
-## ruff (0.12.0) - MIT License
+## ruff (0.12.4) - MIT License
 
 An extremely fast Python linter and code formatter, written in Rust.
 
@@ -30433,7 +30434,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## sentry-sdk (2.32.0) - BSD License
+## sentry-sdk (2.33.0) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -31540,7 +31541,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## swagger-plugin-for-sphinx (5.1.0) - Apache Software License
+## swagger-plugin-for-sphinx (5.1.2) - UNKNOWN
 
 Sphinx plugin which renders a OpenAPI specification with Swagger
 
