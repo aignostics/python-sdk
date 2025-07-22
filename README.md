@@ -487,10 +487,16 @@ Field combining digital pathology with artificial intelligence and machine learn
 **Aignostics Console**  
 Web-based user interface for managing organizations, applications, quotas, users, and monitoring platform usage.
 
+**Container**
+Objects that hold specimens including buckets, cassettes, vials, and slides. In DICOM terminology, slides are considered containers for tissue specimens.
+
 ### D
 
 **DICOM (Digital Imaging and Communications in Medicine)**  
 Standard format for medical imaging data, supported by the Aignostics Platform for whole slide images.
+
+**Digital Specimen**
+The digitized representation of a physical specimen captured as a Whole Slide Image (WSI).
 
 **Download URL**  
 Signed URL that allows the Aignostics Platform to securely download image data during processing.
@@ -591,6 +597,9 @@ Architectural style for web services that the Aignostics Platform API follows, e
 **Self-signed URLs**  
 Secure URLs with embedded authentication that allow the platform to access user data without exposing credentials.
 
+**Specimen**
+A discrete physical object (or collection of objects) that is the subject of pathology examination, including objects at all levels of processing - from fresh tissue, dissected organs, tissue embedded in paraffin, sections made from embedded tissue, to liquid preparations (DICOM standard definition).
+
 **SVS**  
 Aperio ScanScope Virtual Slide format, commonly used for whole slide images and supported by the platform.
 
@@ -626,3 +635,7 @@ High-resolution digital image of an entire histopathology slide, the primary inp
 
 **Workflow**  
 Sequence of automated processing steps within an application that transform input images into analytical results.
+
+
+## Standards References:
+- DICOM specimen terminology based on [DICOM PS3.3 2025c - Information Object Definitions](https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.22.html)
