@@ -217,6 +217,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182,
     "pillow>=11.3.0",                   # CVE-2025-48379,
     "aiohttp>=3.12.14",                 # GHSA-9548-qrrj-x5pj
+    "starlette>=0.47.2",                # GHSA-2c2j-9gv5-cj73
 ]
 
 [tool.ruff]
