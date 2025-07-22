@@ -162,15 +162,17 @@ jobs:
         with:
           name: test-results-ubuntu-latest          
 
-      - name: Have audit checks publish to reports/ for auditing
-        shell: bash
-        run: make audit
+      - name: Download audit results generated in _audit.yml
+        uses: actions/download-artifact@v4
+        with:
+          name: audit-results          
 
       - name: Create GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
+          rm -rf ./reports/coverage_html
           gh release create ${{ github.ref_name }} ./dist/* ./reports/* ./dist_native_zipped/* \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
