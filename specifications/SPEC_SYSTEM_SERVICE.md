@@ -1,5 +1,6 @@
 ---
 itemId: SPEC-SYSTEM-SERVICE
+itemTitle: SPEC-SYSTEM-SERVICE
 itemType: Software Item Spec
 itemFulfills: SWR-SYSTEM-CLI-HEALTH-1, SWR-SYSTEM-GUI-HEALTH-1, SWR-SYSTEM-GUI-SETTINGS-1
 Module: System
