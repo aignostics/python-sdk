@@ -1,7 +1,7 @@
 ---
 itemId: SHR-PRIVACY-1
 itemType: Requirement
-Requirement type: Stakeholder requirement (user)
+Requirement type: Environment 
 Context: Security
 ---
 
