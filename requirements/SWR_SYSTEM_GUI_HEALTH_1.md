@@ -2,6 +2,7 @@
 itemId: SWR-SYSTEM-GUI-HEALTH-1
 itemHasParent: SHR-USABILITY-1
 itemType: Requirement
+Requirement type: Regulatory
 Module: System
 Layer: GUI
 Context: Clinical

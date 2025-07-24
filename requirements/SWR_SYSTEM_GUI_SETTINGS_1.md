@@ -2,6 +2,7 @@
 itemId: SWR-SYSTEM-GUI-SETTINGS-1
 itemHasParent: SHR-PRIVACY-1
 itemType: Requirement
+Requirement type: Regulatory
 Module: System
 Layer: GUI
 Context: Clinical

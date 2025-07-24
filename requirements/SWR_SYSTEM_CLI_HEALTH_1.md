@@ -2,6 +2,7 @@
 itemId: SWR-SYSTEM-CLI-HEALTH-1
 itemHasParent: SHR-USABILITY-1
 itemType: Requirement
+Requirement type: Regulatory
 Module: System
 Layer: CLI
 Context: Clinical

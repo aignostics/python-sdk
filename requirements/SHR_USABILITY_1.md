@@ -1,7 +1,7 @@
 ---
 itemId: SHR-USABILITY-1
 itemType: Requirement
-Requirement type: Use case
+Requirement type: Environment
 Context: Security
 ---
 
