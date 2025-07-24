@@ -1,5 +1,6 @@
 ---
 itemId: SHR-USABILITY-1
+itemTitle: SHR-USABILITY-1
 itemType: Requirement
 Requirement type: Environment
 Context: Security

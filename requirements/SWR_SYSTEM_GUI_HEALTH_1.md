@@ -1,5 +1,6 @@
 ---
 itemId: SWR-SYSTEM-GUI-HEALTH-1
+itemTitle: SWR-SYSTEM-GUI-HEALTH-1
 itemHasParent: SHR-USABILITY-1
 itemType: Requirement
 Requirement type: Regulatory

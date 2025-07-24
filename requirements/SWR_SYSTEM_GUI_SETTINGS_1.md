@@ -1,5 +1,6 @@
 ---
 itemId: SWR-SYSTEM-GUI-SETTINGS-1
+itemTitle: SWR-SYSTEM-GUI-SETTINGS-1
 itemHasParent: SHR-PRIVACY-1
 itemType: Requirement
 Requirement type: Regulatory
