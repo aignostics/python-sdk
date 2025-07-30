@@ -1,5 +1,5 @@
 ---
-itemId: ADR-0001-APPLICATION-LISTING-SERVICE
+itemId: ADR-1-APPLICATION-LISTING-SERVICE
 itemType: Software Item Spec
 itemFulfills: SWR-APPLICATION-1, SWR-APPLICATION-2, SWR-APPLICATION-3, SWR-APPLICATION-4
 owner: engineering@aignostics.com
@@ -157,9 +157,9 @@ flowchart TB
     AppService --> AppRegistry[Application Registry]
     AppService --> Cache[Application Cache]
     
-    AppService --> |list| ListAPI[GET /applications]
-    AppService --> |describe| DetailAPI[GET /applications/{id}]
-    AppService --> |verbose| VerboseAPI[GET /applications?verbose=true]
+    AppService --> |list| ListAPI["GET /applications"]
+    AppService --> |describe| DetailAPI["GET /applications/:id"]
+    AppService --> |verbose| VerboseAPI["GET /applications?verbose=true"]
     
     AppRegistry --> AppMetadata[(Application Metadata)]
     
