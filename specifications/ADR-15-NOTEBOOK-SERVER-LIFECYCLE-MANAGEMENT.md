@@ -2,7 +2,7 @@
 itemId: ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT
 itemTitle: Notebook Server Lifecycle Management Architecture
 itemType: Software Item Spec
-itemFulfills: SWR-NOTEBOOK-4, SWR-NOTEBOOK-5, SWR-NOTEBOOK-6
+itemFulfills: SWR-NOTEBOOK-1, SWR-NOTEBOOK-4, SWR-NOTEBOOK-5, SWR-NOTEBOOK-6, SWR-NOTEBOOK-7, SWR-NOTEBOOK-8
 owner: engineering@aignostics.com
 approvers: product@aignostics.com, architecture@aignostics.com
 informed: stakeholders@aignostics.com

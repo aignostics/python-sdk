@@ -1,8 +1,9 @@
 ---
-itemId: ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE
-itemTitle: Cloud Storage Service Architecture
+itemId: ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE
+itemTitle: Dataset Download Service Architecture
 itemType: Software Item Spec
-itemFulfills: SWR-BUCKET-1, SWR-BUCKET-2, SWR-BUCKET-3
+itemFulfills: SWR-DATASET-1, SWR-DATASET-3, SWR-DATASET-4 
+itemExtends: ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE
 owner: engineering@aignostics.com
 approvers: product@aignostics.com, architecture@aignostics.com
 informed: stakeholders@aignostics.com

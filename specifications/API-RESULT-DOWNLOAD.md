@@ -2,7 +2,7 @@
 itemId: API-RESULT-DOWNLOAD
 itemTitle: Result Download API
 itemType: Software Item Spec
-itemFulfills: SWR-APPLICATION-13, SWR-APPLICATION-14, SWR-APPLICATION-16, SWR-APPLICATION-17
+itemFulfills: SWR-APPLICATION-13, SWR-APPLICATION-14, SWR-APPLICATION-16
 itemExtends: ADR-6-CLOUD-STORAGE-INFRASTRUCTURE
 owner: engineering@aignostics.com
 approvers: product@aignostics.com, architecture@aignostics.com

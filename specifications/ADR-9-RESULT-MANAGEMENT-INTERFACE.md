@@ -2,7 +2,7 @@
 itemId: ADR-7-CROSS-INTERFACE-RUN-STATE-MANAGEMENT
 itemTitle: Cross-Interface Run State Management Architecture
 itemType: Software Item Spec
-itemFulfills: SWR-APPLICATION-17, SWR-APPLICATION-18, SWR-APPLICATION-19
+itemFulfills: SWR-APPLICATION-17, SWR-APPLICATION-18
 owner: engineering@aignostics.com
 approvers: product@aignostics.com, architecture@aignostics.com
 informed: stakeholders@aignostics.com
