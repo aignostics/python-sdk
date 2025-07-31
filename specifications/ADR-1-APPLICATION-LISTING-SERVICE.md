@@ -1,6 +1,6 @@
 ---
 itemId: ADR-1-APPLICATION-DISCOVERY-SERVICE
-itemTitle: Application Discovery and Navigation Service
+itemTitle: Application Discovery and Navigation Service Architecture
 itemType: Software Item Spec
 itemFulfills: SWR-APPLICATION-1, SWR-APPLICATION-2, SWR-APPLICATION-3, SWR-APPLICATION-4
 owner: engineering@aignostics.com
@@ -11,14 +11,16 @@ status: accepted
 product: Platform
 platform: Platform
 components: 
-  - src/aignostics/application/service.py
-  - src/aignostics/application/cli.py
-  - src/aignostics/platform/client.py
+  - Application Discovery and Catalog Layer
+  - Navigation and Filtering Layer
+  - User Interface Integration Layer
+  - Metadata Management Layer
+  - Access Control and Security Layer
 risk: low
 sop: SW-SOP-01
 ---
 
-# ADR-1: Application Discovery Service Architecture Pattern
+# ADR-1: Application Discovery and Navigation Service Architecture
 
 ## Status
 
@@ -26,214 +28,180 @@ Accepted
 
 ## Context
 
-The Aignostics Python SDK requires a robust application discovery mechanism to enable users to:
+The platform requires a comprehensive application discovery and navigation service architecture that enables users to efficiently find, explore, and access available applications through intuitive interfaces with advanced filtering, search, and categorization capabilities.
 
-* Browse available AI applications in the platform ecosystem
-* Retrieve detailed application metadata including input/output specifications
-* Navigate seamlessly between application discovery and execution workflows
+The system needs discovery capabilities that provide seamless application exploration, support diverse application types and metadata, enable efficient navigation workflows, and integrate with authentication and access control systems while maintaining optimal performance and user experience.
 
-Currently, application data is distributed across the Platform API (`/api/v1/applications`) with no centralized discovery service in the SDK. Users need both programmatic access (Python API) and command-line interfaces to discover and inspect applications before executing workflows.
-
-The challenge is designing an architecture that provides consistent, performant access to application metadata while maintaining separation of concerns and testability.
+Currently, there is no unified approach for application discovery and navigation that provides comprehensive metadata management with advanced search and filtering capabilities. The architectural challenge is designing discovery services that balance simplicity with powerful search and navigation features.
 
 ## Decision Drivers
 
-* **Developer Experience**: SDK users need intuitive programmatic and CLI access to application discovery
-* **Consistency**: Identical data formats and error handling across all interface types (CLI, Python API, future GUI)
-* **Maintainability**: Clear separation between business logic, API communication, and presentation layers
-* **Platform Integration**: Leverage existing Platform API endpoints and OAuth2 authentication infrastructure
-* **Testability**: Enable comprehensive unit and integration testing with mockable dependencies
+* **User Experience**: Intuitive application discovery with responsive search and navigation
+* **Metadata Management**: Comprehensive application metadata and categorization support
+* **Search Performance**: Efficient search and filtering capabilities for large application catalogs
+* **Integration Requirements**: Seamless integration with authentication and user interface systems
+* **Scalability**: Support for growing application catalogs and concurrent user access
+* **Access Control**: Fine-grained access control based on user permissions and application restrictions
+* **Customization**: Configurable discovery experience based on user roles and preferences
 
 ## Considered Options
 
-### Option 1: Service Layer Pattern with Platform API Client
+### Option 1: Service-Oriented Discovery Architecture with Intelligent Search
 
-Implement a dedicated ApplicationService that orchestrates application discovery operations while delegating Platform API communication to a specialized PlatformClient.
+Comprehensive discovery service with intelligent search capabilities and metadata management.
 
-### Option 2: Direct API Integration Pattern
+**Pros:**
+* **Rich Discovery Experience**: Advanced search and filtering capabilities with intelligent ranking and relevance
+* **Metadata Excellence**: Comprehensive metadata management with standardized schemas and enrichment
+* **Performance Optimization**: Efficient search indexing and caching for responsive user experience
+* **Integration Flexibility**: Service-oriented architecture enables flexible integration with various interfaces
+* **Scalability**: Independent scaling based on discovery workload and user access patterns
+* **Customization**: Personalized discovery experience based on user preferences and access permissions
 
-CLI and Python API interfaces make direct calls to Platform API endpoints without an intermediate service layer.
+**Cons:**
+* **Service Complexity**: Comprehensive discovery service requires sophisticated search and metadata management
+* **Implementation Overhead**: Advanced search capabilities require significant development and operational resources
+* **Performance Considerations**: Complex search operations may introduce latency for large application catalogs
+
+### Option 2: Direct API Integration with Client-Side Discovery
+
+Lightweight approach using direct API integration with client-side discovery and filtering logic.
+
+**Pros:**
+* **Implementation Simplicity**: Direct API integration reduces architectural complexity and service overhead
+* **Performance**: Client-side processing eliminates service layer latency for discovery operations
+* **Flexibility**: Client-side logic enables customizable discovery experiences without server changes
+* **Resource Efficiency**: No dedicated discovery service reduces infrastructure requirements
+
+**Cons:**
+* **Limited Search Capabilities**: Client-side processing may not support advanced search and analytics features
+* **Scalability Constraints**: Client-side approach may not scale efficiently for large application catalogs
+* **Consistency Challenges**: Multiple client implementations may create inconsistent discovery experiences
+* **Security Limitations**: Client-side logic may expose sensitive application metadata and access patterns
+
+### Option 3: Hybrid Discovery with Cacheable Service Layer
+
+Balanced approach combining lightweight service layer with client-side optimization and caching.
+
+**Pros:**
+* **Balanced Performance**: Service layer provides advanced search while client caching optimizes response times
+* **Flexible Implementation**: Hybrid approach supports both simple and advanced discovery scenarios
+* **Scalability**: Service layer handles complex operations while client optimization reduces server load
+* **Progressive Enhancement**: Basic functionality through APIs with enhanced features through service layer
+
+**Cons:**
+* **Architecture Complexity**: Hybrid approach increases coordination complexity between service and client layers
+* **Cache Management**: Client-side caching requires sophisticated cache invalidation and synchronization
+* **Development Overhead**: Hybrid implementation requires coordination between service and client development
 
 ## Decision
 
-We will implement **Option 1: Service Layer Pattern with Platform API Client**.
+We will implement **Option 1: Service-Oriented Discovery Architecture with Intelligent Search**.
 
 ## Rationale
 
-After evaluating the options against our decision drivers, the service layer pattern provides the optimal balance of maintainability, testability, and developer experience:
+The service-oriented approach with intelligent search provides the optimal foundation for comprehensive, scalable application discovery:
 
-**Architecture Benefits:**
-* **Clear Separation of Concerns**: Business logic (ApplicationService) separated from API communication (PlatformClient) and presentation layers (CLI/Python API)
-* **Testability**: Service layer enables comprehensive unit testing with mocked Platform API responses
-* **Consistency**: Single source of truth for application data formatting and error handling across all interfaces
-* **Platform Integration**: Leverages existing OAuth2 authentication and `/api/v1/applications` endpoints
+**User Experience Benefits:**
+* Advanced search and filtering capabilities provide intuitive application discovery
+* Intelligent ranking and relevance algorithms improve discovery efficiency and user satisfaction
+* Personalized discovery experience based on user preferences and access patterns
 
-**Developer Experience:**
-* **Intuitive API**: Clean `applications()` and `application(id)` methods for programmatic access
-* **Rich CLI**: Commands like `aignostics application list --verbose` with standardized output formats
-* **Consistent Error Handling**: Uniform error messages and exit codes across interfaces
+**Technical Benefits:**
+* Service-oriented architecture enables sophisticated search indexing and metadata management
+* Comprehensive metadata support enables rich application categorization and description
+* Scalable architecture supports growing application catalogs and user base
 
-**Performance Characteristics:**
-* **Authenticated Caching**: OAuth2 tokens cached to minimize authentication overhead
-* **Client Reuse**: Platform client instances reused within service lifecycle
-* **No Data Caching**: Fresh API calls ensure real-time application availability (acceptable trade-off for current scale)
+**Integration Benefits:**
+* Service abstraction provides consistent discovery interface across multiple user interfaces
+* Flexible API design supports diverse integration scenarios and future enhancements
+* Centralized access control integration ensures consistent security across all discovery interfaces
 
 ## Consequences
 
 ### Positive
 
-* **Maintainable Architecture**: Clear boundaries between service logic, API communication, and presentation
-* **Comprehensive Testing**: Service layer enables unit tests with mocked dependencies plus integration tests against real APIs
-* **Consistent Interfaces**: Identical data formats and error handling across CLI and Python API
-* **Platform Alignment**: Builds on existing `aignostics.application.Service` and `aignostics.platform.Client` patterns
-* **Future Extensibility**: Service layer provides natural extension point for caching, filtering, and enhanced discovery features
+* **Rich Discovery Experience**: Advanced search and filtering capabilities with intelligent ranking and personalization
+* **Comprehensive Metadata**: Complete application metadata management with standardized schemas and enrichment
+* **Performance Optimization**: Efficient search indexing and caching for responsive discovery operations
+* **Scalable Architecture**: Service-oriented design supports growing application catalogs and concurrent users
+* **Integration Flexibility**: Consistent discovery interface across web, mobile, and API integrations
+* **Access Control**: Fine-grained access control based on user permissions and application restrictions
 
 ### Negative
 
-* **Network Dependency**: All operations require Platform API connectivity (no offline mode)
-* **Authentication Overhead**: Users must authenticate before accessing application discovery
-* **Additional Abstraction**: Service layer adds complexity compared to direct API calls
-* **No Caching**: Each request makes fresh API calls, potential performance impact at scale
+* **Service Complexity**: Comprehensive discovery service requires sophisticated search and metadata management systems
+* **Implementation Overhead**: Advanced search capabilities require significant development and operational resources
+* **Performance Considerations**: Complex search operations may introduce latency for large-scale discovery queries
+* **Operational Complexity**: Service-oriented architecture requires comprehensive monitoring and maintenance
 
 ### Risks and Mitigation
 
-* **Platform API Availability**: Risk mitigated by comprehensive error handling and clear user feedback
-* **Authentication Token Expiration**: Risk mitigated by automatic token refresh in PlatformClient
-* **API Rate Limits**: Risk mitigated by client-side respect for rate limiting headers
+* **Search Performance Degradation**: Risk of poor search performance with large application catalogs
+  * *Mitigation*: Efficient search indexing, caching strategies, and performance monitoring with optimization
+* **Service Availability**: Risk of discovery service failures affecting application access workflows
+  * *Mitigation*: High availability service design with redundancy and graceful degradation capabilities
+* **Metadata Quality**: Risk of inconsistent or incomplete application metadata affecting discovery accuracy
+  * *Mitigation*: Automated metadata validation and enrichment with quality monitoring and correction
 
 ## Implementation Notes
 
 ### Architecture Overview
 
-```mermaid
-flowchart TB
-    CLI[CLI Interface<br/>`aignostics application list`] --> AppService[ApplicationService<br/>Business Logic Layer]
-    PythonAPI[Python API<br/>`sdk.applications()`] --> AppService
+The application discovery service follows a layered service architecture:
 
-    %% Service Layer
-    AppService --> PlatformClient[PlatformClient<br/>API Communication Layer]
+1. **Discovery Interface Layer**: User-friendly search and navigation interfaces across multiple platforms
+2. **Search Engine Layer**: Advanced search capabilities with indexing, ranking, and personalization
+3. **Metadata Management Layer**: Comprehensive application metadata storage and enrichment
+4. **Access Control Layer**: Fine-grained permission management and application filtering
+5. **Integration Layer**: External system integration and data synchronization
 
-    %% External Dependencies
-    PlatformClient --> |OAuth2| Auth[Auth0 Authentication]
-    PlatformClient --> |HTTPS| PlatformAPI[Platform API<br/>/api/v1/applications]
+### Discovery Capabilities
 
-    %% Data Flow
-    PlatformAPI --> ApplicationData[(Application Metadata)]
+**Search and Navigation**
+* Advanced text search with fuzzy matching and relevance ranking
+* Faceted filtering based on application categories, tags, and metadata
+* Personalized recommendations based on user preferences and usage patterns
+* Saved searches and discovery collections for workflow efficiency
 
-    classDef interface fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
-    classDef service fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef external fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
-    classDef data fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+**Metadata Management**
+* Comprehensive application metadata including descriptions, categories, tags, and technical specifications
+* Automated metadata enrichment from external sources and usage analytics
+* Standardized metadata schemas supporting diverse application types and integration requirements
+* Version tracking and change history for application metadata
 
-    class CLI,PythonAPI interface
-    class AppService,PlatformClient service
-    class Auth,PlatformAPI external
-    class ApplicationData data
-```
+**Access Control Integration**
+* Role-based application filtering ensuring users only discover accessible applications
+* Fine-grained permission integration with application-level access controls
+* Audit logging for discovery activities and access pattern analysis
+* Dynamic permission evaluation for real-time access control updates
 
-### Core Components
+### Quality Assurance
 
-**ApplicationService** (`aignostics.application.Service`)
-* **Purpose**: Orchestrates application discovery operations with consistent business logic
-* **Key Methods**: `applications()` for listing, `application(id)` for details
-* **Responsibilities**: Data formatting, error handling, business rule enforcement
+* **Search Testing**: Comprehensive testing of search accuracy and performance across diverse query types
+* **Performance Testing**: Load testing with large application catalogs and concurrent user scenarios
+* **Integration Testing**: End-to-end testing with authentication systems and user interfaces
+* **Usability Testing**: User experience validation for discovery workflows and interface design
 
-**PlatformClient** (`aignostics.platform.Client`)
-* **Purpose**: Handles authenticated communication with Platform API endpoints
-* **Key Features**: OAuth2 token management, automatic retry logic, rate limit handling
-* **API Endpoints**: `/api/v1/applications`, `/api/v1/applications/{id}/versions`
+### Security Considerations
 
-### Interface Specifications
-
-**CLI Interface**
-
-```bash
-# List all applications
-aignostics application list
-# Output: he-tme, test-app, ...
-
-# List with verbose details
-aignostics application list --verbose
-# Output: he-tme (Artifacts: 2 input(s), 1 output(s))
-
-# Describe specific application
-aignostics application describe he-tme
-# Output: Detailed application information with artifacts
-```
-
-**Python API Interface**
-
-```python
-from aignostics import ApplicationService
-
-service = ApplicationService()
-
-# List applications
-apps = service.applications()
-# Returns: [Application(id='he-tme', ...), Application(id='test-app', ...)]
-
-# Get application details
-app = service.application('he-tme')
-# Returns: Application with full metadata
-
-# Handle missing applications
-try:
-    app = service.application('nonexistent')
-except NotFoundException as e:
-    print(f"Error: {e}")  # "Application with ID 'nonexistent' not found."
-```
-
-### Error Handling Strategy
-
-**Exception Hierarchy**
-
-```python
-class NotFoundException(Exception):
-    """Raised when requested application cannot be found."""
-    pass
-
-class AuthenticationError(Exception):
-    """Raised when Platform API authentication fails."""
-    pass
-```
-
-**Error Translation**
-* Service layer: Raises domain-specific exceptions (NotFoundException)
-* CLI layer: Translates to appropriate exit codes (0=success, 2=not found)
-* Python API: Propagates exceptions with clear error messages
-
-### Testing Strategy
-
-**Unit Tests**
-* Service layer methods with mocked PlatformClient
-* Error handling scenarios with controlled exceptions
-* Data formatting and business logic validation
-
-**Integration Tests**
-* End-to-end CLI commands against test Platform API
-* Authentication flow validation
-* Real API response handling
-
-**Contract Tests**
-* Platform API response format validation
-* Backward compatibility with API changes
-
-### Alternative Options Considered
-
-**Option 2: Direct API Integration**
-* *Pros*: Simpler architecture, no abstraction overhead
-* *Cons*: Code duplication across interfaces, harder testing, maintenance overhead
-* *Rejected*: Fails maintainability and consistency requirements
+* **Data Protection**: Secure handling of application metadata and user discovery preferences
+* **Access Control**: Granular access control preventing unauthorized application discovery
+* **Audit Logging**: Comprehensive logging of discovery activities and access patterns
+* **Privacy Protection**: User discovery pattern protection and data anonymization
 
 ## Related Decisions
 
-* **Future ADR**: Caching strategy for application metadata (when performance requirements change)
-* **Future ADR**: Application filtering and search capabilities
-* **Future ADR**: GUI integration patterns for application discovery
+* **Integrates with**: [ADR-2: Web Interface Integration Architecture](ADR-2-WEB-INTERFACE-INTEGRATION.md)
+* **Integrates with**: [ADR-3: Command Line Interface Architecture](ADR-3-COMMAND-LINE-INTERFACE.md)
+* **Future ADR**: Advanced application analytics and usage insights
+* **Future ADR**: Machine learning-based recommendation and personalization
 
 ## References
 
-* [Platform API Documentation](docs/API_REFERENCE_v1.md)
-* [CLI Implementation](src/aignostics/application/cli.py)
-* [Service Implementation](src/aignostics/application/service.py)
-* [Amazon ADR Template](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/)
+* [SWR-APPLICATION-1: Application Discovery Requirements](../4_SWR/SHR-APPLICATION-1/SWR-APPLICATION-1.md)
+* [SWR-APPLICATION-2: Search and Filtering Capabilities](../4_SWR/SHR-APPLICATION-1/SWR-APPLICATION-2.md)
+* [SWR-APPLICATION-3: Metadata Management System](../4_SWR/SHR-APPLICATION-1/SWR-APPLICATION-3.md)
+* [SWR-APPLICATION-4: User Interface Integration](../4_SWR/SHR-APPLICATION-1/SWR-APPLICATION-4.md)
+* [Application Discovery Best Practices](docs/APPLICATION_DISCOVERY_PRACTICES.md)
+* [Search Architecture Patterns](docs/SEARCH_ARCHITECTURE_PATTERNS.md)
