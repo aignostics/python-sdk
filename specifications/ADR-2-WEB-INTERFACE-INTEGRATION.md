@@ -1,214 +1,245 @@
 ---
 itemId: ADR-2-APPLICATION-WEB-INTERFACE
+itemTitle: Application Web Interface for Discovery and Navigation
 itemType: Software Item Spec
 itemFulfills: SWR-APPLICATION-5
-owner: frontend@aignostics.com
-approvers: product@aignostics.com, ux@aignostics.com
+itemExtends: ADR-1-APPLICATION-DISCOVERY-SERVICE
+owner: engineering@aignostics.com
+approvers: product@aignostics.com, architecture@aignostics.com
 informed: stakeholders@aignostics.com
-date: 2025-01-29
+date: 2025-07-31
 status: accepted
 product: Platform
 platform: Platform
-components: web-ui, application-service
+components: 
+  - src/aignostics/web/server.py
+  - src/aignostics/web/templates/applications/list.html
+  - src/aignostics/web/templates/applications/detail.html
+  - src/aignostics/web/static/css/applications.css
 risk: low
 sop: SW-SOP-01
 ---
 
-# ADR-0002: Application Web Interface for Discovery and Navigation
+# ADR-2: Application Web Interface for Discovery and Navigation
 
-## Context and Problem Statement
+## Status
 
-The platform requires a web interface that enables users to view available AI applications and navigate between different application pages. Users need to access application information through an intuitive web interface and be able to navigate to detailed application pages to access application functionality.
+Accepted
+
+## Context
+
+Building upon the application discovery service architecture established in [ADR-1: Application Discovery Service](ADR-1-APPLICATION-LISTING-SERVICE.md), users require a web-based interface that complements the existing CLI capabilities. The web interface must enable:
+
+* Visual navigation between available AI applications without CLI expertise
+* Intuitive browser-based application discovery for non-technical users
+* Seamless integration with the existing ApplicationService architecture
+* Consistent presentation of application metadata across web and CLI interfaces
+
+Currently, application discovery is only available through CLI commands (`aignostics application list`, `aignostics application describe`) and Python API interfaces. A web interface is needed to provide broader accessibility and improved user experience for application discovery workflows, particularly for users who prefer graphical interfaces over command-line tools.
+
+The challenge is designing a web interface that leverages the existing ApplicationService while providing optimal user experience, maintaining architectural consistency with ADR-1, and ensuring security best practices.
 
 ## Decision Drivers
 
-* Need for web interface to display available AI applications
-* Navigation capability between application pages
-* Display of application information in web format
-* Access to detailed application pages for further functionality
-* Integration with backend application service for data retrieval
+* **User Accessibility**: Non-technical users need web-based application discovery without CLI requirements
+* **Architectural Consistency**: Leverage existing ApplicationService from ADR-1 for consistent data access patterns
+* **Developer Experience**: Frontend developers need clear patterns for application data integration using established service layer
+* **Performance**: Fast page loads and responsive navigation between applications with server-side rendering
+* **SEO and Shareability**: Application pages should be linkable and searchable for knowledge sharing across teams
+* **Security**: Proper authentication and authorization using existing OAuth2 infrastructure from PlatformClient
+* **Future Extensibility**: Architecture should support enhanced features like filtering, search, and interactive workflows
 
 ## Considered Options
 
-1. Server-Side Rendered Pages with Simple Navigation
-2. Single Page Application with Client-Side Routing
-3. Multi-Page Application with Progressive Enhancement
-4. Hybrid Approach with Server-Side Base and Client-Side Enhancement
+### Option 1: Server-Side Rendered Web Interface with Service Layer Integration
 
-## Decision Outcome
+Implement a web server that renders HTML pages server-side, consuming the existing ApplicationService for consistent data access and error handling patterns established in ADR-1.
 
-Chosen option: "Server-Side Rendered Pages with Simple Navigation", because it provides reliable page loading, simple navigation between applications, and straightforward integration with the application service while meeting the basic requirements for application discovery and information display.
+### Option 2: Single-Page Application with REST API
 
-### Rationale
+Build a client-side JavaScript application that communicates with a new REST API endpoint, bypassing the service layer for direct Platform API access.
 
-The server-side rendering approach allows for:
-- Reliable page loading with application information
-- Simple navigation links between application pages
-- Direct integration with the application service API
-- Standard web page behavior that works in all browsers
-- Easy implementation and maintenance
+### Option 3: Hybrid Approach with Progressive Enhancement
 
-### Positive Consequences
+Combine server-side rendering for initial page loads with client-side JavaScript for enhanced interactivity and dynamic features.
 
-* Excellent user experience with fast initial loads and responsive interactions
-* Real-time updates for workflow progress and run status changes
-* Good accessibility support with progressive enhancement
-* Scalable architecture that supports future feature additions
-* Clear separation between presentation and business logic
-* Strong integration with existing backend services
+## Decision
 
-### Negative Consequences
+We will implement **Option 1: Server-Side Rendered Web Interface with Service Layer Integration**.
 
-* More complex architecture than pure SPA or SSR approaches
-* WebSocket infrastructure adds operational complexity
-* State synchronization between client and server requires careful design
+## Rationale
 
-## Pros and Cons of the Options
+After evaluating the options against our decision drivers, the server-side rendering approach with service layer integration provides the optimal balance of consistency, performance, and maintainability:
 
-### Server-Side Rendered Pages with Simple Navigation
+**Architecture Benefits:**
+* **Service Layer Reuse**: Leverages existing ApplicationService for identical data access patterns as CLI, maintaining consistency from ADR-1
+* **Consistent Error Handling**: Same NotFoundException handling and user feedback across all interfaces
+* **Authentication Integration**: Uses existing OAuth2 flow through PlatformClient without additional API endpoints
+* **SEO Optimization**: Server-rendered pages provide better search engine indexing and faster initial loads
 
-Traditional web pages rendered on the server with HTML links for navigation between application pages.
+**Developer Experience:**
+* **Familiar Patterns**: Web developers can use established service layer patterns from ADR-1
+* **Simplified Testing**: Unit tests with mocked ApplicationService, consistent with existing test patterns
+* **Clear Architecture**: Clean separation between presentation (templates) and business logic (service)
 
-#### Pros
+**Performance Characteristics:**
+* **Fast Initial Loads**: Server-side rendering eliminates client-side API round trips for initial page content
+* **Progressive Enhancement**: JavaScript can be added later for enhanced features without architectural changes
+* **Shared Caching**: Benefits from any future ApplicationService caching implementations
 
-* Simple and reliable implementation
-* Fast initial page loads with complete content
-* Standard browser navigation behavior
-* No JavaScript dependencies for core functionality
-* Easy to cache and optimize for performance
-* Works across all browsers and devices
-* Straightforward integration with application service
+## Relationship to ADR-1
 
-#### Cons
+This ADR builds directly on [ADR-1: Application Discovery Service](ADR-1-APPLICATION-LISTING-SERVICE.md):
 
-* Page reloads required for each navigation
-* Limited client-side interactivity
-* Less dynamic user experience than modern web apps
-* Requires server round-trip for each page view
+* **Service Layer Reuse**: Web interface consumes the same ApplicationService for consistent data access
+* **Error Handling**: Leverages NotFoundException from ADR-1 for 404 page rendering
+* **Authentication**: Uses same OAuth2 flow through PlatformClient
+* **Data Consistency**: Identical application metadata format across CLI and web interfaces
 
-### Single Page Application with Client-Side Routing
+**Integration Points:**
+* Web server instantiates ApplicationService for each request using established patterns
+* 404 errors mapped to user-friendly "Application not found" pages
+* Same artifact format display as CLI `--verbose` output
+* Consistent authentication flow with token management
 
-Client-side application that loads once and handles navigation through JavaScript routing.
+## Consequences
 
-#### Pros
+### Positive
 
-* Smooth navigation without page reloads
-* Rich interactive user experience
-* Fast navigation after initial load
-* Modern web application feel
+* **Architectural Consistency**: Maintains service layer patterns established in ADR-1
+* **Reduced Development Overhead**: No new API endpoints or authentication flows required
+* **Comprehensive Testing**: Leverages existing service layer test infrastructure
+* **SEO Benefits**: Server-rendered pages improve discoverability and link sharing
+* **Performance**: Fast initial page loads without client-side API dependencies
+* **Future Extensibility**: Server-side architecture supports progressive enhancement
 
-#### Cons
+### Negative
 
-* Complex JavaScript application to build and maintain
-* Slower initial page load
-* Requires JavaScript for basic functionality
-* More complex state management
-* SEO challenges without server-side rendering
+* **Limited Interactivity**: Initial implementation lacks dynamic client-side features
+* **Page Refresh Navigation**: Traditional web navigation requires full page reloads
+* **JavaScript Dependency for Enhancement**: Future interactive features require additional client-side complexity
 
-### Multi-Page Application with Progressive Enhancement
+### Risks and Mitigation
 
-Server-rendered pages with optional JavaScript enhancements for improved user experience.
+* **Authentication Session Management**: Risk mitigated by leveraging existing OAuth2 token handling from PlatformClient
+* **Template Maintenance**: Risk mitigated by clear separation between templates and business logic
+* **Performance at Scale**: Risk mitigated by potential future ApplicationService caching implementation
 
-#### Pros
+## Implementation Notes
 
-* Works without JavaScript (baseline functionality)
-* Can add interactive features where beneficial
-* Good balance of reliability and enhancement
-* SEO-friendly with server-rendered content
-
-#### Cons
-
-* More complex to implement than pure server-side approach
-* Need to maintain both server and client-side logic
-* Potential for inconsistent behavior between enhanced and basic modes
-
-### Hybrid Approach with Server-Side Base and Client-Side Enhancement
-
-Combines server-side rendering for initial page loads with client-side routing for subsequent navigation.
-
-#### Pros
-
-* Fast initial page loads
-* Smooth navigation after first load
-* Progressive enhancement capabilities
-* Good performance characteristics
-
-#### Cons
-
-* Most complex implementation option
-* Requires coordination between server and client routing
-* Potential for inconsistent user experience
-* Higher development and maintenance overhead
-
-## More Information
-
-### Architecture Diagram
+### Architecture Overview
 
 ```mermaid
 flowchart TB
-    Browser[User Browser] --> WebServer[Web Server]
+    Browser[User Browser] --> WebServer[Web Server<br/>FastAPI/Flask]
     
-    WebServer --> AppListPage[Application List Page]
-    WebServer --> AppDetailPage[Application Detail Page]
-    WebServer --> StaticAssets[Static Assets]
+    WebServer --> AppListPage[Application List Page<br/>Server-Rendered HTML]
+    WebServer --> AppDetailPage[Application Detail Page<br/>Server-Rendered HTML]
+    WebServer --> StaticAssets[Static Assets<br/>CSS, JS, Images]
     
-    AppListPage --> AppService[Application Service]
+    %% Integration with ADR-1 Service Layer
+    AppListPage --> AppService[ApplicationService<br/>From ADR-1]
     AppDetailPage --> AppService
     
-    AppService --> ApplicationAPI[Application API]
+    %% Platform Integration
+    AppService --> PlatformClient[PlatformClient<br/>OAuth2 + API Communication]
+    PlatformClient --> PlatformAPI[Platform API<br/>/api/v1/applications]
     
-    Browser --> |HTTP GET| PageRequest[Page Requests]
-    Browser --> |Navigation| LinkClick[Link Navigation]
+    %% Navigation Flow
+    Browser --> |GET /applications| AppListPage
+    Browser --> |GET /applications/:id| AppDetailPage
+    AppListPage --> |Click Application| AppDetailPage
     
-    classDef browser fill:#E3F2FD,stroke:#1976D2,color:#0D47A1
-    classDef server fill:#F3E5F5,stroke:#7B1FA2,color:#4A148C
-    classDef page fill:#E8F5E8,stroke:#388E3C,color:#1B5E20
-    classDef service fill:#FFF3E0,stroke:#F57C00,color:#E65100
+    classDef browser fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef server fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef page fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef service fill:#fff3e0,stroke:#f57c00,stroke-width:2px
     
-    class Browser,PageRequest,LinkClick browser
+    class Browser browser
     class WebServer server
-    class AppListPage,AppDetailPage page
-    class StaticAssets,AppService,ApplicationAPI service
+    class AppListPage,AppDetailPage,StaticAssets page
+    class AppService,PlatformClient,PlatformAPI service
 ```
 
-### Components Details
+### Core Components
 
-#### Web Server
+**Web Server** (`src/aignostics/web/server.py`)
+* **Purpose**: Serves application discovery pages with server-side rendering using FastAPI framework
+* **Key Routes**: `/applications` (list), `/applications/{id}` (details), `/static/*` (assets)
+* **Integration**: Consumes ApplicationService from ADR-1 for consistent data access
 
-Standard web server that handles HTTP requests and serves HTML pages with application information.
+**Application List Page** (`src/aignostics/web/templates/applications/list.html`)
+* **Purpose**: Displays available applications with navigation links using Jinja2 templates
+* **Data Source**: `ApplicationService.applications()` method from ADR-1
+* **Features**: Application cards, search functionality, navigation to details
 
-**Key Responsibilities:**
-- Serve application list page showing available applications
-- Serve individual application detail pages
-- Handle static assets (CSS, JavaScript, images)
-- Integrate with application service to retrieve current application data
+**Application Detail Page** (`src/aignostics/web/templates/applications/detail.html`)
+* **Purpose**: Shows detailed application information and metadata
+* **Data Source**: `ApplicationService.application(id)` method from ADR-1
+* **Features**: Artifact display, metadata tables, navigation back to list
 
-#### Application List Page
+### Interface Specifications
 
-Server-rendered HTML page that displays available applications with navigation links.
+**URL Structure**
+```
+GET /applications              # Renders list of available applications
+GET /applications/{id}         # Renders detailed application page (404 if not found)
+GET /static/{path}            # Serves CSS, JavaScript, images
+```
 
-**Page Features:**
-- List of available applications including "he-tme" and "test-app"
-- Navigation links to individual application detail pages
-- Application names and basic information display
-- Simple HTML structure with standard web navigation
+**Error Handling Strategy**
+* 404 pages for missing applications using NotFoundException from service layer
+* Authentication redirects using existing OAuth2 flow
+* User-friendly error messages consistent with CLI interface
+* Proper HTTP status codes aligned with REST principles
 
-#### Application Detail Page
+### Security Considerations
 
-Server-rendered HTML page that shows detailed information for a specific application.
+* **Authentication**: Web interface requires same OAuth2 authentication as CLI through PlatformClient
+* **CSRF Protection**: Form submissions protected with CSRF tokens using FastAPI security features
+* **XSS Prevention**: All user-generated content properly escaped in Jinja2 templates
+* **Content Security Policy**: Strict CSP headers to prevent script injection
+* **Session Management**: Secure cookie handling for authentication state following coding guidelines
 
-**Page Features:**
-- Detailed application information including artifact identifiers
-- Application-specific content and descriptions
-- Navigation back to application list
-- Links to access application functionality
+### Testing Strategy
 
-#### Integration with Application Service
+**Unit Tests**
+* Web route handlers with mocked ApplicationService using pytest fixtures
+* Template rendering with sample application data
+* Error handling scenarios (404, authentication failures)
 
-The web interface consumes the application service API to retrieve current application data for page rendering.
+**Integration Tests**
+* End-to-end page rendering with real ApplicationService
+* Navigation flow between list and detail pages
+* Authentication integration with Platform API
 
-**Data Integration:**
-- Retrieve application list for list page rendering
-- Retrieve specific application details for detail page rendering
-- Handle application service errors gracefully
-- Cache application data appropriately for performance
+**UI Tests**
+* Browser-based testing of user navigation flows using pytest-playwright
+* Responsive design validation across devices
+* Accessibility compliance (WCAG 2.1 AA)
+
+### Alternative Options Considered
+
+**Option 2: Single-Page Application**
+* *Pros*: Rich interactivity, modern user experience
+* *Cons*: Requires new API endpoints, duplicates service logic, complex authentication, violates DRY principle
+* *Rejected*: Violates architectural consistency and increases maintenance overhead
+
+**Option 3: Hybrid Approach**
+* *Pros*: Best of both worlds - SEO and interactivity
+* *Cons*: Increased complexity, harder testing, multiple rendering paths
+* *Deferred*: Can be implemented as progressive enhancement in future iterations
+
+## Related Decisions
+
+* **Extends**: [ADR-1: Application Discovery Service](ADR-1-APPLICATION-LISTING-SERVICE.md)
+* **Future ADR**: Client-side interactivity and progressive enhancement patterns
+* **Future ADR**: Application filtering and search user interface design
+* **Future ADR**: Mobile-responsive design patterns for application discovery
+
+## References
+
+* [ADR-1: Application Discovery Service](ADR-1-APPLICATION-LISTING-SERVICE.md)
+* [FastAPI Documentation](https://fastapi.tiangolo.com/)
+* [Jinja2 Template Engine](https://jinja.palletsprojects.com/)
+* [Platform Authentication Flow Documentation](docs/AUTHENTICATION.md)

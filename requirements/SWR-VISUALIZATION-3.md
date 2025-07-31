@@ -1,7 +1,7 @@
 ---
-itemId: SWR-QUPATH-3
+itemId: SWR-VISUALIZATION-3
 itemTitle: Launch QuPath User Interface
-itemHasParent: SHR-QUPATH-1
+itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)

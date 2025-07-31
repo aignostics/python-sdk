@@ -1,265 +1,239 @@
 ---
-itemId: ADR-1-APPLICATION-LISTING-SERVICE
+itemId: ADR-1-APPLICATION-DISCOVERY-SERVICE
+itemTitle: Application Discovery and Navigation Service
 itemType: Software Item Spec
 itemFulfills: SWR-APPLICATION-1, SWR-APPLICATION-2, SWR-APPLICATION-3, SWR-APPLICATION-4
 owner: engineering@aignostics.com
 approvers: product@aignostics.com, architecture@aignostics.com
 informed: stakeholders@aignostics.com
-date: 2025-01-29
+date: 2025-07-31
 status: accepted
 product: Platform
 platform: Platform
-components: application-service, cli, gui
+components: 
+  - src/aignostics/application/service.py
+  - src/aignostics/application/cli.py
+  - src/aignostics/platform/client.py
 risk: low
 sop: SW-SOP-01
 ---
 
-# ADR-0001: Application Listing and Discovery Service
+# ADR-1: Application Discovery Service Architecture Pattern
 
-## Context and Problem Statement
+## Status
 
-The platform needs to provide users with the ability to discover and access available AI applications through both CLI and web interfaces. Users need to list applications (with optional verbose output), get detailed information about specific applications, and handle error cases when requesting non-existent applications. The system must provide consistent behavior and proper error handling with specific exit codes and message formats.
+Accepted
+
+## Context
+
+The Aignostics Python SDK requires a robust application discovery mechanism to enable users to:
+
+* Browse available AI applications in the platform ecosystem
+* Retrieve detailed application metadata including input/output specifications
+* Navigate seamlessly between application discovery and execution workflows
+
+Currently, application data is distributed across the Platform API (`/api/v1/applications`) with no centralized discovery service in the SDK. Users need both programmatic access (Python API) and command-line interfaces to discover and inspect applications before executing workflows.
+
+The challenge is designing an architecture that provides consistent, performant access to application metadata while maintaining separation of concerns and testability.
 
 ## Decision Drivers
 
-* Need to list available AI applications with their identifiers
-* Support for verbose output showing artifact counts in format "Artifacts: X input(s), Y output(s)"
-* Display specific application details including artifact identifiers
-* Handle unknown applications with exit code 2 and specific error message format
-* Support application schema export functionality
-* Provide web interface navigation between applications
-* Consistent exit code 0 for successful operations across all functions
+* **Developer Experience**: SDK users need intuitive programmatic and CLI access to application discovery
+* **Consistency**: Identical data formats and error handling across all interface types (CLI, Python API, future GUI)
+* **Maintainability**: Clear separation between business logic, API communication, and presentation layers
+* **Platform Integration**: Leverage existing Platform API endpoints and OAuth2 authentication infrastructure
+* **Testability**: Enable comprehensive unit and integration testing with mockable dependencies
 
 ## Considered Options
 
-1. Centralized Application Service with REST API
-2. Simple Configuration Files with Direct Access
-3. In-Memory Registry with File Loading
-4. Hybrid: Configuration Files with Service Layer
+### Option 1: Service Layer Pattern with Platform API Client
 
-## Decision Outcome
+Implement a dedicated ApplicationService that orchestrates application discovery operations while delegating Platform API communication to a specialized PlatformClient.
 
-Chosen option: "Centralized Application Service with REST API", because it provides the best balance of consistency, testability, and caching capabilities while avoiding the complexity of file synchronization issues and providing a clean interface for both CLI and GUI components.
+### Option 2: Direct API Integration Pattern
 
-### Rationale
+CLI and Python API interfaces make direct calls to Platform API endpoints without an intermediate service layer.
 
-The centralized service approach allows for:
-- Consistent application listing with identifiers as shown in test evidence
-- Standardized verbose output format "Artifacts: X input(s), Y output(s)" across interfaces
-- Unified error handling with exit code 2 and message format "Application with ID '[identifier]' not found."
-- Support for schema export functionality as demonstrated in tests
-- Web interface navigation capabilities between application pages
+## Decision
 
-### Positive Consequences
+We will implement **Option 1: Service Layer Pattern with Platform API Client**.
 
-* Application listing returns identifiers including "he-tme" and "test-app" as evidenced in tests
-* Verbose output includes artifact counts in the required format
-* Application details display artifact identifiers like "tissue_qc:geojson_polygons"
-* Error handling provides exact message format for unknown applications
-* Schema export creates zip files with expected naming pattern
-* Web interface supports navigation between application pages
+## Rationale
 
-### Negative Consequences
+After evaluating the options against our decision drivers, the service layer pattern provides the optimal balance of maintainability, testability, and developer experience:
 
-* Additional service layer adds some complexity
-* Network dependency for application information requests
-* Requires service coordination for deployments
+**Architecture Benefits:**
+* **Clear Separation of Concerns**: Business logic (ApplicationService) separated from API communication (PlatformClient) and presentation layers (CLI/Python API)
+* **Testability**: Service layer enables comprehensive unit testing with mocked Platform API responses
+* **Consistency**: Single source of truth for application data formatting and error handling across all interfaces
+* **Platform Integration**: Leverages existing OAuth2 authentication and `/api/v1/applications` endpoints
 
-## Pros and Cons of the Options
+**Developer Experience:**
+* **Intuitive API**: Clean `applications()` and `application(id)` methods for programmatic access
+* **Rich CLI**: Commands like `aignostics application list --verbose` with standardized output formats
+* **Consistent Error Handling**: Uniform error messages and exit codes across interfaces
 
-### Centralized Application Service with REST API
+**Performance Characteristics:**
+* **Authenticated Caching**: OAuth2 tokens cached to minimize authentication overhead
+* **Client Reuse**: Platform client instances reused within service lifecycle
+* **No Data Caching**: Fresh API calls ensure real-time application availability (acceptable trade-off for current scale)
 
-Implements a dedicated service component that manages application metadata and provides API endpoints for listing, detailed information, and schema export operations.
+## Consequences
 
-#### Pros
+### Positive
 
-* Consistent data access patterns across CLI and GUI interfaces
-* Centralized caching improves performance for repeated requests
-* Clean separation between data management and interface logic
-* Easy to mock service interface for testing different scenarios
-* Single place to implement error handling and validation logic
-* Can optimize for specific access patterns (e.g., caching verbose output)
+* **Maintainable Architecture**: Clear boundaries between service logic, API communication, and presentation
+* **Comprehensive Testing**: Service layer enables unit tests with mocked dependencies plus integration tests against real APIs
+* **Consistent Interfaces**: Identical data formats and error handling across CLI and Python API
+* **Platform Alignment**: Builds on existing `aignostics.application.Service` and `aignostics.platform.Client` patterns
+* **Future Extensibility**: Service layer provides natural extension point for caching, filtering, and enhanced discovery features
 
-#### Cons
+### Negative
 
-* Additional service layer adds some architectural complexity
-* Requires service initialization and lifecycle management
-* More components to test and maintain than simple file access
+* **Network Dependency**: All operations require Platform API connectivity (no offline mode)
+* **Authentication Overhead**: Users must authenticate before accessing application discovery
+* **Additional Abstraction**: Service layer adds complexity compared to direct API calls
+* **No Caching**: Each request makes fresh API calls, potential performance impact at scale
 
-### Simple Configuration Files with Direct Access
+### Risks and Mitigation
 
-Store application metadata in JSON or YAML files that are read directly by CLI and GUI components without an intermediate service layer.
+* **Platform API Availability**: Risk mitigated by comprehensive error handling and clear user feedback
+* **Authentication Token Expiration**: Risk mitigated by automatic token refresh in PlatformClient
+* **API Rate Limits**: Risk mitigated by client-side respect for rate limiting headers
 
-#### Pros
+## Implementation Notes
 
-* Extremely simple implementation with minimal infrastructure
-* Easy to version control application metadata alongside code
-* No service dependencies or initialization requirements
-* Fast access for small datasets with direct file I/O
-* Easy to inspect and modify application metadata by hand
-* No network calls or service coordination needed
-
-#### Cons
-
-* File parsing logic needs to be duplicated across CLI and GUI
-* Inconsistent caching behavior between different components
-* Harder to implement optimizations like pre-computed verbose output
-* File locking issues if multiple processes access simultaneously
-* Error handling logic scattered across multiple components
-
-### In-Memory Registry with File Loading
-
-Load application metadata from files into memory structures during application startup, providing fast access without file I/O overhead.
-
-#### Pros
-
-* Very fast access once loaded (no file I/O or network calls)
-* Simple data structures can be optimized for specific queries
-* Still allows version controlling metadata in files
-* No concurrent file access issues
-* Single loading point allows validation and error handling
-
-#### Cons
-
-* Requires application restart to pick up metadata changes
-* Memory usage scales with number of applications
-* Loading errors affect entire application startup
-* No dynamic updates without restart
-* Potential for memory/file inconsistency during development
-
-### Hybrid: Configuration Files with Service Layer
-
-Combine configuration files for metadata storage with a lightweight service layer that handles caching and provides consistent API.
-
-#### Pros
-
-* Version controllable metadata in files
-* Service layer provides consistent API and caching
-* File changes can trigger service refresh without restart
-* Best of both worlds: simple storage, clean interfaces
-* Service can optimize file access patterns
-
-#### Cons
-
-* Most complex option with both file and service management
-* File watching and refresh logic adds complexity
-* Potential for inconsistency between files and service cache
-* Two places where errors can occur (file loading + service)
-
-## More Information
-
-### Architecture Diagram
+### Architecture Overview
 
 ```mermaid
 flowchart TB
-    CLI[CLI Interface] --> AppService[Application Service]
-    GUI[GUI Interface] --> AppService
-    AppService --> AppRegistry[Application Registry]
-    AppService --> Cache[Application Cache]
-    
-    AppService --> |list| ListAPI["GET /applications"]
-    AppService --> |describe| DetailAPI["GET /applications/:id"]
-    AppService --> |verbose| VerboseAPI["GET /applications?verbose=true"]
-    
-    AppRegistry --> AppMetadata[(Application Metadata)]
-    
-    classDef interface fill:#E3F2FD,stroke:#1976D2,color:#0D47A1
-    classDef service fill:#F3E5F5,stroke:#7B1FA2,color:#4A148C
-    classDef storage fill:#E8F5E8,stroke:#388E3C,color:#1B5E20
-    classDef api fill:#FFF3E0,stroke:#F57C00,color:#E65100
-    
-    class CLI,GUI interface
-    class AppService service
-    class AppRegistry,Cache,AppMetadata storage
-    class ListAPI,DetailAPI,VerboseAPI api
+    CLI[CLI Interface<br/>`aignostics application list`] --> AppService[ApplicationService<br/>Business Logic Layer]
+    PythonAPI[Python API<br/>`sdk.applications()`] --> AppService
+
+    %% Service Layer
+    AppService --> PlatformClient[PlatformClient<br/>API Communication Layer]
+
+    %% External Dependencies
+    PlatformClient --> |OAuth2| Auth[Auth0 Authentication]
+    PlatformClient --> |HTTPS| PlatformAPI[Platform API<br/>/api/v1/applications]
+
+    %% Data Flow
+    PlatformAPI --> ApplicationData[(Application Metadata)]
+
+    classDef interface fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef service fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef external fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef data fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+
+    class CLI,PythonAPI interface
+    class AppService,PlatformClient service
+    class Auth,PlatformAPI external
+    class ApplicationData data
 ```
 
-### Components Details
+### Core Components
 
-#### Application Service
+**ApplicationService** (`aignostics.application.Service`)
+* **Purpose**: Orchestrates application discovery operations with consistent business logic
+* **Key Methods**: `applications()` for listing, `application(id)` for details
+* **Responsibilities**: Data formatting, error handling, business rule enforcement
 
-The core service responsible for managing application metadata and providing consistent APIs for different interface layers.
+**PlatformClient** (`aignostics.platform.Client`)
+* **Purpose**: Handles authenticated communication with Platform API endpoints
+* **Key Features**: OAuth2 token management, automatic retry logic, rate limit handling
+* **API Endpoints**: `/api/v1/applications`, `/api/v1/applications/{id}/versions`
 
-**Key Responsibilities:**
-- List available applications returning identifiers including "he-tme" and "test-app"
-- Provide verbose listing with artifact counts in format "Artifacts: X input(s), Y output(s)"
-- Display application details including artifact identifiers (e.g., "tissue_qc:geojson_polygons")
-- Export application schemas as zip files with naming pattern "{application_version_id}_schemata.zip"
-- Handle unknown application requests with exit code 2 and error message "Application with ID '[identifier]' not found."
+### Interface Specifications
 
-**Interface Contracts:**
-- `list_applications()` - Returns applications including "he-tme" and "test-app" identifiers
-- `list_applications_verbose()` - Returns list with artifact counts: "Artifacts: 1 input(s), 6 output(s)"
-- `get_application_details(id)` - Returns details with artifact identifiers like "tissue_qc:geojson_polygons"
-- `export_application_schema(id, destination, zip)` - Creates zip file with schema files
-- `validate_application_id(id)` - Returns appropriate error for unknown applications
+**CLI Interface**
 
-#### CLI Interface Layer
+```bash
+# List all applications
+aignostics application list
+# Output: he-tme, test-app, ...
 
-Command-line interface implementation that translates user commands to service calls and formats output appropriately.
+# List with verbose details
+aignostics application list --verbose
+# Output: he-tme (Artifacts: 2 input(s), 1 output(s))
 
-**Command Implementations:**
-- `application list` - Displays available applications including "he-tme" and "test-app"
-- `application list --verbose` - Shows applications with "Artifacts: 1 input(s), 6 output(s)" format
-- `application describe <id>` - Displays application details including "tissue_qc:geojson_polygons"
-- `application dump-schemata <id> --destination <path> --zip` - Creates zip with schema files
-- Error handling: exit code 0 for success, exit code 2 for "Application with ID 'unknown' not found."
+# Describe specific application
+aignostics application describe he-tme
+# Output: Detailed application information with artifacts
+```
 
-#### GUI Interface Layer
+**Python API Interface**
 
-Web interface components that provide visual application discovery and navigation capabilities.
+```python
+from aignostics import ApplicationService
 
-**Interface Components:**
-- Application listing showing available applications with navigation capability
-- Application detail pages with information display and artifact details
-- Navigation between applications for workflow access
-- Integration with application workflow components
+service = ApplicationService()
 
-#### Error Handling Strategy
+# List applications
+apps = service.applications()
+# Returns: [Application(id='he-tme', ...), Application(id='test-app', ...)]
 
-**Application Not Found (Exit Code 2):**
-- Exact error message format: "Application with ID '[identifier]' not found."
-- Consistent across CLI interface for all unknown application requests
-- Proper exit code 2 for CLI commands
+# Get application details
+app = service.application('he-tme')
+# Returns: Application with full metadata
 
-**Success Responses (Exit Code 0):**
-- CLI: Application identifiers and information display
-- Verbose output: "Artifacts: 1 input(s), 6 output(s)" format
-- Schema export: Zip files with pattern "{application_version_id}_schemata.zip"
-- GUI: Application pages with navigation between applications
+# Handle missing applications
+try:
+    app = service.application('nonexistent')
+except NotFoundException as e:
+    print(f"Error: {e}")  # "Application with ID 'nonexistent' not found."
+```
 
-### Implementation Guidelines
+### Error Handling Strategy
 
-1. **Service Interface Design:**
-   - Use dependency injection for service implementation
-   - Implement proper error handling with typed exceptions
-   - Include comprehensive logging for debugging and monitoring
-   - Design for testability with clear mocking boundaries
+**Exception Hierarchy**
 
-2. **Data Format Specifications:**
-   - Application identifiers: alphanumeric strings with hyphens
-   - Artifact counts: formatted as "Artifacts: X input(s), Y output(s)"
-   - Error messages: standardized format with application ID inclusion
+```python
+class NotFoundException(Exception):
+    """Raised when requested application cannot be found."""
+    pass
 
-3. **Performance Considerations:**
-   - Implement caching for frequently accessed application information
-   - Use lazy loading for detailed application information
-   - Consider pagination for large application catalogs in future versions
+class AuthenticationError(Exception):
+    """Raised when Platform API authentication fails."""
+    pass
+```
 
-4. **Testing Strategy:**
-   - Unit tests for service logic with mocked dependencies
-   - Integration tests for CLI and GUI interface layers
-   - End-to-end tests for complete user workflows
-   - Error case testing for all supported error conditions
+**Error Translation**
+* Service layer: Raises domain-specific exceptions (NotFoundException)
+* CLI layer: Translates to appropriate exit codes (0=success, 2=not found)
+* Python API: Propagates exceptions with clear error messages
 
-### Validation Criteria
+### Testing Strategy
 
-This architectural decision can be considered successful when:
-- CLI `application list` command returns "he-tme" and "test-app" identifiers with exit code 0
-- CLI `application list --verbose` includes "Artifacts: 1 input(s), 6 output(s)" format
-- CLI `application describe he-tme` shows "tissue_qc:geojson_polygons" in output
-- CLI `application describe unknown` returns exit code 2 with exact error message
-- CLI `application dump-schemata` creates zip files with expected naming and content
-- GUI displays applications with navigation capability between application pages
-- All successful operations complete with exit code 0
-- Error handling provides exact message formats as specified in requirements
+**Unit Tests**
+* Service layer methods with mocked PlatformClient
+* Error handling scenarios with controlled exceptions
+* Data formatting and business logic validation
+
+**Integration Tests**
+* End-to-end CLI commands against test Platform API
+* Authentication flow validation
+* Real API response handling
+
+**Contract Tests**
+* Platform API response format validation
+* Backward compatibility with API changes
+
+### Alternative Options Considered
+
+**Option 2: Direct API Integration**
+* *Pros*: Simpler architecture, no abstraction overhead
+* *Cons*: Code duplication across interfaces, harder testing, maintenance overhead
+* *Rejected*: Fails maintainability and consistency requirements
+
+## Related Decisions
+
+* **Future ADR**: Caching strategy for application metadata (when performance requirements change)
+* **Future ADR**: Application filtering and search capabilities
+* **Future ADR**: GUI integration patterns for application discovery
+
+## References
+
+* [Platform API Documentation](docs/API_REFERENCE_v1.md)
+* [CLI Implementation](src/aignostics/application/cli.py)
+* [Service Implementation](src/aignostics/application/service.py)
+* [Amazon ADR Template](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/)

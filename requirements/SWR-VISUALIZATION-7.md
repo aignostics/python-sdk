@@ -1,7 +1,7 @@
 ---
-itemId: SWR-QUPATH-7
+itemId: SWR-VISUALIZATION-7
 itemTitle: Terminate QuPath Processes
-itemHasParent: SHR-QUPATH-1
+itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)

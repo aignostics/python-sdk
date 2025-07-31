@@ -1,10 +1,10 @@
 ---
 itemId: SWR-APPLICATION-12
-itemTitle: Manage Cloud Storage Operations
+itemTitle: Provide Run Management Interface
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
 Requirement type: FUNCTIONAL
-Layer: System (backend logic)
+Layer: GUI (web interface)
 ---
 
-System shall manage cloud storage operations by uploading files with directory structure preservation, downloading files with content verification, finding files with pattern matching, and deleting files with confirmation.
+System shall provide a web interface for application run management that displays run status, enables run cancellation, and provides navigation to detailed run information pages.

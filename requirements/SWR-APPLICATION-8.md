@@ -1,10 +1,10 @@
 ---
 itemId: SWR-APPLICATION-8
-itemTitle: Submit Application Runs for Processing
+itemTitle: Upload Whole Slide Images to Platform
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: CLI (command-line interface)
 ---
 
-System shall submit application runs by validating application version identifiers, metadata CSV content, platform bucket URL formats, and creating runs with unique identifiers.
+System shall upload whole slide images to platform storage by reading metadata CSV files, validating referenced file existence, and transferring files with completion confirmation.

@@ -1,7 +1,7 @@
 ---
-itemId: SWR-QUPATH-2
+itemId: SWR-VISUALIZATION-2
 itemTitle: Uninstall QuPath Application
-itemHasParent: SHR-QUPATH-1
+itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)

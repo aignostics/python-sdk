@@ -1,7 +1,7 @@
 ---
-itemId: SWR-QUPATH-1
+itemId: SWR-VISUALIZATION-1
 itemTitle: Install QuPath Application
-itemHasParent: SHR-QUPATH-1
+itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)

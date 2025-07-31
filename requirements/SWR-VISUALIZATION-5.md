@@ -1,7 +1,7 @@
 ---
-itemId: SWR-QUPATH-5
+itemId: SWR-VISUALIZATION-5
 itemTitle: Provide QuPath Installation Interface
-itemHasParent: SHR-QUPATH-1
+itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: GUI (web interface)

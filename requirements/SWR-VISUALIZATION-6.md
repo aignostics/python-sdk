@@ -1,7 +1,7 @@
 ---
-itemId: SWR-QUPATH-6
+itemId: SWR-VISUALIZATION-6
 itemTitle: Create QuPath Projects from Analysis Results
-itemHasParent: SHR-QUPATH-1
+itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)

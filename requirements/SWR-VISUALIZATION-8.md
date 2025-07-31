@@ -1,7 +1,7 @@
 ---
-itemId: SWR-QUPATH-8
+itemId: SWR-VISUALIZATION-8
 itemTitle: Launch QuPath with Project
-itemHasParent: SHR-QUPATH-1
+itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)
