@@ -1,5 +1,5 @@
 ---
-itemId: ADR-1-APPLICATION-DISCOVERY-SERVICE
+itemId: ADR-1-APPLICATION-DISCOVERY-SERVICE 
 itemTitle: Application Discovery and Navigation Service Architecture
 itemType: Software Item Spec
 itemFulfills: SWR-APPLICATION-1, SWR-APPLICATION-2, SWR-APPLICATION-3, SWR-APPLICATION-4

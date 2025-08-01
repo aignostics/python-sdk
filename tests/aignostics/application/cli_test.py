@@ -21,7 +21,9 @@ TEST_APPLICATION_ID = "test-app"
 
 def test_cli_application_list(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
-    record_property("tested-item-id", "TEST-APPLICATION-LIST-BASIC, TEST-APPLICATION-LIST-YAML")
+    record_property(
+        "tested-item-id", "TEST-APPLICATION-LIST-BASIC, TEST-APPLICATION-LIST-YAML, ADR-1-APPLICATION-DISCOVERY-SERVICE"
+    )
 
     result = runner.invoke(cli, ["application", "list"])
     assert result.exit_code == 0
