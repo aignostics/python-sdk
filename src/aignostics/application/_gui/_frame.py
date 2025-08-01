@@ -18,7 +18,7 @@ STORAGE_TAB_RUNS_COMPLETED_ONLY = "runs_completed_only"
 service = Service()
 
 
-async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
+async def _frame(  # noqa: C901, PLR0915
     navigation_title: str,
     navigation_icon: str | None = None,
     navigation_icon_color: str | None = None,

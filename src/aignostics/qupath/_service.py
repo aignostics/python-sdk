@@ -452,7 +452,7 @@ class Service(BaseService):
         return Path(appdirs.user_data_dir(__project_name__)).resolve()
 
     @staticmethod
-    def _download_qupath(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
+    def _download_qupath(  # noqa: C901, PLR0912, PLR0915
         version: str,
         path: Path,
         platform_system: str | None = None,

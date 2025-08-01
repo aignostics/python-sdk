@@ -91,8 +91,8 @@ async def test_gui_idc_downloads(user: User, tmp_path, silent_logging, record_pr
     ],
 )
 async def test_gui_idc_download_fails_with_invalid_inputs(
-    user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None
-record_property) -> None:
+    user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
+) -> None:
     """Test that the download fails with appropriate notification when invalid IDs are provided."""
     record_property("tested-item-id", "TEST-SWR-DATASET-3-NO-IDS-PROVIDED,TEST-SWR-DATASET-3-INVALID-IDENTIFIERS")
 

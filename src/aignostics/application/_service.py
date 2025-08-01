@@ -550,7 +550,7 @@ class Service(BaseService):
                 open(source_file_path, "rb") as f,
             ):
 
-                def read_in_chunks(  # noqa: PLR0913, PLR0917
+                def read_in_chunks(
                     reference: str,
                     file_size: int,
                     upload_progress_queue: Any | None = None,  # noqa: ANN401
@@ -1123,7 +1123,7 @@ class Service(BaseService):
 
                 downloaded_items.add(item.reference)
 
-    def _download_item_artifact(  # noqa: PLR0913, PLR0917
+    def _download_item_artifact(
         self,
         progress: DownloadProgress,
         artifact: Any,  # noqa: ANN401
@@ -1178,7 +1178,7 @@ class Service(BaseService):
         )
 
     @staticmethod
-    def _download_file_with_progress(  # noqa: PLR0913, PLR0917
+    def _download_file_with_progress(
         progress: DownloadProgress,
         signed_url: str,
         artifact_path: Path,

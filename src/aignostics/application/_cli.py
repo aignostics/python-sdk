@@ -638,7 +638,7 @@ def run_cancel(
 
 
 @result_app.command("download")
-def result_download(  # noqa: PLR0913, PLR0917
+def result_download(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to download results for")],
     destination_directory: Annotated[
         Path,

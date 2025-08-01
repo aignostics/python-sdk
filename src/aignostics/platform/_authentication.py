@@ -259,7 +259,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     authentication_result = AuthenticationResult()
 
     class OAuthCallbackHandler(BaseHTTPRequestHandler):
-        def do_GET(self) -> None:  # noqa: N802
+        def do_GET(self) -> None:
             parsed = parse.urlparse(self.path)
             query = parse.parse_qs(parsed.query)
 

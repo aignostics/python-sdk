@@ -81,10 +81,10 @@ async def test_gui_qupath_install_and_launch(
         (
             "TEST-SWR-VISUALIZATION-3-QUPATH-LAUNCH,"
             "TEST-SWR-VISUALIZATION-3-NOT-INSTALLED-ERROR,"
-            "TEST-SWR-VISUALIZATION-5-INSTALLATION-INTERFACE
+            "TEST-SWR-VISUALIZATION-5-INSTALLATION-INTERFACE"
         ),
     )
-    
+
     pytest.skip("Skip interim - TODO (Helmut)")
 
     result = runner.invoke(cli, ["qupath", "uninstall"])
@@ -147,8 +147,8 @@ async def test_gui_qupath_install_and_launch(
 )
 @pytest.mark.long_running
 async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
-record_property) -> None:
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
+) -> None:
     """Test that the user can open QuPath on a run."""
     record_property(
         "tested-item-id",
