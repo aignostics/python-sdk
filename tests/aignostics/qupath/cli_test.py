@@ -18,8 +18,12 @@ from tests.conftest import normalize_output
     reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.sequential
-def test_cli_install_and_uninstall(runner: CliRunner) -> None:
+def test_cli_install_and_uninstall(runner: CliRunner, record_property) -> None:
     """Check (un)install works for Windows, Mac and Linux package."""
+    record_property(
+        "tested-item-id", "TEST-SWR-VISUALIZATION-1-QUPATH-INSTALL,TEST-SWR-VISUALIZATION-2-QUPATH-UNINSTALL"
+    )
+
     # Uninstall QuPath if it exists to have a clean state for the test
     result = runner.invoke(cli, ["qupath", "uninstall"])
     was_installed = result.exit_code == 0
@@ -62,8 +66,12 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
     reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.sequential
-def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown) -> None:
+def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown, record_property) -> None:
     """Check (un)install and launching headless works."""
+    record_property(
+        "tested-item-id", "TEST-SWR-VISUALIZATION-4-PROCESS-LIST,TEST-SWR-VISUALIZATION-7-PROCESS-TERMINATION"
+    )
+
     # Uninstall QuPath if it exists to have a clean state for the test
     result = runner.invoke(cli, ["qupath", "uninstall"])
     was_installed = result.exit_code == 0
@@ -115,8 +123,17 @@ def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown) -> 
 )
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.sequential
-def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
+def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown, record_property) -> None:
     """Check (un)install and launching UI versin of QuPath works."""
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-VISUALIZATION-3-QUPATH-LAUNCH,"
+            "TEST-SWR-VISUALIZATION-4-PROCESS-LIST,"
+            "TEST-SWR-VISUALIZATION-7-PROCESS-TERMINATION"
+        ),
+    )
+
     # Uninstall QuPath if it exists to have a clean state for the test
     result = runner.invoke(cli, ["qupath", "uninstall"])
     was_installed = result.exit_code == 0

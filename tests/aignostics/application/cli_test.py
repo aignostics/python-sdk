@@ -72,8 +72,19 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
-def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
+    runner: CliRunner, tmp_path: Path, record_property
+) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-APPLICATION-7-METADATA-GENERATION, "
+            "TEST-SWR-APPLICATION-8-SUCCESSFUL-UPLOAD, "
+            "TEST-SWR-APPLICATION-8-MISSING-FILES-ERROR"
+        ),
+    )
+
     # Step 1: Prepare the file, by scanning for wsi and generating metadata
     source_directory = Path(__file__).parent.parent.parent / "resources" / "run"
     metadata_csv = tmp_path / "metadata.csv"
@@ -168,8 +179,26 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
 
 
-def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_submit_and_describe_and_cancel_and_download(
+    runner: CliRunner, tmp_path: Path, record_property
+) -> None:
     """Check run submit command runs successfully."""
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-APPLICATION-9-SUCCESSFUL-SUBMISSION,"
+            "TEST-SWR-APPLICATION-9-VALIDATION-ERRORS,"
+            "TEST-SWR-APPLICATION-10-LIST-RUNS,"
+            "TEST-SWR-APPLICATION-10-CANCEL-RUNS,"
+            "TEST-SWR-APPLICATION-11-COMPLETE-WORKFLOW,"
+            "TEST-SWR-APPLICATION-11-RESULT-VALIDATION,"
+            "TEST-SWR-APPLICATION-13-SUCCESSFUL-DOWNLOAD,"
+            "TEST-SWR-APPLICATION-13-INVALID-RUN-HANDLING, "
+            "TEST-SWR-APPLICATION-17-PERMISSION-ERRORS,"
+            "TEST-SWR-APPLICATION-18-NON-EXISTENT-RUNS"
+        ),
+    )
+
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"

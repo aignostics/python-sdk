@@ -13,7 +13,7 @@ from tests.conftest import normalize_output
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 
 
-def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0912, PLR0915
+def test_cli_bucket_flow(runner: CliRunner, tmpdir, record_property) -> None:  # noqa: C901, PLR0912, PLR0915
     """E2E flow testing all bucket CLI commands.
 
     1. Creates 9 files with 2 sub directories in tmpdir, with total file size of 1MB
@@ -25,6 +25,18 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
     7. No longer finds any of the 9 files
     8. Tries to delete a file that does not exist and gets "Object with key '{file}' not found message
     """
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-BUCKET-1-FILE-UPLOAD, "
+            "TEST-SWR-BUCKET-2-OBJECT-SEARCH, "
+            "TEST-SWR-BUCKET-3-FILE-DOWNLOAD, "
+            "TEST-SWR-BUCKET-4-OBJECT-DELETION, "
+            "TEST-SWR-BUCKET-4-NO-OBJECTS-FOUND, "
+            "TEST-SWR-BUCKET-6-BULK-PURGE"
+        ),
+    )
+
     import re
 
     import psutil

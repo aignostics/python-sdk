@@ -10,8 +10,10 @@ SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
 
 
-def test_inspect_openslide_dicom(runner: CliRunner) -> None:
+def test_inspect_openslide_dicom(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
+    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-9-METADATA-INSPECTION")
+
     file_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
     result = runner.invoke(cli, ["wsi", "inspect", str(file_path)])
     assert result.exit_code == 0
@@ -59,8 +61,10 @@ def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
     )
 
 
-def test_inspect_pydicom_geojson_import(runner: CliRunner) -> None:
+def test_inspect_pydicom_geojson_import(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
+    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-11-FORMAT-CONVERSION")
+
     dicom_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
     geojson_path = Path(__file__).parent.parent.parent / "resources" / "cells.json"
     result = runner.invoke(cli, ["wsi", "dicom", "geojson_import", str(dicom_path), str(geojson_path)])

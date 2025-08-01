@@ -66,8 +66,19 @@ async def test_gui_home_to_application(
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_logging) -> None:
+async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_logging, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-APPLICATION-9-SUCCESSFUL-SUBMISSION,"
+            "TEST-SWR-APPLICATION-9-VALIDATION-ERRORS,"
+            "TEST-SWR-APPLICATION-10-LIST-RUNS,"
+            "TEST-SWR-APPLICATION-10-CANCEL-RUNS,"
+            "TEST-SWR-APPLICATION-12-RUN-INTERFACE"
+        ),
+    )
+
     with tempfile.TemporaryDirectory() as tmpdir:
         gui_register_pages()
 
@@ -116,9 +127,19 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_loggi
 
 @pytest.mark.long_running
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-APPLICATION-7-METADATA-GENERATION, "
+            "TEST-SWR-APPLICATION-8-SUCCESSFUL-UPLOAD, "
+            "TEST-SWR-APPLICATION-8-MISSING-FILES-ERROR, "
+            "TEST-SWR-APPLICATION-12-RUN-INTERFACE"
+        ),
+    )
+
     with patch("aignostics.application._gui._page_application_describe.Path.home", return_value=tmp_path):
         gui_register_pages()
 
@@ -212,8 +233,12 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
 
 @pytest.mark.sequential
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+async def test_gui_run_download(
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
+) -> None:
     """Test that the user can download a run result via the GUI."""
+    record_property("tested_item_id", "TEST-SWR-APPLICATION-15-DOWNLOAD-INTERFACE")
+
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):

@@ -78,8 +78,10 @@ def test_cli_idc_download_series_dry(runner: CliRunner, caplog) -> None:
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog) -> None:
+def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog, record_property) -> None:
     """Check download functionality with dry-run option."""
+    record_property("tested-item-id", "	TEST-SWR-DATASET-1-FILE-DOWNLOAD, TEST-SWR-DATASET-4-FILE-SIZE-VALIDATION")
+
     caplog.set_level(logging.INFO)
     with tempfile.TemporaryDirectory() as tmpdir:
         result = runner.invoke(
@@ -110,8 +112,10 @@ def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog) -> None:
         )
 
 
-def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check download functionality with dry-run option."""
+    record_property("tested-item-id", "TEST-SWR-DATASET-1-FILE-DOWNLOAD, TEST-SWR-DATASET-4-FILE-SIZE-VALIDATION")
+
     result = runner.invoke(
         cli,
         [

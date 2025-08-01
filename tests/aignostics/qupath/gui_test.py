@@ -73,9 +73,18 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
 )
 @pytest.mark.long_running
 async def test_gui_qupath_install_and_launch(
-    user: User, runner: CliRunner, silent_logging: None, qupath_teardown
+    user: User, runner: CliRunner, silent_logging: None, qupath_teardown, record_property
 ) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-VISUALIZATION-3-QUPATH-LAUNCH,"
+            "TEST-SWR-VISUALIZATION-3-NOT-INSTALLED-ERROR,"
+            "TEST-SWR-VISUALIZATION-5-INSTALLATION-INTERFACE
+        ),
+    )
+    
     pytest.skip("Skip interim - TODO (Helmut)")
 
     result = runner.invoke(cli, ["qupath", "uninstall"])
@@ -139,8 +148,17 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.long_running
 async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
-) -> None:
+record_property) -> None:
     """Test that the user can open QuPath on a run."""
+    record_property(
+        "tested-item-id",
+        (
+            "TEST-SWR-VISUALIZATION-1-QUPATH-INSTALL,"
+            "TEST-SWR-VISUALIZATION-6-PROJECT-CREATION,"
+            "TEST-SWR-VISUALIZATION-8-PROJECT-LAUNCH"
+        ),
+    )
+
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code
