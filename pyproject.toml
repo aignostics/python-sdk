@@ -540,3 +540,12 @@ ignore_tags = "rc"
 topo_order = false
 # sort the commits inside sections by oldest/newest order
 sort_commits = "newest"
+
+
+# set max number of arguments for pylint
+# https://pylint.pycqa.org/en/latest/user_guide/run.html#cmdline-options
+# pylint will raise an error if the number of arguments exceeds this value
+# this is to avoid pylint errors in the CI pipeline
+# and to allow for more flexible code structure
+[tool.ruff.lint.pylint]
+max-args = 6
