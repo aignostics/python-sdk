@@ -31,7 +31,7 @@ def test_cli_application_list(runner: CliRunner, record_property) -> None:
 
 def test_cli_application_list_verbose(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
-    record_property("tested-item-id", "TEST-APPLICATION-DESCRIBE-VERBOSE", "TEST-APPLICATION-DESCRIBE-ARTIFACTS-COUNT")
+    record_property("tested-item-id", "TEST-APPLICATION-DESCRIBE-VERBOSE, TEST-APPLICATION-DESCRIBE-ARTIFACTS-COUNT")
 
     result = runner.invoke(cli, ["application", "list", "--verbose"])
     assert result.exit_code == 0
