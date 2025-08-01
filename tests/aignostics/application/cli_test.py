@@ -19,7 +19,9 @@ HETA_APPLICATION_ID = "he-tme"
 TEST_APPLICATION_ID = "test-app"
 
 
-def test_cli_application_list(runner: CliRunner) -> None:
+def test_cli_application_list(runner: CliRunner, record_property)) -> None:
+    record_property('tested-item-id', 'TEST-APPLICATION-LIST-BASIC, TEST-APPLICATION-LIST-YAML')
+
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list"])
     assert result.exit_code == 0
