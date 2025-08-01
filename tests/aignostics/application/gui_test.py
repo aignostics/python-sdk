@@ -27,9 +27,10 @@ HETA_APPLICATION_ID = "he-tme"
 
 
 @pytest.mark.sequential
-async def test_gui_index(user: User) -> None:
+async def test_gui_index(user: User, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
-    # hello world
+    record_property("tested-item-id", "TEST-APPLICATION-WEB-INDEX")
+
     gui_register_pages()
     await user.open("/")
     await user.should_see("Atlas H&E-TME")
@@ -52,9 +53,11 @@ async def test_gui_index(user: User) -> None:
     ],
 )
 async def test_gui_home_to_application(
-    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None
+    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None, record_property
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
+    record_property("tested-item-id", "TEST-APPLICATION-WEB-NAVIGATION")
+
     gui_register_pages()
     await user.open("/")
     await user.should_see(application_name, retries=100)

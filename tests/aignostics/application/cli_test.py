@@ -21,9 +21,7 @@ TEST_APPLICATION_ID = "test-app"
 
 def test_cli_application_list(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
-    record_property(
-        "tested-item-id", "TEST-APPLICATION-LIST-BASIC, TEST-APPLICATION-LIST-YAML, ADR-1-APPLICATION-DISCOVERY-SERVICE"
-    )
+    record_property("tested-item-id", "TEST-APPLICATION-LIST-BASIC, TEST-APPLICATION-LIST-YAML")
 
     result = runner.invoke(cli, ["application", "list"])
     assert result.exit_code == 0
@@ -42,22 +40,28 @@ def test_cli_application_list_verbose(runner: CliRunner, record_property) -> Non
     assert TEST_APPLICATION_ID in normalize_output(result.output)
 
 
-def test_cli_application_describe(runner: CliRunner) -> None:
+def test_cli_application_describe(runner: CliRunner, record_property) -> None:
     """Check application describe command runs successfully."""
+    record_property("tested-item-id", "TEST-APPLICATION-DESCRIBE-SPECIFIC-ID, TEST-APPLICATION-DESCRIBE-ARTIFACTS-ID")
+
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID])
     assert result.exit_code == 0
     assert "tissue_qc:geojson_polygons" in normalize_output(result.output)
 
 
-def test_cli_application_describe_not_found(runner: CliRunner) -> None:
-    """Check application describe command fails as expected on unknown upplication."""
+def test_cli_application_describe_not_found(runner: CliRunner, record_property) -> None:
+    """Check application describe command fails as expected on unknown application."""
+    record_property("tested-item-id", "TEST-APPLICATION-UNKNOWN-ID-ERROR, TEST-APPLICATION-INVALID-FORMAT-ERROR")
+
     result = runner.invoke(cli, ["application", "describe", "unknown"])
     assert result.exit_code == 2
     assert "Application with ID 'unknown' not found." in normalize_output(result.output)
 
 
-def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check application dump schemata works as expected."""
+    record_property("tested-item-id", "TEST-APPLICATION-SCHEMA-EXPORT-BASIC, TEST-APPLICATION-SCHEMA-EXPORT-FILES")
+
     result = runner.invoke(
         cli, ["application", "dump-schemata", HETA_APPLICATION_ID, "--destination", str(tmp_path), "--zip"]
     )
