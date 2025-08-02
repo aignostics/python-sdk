@@ -15,8 +15,10 @@ from aignostics.utils import gui_register_pages
 from tests.conftest import assert_notified
 
 
-async def test_gui_bucket_shows(user: User) -> None:
+async def test_gui_bucket_shows(user: User, record_property) -> None:
     """Test that the user sees the dataset page."""
+    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
+    record_property("tested-item-id", "ADR-22-CLOUD-STORAGE-WEB-INTERFACE")
     gui_register_pages()
     await user.open("/bucket")
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
@@ -31,8 +33,10 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     5. Deletes the files using the GUI
     6. Checks the file is no longer there using the find command
     """
+    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
+    record_property("tested-item-id", "ADR-22-CLOUD-STORAGE-WEB-INTERFACE")
     record_property(
-        "tested_item_id",
+        "tested-item-id",
         (
             "TEST-SWR-BUCKET-1-FILE-UPLOAD, "
             "TEST-SWR-BUCKET-2-OBJECT-SEARCH, "

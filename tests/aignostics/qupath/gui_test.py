@@ -33,6 +33,7 @@ HETA_APPLICATION_ID = "he-tme"
 async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
     record_property("tested-item-id", "TEST-SWR-VISUALIZATION-5-INSTALLATION-INTERFACE")
+    record_property("tested-item-id", "API-QUPATH-INSTALLATION")
 
     gui_register_pages()
 
@@ -86,6 +87,7 @@ async def test_gui_qupath_install_and_launch(
             "TEST-SWR-VISUALIZATION-5-INSTALLATION-INTERFACE"
         ),
     )
+    record_property("tested-item-id", "ADR-18-QUPATH-PROCESS-LIFECYCLE-MANAGEMENT")
 
     pytest.skip("Skip interim - TODO (Helmut)")
 
@@ -160,6 +162,8 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
             "TEST-SWR-VISUALIZATION-8-PROJECT-LAUNCH"
         ),
     )
+    record_property("tested-item-id", "ADR-19-QUPATH-RESULTS-INTEGRATION-PIPELINE")
+    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
 
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"

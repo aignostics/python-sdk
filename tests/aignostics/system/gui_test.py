@@ -17,6 +17,9 @@ from aignostics.utils import __project_name__, gui_register_pages
 async def test_gui_system_switch_right(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the info page with the mask secrets switch on by default."""
     record_property("tested-item-id", "TEST-SYSTEM-GUI-SETTINGS-MASKING-DEFAULT")
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
 
     gui_register_pages()
     await user.open("/system")

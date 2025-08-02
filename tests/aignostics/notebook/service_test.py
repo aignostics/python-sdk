@@ -30,6 +30,7 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture, record_property) -> No
         caplog: Fixture to capture log messages.
         record_property: Function to report test result to Ketryx.
     """
+    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     record_property("tested-item-id", "TEST-SWR-NOTEBOOK-1-SERVER-LAUNCH, TEST-SWR-NOTEBOOK-7-EXISTING-SERVER")
 
     caplog.set_level(logging.DEBUG)
@@ -115,6 +116,7 @@ def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture, record_pro
     Raises:
         AssertionError: If the test assertions fail.
     """
+    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
     record_property("tested-item-id", "TEST-SWR-NOTEBOOK-3-HTTP-ENDPOINTS")
 
     # Set up logging to capture DEBUG level and above
@@ -178,6 +180,7 @@ def test_startup_timeout(record_property) -> None:
     This test mocks the _server_ready.wait() method to simulate a timeout
     during server startup and verifies that an exception is raised.
     """
+    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     record_property("tested-item-id", "TEST-SWR-NOTEBOOK-5-TIMEOUT-HANDLING")
 
     runner = _Runner()
@@ -221,6 +224,7 @@ def test_missing_url(record_property) -> None:
     This test mocks the _server_ready event to return True (server ready)
     but doesn't set the _server_url, simulating a rare race condition.
     """
+    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     record_property("tested-item-id", "TEST-SWR-NOTEBOOK-8-URL-VALIDATION")
 
     runner = _Runner()
@@ -248,6 +252,7 @@ def test_stop_nonrunning_server(record_property) -> None:
     Verifies that stopping a non-running server doesn't cause errors
     and logs the appropriate messages.
     """
+    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     record_property("tested-item-id", "TEST-SWR-NOTEBOOK-6-SERVER-SHUTDOWN")
 
     with patch("aignostics.notebook._service.logger") as mock_logger:
@@ -264,12 +269,13 @@ def test_stop_nonrunning_server(record_property) -> None:
         mock_logger.info.assert_called_with("Service stopped.")
 
 
-def test_capture_output_no_stdout() -> None:
+def test_capture_output_no_stdout(record_property) -> None:
     """Test _capture_output method with None stdout.
 
     This tests the case where process.stdout is None, which should
     log a warning and return early.
     """
+    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     with patch("aignostics.notebook._service.logger") as mock_logger:
         runner = _Runner()
         process = MagicMock()
@@ -288,6 +294,7 @@ def test_server_url_detection(record_property) -> None:
     This test verifies that the URL detection regex works correctly
     with different URL formats that Marimo might output.
     """
+    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     record_property("tested-item-id", "TEST-SWR-NOTEBOOK-4-URL-DETECTION")
 
     sample_outputs = [
@@ -304,8 +311,9 @@ def test_server_url_detection(record_property) -> None:
         assert match.group(1).startswith("http"), f"Extracted invalid URL from: {output}"
 
 
-def test_singleton_runner() -> None:
+def test_singleton_runner(record_property) -> None:
     """Test that _get_runner returns a singleton instance."""
+    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     # Reset the singleton for testing
     import aignostics.notebook._service
 

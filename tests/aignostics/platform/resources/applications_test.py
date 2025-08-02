@@ -40,7 +40,7 @@ def applications(mock_api) -> Applications:
     return Applications(mock_api)
 
 
-def test_applications_list_with_pagination(applications, mock_api) -> None:
+def test_applications_list_with_pagination(applications, mock_api, record_property) -> None:
     """Test that Applications.list() correctly handles pagination.
 
     This test verifies that the list method properly aggregates results
@@ -50,6 +50,7 @@ def test_applications_list_with_pagination(applications, mock_api) -> None:
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     # Create two pages of results
     page1 = [Mock(spec=ApplicationReadResponse) for _ in range(PAGE_SIZE)]
@@ -68,7 +69,7 @@ def test_applications_list_with_pagination(applications, mock_api) -> None:
     ])
 
 
-def test_versions_list_with_pagination(mock_api) -> None:
+def test_versions_list_with_pagination(mock_api, record_property) -> None:
     """Test that Versions.list() correctly handles pagination.
 
     This test verifies that the list method for application versions properly
@@ -77,6 +78,7 @@ def test_versions_list_with_pagination(mock_api) -> None:
     Args:
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     versions = Versions(mock_api)
     mock_app = Mock(spec=ApplicationReadResponse)
@@ -100,7 +102,7 @@ def test_versions_list_with_pagination(mock_api) -> None:
     ])
 
 
-def test_applications_list_returns_empty_list_when_no_applications(applications, mock_api) -> None:
+def test_applications_list_returns_empty_list_when_no_applications(applications, mock_api, record_property) -> None:
     """Test that Applications.list() returns an empty list when no applications are available.
 
     This test verifies that the list method handles empty API responses correctly.
@@ -109,6 +111,7 @@ def test_applications_list_returns_empty_list_when_no_applications(applications,
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     mock_api.list_applications_v1_applications_get.return_value = []
 
@@ -120,7 +123,7 @@ def test_applications_list_returns_empty_list_when_no_applications(applications,
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
-def test_applications_list_returns_applications_when_available(applications, mock_api) -> None:
+def test_applications_list_returns_applications_when_available(applications, mock_api, record_property) -> None:
     """Test that Applications.list() returns a list of applications when available.
 
     This test verifies that the list method correctly returns application objects
@@ -130,6 +133,7 @@ def test_applications_list_returns_applications_when_available(applications, moc
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     mock_app1 = Mock(spec=ApplicationReadResponse)
     mock_app2 = Mock(spec=ApplicationReadResponse)
@@ -145,7 +149,7 @@ def test_applications_list_returns_applications_when_available(applications, moc
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
-def test_applications_list_passes_through_api_exception(applications, mock_api) -> None:
+def test_applications_list_passes_through_api_exception(applications, mock_api, record_property) -> None:
     """Test that Applications.list() passes through exceptions from the API.
 
     This test verifies that exceptions raised by the API client are propagated
@@ -155,6 +159,7 @@ def test_applications_list_passes_through_api_exception(applications, mock_api) 
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     mock_api.list_applications_v1_applications_get.side_effect = Exception(API_ERROR)
 
@@ -164,7 +169,7 @@ def test_applications_list_passes_through_api_exception(applications, mock_api) 
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
-def test_versions_property_returns_versions_instance(applications) -> None:
+def test_versions_property_returns_versions_instance(applications, record_property) -> None:
     """Test that the versions property returns a Versions instance.
 
     This test verifies that the versions property correctly initializes
@@ -173,6 +178,7 @@ def test_versions_property_returns_versions_instance(applications) -> None:
     Args:
         applications: Applications instance with mock API.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Act
     versions = applications.versions
 
@@ -181,7 +187,7 @@ def test_versions_property_returns_versions_instance(applications) -> None:
     assert versions._api == applications._api
 
 
-def test_versions_list_returns_versions_for_application(mock_api) -> None:
+def test_versions_list_returns_versions_for_application(mock_api, record_property) -> None:
     """Test that Versions.list() returns versions for a specified application.
 
     This test verifies that the list method correctly returns version objects
@@ -190,6 +196,7 @@ def test_versions_list_returns_versions_for_application(mock_api) -> None:
     Args:
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     versions = Versions(mock_api)
     mock_app = Mock(spec=ApplicationReadResponse)
@@ -208,7 +215,7 @@ def test_versions_list_returns_versions_for_application(mock_api) -> None:
     )
 
 
-def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
+def test_versions_list_returns_empty_list_when_no_versions(mock_api, record_property) -> None:
     """Test that Versions.list() returns an empty list when no versions are available.
 
     This test verifies that the list method handles empty API responses correctly
@@ -217,6 +224,7 @@ def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
     Args:
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     versions = Versions(mock_api)
     mock_app = Mock(spec=ApplicationReadResponse)
@@ -233,7 +241,7 @@ def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
     )
 
 
-def test_versions_list_passes_through_api_exception(mock_api) -> None:
+def test_versions_list_passes_through_api_exception(mock_api, record_property) -> None:
     """Test that Versions.list() passes through exceptions from the API.
 
     This test verifies that exceptions raised by the API client when requesting
@@ -242,6 +250,7 @@ def test_versions_list_passes_through_api_exception(mock_api) -> None:
     Args:
         mock_api: Mock ExternalsApi instance.
     """
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
     versions = Versions(mock_api)
     mock_app = Mock(spec=ApplicationReadResponse)

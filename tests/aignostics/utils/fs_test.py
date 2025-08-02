@@ -16,15 +16,17 @@ from aignostics.utils._fs import (
 log = get_logger(__name__)
 
 
-def test_string_input_returns_string() -> None:
+def test_string_input_returns_string(record_property) -> None:
     """Test that string input returns string output."""
+    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
     result = sanitize_path("test/path")
     assert isinstance(result, str)
     assert result == "test/path"
 
 
-def test_path_input_returns_path() -> None:
+def test_path_input_returns_path(record_property) -> None:
     """Test that Path input returns Path output."""
+    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
     input_path = Path("test/path")
     result = sanitize_path(input_path)
     assert isinstance(result, Path)
@@ -223,8 +225,11 @@ def test_sanitize_path_uses_sanitize_path_component_for_non_drive_path() -> None
 
 
 # Tests for get_user_data_directory function
-def test_get_user_data_directory_without_scope(tmp_path) -> None:
+def test_get_user_data_directory_without_scope(tmp_path, record_property) -> None:
     """Test get_user_data_directory returns correct path without scope."""
+    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     with (
         patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
@@ -241,8 +246,11 @@ def test_get_user_data_directory_without_scope(tmp_path) -> None:
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
-def test_get_user_data_directory_with_scope(tmp_path) -> None:
+def test_get_user_data_directory_with_scope(tmp_path, record_property) -> None:
     """Test get_user_data_directory returns correct path with scope."""
+    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     with (
         patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
@@ -259,8 +267,11 @@ def test_get_user_data_directory_with_scope(tmp_path) -> None:
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
-def test_get_user_data_directory_with_nested_scope(tmp_path) -> None:
+def test_get_user_data_directory_with_nested_scope(tmp_path, record_property) -> None:
     """Test get_user_data_directory returns correct path with nested scope."""
+    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     with (
         patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
@@ -332,8 +343,11 @@ def test_get_user_data_directory_none_scope(tmp_path) -> None:
 
 
 # Tests for open_user_data_directory function
-def test_open_user_data_directory_without_scope(tmp_path) -> None:
+def test_open_user_data_directory_without_scope(tmp_path, record_property) -> None:
     """Test open_user_data_directory opens correct directory without scope."""
+    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     with (
         patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
@@ -352,8 +366,11 @@ def test_open_user_data_directory_without_scope(tmp_path) -> None:
         mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project"))
 
 
-def test_open_user_data_directory_with_scope(tmp_path) -> None:
+def test_open_user_data_directory_with_scope(tmp_path, record_property) -> None:
     """Test open_user_data_directory opens correct directory with scope."""
+    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     with (
         patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
@@ -372,8 +389,11 @@ def test_open_user_data_directory_with_scope(tmp_path) -> None:
         mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project" / "logs"))
 
 
-def test_open_user_data_directory_with_nested_scope(tmp_path) -> None:
+def test_open_user_data_directory_with_nested_scope(tmp_path, record_property) -> None:
     """Test open_user_data_directory opens correct directory with nested scope."""
+    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     with (
         patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),

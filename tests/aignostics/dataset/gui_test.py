@@ -13,8 +13,10 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 IDC_DOWNLOAD_MAX_DURATION = 60
 
 
-async def test_gui_idc_shows(user: User) -> None:
+async def test_gui_idc_shows(user: User, record_property) -> None:
     """Test that the user sees the dataset page."""
+    record_property("tested-item-id", "ADR-14-DATASET-DISCOVERY-AND-QUERY-SERVICE")
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     gui_register_pages()
     await user.open("/dataset/idc")
     await user.should_see("Explore Portal")
@@ -23,6 +25,9 @@ async def test_gui_idc_shows(user: User) -> None:
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 async def test_gui_idc_downloads(user: User, tmp_path, silent_logging, record_property) -> None:
     """Test that the user can download a dataset to a temporary directory."""
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     record_property("tested-item-id", "TEST-SWR-DATASET-2-DOWNLOAD-INTERFACE, TEST-SWR-DATASET-4-FILE-SIZE-VALIDATION")
 
     # Mock get_user_data_directory to return the tmpdir for this test
@@ -94,6 +99,9 @@ async def test_gui_idc_download_fails_with_invalid_inputs(
     user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
 ) -> None:
     """Test that the download fails with appropriate notification when invalid IDs are provided."""
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     record_property("tested-item-id", "TEST-SWR-DATASET-3-NO-IDS-PROVIDED,TEST-SWR-DATASET-3-INVALID-IDENTIFIERS")
 
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=Path(tmpdir)):

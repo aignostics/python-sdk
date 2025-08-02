@@ -14,23 +14,27 @@ from aignostics.utils._settings import (
 )
 
 
-def test_strip_to_none_before_validator_with_none() -> None:
+def test_strip_to_none_before_validator_with_none(record_property) -> None:
     """Test that None is returned when None is passed."""
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     assert strip_to_none_before_validator(None) is None
 
 
-def test_strip_to_none_before_validator_with_empty_string() -> None:
+def test_strip_to_none_before_validator_with_empty_string(record_property) -> None:
     """Test that None is returned when an empty string is passed."""
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     assert strip_to_none_before_validator("") is None
 
 
-def test_strip_to_none_before_validator_with_whitespace_string() -> None:
+def test_strip_to_none_before_validator_with_whitespace_string(record_property) -> None:
     """Test that None is returned when a whitespace string is passed."""
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     assert strip_to_none_before_validator("  \t\n  ") is None
 
 
-def test_strip_to_none_before_validator_with_valid_string() -> None:
+def test_strip_to_none_before_validator_with_valid_string(record_property) -> None:
     """Test that a stripped string is returned when a valid string is passed."""
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     assert strip_to_none_before_validator("  test  ") == "test"
 
 
@@ -42,8 +46,10 @@ class TheTestSettings(OpaqueSettings):
     required_value: str
 
 
-def test_opaque_settings_serialize_sensitive_info_with_unhide() -> None:
+def test_opaque_settings_serialize_sensitive_info_with_unhide(record_property) -> None:
     """Test that sensitive info is revealed when unhide_sensitive_info is True."""
+    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     secret = SecretStr("sensitive")
     context = {UNHIDE_SENSITIVE_INFO: True}
 
@@ -52,8 +58,10 @@ def test_opaque_settings_serialize_sensitive_info_with_unhide() -> None:
     assert result == "sensitive"
 
 
-def test_opaque_settings_serialize_sensitive_info_without_unhide() -> None:
+def test_opaque_settings_serialize_sensitive_info_without_unhide(record_property) -> None:
     """Test that sensitive info is hidden when unhide_sensitive_info is False."""
+    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     secret = SecretStr("sensitive")
     context = {UNHIDE_SENSITIVE_INFO: False}
 
@@ -62,8 +70,9 @@ def test_opaque_settings_serialize_sensitive_info_without_unhide() -> None:
     assert result == "**********"
 
 
-def test_opaque_settings_serialize_sensitive_info_empty() -> None:
+def test_opaque_settings_serialize_sensitive_info_empty(record_property) -> None:
     """Test that None is returned when the SecretStr is empty."""
+    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     secret = SecretStr("")
     context = {}
 
@@ -73,8 +82,10 @@ def test_opaque_settings_serialize_sensitive_info_empty() -> None:
 
 
 @patch.dict(os.environ, {"REQUIRED_VALUE": "test_value"})
-def test_load_settings_success() -> None:
+def test_load_settings_success(record_property) -> None:
     """Test successful settings loading."""
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     settings = load_settings(TheTestSettings)
     assert settings.test_value == "default"
     assert settings.required_value == "test_value"
@@ -82,8 +93,10 @@ def test_load_settings_success() -> None:
 
 @patch("sys.exit")
 @patch("rich.console.Console.print")
-def test_load_settings_validation_error(mock_console_print, mock_exit) -> None:
+def test_load_settings_validation_error(mock_console_print, mock_exit, record_property) -> None:
     """Test that validation error is handled properly."""
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
+    record_property("tested-item-id", "API-DATASET-MANAGEMENT")
     # The settings class requires required_value, but we're not providing it
     # This will trigger a validation error
     load_settings(TheTestSettings)
@@ -104,8 +117,9 @@ class TheTestSettingsWithEnvPrefix(OpaqueSettings):
 
 
 @patch.dict(os.environ, {"TEST_VALUE": "prefixed_value"})
-def test_settings_with_env_prefix() -> None:
+def test_settings_with_env_prefix(record_property) -> None:
     """Test that settings with environment prefix work correctly."""
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = load_settings(TheTestSettingsWithEnvPrefix)
     assert settings.value == "prefixed_value"
 

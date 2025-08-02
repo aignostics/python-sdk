@@ -66,8 +66,10 @@ def reset_cached_settings():  # noqa: ANN201
     settings.__cached_settings = original
 
 
-def test_authentication_settings_production(mock_env_vars, reset_cached_settings) -> None:
+def test_authentication_settings_production(mock_env_vars, reset_cached_settings, record_property) -> None:
     """Test authentication settings with production API root."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     # Create settings with production API root
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -93,8 +95,10 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.authorization_backoff_seconds == 3
 
 
-def test_authentication_settings_staging(mock_env_vars) -> None:
+def test_authentication_settings_staging(mock_env_vars, record_property) -> None:
     """Test authentication settings with staging API root."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -110,8 +114,10 @@ def test_authentication_settings_staging(mock_env_vars) -> None:
     assert settings.jws_json_url == JWS_JSON_URL_STAGING
 
 
-def test_authentication_settings_dev(mock_env_vars) -> None:
+def test_authentication_settings_dev(mock_env_vars, record_property) -> None:
     """Test authentication settings with dev API root."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -127,8 +133,10 @@ def test_authentication_settings_dev(mock_env_vars) -> None:
     assert settings.jws_json_url == JWS_JSON_URL_DEV
 
 
-def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
+def test_authentication_settings_unknown_api_root(mock_env_vars, record_property) -> None:
     """Test authentication settings with unknown API root raises ValueError."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     with pytest.raises(ValueError, match=UNKNOWN_ENDPOINT_URL):
         Settings(
             client_id_device=SecretStr("test-client-id-device"),
@@ -137,8 +145,10 @@ def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
         )
 
 
-def test_scope_elements_empty() -> None:
+def test_scope_elements_empty(record_property) -> None:
     """Test scope_elements property with empty scope."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -148,8 +158,10 @@ def test_scope_elements_empty() -> None:
     assert settings.scope_elements == []
 
 
-def test_scope_elements_multiple() -> None:
+def test_scope_elements_multiple(record_property) -> None:
     """Test scope_elements property with multiple scopes."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -159,8 +171,10 @@ def test_scope_elements_multiple() -> None:
     assert settings.scope_elements == ["offline_access", "profile", "email"]
 
 
-def test_authentication_settings_with_refresh_token(mock_env_vars) -> None:
+def test_authentication_settings_with_refresh_token(mock_env_vars, record_property) -> None:
     """Test authentication settings with refresh token."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -170,8 +184,10 @@ def test_authentication_settings_with_refresh_token(mock_env_vars) -> None:
     assert settings.refresh_token == SecretStr("test-refresh-token")
 
 
-def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings) -> None:
+def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings, record_property) -> None:
     """Test lazy loading of authentication settings."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     # First call should create the settings
     settings1 = settings()
     assert settings1 is not None
@@ -184,8 +200,10 @@ def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings) -> N
 @pytest.mark.sequential
 # TODO(Helmut): fix race
 @pytest.mark.skip
-def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_settings) -> None:
+def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_settings, record_property) -> None:
     """Test authentication settings from environment variables."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings1 = settings()
     assert settings1.client_id_device.get_secret_value() == "test-client-id-device"
     assert settings1.client_id_interactive.get_secret_value() == "test-client-id-interactive"
@@ -193,16 +211,20 @@ def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_setti
 
 # TODO(Helmut): fixme
 @pytest.mark.skip
-def test_custom_env_file_location(mock_env_vars) -> None:
+def test_custom_env_file_location(mock_env_vars, record_property) -> None:
     """Test custom env file location."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     custom_env_file = "/home/dummy/test_env_file"
     with mock.patch.dict(os.environ, {f"{__project_name__.upper()}_ENV_FILE": custom_env_file}):
         settings = Settings.model_config
         assert custom_env_file in settings["env_file"]
 
 
-def test_custom_cache_dir(mock_env_vars) -> None:
+def test_custom_cache_dir(mock_env_vars, record_property) -> None:
     """Test custom cache directory."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     custom_cache_dir = "/home/dummy/test_cache_dir"
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -214,8 +236,10 @@ def test_custom_cache_dir(mock_env_vars) -> None:
     assert settings.token_file == Path(custom_cache_dir) / ".token"
 
 
-def test_issuer_computed_field_production(mock_env_vars) -> None:
+def test_issuer_computed_field_production(mock_env_vars, record_property) -> None:
     """Test issuer computed field with production authorization base URL."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -227,8 +251,10 @@ def test_issuer_computed_field_production(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_staging(mock_env_vars) -> None:
+def test_issuer_computed_field_staging(mock_env_vars, record_property) -> None:
     """Test issuer computed field with staging authorization base URL."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -240,8 +266,10 @@ def test_issuer_computed_field_staging(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_dev(mock_env_vars) -> None:
+def test_issuer_computed_field_dev(mock_env_vars, record_property) -> None:
     """Test issuer computed field with dev authorization base URL."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -253,8 +281,10 @@ def test_issuer_computed_field_dev(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_custom_url(mock_env_vars) -> None:
+def test_issuer_computed_field_custom_url(mock_env_vars, record_property) -> None:
     """Test issuer computed field with custom authorization base URL."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     # Avoid triggering api_root-based validator by setting all required fields manually
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
@@ -271,8 +301,10 @@ def test_issuer_computed_field_custom_url(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_malformed_url_no_scheme(mock_env_vars) -> None:
+def test_issuer_computed_field_malformed_url_no_scheme(mock_env_vars, record_property) -> None:
     """Test issuer computed field with malformed URL (no scheme) falls back gracefully."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -289,8 +321,10 @@ def test_issuer_computed_field_malformed_url_no_scheme(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_malformed_url_no_domain(mock_env_vars) -> None:
+def test_issuer_computed_field_malformed_url_no_domain(mock_env_vars, record_property) -> None:
     """Test issuer computed field with malformed URL (no domain) falls back gracefully."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -307,8 +341,10 @@ def test_issuer_computed_field_malformed_url_no_domain(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_url_with_port(mock_env_vars) -> None:
+def test_issuer_computed_field_url_with_port(mock_env_vars, record_property) -> None:
     """Test issuer computed field with URL containing port number."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -324,8 +360,10 @@ def test_issuer_computed_field_url_with_port(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_url_with_subdirectory(mock_env_vars) -> None:
+def test_issuer_computed_field_url_with_subdirectory(mock_env_vars, record_property) -> None:
     """Test issuer computed field with URL containing multiple path segments."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
@@ -341,8 +379,10 @@ def test_issuer_computed_field_url_with_subdirectory(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-def test_issuer_computed_field_url_with_query_params(mock_env_vars) -> None:
+def test_issuer_computed_field_url_with_query_params(mock_env_vars, record_property) -> None:
     """Test issuer computed field with URL containing query parameters."""
+    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
+    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),

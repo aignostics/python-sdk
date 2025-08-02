@@ -13,6 +13,8 @@ THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
 def test_inspect_openslide_dicom(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
     record_property("tested-item-id", "TEST-SWR-VISUALIZATION-9-METADATA-INSPECTION")
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
 
     file_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
     result = runner.invoke(cli, ["wsi", "inspect", str(file_path)])
@@ -29,8 +31,10 @@ def test_inspect_openslide_dicom(runner: CliRunner, record_property) -> None:
     )
 
 
-def test_inspect_pydicom_directory(runner: CliRunner) -> None:
+def test_inspect_pydicom_directory(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
     file_path = Path(__file__).parent.parent.parent / "resources"
     result = runner.invoke(cli, ["wsi", "dicom", "inspect", str(file_path)])
     assert result.exit_code == 0
@@ -43,8 +47,10 @@ def test_inspect_pydicom_directory(runner: CliRunner) -> None:
     )
 
 
-def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
+def test_inspect_pydicom_directory_verbose(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
     file_path = Path(__file__).parent.parent.parent / "resources"
     result = runner.invoke(cli, ["wsi", "dicom", "inspect", "--verbose", str(file_path)])
     assert result.exit_code == 0
@@ -64,6 +70,8 @@ def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
 def test_inspect_pydicom_geojson_import(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
     record_property("tested-item-id", "TEST-SWR-VISUALIZATION-11-FORMAT-CONVERSION")
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
+    record_property("tested-item-id", "ADR-19-QUPATH-RESULTS-INTEGRATION-PIPELINE")
 
     dicom_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
     geojson_path = Path(__file__).parent.parent.parent / "resources" / "cells.json"

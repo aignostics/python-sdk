@@ -14,8 +14,9 @@ class TestUserProfile:
     """Test cases for UserProfile model."""
 
     @staticmethod
-    def test_user_profile_from_userinfo_full_data() -> None:
+    def test_user_profile_from_userinfo_full_data(record_property) -> None:
         """Test UserProfile creation from complete userinfo."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         userinfo = {
             "name": "John Doe",
             "given_name": "John",
@@ -40,8 +41,9 @@ class TestUserProfile:
         assert profile.updated_at == datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC)
 
     @staticmethod
-    def test_user_profile_from_userinfo_partial_data() -> None:
+    def test_user_profile_from_userinfo_partial_data(record_property) -> None:
         """Test UserProfile creation from partial userinfo."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         userinfo = {
             "name": "Jane Smith",
             "email": "jane.smith@example.com",
@@ -60,8 +62,9 @@ class TestUserProfile:
         assert profile.updated_at is None
 
     @staticmethod
-    def test_user_profile_from_userinfo_empty_data() -> None:
+    def test_user_profile_from_userinfo_empty_data(record_property) -> None:
         """Test UserProfile creation from empty userinfo."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         userinfo = {}
 
         profile = UserProfile.from_userinfo(userinfo)
@@ -80,8 +83,9 @@ class TestTokenInfo:
     """Test cases for TokenInfo model."""
 
     @staticmethod
-    def test_token_info_from_claims() -> None:
+    def test_token_info_from_claims(record_property) -> None:
         """Test TokenInfo creation from JWT claims."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         claims = {
             "iss": "https://test.auth0.com/",
             "iat": 1609459200,
@@ -101,8 +105,9 @@ class TestTokenInfo:
         assert token_info.authorized_party == "test-client-id"
 
     @staticmethod
-    def test_token_info_from_claims_with_audience_list() -> None:
+    def test_token_info_from_claims_with_audience_list(record_property) -> None:
         """Test TokenInfo creation from JWT claims with audience as list."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         claims = {
             "iss": "https://test.auth0.com/",
             "iat": 1609459200,
@@ -121,8 +126,9 @@ class TestUserInfo:
     """Test cases for UserInfo model."""
 
     @staticmethod
-    def test_user_info_from_claims_and_userinfo_with_profile() -> None:
+    def test_user_info_from_claims_and_userinfo_with_profile(record_property) -> None:
         """Test UserInfo creation with both claims and userinfo."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         claims = {
             "sub": "user123",
             "org_id": "org456",
@@ -154,8 +160,9 @@ class TestUserInfo:
         assert user_info.profile.email_verified is True
 
     @staticmethod
-    def test_user_info_from_claims_and_userinfo_without_profile() -> None:
+    def test_user_info_from_claims_and_userinfo_without_profile(record_property) -> None:
         """Test UserInfo creation with only claims, no userinfo."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         claims = {
             "sub": "user456",
             "org_id": "org789",
@@ -179,8 +186,9 @@ class TestUserInfo:
         assert user_info.profile is None
 
     @staticmethod
-    def test_user_info_from_claims_and_userinfo_no_org_name() -> None:
+    def test_user_info_from_claims_and_userinfo_no_org_name(record_property) -> None:
         """Test UserInfo creation when org_name is not provided in claims."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         claims = {
             "sub": "user789",
             "org_id": "org999",
@@ -207,8 +215,9 @@ class TestPlatformCLI:
     """Test cases for platform CLI commands."""
 
     @staticmethod
-    def test_login_out_info_e2e(runner: CliRunner) -> None:
+    def test_login_out_info_e2e(runner: CliRunner, record_property) -> None:
         """Test successful logout command."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.logout", return_value=True):
             result = runner.invoke(cli, ["user", "login", "--relogin"])
             assert result.exit_code == 0
@@ -221,8 +230,9 @@ class TestPlatformCLI:
             assert "https://aignostics-platform.eu.auth0.com/" in normalize_output(result.output)
 
     @staticmethod
-    def test_logout_success(runner: CliRunner) -> None:
+    def test_logout_success(runner: CliRunner, record_property) -> None:
         """Test successful logout command."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.logout", return_value=True):
             result = runner.invoke(cli, ["user", "logout"])
 
@@ -230,8 +240,9 @@ class TestPlatformCLI:
             assert "Successfully logged out." in normalize_output(result.output)
 
     @staticmethod
-    def test_logout_not_logged_in(runner: CliRunner) -> None:
+    def test_logout_not_logged_in(runner: CliRunner, record_property) -> None:
         """Test logout command when not logged in."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.logout", return_value=False):
             result = runner.invoke(cli, ["user", "logout"])
 
@@ -239,8 +250,9 @@ class TestPlatformCLI:
             assert "Was not logged in." in normalize_output(result.output)
 
     @staticmethod
-    def test_logout_error(runner: CliRunner) -> None:
+    def test_logout_error(runner: CliRunner, record_property) -> None:
         """Test logout command when an error occurs."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.logout", side_effect=RuntimeError("Test error")):
             result = runner.invoke(cli, ["user", "logout"])
 
@@ -248,8 +260,9 @@ class TestPlatformCLI:
             assert "Error during logout: Test error" in normalize_output(result.output)
 
     @staticmethod
-    def test_login_success(runner: CliRunner) -> None:
+    def test_login_success(runner: CliRunner, record_property) -> None:
         """Test successful login command."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.login", return_value=True):
             result = runner.invoke(cli, ["user", "login"])
 
@@ -257,8 +270,9 @@ class TestPlatformCLI:
             assert "Successfully logged in." in normalize_output(result.output)
 
     @staticmethod
-    def test_login_with_relogin_flag(runner: CliRunner) -> None:
+    def test_login_with_relogin_flag(runner: CliRunner, record_property) -> None:
         """Test login command with relogin flag."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.login", return_value=True) as mock_login:
             result = runner.invoke(cli, ["user", "login", "--relogin"])
 
@@ -267,8 +281,9 @@ class TestPlatformCLI:
             mock_login.assert_called_once_with(relogin=True)
 
     @staticmethod
-    def test_login_failure(runner: CliRunner) -> None:
+    def test_login_failure(runner: CliRunner, record_property) -> None:
         """Test login command when login fails."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.login", return_value=False):
             result = runner.invoke(cli, ["user", "login"])
 
@@ -276,8 +291,9 @@ class TestPlatformCLI:
             assert "Failed to log you in" in normalize_output(result.output)
 
     @staticmethod
-    def test_login_error(runner: CliRunner) -> None:
+    def test_login_error(runner: CliRunner, record_property) -> None:
         """Test login command when an error occurs."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.login", side_effect=RuntimeError("Test error")):
             result = runner.invoke(cli, ["user", "login"])
 
@@ -285,8 +301,9 @@ class TestPlatformCLI:
             assert "Error during login: Test error" in normalize_output(result.output)
 
     @staticmethod
-    def test_whoami_success(runner: CliRunner) -> None:
+    def test_whoami_success(runner: CliRunner, record_property) -> None:
         """Test successful whoami command."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         # Create mock user info
         mock_token_info = TokenInfo(
             issuer="https://test.auth0.com/",
@@ -316,8 +333,9 @@ class TestPlatformCLI:
             assert "admin" in output
 
     @staticmethod
-    def test_whoami_with_relogin_flag(runner: CliRunner) -> None:
+    def test_whoami_with_relogin_flag(runner: CliRunner, record_property) -> None:
         """Test whoami command with relogin flag."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         mock_token_info = TokenInfo(
             issuer="https://test.auth0.com/",
             issued_at=1609459200,
@@ -343,8 +361,9 @@ class TestPlatformCLI:
             mock_get_user_info.assert_called_once_with(relogin=True)
 
     @staticmethod
-    def test_whoami_not_logged_in(runner: CliRunner) -> None:
+    def test_whoami_not_logged_in(runner: CliRunner, record_property) -> None:
         """Test whoami command when not logged in."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.get_user_info", return_value=None):
             result = runner.invoke(cli, ["user", "whoami"])
 
@@ -352,8 +371,9 @@ class TestPlatformCLI:
             assert "Failed to log you in." in normalize_output(result.output)
 
     @staticmethod
-    def test_whoami_error(runner: CliRunner) -> None:
+    def test_whoami_error(runner: CliRunner, record_property) -> None:
         """Test whoami command when an error occurs."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with patch("aignostics.platform._service.Service.get_user_info", side_effect=RuntimeError("Test error")):
             result = runner.invoke(cli, ["user", "whoami"])
 
@@ -361,8 +381,9 @@ class TestPlatformCLI:
             assert "Error while getting user info: Test error" in normalize_output(result.output)
 
     @staticmethod
-    def test_whoami_success_with_user_profile(runner: CliRunner) -> None:
+    def test_whoami_success_with_user_profile(runner: CliRunner, record_property) -> None:
         """Test successful whoami command with complete user profile."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         # Create mock token info
         mock_token_info = TokenInfo(
             issuer="https://test.auth0.com/",
@@ -410,8 +431,9 @@ class TestPlatformCLI:
             assert "johnny" in output
 
     @staticmethod
-    def test_whoami_success_with_no_org_name(runner: CliRunner) -> None:
+    def test_whoami_success_with_no_org_name(runner: CliRunner, record_property) -> None:
         """Test successful whoami command when org_name is None."""
+        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         # Create mock token info
         mock_token_info = TokenInfo(
             issuer="https://test.auth0.com/",

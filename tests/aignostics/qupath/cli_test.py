@@ -20,6 +20,9 @@ from tests.conftest import normalize_output
 @pytest.mark.sequential
 def test_cli_install_and_uninstall(runner: CliRunner, record_property) -> None:
     """Check (un)install works for Windows, Mac and Linux package."""
+    record_property("tested-item-id", "ADR-18-QUPATH-PROCESS-LIFECYCLE-MANAGEMENT")
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
+    record_property("tested-item-id", "API-QUPATH-INSTALLATION")
     record_property(
         "tested-item-id", "TEST-SWR-VISUALIZATION-1-QUPATH-INSTALL,TEST-SWR-VISUALIZATION-2-QUPATH-UNINSTALL"
     )
@@ -68,6 +71,9 @@ def test_cli_install_and_uninstall(runner: CliRunner, record_property) -> None:
 @pytest.mark.sequential
 def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown, record_property) -> None:
     """Check (un)install and launching headless works."""
+    record_property("tested-item-id", "ADR-18-QUPATH-PROCESS-LIFECYCLE-MANAGEMENT")
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
+    record_property("tested-item-id", "API-QUPATH-INSTALLATION")
     record_property(
         "tested-item-id", "TEST-SWR-VISUALIZATION-4-PROCESS-LIST,TEST-SWR-VISUALIZATION-7-PROCESS-TERMINATION"
     )
@@ -125,6 +131,9 @@ def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown, rec
 @pytest.mark.sequential
 def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown, record_property) -> None:
     """Check (un)install and launching UI versin of QuPath works."""
+    record_property("tested-item-id", "ADR-18-QUPATH-PROCESS-LIFECYCLE-MANAGEMENT")
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
+    record_property("tested-item-id", "API-QUPATH-INSTALLATION")
     record_property(
         "tested-item-id",
         (

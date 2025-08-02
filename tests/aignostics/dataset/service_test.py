@@ -7,8 +7,9 @@ from aignostics.dataset._service import _active_processes, _cleanup_processes, _
 
 
 @mock.patch("aignostics.dataset._service._terminate_process")
-def test_cleanup_processes_terminates_running_processes(mock_terminate_process: mock.MagicMock) -> None:
+def test_cleanup_processes_terminates_running_processes(mock_terminate_process: mock.MagicMock, record_property) -> None:
     """Test that _cleanup_processes terminates all running processes."""
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
     # Create mock processes
     mock_running_process = mock.MagicMock(spec=subprocess.Popen)
     mock_running_process.poll.return_value = None  # Process is still running
@@ -29,8 +30,9 @@ def test_cleanup_processes_terminates_running_processes(mock_terminate_process: 
 
 
 @mock.patch("time.sleep")
-def test_terminate_process(mock_sleep: mock.MagicMock) -> None:
+def test_terminate_process(mock_sleep: mock.MagicMock, record_property) -> None:
     """Test that _terminate_process properly terminates a process."""
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
     # Create a mock process that needs to be killed after terminate
     mock_process = mock.MagicMock(spec=subprocess.Popen)
     mock_process.pid = 12345
@@ -47,8 +49,9 @@ def test_terminate_process(mock_sleep: mock.MagicMock) -> None:
 
 
 @mock.patch("time.sleep")
-def test_terminate_process_graceful_exit(mock_sleep: mock.MagicMock) -> None:
+def test_terminate_process_graceful_exit(mock_sleep: mock.MagicMock, record_property) -> None:
     """Test that _terminate_process handles graceful process termination."""
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
     # Create a mock process that exits after terminate
     mock_process = mock.MagicMock(spec=subprocess.Popen)
     mock_process.pid = 12345
@@ -65,8 +68,9 @@ def test_terminate_process_graceful_exit(mock_sleep: mock.MagicMock) -> None:
 
 
 @mock.patch("aignostics.dataset._service.logger")
-def test_terminate_process_exception_handling(mock_logger: mock.MagicMock) -> None:
+def test_terminate_process_exception_handling(mock_logger: mock.MagicMock, record_property) -> None:
     """Test that _terminate_process handles exceptions properly."""
+    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
     # Create a mock process that raises an exception when terminated
     mock_process = mock.MagicMock(spec=subprocess.Popen)
     mock_process.pid = 12345

@@ -249,6 +249,9 @@ def test_application_runs(
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
+    record_property("tested-item-id", "ADR-5-AUTOMATED-WORKFLOW-COMPOSITION")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     record_property(
         "tested-item-id",
         (
