@@ -30,7 +30,7 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture, record_property) -> No
         caplog: Fixture to capture log messages.
         record_property: Function to report test result to Ketryx.
     """
-    record_property("tested-item-id", "TEST-SWR-NOTEBOOK-1-SERVER-LAUNCH")
+    record_property("tested-item-id", "TEST-SWR-NOTEBOOK-1-SERVER-LAUNCH, TEST-SWR-NOTEBOOK-7-EXISTING-SERVER")
 
     caplog.set_level(logging.DEBUG)
     service = None
