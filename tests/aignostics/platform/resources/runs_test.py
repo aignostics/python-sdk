@@ -65,6 +65,7 @@ def test_runs_list_with_pagination(runs, mock_api, record_property) -> None:
     Args:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property("tested-item-id", "API-RESULT-DOWNLOAD")
@@ -95,6 +96,7 @@ def test_runs_list_with_application_version_filter(runs, mock_api, record_proper
     Args:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property("tested-item-id", "API-RESULT-DOWNLOAD")
@@ -120,6 +122,7 @@ def test_application_run_results_with_pagination(app_run, mock_api, record_prope
     Args:
         app_run: ApplicationRun instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property("tested-item-id", "API-RESULT-DOWNLOAD")
@@ -148,6 +151,7 @@ def test_runs_call_returns_application_run(runs, record_property) -> None:
 
     Args:
         runs: Runs instance with mock API.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property("tested-item-id", "API-RESULT-DOWNLOAD")
@@ -170,6 +174,7 @@ def test_runs_create_returns_application_run(runs, mock_api, record_property) ->
     Args:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property("tested-item-id", "API-RESULT-DOWNLOAD")
@@ -210,6 +215,7 @@ def test_paginate_with_not_found_exception_on_first_page(runs, mock_api, record_
     Args:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property("tested-item-id", "API-RESULT-DOWNLOAD")
@@ -237,6 +243,7 @@ def test_paginate_with_not_found_exception_after_full_page(runs, mock_api, recor
     Args:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property("tested-item-id", "API-RESULT-DOWNLOAD")

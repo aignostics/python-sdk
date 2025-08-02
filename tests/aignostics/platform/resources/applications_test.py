@@ -49,6 +49,7 @@ def test_applications_list_with_pagination(applications, mock_api, record_proper
     Args:
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
@@ -77,6 +78,7 @@ def test_versions_list_with_pagination(mock_api, record_property) -> None:
 
     Args:
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
@@ -110,6 +112,7 @@ def test_applications_list_returns_empty_list_when_no_applications(applications,
     Args:
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
@@ -132,6 +135,7 @@ def test_applications_list_returns_applications_when_available(applications, moc
     Args:
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
@@ -158,6 +162,7 @@ def test_applications_list_passes_through_api_exception(applications, mock_api, 
     Args:
         applications: Applications instance with mock API.
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
@@ -177,6 +182,7 @@ def test_versions_property_returns_versions_instance(applications, record_proper
 
     Args:
         applications: Applications instance with mock API.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Act
@@ -195,6 +201,7 @@ def test_versions_list_returns_versions_for_application(mock_api, record_propert
 
     Args:
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
@@ -223,6 +230,7 @@ def test_versions_list_returns_empty_list_when_no_versions(mock_api, record_prop
 
     Args:
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange
@@ -249,6 +257,7 @@ def test_versions_list_passes_through_api_exception(mock_api, record_property) -
 
     Args:
         mock_api: Mock ExternalsApi instance.
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     # Arrange

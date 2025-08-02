@@ -17,7 +17,7 @@ def test_base_page_builder_is_abstract(record_property) -> None:
     """Test that BasePageBuilder is an abstract class.
 
     Args:
-        None
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
     record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
@@ -31,7 +31,7 @@ def test_register_pages_is_abstract(record_property) -> None:
     """Test that register_pages is an abstract method.
 
     Args:
-        None
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
     record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
@@ -51,6 +51,7 @@ def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMoc
 
     Args:
         mock_locate_subclasses: Mock for locate_subclasses function
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
     record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
@@ -78,6 +79,7 @@ def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mo
     Args:
         mock_ui: Mock for nicegui UI
         mock_register_pages: Mock for gui_register_pages function
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
     record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
@@ -104,6 +106,7 @@ def test_gui_run_custom_params(mock_ui: mock.MagicMock, mock_register_pages: moc
     Args:
         mock_ui: Mock for nicegui UI
         mock_register_pages: Mock for gui_register_pages function
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
     record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
@@ -136,6 +139,7 @@ def test_gui_run_in_container_with_native(mock_ui: mock.MagicMock, record_proper
 
     Args:
         mock_ui: Mock for nicegui UI
+        record_property: Map test to Ketryx item
     """
     record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
     record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")

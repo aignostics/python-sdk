@@ -7,7 +7,10 @@ from aignostics.dataset._service import _active_processes, _cleanup_processes, _
 
 
 @mock.patch("aignostics.dataset._service._terminate_process")
-def test_cleanup_processes_terminates_running_processes(mock_terminate_process: mock.MagicMock, record_property) -> None:
+def test_cleanup_processes_terminates_running_processes(
+    mock_terminate_process: mock.MagicMock,
+    record_property,
+) -> None:
     """Test that _cleanup_processes terminates all running processes."""
     record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
     # Create mock processes
