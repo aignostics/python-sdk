@@ -21,6 +21,7 @@ TEST_APPLICATION_ID = "test-app"
 
 def test_cli_application_list(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     record_property("tested-item-id", "TEST-APPLICATION-LIST-BASIC, TEST-APPLICATION-LIST-YAML")
 
     result = runner.invoke(cli, ["application", "list"])
@@ -31,6 +32,7 @@ def test_cli_application_list(runner: CliRunner, record_property) -> None:
 
 def test_cli_application_list_verbose(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     record_property("tested-item-id", "TEST-APPLICATION-DESCRIBE-VERBOSE, TEST-APPLICATION-DESCRIBE-ARTIFACTS-COUNT")
 
     result = runner.invoke(cli, ["application", "list", "--verbose"])
@@ -42,6 +44,7 @@ def test_cli_application_list_verbose(runner: CliRunner, record_property) -> Non
 
 def test_cli_application_describe(runner: CliRunner, record_property) -> None:
     """Check application describe command runs successfully."""
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     record_property("tested-item-id", "TEST-APPLICATION-DESCRIBE-SPECIFIC-ID, TEST-APPLICATION-DESCRIBE-ARTIFACTS-ID")
 
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID])
@@ -51,6 +54,7 @@ def test_cli_application_describe(runner: CliRunner, record_property) -> None:
 
 def test_cli_application_describe_not_found(runner: CliRunner, record_property) -> None:
     """Check application describe command fails as expected on unknown application."""
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
     record_property("tested-item-id", "TEST-APPLICATION-UNKNOWN-ID-ERROR, TEST-APPLICATION-INVALID-FORMAT-ERROR")
 
     result = runner.invoke(cli, ["application", "describe", "unknown"])
@@ -60,6 +64,7 @@ def test_cli_application_describe_not_found(runner: CliRunner, record_property) 
 
 def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check application dump schemata works as expected."""
+    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     record_property("tested-item-id", "TEST-APPLICATION-SCHEMA-EXPORT-BASIC, TEST-APPLICATION-SCHEMA-EXPORT-FILES")
 
     result = runner.invoke(
@@ -76,6 +81,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     runner: CliRunner, tmp_path: Path, record_property
 ) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     record_property(
         "tested-item-id",
         (
@@ -122,8 +128,9 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
 
 
-def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     metadata_csv = tmp_path / "metadata.csv"
     metadata_csv.write_text(
         "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
@@ -137,8 +144,9 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
     assert "Warning: Source file 'missing.file' (row 0) does not exist" in normalize_output(result.stdout)
 
 
-def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run submit command fails as expected."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
@@ -151,8 +159,9 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     assert "Error: Failed to create run for application version" in normalize_output(result.stdout)
 
 
-def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run submit command fails as expected."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;aws://bucket/test"
@@ -165,8 +174,9 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
     assert "Invalid platform bucket URL: 'aws://bucket/test'" in normalize_output(result.stdout)
 
 
-def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run submit command fails as expected."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;"
@@ -183,6 +193,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(
     runner: CliRunner, tmp_path: Path, record_property
 ) -> None:
     """Check run submit command runs successfully."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     record_property(
         "tested-item-id",
         (
@@ -267,8 +279,10 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(
         assert f"Failed to create destination directory '/4711/{run_id}'" in normalize_output(download_result.stdout)
 
 
-def test_cli_run_list_limit_10(runner: CliRunner) -> None:
+def test_cli_run_list_limit_10(runner: CliRunner, record_property) -> None:
     """Check run list command runs successfully."""
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
     output = normalize_output(result.stdout)
@@ -280,8 +294,10 @@ def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     assert displayed_count <= 10, f"Expected listed count to be <= 10, but got {displayed_count}"
 
 
-def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
+def test_cli_run_list_verbose_limit_1(runner: CliRunner, record_property) -> None:
     """Check run list command runs successfully."""
+    record_property("tested-item-id", "ADR-1-APPLICATION-DISCOVERY-SERVICE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
     assert result.exit_code == 0
     output = normalize_output(result.stdout)
@@ -293,43 +309,53 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     assert displayed_count == 1, f"Expected listed count to be == 1, but got {displayed_count}"
 
 
-def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
+def test_cli_run_describe_invalid_uuid(runner: CliRunner, record_property) -> None:
     """Check run describe command fails as expected on run not found."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     result = runner.invoke(cli, ["application", "run", "describe", "4711"])
     assert result.exit_code == 1
     assert "Error: Failed to retrieve run details for ID '4711'" in normalize_output(result.stdout)
 
 
-def test_cli_run_describe_not_found(runner: CliRunner) -> None:
+def test_cli_run_describe_not_found(runner: CliRunner, record_property) -> None:
     """Check run describe command fails as expected on run not found."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     result = runner.invoke(cli, ["application", "run", "describe", "00000000000000000000000000000000"])
     assert result.exit_code == 2
     assert "Warning: Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
 
 
-def test_cli_run_cancel_invalid_run_id(runner: CliRunner) -> None:
+def test_cli_run_cancel_invalid_run_id(runner: CliRunner, record_property) -> None:
     """Check run cancel command fails as expected on run not found."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     result = runner.invoke(cli, ["application", "run", "cancel", "4711"])
     assert result.exit_code == 1
     assert "Failed to cancel run with ID '4711'" in normalize_output(result.stdout)
 
 
-def test_cli_run_cancel_not_found(runner: CliRunner) -> None:
+def test_cli_run_cancel_not_found(runner: CliRunner, record_property) -> None:
     """Check run cancel command fails as expected on run not found."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     result = runner.invoke(cli, ["application", "run", "cancel", "00000000000000000000000000000000"])
     assert result.exit_code == 2
     assert "Warning: Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
 
 
-def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run result download command fails on invalid uui."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     result = runner.invoke(cli, ["application", "run", "result", "download", "4711", str(tmp_path)])
     assert result.exit_code == 2
     assert "Run ID '4711' invalid" in normalize_output(result.stdout)
 
 
-def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run result download fails on ID not found."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     result = runner.invoke(
         cli, ["application", "run", "result", "download", "00000000000000000000000000000000", str(tmp_path)]
     )
@@ -337,16 +363,19 @@ def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Pat
     assert result.exit_code == 2
 
 
-def test_cli_run_result_delete(runner: CliRunner) -> None:
+def test_cli_run_result_delete(runner: CliRunner, record_property) -> None:
     """Check run result delete command runs successfully."""
+    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
     result = runner.invoke(cli, ["application", "run", "result", "delete"])
     assert result.exit_code == 1
     assert MESSAGE_NOT_YET_IMPLEMENTED in normalize_output(result.stdout)
 
 
 @pytest.mark.long_running
-def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run execution runs e2e."""
+    record_property("tested-item-id", "ADR-5-AUTOMATED-WORKFLOW-COMPOSITION")
+    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Step 1: Download the sample file
     result = runner.invoke(
         cli,
