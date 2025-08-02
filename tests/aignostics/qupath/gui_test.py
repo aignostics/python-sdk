@@ -30,8 +30,10 @@ HETA_APPLICATION_ID = "he-tme"
     reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.sequential
-async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None) -> None:
+async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
+    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-5-INSTALLATION-INTERFACE")
+
     gui_register_pages()
 
     result = runner.invoke(cli, ["qupath", "uninstall"])

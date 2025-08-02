@@ -17,8 +17,10 @@ THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-def test_cli_idc_indices(runner: CliRunner) -> None:
+def test_cli_idc_indices(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
+    record_property("tested-item-id", "TEST-SWR-DATASET-5-DATASET-DISCOVERY")
+
     result = runner.invoke(cli, ["dataset", "idc", "indices"])
     assert result.exit_code == 0
     assert all(
@@ -28,16 +30,20 @@ def test_cli_idc_indices(runner: CliRunner) -> None:
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-def test_cli_idc_columns_default_index(runner: CliRunner) -> None:
+def test_cli_idc_columns_default_index(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
+    record_property("tested-item-id", "TEST-SWR-DATASET-5-DATASET-DISCOVERY")
+
     result = runner.invoke(cli, ["dataset", "idc", "columns"])
     assert result.exit_code == 0
     assert "SOPInstanceUID" in result.output
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-def test_cli_columns_special_index(runner: CliRunner) -> None:
+def test_cli_columns_special_index(runner: CliRunner, record_property) -> None:
     """Check expected column returned."""
+    record_property("tested-item-id", "TEST-SWR-DATASET-5-DATASET-DISCOVERY, TEST-SWR-DATASET-6-CONTENT-QUERY")
+
     result = runner.invoke(cli, ["dataset", "idc", "columns", "--index", "index"])
     assert result.exit_code == 0
     assert "series_aws_url" in result.output
@@ -57,8 +63,10 @@ def test_cli_idc_query(runner: CliRunner) -> None:
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-def test_cli_idc_download_series_dry(runner: CliRunner, caplog) -> None:
+def test_cli_idc_download_series_dry(runner: CliRunner, caplog, record_property) -> None:
     """Check download functionality with dry-run option."""
+    record_property("tested-item-id", "TEST-SWR-DATASET-6-CONTENT-QUERY")
+
     caplog.set_level(logging.INFO)
     with tempfile.TemporaryDirectory() as tmpdir:
         result = runner.invoke(
