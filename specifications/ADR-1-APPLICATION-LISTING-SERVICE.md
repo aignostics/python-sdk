@@ -32,7 +32,7 @@ The platform requires a comprehensive application discovery and navigation servi
 
 The system needs discovery capabilities that provide seamless application exploration, support diverse application types and metadata, enable efficient navigation workflows, and integrate with authentication and access control systems while maintaining optimal performance and user experience.
 
-Currently, there is no unified approach for application discovery and navigation that provides comprehensive metadata management with advanced search and filtering capabilities. The architectural challenge is designing discovery services that balance simplicity with powerful search and navigation features.
+Currently, there is no unified way for application discovery and navigation that provides comprehensive metadata management with advanced search and filtering capabilities. The architectural challenge is designing discovery services that balance simplicity with powerful search and navigation features.
 
 ## Decision Drivers
 
