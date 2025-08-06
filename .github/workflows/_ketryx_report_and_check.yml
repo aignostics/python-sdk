@@ -22,12 +22,12 @@ jobs:
           fetch-depth: 0
 
       - name: Download test results for ubuntu-latest generated in _test.yml
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: test-results-ubuntu-latest          
 
       - name: Download audit results generated in _audit.yml
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: audit-results          
 

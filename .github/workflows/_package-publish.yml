@@ -99,7 +99,7 @@ jobs:
         run: .github/workflows/_install_dev_tools.bash
 
       - name: Download native distribution artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           pattern: dist_native-*
           path: dist_native_all/
@@ -158,12 +158,12 @@ jobs:
         run: uv publish -t ${{ secrets.UV_PUBLISH_TOKEN }}
 
       - name: Download test results for ubuntu-latest generated in _test.yml
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: test-results-ubuntu-latest          
 
       - name: Download audit results generated in _audit.yml
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: audit-results          
 
