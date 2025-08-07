@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.107](https://github.com/aignostics/python-sdk/compare/v0.2.106..0.2.107) - 2025-08-07
+# [0.2.108](https://github.com/aignostics/python-sdk/compare/v0.2.107..0.2.108) - 2025-08-07
+
+### ⚙️ Miscellaneous Tasks
+
+- *(test)* Adapt remaining test config to beta.5 of heta - ([6d98300](https://github.com/aignostics/python-sdk/commit/6d983007b11604f1a1b3aab4f5fdb00956070707))
+
+
+# [v0.2.107](https://github.com/aignostics/python-sdk/compare/v0.2.106..v0.2.107) - 2025-08-07
 
 ### ⛰️  Features
 
@@ -21,7 +28,6 @@
 
 
 
-* @helmut-hoffer-von-ankershoffen made their first contribution in [#81](https://github.com/aignostics/python-sdk/pull/81)
 * @omid-aignostics made their first contribution in [#70](https://github.com/aignostics/python-sdk/pull/70)
 
 # [v0.2.106](https://github.com/aignostics/python-sdk/compare/v0.2.105..v0.2.106) - 2025-07-22
