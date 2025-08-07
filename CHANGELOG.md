@@ -1,6 +1,31 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.104](https://github.com/aignostics/python-sdk/compare/v0.2.103..0.2.104) - 2025-07-15
+# [0.2.106](https://github.com/aignostics/python-sdk/compare/v0.2.105..0.2.106) - 2025-07-22
+
+### ⚙️ Miscellaneous Tasks
+
+- *(audit)* Allow for heartbeat url specific for audit - ([475eac1](https://github.com/aignostics/python-sdk/commit/475eac159816f3e63b1724b66b71c79fbe6912be))
+- *(publish)* Adapt to recent changes - ([524f8d1](https://github.com/aignostics/python-sdk/commit/524f8d130011df71b2a9841149a5611e673dd1b0))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.105](https://github.com/aignostics/python-sdk/compare/v0.2.104..v0.2.105) - 2025-07-22
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Add metadata to BetterStack when posting heartbeats ([#61](https://github.com/orhun/git-cliff/issues/61)) - ([bd74063](https://github.com/aignostics/python-sdk/commit/bd740634dcf8749e479c020556602d621d54cf7c))
+
+### 🛡️ Security
+
+- *(dep)* Ensure starlette >= 0.47.2 given GHSA-2c2j-9gv5-cj73 - ([98ebe61](https://github.com/aignostics/python-sdk/commit/98ebe612eccdd17175bfa49e6a683b426117c55d))
+
+
+
+* @idelsink made their first contribution in [#61](https://github.com/aignostics/python-sdk/pull/61)
+
+# [v0.2.104](https://github.com/aignostics/python-sdk/compare/v0.2.103..v0.2.104) - 2025-07-15
 
 ### 📚 Documentation
 
@@ -832,5 +857,3 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
-
-

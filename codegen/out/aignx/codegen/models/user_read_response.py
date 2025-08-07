@@ -28,14 +28,14 @@ class UserReadResponse(BaseModel):
     This model corresponds to the response schema returned from Auth0 GET /v2/users/{id} endpoint. For details, see: https://auth0.com/docs/api/management/v2/users/get-users-by-id
     """ # noqa: E501
     id: StrictStr
-    email: StrictStr
-    email_verified: StrictBool
-    name: StrictStr
-    given_name: StrictStr
-    family_name: StrictStr
-    nickname: Optional[StrictStr]
-    picture: StrictStr
-    updated_at: datetime
+    email: Optional[StrictStr] = None
+    email_verified: Optional[StrictBool] = None
+    name: Optional[StrictStr] = None
+    given_name: Optional[StrictStr] = None
+    family_name: Optional[StrictStr] = None
+    nickname: Optional[StrictStr] = None
+    picture: Optional[StrictStr] = None
+    updated_at: Optional[datetime] = None
     __properties: ClassVar[List[str]] = ["id", "email", "email_verified", "name", "given_name", "family_name", "nickname", "picture", "updated_at"]
 
     model_config = ConfigDict(
@@ -77,10 +77,45 @@ class UserReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if email (nullable) is None
+        # and model_fields_set contains the field
+        if self.email is None and "email" in self.model_fields_set:
+            _dict['email'] = None
+
+        # set to None if email_verified (nullable) is None
+        # and model_fields_set contains the field
+        if self.email_verified is None and "email_verified" in self.model_fields_set:
+            _dict['email_verified'] = None
+
+        # set to None if name (nullable) is None
+        # and model_fields_set contains the field
+        if self.name is None and "name" in self.model_fields_set:
+            _dict['name'] = None
+
+        # set to None if given_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.given_name is None and "given_name" in self.model_fields_set:
+            _dict['given_name'] = None
+
+        # set to None if family_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.family_name is None and "family_name" in self.model_fields_set:
+            _dict['family_name'] = None
+
         # set to None if nickname (nullable) is None
         # and model_fields_set contains the field
         if self.nickname is None and "nickname" in self.model_fields_set:
             _dict['nickname'] = None
+
+        # set to None if picture (nullable) is None
+        # and model_fields_set contains the field
+        if self.picture is None and "picture" in self.model_fields_set:
+            _dict['picture'] = None
+
+        # set to None if updated_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.updated_at is None and "updated_at" in self.model_fields_set:
+            _dict['updated_at'] = None
 
         return _dict
 
@@ -105,5 +140,3 @@ class UserReadResponse(BaseModel):
             "updated_at": obj.get("updated_at")
         })
         return _obj
-
-

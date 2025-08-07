@@ -1,6 +1,5 @@
 """CLI of platform module."""
 
-import json
 import sys
 from typing import Annotated
 
@@ -70,18 +69,19 @@ def login(
 
 @cli.command("whoami")
 def whoami(
+    mask_secrets: Annotated[bool, typer.Option(help="Mask secrets")] = True,
     relogin: Annotated[bool, typer.Option(help="Re-login")] = False,
 ) -> None:
     """Print user info."""
     service = _get_service()
     try:
         user_info = service.get_user_info(relogin=relogin)
-        if user_info is None:
-            console.print("Failed to log you in.", style="warning")
-            sys.exit(1)
-        console.print_json(data=json.loads(user_info.model_dump_json()))
+        console.print_json(
+            data=user_info.model_dump_secrets_masked() if mask_secrets else user_info.model_dump(mode="json")
+        )
     except Exception as e:
         message = f"Error while getting user info: {e!s}"
         logger.exception(message)
         console.print(message, style="error")
+        sys.exit(1)
         sys.exit(1)

@@ -284,6 +284,92 @@ To perform this operation, you must be authenticated by means of one of the foll
 OAuth2AuthorizationCodeBearer
 
 
+### get_me_v1_me_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/me', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/me',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/me`
+
+*Get Me*
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "organization": {
+    "aignostics_bucket_hmac_access_key_id": "string",
+    "aignostics_bucket_hmac_secret_access_key": "string",
+    "aignostics_bucket_name": "string",
+    "aignostics_bucket_protocol": "string",
+    "aignostics_logfire_token": "string",
+    "aignostics_sentry_dsn": "string",
+    "display_name": "string",
+    "id": "string",
+    "name": "string"
+  },
+  "user": {
+    "email": "string",
+    "email_verified": true,
+    "family_name": "string",
+    "given_name": "string",
+    "id": "string",
+    "name": "string",
+    "nickname": "string",
+    "picture": "string",
+    "updated_at": "2019-08-24T14:15:22Z"
+  }
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[MeReadResponse](#schemamereadresponse)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
 ### list_application_runs_v1_runs_get
 
 
@@ -1486,6 +1572,117 @@ ItemStatus
 |ItemStatus|ERROR_SYSTEM|
 |ItemStatus|SUCCEEDED|
 
+### MeReadResponse
+
+
+
+
+
+
+```json
+{
+  "organization": {
+    "aignostics_bucket_hmac_access_key_id": "string",
+    "aignostics_bucket_hmac_secret_access_key": "string",
+    "aignostics_bucket_name": "string",
+    "aignostics_bucket_protocol": "string",
+    "aignostics_logfire_token": "string",
+    "aignostics_sentry_dsn": "string",
+    "display_name": "string",
+    "id": "string",
+    "name": "string"
+  },
+  "user": {
+    "email": "string",
+    "email_verified": true,
+    "family_name": "string",
+    "given_name": "string",
+    "id": "string",
+    "name": "string",
+    "nickname": "string",
+    "picture": "string",
+    "updated_at": "2019-08-24T14:15:22Z"
+  }
+}
+
+```
+
+MeReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|organization|[OrganizationReadResponse](#schemaorganizationreadresponse)|true|none|This model corresponds to the response schema returned fromAuth0 GET /v2/organizations/{id} endpoint, flattens out the metadata outand doesn't return branding or token_quota objects.For details, see:https://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id|
+|user|[UserReadResponse](#schemauserreadresponse)|true|none|This model corresponds to the response schema returned fromAuth0 GET /v2/users/{id} endpoint.For details, see:https://auth0.com/docs/api/management/v2/users/get-users-by-id|
+
+### OrganizationReadResponse
+
+
+
+
+
+
+```json
+{
+  "aignostics_bucket_hmac_access_key_id": "string",
+  "aignostics_bucket_hmac_secret_access_key": "string",
+  "aignostics_bucket_name": "string",
+  "aignostics_bucket_protocol": "string",
+  "aignostics_logfire_token": "string",
+  "aignostics_sentry_dsn": "string",
+  "display_name": "string",
+  "id": "string",
+  "name": "string"
+}
+
+```
+
+OrganizationReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|aignostics_bucket_hmac_access_key_id|string|true|none|none|
+|aignostics_bucket_hmac_secret_access_key|string|true|none|none|
+|aignostics_bucket_name|string|true|none|none|
+|aignostics_bucket_protocol|string|true|none|none|
+|aignostics_logfire_token|string|true|none|none|
+|aignostics_sentry_dsn|string|true|none|none|
+|display_name|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|id|string|true|none|none|
+|name|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
 ### OutputArtifactReadResponse
 
 
@@ -2015,6 +2212,175 @@ continued
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |items|[[PayloadItem](#schemapayloaditem)]|true|none|none|
+
+### UserReadResponse
+
+
+
+
+
+
+```json
+{
+  "email": "string",
+  "email_verified": true,
+  "family_name": "string",
+  "given_name": "string",
+  "id": "string",
+  "name": "string",
+  "nickname": "string",
+  "picture": "string",
+  "updated_at": "2019-08-24T14:15:22Z"
+}
+
+```
+
+UserReadResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|email|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|email_verified|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|boolean|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|family_name|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|given_name|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|id|string|true|none|none|
+|name|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|nickname|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|picture|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|updated_at|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
 
 ### ValidationError
 

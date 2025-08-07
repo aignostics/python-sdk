@@ -27,7 +27,7 @@ extensions = [
 project = "aignostics"
 author = "Helmut Hoffer von Ankershoffen"
 copyright = f" (c) 2025-{datetime.now(UTC).year} Aignostics GmbH, Author: {author}"  # noqa: A001
-version = "0.2.104"
+version = "0.2.106"
 release = version
 github_username = "aignostics"
 github_repository = "python-sdk"
@@ -36,9 +36,7 @@ language = "en"
 
 ogp_site_name = "Aignostics Python SDK"
 ogp_image = "https://aignostics.readthedocs.io/en/latest/_static/logo.png"
-ogp_custom_meta_tags = [
-    '<meta name="twitter:card" content="Aignostics Python SDK" />',
-]
+ogp_custom_meta_tags = ('<meta name="twitter:card" content="Aignostics Python SDK" />',)
 ogp_enable_meta_description = True
 ogp_description_length = 300
 

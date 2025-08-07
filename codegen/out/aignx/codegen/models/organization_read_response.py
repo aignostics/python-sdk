@@ -27,14 +27,14 @@ class OrganizationReadResponse(BaseModel):
     This model corresponds to the response schema returned from Auth0 GET /v2/organizations/{id} endpoint, flattens out the metadata out and doesn't return branding or token_quota objects. For details, see: https://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id
     """ # noqa: E501
     id: StrictStr
-    name: StrictStr
-    display_name: StrictStr
-    aignostics_bucket_hmac_access_key_id: Optional[StrictStr]
-    aignostics_bucket_hmac_secret_access_key: Optional[StrictStr]
-    aignostics_bucket_name: Optional[StrictStr]
-    aignostics_bucket_protocol: Optional[StrictStr]
-    aignostics_logfire_token: Optional[StrictStr]
-    aignostics_sentry_dsn: Optional[StrictStr]
+    name: Optional[StrictStr] = None
+    display_name: Optional[StrictStr] = None
+    aignostics_bucket_hmac_access_key_id: StrictStr
+    aignostics_bucket_hmac_secret_access_key: StrictStr
+    aignostics_bucket_name: StrictStr
+    aignostics_bucket_protocol: StrictStr
+    aignostics_logfire_token: StrictStr
+    aignostics_sentry_dsn: StrictStr
     __properties: ClassVar[List[str]] = ["id", "name", "display_name", "aignostics_bucket_hmac_access_key_id", "aignostics_bucket_hmac_secret_access_key", "aignostics_bucket_name", "aignostics_bucket_protocol", "aignostics_logfire_token", "aignostics_sentry_dsn"]
 
     model_config = ConfigDict(
@@ -76,35 +76,15 @@ class OrganizationReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if aignostics_bucket_hmac_access_key_id (nullable) is None
+        # set to None if name (nullable) is None
         # and model_fields_set contains the field
-        if self.aignostics_bucket_hmac_access_key_id is None and "aignostics_bucket_hmac_access_key_id" in self.model_fields_set:
-            _dict['aignostics_bucket_hmac_access_key_id'] = None
+        if self.name is None and "name" in self.model_fields_set:
+            _dict['name'] = None
 
-        # set to None if aignostics_bucket_hmac_secret_access_key (nullable) is None
+        # set to None if display_name (nullable) is None
         # and model_fields_set contains the field
-        if self.aignostics_bucket_hmac_secret_access_key is None and "aignostics_bucket_hmac_secret_access_key" in self.model_fields_set:
-            _dict['aignostics_bucket_hmac_secret_access_key'] = None
-
-        # set to None if aignostics_bucket_name (nullable) is None
-        # and model_fields_set contains the field
-        if self.aignostics_bucket_name is None and "aignostics_bucket_name" in self.model_fields_set:
-            _dict['aignostics_bucket_name'] = None
-
-        # set to None if aignostics_bucket_protocol (nullable) is None
-        # and model_fields_set contains the field
-        if self.aignostics_bucket_protocol is None and "aignostics_bucket_protocol" in self.model_fields_set:
-            _dict['aignostics_bucket_protocol'] = None
-
-        # set to None if aignostics_logfire_token (nullable) is None
-        # and model_fields_set contains the field
-        if self.aignostics_logfire_token is None and "aignostics_logfire_token" in self.model_fields_set:
-            _dict['aignostics_logfire_token'] = None
-
-        # set to None if aignostics_sentry_dsn (nullable) is None
-        # and model_fields_set contains the field
-        if self.aignostics_sentry_dsn is None and "aignostics_sentry_dsn" in self.model_fields_set:
-            _dict['aignostics_sentry_dsn'] = None
+        if self.display_name is None and "display_name" in self.model_fields_set:
+            _dict['display_name'] = None
 
         return _dict
 
@@ -129,5 +109,3 @@ class OrganizationReadResponse(BaseModel):
             "aignostics_sentry_dsn": obj.get("aignostics_sentry_dsn")
         })
         return _obj
-
-

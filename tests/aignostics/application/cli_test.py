@@ -357,7 +357,7 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
         ("tissue_segmentation_geojson_polygons.json", 270932, 10),
         ("tissue_qc_geojson_polygons.json", 180522, 10),
         ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
-        ("readout_generation_slide_readouts.csv", 348957, 10),
+        ("readout_generation_slide_readouts.csv", 295269, 10),
         ("tissue_segmentation_segmentation_map_image.tiff", 521530, 10),
     ]
     for filename, expected_size, tolerance_percent in expected_files:

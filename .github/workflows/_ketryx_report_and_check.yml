@@ -1,0 +1,53 @@
+name: "Report build to Ketryx and check for approval"
+
+on:
+  workflow_call:
+    # No inputs needed at this time
+
+env:
+  # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
+  PYTHONIOENCODING: "utf8"
+
+jobs:
+
+  ketryx_report_and_check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Download test results for ubuntu-latest generated in _test.yml
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results-ubuntu-latest          
+
+      - name: Download audit results generated in _audit.yml
+        uses: actions/download-artifact@v4
+        with:
+          name: audit-results          
+
+      - name: Report build to Ketryx and check for approval
+        uses: Ketryx/ketryx-github-action@v1.4.0
+        with:
+          project: ${{ secrets.KETRYX_PROJECT }}
+          api-key: ${{ secrets.KETRYX_API_KEY }}
+          build-name: "ci-cd"
+          check-dependencies-status: true
+          test-junit-path: reports/junit_*.xml
+          cyclonedx-json-path: |
+            reports/sbom.json
+          artifact-path: |
+            reports/sbom.spdx
+            reports/licenses.csv
+            reports/licenses.json
+            reports/licenses_grouped.json
+            reports/vulnerabilities.json
+            reports/mypy_junit.xml
+            reports/coverage.xml
+            reports/coverage.md
+            aignostics.log

@@ -85,8 +85,8 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.jws_json_url == JWS_JSON_URL_PRODUCTION
 
     # Test other properties
-    assert settings.scope == "offline_access, profile, email, openid"
-    assert settings.scope_elements == ["offline_access", "profile", "email", "openid"]
+    assert settings.scope == "offline_access"
+    assert settings.scope_elements == ["offline_access"]
     assert settings.cache_dir == appdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.request_timeout_seconds == 30
@@ -258,7 +258,7 @@ def test_issuer_computed_field_custom_url(mock_env_vars) -> None:
     # Avoid triggering api_root-based validator by setting all required fields manually
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
+        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
         authorization_base_url="https://custom.example.com/auth/oauth2/authorize",
         audience="test-audience",
@@ -275,7 +275,7 @@ def test_issuer_computed_field_malformed_url_no_scheme(mock_env_vars) -> None:
     """Test issuer computed field with malformed URL (no scheme) falls back gracefully."""
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
+        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
         authorization_base_url="example.com/oauth2/auth",
         audience="test-audience",
@@ -293,7 +293,7 @@ def test_issuer_computed_field_malformed_url_no_domain(mock_env_vars) -> None:
     """Test issuer computed field with malformed URL (no domain) falls back gracefully."""
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
+        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
         authorization_base_url="https:///oauth2/auth",
         audience="test-audience",
@@ -311,7 +311,7 @@ def test_issuer_computed_field_url_with_port(mock_env_vars) -> None:
     """Test issuer computed field with URL containing port number."""
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
+        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
         authorization_base_url="https://localhost:8080/oauth2/auth",
         audience="test-audience",
@@ -328,7 +328,7 @@ def test_issuer_computed_field_url_with_subdirectory(mock_env_vars) -> None:
     """Test issuer computed field with URL containing multiple path segments."""
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
+        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
         authorization_base_url="https://example.com/auth/v1/oauth2/authorize",
         audience="test-audience",
@@ -345,7 +345,7 @@ def test_issuer_computed_field_url_with_query_params(mock_env_vars) -> None:
     """Test issuer computed field with URL containing query parameters."""
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
+        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
         authorization_base_url="https://example.com/oauth2/auth?param=value",
         audience="test-audience",
