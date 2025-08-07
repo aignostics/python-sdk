@@ -1,15 +1,36 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.106](https://github.com/aignostics/python-sdk/compare/v0.2.105..0.2.106) - 2025-07-22
+# [0.2.107](https://github.com/aignostics/python-sdk/compare/v0.2.106..0.2.107) - 2025-08-07
+
+### ⛰️  Features
+
+- *(codegen, platform)* Support me endpoint ([#81](https://github.com/orhun/git-cliff/issues/81)) - ([9666c56](https://github.com/aignostics/python-sdk/commit/9666c563e9fd2404e7ad27c15605e3237b7f0bfa))
+- Allow to boot with zero config, i.e. no .env file required in default case - ([9666c56](https://github.com/aignostics/python-sdk/commit/9666c563e9fd2404e7ad27c15605e3237b7f0bfa))
+
+### 🐛 Bug Fixes
+
+- *(codegen)* Don't rely on redirects from /v1 to /api/v1 - ([9666c56](https://github.com/aignostics/python-sdk/commit/9666c563e9fd2404e7ad27c15605e3237b7f0bfa))
+- *(platform)* Allow to dial into dev environment - ([9666c56](https://github.com/aignostics/python-sdk/commit/9666c563e9fd2404e7ad27c15605e3237b7f0bfa))
+- Fix typos in readme.md - ([1b6a652](https://github.com/aignostics/python-sdk/commit/1b6a65253ca524a76c41506d5c00de5bfbd16be6))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump nicegui - ([e190094](https://github.com/aignostics/python-sdk/commit/e1900941f155f1382fd7d767aed2d4b5e6fe1e4d))
+- *(deps)* Bump - ([9666c56](https://github.com/aignostics/python-sdk/commit/9666c563e9fd2404e7ad27c15605e3237b7f0bfa))
+- *(heta)* Adapt tests to 1.0.0-beta.5 of HETA - ([9666c56](https://github.com/aignostics/python-sdk/commit/9666c563e9fd2404e7ad27c15605e3237b7f0bfa))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution in [#81](https://github.com/aignostics/python-sdk/pull/81)
+* @omid-aignostics made their first contribution in [#70](https://github.com/aignostics/python-sdk/pull/70)
+
+# [v0.2.106](https://github.com/aignostics/python-sdk/compare/v0.2.105..v0.2.106) - 2025-07-22
 
 ### ⚙️ Miscellaneous Tasks
 
 - *(audit)* Allow for heartbeat url specific for audit - ([475eac1](https://github.com/aignostics/python-sdk/commit/475eac159816f3e63b1724b66b71c79fbe6912be))
 - *(publish)* Adapt to recent changes - ([524f8d1](https://github.com/aignostics/python-sdk/commit/524f8d130011df71b2a9841149a5611e673dd1b0))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 # [v0.2.105](https://github.com/aignostics/python-sdk/compare/v0.2.104..v0.2.105) - 2025-07-22
 
@@ -857,3 +878,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
