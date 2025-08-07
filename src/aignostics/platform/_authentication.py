@@ -11,7 +11,6 @@ from urllib.error import HTTPError
 
 import jwt
 import requests
-from auth0.authentication import Users
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 
@@ -19,7 +18,6 @@ from aignostics.platform._messages import AUTHENTICATION_FAILED, INVALID_REDIREC
 from aignostics.platform._settings import settings
 
 CALLBACK_PORT_RETRY_COUNT = 10
-CLAIM_ROLE = "https://aignostics-platform-samia/role"
 try:
     import sentry_sdk
 except ImportError:
@@ -59,11 +57,7 @@ def _inform_sentry_about_user(token: str) -> None:
         user_id = claims.get("sub", None)
         if user_id is None:
             _raise_missing_sub_claim_error()
-        sentry_sdk.set_user({
-            "id": user_id,
-            "org_id": claims.get("org_id", None),
-            "role": claims.get(CLAIM_ROLE, None),
-        })
+        sentry_sdk.set_user({"id": user_id, "org_id": claims.get("org_id", None)})
     except (jwt.InvalidTokenError, RuntimeError):
         # Don't fail authentication if Sentry user setup fails
         # Only catch specific exceptions related to token processing
@@ -197,25 +191,6 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
-def userinfo(token: str) -> dict[str, str]:
-    """Fetches user information from the Auth0 API using the provided token.
-
-    Args:
-        token (str): The JWT access token.
-
-    Returns:
-        dict[str, str]: The user information.
-
-    Raises:
-        RuntimeError: If fetching user information fails.
-    """
-    try:
-        return Users(settings().tenant_domain).userinfo(access_token=token)  # type: ignore[no-any-return]
-    except Exception as e:
-        message = f"Failed to fetch user information: {e!s}"
-        raise RuntimeError(message) from e
-
-
 def _can_open_browser() -> bool:
     """Checks if a browser can be opened for authentication.
 
@@ -245,7 +220,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
         RuntimeError: If authentication fails.
     """
     session = OAuth2Session(
-        settings().client_id_interactive.get_secret_value(),
+        settings().client_id_interactive,
         scope=settings().scope_elements,
         redirect_uri=settings().redirect_uri,
         pkce="S256",
@@ -259,7 +234,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     authentication_result = AuthenticationResult()
 
     class OAuthCallbackHandler(BaseHTTPRequestHandler):
-        def do_GET(self) -> None:  # noqa: N802
+        def do_GET(self) -> None:
             parsed = parse.urlparse(self.path)
             query = parse.parse_qs(parsed.query)
 
@@ -348,12 +323,19 @@ def _perform_device_flow() -> str | None:
         str | None: The JWT access token.
 
     Raises:
+        ValueError: If no client id is configured for device flow.
         RuntimeError: If authentication fails or is denied.
     """
+    client_id_device = settings().client_id_device
+    if not client_id_device:
+        message = (
+            "No client id configured for device flow. Please set 'AIGNOSTICS_CLIENT_ID_DEVICE' in your environment."
+        )
+        raise ValueError(message)
     response = requests.post(
         settings().device_url,
         data={
-            "client_id": settings().client_id_device.get_secret_value(),
+            "client_id": client_id_device.get_secret_value(),
             "scope": settings().scope_elements,
             "audience": settings().audience,
         },
@@ -382,7 +364,7 @@ def _perform_device_flow() -> str | None:
                 data={
                     "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
                     "device_code": device_code,
-                    "client_id": settings().client_id_device.get_secret_value(),
+                    "client_id": client_id_device.get_secret_value(),
                 },
                 timeout=settings().request_timeout_seconds,
             ).json()
@@ -418,7 +400,7 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
             headers={"Accept": "application/json"},
             data={
                 "grant_type": "refresh_token",
-                "client_id": settings().client_id_interactive.get_secret_value(),
+                "client_id": settings().client_id_interactive,
                 "refresh_token": refresh_token.get_secret_value(),
             },
             timeout=settings().request_timeout_seconds,

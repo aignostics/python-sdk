@@ -13,6 +13,7 @@ from pydantic import BaseModel, computed_field
 if TYPE_CHECKING:
     from botocore.client import BaseClient
 
+from aignostics.platform import Service as PlatformService
 from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, get_user_data_directory
 
 from ._settings import Settings
@@ -85,10 +86,12 @@ class Service(BaseService):
     """Service of the bucket module."""
 
     _settings: Settings
+    _platform_service: PlatformService
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)
+        self._platform_service = PlatformService()
 
     def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
@@ -120,14 +123,30 @@ class Service(BaseService):
 
         Returns:
             BaseClient: A Boto3 S3 client instance.
+
+        Raises:
+            ValueError: If the HMAC access key ID or secret access key is not set in the organization settings.
         """
         from boto3 import Session  # noqa: PLC0415
         from botocore.client import Config  # noqa: PLC0415
 
+        user_info = self._platform_service.get_user_info()
+        access_key_id = user_info.organization.aignostics_bucket_hmac_access_key_id
+        if not access_key_id:
+            message = "HMAC access key ID is not set in the organization settings."
+            logger.error(message)
+            raise ValueError(message)
+
+        secret_access_key = user_info.organization.aignostics_bucket_hmac_secret_access_key
+        if not secret_access_key:
+            message = "HMAC secret access key is not set in the organization settings."
+            logger.error(message)
+            raise ValueError(message)
+
         # https://www.kmp.tw/post/accessgcsusepythonboto3/
         session = Session(
-            aws_access_key_id=self._settings.hmac_access_key_id.get_secret_value(),
-            aws_secret_access_key=self._settings.hmac_secret_access_key.get_secret_value(),
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
             region_name=self._settings.region_name,
         )
         return session.client("s3", endpoint_url=endpoint_url, config=Config(signature_version=SIGNATURE_VERSION))
@@ -146,8 +165,16 @@ class Service(BaseService):
 
         Returns:
             str: The bucket name.
+
+        Raises:
+            ValueError: If the bucket name is not set in the organization settings.
         """
-        return self._settings.name
+        bucket_name = self._platform_service.get_user_info().organization.aignostics_bucket_name
+        if not bucket_name:
+            message = "Bucket name is not set in the organization settings."
+            logger.error(message)
+            raise ValueError(message)
+        return str(bucket_name)
 
     def create_signed_upload_url(self, object_key: str, bucket_name: str | None = None) -> str:
         """Generates a signed URL to upload a Google Cloud Storage object.
@@ -162,7 +189,7 @@ class Service(BaseService):
         """
         url = self._get_s3_client().generate_presigned_url(
             ClientMethod="put_object",
-            Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
+            Params={"Bucket": self.get_bucket_name() if bucket_name is None else bucket_name, "Key": object_key},
             ExpiresIn=self._settings.upload_signed_url_expiration_seconds,
         )
         return cast("str", url)
@@ -307,7 +334,7 @@ class Service(BaseService):
 
         # Normalize keys by removing bucket prefix if present (when treating as exact keys)
         if what_is_key:
-            bucket_prefix = f"{self._settings.name}/"
+            bucket_prefix = f"{self.get_bucket_name()}/"
             what = [key.removeprefix(bucket_prefix) for key in what]
 
         compiled_patterns: list[re.Pattern[str]] = []
@@ -322,7 +349,7 @@ class Service(BaseService):
 
         s3c = self._get_s3_client()
         paginator = s3c.get_paginator("list_objects_v2")
-        pages = paginator.paginate(Bucket=self._settings.name)
+        pages = paginator.paginate(Bucket=self.get_bucket_name())
 
         result: list[str | dict[str, Any]] = []
 
@@ -375,7 +402,7 @@ class Service(BaseService):
         """
         url = self._get_s3_client().generate_presigned_url(
             ClientMethod="get_object",
-            Params={"Bucket": self._settings.name if bucket_name is None else bucket_name, "Key": object_key},
+            Params={"Bucket": self.get_bucket_name() if bucket_name is None else bucket_name, "Key": object_key},
             ExpiresIn=self._settings.download_signed_url_expiration_seconds,
         )
         return cast("str", url)
@@ -619,7 +646,7 @@ class Service(BaseService):
         for object_key in object_keys_to_delete:
             logger.debug("Deleting object with key: %s", object_key)
             try:
-                s3c.delete_object(Bucket=self._settings.name, Key=object_key)
+                s3c.delete_object(Bucket=self.get_bucket_name(), Key=object_key)
                 deleted_count += 1
             except ClientError as e:
                 if e.response["Error"]["Code"] == "NoSuchKey":

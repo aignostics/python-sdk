@@ -6,6 +6,7 @@ from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import Configuration
 from aignx.codegen.exceptions import NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
+from aignx.codegen.models import MeReadResponse as Me
 
 from aignostics.platform._authentication import get_token
 from aignostics.platform.resources.applications import Applications, Versions
@@ -46,6 +47,17 @@ class Client:
         except Exception:
             logger.exception("Failed to initialize client.")
             raise
+
+    def me(self) -> Me:
+        """Retrieves info about the current user and their organisation.
+
+        Returns:
+            Me: User and organization information.
+
+        Raises:
+            aignx.codegen.exceptions.ApiException: If the API call fails.
+        """
+        return self._api.get_me_v1_me_get()
 
     def run(self, application_run_id: str) -> ApplicationRun:
         """Finds a specific run by id.

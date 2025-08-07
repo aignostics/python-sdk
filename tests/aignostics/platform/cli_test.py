@@ -1,79 +1,13 @@
 """Tests to verify the CLI functionality of the platform module."""
 
-from datetime import UTC, datetime
 from unittest.mock import patch
 
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
-from aignostics.platform._service import TokenInfo, UserInfo, UserProfile
+from aignostics.platform import Me
+from aignostics.platform._service import Organization, TokenInfo, User, UserInfo
 from tests.conftest import normalize_output
-
-
-class TestUserProfile:
-    """Test cases for UserProfile model."""
-
-    @staticmethod
-    def test_user_profile_from_userinfo_full_data() -> None:
-        """Test UserProfile creation from complete userinfo."""
-        userinfo = {
-            "name": "John Doe",
-            "given_name": "John",
-            "family_name": "Doe",
-            "nickname": "johnny",
-            "email": "john.doe@example.com",
-            "email_verified": True,
-            "picture": "https://example.com/avatar.jpg",
-            "updated_at": "2024-01-15T10:30:00Z",
-        }
-
-        profile = UserProfile.from_userinfo(userinfo)
-
-        assert profile.name == "John Doe"
-        assert profile.given_name == "John"
-        assert profile.family_name == "Doe"
-        assert profile.nickname == "johnny"
-        assert profile.email == "john.doe@example.com"
-        assert profile.email_verified is True
-        assert profile.picture == "https://example.com/avatar.jpg"
-        # Pydantic automatically converts the ISO string to a datetime object
-        assert profile.updated_at == datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC)
-
-    @staticmethod
-    def test_user_profile_from_userinfo_partial_data() -> None:
-        """Test UserProfile creation from partial userinfo."""
-        userinfo = {
-            "name": "Jane Smith",
-            "email": "jane.smith@example.com",
-            "email_verified": False,
-        }
-
-        profile = UserProfile.from_userinfo(userinfo)
-
-        assert profile.name == "Jane Smith"
-        assert profile.given_name is None
-        assert profile.family_name is None
-        assert profile.nickname is None
-        assert profile.email == "jane.smith@example.com"
-        assert profile.email_verified is False
-        assert profile.picture is None
-        assert profile.updated_at is None
-
-    @staticmethod
-    def test_user_profile_from_userinfo_empty_data() -> None:
-        """Test UserProfile creation from empty userinfo."""
-        userinfo = {}
-
-        profile = UserProfile.from_userinfo(userinfo)
-
-        assert profile.name is None
-        assert profile.given_name is None
-        assert profile.family_name is None
-        assert profile.nickname is None
-        assert profile.email is None
-        assert profile.email_verified is None
-        assert profile.picture is None
-        assert profile.updated_at is None
 
 
 class TestTokenInfo:
@@ -87,8 +21,10 @@ class TestTokenInfo:
             "iat": 1609459200,
             "exp": 1609462800,
             "scope": "openid profile email",
-            "aud": "test-audience",
+            "aud": "https://test-audience",
             "azp": "test-client-id",
+            "org_id": "org123",
+            "https://test-audience/role": "member",
         }
 
         token_info = TokenInfo.from_claims(claims)
@@ -97,8 +33,10 @@ class TestTokenInfo:
         assert token_info.issued_at == 1609459200
         assert token_info.expires_at == 1609462800
         assert token_info.scope == ["openid", "profile", "email"]
-        assert token_info.audience == ["test-audience"]
+        assert token_info.audience == ["https://test-audience"]
         assert token_info.authorized_party == "test-client-id"
+        assert token_info.org_id == "org123"
+        assert token_info.role == "member"
 
     @staticmethod
     def test_token_info_from_claims_with_audience_list() -> None:
@@ -108,13 +46,34 @@ class TestTokenInfo:
             "iat": 1609459200,
             "exp": 1609462800,
             "scope": "openid profile",
-            "aud": ["audience1", "audience2"],
+            "aud": ["https://test-audience1", "test-audience2"],
             "azp": "test-client-id",
+            "org_id": "org123",
+            "https://test-audience1": "member",
         }
 
         token_info = TokenInfo.from_claims(claims)
 
-        assert token_info.audience == ["audience1", "audience2"]
+        assert token_info.audience == ["https://test-audience1", "test-audience2"]
+        assert token_info.role == "member"
+
+    @staticmethod
+    def test_token_info_from_claims_without_role() -> None:
+        """Test TokenInfo creation from JWT claims with role missing."""
+        claims = {
+            "iss": "https://test.auth0.com/",
+            "iat": 1609459200,
+            "exp": 1609462800,
+            "scope": "openid profile",
+            "aud": ["https://test-audience1"],
+            "azp": "test-client-id",
+            "org_id": "org123",
+        }
+
+        token_info = TokenInfo.from_claims(claims)
+
+        assert token_info.audience == ["https://test-audience1"]
+        assert token_info.role == "member"
 
 
 class TestUserInfo:
@@ -132,51 +91,38 @@ class TestUserInfo:
             "iat": 1609459200,
             "exp": 1609462800,
             "scope": "openid profile",
-            "aud": "test-audience",
+            "aud": "https://test-audience1",
             "azp": "test-client-id",
         }
-        userinfo = {
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "email_verified": True,
-        }
+        me = Me(
+            user=User(
+                id="user123",
+                name="John Doe",
+                email="john.doe@example.com",
+                email_verified=True,
+            ),
+            organization=Organization(
+                id="org456",
+                name="Test Organization",
+                aignostics_bucket_hmac_access_key_id="secret_access_key_id",
+                aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
+                aignostics_bucket_name="test-bucket",
+                aignostics_bucket_protocol="gs",
+                aignostics_logfire_token="logfire_token",  # noqa: S106
+                aignostics_sentry_dsn="sentry_dsn",
+            ),
+        )
 
-        user_info = UserInfo.from_claims_and_userinfo(claims, userinfo)
+        user_info = UserInfo.from_claims_and_me(claims, me)
 
-        assert user_info.id == "user123"
-        assert user_info.org_id == "org456"
-        assert user_info.org_name == "Test Organization"
-        assert user_info.role == "admin"
+        assert user_info.user.id == "user123"
+        assert user_info.user.name == "John Doe"
+        assert user_info.user.email == "john.doe@example.com"
+        assert user_info.user.email_verified is True
+        assert user_info.organization.id == "org456"
+        assert user_info.organization.name == "Test Organization"
+        assert user_info.role == "member"
         assert user_info.token.issuer == "https://test.auth0.com/"
-        assert user_info.profile is not None
-        assert user_info.profile.name == "John Doe"
-        assert user_info.profile.email == "john.doe@example.com"
-        assert user_info.profile.email_verified is True
-
-    @staticmethod
-    def test_user_info_from_claims_and_userinfo_without_profile() -> None:
-        """Test UserInfo creation with only claims, no userinfo."""
-        claims = {
-            "sub": "user456",
-            "org_id": "org789",
-            "org_name": "Another Organization",
-            "https://aignostics-platform-samia/role": "user",
-            "iss": "https://test.auth0.com/",
-            "iat": 1609459200,
-            "exp": 1609462800,
-            "scope": "openid",
-            "aud": "test-audience",
-            "azp": "test-client-id",
-        }
-
-        user_info = UserInfo.from_claims_and_userinfo(claims, None)
-
-        assert user_info.id == "user456"
-        assert user_info.org_id == "org789"
-        assert user_info.org_name == "Another Organization"
-        assert user_info.role == "user"
-        assert user_info.token.issuer == "https://test.auth0.com/"
-        assert user_info.profile is None
 
     @staticmethod
     def test_user_info_from_claims_and_userinfo_no_org_name() -> None:
@@ -184,23 +130,43 @@ class TestUserInfo:
         claims = {
             "sub": "user789",
             "org_id": "org999",
-            "https://aignostics-platform-samia/role": "viewer",
+            "https://test-audience1/role": "viewer",
             "iss": "https://test.auth0.com/",
             "iat": 1609459200,
             "exp": 1609462800,
             "scope": "openid",
-            "aud": "test-audience",
+            "aud": "https://test-audience1",
             "azp": "test-client-id",
         }
 
-        user_info = UserInfo.from_claims_and_userinfo(claims, None)
+        me = Me(
+            user=User(
+                id="user123",
+                name="John Doe",
+                email="john.doe@example.com",
+                email_verified=True,
+            ),
+            organization=Organization(
+                id="org456",
+                aignostics_bucket_hmac_access_key_id="secret_access_key_id",
+                aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
+                aignostics_bucket_name="test-bucket",
+                aignostics_bucket_protocol="gs",
+                aignostics_logfire_token="logfire_token",  # noqa: S106
+                aignostics_sentry_dsn="sentry_dsn",
+            ),
+        )
 
-        assert user_info.id == "user789"
-        assert user_info.org_id == "org999"
-        assert user_info.org_name is None
+        user_info = UserInfo.from_claims_and_me(claims, me)
+
+        assert user_info.user.id == "user123"
+        assert user_info.user.name == "John Doe"
+        assert user_info.user.email == "john.doe@example.com"
+        assert user_info.user.email_verified is True
+        assert user_info.organization.id == "org456"
+        assert user_info.organization.name is None
         assert user_info.role == "viewer"
         assert user_info.token.issuer == "https://test.auth0.com/"
-        assert user_info.profile is None
 
 
 class TestPlatformCLI:
@@ -293,15 +259,29 @@ class TestPlatformCLI:
             issued_at=1609459200,
             expires_at=1609462800,
             scope=["openid", "profile"],
-            audience=["test-audience"],
+            audience=["https://test-audience"],
             authorized_party="test-client-id",
+            org_id="org456",
+            role="admin",
+        )
+        mock_user = User(
+            id="user123",
+        )
+        mock_organization = Organization(
+            id="org456",
+            name="Test Organization",
+            aignostics_bucket_hmac_access_key_id="secret_access_key_id",
+            aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
+            aignostics_bucket_name="test-bucket",
+            aignostics_bucket_protocol="gs",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
+            aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
-            id="user123",
-            org_id="org456",
-            org_name="Test Organization",
             role="admin",
             token=mock_token_info,
+            user=mock_user,
+            organization=mock_organization,
         )
 
         with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
@@ -325,13 +305,27 @@ class TestPlatformCLI:
             scope=["openid", "profile"],
             audience=["test-audience"],
             authorized_party="test-client-id",
+            org_id="org456",
+            role="admin",
+        )
+        mock_user = User(
+            id="user123",
+        )
+        mock_organization = Organization(
+            id="org456",
+            name="Test Organization",
+            aignostics_bucket_hmac_access_key_id="secret_access_key_id",
+            aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
+            aignostics_bucket_name="test-bucket",
+            aignostics_bucket_protocol="gs",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
+            aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
-            id="user123",
-            org_id="org456",
-            org_name="Test Organization",
             role="admin",
             token=mock_token_info,
+            user=mock_user,
+            organization=mock_organization,
         )
 
         with patch(
@@ -345,11 +339,13 @@ class TestPlatformCLI:
     @staticmethod
     def test_whoami_not_logged_in(runner: CliRunner) -> None:
         """Test whoami command when not logged in."""
-        with patch("aignostics.platform._service.Service.get_user_info", return_value=None):
+        with patch(
+            "aignostics.platform._service.Service.get_user_info", side_effect=RuntimeError("Could not user info")
+        ):
             result = runner.invoke(cli, ["user", "whoami"])
 
             assert result.exit_code == 1
-            assert "Failed to log you in." in normalize_output(result.output)
+            assert "Error while getting user info: Could not user info" in normalize_output(result.output)
 
     @staticmethod
     def test_whoami_error(runner: CliRunner) -> None:
@@ -359,55 +355,6 @@ class TestPlatformCLI:
 
             assert result.exit_code == 1
             assert "Error while getting user info: Test error" in normalize_output(result.output)
-
-    @staticmethod
-    def test_whoami_success_with_user_profile(runner: CliRunner) -> None:
-        """Test successful whoami command with complete user profile."""
-        # Create mock token info
-        mock_token_info = TokenInfo(
-            issuer="https://test.auth0.com/",
-            issued_at=1609459200,
-            expires_at=1609462800,
-            scope=["openid", "profile", "email"],
-            audience=["test-audience"],
-            authorized_party="test-client-id",
-        )
-
-        # Create mock user profile
-        mock_user_profile = UserProfile(
-            name="John Doe",
-            given_name="John",
-            family_name="Doe",
-            nickname="johnny",
-            email="john.doe@example.com",
-            email_verified=True,
-            picture="https://example.com/avatar.jpg",
-            updated_at=datetime(2024, 1, 15, 10, 30, 0, tzinfo=UTC),
-        )
-
-        # Create mock user info with profile
-        mock_user_info = UserInfo(
-            id="user123",
-            org_id="org456",
-            org_name="Test Organization",
-            role="admin",
-            token=mock_token_info,
-            profile=mock_user_profile,
-        )
-
-        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
-            result = runner.invoke(cli, ["user", "whoami"])
-
-            assert result.exit_code == 0
-            # Check that JSON output contains expected fields from both user info and profile
-            output = normalize_output(result.output)
-            assert "user123" in output
-            assert "org456" in output
-            assert "Test Organization" in output
-            assert "admin" in output
-            assert "John Doe" in output
-            assert "john.doe@example.com" in output
-            assert "johnny" in output
 
     @staticmethod
     def test_whoami_success_with_no_org_name(runner: CliRunner) -> None:
@@ -420,15 +367,28 @@ class TestPlatformCLI:
             scope=["openid", "profile"],
             audience=["test-audience"],
             authorized_party="test-client-id",
+            org_id="org999",
+            role="viewer",
+        )
+        mock_user = User(
+            id="user789",
+        )
+        mock_organization = Organization(
+            id="org999",
+            name=None,
+            aignostics_bucket_hmac_access_key_id="secret_access_key_id",
+            aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
+            aignostics_bucket_name="test-bucket",
+            aignostics_bucket_protocol="gs",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
+            aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
-            id="user789",
-            org_id="org999",
-            org_name=None,
             role="viewer",
             token=mock_token_info,
+            user=mock_user,
+            organization=mock_organization,
         )
-
         with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
             result = runner.invoke(cli, ["user", "whoami"])
 
@@ -439,4 +399,91 @@ class TestPlatformCLI:
             assert "org999" in output
             assert "viewer" in output
             # org_name should be null in JSON output
-            assert '"org_name": null' in output or '"org_name":null' in output
+            assert '"name": null' in output or '"name":null' in output
+
+    @staticmethod
+    def test_whoami_masks_secrets_by_default(runner: CliRunner) -> None:
+        """Test that whoami masks secrets by default."""
+        mock_token_info = TokenInfo(
+            issuer="https://test.auth0.com/",
+            issued_at=1609459200,
+            expires_at=1609462800,
+            scope=["openid", "profile"],
+            audience=["test-audience"],
+            authorized_party="test-client-id",
+            org_id="org456",
+            role="admin",
+        )
+        mock_user = User(id="user123", email="nospam@aignostics.com")
+        mock_organization = Organization(
+            id="org456",
+            name="Test Organization",
+            aignostics_bucket_hmac_access_key_id="secret_access_key_id_123",
+            aignostics_bucket_hmac_secret_access_key="very_secret_access_key_456",  # noqa: S106
+            aignostics_bucket_name="test-bucket",
+            aignostics_bucket_protocol="gs",
+            aignostics_logfire_token="the_logfire_token",  # noqa: S106
+            aignostics_sentry_dsn="sentry_dsn",
+        )
+        mock_user_info = UserInfo(
+            role="admin",
+            token=mock_token_info,
+            user=mock_user,
+            organization=mock_organization,
+        )
+
+        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+            result = runner.invoke(cli, ["user", "whoami"])
+
+            assert result.exit_code == 0
+            output = normalize_output(result.output)
+            # Check that secrets are masked with length
+            assert "***MASKED(10)***" in output
+            assert "***MASKED(17)***" in output
+            assert "***MASKED(26)***" in output
+            # Check that original secrets are not in output
+            assert "nospam@aignostics.com" not in output
+            assert "the_logfire_token" not in output
+            assert "very_secret_access_key_456" not in output
+
+    @staticmethod
+    def test_whoami_shows_secrets_with_no_mask_flag(runner: CliRunner) -> None:
+        """Test that whoami shows secrets when --no-mask-secrets flag is used."""
+        mock_token_info = TokenInfo(
+            issuer="https://test.auth0.com/",
+            issued_at=1609459200,
+            expires_at=1609462800,
+            scope=["openid", "profile"],
+            audience=["test-audience"],
+            authorized_party="test-client-id",
+            org_id="org456",
+            role="admin",
+        )
+        mock_user = User(id="user123")
+        mock_organization = Organization(
+            id="org456",
+            name="Test Organization",
+            aignostics_bucket_hmac_access_key_id="secret_access_key_id_123",
+            aignostics_bucket_hmac_secret_access_key="very_secret_access_key_456",  # noqa: S106
+            aignostics_bucket_name="test-bucket",
+            aignostics_bucket_protocol="gs",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
+            aignostics_sentry_dsn="sentry_dsn",
+        )
+        mock_user_info = UserInfo(
+            role="admin",
+            token=mock_token_info,
+            user=mock_user,
+            organization=mock_organization,
+        )
+
+        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+            result = runner.invoke(cli, ["user", "whoami", "--no-mask-secrets"])
+
+            assert result.exit_code == 0
+            output = normalize_output(result.output)
+            # Check that original secrets are shown
+            assert "secret_access_key_id_123" in output
+            assert "very_secret_access_key_456" in output
+            # Check that masked values are not in output
+            assert "***MASKED" not in output

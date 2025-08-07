@@ -17,7 +17,7 @@ from aignostics.platform.resources.runs import ApplicationRun
 
 TEST_APPLICATION_VERSION_ID = "test-app:v0.0.1"
 TEST_APPLICATION_TIMEOUT_SECONDS = 2 * 60 * 60  # 1 hour
-HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
+HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.5"
 HETA_APPLICATION_TIMEOUT_SECONDS = 6 * 60 * 60  # 6 hours
 
 
@@ -267,7 +267,9 @@ def test_application_runs(
 
 
 def _validate_output(
-    application_run: ApplicationRun, output_base_folder: Path, checksum_attribute_key: str = "checksum_base64_crc32c"
+    application_run: ApplicationRun,
+    output_base_folder: Path,
+    checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
     """Validate the output of an application run.
 
@@ -278,26 +280,44 @@ def _validate_output(
         output_base_folder (Path): The base folder where the output is stored.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
-    assert application_run.details().status == ApplicationRunStatus.COMPLETED, (
-        "Application run did not finish in completed status"
+    run_details = application_run.details()
+    assert run_details.status == ApplicationRunStatus.COMPLETED, (
+        f"Application run {application_run.application_run_id}: "
+        f"Did not finish in status COMPLETED but '{run_details.status}'."
     )
 
     run_result_folder = output_base_folder / application_run.application_run_id
-    assert run_result_folder.exists(), "Application run result folder does not exist"
+    assert run_result_folder.exists(), (
+        f"Application run {application_run.application_run_id}: result folder does not exist"
+    )
 
     run_results = application_run.results()
 
     for item in run_results:
         # validate status
-        assert item.status == ItemStatus.SUCCEEDED
+        assert item.status == ItemStatus.SUCCEEDED, (
+            f"Application run {application_run.application_run_id}: "
+            f"item {item.reference} status is {item.status}, expected SUCCEEDED"
+        )
         # validate results
         item_dir = run_result_folder / item.reference
-        assert item_dir.exists(), f"Result folder for item {item.reference} does not exist"
+        assert item_dir.exists(), (
+            f"Application run {application_run.application_run_id}: "
+            f"result folder for item {item.reference} does not exist"
+        )
         for artifact in item.output_artifacts:
-            assert artifact.download_url is not None, f"{artifact} should provide an download url"
+            assert artifact.download_url is not None, (
+                f"Application run {application_run.application_run_id}: "
+                f"artifact {artifact} should provide a download url"
+            )
             file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"
-            assert file_path.exists(), f"Artifact {artifact} was not downloaded"
+            assert file_path.exists(), (
+                f"Application run {application_run.application_run_id}: artifact {artifact} was not downloaded"
+            )
             checksum = artifact.metadata[checksum_attribute_key]
             file_checksum = platform.calculate_file_crc32c(file_path)
-            assert file_checksum == checksum, f"Metadata checksum != file checksum {checksum} <> {file_checksum}"
+            assert file_checksum == checksum, (
+                f"Application run {application_run.application_run_id}: "
+                f"metadata checksum != file checksum {checksum} <> {file_checksum}"
+            )

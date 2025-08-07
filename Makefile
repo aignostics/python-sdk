@@ -103,19 +103,20 @@ dist_native:
 ## codegen
 codegen:
 	docker run --rm -u "$(id -u):$(id -g)" -v "${PWD}:/local" openapitools/openapi-generator-cli:v7.10.0 generate \
-		-i "/local/codegen/in/api.json" \
+		-i "/local/codegen/in/openapi.json" \
 		-g python \
 		-o /local/codegen/out \
 		-c /local/codegen/config.json \
 	# Alternative
-	# openapi-generator generate -i codegen/in/api.json -g python -c codegen/config.json -o codegen/out
+	# openapi-generator generate -i codegen/in/openapi.json -g python -c codegen/config.json -o codegen/out
 
 	# Hotfix for https://github.com/OpenAPITools/openapi-generator/issues/18932
 	# create __init__.py files
 	find codegen/out/aignx/codegen/models/ -name "[a-z]*.py" -type f | sed 's|.*/\(.*\)\.py|\1|' | xargs -I{} echo "from .{} import *" > codegen/out/aignx/codegen/models/__init__.py
-	# ls codegen/out/aignx/codegen/models/ | awk -F . '/[a-z].py/ {print "from ."$1" import *"}' > codegen/out/aignx/codegen/models/__init__.py
-
-
+	# fix resource patch
+	# in codegen/out/public_api.py replace all occurrences of resource_path='/v1 with resource_path='/api/v1
+	sed -i '' "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py
+	
 # Special rule to catch any arguments (like patch, minor, major, pdf, Python versions, or x.y.z)
 # This prevents "No rule to make target" errors when passing arguments to make commands
 .PHONY: %
