@@ -94,5 +94,3 @@ class PayloadOutputArtifact(BaseModel):
             "metadata": TransferUrls.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None
         })
         return _obj
-
-

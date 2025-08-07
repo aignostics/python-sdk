@@ -55,9 +55,9 @@ def frame(  # noqa: C901, PLR0915
     @ui.refreshable
     def _user_info_ui() -> None:
         spinner = ui.spinner().props("flat color=purple-400")
-        if user_info and user_info.profile:
+        if user_info:
             spinner.set_visibility(False)
-            icon = "img:" + user_info.profile.picture if user_info.profile.picture else "account_circle"
+            icon = "img:" + user_info.user.picture if user_info.user.picture else "account_circle"
             with (
                 ui.dropdown_button(icon=icon)
                 .style("width: 30px; height: 30px; border-radius: 50%")
@@ -66,13 +66,14 @@ def frame(  # noqa: C901, PLR0915
                 ui.card(),
             ):
                 with ui.row():
-                    if user_info.profile.picture:
-                        ui.image(user_info.profile.picture).style("width: 90px; height: 90px")
+                    if user_info.user.picture:
+                        ui.image(user_info.user.picture).style("width: 90px; height: 90px")
                     else:
                         ui.icon("account_circle", size="90px").classes("text-gray-500")
                     with ui.column():
-                        ui.label(f"{user_info.profile.name} ({user_info.profile.email})")
-                        ui.label(f"{user_info.role.capitalize()} at {user_info.org_name or user_info.org_id}")
+                        ui.label(f"{user_info.user.name} ({user_info.user.email})")
+                        org_name = user_info.organization.name or user_info.organization.id
+                        ui.label(f"{user_info.role.capitalize()} at {org_name}")
                         ui.label(f"Authentication valid for {naturaldelta(user_info.token.expires_in)}")
                 ui.separator()
                 with ui.row().classes("items-center justify-between full-width"):

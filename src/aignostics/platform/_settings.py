@@ -28,6 +28,9 @@ from ._constants import (
     AUTHORIZATION_BASE_URL_DEV,
     AUTHORIZATION_BASE_URL_PRODUCTION,
     AUTHORIZATION_BASE_URL_STAGING,
+    CLIENT_ID_INTERACTIVE_DEV,
+    CLIENT_ID_INTERACTIVE_PRODUCTION,
+    CLIENT_ID_INTERACTIVE_STAGING,
     DEVICE_URL_DEV,
     DEVICE_URL_PRODUCTION,
     DEVICE_URL_STAGING,
@@ -61,8 +64,8 @@ class Settings(OpaqueSettings):
         authorization_backoff_seconds (int): Backoff time for authorization retries in seconds.
         authorization_base_url (str): Authorization endpoint for OAuth flows.
         cache_dir (str): Directory for caching tokens and other data.
-        client_id_device (SecretStr): Client ID for device authorization flow.
-        client_id_interactive (SecretStr): Client ID for interactive authorization flow.
+        client_id_interactive (str): Client ID for interactive authorization flow.
+        client_id_device (SecretStr | None): Client ID for device authorization flow.
         device_url (str): Device authorization endpoint for device flow.
         jws_json_url (str): URL for JWS key set.
         redirect_uri (str): Redirect URI for OAuth authorization code flow.
@@ -85,25 +88,19 @@ class Settings(OpaqueSettings):
     )
 
     client_id_device: Annotated[
-        SecretStr,
+        SecretStr | None,
         PlainSerializer(
             func=OpaqueSettings.serialize_sensitive_info, return_type=str, when_used="always"
         ),  # allow to unhide sensitive info from CLI or if user presents valid token via API
         Field(description="OAuth Client ID Interactive"),
-    ]
-    client_id_interactive: Annotated[
-        SecretStr,
-        PlainSerializer(
-            func=OpaqueSettings.serialize_sensitive_info, return_type=str, when_used="always"
-        ),  # allow to unhide sensitive info from CLI or if user presents valid token via API
-        Field(description="OAuth Client ID Interactive"),
-    ]
+    ] = None
+
     api_root: Annotated[
         str,
         Field(description="URL of the API root", default=API_ROOT_PRODUCTION),
     ]
 
-    scope: str = "offline_access, profile, email, openid"
+    scope: str = "offline_access"
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -155,6 +152,7 @@ class Settings(OpaqueSettings):
     redirect_uri: str
     device_url: str
     jws_json_url: str
+    client_id_interactive: str
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -222,7 +220,15 @@ class Settings(OpaqueSettings):
         api_root = values.get("api_root", API_ROOT_PRODUCTION)
 
         # Check if all required auth fields are already provided
-        auth_fields = ["audience", "authorization_base_url", "token_url", "redirect_uri", "device_url", "jws_json_url"]
+        auth_fields = [
+            "audience",
+            "authorization_base_url",
+            "token_url",
+            "redirect_uri",
+            "device_url",
+            "jws_json_url",
+            "client_id_interactive",
+        ]
         all_auth_fields_provided = all(field in values for field in auth_fields)
 
         # If all auth fields are provided, don't override them
@@ -237,6 +243,7 @@ class Settings(OpaqueSettings):
                 values["redirect_uri"] = REDIRECT_URI_PRODUCTION
                 values["device_url"] = DEVICE_URL_PRODUCTION
                 values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
+                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_PRODUCTION
             case "https://platform-staging.aignostics.com":
                 values["audience"] = AUDIENCE_STAGING
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
@@ -244,6 +251,7 @@ class Settings(OpaqueSettings):
                 values["redirect_uri"] = REDIRECT_URI_STAGING
                 values["device_url"] = DEVICE_URL_STAGING
                 values["jws_json_url"] = JWS_JSON_URL_STAGING
+                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_STAGING
             case "https://platform-dev.aignostics.com":
                 values["audience"] = AUDIENCE_DEV
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_DEV
@@ -251,6 +259,7 @@ class Settings(OpaqueSettings):
                 values["redirect_uri"] = REDIRECT_URI_DEV
                 values["device_url"] = DEVICE_URL_DEV
                 values["jws_json_url"] = JWS_JSON_URL_DEV
+                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_DEV
             case _:
                 raise ValueError(UNKNOWN_ENDPOINT_URL)
 

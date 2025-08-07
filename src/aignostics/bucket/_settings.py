@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import Field, PlainSerializer, SecretStr
+from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from ..utils import OpaqueSettings, __env_file__, __project_name__  # noqa: TID252
@@ -32,26 +32,9 @@ class Settings(OpaqueSettings):
         ),
     ]
 
-    name: Annotated[
-        str,
-        Field(description=("Name of the cloud bucket")),
-    ]
-
     region_name: Annotated[
         str,
         Field(description=("Region of the cloud bucket"), default="EUROPE-WEST3"),
-    ]
-
-    hmac_access_key_id: Annotated[
-        SecretStr,
-        PlainSerializer(func=OpaqueSettings.serialize_sensitive_info, return_type=str, when_used="always"),
-        Field(description=("HMAC access key ID of the cloud bucket")),
-    ]
-
-    hmac_secret_access_key: Annotated[
-        SecretStr,
-        PlainSerializer(func=OpaqueSettings.serialize_sensitive_info, return_type=str, when_used="always"),
-        Field(description=("HMAC secret access key of the cloud bucket")),
     ]
 
     upload_signed_url_expiration_seconds: Annotated[

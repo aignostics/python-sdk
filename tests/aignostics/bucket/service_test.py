@@ -15,7 +15,6 @@ def test_create_signed_upload_url_expires_in_3600_seconds(mock_get_s3_client: mo
 
     service = Service()
     service._settings = mock.MagicMock()
-    service._settings.name = "test-bucket"
     service._settings.upload_signed_url_expiration_seconds = 2 * 60 * 60
 
     # Act
@@ -24,7 +23,7 @@ def test_create_signed_upload_url_expires_in_3600_seconds(mock_get_s3_client: mo
     # Assert
     mock_s3_client.generate_presigned_url.assert_called_once_with(
         ClientMethod="put_object",
-        Params={"Bucket": "test-bucket", "Key": "test-object-key"},
+        Params={"Bucket": service.get_bucket_name(), "Key": "test-object-key"},
         ExpiresIn=2 * 60 * 60,
     )
     assert result == "https://example.com/signed-upload-url"
@@ -40,7 +39,6 @@ def test_create_signed_download_url_expires_in_7_days(mock_get_s3_client: mock.M
 
     service = Service()
     service._settings = mock.MagicMock()
-    service._settings.name = "test-bucket"
     service._settings.download_signed_url_expiration_seconds = 7 * 24 * 60 * 60  # 7 days in seconds
 
     # Act
@@ -49,7 +47,7 @@ def test_create_signed_download_url_expires_in_7_days(mock_get_s3_client: mock.M
     # Assert
     mock_s3_client.generate_presigned_url.assert_called_once_with(
         ClientMethod="get_object",
-        Params={"Bucket": "test-bucket", "Key": "test-object-key"},
+        Params={"Bucket": service.get_bucket_name(), "Key": "test-object-key"},
         ExpiresIn=604800,  # 7 days in seconds
     )
     assert result == "https://example.com/signed-download-url"

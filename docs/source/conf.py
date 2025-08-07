@@ -36,9 +36,7 @@ language = "en"
 
 ogp_site_name = "Aignostics Python SDK"
 ogp_image = "https://aignostics.readthedocs.io/en/latest/_static/logo.png"
-ogp_custom_meta_tags = [
-    '<meta name="twitter:card" content="Aignostics Python SDK" />',
-]
+ogp_custom_meta_tags = ('<meta name="twitter:card" content="Aignostics Python SDK" />',)
 ogp_enable_meta_description = True
 ogp_description_length = 300
 
