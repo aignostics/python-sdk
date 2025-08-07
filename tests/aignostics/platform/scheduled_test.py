@@ -14,11 +14,12 @@ from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 
 from aignostics import platform
 from aignostics.platform.resources.runs import ApplicationRun
-
-TEST_APPLICATION_VERSION_ID = "test-app:v0.0.1"
-TEST_APPLICATION_TIMEOUT_SECONDS = 2 * 60 * 60  # 1 hour
-HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.5"
-HETA_APPLICATION_TIMEOUT_SECONDS = 6 * 60 * 60  # 6 hours
+from tests.constants import (
+    HETA_APPLICATION_TIMEOUT_SECONDS,
+    HETA_APPLICATION_VERSION_ID,
+    TEST_APPLICATION_TIMEOUT_SECONDS,
+    TEST_APPLICATION_VERSION_ID,
+)
 
 
 def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:

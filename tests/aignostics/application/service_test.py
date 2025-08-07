@@ -5,8 +5,7 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
 from aignostics.platform import NotFoundException
-
-HETA_APPLICATION_ID = "he-tme"
+from tests.constants import HETA_APPLICATION_ID
 
 
 def test_application_version_valid_semver_formats(runner: CliRunner) -> None:
