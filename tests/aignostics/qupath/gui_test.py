@@ -20,7 +20,7 @@ from aignostics.platform import ApplicationRunStatus
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__, gui_register_pages
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.constants import HETA_APPLICATION_ID
+from tests.contants_test import HETA_APPLICATION_ID
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
