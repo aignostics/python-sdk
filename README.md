@@ -30,10 +30,10 @@ The **Aignostics Python SDK** includes multiple pathways to interact with the
    View your results by launching popular tools such as [QuPath](https://qupath.github.io/) and Python Notebooks with one click.
    The app runs on Mac OS X, Windows, and Linux.
 2. Use the **Aignostics Command-line interface (CLI)** to run applications directly from your terminal or shell scripts.
-   The CLI lets you query public datasets from the [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/),
+   THe CLI lets you query public datasets from the [NCI Image Data Commons (IDC)](https://portal.imaging.datacommons.cancer.gov/),
    process both public and private whole slide images, and easily download results. The CLI is available for Mac OS X, Windows, and Linux.
 3. Use the included **example notebooks** as starting points to run applications
-   directly from your preferred notebook environment. We support Marimo and Jupyter based notebooks environments including Google Colab.
+   directly from your preferred notebook environment. We support Marimo and Jupyter based notebooks environments including Google Collab.
 4. Use the **Aignostics Client Library** to seamlessly integrate the Aignostics Platform with your enterprise image management systems and scientific workflows.
    The client provides a simple way to access the Aignostics Platform API from your Python codebase. We support Python 3.11 and above.
 
@@ -52,7 +52,7 @@ all releases, (3) achieving
 with
 [active scanning of dependencies](https://github.com/aignostics/python-sdk/issues/4),
 and (4) providing
-[extensive documentation](https://aignostics.readthedocs.io/en/latest/). Read
+[extensive documentation](hhttps://aignostics.readthedocs.io/en/latest/). Read
 more about how we achieve
 [operational excellence](https://aignostics.readthedocs.io/en/latest/operational_excellence.html) and
 [security](https://aignostics.readthedocs.io/en/latest/security.html).
@@ -61,7 +61,7 @@ more about how we achieve
 
 > [!Note]
 > See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible. 
-> If you first want to learn about the basic concepts and components of the Aignostics Platform skip to that section below. 
+> If you first want to learn bout the basic concepts and components of the Aignostics Platform skip to that section below. 
 > The further reading section points you to reference documentation listing all available CLI commands, methods and classes provided by the client library, operations of the API, how we achieve operational excellence, security, and more. 
 > If you are not familiar with terminology please check the glossary at the end of this document.
 
@@ -114,7 +114,7 @@ uvx aignostics application run list
 uvx aignostics application run result download APPLICATION_RUN_ID 
 ```
 
-For convenience the `application run execute` command combines preparation, upload, submission and download.
+For convenience the the `application run execute` command combines preparation, upload, submission and download.
 The below is equivalent to the above, while adding additionally required metadata using a mapping:
 
 ```shell
@@ -320,7 +320,7 @@ To start using the Aignostics Platform and its advanced applications, your organ
 > 1. All user accounts must be associated with your organization's official domain. We do not support the registration of private or personal email addresses.
 > 2. For security, Two-Factor Authentication (2FA) is mandatory for all user accounts.
 > 3. We can integrate with your IDP system (e.g. SAML, OIDC) for user authentication. Please contact us to discuss the integration.
-> 4. Registering your organisation typically takes 2 business days depending on the complexity of the signed business agreement and specific requirements.
+> 4. Registering your organistation typically takes 2 business days depending on the complexity of the signed business agreement and specific requirements.
 
 ### Console
 
@@ -328,7 +328,7 @@ The web-based [*Aignostics Console*](https://platform.aignostics.com) is a user-
 manage your organization, applications, quotas, and users registered with the Aignostics Platform.
 
 1. The Console is available to users registered for your organisation to manage their profile and monitor usage of their quota.
-2. Administrators of your organization can invite additional users, manage the organisation and user-specific quotas and monitor usage.
+2. Administrators of your organization can invite additional users, manage the organisation and user specific quotas and monitor usage.
 3. Both roles can trigger application runs.
 
 ### Applications
@@ -487,16 +487,10 @@ Field combining digital pathology with artificial intelligence and machine learn
 **Aignostics Console**  
 Web-based user interface for managing organizations, applications, quotas, users, and monitoring platform usage.
 
-**Container**
-Objects that hold specimens including buckets, cassettes, vials, and slides. In DICOM terminology, slides are considered containers for tissue specimens.
-
 ### D
 
 **DICOM (Digital Imaging and Communications in Medicine)**  
 Standard format for medical imaging data, supported by the Aignostics Platform for whole slide images.
-
-**Digital Specimen**
-The digitized representation of a physical specimen captured as a Whole Slide Image (WSI).
 
 **Download URL**  
 Signed URL that allows the Aignostics Platform to securely download image data during processing.
@@ -597,9 +591,6 @@ Architectural style for web services that the Aignostics Platform API follows, e
 **Self-signed URLs**  
 Secure URLs with embedded authentication that allow the platform to access user data without exposing credentials.
 
-**Specimen**
-A discrete physical object (or collection of objects) that is the subject of pathology examination, including objects at all levels of processing - from fresh tissue, dissected organs, tissue embedded in paraffin, sections made from embedded tissue, to liquid preparations (DICOM standard definition).
-
 **SVS**  
 Aperio ScanScope Virtual Slide format, commonly used for whole slide images and supported by the platform.
 
@@ -635,7 +626,3 @@ High-resolution digital image of an entire histopathology slide, the primary inp
 
 **Workflow**  
 Sequence of automated processing steps within an application that transform input images into analytical results.
-
-
-## Standards References:
-- DICOM specimen terminology based on [DICOM PS3.3 2025c - Information Object Definitions](https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.22.html)
