@@ -16,14 +16,12 @@ from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import get_logger, gui_register_pages
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
+from tests.constants import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION_ID
 
 if TYPE_CHECKING:
     from nicegui import ui
 
 logger = get_logger(__name__)
-
-HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.5"
-HETA_APPLICATION_ID = "he-tme"
 
 
 @pytest.mark.sequential

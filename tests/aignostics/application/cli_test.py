@@ -11,12 +11,10 @@ from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
 from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
+from tests.constants import HETA_APPLICATION_ID, TEST_APPLICATION_ID
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
-
-HETA_APPLICATION_ID = "he-tme"
-TEST_APPLICATION_ID = "test-app"
 
 
 def test_cli_application_list(runner: CliRunner) -> None:
