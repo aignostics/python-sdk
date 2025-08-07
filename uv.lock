@@ -172,7 +172,7 @@ requires-dist = [
     { name = "logfire", extras = ["system-metrics"], specifier = ">=4.2.0" },
     { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.14.11" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.3" },
-    { name = "nicegui", extras = ["native"], specifier = ">=2.21.1" },
+    { name = "nicegui", extras = ["native"], specifier = ">=2.22.1" },
     { name = "openslide-bin", specifier = ">=4.0.0.8" },
     { name = "openslide-python", specifier = ">=1.4.2" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.53b0" },
