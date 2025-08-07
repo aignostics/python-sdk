@@ -70,7 +70,7 @@ app = BUNDLE(
     name='aignostics.app',
     icon='logo.ico',
     bundle_identifier='com.aignostics.launchpad',
-    version='0.2.108',
+    version='0.2.109',
     info_plist={
         'NSPrincipalClass': 'NSApplication',
         'NSAppleScriptEnabled': False,
