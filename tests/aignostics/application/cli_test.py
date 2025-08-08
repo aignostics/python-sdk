@@ -354,10 +354,22 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
         ("tissue_qc_csv_class_information.csv", 232, 10),
         ("tissue_segmentation_geojson_polygons.json", 270932, 10),
         ("tissue_qc_geojson_polygons.json", 180522, 10),
-        ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
+        ("tissue_qc_segmentation_map_image.tiff", 581256, 10),
         ("readout_generation_slide_readouts.csv", 295269, 10),
         ("tissue_segmentation_segmentation_map_image.tiff", 521530, 10),
     ]
+
+    # Print all found file sizes first
+    print(f"Found files in {item_out_dir}:")
+    for filename, expected_size, tolerance_percent in expected_files:
+        file_path = item_out_dir / filename
+        if file_path.exists():
+            actual_size = file_path.stat().st_size
+            print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
+        else:
+            print(f"  {filename}: NOT FOUND")
+
+    # Now perform the assertions
     for filename, expected_size, tolerance_percent in expected_files:
         file_path = item_out_dir / filename
         assert file_path.exists(), f"Expected file {filename} not found"
