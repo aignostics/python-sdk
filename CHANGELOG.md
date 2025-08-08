@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.111](https://github.com/aignostics/python-sdk/compare/v0.2.110..0.2.111) - 2025-08-08
+# [0.2.112](https://github.com/aignostics/python-sdk/compare/v0.2.111..0.2.112) - 2025-08-08
+
+### ⚙️ Miscellaneous Tasks
+
+- *(heta)* Adapt tests - ([2d315d0](https://github.com/aignostics/python-sdk/commit/2d315d0fd84cb62520b08dda845d2fef2c6c9636))
+
+
+# [v0.2.111](https://github.com/aignostics/python-sdk/compare/v0.2.110..v0.2.111) - 2025-08-08
 
 ### 🚜 Refactor
 
@@ -16,9 +23,6 @@
 
 - *(dep)* Ensure all uses of uv are >= 0.8.6 (CVE-2025-54368) - ([c7b7db2](https://github.com/aignostics/python-sdk/commit/c7b7db275d6924aecc5f8ee657e69577ebdd8e1a))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 # [v0.2.110](https://github.com/aignostics/python-sdk/compare/v0.2.109..v0.2.110) - 2025-08-08
 
