@@ -219,6 +219,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "aiohttp>=3.12.14",                 # GHSA-9548-qrrj-x5pj
     "starlette>=0.47.2",                # GHSA-2c2j-9gv5-cj73
 ]
+required-version = ">=0.8.6" # CVE-2025-54368
 
 [tool.ruff]
 target-version = "py311"
