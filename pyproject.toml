@@ -182,7 +182,7 @@ dev = [
     "types-pyyaml>=6.0.12.20250516",
     "types-requests>=2.32.4.20250611",
     "watchdog>=6.0.0",
-    "uv>=0.8.6",
+    "uv>=0.8.6",                                                             # CVE-2025-54368                                                       # CVE-2025-54368
 ]
 
 [project.scripts]
