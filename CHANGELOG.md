@@ -1,5 +1,27 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+# [0.2.110](https://github.com/aignostics/python-sdk/compare/v0.2.109..0.2.110) - 2025-08-08
+
+### 🚜 Refactor
+
+- *(tests)* Central place for app id and version - ([fef1174](https://github.com/aignostics/python-sdk/commit/fef1174a9168baa1042ad569adf1212a31875678))
+- *(tests)* Central constants for app and app version id to simplify adapting to new apps - ([4156d33](https://github.com/aignostics/python-sdk/commit/4156d33da999018ae933005739aca69001bd4df9))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(tests)* Adapt to heta.5 - ([47cffb7](https://github.com/aignostics/python-sdk/commit/47cffb7ec05d8b417c6dd24d368a20a1e9f0ba94))
+
+### 🛡️ Security
+
+- *(dep)* Force UV >0.8.6 given CVE-2025-54368 - ([e8ff6c1](https://github.com/aignostics/python-sdk/commit/e8ff6c167727e5f00d06fa40da4a6de10ab2a9ab))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.109](https://github.com/aignostics/python-sdk/compare/v0.2.108..v0.2.109) - 2025-08-07
+
+
 # [v0.2.108](https://github.com/aignostics/python-sdk/compare/v0.2.107..v0.2.108) - 2025-08-07
 
 ### ⚙️ Miscellaneous Tasks
@@ -884,3 +906,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
