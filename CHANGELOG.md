@@ -1,6 +1,26 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.110](https://github.com/aignostics/python-sdk/compare/v0.2.109..0.2.110) - 2025-08-08
+# [0.2.111](https://github.com/aignostics/python-sdk/compare/v0.2.110..0.2.111) - 2025-08-08
+
+### 🚜 Refactor
+
+- *(uv)* Define required uv version in pyproject.toml, for use across GHA - ([c7b7db2](https://github.com/aignostics/python-sdk/commit/c7b7db275d6924aecc5f8ee657e69577ebdd8e1a))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([a62e9c7](https://github.com/aignostics/python-sdk/commit/a62e9c7974db39dc5e64e64a7ddc22572a9bef9b))
+- *(deps)* Bump various github actions versions - ([c7b7db2](https://github.com/aignostics/python-sdk/commit/c7b7db275d6924aecc5f8ee657e69577ebdd8e1a))
+- *(heta)* Further adaptation to changed output file sizes - ([a62e9c7](https://github.com/aignostics/python-sdk/commit/a62e9c7974db39dc5e64e64a7ddc22572a9bef9b))
+
+### 🛡️ Security
+
+- *(dep)* Ensure all uses of uv are >= 0.8.6 (CVE-2025-54368) - ([c7b7db2](https://github.com/aignostics/python-sdk/commit/c7b7db275d6924aecc5f8ee657e69577ebdd8e1a))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.110](https://github.com/aignostics/python-sdk/compare/v0.2.109..v0.2.110) - 2025-08-08
 
 ### 🚜 Refactor
 
@@ -15,9 +35,6 @@
 
 - *(dep)* Force UV >0.8.6 given CVE-2025-54368 - ([e8ff6c1](https://github.com/aignostics/python-sdk/commit/e8ff6c167727e5f00d06fa40da4a6de10ab2a9ab))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 # [v0.2.109](https://github.com/aignostics/python-sdk/compare/v0.2.108..v0.2.109) - 2025-08-07
 
