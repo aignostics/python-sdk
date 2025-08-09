@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.113](https://github.com/aignostics/python-sdk/compare/v0.2.112..0.2.113) - 2025-08-09
+# [0.2.114](https://github.com/aignostics/python-sdk/compare/v0.2.113..0.2.114) - 2025-08-09
+
+### ⚙️ Miscellaneous Tasks
+
+- *(notebook)* Cannot in parallel test multiple marimo servers on same host with no isolation - ([bb27f4c](https://github.com/aignostics/python-sdk/commit/bb27f4caf417e400c0978f73799a25cb75f88288))
+
+
+# [v0.2.113](https://github.com/aignostics/python-sdk/compare/v0.2.112..v0.2.113) - 2025-08-09
 
 ### 🐛 Bug Fixes
 
