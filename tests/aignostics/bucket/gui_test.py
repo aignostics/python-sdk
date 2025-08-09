@@ -90,7 +90,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     assert grid_item.get_selected_rows is not None
     grid_item.get_selected_rows = mocked_get_selected_rows
 
-    # Click the delete button to trigger the deletion
+    # Click the download button to trigger the download
     await user.should_see(marker="BUTTON_DOWNLOAD_OBJECTS")
     user.find(marker="BUTTON_DOWNLOAD_OBJECTS").click()
 

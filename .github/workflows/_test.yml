@@ -185,7 +185,6 @@ jobs:
             reports/coverage.xml
             reports/coverage.md
             reports/coverage_html
-            aignostics.log
           retention-days: 7
 
       - name: Upload coverage reports to Codecov

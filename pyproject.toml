@@ -97,7 +97,7 @@ dependencies = [
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
-    "boto3>=1.40.5",
+    "boto3>=1.40.6",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "duckdb>=0.10.0,<=1.4.0",
@@ -179,8 +179,8 @@ dev = [
     "sphinxext.opengraph>=0.9.1",
     "swagger-plugin-for-sphinx>=5.1.2",
     "tomli>=2.1.0",
-    "types-pyyaml>=6.0.12.20250516",
-    "types-requests>=2.32.4.20250611",
+    "types-pyyaml>=6.0.12.20250809",
+    "types-requests>=2.32.4.20250809",
     "watchdog>=6.0.0",
     "uv>=0.8.6",                                                             # CVE-2025-54368                                                       # CVE-2025-54368
 ]
