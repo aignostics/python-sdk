@@ -84,7 +84,13 @@ async def assert_notified(user: User, expected_notification: str, wait_seconds: 
         if matching_messages:
             return matching_messages[0]
         await sleep(1)
-    pytest.fail(f"No notification containing '{expected_notification}' was found within {wait_seconds} seconds")
+
+    recent_messages = user.notify.messages[-10:] if len(user.notify.messages) > 10 else user.notify.messages
+    total_count = len(user.notify.messages)
+    pytest.fail(
+        f"No notification containing '{expected_notification}' was found within {wait_seconds} seconds. "
+        f"Total messages: {total_count}. Recent messages: {recent_messages}"
+    )
 
 
 def pytest_collection_modifyitems(config, items) -> None:
