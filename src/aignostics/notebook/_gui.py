@@ -25,12 +25,6 @@ class PageBuilder(BasePageBuilder):
                 # Nothing to do here, just to show the page
                 pass
 
-            def launch_marimo() -> None:
-                """Launch QuPath."""
-                launch_button.props(add="loading")
-                ui.notify("Launching Python Notebook...", color="blue")
-                ui.navigate.to(f"/notebook/all?results_folder={quote(get_user_data_directory('results').as_posix())}")
-
             ui.markdown(
                 """
                     ### Manage your Marimo Extension
@@ -43,12 +37,13 @@ class PageBuilder(BasePageBuilder):
                             "Marimo is installed and ready to execute. "
                             "Go to a completed application result and click the Notebook button."
                         )
-                        with ui.row().classes("w-full justify-between items-center"):
-                            launch_button = ui.button(
-                                "Open",
-                                on_click=launch_marimo,
-                                icon="visibility",
-                            ).mark("BUTTON_NOTEBOOK_LAUNCH")
+                        with (
+                            ui.row().classes("w-full justify-between items-center"),
+                            ui.link(
+                                target=f"/notebook/all?results_folder={quote(get_user_data_directory('results').as_posix())}",
+                            ),
+                        ):
+                            ui.button("Open", icon="visibility").mark("BUTTON_NOTEBOOK_LAUNCH")
                     ui.markdown(
                         """
                             ###### What is Marimo?
