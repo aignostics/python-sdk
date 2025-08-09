@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.115](https://github.com/aignostics/python-sdk/compare/v0.2.114..0.2.115) - 2025-08-09
+# [0.2.116](https://github.com/aignostics/python-sdk/compare/v0.2.115..0.2.116) - 2025-08-09
+
+### 🚜 Refactor
+
+- *(notebook)* Simplify open marimo button - ([4bc3184](https://github.com/aignostics/python-sdk/commit/4bc318415c12abda1758290dde1764e9c36cc6e5))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(bucket)* Better logging for flaky test - ([4bc3184](https://github.com/aignostics/python-sdk/commit/4bc318415c12abda1758290dde1764e9c36cc6e5))
+
+
+# [v0.2.115](https://github.com/aignostics/python-sdk/compare/v0.2.114..v0.2.115) - 2025-08-09
 
 ### ⚙️ Miscellaneous Tasks
 
