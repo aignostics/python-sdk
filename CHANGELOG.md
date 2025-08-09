@@ -1,6 +1,25 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.112](https://github.com/aignostics/python-sdk/compare/v0.2.111..0.2.112) - 2025-08-08
+# [0.2.113](https://github.com/aignostics/python-sdk/compare/v0.2.112..0.2.113) - 2025-08-09
+
+### 🐛 Bug Fixes
+
+- *(bucket)* In GUI use static version of download operation offered by service - ([66499ae](https://github.com/aignostics/python-sdk/commit/66499ae082dcec8230adb2b1e140e6ccdba8d232))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(audit)* Audit reports part of release artifacts - ([66499ae](https://github.com/aignostics/python-sdk/commit/66499ae082dcec8230adb2b1e140e6ccdba8d232))
+- *(deps)* Bump - ([66499ae](https://github.com/aignostics/python-sdk/commit/66499ae082dcec8230adb2b1e140e6ccdba8d232))
+- *(pytest)* Show recent notifications if asserted one not found - ([66499ae](https://github.com/aignostics/python-sdk/commit/66499ae082dcec8230adb2b1e140e6ccdba8d232))
+- *(release)* Announce release on internal Slack (experimental) - ([66499ae](https://github.com/aignostics/python-sdk/commit/66499ae082dcec8230adb2b1e140e6ccdba8d232))
+- *(test)* Don't provide log as job artifact - ([66499ae](https://github.com/aignostics/python-sdk/commit/66499ae082dcec8230adb2b1e140e6ccdba8d232))
+
+### 🛡️ Security
+
+- *(uv)* Use uv > 0.8.6 in pre-commit hook - ([66499ae](https://github.com/aignostics/python-sdk/commit/66499ae082dcec8230adb2b1e140e6ccdba8d232))
+
+
+# [v0.2.112](https://github.com/aignostics/python-sdk/compare/v0.2.111..v0.2.112) - 2025-08-08
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -927,3 +946,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
