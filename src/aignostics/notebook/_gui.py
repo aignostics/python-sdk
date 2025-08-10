@@ -96,9 +96,9 @@ class PageBuilder(BasePageBuilder):
             try:
                 server_url = Service().start()
                 ui.html(
-                    f'<iframe id="marimo_iframe" src="{server_url}?application_run_id={application_run_id}'
+                    f'<iframe src="{server_url}?application_run_id={application_run_id}'
                     f'&results_folder={quote(results_folder)}" '
-                    'width="100%" height="100%"></iframe>'
+                    'width="100%" height="100%" id="marimo_iframe"></iframe>'
                 ).classes("w-full h-[calc(100vh-5rem)]")
             except Exception:
                 message = "Failed to start Marimo server."
