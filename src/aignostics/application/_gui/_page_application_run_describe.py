@@ -402,6 +402,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             button.disable()
             button.props(add="loading")
         ui.navigate.to(f"/notebook/{run.application_run_id}?results_folder={quote(results_folder.as_posix())}")
+        ui.navigate.reload()  # TODO(Helmut): Find out why this workaround works. Was just a hunch ...
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
