@@ -12,7 +12,7 @@ from aignostics.utils import BaseService, Health, get_logger, get_user_data_dire
 
 logger = get_logger(__name__)
 
-MARIMO_SERVER_STARTUP_TIMEOUT = 2
+MARIMO_SERVER_STARTUP_TIMEOUT = 60
 
 
 class _Runner:
