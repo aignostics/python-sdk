@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.119](https://github.com/aignostics/python-sdk/compare/v0.2.118..0.2.119) - 2025-08-10
+# [0.2.120](https://github.com/aignostics/python-sdk/compare/v0.2.119..0.2.120) - 2025-08-10
+
+### 🐛 Bug Fixes
+
+- *(notebook)* Revert timeout - ([083d890](https://github.com/aignostics/python-sdk/commit/083d8904666eb90689b94372f97a66828f6ffd3d))
+
+
+# [v0.2.119](https://github.com/aignostics/python-sdk/compare/v0.2.118..v0.2.119) - 2025-08-10
 
 ### 🐛 Bug Fixes
 
