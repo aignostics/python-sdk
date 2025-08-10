@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.118](https://github.com/aignostics/python-sdk/compare/v0.2.117..0.2.118) - 2025-08-10
+# [0.2.119](https://github.com/aignostics/python-sdk/compare/v0.2.118..0.2.119) - 2025-08-10
+
+### 🐛 Bug Fixes
+
+- *(native)* Add_docstring issue caused by inconsistent optimization on analysis and exe building - ([4b6154c](https://github.com/aignostics/python-sdk/commit/4b6154cfc8ca95aea594648d3bb54c50588df097))
+
+
+# [v0.2.118](https://github.com/aignostics/python-sdk/compare/v0.2.117..v0.2.118) - 2025-08-10
 
 ### ⚙️ Miscellaneous Tasks
 
