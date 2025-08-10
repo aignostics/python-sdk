@@ -41,7 +41,7 @@ class PageBuilder(BasePageBuilder):
                             ui.row().classes("w-full justify-between items-center"),
                             ui.link(
                                 target=f"/notebook/all?results_folder={quote(get_user_data_directory('results').as_posix())}",
-                            ),
+                            ).mark("LINK_NOTEBOOK_LAUNCH"),
                         ):
                             ui.button("Open", icon="visibility").mark("BUTTON_NOTEBOOK_LAUNCH")
                     ui.markdown(
@@ -96,7 +96,7 @@ class PageBuilder(BasePageBuilder):
             try:
                 server_url = Service().start()
                 ui.html(
-                    f'<iframe src="{server_url}?application_run_id={application_run_id}'
+                    f'<iframe id="marimo_iframe" src="{server_url}?application_run_id={application_run_id}'
                     f'&results_folder={quote(results_folder)}" '
                     'width="100%" height="100%"></iframe>'
                 ).classes("w-full h-[calc(100vh-5rem)]")
