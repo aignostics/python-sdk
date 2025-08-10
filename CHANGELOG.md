@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.117](https://github.com/aignostics/python-sdk/compare/v0.2.116..0.2.117) - 2025-08-10
+# [0.2.118](https://github.com/aignostics/python-sdk/compare/v0.2.117..0.2.118) - 2025-08-10
+
+### ⚙️ Miscellaneous Tasks
+
+- *(notebook)* Adapt to refactoring - ([d2502e5](https://github.com/aignostics/python-sdk/commit/d2502e5f8d44b9751a6214a946d47f943b5c9b6f))
+
+
+# [v0.2.117](https://github.com/aignostics/python-sdk/compare/v0.2.116..v0.2.117) - 2025-08-10
 
 ### 🐛 Bug Fixes
 
