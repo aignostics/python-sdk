@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.120](https://github.com/aignostics/python-sdk/compare/v0.2.119..0.2.120) - 2025-08-10
+# [0.2.121](https://github.com/aignostics/python-sdk/compare/v0.2.120..0.2.121) - 2025-08-10
+
+### ⛰️  Features
+
+- *(gui)* Custom error page showing traceback and allowing to close app even in non-chrome mode - ([7104bf6](https://github.com/aignostics/python-sdk/commit/7104bf64f850bbcfd9008bbbc828c7e8ff8326d2))
+
+
+# [v0.2.120](https://github.com/aignostics/python-sdk/compare/v0.2.119..v0.2.120) - 2025-08-10
 
 ### 🐛 Bug Fixes
 
