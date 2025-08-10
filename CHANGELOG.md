@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.116](https://github.com/aignostics/python-sdk/compare/v0.2.115..0.2.116) - 2025-08-09
+# [0.2.117](https://github.com/aignostics/python-sdk/compare/v0.2.116..0.2.117) - 2025-08-10
+
+### 🐛 Bug Fixes
+
+- *(notebook)* Navigation to marimo - ([8d3d117](https://github.com/aignostics/python-sdk/commit/8d3d117bfba1381576c722c5bafc8213945d0599))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(notebook)* Adapt test - ([8813de6](https://github.com/aignostics/python-sdk/commit/8813de6e3beadf5108c203be25059511c7eda05a))
+
+
+# [v0.2.116](https://github.com/aignostics/python-sdk/compare/v0.2.115..v0.2.116) - 2025-08-09
 
 ### 🚜 Refactor
 
