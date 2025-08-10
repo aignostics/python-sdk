@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.122](https://github.com/aignostics/python-sdk/compare/v0.2.121..0.2.122) - 2025-08-10
+# [0.2.123](https://github.com/aignostics/python-sdk/compare/v0.2.122..0.2.123) - 2025-08-10
+
+### ⚙️ Miscellaneous Tasks
+
+- *(qupath)* Skip test step temporarily - ([29d9c29](https://github.com/aignostics/python-sdk/commit/29d9c29fa480b050cb397d0d64425e84af92cc4e))
+
+
+# [v0.2.122](https://github.com/aignostics/python-sdk/compare/v0.2.121..v0.2.122) - 2025-08-10
 
 ### ⚙️ Miscellaneous Tasks
 
