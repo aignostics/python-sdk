@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.127](https://github.com/aignostics/python-sdk/compare/v0.2.126..0.2.127) - 2025-08-11
+# [0.2.128](https://github.com/aignostics/python-sdk/compare/v0.2.127..0.2.128) - 2025-08-11
+
+### 🐛 Bug Fixes
+
+- *(native)* Bundle openslide native libs - ([c5ee78a](https://github.com/aignostics/python-sdk/commit/c5ee78a67a5d80f48fd45cc08aff2ef4297a4824))
+
+
+# [v0.2.127](https://github.com/aignostics/python-sdk/compare/v0.2.126..v0.2.127) - 2025-08-11
 
 ### 🐛 Bug Fixes
 
