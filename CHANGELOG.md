@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.126](https://github.com/aignostics/python-sdk/compare/v0.2.125..0.2.126) - 2025-08-11
+# [0.2.127](https://github.com/aignostics/python-sdk/compare/v0.2.126..0.2.127) - 2025-08-11
+
+### 🐛 Bug Fixes
+
+- *(native)* Include s5cmd binary in native distribution - ([db63b0c](https://github.com/aignostics/python-sdk/commit/db63b0cd9c1e902282ba070f7b8c76467c261bc9))
+
+
+# [v0.2.126](https://github.com/aignostics/python-sdk/compare/v0.2.125..v0.2.126) - 2025-08-11
 
 ### ⚙️ Miscellaneous Tasks
 
