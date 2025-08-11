@@ -184,7 +184,7 @@ jobs:
           payload: |
             "repository": "${{ github.repository }}",
             "version": "${{ steps.git-cliff.outputs.version }}",
-            "release_notes": ${{ steps.git-cliff.outputs.content }},
+            "release_notes": ${{ toJSON(steps.git-cliff.outputs.content) }},
             "channel_id": "${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}"
 
       - name: Allow other workflows to trigger on release
