@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.125](https://github.com/aignostics/python-sdk/compare/v0.2.124..0.2.125) - 2025-08-11
+# [0.2.126](https://github.com/aignostics/python-sdk/compare/v0.2.125..0.2.126) - 2025-08-11
+
+### ⚙️ Miscellaneous Tasks
+
+- *(slack)* Convert release notes to JSON rep. for posting to slack - ([76caa83](https://github.com/aignostics/python-sdk/commit/76caa8357e4565ee20f171c9d060f45f569129f0))
+
+
+# [v0.2.125](https://github.com/aignostics/python-sdk/compare/v0.2.124..v0.2.125) - 2025-08-11
 
 ### ⚙️ Miscellaneous Tasks
 
