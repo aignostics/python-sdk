@@ -6,6 +6,10 @@ from multiprocessing import freeze_support
 
 freeze_support()
 
+import pip_system_certs.wrapt_requests
+
+pip_system_certs.wrapt_requests.inject_truststore()  # See https://pypi.org/project/pip-system-certs/
+
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
 from aignostics.constants import MODULES_TO_INSTRUMENT  # noqa: E402

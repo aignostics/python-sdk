@@ -161,7 +161,7 @@ requires-dist = [
     { name = "duckdb", specifier = ">=0.10.0,<=1.4.0" },
     { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.116.1" },
     { name = "fastparquet", specifier = ">=2024.11.0" },
-    { name = "google-cloud-storage", specifier = ">=3.2.0" },
+    { name = "google-cloud-storage", specifier = ">=3.3.0" },
     { name = "google-crc32c", specifier = ">=1.7.1" },
     { name = "highdicom", specifier = ">=0.26.1" },
     { name = "httpx", specifier = ">=0.28.1" },
@@ -171,7 +171,7 @@ requires-dist = [
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", specifier = ">=4.24.1" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1" },
-    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.2.0" },
+    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.3.1" },
     { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.14.17" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.3" },
     { name = "nicegui", extras = ["native"], specifier = ">=2.22.2" },
@@ -1895,7 +1895,7 @@ wheels = [
 
 [[package]]
 name = "google-cloud-storage"
-version = "3.2.0"
+version = "3.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-api-core" },
@@ -1905,9 +1905,9 @@ dependencies = [
     { name = "google-resumable-media" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/52/5b/6d4627484248e018a926dde114c4034656570da9c1c438e3db061fa42de5/google_cloud_storage-3.2.0.tar.gz", hash = "sha256:decca843076036f45633198c125d1861ffbf47ebf5c0e3b98dcb9b2db155896c", size = 7669611, upload-time = "2025-07-07T05:14:06.764Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/91/10b9ddd5baacde375dcd7e6716b5024b3f65a22366f74c26926b6aa84e4e/google_cloud_storage-3.3.0.tar.gz", hash = "sha256:ae9d891d53e17d9681d7c4ef1ffeea0cde9bdc53d5b64fa6ff6bf30d1911cf61", size = 7781974, upload-time = "2025-08-12T09:10:36.245Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/48/823ce62cf29d04db6508971a0db13a72c1c9faf67cea2c206b1c9c9f1f02/google_cloud_storage-3.2.0-py3-none-any.whl", hash = "sha256:ff7a9a49666954a7c3d1598291220c72d3b9e49d9dfcf9dfaecb301fc4fb0b24", size = 176133, upload-time = "2025-07-07T05:14:05.059Z" },
+    { url = "https://files.pythonhosted.org/packages/41/9d/2814a2c47429dc2e197e176de25a946d4538422b081ade8638e585e4006f/google_cloud_storage-3.3.0-py3-none-any.whl", hash = "sha256:0338ecd6621b3ecacb108f1cf7513ff0d1bca7f1ff4d58e0220b59f3a725ff23", size = 274270, upload-time = "2025-08-12T09:10:34.793Z" },
 ]
 
 [[package]]
@@ -2691,7 +2691,7 @@ wheels = [
 
 [[package]]
 name = "logfire"
-version = "4.2.0"
+version = "4.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "executing" },
@@ -2702,9 +2702,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/1d/6646ff0bbd2793d960facc05c29a599619e1a4f265d333f294f7292a6488/logfire-4.2.0.tar.gz", hash = "sha256:72ffe5b68dd97f386f691143a48cfe4e8e5aae261e111a5d5a852b4e23c1e1a8", size = 514414, upload-time = "2025-08-06T11:53:59.302Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/f3/66f656cf4d482c290c4b847963a137bbb9ede97dd7f1cde1cda53878f5eb/logfire-4.3.1.tar.gz", hash = "sha256:8b8788bb044e14259ac54ae0c027341ba884a362f0cba7dd858f1378ecc6f043", size = 515669, upload-time = "2025-08-12T12:49:40.713Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/86/4260e8d62775e9ab4b81b289479a7a9a7b6644ae8e73e8b1cb5d9da381d0/logfire-4.2.0-py3-none-any.whl", hash = "sha256:aaa6fe49c2835b8ca303090c0720604cddaafb16db064d671d7240095b1b395e", size = 212457, upload-time = "2025-08-06T11:53:55.496Z" },
+    { url = "https://files.pythonhosted.org/packages/de/59/c0978a21e8757f1559648dcd00c77215221c50ee2c59da6aa831b74130c6/logfire-4.3.1-py3-none-any.whl", hash = "sha256:1bd48c782cc71bf1c19751338b9229062c037c2644ae13137dfc00a474476762", size = 213490, upload-time = "2025-08-12T12:49:37.666Z" },
 ]
 
 [package.optional-dependencies]
