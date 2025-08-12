@@ -76,7 +76,7 @@ dependencies = [
     # From Template
     "fastapi[standard,all]>=0.116.1",
     "humanize>=4.12.3",
-    "logfire[system-metrics]>=4.2.0",
+    "logfire[system-metrics]>=4.3.1",
     "nicegui[native]>=2.22.2",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
@@ -102,7 +102,7 @@ dependencies = [
     "dicomweb-client[gcp]>=0.59.2",
     "duckdb>=0.10.0,<=1.4.0",
     "fastparquet>=2024.11.0",
-    "google-cloud-storage>=3.2.0",
+    "google-cloud-storage>=3.3.0",
     "google-crc32c>=1.7.1",
     "highdicom>=0.26.1",
     "httpx>=0.28.1",
