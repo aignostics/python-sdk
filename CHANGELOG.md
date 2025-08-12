@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.131](https://github.com/aignostics/python-sdk/compare/v0.2.130..0.2.131) - 2025-08-12
+# [0.2.132](https://github.com/aignostics/python-sdk/compare/v0.2.131..0.2.132) - 2025-08-12
+
+### 🎨 Styling
+
+- *(lint)* Fix linting error in native starter - ([ee0ea42](https://github.com/aignostics/python-sdk/commit/ee0ea422f6e5b57d73fa0c532a4003f7154d0fd4))
+
+### ⚙️ Miscellaneous Tasks
+
+- Chore(deps); bump dev dependencies - ([ee0ea42](https://github.com/aignostics/python-sdk/commit/ee0ea422f6e5b57d73fa0c532a4003f7154d0fd4))
+
+
+# [v0.2.131](https://github.com/aignostics/python-sdk/compare/v0.2.130..v0.2.131) - 2025-08-12
 
 ### 🐛 Bug Fixes
 
