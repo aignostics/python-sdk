@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.132](https://github.com/aignostics/python-sdk/compare/v0.2.131..0.2.132) - 2025-08-12
+# [0.2.133](https://github.com/aignostics/python-sdk/compare/v0.2.132..0.2.133) - 2025-08-12
+
+### ⛰️  Features
+
+- *(application)* Show run id in collapsible so it can be copied - ([ab8a021](https://github.com/aignostics/python-sdk/commit/ab8a0213b7475f3fd72c30459eefea61ce25030c))
+
+
+# [v0.2.132](https://github.com/aignostics/python-sdk/compare/v0.2.131..v0.2.132) - 2025-08-12
 
 ### 🎨 Styling
 
