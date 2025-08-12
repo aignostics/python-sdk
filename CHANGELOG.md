@@ -1,6 +1,18 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.128](https://github.com/aignostics/python-sdk/compare/v0.2.127..0.2.128) - 2025-08-11
+# [0.2.129](https://github.com/aignostics/python-sdk/compare/v0.2.128..0.2.129) - 2025-08-12
+
+### 🐛 Bug Fixes
+
+- *(native)* Dataset download - openslide libs were not bundled by pyinstaller - ([4a24b3e](https://github.com/aignostics/python-sdk/commit/4a24b3e6692641a248b43e649226735f1158fcca))
+- *(native)* Thumbnail generation on submission - script execution complexity - ([4a24b3e](https://github.com/aignostics/python-sdk/commit/4a24b3e6692641a248b43e649226735f1158fcca))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump nicegui, boto - ([4a24b3e](https://github.com/aignostics/python-sdk/commit/4a24b3e6692641a248b43e649226735f1158fcca))
+
+
+# [v0.2.128](https://github.com/aignostics/python-sdk/compare/v0.2.127..v0.2.128) - 2025-08-11
 
 ### 🐛 Bug Fixes
 
