@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.129](https://github.com/aignostics/python-sdk/compare/v0.2.128..0.2.129) - 2025-08-12
+# [0.2.130](https://github.com/aignostics/python-sdk/compare/v0.2.129..0.2.130) - 2025-08-12
+
+### ⛰️  Features
+
+- *(native)* Debug command - ([f3422b7](https://github.com/aignostics/python-sdk/commit/f3422b7788343b03aa864b02b2c141fea6c6d046))
+
+
+# [v0.2.129](https://github.com/aignostics/python-sdk/compare/v0.2.128..v0.2.129) - 2025-08-12
 
 ### 🐛 Bug Fixes
 
