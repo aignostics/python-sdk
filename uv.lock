@@ -67,6 +67,7 @@ dependencies = [
     { name = "opentelemetry-instrumentation-urllib3" },
     { name = "packaging" },
     { name = "pandas" },
+    { name = "pip-system-certs" },
     { name = "platformdirs" },
     { name = "psutil" },
     { name = "pydantic-settings" },
@@ -153,7 +154,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = ">=1.4.4" },
-    { name = "boto3", specifier = ">=1.40.6" },
+    { name = "boto3", specifier = ">=1.40.7" },
     { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.21.1" },
     { name = "dicom-validator", specifier = ">=0.7.1" },
     { name = "dicomweb-client", extras = ["gcp"], specifier = ">=0.59.2" },
@@ -171,9 +172,9 @@ requires-dist = [
     { name = "jsonschema", specifier = ">=4.24.1" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1" },
     { name = "logfire", extras = ["system-metrics"], specifier = ">=4.2.0" },
-    { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.14.11" },
+    { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.14.17" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.3" },
-    { name = "nicegui", extras = ["native"], specifier = ">=2.22.1" },
+    { name = "nicegui", extras = ["native"], specifier = ">=2.22.2" },
     { name = "openslide-bin", specifier = ">=4.0.0.8" },
     { name = "openslide-python", specifier = ">=1.4.2" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.53b0" },
@@ -186,6 +187,7 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-urllib3", specifier = ">=0.53b0" },
     { name = "packaging", specifier = ">=25.0" },
     { name = "pandas", specifier = "<=2.3.1" },
+    { name = "pip-system-certs", specifier = ">=5.2" },
     { name = "platformdirs", specifier = ">=4.3.8" },
     { name = "psutil", specifier = ">=7.0.0" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
@@ -659,30 +661,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.40.6"
+version = "1.40.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/eb/bd2406de26d76f34661aa42ee03109b3914ac7a2cc17d8f9abb958c80e6e/boto3-1.40.6.tar.gz", hash = "sha256:3f2375b7576de603085d7b7491cf2c4ab5c57d12965a5ce295821cdd4d10e950", size = 111944, upload-time = "2025-08-08T19:29:13.638Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/5a/f31556d817e872c2723196a34b197d971d78297b22b8bae0ae6d93f7f9c1/boto3-1.40.7.tar.gz", hash = "sha256:61b15f70761f1eadd721c6ba41a92658f003eaaef09500ca7642f5ae68ec8945", size = 111989, upload-time = "2025-08-11T19:20:45.824Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5e/f6/a9d57282f1a79c793077fecfd24273a2bdb35fa1108bdb99c451b5a2cea3/boto3-1.40.6-py3-none-any.whl", hash = "sha256:7685085b8ea679dd858330834c16364c61c5830edb892c5864fb12ed68798708", size = 140062, upload-time = "2025-08-08T19:29:11.538Z" },
+    { url = "https://files.pythonhosted.org/packages/41/e3/f2a77f4809ffe4e896c2e6186db88333ae980f52a91b28e9fd068d8f5506/boto3-1.40.7-py3-none-any.whl", hash = "sha256:8727cac601a679d2885dc78b8119a0548bbbe04e49b72f7d94021a629154c080", size = 140061, upload-time = "2025-08-11T19:20:43.173Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.40.6"
+version = "1.40.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/a6/130e049f6b38c02628b765b24b1a3d2016cffd8e363edb7660bbb9f4681d/botocore-1.40.6.tar.gz", hash = "sha256:e132eac967a7526596e31ca571d7f1ef9676c6a9c4f1322446768994ccab64aa", size = 14314806, upload-time = "2025-08-08T19:29:02.028Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/d7/5e559918410b259c1e54a4646ff39c56433e1c9cefa5e66ab0f06716cee8/botocore-1.40.7.tar.gz", hash = "sha256:33793696680cf3a0c4b5ace4f9070c67c4d4fcb19c999fd85cfee55de3dcf913", size = 14318282, upload-time = "2025-08-11T19:20:33.348Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/4e/e049c6107eb1f4202e0c49030dc482a6277b7be1e3ee54784434a8a9de3d/botocore-1.40.6-py3-none-any.whl", hash = "sha256:b253f107617791a29ca81c6f0fca20ac1afdba01869eb43017022bbbb8387f34", size = 13980040, upload-time = "2025-08-08T19:28:56.123Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/fa/bb7ec68b24d1b4678d341a305cbfed78a593e6383c86a70727410e4d0e11/botocore-1.40.7-py3-none-any.whl", hash = "sha256:a06956f3d7222e80ef6ae193608f358c3b7898e1a2b88553479d8f9737fbb03e", size = 13981488, upload-time = "2025-08-11T19:20:27.303Z" },
 ]
 
 [[package]]
@@ -2851,7 +2853,7 @@ wheels = [
 
 [[package]]
 name = "marimo"
-version = "0.14.16"
+version = "0.14.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2871,9 +2873,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/39/bfaba4cdb29b3c0ef2608184af16cb487298ab9cfcf4be803f4d12ac84e6/marimo-0.14.16.tar.gz", hash = "sha256:f0f291ac7fa6f87c8072f4019c6e9f635ad7efb37e0214f22543c8dd983042d1", size = 30568080, upload-time = "2025-08-01T13:43:27.637Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/2a/f0ce506e78e49ae0fe567ae23418e9af759c0272ac46c91a7d5ed8e92777/marimo-0.14.17.tar.gz", hash = "sha256:f38e592b83f8c23a0f19ef32d845594f6566691c28b1e41d04a78156df953305", size = 30581473, upload-time = "2025-08-11T19:31:16.103Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e9/d4/e8cb6cd10f22bcaf482d072d51511c34913c307caa10b0e0c2bfbea70955/marimo-0.14.16-py3-none-any.whl", hash = "sha256:2ffa19f9d7bc403895acd8aeba6a648d7787fc8a08ccae7882bacfd80099e15e", size = 30810373, upload-time = "2025-08-01T13:43:31.766Z" },
+    { url = "https://files.pythonhosted.org/packages/76/23/ca5f37ea5f6d0e22e8ba1bb6c2d00b44d8178ec5c5b10dad9d17e3561886/marimo-0.14.17-py3-none-any.whl", hash = "sha256:88e2b3fe86567c322805a5faebcc18e302813b109e017e1104157e44b8659777", size = 30819777, upload-time = "2025-08-11T19:31:12.049Z" },
 ]
 
 [[package]]
@@ -3331,7 +3333,7 @@ wheels = [
 
 [[package]]
 name = "nicegui"
-version = "2.22.1"
+version = "2.22.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -3356,9 +3358,9 @@ dependencies = [
     { name = "vbuild" },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/80/8c933170a72d49424134b4b112a9a95b2d022ef5c0bd3ff34a4d37fec22d/nicegui-2.22.1.tar.gz", hash = "sha256:226c56299cb1e427c28aa1d042ec808ce83944e46583f396885e799331688caa", size = 13107328, upload-time = "2025-08-01T19:21:06.639Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/81/aaf1432abf54f25d62a3c346a087db39c4d7a38833795c3f1eb90feab5fd/nicegui-2.22.2.tar.gz", hash = "sha256:5c0aaf2d2365c665ae42955b17d6fa7ba19526d7aa9bd02ab547917e7bd1338c", size = 13107276, upload-time = "2025-08-09T15:31:08.031Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7a/9f/e26800f72c475f8c856babb17a5741e7c0f577629587e6e4a29d959d11dd/nicegui-2.22.1-py3-none-any.whl", hash = "sha256:bdc461b80a30f44ea28d25f439a19dab44a3f574166318a2d6121b71c78261c4", size = 13494491, upload-time = "2025-08-01T19:21:03.035Z" },
+    { url = "https://files.pythonhosted.org/packages/84/2b/141c85335df3982ca9a54da95d0c8954efe9756da8f2edaba2afbd262014/nicegui-2.22.2-py3-none-any.whl", hash = "sha256:a0e371918419af5bae7b22e6b55a29065a7a4222908af66584fd599e391b5b5f", size = 13494497, upload-time = "2025-08-09T15:31:05.235Z" },
 ]
 
 [package.optional-dependencies]
@@ -4169,6 +4171,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/2a/63b574101850e7f7b306ddbdb02cb294380d37948140eecd468fae392b54/pip-requirements-parser-32.0.1.tar.gz", hash = "sha256:b4fa3a7a0be38243123cf9d1f3518da10c51bdb165a2b2985566247f9155a7d3", size = 209359, upload-time = "2022-12-21T15:25:22.732Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/d0/d04f1d1e064ac901439699ee097f58688caadea42498ec9c4b4ad2ef84ab/pip_requirements_parser-32.0.1-py3-none-any.whl", hash = "sha256:4659bc2a667783e7a15d190f6fccf8b2486685b6dba4c19c3876314769c57526", size = 35648, upload-time = "2022-12-21T15:25:21.046Z" },
+]
+
+[[package]]
+name = "pip-system-certs"
+version = "5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pip" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3d/0c/a338ae5d49192861cf54da4d5c2af0efe47edbaa0827995b284005366ca5/pip_system_certs-5.2.tar.gz", hash = "sha256:80b776b5cf17191bf99d313699b7fce2fdb84eb7bbb225fd134109a82706406f", size = 5408, upload-time = "2025-06-17T23:33:15.322Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/ce/608bbe82759363d6e752dd370daf066be3be8e7ffdb79838501ed6104173/pip_system_certs-5.2-py3-none-any.whl", hash = "sha256:e6ef3e106d4d02313e33955c2bcc4c2b143b2da07ef91e28a6805a0c1c512126", size = 5866, upload-time = "2025-06-17T23:33:14.554Z" },
 ]
 
 [[package]]

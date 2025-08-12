@@ -155,7 +155,7 @@ class Service(BaseService):
         logger.debug("Process completed, setting progress to 100%")
 
     @staticmethod
-    def download_with_queue(  # noqa: PLR0915
+    def download_with_queue(  # noqa: PLR0915, C901
         queue: Queue,  # type: ignore[type-arg]
         source: str,
         target: str = str(Path.cwd()),
@@ -237,16 +237,29 @@ client.download_from_selection(
 """
 
             # Run the download in a subprocess
-            logger.debug(
-                "Starting download subprocess with executable '%s' and script:\n%s", sys.executable, script_content
-            )
-            process = subprocess.Popen(  # noqa: S603
-                [sys.executable, "-c", script_content],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
-            )
+            if getattr(sys, "frozen", False):
+                # When running under PyInstaller, sys.executable points to the PyInstaller executable.
+                # We use a special flag to execute the script without launching the GUI.
+                # See src/aignostics.py
+                logger.debug("Running under PyInstaller - using --exec-script flag")
+                process = subprocess.Popen(  # noqa: S603
+                    [sys.executable, "--exec-script", script_content],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1,
+                )
+            else:
+                logger.debug(
+                    "Starting download subprocess with executable '%s' and script:\n%s", sys.executable, script_content
+                )
+                process = subprocess.Popen(  # noqa: S603
+                    [sys.executable, "-c", script_content],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1,
+                )
 
             # Register process for cleanup
             _active_processes.append(process)

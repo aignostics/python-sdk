@@ -14,7 +14,7 @@ import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
 datas = []
 binaries = []
-hiddenimports = ['pythonnet']
+hiddenimports = ['pythonnet','openslide_bin']
 datas += collect_data_files('idc_index_data')
 datas += copy_metadata('aignostics', recursive=False)
 tmp_ret = collect_all('nicegui')
@@ -23,7 +23,7 @@ tmp_ret = collect_all('aignostics')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('s5cmd')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('openslide-bin')
+tmp_ret = collect_all('openslide_bin')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 a = Analysis(

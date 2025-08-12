@@ -77,7 +77,7 @@ dependencies = [
     "fastapi[standard,all]>=0.116.1",
     "humanize>=4.12.3",
     "logfire[system-metrics]>=4.2.0",
-    "nicegui[native]>=2.22.1",
+    "nicegui[native]>=2.22.2",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
     "opentelemetry-instrumentation-jinja2>=0.53b0",
@@ -97,7 +97,7 @@ dependencies = [
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
-    "boto3>=1.40.6",
+    "boto3>=1.40.7",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "duckdb>=0.10.0,<=1.4.0",
@@ -125,6 +125,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "urllib3>=2.5.0",
     "wsidicom>=0.27.1",
+    "pip-system-certs>=5.2",
 ]
 
 [project.optional-dependencies]
@@ -132,7 +133,7 @@ pyinstaller = ["pyinstaller>=6.14.0"]
 jupyter = ["jupyter>=1.1.1"]
 marimo = [
     "cloudpathlib>=0.21.1",
-    "marimo>=0.14.11",
+    "marimo>=0.14.17",
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
