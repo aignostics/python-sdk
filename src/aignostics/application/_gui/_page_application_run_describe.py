@@ -409,7 +409,9 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             with ui.expansion(text=f"Run {run.application_run_id}"):
                 ui.markdown(
                     f"""
+                    * Run ID: {run_data.application_run_id}
                     * Application Version: {run_data.application_version_id}
+                    * Triggered On: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
                     * Triggered by: {run_data.triggered_by}
                     * Organization: {run_data.organization_id}
                     """
