@@ -18,6 +18,8 @@ logger = get_logger(__name__)
 EXEC_SCRIPT_FLAG = "--exec-script"
 MIN_ARGS_FOR_SCRIPT = 3  # program name, flag, and script content
 
+DEBUG_FLAG = "--debug"
+
 # Check if we should execute a script instead of launching the GUI
 if len(sys.argv) > 1 and sys.argv[1] == EXEC_SCRIPT_FLAG:
     # Execute the script passed as the second argument
@@ -31,6 +33,10 @@ if len(sys.argv) > 1 and sys.argv[1] == EXEC_SCRIPT_FLAG:
     else:
         logger.error("No script content provided")
         sys.exit(1)
+elif len(sys.argv) > 1 and sys.argv[1] == DEBUG_FLAG:
+    import ssl
+
+    print(ssl.get_default_verify_paths())
 else:
     # Normal GUI launch
     gui_run(native=True, with_api=False, title="Aignostics Launchpad", icon="🔬")
