@@ -6,7 +6,7 @@ from multiprocessing import freeze_support
 
 freeze_support()
 
-import pip_system_certs.wrapt_requests
+import pip_system_certs.wrapt_requests  # noqa: E402
 
 pip_system_certs.wrapt_requests.inject_truststore()  # See https://pypi.org/project/pip-system-certs/
 
