@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.130](https://github.com/aignostics/python-sdk/compare/v0.2.129..0.2.130) - 2025-08-12
+# [0.2.131](https://github.com/aignostics/python-sdk/compare/v0.2.130..0.2.131) - 2025-08-12
+
+### 🐛 Bug Fixes
+
+- *(native)* Use system trust store for SSL certificates - ([d397192](https://github.com/aignostics/python-sdk/commit/d397192dcbb5725b03149e0e104c8ea1ee3d96ed))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump deps - ([d397192](https://github.com/aignostics/python-sdk/commit/d397192dcbb5725b03149e0e104c8ea1ee3d96ed))
+
+
+# [v0.2.130](https://github.com/aignostics/python-sdk/compare/v0.2.129..v0.2.130) - 2025-08-12
 
 ### ⛰️  Features
 
