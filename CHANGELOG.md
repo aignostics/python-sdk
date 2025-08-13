@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.134](https://github.com/aignostics/python-sdk/compare/v0.2.133..0.2.134) - 2025-08-13
+# [0.2.135](https://github.com/aignostics/python-sdk/compare/v0.2.134..0.2.135) - 2025-08-13
+
+### ⚙️ Miscellaneous Tasks
+
+- *(debug)* Temp disable of tests - ([8540650](https://github.com/aignostics/python-sdk/commit/8540650d248dbc73eeadbefd9ebfcf315411de41))
+
+
+# [v0.2.134](https://github.com/aignostics/python-sdk/compare/v0.2.133..v0.2.134) - 2025-08-13
 
 ### ⚙️ Miscellaneous Tasks
 
