@@ -5,15 +5,7 @@ import ssl
 import sys
 from multiprocessing import freeze_support
 
-import certifi
-
 freeze_support()
-
-# Use bundled bundled certifi certificate bundle IF cafile could not be found by openssl.
-if ssl.get_default_verify_paths().cafile is None:
-    os.environ["SSL_CERT_FILE"] = certifi.where()
-
-# See https://github.com/pyinstaller/pyinstaller/issues/7229
 
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
