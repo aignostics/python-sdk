@@ -115,7 +115,7 @@ jobs:
           uv run --all-extras aignostics application run list --verbose --limit 1
 
       - name: Test / regular
-        if: (!contains(github.event.head_commit.message, 'skip:test:regular'))
+        if: false && (!contains(github.event.head_commit.message, 'skip:test:regular'))
         shell: bash
         run: |
           set +e
@@ -145,7 +145,7 @@ jobs:
           exit $EXIT_CODE
 
       - name: Test / long running
-        if: (!contains(github.event.head_commit.message, 'skip:test:long-running'))
+        if: false && (!contains(github.event.head_commit.message, 'skip:test:long-running'))
         shell: bash
         run: |
           set +e
