@@ -116,6 +116,7 @@ jobs:
 
       - name: Test / regular
         if: false && (!contains(github.event.head_commit.message, 'skip:test:regular'))
+        # TODO(Helmut): Revert
         shell: bash
         run: |
           set +e
@@ -146,6 +147,7 @@ jobs:
 
       - name: Test / long running
         if: false && (!contains(github.event.head_commit.message, 'skip:test:long-running'))
+        # TODO(Helmut): Revert
         shell: bash
         run: |
           set +e
