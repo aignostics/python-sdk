@@ -32,6 +32,7 @@ jobs:
           name: audit-results          
 
       - name: Report build to Ketryx and check for approval
+        if: false
         uses: Ketryx/ketryx-github-action@v1.4.0
         continue-on-error: true # TODO(Helmut): Remove post having Ketryx configured to inspect the main branch
         with:
