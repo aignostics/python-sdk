@@ -39,6 +39,7 @@ source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
     { name = "boto3" },
+    { name = "certifi" },
     { name = "dicom-validator" },
     { name = "dicomweb-client", extra = ["gcp"] },
     { name = "duckdb" },
@@ -67,7 +68,6 @@ dependencies = [
     { name = "opentelemetry-instrumentation-urllib3" },
     { name = "packaging" },
     { name = "pandas" },
-    { name = "pip-system-certs" },
     { name = "platformdirs" },
     { name = "psutil" },
     { name = "pydantic-settings" },
@@ -154,7 +154,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = ">=1.4.4" },
-    { name = "boto3", specifier = ">=1.40.7" },
+    { name = "boto3", specifier = ">=1.40.8" },
+    { name = "certifi", specifier = ">=2025.8.3" },
     { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.21.1" },
     { name = "dicom-validator", specifier = ">=0.7.1" },
     { name = "dicomweb-client", extras = ["gcp"], specifier = ">=0.59.2" },
@@ -171,7 +172,7 @@ requires-dist = [
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", specifier = ">=4.24.1" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1" },
-    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.3.1" },
+    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.3.3" },
     { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.14.17" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.3" },
     { name = "nicegui", extras = ["native"], specifier = ">=2.22.2" },
@@ -187,7 +188,6 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-urllib3", specifier = ">=0.53b0" },
     { name = "packaging", specifier = ">=25.0" },
     { name = "pandas", specifier = "<=2.3.1" },
-    { name = "pip-system-certs", specifier = ">=5.2" },
     { name = "platformdirs", specifier = ">=4.3.8" },
     { name = "psutil", specifier = ">=7.0.0" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
@@ -661,30 +661,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.40.7"
+version = "1.40.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/58/5a/f31556d817e872c2723196a34b197d971d78297b22b8bae0ae6d93f7f9c1/boto3-1.40.7.tar.gz", hash = "sha256:61b15f70761f1eadd721c6ba41a92658f003eaaef09500ca7642f5ae68ec8945", size = 111989, upload-time = "2025-08-11T19:20:45.824Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/0d/1c5c70d2f72bba218c9ed166016e4a8e2fec4783399f98b2c007c510bda8/boto3-1.40.8.tar.gz", hash = "sha256:62959010dfd3d24157f73a8183fca7619ec97fb42ac400477006f7ecb9548d06", size = 111983, upload-time = "2025-08-12T19:21:20.837Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/41/e3/f2a77f4809ffe4e896c2e6186db88333ae980f52a91b28e9fd068d8f5506/boto3-1.40.7-py3-none-any.whl", hash = "sha256:8727cac601a679d2885dc78b8119a0548bbbe04e49b72f7d94021a629154c080", size = 140061, upload-time = "2025-08-11T19:20:43.173Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/2a/73378c48746908c17251083c1e205ae07f989f82be546b99175d5bf5ca2c/boto3-1.40.8-py3-none-any.whl", hash = "sha256:9f55edd8e2eb5cd86e1c972b5250f9ab0a9555f84632506a2ed131e4a82ea23a", size = 140062, upload-time = "2025-08-12T19:21:19.607Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.40.7"
+version = "1.40.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/73/d7/5e559918410b259c1e54a4646ff39c56433e1c9cefa5e66ab0f06716cee8/botocore-1.40.7.tar.gz", hash = "sha256:33793696680cf3a0c4b5ace4f9070c67c4d4fcb19c999fd85cfee55de3dcf913", size = 14318282, upload-time = "2025-08-11T19:20:33.348Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/43/d83d03afe05d46249d0e65231f7b59eec7900f9af0e395888e4d46f99d04/botocore-1.40.8.tar.gz", hash = "sha256:954fa6e36020ebf58898de80a8f864ba13b74dc26994cf20ccfff2966724b0b9", size = 14321072, upload-time = "2025-08-12T19:21:12.034Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/fa/bb7ec68b24d1b4678d341a305cbfed78a593e6383c86a70727410e4d0e11/botocore-1.40.7-py3-none-any.whl", hash = "sha256:a06956f3d7222e80ef6ae193608f358c3b7898e1a2b88553479d8f9737fbb03e", size = 13981488, upload-time = "2025-08-11T19:20:27.303Z" },
+    { url = "https://files.pythonhosted.org/packages/54/47/778f25ecedaf2c1484710d244ef40a42fe0a2088e5a24e79f68ae6489a4b/botocore-1.40.8-py3-none-any.whl", hash = "sha256:7f0327e08d7c061aaa03e32459e56bcf6daa29cd946e95b1c06be14d61a9a94d", size = 13983180, upload-time = "2025-08-12T19:21:07.665Z" },
 ]
 
 [[package]]
@@ -2691,7 +2691,7 @@ wheels = [
 
 [[package]]
 name = "logfire"
-version = "4.3.1"
+version = "4.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "executing" },
@@ -2702,9 +2702,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/f3/66f656cf4d482c290c4b847963a137bbb9ede97dd7f1cde1cda53878f5eb/logfire-4.3.1.tar.gz", hash = "sha256:8b8788bb044e14259ac54ae0c027341ba884a362f0cba7dd858f1378ecc6f043", size = 515669, upload-time = "2025-08-12T12:49:40.713Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/9c/1a575014f5da17a13b5dc5fe457f4734a7810be5a4cd4d0c9ef441b235a3/logfire-4.3.3.tar.gz", hash = "sha256:ca11650480793f5d0760f614684bff027e5c0e08379d8b4d236acc6f6dc5ae17", size = 515840, upload-time = "2025-08-13T11:23:08.451Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/59/c0978a21e8757f1559648dcd00c77215221c50ee2c59da6aa831b74130c6/logfire-4.3.1-py3-none-any.whl", hash = "sha256:1bd48c782cc71bf1c19751338b9229062c037c2644ae13137dfc00a474476762", size = 213490, upload-time = "2025-08-12T12:49:37.666Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/db/f4b3bd0b99b0c6ff6c988e8a30a01743b0435b5f5fd555f5db356486a5cc/logfire-4.3.3-py3-none-any.whl", hash = "sha256:61fac5508ee2cef49c42cc2598b109634f7b7ea2c81dddd2e3ec7f3a5a2742ee", size = 213523, upload-time = "2025-08-13T11:23:05.376Z" },
 ]
 
 [package.optional-dependencies]
@@ -4171,18 +4171,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/2a/63b574101850e7f7b306ddbdb02cb294380d37948140eecd468fae392b54/pip-requirements-parser-32.0.1.tar.gz", hash = "sha256:b4fa3a7a0be38243123cf9d1f3518da10c51bdb165a2b2985566247f9155a7d3", size = 209359, upload-time = "2022-12-21T15:25:22.732Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/d0/d04f1d1e064ac901439699ee097f58688caadea42498ec9c4b4ad2ef84ab/pip_requirements_parser-32.0.1-py3-none-any.whl", hash = "sha256:4659bc2a667783e7a15d190f6fccf8b2486685b6dba4c19c3876314769c57526", size = 35648, upload-time = "2022-12-21T15:25:21.046Z" },
-]
-
-[[package]]
-name = "pip-system-certs"
-version = "5.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pip" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/0c/a338ae5d49192861cf54da4d5c2af0efe47edbaa0827995b284005366ca5/pip_system_certs-5.2.tar.gz", hash = "sha256:80b776b5cf17191bf99d313699b7fce2fdb84eb7bbb225fd134109a82706406f", size = 5408, upload-time = "2025-06-17T23:33:15.322Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/ce/608bbe82759363d6e752dd370daf066be3be8e7ffdb79838501ed6104173/pip_system_certs-5.2-py3-none-any.whl", hash = "sha256:e6ef3e106d4d02313e33955c2bcc4c2b143b2da07ef91e28a6805a0c1c512126", size = 5866, upload-time = "2025-06-17T23:33:14.554Z" },
 ]
 
 [[package]]
