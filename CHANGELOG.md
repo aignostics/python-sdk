@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.138](https://github.com/aignostics/python-sdk/compare/v0.2.137..0.2.138) - 2025-08-13
+# [0.2.139](https://github.com/aignostics/python-sdk/compare/v0.2.138..0.2.139) - 2025-08-13
+
+### 🐛 Bug Fixes
+
+- *(ssl)* Use certifi as fallback if configured intermediate certificates not found, and no env override - ([eed7500](https://github.com/aignostics/python-sdk/commit/eed750036ef337c7e8acba801640347ce2328995))
+
+
+# [v0.2.138](https://github.com/aignostics/python-sdk/compare/v0.2.137..v0.2.138) - 2025-08-13
 
 ### 🐛 Bug Fixes
 
