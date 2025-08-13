@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.137](https://github.com/aignostics/python-sdk/compare/v0.2.136..0.2.137) - 2025-08-13
+# [0.2.138](https://github.com/aignostics/python-sdk/compare/v0.2.137..0.2.138) - 2025-08-13
+
+### 🐛 Bug Fixes
+
+- *(native)* Use certifi bundle if default bundle not found - ([fe7370a](https://github.com/aignostics/python-sdk/commit/fe7370a181d93ab5a37ed41abd662683ff5a0b93))
+
+
+# [v0.2.137](https://github.com/aignostics/python-sdk/compare/v0.2.136..v0.2.137) - 2025-08-13
 
 ### ⚙️ Miscellaneous Tasks
 
