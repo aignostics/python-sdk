@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.139](https://github.com/aignostics/python-sdk/compare/v0.2.138..0.2.139) - 2025-08-13
+# [0.2.140](https://github.com/aignostics/python-sdk/compare/v0.2.139..0.2.140) - 2025-08-14
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Re-enable tests - ([4ad4269](https://github.com/aignostics/python-sdk/commit/4ad4269e6a7d3239b2103e465efaf71cd949ff69))
+
+
+# [v0.2.139](https://github.com/aignostics/python-sdk/compare/v0.2.138..v0.2.139) - 2025-08-13
 
 ### 🐛 Bug Fixes
 
