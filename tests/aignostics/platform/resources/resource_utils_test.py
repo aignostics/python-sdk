@@ -9,15 +9,12 @@ from unittest.mock import Mock
 from aignostics.platform.resources.utils import PAGE_SIZE, paginate
 
 
-def test_paginate_stops_when_results_less_than_page_size(record_property) -> None:
+def test_paginate_stops_when_results_less_than_page_size() -> None:
     """Test that paginate stops yielding when a page has fewer items than the page size.
 
     This test verifies that the paginate function correctly stops requesting new pages
     when a response contains fewer items than the page size, indicating it's the last page.
     """
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
-    record_property("tested-item-id", "ADR-14-DATASET-DISCOVERY-AND-QUERY-SERVICE")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Arrange
     mock_func = Mock()
     # First call returns full page, second call returns partial page
@@ -38,15 +35,12 @@ def test_paginate_stops_when_results_less_than_page_size(record_property) -> Non
     mock_func.assert_any_call(page=2, page_size=PAGE_SIZE)
 
 
-def test_paginate_handles_empty_first_page(record_property) -> None:
+def test_paginate_handles_empty_first_page() -> None:
     """Test that paginate handles an empty first page correctly.
 
     This test verifies that the paginate function correctly handles the case where
     the first page of results is empty, and doesn't make additional API requests.
     """
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
-    record_property("tested-item-id", "ADR-14-DATASET-DISCOVERY-AND-QUERY-SERVICE")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Arrange
     mock_func = Mock(return_value=[])
 
@@ -58,15 +52,12 @@ def test_paginate_handles_empty_first_page(record_property) -> None:
     mock_func.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
-def test_paginate_passes_additional_arguments(record_property) -> None:
+def test_paginate_passes_additional_arguments() -> None:
     """Test that paginate correctly passes additional arguments to the function.
 
     This test verifies that the paginate function correctly forwards both positional
     and keyword arguments to the paginated function.
     """
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
-    record_property("tested-item-id", "ADR-14-DATASET-DISCOVERY-AND-QUERY-SERVICE")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Arrange
     mock_func = Mock(return_value=[])
     additional_arg = "test"
@@ -80,15 +71,12 @@ def test_paginate_passes_additional_arguments(record_property) -> None:
     mock_func.assert_called_once_with(additional_arg, keyword=additional_kwarg, page=1, page_size=PAGE_SIZE)
 
 
-def test_paginate_custom_page_size(record_property) -> None:
+def test_paginate_custom_page_size() -> None:
     """Test that paginate correctly uses custom page size.
 
     This test verifies that the paginate function correctly uses a custom page size
     when provided and passes it to the wrapped function.
     """
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
-    record_property("tested-item-id", "ADR-14-DATASET-DISCOVERY-AND-QUERY-SERVICE")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Arrange
     mock_func = Mock(return_value=[])
     custom_page_size = 50
@@ -100,16 +88,13 @@ def test_paginate_custom_page_size(record_property) -> None:
     mock_func.assert_called_once_with(page=1, page_size=custom_page_size)
 
 
-def test_paginate_multiple_pages(record_property) -> None:
+def test_paginate_multiple_pages() -> None:
     """Test that paginate correctly iterates through multiple pages.
 
     This test verifies that the paginate function correctly requests and yields
     items from multiple pages in sequence, until reaching a page with fewer items
     than the page size.
     """
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
-    record_property("tested-item-id", "ADR-14-DATASET-DISCOVERY-AND-QUERY-SERVICE")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Arrange
     mock_func = Mock()
     # Three pages of results, each with PAGE_SIZE items

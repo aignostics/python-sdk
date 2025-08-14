@@ -25,21 +25,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir, record_property) -> None:  #
     7. No longer finds any of the 9 files
     8. Tries to delete a file that does not exist and gets "Object with key '{file}' not found message
     """
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "CLI-CLOUD-STORAGE-OPERATIONS")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
-    record_property(
-        "tested-item-id",
-        (
-            "TEST-SWR-BUCKET-1-FILE-UPLOAD, "
-            "TEST-SWR-BUCKET-2-OBJECT-SEARCH, "
-            "TEST-SWR-BUCKET-3-FILE-DOWNLOAD, "
-            "TEST-SWR-BUCKET-4-OBJECT-DELETION, "
-            "TEST-SWR-BUCKET-4-NO-OBJECTS-FOUND, "
-            "TEST-SWR-BUCKET-6-BULK-PURGE"
-        ),
-    )
-
+    record_property("tested-item-id", "TC-BUCKET-CLI-01")
     import re
 
     import psutil
@@ -160,17 +146,14 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir, record_property) -> None:  #
     assert f"No objects found matching pattern ['{non_existent_file}']" in normalize_output(result.stdout)
 
 
-def test_cli_bucket_purge(runner: CliRunner, record_property) -> None:
+def test_cli_bucket_purge(runner: CliRunner) -> None:
     """Check bucket purge command runs successfully."""
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "CLI-CLOUD-STORAGE-OPERATIONS")
     result = runner.invoke(cli, ["bucket", "purge", "--dry-run"])
     assert result.exit_code == 0
 
 
-def test_cli_bucket_info_settings(runner: CliRunner, record_property) -> None:
+def test_cli_bucket_info_settings(runner: CliRunner) -> None:
     """Check settings in system info with proper defaults."""
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
     result = runner.invoke(cli, ["system", "info"])
     assert result.exit_code == 0
 

@@ -6,9 +6,8 @@ from pydantic import ValidationError
 from aignostics.bucket._settings import Settings
 
 
-def test_signed_url_upload_settings(record_property) -> None:
+def test_signed_url_upload_settings() -> None:
     """Test upload settings, happy and not so happy path."""
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     # Test default works
     settings = Settings()
     assert settings.upload_signed_url_expiration_seconds == 2 * 60 * 60  # 2 hours
@@ -37,9 +36,8 @@ def test_signed_url_upload_settings(record_property) -> None:
         )
 
 
-def test_signed_url_download_settings(record_property) -> None:
+def test_signed_url_download_settings() -> None:
     """Test download settings, happy and not so happy path."""
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
     # Test default works (default is max: 7 days)
     settings = Settings()
     assert settings.download_signed_url_expiration_seconds == 7 * 24 * 60 * 60  # 7 days

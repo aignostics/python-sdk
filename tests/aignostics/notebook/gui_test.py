@@ -9,10 +9,7 @@ from tests.conftest import assert_notified
 
 async def test_gui_marimo_extension(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
     """Test that the user can install and launch Marimo via the GUI."""
-    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "TEST-SWR-NOTEBOOK-2-MANAGEMENT-INTERFACE")
-
+    record_property("tested-item-id", "TC-NOTEBOOK-GUI-01")
     gui_register_pages()
 
     # Step 1: Check we are on the Notebook page

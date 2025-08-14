@@ -41,9 +41,8 @@ if find_spec("sentry_sdk"):
         ):
             yield
 
-    def test_validate_url_scheme(record_property) -> None:
+    def test_validate_url_scheme() -> None:
         """Test URL scheme validation."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         import urllib.parse
 
         # Valid case
@@ -55,9 +54,8 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_MISSING_SCHEME)):
             _validate_url_scheme(invalid_url)
 
-    def test_validate_url_netloc(record_property) -> None:
+    def test_validate_url_netloc() -> None:
         """Test network location validation."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         import urllib.parse
 
         # Valid case
@@ -69,9 +67,8 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_MISSING_NETLOC)):
             _validate_url_netloc(invalid_url)
 
-    def test_validate_https_scheme(record_property) -> None:
+    def test_validate_https_scheme() -> None:
         """Test HTTPS scheme validation."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         import urllib.parse
 
         # Valid case
@@ -83,9 +80,8 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_NON_HTTPS)):
             _validate_https_scheme(invalid_url)
 
-    def test_validate_sentry_domain(record_property) -> None:
+    def test_validate_sentry_domain() -> None:
         """Test Sentry domain validation."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         import urllib.parse
 
         # Valid cases
@@ -105,22 +101,19 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_INVALID_DOMAIN)):
             _validate_sentry_domain(invalid_netloc)
 
-    def test_validate_https_dsn_with_valid_dsn(record_property) -> None:
+    def test_validate_https_dsn_with_valid_dsn() -> None:
         """Test DSN validation with valid DSN."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         valid_dsn = SecretStr(VALID_DSN)
         result = _validate_https_dsn(valid_dsn)
         assert result is valid_dsn  # Should return the same object
 
-    def test_validate_https_dsn_with_none(record_property) -> None:
+    def test_validate_https_dsn_with_none() -> None:
         """Test DSN validation with None value."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         result = _validate_https_dsn(None)
         assert result is None  # Should return None unchanged
 
-    def test_validate_https_dsn_invalid_cases(record_property) -> None:
+    def test_validate_https_dsn_invalid_cases() -> None:
         """Test DSN validation with various invalid cases."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         # Missing scheme
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_MISSING_SCHEME)):
             _validate_https_dsn(SecretStr("//invalid.com"))
@@ -137,9 +130,8 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_INVALID_DOMAIN)):
             _validate_https_dsn(SecretStr("https://user@example.com"))
 
-    def test_sentry_initialize_with_no_dsn(mock_environment: None, record_property) -> None:
+    def test_sentry_initialize_with_no_dsn(mock_environment: None) -> None:
         """Test sentry_initialize with no DSN."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings:
             mock_settings = mock.MagicMock()
             mock_settings.dsn = None
@@ -148,9 +140,8 @@ if find_spec("sentry_sdk"):
             result = sentry_initialize()
             assert result is False  # Should return False when no DSN is provided
 
-    def test_sentry_initialize_with_valid_dsn(mock_environment: None, record_property) -> None:
+    def test_sentry_initialize_with_valid_dsn(mock_environment: None) -> None:
         """Test sentry_initialize with a valid DSN."""
-        record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
         with (
             mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings,
             mock.patch("sentry_sdk.init") as mock_sentry_init,

@@ -16,36 +16,31 @@ THE_VALUE = "THE_VALUE"
 
 
 @pytest.mark.scheduled
-def test_cli_health_json(runner: CliRunner, record_property) -> None:
+def test_cli_health_json(runner: CliRunner) -> None:
     """Check health is true."""
-    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
     assert '"status": "UP"' in result.output
 
 
 @pytest.mark.scheduled
-def test_cli_health_yaml(runner: CliRunner, record_property) -> None:
+def test_cli_health_yaml(runner: CliRunner) -> None:
     """Check health is true."""
-    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
     assert result.exit_code == 0
     assert "status: UP" in result.output
 
 
 @pytest.mark.sequential
-def test_cli_info(runner: CliRunner, record_property) -> None:
+def test_cli_info(runner: CliRunner) -> None:
     """Check aignostics.log in outpu of system info."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     result = runner.invoke(cli, ["system", "info"])
     assert result.exit_code == 0
     assert "aignostics.log" in result.output
 
 
 @pytest.mark.sequential
-def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture, record_property) -> None:
+def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture) -> None:
     """Check secrets only shown if requested.
 
     This test verifies that secrets are properly masked by default and only shown
@@ -53,7 +48,6 @@ def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture, r
     secret values in test failure output and disable logging to prevent secret
     exposure in logs.
     """
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     # Disable all logging to prevent secrets from appearing in logs
     with runner.isolated_filesystem(), caplog.at_level(logging.CRITICAL + 1):
         # Set environment variable for the test
@@ -82,9 +76,8 @@ def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture, r
 
 @patch("aignostics.utils._gui.gui_register_pages")
 @patch("nicegui.ui.run")
-def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunner, record_property) -> None:
+def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunner) -> None:
     """Check serve command starts the server with API and GUI app."""
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
     # Create mocks for components needed in gui_run
     mock_app = MagicMock()
 
@@ -114,9 +107,8 @@ def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunn
         )
 
 
-def test_cli_openapi_yaml(runner: CliRunner, record_property) -> None:
+def test_cli_openapi_yaml(runner: CliRunner) -> None:
     """Check openapi command outputs YAML schema."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     result = runner.invoke(cli, ["system", "openapi", "--output-format", "yaml"])
     assert result.exit_code == 0
     # Check for common OpenAPI YAML elements
@@ -129,9 +121,8 @@ def test_cli_openapi_yaml(runner: CliRunner, record_property) -> None:
     assert "Error: Invalid API version 'v3'. Available versions: v1" in result.output
 
 
-def test_cli_openapi_json(runner: CliRunner, record_property) -> None:
+def test_cli_openapi_json(runner: CliRunner) -> None:
     """Check openapi command outputs JSON schema."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     result = runner.invoke(cli, ["system", "openapi"])
     assert result.exit_code == 0
     # Check for common OpenAPI JSON elements
@@ -140,17 +131,15 @@ def test_cli_openapi_json(runner: CliRunner, record_property) -> None:
     assert '"paths":' in result.output
 
 
-def test_cli_install(runner: CliRunner, record_property) -> None:
+def test_cli_install(runner: CliRunner) -> None:
     """Check install command runs successfully."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     result = runner.invoke(cli, ["system", "install"])
     assert result.exit_code == 0
 
 
 @pytest.mark.sequential
-def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path, record_property) -> None:
+def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path) -> None:
     """Check set, unset, and get commands."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
         (tmp_path / ".env").touch()
         result = runner.invoke(cli, ["system", "config", "unset", "test_key"])
@@ -182,9 +171,8 @@ def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path, record_p
 
 
 @pytest.mark.sequential
-def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Path, record_property) -> None:
+def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
     """Check disable/enable remote diagnostics."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
         (tmp_path / ".env").touch()
         result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
@@ -224,9 +212,8 @@ def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Pat
 
 
 @pytest.mark.sequential
-def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path, record_property) -> None:  # noqa: PLR0915
+def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> None:  # noqa: PLR0915
     """Check disable/enable remote diagnostics."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
         # Set up a mock .env file
         (tmp_path / ".env").touch()

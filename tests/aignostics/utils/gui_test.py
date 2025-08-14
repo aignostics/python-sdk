@@ -13,30 +13,22 @@ from aignostics.utils._gui import (
 )
 
 
-def test_base_page_builder_is_abstract(record_property) -> None:
+def test_base_page_builder_is_abstract() -> None:
     """Test that BasePageBuilder is an abstract class.
 
     Args:
-        record_property: Map test to Ketryx item
+        None
     """
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     with pytest.raises(TypeError):
         BasePageBuilder()  # type: ignore # Cannot instantiate abstract class
 
 
-def test_register_pages_is_abstract(record_property) -> None:
+def test_register_pages_is_abstract() -> None:
     """Test that register_pages is an abstract method.
 
     Args:
-        record_property: Map test to Ketryx item
+        None
     """
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
 
     class IncompletePageBuilder(BasePageBuilder):
         pass
@@ -46,17 +38,12 @@ def test_register_pages_is_abstract(record_property) -> None:
 
 
 @mock.patch("aignostics.utils._gui.locate_subclasses")
-def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMock, record_property) -> None:
+def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMock) -> None:
     """Test that gui_register_pages calls register_pages on all builders.
 
     Args:
         mock_locate_subclasses: Mock for locate_subclasses function
-        record_property: Map test to Ketryx item
     """
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     # Create mock page builders
     mock_builder1 = mock.MagicMock()
     mock_builder2 = mock.MagicMock()
@@ -73,18 +60,13 @@ def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMoc
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui")
-def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock, record_property) -> None:
+def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock) -> None:
     """Test gui_run with default parameters.
 
     Args:
         mock_ui: Mock for nicegui UI
         mock_register_pages: Mock for gui_register_pages function
-        record_property: Map test to Ketryx item
     """
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     with mock.patch("nicegui.native.find_open_port", return_value=8000):
         gui_run()
         mock_register_pages.assert_called_once()
@@ -100,18 +82,13 @@ def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mo
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui")
-def test_gui_run_custom_params(mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock, record_property) -> None:
+def test_gui_run_custom_params(mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock) -> None:
     """Test gui_run with custom parameters.
 
     Args:
         mock_ui: Mock for nicegui UI
         mock_register_pages: Mock for gui_register_pages function
-        record_property: Map test to Ketryx item
     """
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     gui_run(
         native=False,
         show=True,
@@ -134,17 +111,12 @@ def test_gui_run_custom_params(mock_ui: mock.MagicMock, mock_register_pages: moc
 
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", True)
 @mock.patch("nicegui.ui")
-def test_gui_run_in_container_with_native(mock_ui: mock.MagicMock, record_property) -> None:
+def test_gui_run_in_container_with_native(mock_ui: mock.MagicMock) -> None:
     """Test that gui_run raises ValueError when running native in container.
 
     Args:
         mock_ui: Mock for nicegui UI
-        record_property: Map test to Ketryx item
     """
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-16-NOTEBOOK-WEB-INTEGRATION-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     with pytest.raises(ValueError) as excinfo:
         gui_run(native=True)
     assert "Native GUI cannot be run in a container" in str(excinfo.value)

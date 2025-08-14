@@ -6,11 +6,8 @@ from aignostics.bucket._service import Service
 
 
 @mock.patch("aignostics.bucket._service.Service._get_s3_client")
-def test_create_signed_upload_url_expires_in_3600_seconds(mock_get_s3_client: mock.MagicMock, record_property) -> None:
+def test_create_signed_upload_url_expires_in_3600_seconds(mock_get_s3_client: mock.MagicMock) -> None:
     """Test that create_signed_upload_url calls generate_presigned_url with ExpiresIn of 3600 seconds."""
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
-    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Arrange
     mock_s3_client = mock.MagicMock()
     mock_s3_client.generate_presigned_url.return_value = "https://example.com/signed-upload-url"
@@ -34,11 +31,8 @@ def test_create_signed_upload_url_expires_in_3600_seconds(mock_get_s3_client: mo
 
 
 @mock.patch("aignostics.bucket._service.Service._get_s3_client")
-def test_create_signed_download_url_expires_in_7_days(mock_get_s3_client: mock.MagicMock, record_property) -> None:
+def test_create_signed_download_url_expires_in_7_days(mock_get_s3_client: mock.MagicMock) -> None:
     """Test that create_signed_download_url calls generate_presigned_url with ExpiresIn of 7 days (604800 seconds)."""
-    record_property("tested-item-id", "ADR-6-CLOUD-STORAGE-INFRASTRUCTURE")
-    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
     # Arrange
     mock_s3_client = mock.MagicMock()
     mock_s3_client.generate_presigned_url.return_value = "https://example.com/signed-download-url"

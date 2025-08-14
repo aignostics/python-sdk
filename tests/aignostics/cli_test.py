@@ -19,18 +19,16 @@ BUILT_WITH_LOVE = "built with love in Berlin"
 THE_VALUE = "THE_VALUE"
 
 
-def test_cli_built_with_love(runner, record_property) -> None:
+def test_cli_built_with_love(runner) -> None:
     """Check epilog shown."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     result = runner.invoke(cli, ["--help"])
     assert result.exit_code == 0
     assert BUILT_WITH_LOVE in result.output
     assert __version__ in result.output
 
 
-def test_cli_fails_on_invalid_setting_with_env_arg(record_property) -> None:
+def test_cli_fails_on_invalid_setting_with_env_arg() -> None:
     """Check system fails on boot with invalid setting using subprocess."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     # Run the CLI as a subprocess with environment variable
     cmd = [
         sys.executable,
@@ -65,9 +63,8 @@ def test_cli_fails_on_invalid_setting_with_env_arg(record_property) -> None:
 
 
 @pytest.mark.sequential
-def test_cli_fails_on_invalid_setting_with_environ(runner, record_property) -> None:
+def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
     """Check system fails on boot with invalid setting using CliRunner and environment variables."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     # Set the environment variable directly
     with runner.isolated_filesystem():
         # Set environment variable for the test
@@ -105,15 +102,13 @@ def test_cli_fails_on_invalid_setting_with_environ(runner, record_property) -> N
 
 if find_spec("nicegui"):
 
-    def test_cli_gui_help(runner: CliRunner, record_property) -> None:
+    def test_cli_gui_help(runner: CliRunner) -> None:
         """Check gui help works."""
-        record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
         result = runner.invoke(cli, ["launchpad", "--help"])
         assert result.exit_code == 0
 
-    def test_cli_gui_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch, record_property) -> None:
+    def test_cli_gui_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
         """Check gui component behaviors when launchpad command is executed."""
-        record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
         # Create mocks
         mock_ui_run_called = False
         mock_ui_run_args = {}
@@ -204,15 +199,13 @@ if find_spec("nicegui"):
 if find_spec("marimo") and find_spec("fastapi"):
     from fastapi import FastAPI
 
-    def test_cli_notebook_help(runner: CliRunner, record_property) -> None:
+    def test_cli_notebook_help(runner: CliRunner) -> None:
         """Check notebook help works."""
-        record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
         result = runner.invoke(cli, ["notebook", "--help"])
         assert result.exit_code == 0
 
-    def test_cli_notebook_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch, record_property) -> None:
+    def test_cli_notebook_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
         """Check uvicorn.run is called with FastAPI app from the notebook service."""
-        record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
         # Create a mock for uvicorn.run to capture the app instance
         mock_called = False
         mock_args = {}

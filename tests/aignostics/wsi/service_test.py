@@ -17,14 +17,8 @@ from aignostics.utils import gui_register_pages
 CONTENT_LENGTH_FALLBACK = 32066  # Fallback image size in bytes
 
 
-def test_serve_thumbnail_fails_on_missing_file(user: User, record_property) -> None:
+def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
     """Test that the thumbnail fails on missing file."""
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-10-THUMBNAIL-GENERATION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -37,13 +31,8 @@ def test_serve_thumbnail_fails_on_missing_file(user: User, record_property) -> N
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
-def test_serve_thumbnail_fails_on_unsupported_filetype(user: User, record_property) -> None:
+def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
     """Test that the thumbnail falls back on unsupported_filetype."""
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-10-THUMBNAIL-GENERATION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -56,14 +45,8 @@ def test_serve_thumbnail_fails_on_unsupported_filetype(user: User, record_proper
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
-def test_serve_thumbnail_for_dicom_thumbnail(user: User, silent_logging, record_property) -> None:
+def test_serve_thumbnail_for_dicom_thumbnail(user: User, silent_logging) -> None:
     """Test that the thumbnail route works for non-pyramidal dicom thumbnail file."""
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-10-THUMBNAIL-GENERATION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -82,13 +65,8 @@ def test_serve_thumbnail_for_dicom_thumbnail(user: User, silent_logging, record_
     assert image.height > 0
 
 
-def test_serve_thumbnail_for_dicom_pyramidal_small(user: User, record_property) -> None:
+def test_serve_thumbnail_for_dicom_pyramidal_small(user: User) -> None:
     """Test that the thumbnail route works for small pyramidal dicom file."""
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-10-THUMBNAIL-GENERATION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -107,14 +85,8 @@ def test_serve_thumbnail_for_dicom_pyramidal_small(user: User, record_property) 
     assert image.height > 0
 
 
-def test_serve_thumbnail_for_tiff(user: User, record_property) -> None:
+def test_serve_thumbnail_for_tiff(user: User) -> None:
     """Test that the thumbnail route works for dicom file."""
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-10-THUMBNAIL-GENERATION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -133,17 +105,13 @@ def test_serve_thumbnail_for_tiff(user: User, record_property) -> None:
     assert image.height > 0
 
 
-def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User, record_property) -> None:
+def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User) -> None:
     """Test that the tiff route serves the expected jpeg.
 
     - Spin up local webserver serving tests/resources/single-channel-ome.tiff
     - Open the tiff and check that the response is a valid jpeg
 
     """
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-10-THUMBNAIL-GENERATION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -189,18 +157,13 @@ def _local_http_server(directory: Path) -> str:
             print("Warning: Server thread did not terminate within timeout")
 
 
-def test_serve_tiff_to_jpeg(user: User, silent_logging, record_property) -> None:
+def test_serve_tiff_to_jpeg(user: User, silent_logging) -> None:
     """Test that the tiff route serves the expected jpeg.
 
     - Spin up local webserver serving tests/resources/single-channel-ome.tiff
     - Open the tiff and check that the response is a valid jpeg
 
     """
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-10-THUMBNAIL-GENERATION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "ADR-20-IMAGE-PROCESSING-AND-METADATA-SERVICE")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -223,17 +186,13 @@ def test_serve_tiff_to_jpeg(user: User, silent_logging, record_property) -> None
     assert image.height > 0
 
 
-def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir, record_property) -> None:
+def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
     """Test that the tiff route falls back as expected on broken tiff.
 
     - Spin up local webserver serving 4711 random bytes
     - Open the tiff and check the response
 
     """
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-11-FORMAT-CONVERSION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -249,17 +208,13 @@ def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir, record_prop
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
-def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir, record_property) -> None:
+def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
     """Test that the tiff route falls back as expected on tiff not found.
 
     - Spin up local webserver
     - Open the unavailable tiff and check the response
 
     """
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-11-FORMAT-CONVERSION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 
@@ -275,16 +230,12 @@ def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir, record_p
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
-def test_serve_tiff_to_jpeg_fails_on_tiff_url_broken(user: User, record_property) -> None:
+def test_serve_tiff_to_jpeg_fails_on_tiff_url_broken(user: User) -> None:
     """Test that the tiff route falls back as expected on invalid url as arg.
 
     - Open the broken url and check the response
 
     """
-    record_property("tested-item-id", "TEST-SWR-VISUALIZATION-11-FORMAT-CONVERSION")
-    record_property("tested-item-id", "ADR-2-WEB-INTERFACE-INTEGRATION")
-    record_property("tested-item-id", "API-NOTEBOOK-CONTENT-SERVING")
-
     gui_register_pages()
     client = TestClient(app)
 

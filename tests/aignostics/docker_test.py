@@ -20,9 +20,8 @@ BUILT_WITH_LOVE = "built with love in Berlin"
 @pytest.mark.docker
 @pytest.mark.long_running
 @pytest.mark.scheduled
-def test_core_docker_cli_help_with_love(docker_services, record_property) -> None:
+def test_core_docker_cli_help_with_love(docker_services) -> None:
     """Test the CLI help command with docker services returns expected output."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     out = docker_services._docker_compose.execute("run aignostics --help")
     out_str = out.decode("utf-8")
     assert "built with love in Berlin" in out_str

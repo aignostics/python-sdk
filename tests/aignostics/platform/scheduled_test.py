@@ -225,12 +225,7 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
     TEST_PARAMETERS,
 )
 def test_application_runs(
-    timeout: int,
-    application_version_id: str,
-    payload_type: str,
-    checksum_attribute_key: str,
-    request: FixtureRequest,
-    record_property,
+    timeout: int, application_version_id: str, payload_type: str, checksum_attribute_key: str, request: FixtureRequest
 ) -> None:
     """Test application runs.
 
@@ -244,27 +239,10 @@ def test_application_runs(
         payload_type (str): The type of payload to generate ('three_spots_test' or 'single_spot_heta').
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
         request (FixtureRequest): The pytest request object.
-        record_property: Function to report test result to Ketryx.
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    record_property("tested-item-id", "ADR-4-APPLICATION-RUN-DATA-PIPELINE")
-    record_property("tested-item-id", "ADR-5-AUTOMATED-WORKFLOW-COMPOSITION")
-    record_property("tested-item-id", "API-RESULT-DOWNLOAD")
-    record_property(
-        "tested-item-id",
-        (
-            "TEST-SWR-APPLICATION-9-SUCCESSFUL-SUBMISSION, "
-            "TEST-SWR-APPLICATION-10-LIST-RUNS, "
-            "TEST-SWR-APPLICATION-10-CANCEL-RUNS,"
-            "TEST-SWR-APPLICATION-13-SUCCESSFUL-DOWNLOAD, "
-            "TEST-SWR-APPLICATION-14-STATUS-INFORMATION, "
-            "TEST-SWR-APPLICATION-15-STATUS-INFORMATION, "
-            "TEST-SWR-APPLICATION-16-CHECKSUM-VALIDATION"
-        ),
-    )
-
     request.node.add_marker(pytest.mark.timeout(timeout))
 
     # Generate payload lazily during test execution

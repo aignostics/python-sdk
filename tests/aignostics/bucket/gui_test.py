@@ -15,17 +15,16 @@ from aignostics.utils import gui_register_pages
 from tests.conftest import assert_notified
 
 
-async def test_gui_bucket_shows(user: User, record_property) -> None:
+async def test_gui_bucket_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-22-CLOUD-STORAGE-WEB-INTERFACE")
     gui_register_pages()
     await user.open("/bucket")
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
 
 async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging, record_property) -> None:  # noqa: PLR0915
-    """E2E flow testing all bucket CLI commands.
+    """E2E flow testing all bucket CLI commands."""
+    record_property("tested-item-id", "TC-BUCKET-GUI-01")
 
     1. Creates 1 file in a subdir of size 100kb
     2. Uploads tmpdir to bucket using bucket upload command, prefix is {username}/test/
@@ -33,20 +32,6 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     5. Deletes the files using the GUI
     6. Checks the file is no longer there using the find command
     """
-    record_property("tested-item-id", "ADR-21-RESULT-DOWNLOAD-WEB-INTERFACE")
-    record_property("tested-item-id", "ADR-22-CLOUD-STORAGE-WEB-INTERFACE")
-    record_property(
-        "tested-item-id",
-        (
-            "TEST-SWR-BUCKET-1-FILE-UPLOAD, "
-            "TEST-SWR-BUCKET-2-OBJECT-SEARCH, "
-            "TEST-SWR-BUCKET-3-FILE-DOWNLOAD, "
-            "TEST-SWR-BUCKET-4-OBJECT-DELETION, "
-            "TEST-SWR-BUCKET-4-NO-OBJECTS-FOUND, "
-            "TEST-SWR-BUCKET-5-STORAGE-INTERFACE"
-        ),
-    )
-
     # Step 1: Create file
     test_prefix = "{username}/test-gui-" + "".join(random.choices(string.ascii_letters + string.digits, k=3))
     dir1 = tmp_path / "dir1"

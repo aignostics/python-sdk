@@ -10,26 +10,16 @@ DB_FAILURE = "DB failure"
 log = get_logger(__name__)
 
 
-def test_health_default_status(record_property) -> None:
+def test_health_default_status() -> None:
     """Test that health can be initialized with default UP status."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     health = Health(status=Health.Code.UP)
     assert health.status == Health.Code.UP
     assert health.reason is None
     assert health.components == {}
 
 
-def test_health_down_requires_reason(record_property) -> None:
+def test_health_down_requires_reason() -> None:
     """Test that a DOWN status requires a reason."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     # Valid case - DOWN with reason
     health = Health(status=Health.Code.DOWN, reason="Database connection failed")
     assert health.status == Health.Code.DOWN
@@ -40,19 +30,14 @@ def test_health_down_requires_reason(record_property) -> None:
         Health(status=Health.Code.DOWN)
 
 
-def test_health_up_with_reason_invalid(record_property) -> None:
+def test_health_up_with_reason_invalid() -> None:
     """Test that an UP status cannot have a reason."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     with pytest.raises(ValueError, match="Health UP must not have reason"):
         Health(status=Health.Code.UP, reason="This should not be allowed")
 
 
-def test_compute_health_from_components_no_components(record_property) -> None:
+def test_compute_health_from_components_no_components() -> None:
     """Test that health status is unchanged when there are no components."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     health = Health(status=Health.Code.UP)
     result = health.compute_health_from_components()
 
@@ -61,9 +46,8 @@ def test_compute_health_from_components_no_components(record_property) -> None:
     assert result is health  # Should return self
 
 
-def test_compute_health_from_components_already_down(record_property) -> None:
+def test_compute_health_from_components_already_down() -> None:
     """Test that health status remains DOWN with original reason when already DOWN."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     health = Health(status=Health.Code.DOWN, reason="Original failure")
     health.components = {
         "database": Health(status=Health.Code.DOWN, reason=DB_FAILURE),
@@ -77,13 +61,8 @@ def test_compute_health_from_components_already_down(record_property) -> None:
     assert result is health  # Should return self
 
 
-def test_compute_health_from_components_single_down(record_property) -> None:
+def test_compute_health_from_components_single_down() -> None:
     """Test that health status is DOWN when a single component is DOWN."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     health = Health(status=Health.Code.UP)
     health.components = {
         "database": Health(status=Health.Code.DOWN, reason=DB_FAILURE),
@@ -97,13 +76,8 @@ def test_compute_health_from_components_single_down(record_property) -> None:
     assert result is health  # Should return self
 
 
-def test_compute_health_from_components_multiple_down(record_property) -> None:
+def test_compute_health_from_components_multiple_down() -> None:
     """Test that health status is DOWN with correct reason when multiple components are DOWN."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-12-DATASET-DOWNLOAD-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     health = Health(status=Health.Code.UP)
     health.components = {
         "database": Health(status=Health.Code.DOWN, reason=DB_FAILURE),
@@ -123,11 +97,8 @@ def test_compute_health_from_components_multiple_down(record_property) -> None:
     assert result is health  # Should return self
 
 
-def test_compute_health_recursive(record_property) -> None:
+def test_compute_health_recursive() -> None:
     """Test that health status is recursively computed through the component tree."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-10-CLOUD-STORAGE-SERVICE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-15-NOTEBOOK-SERVER-LIFECYCLE-MANAGEMENT")
     # Create a nested health structure
     deep_component = Health(status=Health.Code.DOWN, reason="Deep failure")
     mid_component = Health(
@@ -150,25 +121,20 @@ def test_compute_health_recursive(record_property) -> None:
     assert health.components["other"].status == Health.Code.UP
 
 
-def test_str_representation_up(record_property) -> None:
+def test_str_representation_up() -> None:
     """Test string representation of UP health status."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     health = Health(status=Health.Code.UP)
     assert str(health) == "UP"
 
 
-def test_str_representation_down(record_property) -> None:
+def test_str_representation_down() -> None:
     """Test string representation of DOWN health status."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
-    record_property("tested-item-id", "ADR-23-SYSTEM-SETTINGS-WEB-INTERFACE")
     health = Health(status=Health.Code.DOWN, reason="Service unavailable")
     assert str(health) == "DOWN: Service unavailable"
 
 
-def test_validate_health_state_integration(record_property) -> None:
+def test_validate_health_state_integration() -> None:
     """Test the complete validation process with complex health tree."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     # Create a complex health tree
     health = Health(
         status=Health.Code.UP,
@@ -200,9 +166,8 @@ def test_validate_health_state_integration(record_property) -> None:
     assert health.components["monitoring"].status == Health.Code.UP
 
 
-def test_health_manually_set_components_validated(record_property) -> None:
+def test_health_manually_set_components_validated() -> None:
     """Test that manually setting components triggers validation."""
-    record_property("tested-item-id", "ADR-3-COMMAND-LINE-INTERFACE-ARCHITECTURE")
     health = Health(status=Health.Code.UP)
 
     # Now manually set components that would cause validation to fail
