@@ -62,7 +62,9 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> Non
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
-def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner, tmp_path: Path, record_property) -> None:
+def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
+    runner: CliRunner, tmp_path: Path, record_property
+) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-01")
     # Step 1: Prepare the file, by scanning for wsi and generating metadata
@@ -159,7 +161,9 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
 
 
-def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, tmp_path: Path, record_property) -> None:
+def test_cli_run_submit_and_describe_and_cancel_and_download(
+    runner: CliRunner, tmp_path: Path, record_property
+) -> None:
     """Check run submit command runs successfully."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-02")
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"

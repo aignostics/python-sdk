@@ -23,15 +23,17 @@ async def test_gui_bucket_shows(user: User) -> None:
 
 
 async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging, record_property) -> None:  # noqa: PLR0915
-    """E2E flow testing all bucket CLI commands."""
-    record_property("tested-item-id", "TC-BUCKET-GUI-01")
+    """E2E flow testing all bucket CLI commands.
 
+    Steps:
     1. Creates 1 file in a subdir of size 100kb
     2. Uploads tmpdir to bucket using bucket upload command, prefix is {username}/test/
     3. Checks the file is there using find comand
     5. Deletes the files using the GUI
     6. Checks the file is no longer there using the find command
     """
+    record_property("tested-item-id", "TC-BUCKET-GUI-01")
+
     # Step 1: Create file
     test_prefix = "{username}/test-gui-" + "".join(random.choices(string.ascii_letters + string.digits, k=3))
     dir1 = tmp_path / "dir1"
