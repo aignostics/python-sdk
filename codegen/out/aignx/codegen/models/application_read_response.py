@@ -89,5 +89,3 @@ class ApplicationReadResponse(BaseModel):
             "description": obj.get("description")
         })
         return _obj
-
-

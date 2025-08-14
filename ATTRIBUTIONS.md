@@ -132,7 +132,7 @@ SOFTWARE.
 
 ```
 
-## Faker (37.3.0) - MIT License
+## Faker (37.5.3) - MIT License
 
 Faker is a Python package that generates fake data for you.
 
@@ -205,7 +205,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## Markdown (3.8) - UNKNOWN
+## Markdown (3.8.2) - UNKNOWN
 
 Python implementation of John Gruber's Markdown.
 
@@ -357,7 +357,7 @@ SOFTWARE.
 
 ```
 
-## Pygments (2.19.1) - BSD License
+## Pygments (2.19.2) - BSD License
 
 Pygments is a syntax highlighting package written in Python.
 
@@ -463,7 +463,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
+<<<<<<< HEAD
 ## aignostics (0.2.104) - MIT License
+=======
+## accessible-pygments (0.0.5) - BSD License
+
+A collection of accessible pygments styles
+
+* URL: https://github.com/Quansight-Labs/accessible-pygments
+* Author(s): Stephannie Jimenez Gacha <steff456@hotmail.com>, Tania Allard <trallard@bitsandchips.me>
+* Maintainer(s): Gabriel Fouasnon <gabriel@fouasnon.com>
+
+### License Text
+
+```
+BSD 3-Clause License
+
+Copyright (c) 2022, Quansight Labs
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+```
+
+## aignostics (0.2.106) - MIT License
+>>>>>>> origin/main
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -1012,7 +1059,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ```
 
-## aiohttp (3.12.14) - Apache-2.0
+## aiohttp (3.12.15) - Apache-2.0 AND MIT
 
 Async http client/server framework (asyncio)
 
@@ -1365,9 +1412,9 @@ SOFTWARE.
 
 ```
 
-## anyio (4.9.0) - MIT License
+## anyio (4.10.0) - UNKNOWN
 
-High level compatibility layer for multiple asynchronous event loop implementations
+High-level concurrency and networking framework on top of asyncio or Trio
 
 * URL: https://anyio.readthedocs.io/en/stable/versionhistory.html
 * Author(s): Alex Grönholm <alex.gronholm@nextday.fi>
@@ -1911,13 +1958,12 @@ SOFTWARE.
 
 ```
 
-## argon2-cffi-bindings (21.2.0) - MIT License
+## argon2-cffi-bindings (25.1.0) - UNKNOWN
 
 Low-level CFFI bindings for Argon2
 
-* URL: https://github.com/hynek/argon2-cffi-bindings
-* Author(s): Hynek Schlawack
-* Maintainer(s): Hynek Schlawack
+* URL: https://github.com/hynek/argon2-cffi-bindings/blob/main/CHANGELOG.md
+* Author(s): Hynek Schlawack <hs@ox.cx>
 
 ### License Text
 
@@ -2160,7 +2206,7 @@ Better dates & times for Python
 
 ```
 
-## asgiref (3.8.1) - BSD License
+## asgiref (3.9.1) - BSD License
 
 ASGI specs, helper code, and adapters
 
@@ -2463,40 +2509,6 @@ Classes Without Boilerplate
 The MIT License (MIT)
 
 Copyright (c) 2015 Hynek Schlawack and the attrs contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
-## auth0-python (4.10.0) - MIT License
-
-UNKNOWN
-
-* URL: https://auth0.com
-* Author(s): Auth0
-
-### License Text
-
-```
-The MIT License (MIT)
-
-Copyright (c) 2017 Auth0, Inc. <support@auth0.com> (http://auth0.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -3302,7 +3314,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
+<<<<<<< HEAD
 ## boto3 (1.39.8) - Apache Software License
+=======
+## boto3 (1.40.3) - Apache Software License
+>>>>>>> origin/main
 
 The AWS SDK for Python
 
@@ -3500,7 +3516,11 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
+<<<<<<< HEAD
 ## botocore (1.39.8) - Apache Software License
+=======
+## botocore (1.40.3) - Apache Software License
+>>>>>>> origin/main
 
 Low-level, data-driven core of boto 3.
 
@@ -3756,7 +3776,7 @@ one at http://mozilla.org/MPL/2.0/.
 
 ```
 
-## bottle (0.13.3) - MIT License
+## bottle (0.13.4) - MIT License
 
 Fast and simple WSGI-framework for small web-applications.
 
@@ -3788,7 +3808,7 @@ THE SOFTWARE.
 
 ```
 
-## bracex (2.5.post1) - MIT License
+## bracex (2.6) - MIT License
 
 Bash style brace expander.
 
@@ -3800,7 +3820,7 @@ Bash style brace expander.
 ```
 MIT License
 
-Copyright (c) 2018 - 2024 Isaac Muse
+Copyright (c) 2018 - 2025 Isaac Muse
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -3822,7 +3842,7 @@ SOFTWARE.
 
 ```
 
-## bump-my-version (1.2.0) - MIT License
+## bump-my-version (1.2.1) - MIT License
 
 Version bump your Python project
 
@@ -3889,7 +3909,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## certifi (2025.4.26) - Mozilla Public License 2.0 (MPL 2.0)
+## certifi (2025.8.3) - Mozilla Public License 2.0 (MPL 2.0)
 
 Python package for providing Mozilla's CA Bundle.
 
@@ -4699,7 +4719,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## comm (0.2.2) - BSD License
+## comm (0.2.3) - BSD License
 
 Jupyter Python Comm implementation, for usage in ipykernel, xeus-python etc.
 
@@ -4741,7 +4761,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## contourpy (1.3.2) - BSD License
+## contourpy (1.3.3) - BSD License
 
 Python library for calculating contours of 2D quadrilateral grids
 
@@ -4783,12 +4803,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## coverage (7.8.2) - Apache-2.0
+## coverage (7.10.2) - Apache-2.0
 
 Code coverage measurement for Python
 
 * URL: https://github.com/nedbat/coveragepy
-* Author(s): Ned Batchelder and 240 others
+* Author(s): Ned Batchelder and 242 others
 
 ### License Text
 
@@ -4973,7 +4993,7 @@ Code coverage measurement for Python
 
 ```
 
-## cramjam (2.10.0) - MIT
+## cramjam (2.11.0) - MIT
 
 Thin Python bindings to de/compression algorithms in Rust
 
@@ -5007,7 +5027,7 @@ SOFTWARE.
 
 ```
 
-## cryptography (45.0.3) - Apache-2.0 OR BSD-3-Clause
+## cryptography (45.0.6) - Apache-2.0 OR BSD-3-Clause
 
 cryptography is a package which provides cryptographic recipes and primitives to Python developers.
 
@@ -5241,7 +5261,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-## cyclonedx-bom (6.1.1) - Apache Software License
+## cyclonedx-bom (7.0.0) - Apache Software License
 
 CycloneDX Software Bill of Materials (SBOM) generator for Python projects and environments
 
@@ -5699,7 +5719,7 @@ CycloneDX community (https://cyclonedx.org/).
 
 ```
 
-## debugpy (1.8.14) - MIT License
+## debugpy (1.8.15) - MIT License
 
 An implementation of the Debug Adapter Protocol for Python
 
@@ -6162,7 +6182,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## distlib (0.3.9) - Python Software Foundation License
+## distlib (0.4.0) - Python Software Foundation License
 
 Distribution utilities
 
@@ -6712,12 +6732,12 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## duckdb (1.2.1) - MIT License
+## duckdb (1.3.2) - MIT License
 
 DuckDB in-process database
 
-* URL: https://www.duckdb.org
-* Maintainer(s): Hannes Muehleisen
+* URL: https://github.com/duckdb/duckdb/blob/main/tools/pythonpkg
+* Author(s): Hannes Muehleisen <hannes@cwi.nl>
 
 ### License Text
 
@@ -7335,7 +7355,7 @@ THE SOFTWARE.
 
 ```
 
-## fastapi-cloud-cli (0.1.2) - MIT License
+## fastapi-cloud-cli (0.1.5) - MIT License
 
 Deploy and manage FastAPI Cloud apps from the command line 🚀
 
@@ -7635,7 +7655,7 @@ For more information, please refer to <http://unlicense.org>
 
 ```
 
-## fonttools (4.58.2) - MIT
+## fonttools (4.59.0) - MIT
 
 Tools to manipulate font files
 
@@ -8056,7 +8076,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 ```
 
-## frozenlist (1.6.2) - Apache-2.0
+## frozenlist (1.7.0) - Apache-2.0
 
 A list-like structure which implements collections.abc.MutableSequence
 
@@ -8312,7 +8332,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## furo (2024.8.6) - MIT License
+## furo (2025.7.19) - MIT License
 
 A clean customisable Sphinx documentation theme.
 
@@ -8344,14 +8364,14 @@ IN THE SOFTWARE.
 
 ```
 
-## git-cliff (2.9.1) - MIT OR Apache-2.0
+## git-cliff (2.10.0) - MIT OR Apache-2.0
 
 A highly customizable changelog generator ⛰️
 
 * URL: https://github.com/orhun/git-cliff
 * Author(s): git-cliff contributors <git-cliff@protonmail.com>
 
-## google-api-core (2.25.0) - Apache Software License
+## google-api-core (2.25.1) - Apache Software License
 
 Google API client core library
 
@@ -10558,7 +10578,36 @@ SOFTWARE.
 
 ```
 
-## ipykernel (6.29.5) - BSD License
+## ipykernel (6.30.1) - BSD 3-Clause License
+
+Copyright (c) 2015, IPython Development Team
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 IPython Kernel for Jupyter
 
@@ -10601,7 +10650,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## ipython (9.3.0) - BSD License
+## ipython (9.4.0) - BSD License
 
 IPython: Productive Interactive Computing
 
@@ -11244,7 +11293,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
+<<<<<<< HEAD
 ## jsonschema (4.24.1) - UNKNOWN
+=======
+## jsonschema (4.25.0) - UNKNOWN
+>>>>>>> origin/main
 
 An implementation of JSON Schema validation for Python
 
@@ -11436,7 +11489,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## jupyter-lsp (2.2.5) - BSD License
+## jupyter-lsp (2.2.6) - BSD License
 
 Multi-Language Server WebSocket proxy for Jupyter Notebook/Lab server
 
@@ -11652,7 +11705,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## jupyterlab (4.4.3) - BSD License
+## jupyterlab (4.4.5) - BSD License
 
 JupyterLab computational environment
 
@@ -12168,7 +12221,38 @@ to indicate the copyright and license terms:
 
 ```
 
-## license-expression (30.4.1) - Apache-2.0
+## lark (1.2.2) - MIT License
+
+a modern parsing library
+
+* URL: https://github.com/lark-parser/lark
+* Author(s): Erez Shinan <erezshin@gmail.com>
+
+### License Text
+
+```
+Copyright © 2017 Erez Shinan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+```
+
+## license-expression (30.4.4) - Apache-2.0
 
 license-expression is a comprehensive utility library to parse, compare, simplify and normalize license expressions (such as SPDX license expressions) using boolean logic.
 
@@ -12218,7 +12302,11 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
+<<<<<<< HEAD
 ## logfire (3.24.2) - MIT License
+=======
+## logfire (4.1.0) - MIT License
+>>>>>>> origin/main
 
 The best Python observability tool! 🪵🔥
 
@@ -12252,7 +12340,7 @@ SOFTWARE.
 
 ```
 
-## loro (1.5.1) - UNKNOWN
+## loro (1.5.3) - UNKNOWN
 
 Python bindings for [Loro](https://loro.dev)
 
@@ -12364,219 +12452,15 @@ Copyright 2010-2020 - Ronald Oussoren
 
 ```
 
+<<<<<<< HEAD
 ## marimo (0.14.11) - Apache Software License
+=======
+## marimo (0.14.16) - Apache Software License
+>>>>>>> origin/main
 
 A library for making reactive notebooks and apps
 
 * URL: https://github.com/marimo-team/marimo
-
-### License Text
-
-```
-
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
-
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-   1. Definitions.
-
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
-
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
-
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
-
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
-
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
-
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
-
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
-
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
-
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
-
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
-
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
-
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
-
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
-
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
-
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
-
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
-
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
-
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
-
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
-
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
-
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
-
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
-
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
-
-   END OF TERMS AND CONDITIONS
-
-   APPENDIX: How to apply the Apache License to your work.
-
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
-
-   Copyright [yyyy] [name of copyright owner]
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-
-```
 
 ## markdown-it-py (3.0.0) - MIT License
 
@@ -12612,7 +12496,7 @@ SOFTWARE.
 
 ```
 
-## markdown2 (2.5.3) - MIT License
+## markdown2 (2.5.4) - MIT License
 
 A fast and complete Python implementation of Markdown
 
@@ -12718,7 +12602,7 @@ THE SOFTWARE.
 
 ```
 
-## matplotlib (3.10.3) - Python Software Foundation License
+## matplotlib (3.10.5) - Python Software Foundation License
 
 Python plotting package
 
@@ -13023,7 +12907,7 @@ SOFTWARE.
 
 ```
 
-## msgpack (1.1.0) - Apache Software License
+## msgpack (1.1.1) - Apache 2.0
 
 MessagePack serializer
 
@@ -13050,7 +12934,7 @@ Copyright (C) 2008-2011 INADA Naoki <songofacandy@gmail.com>
 
 ```
 
-## multidict (6.4.4) - Apache Software License
+## multidict (6.6.3) - Apache License 2.0
 
 multidict implementation
 
@@ -13076,7 +12960,11 @@ multidict implementation
 
 ```
 
+<<<<<<< HEAD
 ## mypy (1.17.0) - MIT License
+=======
+## mypy (1.17.1) - MIT License
+>>>>>>> origin/main
 
 Optional static typing for Python
 
@@ -13358,7 +13246,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## narwhals (1.42.0) - MIT License
+## narwhals (2.0.1) - MIT License
 
 Extremely lightweight compatibility layer between dataframe libraries
 
@@ -13593,7 +13481,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (2.21.1) - MIT License
+## nicegui (2.22.1) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -13672,7 +13560,7 @@ DAMAGE.
 
 ```
 
-## notebook (7.4.3) - BSD License
+## notebook (7.4.5) - BSD License
 
 Jupyter Notebook - A web-based notebook environment for interactive computing
 
@@ -13972,7 +13860,7 @@ Flexible test automation.
 
 ```
 
-## numpy (2.3.0) - BSD License
+## numpy (2.3.2) - BSD License
 
 Fundamental package for array computing in Python
 
@@ -14957,18 +14845,18 @@ License: LGPL-2.1-or-later
 
 ```
 
-## oauthlib (3.2.2) - BSD License
+## oauthlib (3.3.1) - BSD-3-Clause
 
 A generic, spec-compliant, thorough implementation of the OAuth request-signing logic
 
 * URL: https://github.com/oauthlib/oauthlib
 * Author(s): The OAuthlib Community
-* Maintainer(s): Ib Lundgren
+* Maintainer(s): Jonathan Huot
 
 ### License Text
 
 ```
-Copyright (c) 2019 The OAuthlib Community
+Copyright (c) The OAuthlib Community
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -14981,14 +14869,14 @@ modification, are permitted provided that the following conditions are met:
        notice, this list of conditions and the following disclaimer in the
        documentation and/or other materials provided with the distribution.
 
-    3. Neither the name of this project nor the names of its contributors may
-       be used to endorse or promote products derived from this software without
-       specific prior written permission.
+    3. Neither the name of the copyright holder nor the names of its
+       contributors may be used to endorse or promote products derived from this
+       software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
 FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
@@ -15564,7 +15452,7 @@ That's all there is to it!
 
 ```
 
-## opentelemetry-api (1.34.0) - Apache Software License
+## opentelemetry-api (1.36.0) - UNKNOWN
 
 OpenTelemetry Python API
 
@@ -15778,7 +15666,7 @@ OpenTelemetry Python API
 
 ```
 
-## opentelemetry-exporter-otlp-proto-common (1.34.0) - Apache Software License
+## opentelemetry-exporter-otlp-proto-common (1.36.0) - UNKNOWN
 
 OpenTelemetry Protobuf encoding
 
@@ -15992,7 +15880,7 @@ OpenTelemetry Protobuf encoding
 
 ```
 
-## opentelemetry-exporter-otlp-proto-http (1.34.0) - Apache Software License
+## opentelemetry-exporter-otlp-proto-http (1.36.0) - UNKNOWN
 
 OpenTelemetry Collector Protobuf over HTTP Exporter
 
@@ -16206,7 +16094,7 @@ OpenTelemetry Collector Protobuf over HTTP Exporter
 
 ```
 
-## opentelemetry-instrumentation (0.55b0) - Apache Software License
+## opentelemetry-instrumentation (0.57b0) - Apache Software License
 
 Instrumentation Tools & Auto Instrumentation for OpenTelemetry Python
 
@@ -16420,7 +16308,7 @@ Instrumentation Tools & Auto Instrumentation for OpenTelemetry Python
 
 ```
 
-## opentelemetry-instrumentation-asgi (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-asgi (0.57b0) - Apache Software License
 
 ASGI instrumentation for OpenTelemetry
 
@@ -16634,7 +16522,7 @@ ASGI instrumentation for OpenTelemetry
 
 ```
 
-## opentelemetry-instrumentation-dbapi (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-dbapi (0.57b0) - Apache Software License
 
 OpenTelemetry Database API instrumentation
 
@@ -16848,7 +16736,7 @@ OpenTelemetry Database API instrumentation
 
 ```
 
-## opentelemetry-instrumentation-fastapi (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-fastapi (0.57b0) - Apache Software License
 
 OpenTelemetry FastAPI Instrumentation
 
@@ -17062,7 +16950,7 @@ OpenTelemetry FastAPI Instrumentation
 
 ```
 
-## opentelemetry-instrumentation-httpx (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-httpx (0.57b0) - Apache Software License
 
 OpenTelemetry HTTPX Instrumentation
 
@@ -17276,7 +17164,7 @@ OpenTelemetry HTTPX Instrumentation
 
 ```
 
-## opentelemetry-instrumentation-jinja2 (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-jinja2 (0.57b0) - Apache Software License
 
 OpenTelemetry jinja2 instrumentation
 
@@ -17490,7 +17378,7 @@ OpenTelemetry jinja2 instrumentation
 
 ```
 
-## opentelemetry-instrumentation-requests (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-requests (0.57b0) - Apache Software License
 
 OpenTelemetry requests instrumentation
 
@@ -17704,7 +17592,7 @@ OpenTelemetry requests instrumentation
 
 ```
 
-## opentelemetry-instrumentation-sqlite3 (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-sqlite3 (0.57b0) - Apache Software License
 
 OpenTelemetry SQLite3 instrumentation
 
@@ -17918,7 +17806,7 @@ OpenTelemetry SQLite3 instrumentation
 
 ```
 
-## opentelemetry-instrumentation-system-metrics (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-system-metrics (0.57b0) - Apache Software License
 
 OpenTelemetry System Metrics Instrumentation
 
@@ -18132,7 +18020,7 @@ OpenTelemetry System Metrics Instrumentation
 
 ```
 
-## opentelemetry-instrumentation-tornado (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-tornado (0.57b0) - Apache Software License
 
 Tornado instrumentation for OpenTelemetry
 
@@ -18346,7 +18234,7 @@ Tornado instrumentation for OpenTelemetry
 
 ```
 
-## opentelemetry-instrumentation-urllib (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-urllib (0.57b0) - Apache Software License
 
 OpenTelemetry urllib instrumentation
 
@@ -18560,7 +18448,7 @@ OpenTelemetry urllib instrumentation
 
 ```
 
-## opentelemetry-instrumentation-urllib3 (0.55b0) - Apache Software License
+## opentelemetry-instrumentation-urllib3 (0.57b0) - Apache Software License
 
 OpenTelemetry urllib3 instrumentation
 
@@ -18774,7 +18662,7 @@ OpenTelemetry urllib3 instrumentation
 
 ```
 
-## opentelemetry-proto (1.34.0) - Apache Software License
+## opentelemetry-proto (1.36.0) - UNKNOWN
 
 OpenTelemetry Python Proto
 
@@ -18988,7 +18876,7 @@ OpenTelemetry Python Proto
 
 ```
 
-## opentelemetry-sdk (1.34.0) - Apache Software License
+## opentelemetry-sdk (1.36.0) - UNKNOWN
 
 OpenTelemetry Python SDK
 
@@ -19202,7 +19090,7 @@ OpenTelemetry Python SDK
 
 ```
 
-## opentelemetry-semantic-conventions (0.55b0) - Apache Software License
+## opentelemetry-semantic-conventions (0.57b0) - UNKNOWN
 
 OpenTelemetry Semantic Conventions
 
@@ -19416,14 +19304,14 @@ OpenTelemetry Semantic Conventions
 
 ```
 
-## opentelemetry-util-http (0.55b0) - Apache Software License
+## opentelemetry-util-http (0.57b0) - Apache Software License
 
 Web util for OpenTelemetry
 
 * URL: https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/util/opentelemetry-util-http
 * Author(s): OpenTelemetry Authors <cncf-opentelemetry-contributors@lists.cncf.io>
 
-## orjson (3.10.18) - Apache Software License; MIT License
+## orjson (3.11.1) - Apache Software License; MIT License
 
 Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy
 
@@ -19868,7 +19756,7 @@ A decorator to automatically detect mismatch when overriding a method.
 
 ```
 
-## packageurl-python (0.17.1) - MIT License
+## packageurl-python (0.17.4) - MIT License
 
 A purl aka. Package URL parser and builder
 
@@ -19891,7 +19779,7 @@ under the terms of *both* these licenses.
 
 ```
 
-## pandas (2.3.0) - BSD License
+## pandas (2.3.1) - BSD License
 
 Powerful data structures for data analysis, time series, and statistics
 
@@ -21679,7 +21567,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 ```
 
-## pathvalidate (3.2.3) - MIT License
+## pathvalidate (3.3.1) - MIT License
 
 pathvalidate is a Python library to sanitize/validate a string such as filenames/file-paths/etc.
 
@@ -23246,7 +23134,7 @@ the FAQ for more information on the distribution of modified source versions.
 
 ```
 
-## pip (25.1.1) - MIT License
+## pip (25.2) - UNKNOWN
 
 The PyPA recommended tool for installing Python packages.
 
@@ -24106,7 +23994,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## propcache (0.3.1) - Apache Software License
+## propcache (0.3.2) - Apache Software License
 
 Accelerated property cache
 
@@ -24556,7 +24444,7 @@ Beautiful, Pythonic protocol buffers
 
 ```
 
-## protobuf (5.29.5) - 3-Clause BSD License
+## protobuf (6.31.1) - 3-Clause BSD License
 
 UNKNOWN
 
@@ -24750,7 +24638,7 @@ SOFTWARE.
 
 ```
 
-## py-serializable (2.0.0) - Apache Software License
+## py-serializable (2.1.0) - Apache Software License
 
 Library for serializing and deserializing Python Objects to and from JSON and XML.
 
@@ -25082,7 +24970,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## pydantic (2.11.5) - MIT License
+## pydantic (2.11.7) - MIT License
 
 Data validation using Python type hints
 
@@ -25290,7 +25178,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## pyinstaller-hooks-contrib (2025.5) - Apache Software License; GNU General Public License v2 (GPLv2)
+## pyinstaller-hooks-contrib (2025.8) - Apache Software License; GNU General Public License v2 (GPLv2)
 
 Community maintained hooks for PyInstaller
 
@@ -25831,7 +25719,7 @@ JPEG-LS for Python via CharLS C++ Library
 * URL: https://github.com/pydicom/pyjpegls
 * Author(s): pydicom contributors
 
-## pymdown-extensions (10.15) - MIT License
+## pymdown-extensions (10.16.1) - MIT License
 
 Extension pack for Python Markdown.
 
@@ -25847,7 +25735,7 @@ Extension pack for Python Markdown.
 
 The MIT License (MIT)
 
-Copyright (c) 2014 - 2024 Isaac Muse
+Copyright (c) 2014 - 2025 Isaac Muse
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25957,7 +25845,7 @@ Complete Legal Terms: http://opensource.org/licenses/MIT
 
 ```
 
-## pyobjc-core (11.0) - MIT License
+## pyobjc-core (11.1) - MIT
 
 Python<->ObjC Interoperability Module
 
@@ -25965,7 +25853,7 @@ Python<->ObjC Interoperability Module
 * Author(s): Ronald Oussoren, bbum, SteveM, LeleG, many others stretching back through the reaches of time...
 * Maintainer(s): Ronald Oussoren
 
-## pyobjc-framework-Cocoa (11.0) - MIT License
+## pyobjc-framework-Cocoa (11.1) - MIT
 
 Wrappers for the Cocoa frameworks on macOS
 
@@ -25978,7 +25866,7 @@ Wrappers for the Cocoa frameworks on macOS
 (This is the MIT license, note that libffi-src is a separate product with its own license)
 
 Copyright 2002, 2003 - Bill Bumgarner, Ronald Oussoren, Steve Majewski, Lele Gaifax, et.al.
-Copyright 2003-2024 - Ronald Oussoren
+Copyright 2003-2025 - Ronald Oussoren
 
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -25988,7 +25876,7 @@ Copyright 2003-2024 - Ronald Oussoren
 
 ```
 
-## pyobjc-framework-Quartz (11.0) - MIT License
+## pyobjc-framework-Quartz (11.1) - MIT
 
 Wrappers for the Quartz frameworks on macOS
 
@@ -26001,7 +25889,7 @@ Wrappers for the Quartz frameworks on macOS
 (This is the MIT license, note that libffi-src is a separate product with its own license)
 
 Copyright 2002, 2003 - Bill Bumgarner, Ronald Oussoren, Steve Majewski, Lele Gaifax, et.al.
-Copyright 2003-2024 - Ronald Oussoren
+Copyright 2003-2025 - Ronald Oussoren
 
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -26011,14 +25899,14 @@ Copyright 2003-2024 - Ronald Oussoren
 
 ```
 
-## pyobjc-framework-Security (11.0) - MIT License
+## pyobjc-framework-Security (11.1) - MIT
 
 Wrappers for the framework Security on macOS
 
 * URL: https://github.com/ronaldoussoren/pyobjc
 * Author(s): Ronald Oussoren
 
-## pyobjc-framework-WebKit (11.0) - MIT License
+## pyobjc-framework-WebKit (11.1) - MIT
 
 Wrappers for the framework WebKit on macOS
 
@@ -26031,7 +25919,7 @@ Wrappers for the framework WebKit on macOS
 (This is the MIT license, note that libffi-src is a separate product with its own license)
 
 Copyright 2002, 2003 - Bill Bumgarner, Ronald Oussoren, Steve Majewski, Lele Gaifax, et.al.
-Copyright 2003-2024 - Ronald Oussoren
+Copyright 2003-2025 - Ronald Oussoren
 
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -26440,7 +26328,7 @@ THE SOFTWARE.
 
 ```
 
-## pytest-datadir (1.7.2) - MIT License
+## pytest-datadir (1.8.0) - MIT License
 
 pytest plugin for test data directories and files
 
@@ -26912,7 +26800,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The above BSD License Applies to all code, even that also covered by Apache 2.0.
 ```
 
-## python-dotenv (1.1.0) - BSD License
+## python-dotenv (1.1.1) - BSD License
 
 Read key-value pairs from a .env file and set them as environment variables
 
@@ -27154,7 +27042,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## pyzmq (26.4.0) - BSD License
+## pyzmq (27.0.1) - BSD License
 
 Python bindings for 0MQ
 
@@ -27535,12 +27423,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ```
 
-## retrying (1.3.4) - Apache Software License
+## retrying (1.4.2) - UNKNOWN
 
 Retrying
 
 * URL: https://github.com/groodt/retrying
-* Author(s): Greg Roodt
+* Author(s): Alex Kuang, Anthony McClosky, Cyrus Durgin, Daniel Nephin, Dougal Matthews, Greg Roodt, Haïkel Guémar, Hugo Klepsch, J Derek Wilson, James Page, Jason Dunkelberger, Job Evers, Jonathan Herriott, Josh Marshall, Joshua Harlow, Justin Turner Arthur, Maxym Shalenyi, Monty Taylor, Pierre-Yves Chibon, Ray Holder, Rees Dooley, Saul Shanabrook, Simon Dollé, Simeon Visser, Thomas Goirand
 
 ### License Text
 
@@ -27753,19 +27641,9 @@ Retrying
 
 ```
 Copyright 2013 Ray Holder
+Copyright 2015 the "retrying" Contributors
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
+SPDX-License-Identifier: Apache-2.0
 ```
 
 ## rfc3339-validator (0.1.4) - MIT License
@@ -27838,7 +27716,41 @@ SOFTWARE.
 
 ```
 
-## rich (14.0.0) - MIT License
+## rfc3987-syntax (1.1.0) - Apache Software License
+
+Helper functions to syntactically validate strings according to RFC 3987.
+
+* URL: https://github.com/willynilly/rfc3987-syntax
+* Author(s): Jan Kowalleck
+
+### License Text
+
+```
+MIT License
+
+Copyright (c) 2025 Will Riley
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+```
+
+## rich (14.1.0) - MIT License
 
 Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal
 
@@ -27905,7 +27817,7 @@ SOFTWARE.
 
 ```
 
-## rich-toolkit (0.14.8) - MIT License
+## rich-toolkit (0.14.9) - MIT License
 
 Rich toolkit for building command-line applications
 
@@ -27938,7 +27850,7 @@ SOFTWARE.
 
 ```
 
-## rignore (0.5.1) - MIT
+## rignore (0.6.4) - MIT
 
 Python Bindings for the ignore crate
 
@@ -28131,7 +28043,7 @@ d. Affirmer understands and acknowledges that Creative Commons is not a
 
 ```
 
-## rpds-py (0.25.1) - MIT
+## rpds-py (0.26.0) - MIT
 
 Python bindings to Rust's persistent data structures (rpds)
 
@@ -28298,12 +28210,16 @@ C version of reader, parser and emitter for ruamel.yaml derived from libyaml
 
 ```
 
+<<<<<<< HEAD
 ## ruff (0.12.4) - MIT License
+=======
+## ruff (0.12.7) - MIT License
+>>>>>>> origin/main
 
 An extremely fast Python linter and code formatter, written in Rust.
 
 * URL: https://docs.astral.sh/ruff
-* Author(s): Charlie Marsh <charlie.r.marsh@gmail.com>
+* Author(s): "Astral Software Inc." <hey@astral.sh>
 
 ### License Text
 
@@ -29709,7 +29625,7 @@ are:
 
 ```
 
-## s3transfer (0.13.0) - Apache Software License
+## s3transfer (0.13.1) - Apache Software License
 
 An Amazon S3 Transfer Manager
 
@@ -30179,7 +30095,7 @@ Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Pytho
 
 ```
 
-## selenium (4.32.0) - Apache Software License
+## selenium (4.34.2) - Apache 2.0
 
 Official Python bindings for Selenium WebDriver
 
@@ -30434,7 +30350,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
+<<<<<<< HEAD
 ## sentry-sdk (2.33.0) - BSD License
+=======
+## sentry-sdk (2.34.1) - BSD License
+>>>>>>> origin/main
 
 Python client for Sentry (https://sentry.io)
 
@@ -30682,13 +30602,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## smart-open (7.1.0) - MIT License
+## smart_open (7.3.0.post1) - MIT License
 
-Utils for streaming large files (S3, HDFS, GCS, Azure Blob Storage, gzip, bz2...)
+Utils for streaming large files (S3, HDFS, GCS, SFTP, Azure Blob Storage, gzip, bz2, zst...)
 
 * URL: https://github.com/piskvorky/smart_open
-* Author(s): Radim Rehurek
-* Maintainer(s): Radim Rehurek
+* Author(s): Radim Rehurek <me@radimrehurek.com>
 
 ### License Text
 
@@ -31007,7 +30926,7 @@ SOFTWARE.
 
 ```
 
-## sphinx-jinja2-compat (0.3.0) - MIT License
+## sphinx-jinja2-compat (0.4.0) - MIT License
 
 Patches Jinja2 v3 to restore compatibility with earlier Sphinx versions.
 
@@ -31039,7 +30958,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## sphinx-prompt (1.9.0) - BSD License
+## sphinx-prompt (1.10.0) - BSD License
 
 Sphinx directive to add unselectable prompt
 
@@ -31049,7 +30968,7 @@ Sphinx directive to add unselectable prompt
 ### License Text
 
 ```
-Copyright (c) 2013-2023, Stéphane Brunner
+Copyright (c) 2013-2025, Stéphane Brunner
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31367,7 +31286,7 @@ sphinxcontrib-serializinghtml is a sphinx extension which outputs "serialized" H
 * URL: https://www.sphinx-doc.org/
 * Author(s): Georg Brandl <georg@python.org>
 
-## sphinxext-opengraph (0.10.0) - UNKNOWN
+## sphinxext-opengraph (0.12.0) - UNKNOWN
 
 Sphinx Extension to enable OGP support
 
@@ -31501,7 +31420,7 @@ license:
 
 ```
 
-## starlette (0.46.2) - BSD License
+## starlette (0.47.2) - BSD License
 
 The little ASGI library that shines.
 
@@ -32946,7 +32865,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## types-python-dateutil (2.9.0.20250516) - UNKNOWN
+## types-python-dateutil (2.9.0.20250708) - UNKNOWN
 
 Typing stubs for python-dateutil
 
@@ -33478,7 +33397,7 @@ SOFTWARE.
 
 ```
 
-## typing_extensions (4.14.0) - UNKNOWN
+## typing_extensions (4.14.1) - UNKNOWN
 
 Backported and Experimental Type Hints for Python 3.9+
 
@@ -34064,12 +33983,12 @@ SOFTWARE.
 
 ```
 
-## uv (0.7.12) - Apache Software License; MIT License
+## uv (0.8.5) - Apache Software License; MIT License
 
 An extremely fast Python package and project manager, written in Rust.
 
 * URL: https://pypi.org/project/uv/
-* Author(s): uv
+* Author(s): "Astral Software Inc." <hey@astral.sh>
 
 ### License Text
 
@@ -34278,7 +34197,7 @@ An extremely fast Python package and project manager, written in Rust.
 
 ```
 
-## uvicorn (0.34.3) - BSD License
+## uvicorn (0.35.0) - BSD License
 
 The lightning-fast ASGI server.
 
@@ -34568,7 +34487,7 @@ SOFTWARE.
 
 ```
 
-## virtualenv (20.31.2) - MIT License
+## virtualenv (20.33.1) - MIT License
 
 Virtual Python Environment builder
 
@@ -34630,7 +34549,7 @@ limitations under the License.
 
 ```
 
-## watchfiles (1.0.5) - MIT License
+## watchfiles (1.1.0) - MIT License
 
 Simple, modern and high performance file watching and code reload in python.
 
@@ -34664,7 +34583,7 @@ SOFTWARE.
 
 ```
 
-## wcmatch (10.0) - MIT License
+## wcmatch (10.1) - MIT License
 
 Wildcard/glob file name matcher.
 
@@ -34676,7 +34595,7 @@ Wildcard/glob file name matcher.
 ```
 MIT License
 
-Copyright (c) 2018 - 2024 Isaac Muse
+Copyright (c) 2018 - 2025 Isaac Muse
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35192,7 +35111,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-## yarl (1.20.0) - Apache Software License
+## yarl (1.20.1) - Apache Software License
 
 Yet another URL library
 

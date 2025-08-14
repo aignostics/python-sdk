@@ -1,6 +1,10 @@
 [project]
 name = "aignostics"
+<<<<<<< HEAD
 version = "0.2.105"
+=======
+version = "0.2.140"
+>>>>>>> origin/main
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -76,8 +80,13 @@ dependencies = [
     # From Template
     "fastapi[standard,all]>=0.116.1",
     "humanize>=4.12.3",
+<<<<<<< HEAD
     "logfire[system-metrics]>=3.24.2",
     "nicegui[native]>=2.21.1",
+=======
+    "logfire[system-metrics]>=4.3.3",
+    "nicegui[native]>=2.22.2",
+>>>>>>> origin/main
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-instrumentation-httpx>=0.53b0",
     "opentelemetry-instrumentation-jinja2>=0.53b0",
@@ -97,15 +106,20 @@ dependencies = [
     "uptime>=3.0.1",
     # Custom
     "appdirs>=1.4.4",
+<<<<<<< HEAD
     "auth0-python>=4.10.0",
     "boto3>=1.39.8",
+=======
+    "boto3>=1.40.8",
+    "certifi>=2025.8.3",
+>>>>>>> origin/main
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
     "duckdb>=0.10.0,<=1.4.0",
     "fastparquet>=2024.11.0",
-    "google-cloud-storage>=3.2.0",
+    "google-cloud-storage>=3.3.0",
     "google-crc32c>=1.7.1",
-    "highdicom>=0.26.0",
+    "highdicom>=0.26.1",
     "httpx>=0.28.1",
     "idc-index-data==21.0.0",
     "ijson>=3.4.0",
@@ -133,7 +147,11 @@ pyinstaller = ["pyinstaller>=6.14.0"]
 jupyter = ["jupyter>=1.1.1"]
 marimo = [
     "cloudpathlib>=0.21.1",
+<<<<<<< HEAD
     "marimo>=0.14.11",
+=======
+    "marimo>=0.14.17",
+>>>>>>> origin/main
     "matplotlib>=3.10.3",
     "shapely>=2.1.0",
 ]
@@ -151,7 +169,11 @@ dev = [
     "nox[uv]>=2025.5.1",
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
+<<<<<<< HEAD
     "pre-commit>=4.1.0",
+=======
+    "pre-commit>=4.3.0",
+>>>>>>> origin/main
     "pyright>=1.1.403",
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
@@ -166,8 +188,13 @@ dev = [
     "pytest-timeout>=2.4.0",
     "pytest-watcher>=0.4.3",
     "pytest-xdist[psutil]>=3.8.0",
+<<<<<<< HEAD
     "ruff>=0.12.4",
     "scalene>=1.5.51",
+=======
+    "ruff>=0.12.8",
+    "scalene>=1.5.53",
+>>>>>>> origin/main
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-click>=6.0.0",
@@ -178,11 +205,16 @@ dev = [
     "sphinx_selective_exclude>=1.0.3",
     "sphinx-toolbox>=3.9.0",
     "sphinxext.opengraph>=0.9.1",
+<<<<<<< HEAD
     "swagger-plugin-for-sphinx>=5.1.2",
+=======
+    "swagger-plugin-for-sphinx>=5.1.3",
+>>>>>>> origin/main
     "tomli>=2.1.0",
-    "types-pyyaml>=6.0.12.20250516",
-    "types-requests>=2.32.4.20250611",
+    "types-pyyaml>=6.0.12.20250809",
+    "types-requests>=2.32.4.20250809",
     "watchdog>=6.0.0",
+    "uv>=0.8.9",                                                             # CVE-2025-54368                                                       # CVE-2025-54368
 ]
 
 [project.scripts]
@@ -219,6 +251,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "aiohttp>=3.12.14",                 # GHSA-9548-qrrj-x5pj
     "starlette>=0.47.2",                # GHSA-2c2j-9gv5-cj73
 ]
+required-version = ">=0.8.6" # CVE-2025-54368
 
 [tool.ruff]
 target-version = "py311"
@@ -355,7 +388,11 @@ source = ["src/"]
 
 
 [tool.bumpversion]
+<<<<<<< HEAD
 current_version = "0.2.105"
+=======
+current_version = "0.2.140"
+>>>>>>> origin/main
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"

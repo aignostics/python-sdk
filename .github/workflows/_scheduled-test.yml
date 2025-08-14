@@ -12,14 +12,18 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
 
       - name: Install uv
+<<<<<<< HEAD
         uses: astral-sh/setup-uv@7edac99f961f18b581bbd960d59d049f04c0002f # v6.4.1
+=======
+        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
+>>>>>>> origin/main
         with:
-          version: "0.6.3"
+          version-file: "pyproject.toml"
           enable-cache: true
           cache-dependency-glob: uv.lock
 
@@ -34,15 +38,8 @@ jobs:
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
-          envkey_AIGNOSTICS_LOGFIRE_TOKEN: "${{ secrets.AIGNOSTICS_LOGFIRE_TOKEN }}"
-          envkey_AIGNOSTICS_SENTRY_DSN: "${{ secrets.AIGNOSTICS_SENTRY_DSN }}"
-          envkey_AIGNOSTICS_API_ROOT: https://platform.aignostics.com
           envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
-          envkey_AIGNOSTICS_CLIENT_ID_INTERACTIVE: ${{ secrets.AIGNOSTICS_CLIENT_ID_INTERACTIVE }}
           envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
-          envkey_AIGNOSTICS_BUCKET_NAME: ${{ secrets.AIGNOSTICS_BUCKET_NAME }}
-          envkey_AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID: ${{ secrets.AIGNOSTICS_BUCKET_HMAC_ACCESS_KEY_ID }}
-          envkey_AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY: ${{ secrets.AIGNOSTICS_BUCKET_HMAC_SECRET_ACCESS_KEY }}
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access
@@ -80,13 +77,46 @@ jobs:
             echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-          # Provide heartbeat to bettersqtack for monitoring/alerting if heartbeat url is configured as secret
+          # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
           if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
-            if [ $EXIT_CODE -eq 0 ]; then
-              curl -s $BETTERSTACK_HEARTBEAT_URL
-            else
-              curl -s $BETTERSTACK_HEARTBEAT_URL/$EXIT_CODE
-            fi
+            BETTERSTACK_METADATA_PAYLOAD=$(jq -n \
+              --arg github_workflow "${{ github.workflow }}" \
+              --arg github_run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --arg github_run_id "${{ github.run_id }}" \
+              --arg github_job "${{ github.job }}" \
+              --arg github_sha "${{ github.sha }}" \
+              --arg github_actor "${{ github.actor }}" \
+              --arg github_repository "${{ github.repository }}" \
+              --arg github_ref "${{ github.ref }}" \
+              --arg job_status "${{ job.status }}" \
+              --arg github_event_name "${{ github.event_name }}" \
+              --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+              '{
+                github: {
+                  workflow: $github_workflow,
+                  run_url: $github_run_url,
+                  run_id: $github_run_id,
+                  job: $github_job,
+                  sha: $github_sha,
+                  actor: $github_actor,
+                  repository: $github_repository,
+                  ref: $github_ref,
+                  event_name: $github_event_name
+                },
+                job: {
+                  status: $job_status,
+                },
+                timestamp: $timestamp,
+              }'
+            )
+
+            curl \
+              --fail-with-body \
+              --silent \
+              --request POST \
+              --header "Content-Type: application/json" \
+              --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
+              "${BETTERSTACK_HEARTBEAT_URL}/${EXIT_CODE}"
           fi
           exit $EXIT_CODE
 

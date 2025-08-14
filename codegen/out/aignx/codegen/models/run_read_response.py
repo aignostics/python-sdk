@@ -106,5 +106,3 @@ class RunReadResponse(BaseModel):
             "triggered_by": obj.get("triggered_by")
         })
         return _obj
-
-

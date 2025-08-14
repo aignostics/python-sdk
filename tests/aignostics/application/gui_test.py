@@ -16,19 +16,18 @@ from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import get_logger, gui_register_pages
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
+from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION_ID
 
 if TYPE_CHECKING:
     from nicegui import ui
 
 logger = get_logger(__name__)
 
-HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.4"
-HETA_APPLICATION_ID = "he-tme"
-
 
 @pytest.mark.sequential
 async def test_gui_index(user: User) -> None:
     """Test that the user sees the index page, and sees the intro."""
+    # hello world
     gui_register_pages()
     await user.open("/")
     await user.should_see("Atlas H&E-TME")

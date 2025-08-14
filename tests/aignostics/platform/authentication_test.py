@@ -552,7 +552,7 @@ class TestSentryIntegration:
         mock_claims = {
             "sub": "user123",
             "org_id": "org456",
-            "aud": "test-audience",
+            "aud": "https://aignostics-platform-samia",
             "https://aignostics-platform-samia/role": "admin",
             "exp": int(time.time()) + 3600,
         }
@@ -576,11 +576,7 @@ class TestSentryIntegration:
             assert token == "test.token"  # noqa: S105 - Test credential
 
             # Verify sentry_sdk.set_user was called with correct user information
-            mock_sentry_sdk.set_user.assert_called_once_with({
-                "id": "user123",
-                "org_id": "org456",
-                "role": "admin",
-            })
+            mock_sentry_sdk.set_user.assert_called_once_with({"id": "user123", "org_id": "org456"})
 
     @staticmethod
     def test_get_token_sentry_unavailable(mock_settings) -> None:

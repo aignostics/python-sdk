@@ -14,6 +14,7 @@ from aignostics.notebook._service import MARIMO_SERVER_STARTUP_TIMEOUT, Service,
 from aignostics.utils import gui_register_pages
 
 
+@pytest.mark.sequential
 def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
     """Test the server can be started and stopped with real process.
 
@@ -33,22 +34,13 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
     service = None
 
     try:
-        # Create the service
         service = Service()
-
-        # Start the actual server (no mocking)
+        server_url = service.stop()  # Might be running from previous test
         server_url = service.start()
-
-        # Verify the URL is valid
         assert server_url.startswith("http://"), f"Invalid server URL: {server_url}"
-
-        # Stop the server
         service.stop()
 
-        # Verify that expected log messages were captured
         log_messages = [record.message for record in caplog.records]
-
-        # Check for server start message
         start_messages = [
             msg
             for msg in log_messages
@@ -101,6 +93,7 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
                 service.stop()
 
 
+@pytest.mark.sequential
 def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
     """Test notebook serving.
 
@@ -118,7 +111,7 @@ def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
     client = TestClient(app)
 
     try:
-        response = client.get("/notebook/4711?results_folder=/tmp")
+        response = client.get("/notebook/4711?results_folder=/tmp", timeout=60)
         assert response.status_code == 200
         content = response.content.decode("utf-8")
         assert "iframe" in content

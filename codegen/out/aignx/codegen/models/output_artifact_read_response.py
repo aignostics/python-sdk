@@ -98,5 +98,3 @@ class OutputArtifactReadResponse(BaseModel):
             "scope": obj.get("scope")
         })
         return _obj
-
-

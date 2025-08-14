@@ -402,13 +402,16 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             button.disable()
             button.props(add="loading")
         ui.navigate.to(f"/notebook/{run.application_run_id}?results_folder={quote(results_folder.as_posix())}")
+        ui.navigate.reload()  # TODO(Helmut): Find out why this workaround works. Was just a hunch ...
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
             with ui.expansion(text=f"Run {run.application_run_id}"):
                 ui.markdown(
                     f"""
+                    * Run ID: {run_data.application_run_id}
                     * Application Version: {run_data.application_version_id}
+                    * Triggered On: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
                     * Triggered by: {run_data.triggered_by}
                     * Organization: {run_data.organization_id}
                     """

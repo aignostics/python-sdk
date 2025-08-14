@@ -27,7 +27,7 @@ cli = typer.Typer(
 
 
 @cli.command()
-def upload(
+def upload(  # noqa: C901
     source: Annotated[
         Path,
         typer.Argument(
@@ -63,58 +63,70 @@ def upload(
 
     console.print(f"Uploading {source} to bucket...")
 
-    total_bytes = 0
-    files_count = 0
+    try:
+        total_bytes = 0
+        files_count = 0
 
-    if source.is_file():
-        total_bytes = source.stat().st_size
-        files_count = 1
-    else:
-        for file_path in source.glob("**/*"):
-            if file_path.is_file():
-                total_bytes += file_path.stat().st_size
-                files_count += 1
+        if source.is_file():
+            total_bytes = source.stat().st_size
+            files_count = 1
+        else:
+            for file_path in source.glob("**/*"):
+                if file_path.is_file():
+                    total_bytes += file_path.stat().st_size
+                    files_count += 1
 
-    console.print(f"Found {files_count} files with total size of {humanize.naturalsize(total_bytes)}")
+        console.print(f"Found {files_count} files with total size of {humanize.naturalsize(total_bytes)}")
 
-    username = psutil.Process().username().replace("\\", "_")
-    timestamp = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d_%H%M%S")
-    base_prefix = destination_prefix.format(username=username, timestamp=timestamp)
-    base_prefix = base_prefix.strip("/")
+        username = psutil.Process().username().replace("\\", "_")
+        timestamp = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        base_prefix = destination_prefix.format(username=username, timestamp=timestamp)
+        base_prefix = base_prefix.strip("/")
 
-    with Progress(
-        TextColumn(
-            f"[progress.description]Uploading from {source.name} to "
-            f"{Service().get_bucket_protocol()}:/{Service().get_bucket_name()}/{base_prefix}"
-        ),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeRemainingColumn(),
-        FileSizeColumn(),
-        TotalFileSizeColumn(),
-        TransferSpeedColumn(),
-        TextColumn("[progress.description]{task.description}"),
-    ) as progress:
-        task = progress.add_task(f"Uploading to {base_prefix}/...", total=total_bytes)
+        with Progress(
+            TextColumn(
+                f"[progress.description]Uploading from {source.name} to "
+                f"{Service().get_bucket_protocol()}:/{Service().get_bucket_name()}/{base_prefix}"
+            ),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeRemainingColumn(),
+            FileSizeColumn(),
+            TotalFileSizeColumn(),
+            TransferSpeedColumn(),
+            TextColumn("[progress.description]{task.description}"),
+        ) as progress:
+            task = progress.add_task(f"Uploading to {base_prefix}/...", total=total_bytes)
 
-        def update_progress(bytes_uploaded: int, file: Path) -> None:
-            relpath = file.relative_to(source)
-            progress.update(task, advance=bytes_uploaded, description=f"{relpath}")
+            def update_progress(bytes_uploaded: int, file: Path) -> None:
+                relpath = file.relative_to(source)
+                progress.update(task, advance=bytes_uploaded, description=f"{relpath}")
 
-        results = Service().upload(source, base_prefix, update_progress)
+            results = Service().upload(source, base_prefix, update_progress)
 
-    if results["success"]:
-        console.print(f"[green]Successfully uploaded {len(results['success'])} files:[/green]")
-        for key in results["success"]:
-            console.print(f"  [green]- {key}[/green]")
+        if results["success"]:
+            console.print(f"[green]Successfully uploaded {len(results['success'])} files:[/green]")
+            for key in results["success"]:
+                console.print(f"  [green]- {key}[/green]")
 
-    if results["failed"]:
-        console.print(f"[red]Failed to upload {len(results['failed'])} files:[/red]")
-        for key in results["failed"]:
-            console.print(f"  [red]- {key}[/red]")
+        if results["failed"]:
+            console.print(f"[red]Failed to upload {len(results['failed'])} files:[/red]")
+            for key in results["failed"]:
+                console.print(f"  [red]- {key}[/red]")
 
-    if not results["failed"]:
-        console.print("[green]All files uploaded successfully![/green]")
+        if not results["failed"]:
+            console.print("[green]All files uploaded successfully![/green]")
+
+    except ValueError as e:
+        msg = f"Failed to upload: {e!s}"
+        logger.exception(msg)
+        console.print(f"[warning]Warning:[/red] {e}")
+        sys.exit(2)
+    except Exception as e:
+        msg = f"Failed to upload: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
 
 
 @cli.command()
@@ -139,12 +151,17 @@ def find(
     except ValueError as e:
         msg = f"Failed to find objects matching {what or 'all'}: {e!s}"
         logger.exception(msg)
-        console.print(f"[red]Error:[/red] {e}")
+        console.print(f"[warning]Warning:[/warning] {e}")
         sys.exit(2)
+    except Exception as e:
+        msg = f"Failed to find objects matching {what or 'all'}: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
 
 
 @cli.command()
-def download(
+def download(  # noqa: C901, PLR0915
     what: Annotated[
         list[str] | None,
         typer.Argument(help="Patterns or keys to match object keys against - all if not specified."),
@@ -179,8 +196,13 @@ def download(
     except ValueError as e:
         msg = f"Failed to find objects matching {what or 'all'} on download to {destination}: {e!s}"
         logger.exception(msg)
-        console.print(f"[red]Error:[/red] {e}")
+        console.print(f"[warning]Warning:[/warning] {e}")
         sys.exit(2)
+    except Exception as e:
+        msg = f"Failed to find objects matching {what or 'all'} on download to {destination}: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
 
     from rich.console import Group  # noqa: PLC0415
     from rich.live import Live  # noqa: PLC0415
@@ -253,14 +275,19 @@ def download(
     except ValueError as e:
         msg = f"Failed to download objects matching {what or 'all'} to {destination}: {e!s}"
         logger.exception(msg)
-        console.print(f"[red]Error:[/red] {e!s}")
+        console.print(f"[error]Error:[/error] {e!s}")
         sys.exit(2)
+    except Exception as e:
+        msg = f"Failed to download objects matching {what or 'all'} to {destination}: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
 
     for downloaded_path in result.downloaded:
-        console.print(f"[green]✓[/green] Downloaded: {downloaded_path.name}")
+        console.print(f"[success]✓[/success] Downloaded: {downloaded_path.name}")
 
     for failed_key in result.failed:
-        console.print(f"[red]✗[/red] Failed: {failed_key}")
+        console.print(f"[error]✗[/error] Failed: {failed_key}")
 
     console.print(
         f"[bold]Summary:[/bold] [success]{result.downloaded_count}[/success] downloaded, "
@@ -298,8 +325,13 @@ def delete(
     except ValueError as e:
         msg = f"Failed to delete objects matching {what}: {e!s}"
         logger.exception(msg)
-        console.print(f"[red]Error:[/red] {e}")
+        console.print(f"[warning]Warning:[/warning] {e}")
         sys.exit(2)
+    except Exception as e:
+        msg = f"Failed to delete objects matching {what}: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
 
 
 @cli.command()
@@ -320,5 +352,10 @@ def purge(
     except ValueError as e:
         msg = f"Failed to purge bucket: {e!s}"
         logger.exception(msg)
-        console.print(f"[red]Error:[/red] {e}")
+        console.print(f"[warning]Warning:[/warning] {e}")
         sys.exit(2)
+    except Exception as e:
+        msg = f"Failed to purge bucket: {e!s}"
+        logger.exception(msg)
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)

@@ -1,16 +1,19 @@
 """Service of the platform module."""
 
+import json
 import time
-from datetime import datetime
 from http import HTTPStatus
 from typing import Any
 
 import urllib3
+from aignx.codegen.models import MeReadResponse as Me
+from aignx.codegen.models import OrganizationReadResponse as Organization
+from aignx.codegen.models import UserReadResponse as User
 from pydantic import BaseModel, computed_field
 
 from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, __version__, get_logger
 
-from ._authentication import CLAIM_ROLE, get_token, remove_cached_token, userinfo, verify_and_decode_token
+from ._authentication import get_token, remove_cached_token, verify_and_decode_token
 from ._client import Client
 from ._settings import Settings
 
@@ -26,6 +29,9 @@ class TokenInfo(BaseModel):
     scope: list[str]  # scope
     audience: list[str]  # aud
     authorized_party: str  # azp
+
+    org_id: str  # org_id
+    role: str  # https://audience/role
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -47,79 +53,84 @@ class TokenInfo(BaseModel):
         Returns:
             TokenInfo: Token information extracted from claims.
         """
+        audience = claims["aud"] if isinstance(claims["aud"], list) else [claims["aud"]]
+
         return cls(
             issuer=claims["iss"],
             issued_at=claims["iat"],
             expires_at=claims["exp"],
             scope=claims["scope"].split(),
-            audience=claims["aud"] if isinstance(claims["aud"], list) else [claims["aud"]],
+            audience=audience,
             authorized_party=claims["azp"],
-        )
-
-
-class UserProfile(BaseModel):
-    """Class to store info about the user."""
-
-    name: str | None = None  # userinfo.name
-    given_name: str | None = None  # userinfo.given_name
-    family_name: str | None = None  # userinfo.family_name
-    nickname: str | None = None  # userinfo.nickname
-    email: str | None = None  # userinfo.email
-    email_verified: bool | None = None  # userinfo.email_verified
-    picture: str | None = None  # userinfo.picture
-    updated_at: datetime | None = None  # userinfo.updated_at
-
-    @classmethod
-    def from_userinfo(cls, userinfo: dict[str, Any]) -> "UserProfile":
-        """Create UserProfile from auth0 userinfo.
-
-        Args:
-            userinfo (dict[str, Any] | None): User information dictionary from auth0.
-
-        Returns:
-            UserProfile: User information extracted from auth0 userinfo.
-        """
-        return cls(
-            name=userinfo.get("name"),
-            given_name=userinfo.get("given_name"),
-            family_name=userinfo.get("family_name"),
-            nickname=userinfo.get("nickname"),
-            email=userinfo.get("email"),
-            email_verified=userinfo.get("email_verified"),
-            picture=userinfo.get("picture"),
-            updated_at=userinfo.get("updated_at"),
+            org_id=claims["org_id"],
+            role=claims.get(audience[0] + "/role", "member"),
         )
 
 
 class UserInfo(BaseModel):
     """Class to store info about the user."""
 
-    id: str  # token.sub
-    org_id: str  # token.org_id
-    org_name: str | None  # token.org_name
     role: str  # token.CLAIM_ROLE
     token: TokenInfo
-    profile: UserProfile | None = None
+    user: User
+    organization: Organization
 
     @classmethod
-    def from_claims_and_userinfo(cls, claims: dict[str, Any], userinfo: dict[str, Any] | None = None) -> "UserInfo":
+    def from_claims_and_me(cls, claims: dict[str, Any], me: Me) -> "UserInfo":
         """Create UserInfo from JWT claims and optional auth0 userinfo.
 
         Args:
             claims (dict[str, Any]): JWT token claims dictionary.
-            userinfo (dict[str, Any] | None): Optional user information dictionary from auth0.
+            me (Me): Info about calling user and their oganisation.
 
         Returns:
             UserInfo: User information extracted from claims.
         """
+        token = TokenInfo.from_claims(claims)
         return cls(
-            id=claims["sub"],
-            org_id=claims["org_id"],
-            org_name=claims.get("org_name"),
-            role=claims[CLAIM_ROLE],
-            token=TokenInfo.from_claims(claims),
-            profile=UserProfile.from_userinfo(userinfo) if userinfo else None,
+            role=token.role,
+            token=token,
+            user=me.user,
+            organization=me.organization,
         )
+
+    def model_dump_secrets_masked(self) -> dict[str, Any]:
+        """Dump model to dict with sensitive organization and user secrets masked.
+
+        Returns:
+            dict[str, Any]: Dictionary representation with sensitive organization and user fields masked.
+        """
+        data = self.model_dump(mode="json")
+
+        # Define mapping of data keys to their sensitive fields
+        sensitive_fields_mapping = {
+            "organization": [
+                "aignostics_bucket_hmac_secret_access_key",
+                "aignostics_logfire_token",
+                "aignostics_sentry_dsn",
+            ],
+            "user": ["email"],
+        }
+
+        # Mask sensitive fields for each data section
+        for data_key, secret_fields in sensitive_fields_mapping.items():
+            if data.get(data_key):
+                section_data = data[data_key]
+                for field_name in secret_fields:
+                    if section_data.get(field_name):
+                        original_value = section_data[field_name]
+                        section_data[field_name] = f"***MASKED({len(original_value)})***"
+
+        return data
+
+    def model_dump_json_secrets_masked(self) -> str:
+        """Dump model to JSON with sensitive organization secrets masked.
+
+        Returns:
+            str: JSON representation with aignostics_bucket_hmac_access_key_id and
+                 aignostics_bucket_hmac_secret_access_key masked.
+        """
+        return json.dumps(self.model_dump_secrets_masked())
 
 
 # Services derived from BaseService and exported by modules via their __init__.py are automatically registered
@@ -145,7 +156,9 @@ class Service(BaseService):
         user_info = self.get_user_info(relogin=mask_secrets)
         return {
             "settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets}),
-            "userinfo": user_info.model_dump(mode="json") if user_info else None,
+            "userinfo": (user_info.model_dump_secrets_masked() if mask_secrets else user_info.model_dump(mode="json"))
+            if user_info
+            else None,
         }
 
     def _determine_api_public_health(self) -> Health:
@@ -242,13 +255,10 @@ class Service(BaseService):
         Returns:
             bool: True if successfully logged out, False if not logged in.
         """
-        logger.debug("Logging out...")
-        rtn = remove_cached_token()
-        logger.debug("Logout successful: %s", rtn)
-        return rtn
+        return remove_cached_token()
 
     @staticmethod
-    def get_user_info(relogin: bool = False) -> UserInfo | None:
+    def get_user_info(relogin: bool = False) -> UserInfo:
         """Get user information from authentication token.
 
         Args:
@@ -256,20 +266,15 @@ class Service(BaseService):
 
         Returns:
             UserInfo | None: User information if successfully authenticated, None if login failed.
+
+        Raises:
+            RuntimeError: If the token cannot be verified or decoded.
         """
         if relogin:
             Service.logout()
         try:
-            token = get_token(use_cache=True)
-            claims = verify_and_decode_token(token)
-            info = None
-            try:
-                info = userinfo(token)
-            except RuntimeError as e:
-                message = f"Error retrieving user info: {e!s}"
-                logger.exception(message)
-            return UserInfo.from_claims_and_userinfo(claims, info)
+            return UserInfo.from_claims_and_me(verify_and_decode_token(get_token()), Client().me())
         except RuntimeError as e:
             message = f"Error during login: {e!s}"
             logger.exception(message)
-            return None
+            raise

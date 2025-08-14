@@ -12,7 +12,7 @@ from aignostics.utils import BaseService, Health, get_logger, get_user_data_dire
 
 logger = get_logger(__name__)
 
-MARIMO_SERVER_STARTUP_TIMEOUT = 30
+MARIMO_SERVER_STARTUP_TIMEOUT = 60
 
 
 class _Runner:
@@ -62,6 +62,7 @@ class _Runner:
         Raises:
             RuntimeError: If the Marimo server fails to start or if the URL isn't detected within given timeout.
         """
+        logger.debug("Checking if Marimo server is running...")
         self._started = True
         if self.is_marimo_server_running():
             logger.warning("Marimo server is already running.")

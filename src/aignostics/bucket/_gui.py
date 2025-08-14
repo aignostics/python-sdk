@@ -126,7 +126,6 @@ class PageBuilder(BasePageBuilder):
                 """Download selected objects with progress tracking."""
                 nonlocal download_progress_queue
 
-                # Validation
                 if bucket_form.grid is None or bucket_form.download_button is None:
                     return
 
@@ -139,16 +138,14 @@ class PageBuilder(BasePageBuilder):
                     ui.notify("No destination selected.", type="warning")
                     return
 
-                # Setup UI for download
                 if bucket_form.download_progress_card:
                     bucket_form.download_progress_card.set_visibility(True)
                 bucket_form.download_button.props(add="loading")
                 bucket_form.download_button.disable()
-                # Disable delete button during download
+
                 if bucket_form.delete_button:
                     bucket_form.delete_button.disable()
 
-                # Initialize progress
                 if download_progress_queue is None:
                     download_progress_queue = Manager().Queue()
                 ui.notify(f"Starting download of {len(selected_rows)} objects ...", type="info")
@@ -158,16 +155,14 @@ class PageBuilder(BasePageBuilder):
                     if download_progress_queue:
                         download_progress_queue.put(progress)
 
-                # Perform download
                 try:
                     result = await run.io_bound(
-                        Service().download,
+                        Service.download_static,
                         what=[row["key"] for row in selected_rows],
                         destination=bucket_form.destination,
                         what_is_key=True,
                         progress_callback=progress_callback,
                     )
-                    # Show results
                     if result.downloaded:
                         ui.notify(f"Downloaded {len(result.downloaded)} objects.", type="positive")
                     if result.failed:

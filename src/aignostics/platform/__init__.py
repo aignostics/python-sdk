@@ -18,9 +18,12 @@ from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import InputArtifactReadResponse as InputArtifactData
 from aignx.codegen.models import ItemCreationRequest as InputItem
 from aignx.codegen.models import ItemResultReadResponse as ItemResult
+from aignx.codegen.models import MeReadResponse as Me
+from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import OutputArtifactReadResponse as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from aignx.codegen.models import RunReadResponse as ApplicationRunData
+from aignx.codegen.models import UserReadResponse as User
 
 from ._cli import cli
 from ._client import Client
@@ -34,6 +37,9 @@ from ._constants import (
     AUTHORIZATION_BASE_URL_DEV,
     AUTHORIZATION_BASE_URL_PRODUCTION,
     AUTHORIZATION_BASE_URL_STAGING,
+    CLIENT_ID_INTERACTIVE_DEV,
+    CLIENT_ID_INTERACTIVE_PRODUCTION,
+    CLIENT_ID_INTERACTIVE_STAGING,
     DEVICE_URL_DEV,
     DEVICE_URL_PRODUCTION,
     DEVICE_URL_STAGING,
@@ -70,6 +76,9 @@ __all__ = [
     "AUTHORIZATION_BASE_URL_DEV",
     "AUTHORIZATION_BASE_URL_PRODUCTION",
     "AUTHORIZATION_BASE_URL_STAGING",
+    "CLIENT_ID_INTERACTIVE_DEV",
+    "CLIENT_ID_INTERACTIVE_PRODUCTION",
+    "CLIENT_ID_INTERACTIVE_STAGING",
     "DEVICE_URL_DEV",
     "DEVICE_URL_PRODUCTION",
     "DEVICE_URL_STAGING",
@@ -100,12 +109,15 @@ __all__ = [
     "InputItem",
     "ItemResult",
     "ItemStatus",
+    "Me",
     "NotFoundException",
+    "Organization",
     "OutputArtifactData",
     "OutputArtifactElement",
     "Service",
     "Settings",
     "TokenInfo",
+    "User",
     "UserInfo",
     "calculate_file_crc32c",
     "cli",

@@ -95,5 +95,3 @@ class InputArtifactReadResponse(BaseModel):
             "metadata_schema": obj.get("metadata_schema")
         })
         return _obj
-
-

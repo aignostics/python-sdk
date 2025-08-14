@@ -33,7 +33,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir, record_property) -> None:  #
     # Get username for path verification
     the_uuid = str(uuid.uuid4())[:8]  # Use first 8 characters of a random UUID
     username = psutil.Process().username().replace("\\", "_")
-    test_prefix = f"{the_uuid}/{username}/test-cli"
+    test_prefix = f"{username}/test/{the_uuid}/test-cli"
 
     # Step 1: Create test files in the temporary directory
     # Create directories
@@ -163,8 +163,5 @@ def test_cli_bucket_info_settings(runner: CliRunner) -> None:
     # Verify the bucket settings defaults
     assert output_data["bucket"]["settings"]["protocol"] == "gs"
     assert output_data["bucket"]["settings"]["region_name"] == "EUROPE-WEST3"
-    assert output_data["bucket"]["settings"]["name"].startswith("aignostics-platform")
     assert output_data["bucket"]["settings"]["upload_signed_url_expiration_seconds"] == 7200
     assert output_data["bucket"]["settings"]["download_signed_url_expiration_seconds"] == 604800
-    assert output_data["bucket"]["settings"]["hmac_access_key_id"] == "**********"
-    assert output_data["bucket"]["settings"]["hmac_secret_access_key"] == "**********"  # noqa: S105

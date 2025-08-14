@@ -88,5 +88,3 @@ class PayloadInputArtifact(BaseModel):
             "download_url": obj.get("download_url")
         })
         return _obj
-
-
