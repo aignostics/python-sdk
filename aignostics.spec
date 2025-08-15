@@ -3,10 +3,7 @@ from PyInstaller.utils.hooks import collect_data_files
 from PyInstaller.utils.hooks import collect_all
 from PyInstaller.utils.hooks import copy_metadata
 
-# Build
-## uv run pyi-makespec --windowed --onedir --copy-metadata="aignostics" --collect-all="nicegui" --collect-all="aignostics" --collect-data="idc_index_data" --name="aignostics" --osx-bundle-identifier com.aignostics.launchpad --icon logo.ico --hidden-import pythonnet src/aignostics.py
-## Inject
-## make dist_native
+# Build via make dist_native
 
 # START INJECTED
 import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
@@ -14,16 +11,33 @@ import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
 datas = []
 binaries = []
-hiddenimports = ['pythonnet','openslide_bin']
-datas += collect_data_files('idc_index_data')
+hiddenimports = []
+
+# core
 datas += copy_metadata('aignostics', recursive=False)
-tmp_ret = collect_all('nicegui')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('aignostics')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+hiddenimports += ['pythonnet']
+
+# layer gui
+tmp_ret = collect_all('nicegui')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+
+# module wsi
+tmp_ret = collect_all('openslide_bin')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+
+# module dataset
+datas += collect_data_files('idc_index_data')
 tmp_ret = collect_all('s5cmd')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('openslide_bin')
+
+# module notebook
+datas += collect_data_files('marimo', subdir='_static')
+hiddenimports += ['IPython']
+tmp_ret = collect_all('cloudpathlib')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('pymdownx')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 a = Analysis(

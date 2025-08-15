@@ -18,6 +18,8 @@ logger = get_logger(__name__)
 # Constants for command line argument handling
 EXEC_SCRIPT_FLAG = "--exec-script"
 MIN_ARGS_FOR_SCRIPT = 3  # program name, flag, and script content
+MODULE_FLAG = "--run-module"
+MIN_ARGS_FOR_MODULE = 3  # program name, flag, and module name
 
 DEBUG_FLAG = "--debug"
 
@@ -33,6 +35,33 @@ if len(sys.argv) > 1 and sys.argv[1] == EXEC_SCRIPT_FLAG:
             sys.exit(1)
     else:
         logger.error("No script content provided")
+        sys.exit(1)
+elif len(sys.argv) > 1 and sys.argv[1] == MODULE_FLAG:
+    # Execute the module passed as the second argument
+    if len(sys.argv) >= MIN_ARGS_FOR_MODULE:
+        module_name = sys.argv[2]
+        # Build the command to run the module with remaining arguments
+        module_args = sys.argv[MIN_ARGS_FOR_MODULE:] if len(sys.argv) > MIN_ARGS_FOR_MODULE else []
+
+        # We're running as a packaged executable, run module directly
+        # Update sys.argv to what the module expects
+        sys.argv = [module_name, *module_args]
+        try:
+            if module_name == "marimo":
+                # Special handling for marimo - importing from private module as marimo's __main__.py does
+                from marimo._cli.cli import main  # noqa: PLC2701
+
+                main(prog_name="marimo")
+            else:
+                # Generic module execution
+                import runpy
+
+                runpy.run_module(module_name, run_name="__main__")
+        except Exception:
+            logger.exception("Failed to execute module '%s'", module_name)
+            sys.exit(1)
+    else:
+        logger.error("No module name provided")
         sys.exit(1)
 elif len(sys.argv) > 1 and sys.argv[1] == DEBUG_FLAG:
     import ssl
