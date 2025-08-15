@@ -34,7 +34,7 @@ wheels = [
 
 [[package]]
 name = "aignostics"
-version = "0.2.141"
+version = "0.2.142"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
