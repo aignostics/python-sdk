@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.140](https://github.com/aignostics/python-sdk/compare/v0.2.139..0.2.140) - 2025-08-14
+# [0.2.141](https://github.com/aignostics/python-sdk/compare/v0.2.140..0.2.141) - 2025-08-15
+
+### 🐛 Bug Fixes
+
+- *(native)* Marimo - ([b7a21f3](https://github.com/aignostics/python-sdk/commit/b7a21f386dd532bb24a04694d2c0950a531adc6f))
+
+
+# [v0.2.140](https://github.com/aignostics/python-sdk/compare/v0.2.139..v0.2.140) - 2025-08-14
 
 ### ⚙️ Miscellaneous Tasks
 
