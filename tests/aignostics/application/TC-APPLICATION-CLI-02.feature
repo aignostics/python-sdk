@@ -4,7 +4,11 @@ Feature: Application Run CLI Commands
   including submission, status inquiry, cancellation, and result download
   with proper functionality across different run states.
 
-  @tests:SWR-APPLICATION-2-5,SWR-APPLICATION-2-6,SWR-APPLICATION-2-7,SWR-APPLICATION-3-1 @id:TC-APPLICATION-CLI-02
+  @tests:SWR-APPLICATION-2-5
+  @tests:SWR-APPLICATION-2-6
+  @tests:SWR-APPLICATION-2-7
+  @tests:SWR-APPLICATION-3-1
+  @id:TC-APPLICATION-CLI-02
   Scenario: System processes CLI commands for run management operations
     Given the system receives a run submission request via CLI
     When the system processes the submission

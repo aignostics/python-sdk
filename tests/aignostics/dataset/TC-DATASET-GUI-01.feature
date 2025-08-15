@@ -4,7 +4,10 @@ Feature: Dataset Download GUI Operations
   including dataset selection, destination configuration, and download
   execution with progress feedback and completion validation.
 
-  @tests:SWR-DATASET-1-1,SWR-DATASET-1-2,SWR-DATASET-1-3 @id:TC-DATASET-GUI-01
+  @tests:SWR-DATASET-1-1
+  @tests:SWR-DATASET-1-2
+  @tests:SWR-DATASET-1-3
+  @id:TC-DATASET-GUI-01
   Scenario: System processes dataset download through GUI interface
     Given the user navigates to the dataset download page
     When the user selects example dataset and configures custom dataset identifier

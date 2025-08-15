@@ -4,7 +4,12 @@ Feature: Bucket GUI File Management Operations
   file upload verification, grid display, download functionality, and deletion
   with real-time UI updates and confirmation.
 
-  @tests:SWR-BUCKET-1-5,SWR-BUCKET-1-6,SWR-BUCKET-1-7,SWR-BUCKET-1-8,SWR-BUCKET-1-9 @id:TC-BUCKET-GUI-01
+  @tests:SWR-BUCKET-1-5
+  @tests:SWR-BUCKET-1-6
+  @tests:SWR-BUCKET-1-7
+  @tests:SWR-BUCKET-1-8
+  @tests:SWR-BUCKET-1-9
+  @id:TC-BUCKET-GUI-01
   Scenario: System processes bucket file operations through GUI interface
     Given the user creates test files and uploads them via CLI
     When the user navigates to the bucket page in GUI

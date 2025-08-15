@@ -4,7 +4,10 @@ Feature: Complete Application Execution Workflow
   application selection, run execution, and result retrieval with automated 
   processing and output validation.
 
-  @tests:SWR-APPLICATION-2-8,SWR-APPLICATION-2-9,SWR-APPLICATION-3-2 @id:TC-APPLICATION-CLI-03
+  @tests:SWR-APPLICATION-2-8
+  @tests:SWR-APPLICATION-2-9
+  @tests:SWR-APPLICATION-3-2
+  @id:TC-APPLICATION-CLI-03
   Scenario: System processes complete slide analysis through sequential user actions
     Given the system provides dataset download capabilities
     When the user requests sample dataset download

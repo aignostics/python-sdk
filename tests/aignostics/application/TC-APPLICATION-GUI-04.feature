@@ -5,7 +5,11 @@ Feature: GUI Application Workflow Management
   run submission, status monitoring, and run control operations including 
   user-initiated cancellation.
 
-  @tests:SWR-APPLICATION-1-1,SWR-APPLICATION-1-2,SWR-APPLICATION-2-10,SWR-APPLICATION-2-11 @id:TC-APPLICATION-GUI-04
+  @tests:SWR-APPLICATION-1-1
+  @tests:SWR-APPLICATION-1-2
+  @tests:SWR-APPLICATION-2-10
+  @tests:SWR-APPLICATION-2-11
+  @id:TC-APPLICATION-GUI-04
   Scenario: System processes user manual cancellation of application runs through complete GUI workflow
     Given the system completes full application workflow through GUI interface
     And the system downloads sample dataset files successfully

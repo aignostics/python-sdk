@@ -4,7 +4,11 @@ Feature: Bucket Complete Data Lifecycle Management
   upload, discovery, download, and deletion with content validation and
   cleanup verification.
 
-  @tests:SWR-BUCKET-1-1,SWR-BUCKET-1-2,SWR-BUCKET-1-3,SWR-BUCKET-1-4 @id:TC-BUCKET-CLI-01
+  @tests:SWR-BUCKET-1-1
+  @tests:SWR-BUCKET-1-2
+  @tests:SWR-BUCKET-1-3
+  @tests:SWR-BUCKET-1-4
+  @id:TC-BUCKET-CLI-01
   Scenario: System processes complete bucket data lifecycle operations
     Given the user creates test files in multiple subdirectories
     When the user uploads the directory structure to bucket storage
