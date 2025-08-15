@@ -173,7 +173,7 @@ jobs:
         shell: bash
         run: |
           rm -rf ./test-results/coverage_html
-         gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./test-results/* ./audit-results/*   \
+          gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./test-results/* ./audit-results/*   \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
             
