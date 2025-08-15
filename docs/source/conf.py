@@ -27,11 +27,7 @@ extensions = [
 project = "aignostics"
 author = "Helmut Hoffer von Ankershoffen"
 copyright = f" (c) 2025-{datetime.now(UTC).year} Aignostics GmbH, Author: {author}"  # noqa: A001
-<<<<<<< HEAD
-version = "0.2.105"
-=======
 version = "0.2.140"
->>>>>>> origin/main
 release = version
 github_username = "aignostics"
 github_repository = "python-sdk"

@@ -333,15 +333,11 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
     TEST_PARAMETERS,
 )
 def test_application_runs(
-<<<<<<< HEAD
-    timeout: int, application_version_id: str, payload_type: str, checksum_attribute_key: str, request: FixtureRequest
-=======
     timeout: int,
     application_version_id: str,
     payload_type: str,
     checksum_attribute_key: str,
     request: FixtureRequest,
->>>>>>> origin/main
 ) -> None:
     """Test application runs.
 
