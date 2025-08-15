@@ -42,11 +42,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-<<<<<<< HEAD
-        uses: astral-sh/setup-uv@7edac99f961f18b581bbd960d59d049f04c0002f # v6.4.1
-=======
         uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
->>>>>>> origin/main
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -90,11 +86,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-<<<<<<< HEAD
-        uses: astral-sh/setup-uv@7edac99f961f18b581bbd960d59d049f04c0002f # v6.4.1
-=======
         uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
->>>>>>> origin/main
         with:
           version-file: "pyproject.toml"
           cache-dependency-glob: uv.lock
@@ -164,16 +156,10 @@ jobs:
         run: uv publish -t ${{ secrets.UV_PUBLISH_TOKEN }}
 
       - name: Download test results for ubuntu-latest generated in _test.yml
-<<<<<<< HEAD
-        uses: actions/download-artifact@v4
-        with:
-          name: test-results-ubuntu-latest          
-=======
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: test-results-ubuntu-latest
           path: test-results
->>>>>>> origin/main
 
       - name: Download audit results generated in _audit.yml
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
