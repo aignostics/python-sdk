@@ -84,25 +84,47 @@ class _Runner:
         self._server_ready.clear()
 
         logger.debug("Starting Marimo server with notebook at '%s'...", notebook_path)
-        self._marimo_server = Popen(  # noqa: S603
-            [
-                sys.executable,
-                "-m",
-                "marimo",
-                "edit",
-                "--headless",
-                "--skip-update-check",
-                "--no-sandbox",
-                "--no-token",
-                str(notebook_path.resolve()),
-            ],
-            stdout=PIPE,
-            stderr=STDOUT,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            bufsize=1,
-        )
+
+        if getattr(sys, "frozen", False):
+            self._marimo_server = Popen(  # noqa: S603
+                [
+                    sys.executable,
+                    "--run-module",
+                    "marimo",
+                    "edit",
+                    "--headless",
+                    "--skip-update-check",
+                    "--no-sandbox",
+                    "--no-token",
+                    str(notebook_path.resolve()),
+                ],
+                stdout=PIPE,
+                stderr=STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                bufsize=1,
+            )
+        else:
+            self._marimo_server = Popen(  # noqa: S603
+                [
+                    sys.executable,
+                    "-m",
+                    "marimo",
+                    "edit",
+                    "--headless",
+                    "--skip-update-check",
+                    "--no-sandbox",
+                    "--no-token",
+                    str(notebook_path.resolve()),
+                ],
+                stdout=PIPE,
+                stderr=STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                bufsize=1,
+            )
 
         # Start a thread to monitor the subprocess output
         self._monitor_thread = Thread(target=self._capture_output, args=(self._marimo_server,), daemon=True)
