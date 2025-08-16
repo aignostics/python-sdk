@@ -1,6 +1,22 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.142](https://github.com/aignostics/python-sdk/compare/v0.2.141..0.2.142) - 2025-08-15
+# [0.2.143](https://github.com/aignostics/python-sdk/compare/v0.2.142..0.2.143) - 2025-08-16
+
+### ⛰️  Features
+
+- *(application, platform)* Allow to delete run. Note: currently broken in Samia - ([f35410d](https://github.com/aignostics/python-sdk/commit/f35410dc856c6529ec692819355443b776f936d8))
+- *(native)* Show being native in footer of launchpad - ([62c4b17](https://github.com/aignostics/python-sdk/commit/62c4b1714fca7535bbf1d351a4be31e1fbc31405))
+
+### 🚜 Refactor
+
+- *(native)* Don't include dev dependencies - ([62c4b17](https://github.com/aignostics/python-sdk/commit/62c4b1714fca7535bbf1d351a4be31e1fbc31405))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Adapt test for delete cli - ([62c4b17](https://github.com/aignostics/python-sdk/commit/62c4b1714fca7535bbf1d351a4be31e1fbc31405))
+
+
+# [v0.2.142](https://github.com/aignostics/python-sdk/compare/v0.2.141..v0.2.142) - 2025-08-15
 
 ### 🐛 Bug Fixes
 
