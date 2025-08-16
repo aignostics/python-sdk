@@ -775,7 +775,7 @@ class Service(BaseService):
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
-            ValueError: If the run ID is invalid or the run cannot be canceled given its current status.
+            ValueError: If the run ID is invalid or the run cannot be canceled given its current state.
             RuntimeError: If canceling the run fails unexpectedly.
         """
         try:
@@ -790,6 +790,37 @@ class Service(BaseService):
             raise NotFoundException(message) from e
         except Exception as e:
             message = f"Failed to cancel application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_delete(self, run_id: str) -> None:
+        """Delete a run by its ID.
+
+        Args:
+            run_id: The ID of the run to delete
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid or the run cannot be deleted given its current state.
+            RuntimeError: If deleting the run fails unexpectedly.
+        """
+        try:
+            logger.debug("Deleting application run with ID '%s'", run_id)
+            self.application_run(run_id).delete()
+            logger.debug("Deleted application run with ID '%s'", run_id)
+        except ValueError as e:
+            message = f"Failed to delete application run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to delete application run with ID '{run_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 

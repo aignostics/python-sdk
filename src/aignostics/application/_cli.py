@@ -819,9 +819,22 @@ def result_download(  # noqa: PLR0913, PLR0917
         sys.exit(1)
 
 
-# TODO(Helmut): Implement result delete when available in platform
-@result_app.command("delete")
-def result_delete() -> None:
-    """Delete results of a run."""
-    console.print(MESSAGE_NOT_YET_IMPLEMENTED)
-    sys.exit(1)
+@run_app.command("delete")
+def run_delete(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to delete")],
+) -> None:
+    """Delete run."""
+    logger.debug("Deleting run with ID '%s'", run_id)
+
+    try:
+        Service().application_run_delete(run_id)
+        logger.info("Deleted run with ID '%s'.", run_id)
+        console.print(f"Run with ID '{run_id}' has been deleted.")
+    except NotFoundException:
+        logger.warning("Run with ID '%s' not found.", run_id)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to delete run with ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to delete run with ID '{run_id}': {e}")
+        sys.exit(1)
