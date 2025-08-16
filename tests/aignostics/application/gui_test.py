@@ -108,6 +108,17 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_loggi
         # Check user sees refreshed run page and run is cancelled
         await user.should_see("status CANCELED_USER", retries=200)
 
+        # ... and user can delete run
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_DELETE")
+
+        # Have user delete run
+        user.find(marker="BUTTON_APPLICATION_RUN_DELETE").click()
+        await assert_notified(user, f"Deleting application run with id '{run_id}' ...")
+        await assert_notified(user, "Application run deleted!")
+
+        # Assert user was auto-navigated to Homepage
+        await user.should_see("Welcome to the Aignostics Launchpad", retries=1000)
+
 
 @pytest.mark.long_running
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915

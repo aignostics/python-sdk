@@ -97,6 +97,30 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             ui.notify(f"Failed to cancel application run: {e}.", type="warning")
             return False
 
+    async def _delete(run_id: str) -> bool:
+        """Delete the application run and navigate to the main page.
+
+        Args:
+            run_id (str): The ID of the run to cancel.
+
+        Returns:
+            bool: True if the run was cancelled, False otherwise.
+        """
+        ui.notify(f"Deleting application run with id '{run_id}' ...", type="info")
+        try:
+            delete_button.disable()
+            delete_button.props(add="loading")
+            await nicegui_run.io_bound(service.application_run_delete, run_id)
+            delete_button.props(remove="loading")
+            ui.navigate.to("/")
+            ui.notify("Application run deleted!", type="positive")
+            return True
+        except Exception as e:  # noqa: BLE001
+            delete_button.enable()
+            delete_button.props(remove="loading")
+            ui.notify(f"Failed to delete application run: {e}.", type="warning")
+            return False
+
     @ui.refreshable
     def download_run_dialog_content(qupath_project: bool = False, marimo: bool = False) -> None:  # noqa: C901, PLR0915
         if qupath_project:
@@ -407,14 +431,15 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
             with ui.expansion(text=f"Run {run.application_run_id}"):
-                ui.markdown(
+                ui.code(
                     f"""
                     * Run ID: {run_data.application_run_id}
                     * Application Version: {run_data.application_version_id}
                     * Triggered On: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
                     * Triggered by: {run_data.triggered_by}
                     * Organization: {run_data.organization_id}
-                    """
+                    """,
+                    language="markdown",
                 )
             ui.space()
             with ui.row().classes("justify-end"):
@@ -448,6 +473,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                                 .props("push")
                             ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
+
                 if run_data.status.value == ApplicationRunStatus.RUNNING:
                     cancel_button = ui.button(
                         "Cancel",
@@ -455,6 +481,22 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         on_click=lambda: _cancel(run.application_run_id),
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
+
+                if run_data.status.value in {
+                    ApplicationRunStatus.CANCELED_USER,
+                    ApplicationRunStatus.CANCELED_SYSTEM,
+                    ApplicationRunStatus.COMPLETED,
+                    ApplicationRunStatus.COMPLETED_WITH_ERROR,
+                    ApplicationRunStatus.REJECTED,
+                    ApplicationRunStatus.RUNNING,
+                    ApplicationRunStatus.SCHEDULED,
+                }:
+                    delete_button = ui.button(
+                        "Delete",
+                        color="red",
+                        on_click=lambda: _delete(run.application_run_id),
+                        icon="delete",
+                    ).mark("BUTTON_APPLICATION_RUN_DELETE")
 
         with ui.list().classes("full-width"):
             results = list(run.results())

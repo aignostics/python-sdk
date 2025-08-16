@@ -156,7 +156,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
 
 
-def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command runs successfully."""
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
@@ -224,6 +224,22 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(runner: CliRunner, 
     else:
         assert download_result.exit_code == 2
         assert f"Failed to create destination directory '/4711/{run_id}'" in normalize_output(download_result.stdout)
+
+    # Test the delete command with the extracted run ID
+    delete_result = runner.invoke(cli, ["application", "run", "delete", run_id])
+    assert delete_result.exit_code == 0
+    assert f"Run with ID '{run_id}' has been deleted." in normalize_output(delete_result.stdout)
+
+    # Test the describe command with the extracted run ID on deleted run
+    describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
+    assert describe_result.exit_code == 0
+    assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
+    assert "Status: CANCELED_USER" in normalize_output(describe_result.stdout)
+
+
+# TODO(Helmut): Activate when PAPI fixed
+#    assert describe_result.exit_code == 2
+#    assert f"Run with id '{run_id}' not found." in normalize_output(describe_result.stdout)
 
 
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
