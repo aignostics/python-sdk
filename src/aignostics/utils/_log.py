@@ -8,8 +8,8 @@ from logging import Handler
 from pathlib import Path
 from typing import Annotated, Literal
 
-import appdirs
 import click
+import platformdirs
 from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
@@ -100,7 +100,7 @@ class LogSettings(BaseSettings):
             description="Name of the log file",
             default="/dev/stdout"
             if __is_running_in_read_only_environment__
-            else appdirs.user_data_dir(__project_name__) + f"/{__project_name__}.log",
+            else platformdirs.user_data_dir(__project_name__) + f"/{__project_name__}.log",
         ),
     ]
     console_enabled: Annotated[

@@ -9,6 +9,8 @@ from PyInstaller.utils.hooks import copy_metadata
 import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 # END INJECTED
 
+import platform
+
 datas = []
 binaries = []
 hiddenimports = []
@@ -51,7 +53,7 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[],
     noarchive=True,
-    optimize=2,
+    optimize=2 if platform.system() == "Darwin" else 0,
 )
 pyz = PYZ(a.pure)
 
@@ -63,8 +65,8 @@ exe = EXE(
     name='aignostics',
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
-    upx=False,
+    strip=True if platform.system() == "Darwin" else False,
+    upx=True,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -77,7 +79,7 @@ coll = COLLECT(
     exe,
     a.binaries,
     a.datas,
-    strip=True,
+    strip=True if platform.system() == "Darwin" else False,
     upx=True,
     upx_exclude=[],
     name='aignostics',

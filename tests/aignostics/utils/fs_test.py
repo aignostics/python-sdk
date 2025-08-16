@@ -226,7 +226,7 @@ def test_sanitize_path_uses_sanitize_path_component_for_non_drive_path() -> None
 def test_get_user_data_directory_without_scope(tmp_path) -> None:
     """Test get_user_data_directory returns correct path without scope."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -244,7 +244,7 @@ def test_get_user_data_directory_without_scope(tmp_path) -> None:
 def test_get_user_data_directory_with_scope(tmp_path) -> None:
     """Test get_user_data_directory returns correct path with scope."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -262,7 +262,7 @@ def test_get_user_data_directory_with_scope(tmp_path) -> None:
 def test_get_user_data_directory_with_nested_scope(tmp_path) -> None:
     """Test get_user_data_directory returns correct path with nested scope."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -280,7 +280,7 @@ def test_get_user_data_directory_with_nested_scope(tmp_path) -> None:
 def test_get_user_data_directory_read_only_environment_no_mkdir(tmp_path) -> None:
     """Test get_user_data_directory doesn't create directory in read-only environment."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", True),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -298,7 +298,7 @@ def test_get_user_data_directory_read_only_environment_no_mkdir(tmp_path) -> Non
 def test_get_user_data_directory_empty_scope(tmp_path) -> None:
     """Test get_user_data_directory handles empty scope string."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -316,7 +316,7 @@ def test_get_user_data_directory_empty_scope(tmp_path) -> None:
 def test_get_user_data_directory_none_scope(tmp_path) -> None:
     """Test get_user_data_directory handles None scope."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -335,7 +335,7 @@ def test_get_user_data_directory_none_scope(tmp_path) -> None:
 def test_open_user_data_directory_without_scope(tmp_path) -> None:
     """Test open_user_data_directory opens correct directory without scope."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -355,7 +355,7 @@ def test_open_user_data_directory_without_scope(tmp_path) -> None:
 def test_open_user_data_directory_with_scope(tmp_path) -> None:
     """Test open_user_data_directory opens correct directory with scope."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -375,7 +375,7 @@ def test_open_user_data_directory_with_scope(tmp_path) -> None:
 def test_open_user_data_directory_with_nested_scope(tmp_path) -> None:
     """Test open_user_data_directory opens correct directory with nested scope."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -395,7 +395,7 @@ def test_open_user_data_directory_with_nested_scope(tmp_path) -> None:
 def test_open_user_data_directory_read_only_environment(tmp_path) -> None:
     """Test open_user_data_directory works in read-only environment."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", True),
         patch("pathlib.Path.mkdir") as mock_mkdir,
@@ -415,7 +415,7 @@ def test_open_user_data_directory_read_only_environment(tmp_path) -> None:
 def test_open_user_data_directory_show_in_file_manager_exception(tmp_path) -> None:
     """Test open_user_data_directory handles show_in_file_manager exceptions gracefully."""
     with (
-        patch("aignostics.utils._fs.appdirs.user_data_dir") as mock_user_data_dir,
+        patch("aignostics.utils._fs.platformdirs.user_data_dir") as mock_user_data_dir,
         patch("aignostics.utils._fs.__project_name__", "test_project"),
         patch("aignostics.utils._fs.__is_running_in_read_only_environment__", False),
         patch("pathlib.Path.mkdir") as _mock_mkdir,

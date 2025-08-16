@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from unittest import mock
 
-import appdirs
+import platformdirs
 import pytest
 from pydantic import SecretStr
 
@@ -87,7 +87,7 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     # Test other properties
     assert settings.scope == "offline_access"
     assert settings.scope_elements == ["offline_access"]
-    assert settings.cache_dir == appdirs.user_cache_dir(__project_name__)
+    assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.request_timeout_seconds == 30
     assert settings.authorization_backoff_seconds == 3

@@ -82,8 +82,8 @@ profile:
 
 # Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
 dist_native:
-	# Bundle
-	uv run --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
+	# Build
+	uv run --python 3.13.6 --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
 	# Create 7z archive preserving symlinks
 	@if command -v 7z >/dev/null 2>&1; then \
 		cd dist_native; \

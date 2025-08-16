@@ -10,7 +10,7 @@ from multiprocessing import Queue
 from pathlib import Path
 from typing import Any
 
-from aignostics.utils import BaseService, Health, get_logger
+from aignostics.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health, get_logger
 
 logger = get_logger(__name__)
 
@@ -248,6 +248,7 @@ client.download_from_selection(
                     stderr=subprocess.PIPE,
                     text=True,
                     bufsize=1,
+                    creationflags=SUBPROCESS_CREATION_FLAGS,
                 )
             else:
                 logger.debug(
@@ -259,6 +260,7 @@ client.download_from_selection(
                     stderr=subprocess.PIPE,
                     text=True,
                     bufsize=1,
+                    creationflags=SUBPROCESS_CREATION_FLAGS,
                 )
 
             # Register process for cleanup
