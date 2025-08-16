@@ -13,7 +13,6 @@ from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 from tests.contants_test import HETA_APPLICATION_ID, TEST_APPLICATION_ID
 
-MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
 
@@ -308,15 +307,15 @@ def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Pat
     result = runner.invoke(
         cli, ["application", "run", "result", "download", "00000000000000000000000000000000", str(tmp_path)]
     )
-    assert "Run with ID '00000000000000000000000000000000' not found." in result.output.replace("\n", "")
+    assert "Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
     assert result.exit_code == 2
 
 
-def test_cli_run_result_delete(runner: CliRunner) -> None:
+def test_cli_run_delete_fails_on_no_arg(runner: CliRunner) -> None:
     """Check run result delete command runs successfully."""
-    result = runner.invoke(cli, ["application", "run", "result", "delete"])
-    assert result.exit_code == 1
-    assert MESSAGE_NOT_YET_IMPLEMENTED in normalize_output(result.stdout)
+    result = runner.invoke(cli, ["application", "run", "delete"])
+    assert "Missing argument 'RUN_ID'." in normalize_output(result.stderr)
+    assert result.exit_code == 2
 
 
 @pytest.mark.long_running
@@ -335,8 +334,8 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
     )
     print_directory_structure(tmp_path, "download")
     assert result.exit_code == 0
-    assert "Successfully downloaded" in result.stdout.replace("\n", "")
-    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout.replace("\n", "")
+    assert "Successfully downloaded" in normalize_output(result.stdout)
+    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
     expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
     assert expected_file.exists(), f"Expected file {expected_file} not found"
     assert expected_file.stat().st_size == 14681750
