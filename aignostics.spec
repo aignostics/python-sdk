@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_data_files
 from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_dynamic_libs
 from PyInstaller.utils.hooks import copy_metadata
 
 # Build via make dist_native
@@ -16,23 +17,20 @@ binaries = []
 hiddenimports = []
 
 # core
+hiddenimports += ['pythonnet']
 datas += copy_metadata('aignostics', recursive=False)
 tmp_ret = collect_all('aignostics')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-hiddenimports += ['pythonnet']
 
 # layer gui
-tmp_ret = collect_all('nicegui')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+datas += collect_data_files('nicegui')
 
 # module wsi
-tmp_ret = collect_all('openslide_bin')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+binaries += collect_dynamic_libs('openslide_bin')
 
 # module dataset
 datas += collect_data_files('idc_index_data')
-tmp_ret = collect_all('s5cmd')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+datas += collect_data_files('s5cmd')
 
 # module notebook
 datas += collect_data_files('marimo', subdir='_static')
@@ -52,7 +50,7 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    noarchive=True,
+    noarchive=False,
     optimize=2 if platform.system() == "Darwin" else 0,
 )
 pyz = PYZ(a.pure)
