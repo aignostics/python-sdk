@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.145](https://github.com/aignostics/python-sdk/compare/v0.2.144..0.2.145) - 2025-08-16
+# [0.2.146](https://github.com/aignostics/python-sdk/compare/v0.2.145..0.2.146) - 2025-08-16
+
+### 🚜 Refactor
+
+- *(native)* Use archive; optimize - ([d9898ac](https://github.com/aignostics/python-sdk/commit/d9898ac4a39a1d7853035de645639bc0a0b4e128))
+
+
+# [v0.2.145](https://github.com/aignostics/python-sdk/compare/v0.2.144..v0.2.145) - 2025-08-16
 
 ### ⚙️ Miscellaneous Tasks
 
