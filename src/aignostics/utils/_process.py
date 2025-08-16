@@ -1,8 +1,11 @@
 """Process related utilities."""
 
+import subprocess
 from pathlib import Path
 
 from pydantic import BaseModel
+
+SUBPROCESS_CREATION_FLAGS = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
 class ParentProcessInfo(BaseModel):

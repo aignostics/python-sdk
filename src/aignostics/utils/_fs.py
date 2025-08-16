@@ -3,7 +3,7 @@
 import platform
 from pathlib import Path, PureWindowsPath
 
-import appdirs
+import platformdirs
 from showinfm.showinfm import show_in_file_manager
 
 from ._constants import __is_running_in_read_only_environment__, __project_name__
@@ -89,7 +89,7 @@ def get_user_data_directory(scope: str | None = None) -> Path:
     Returns:
         Path: The data directory path.
     """
-    directory = Path(appdirs.user_data_dir(__project_name__))
+    directory = Path(platformdirs.user_data_dir(__project_name__))
     if scope:
         directory /= scope
     if not __is_running_in_read_only_environment__:

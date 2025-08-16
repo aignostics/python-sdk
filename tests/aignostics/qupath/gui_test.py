@@ -7,7 +7,7 @@ from asyncio import sleep
 from pathlib import Path
 from unittest.mock import patch
 
-import appdirs
+import platformdirs
 import psutil
 import pytest
 from nicegui.testing import User
@@ -50,7 +50,7 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
     # Step 3: Install QuPath
     await user.should_see(marker="BUTTON_QUPATH_INSTALL")
     user.find("BUTTON_QUPATH_INSTALL").click()
-    app_dir = appdirs.user_data_dir(__project_name__)
+    app_dir = platformdirs.user_data_dir(__project_name__)
     await assert_notified(
         user,
         f"QuPath installed successfully to '{app_dir}",
@@ -101,7 +101,7 @@ async def test_gui_qupath_install_and_launch(
     # Step 3: Install QuPath
     await user.should_see(marker="BUTTON_QUPATH_INSTALL")
     user.find("BUTTON_QUPATH_INSTALL").click()
-    app_dir = appdirs.user_data_dir(__project_name__)
+    app_dir = platformdirs.user_data_dir(__project_name__)
     await assert_notified(
         user,
         f"QuPath installed successfully to '{app_dir}",

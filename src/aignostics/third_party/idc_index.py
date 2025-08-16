@@ -52,7 +52,7 @@ import requests
 from packaging.version import Version
 from tqdm import tqdm
 
-from aignostics.utils import get_logger
+from aignostics.utils import get_logger, SUBPROCESS_CREATION_FLAGS
 
 aws_endpoint_url = "https://s3.amazonaws.com"
 gcp_endpoint_url = "https://storage.googleapis.com"
@@ -427,6 +427,7 @@ class IDCClient:
                 capture_output=True,
                 text=True,
                 check=True,
+                creationflags=SUBPROCESS_CREATION_FLAGS,
             )
             if result.stderr and result.stdout.startswith("ERROR"):
                 logger.error("Failed to download IDC clinical data.")
@@ -712,6 +713,7 @@ class IDCClient:
             ],
             stdout=subprocess.PIPE,
             check=False,
+            creationflags=SUBPROCESS_CREATION_FLAGS,
         )
         output = result.stdout.decode("utf-8")
 
@@ -1135,7 +1137,8 @@ class IDCClient:
                         merged_df.s3_url.values[0],
                     ]
                     process = subprocess.run(
-                        cmd, capture_output=True, text=True, check=False
+                        cmd, capture_output=True, text=True, check=False,
+                        creationflags=SUBPROCESS_CREATION_FLAGS,
                     )
                     if process.stderr and process.stdout.startswith("ERROR"):
                         logger.debug(
@@ -1473,7 +1476,8 @@ class IDCClient:
             ]
 
             process = subprocess.run(
-                dry_run_cmd, stdout=subprocess.PIPE, text=True, check=False
+                dry_run_cmd, stdout=subprocess.PIPE, text=True, check=False,
+                creationflags=SUBPROCESS_CREATION_FLAGS,
             )
 
             if process.stdout:

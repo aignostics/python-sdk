@@ -96,8 +96,8 @@ dependencies = [
     "typer>=0.16.0",
     "uptime>=3.0.1",
     # Custom
-    "appdirs>=1.4.4",
-    "boto3>=1.40.10",
+    "platformdirs>=4.3.8",
+    "boto3>=1.40.11",
     "certifi>=2025.8.3",
     "dicom-validator>=0.7.1",
     "dicomweb-client[gcp]>=0.59.2",
