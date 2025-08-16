@@ -1,6 +1,18 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.143](https://github.com/aignostics/python-sdk/compare/v0.2.142..0.2.143) - 2025-08-16
+# [0.2.144](https://github.com/aignostics/python-sdk/compare/v0.2.143..0.2.144) - 2025-08-16
+
+### 🐛 Bug Fixes
+
+- *(native)* Windows - ([67dc61f](https://github.com/aignostics/python-sdk/commit/67dc61f3d8eb25d1cc89e22ece4264043189b77c))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([67dc61f](https://github.com/aignostics/python-sdk/commit/67dc61f3d8eb25d1cc89e22ece4264043189b77c))
+- *(gha)* Allow to build:native:only ([#89](https://github.com/orhun/git-cliff/issues/89)) - ([67dc61f](https://github.com/aignostics/python-sdk/commit/67dc61f3d8eb25d1cc89e22ece4264043189b77c))
+
+
+# [v0.2.143](https://github.com/aignostics/python-sdk/compare/v0.2.142..v0.2.143) - 2025-08-16
 
 ### ⛰️  Features
 
