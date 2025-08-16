@@ -2,6 +2,7 @@
 
 import contextlib
 import platform
+import sys
 from collections.abc import Generator
 from contextlib import contextmanager
 from importlib.util import find_spec
@@ -307,9 +308,10 @@ def frame(  # noqa: C901, PLR0915
             ui.tooltip("Check Platform Status")
         ui.space()
         with ui.row():
+            flavor = " (native)" if getattr(sys, "frozen", False) else ""
             ui.html(
                 '🔬<a style="color: black; text-decoration: underline" target="_blank" href="https://github.com/aignostics/python-sdk/">'
-                f"Aignostics Python SDK v{__version__}</a>"
+                f"Aignostics Python SDK v{__version__}{flavor}</a>"
                 ' - built with love in <a style="color: black; text-decoration: underline" target="_blank"'
                 ' href="https://www.aignostics.com/company/about">Berlin</A> 🐻'
             ).style("color: black")

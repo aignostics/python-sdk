@@ -9,7 +9,7 @@ from ._log import get_logger
 
 logger = get_logger(__name__)
 
-WINDOW_SIZE = (1200, 768)  # Default window size for the GUI
+WINDOW_SIZE = (1280, 768)  # Default window size for the GUI
 
 
 class BasePageBuilder(ABC):

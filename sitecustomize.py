@@ -1,5 +1,8 @@
 """Site customization module to enable test coverage computation in subprocesses."""
 
-import coverage
+try:
+    import coverage
 
-coverage.process_startup()
+    coverage.process_startup()
+except ImportError:
+    pass
