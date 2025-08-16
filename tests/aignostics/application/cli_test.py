@@ -238,8 +238,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
 
 
 # TODO(Helmut): Activate when PAPI fixed
-#    assert describe_result.exit_code == 2
-#    assert f"Run with id '{run_id}' not found." in normalize_output(describe_result.stdout)
+#    assert describe_result.exit_code == 2 # noqa: ERA001
+#    assert f"Run with id '{run_id}' not found." in normalize_output(describe_result.stdout) # noqa: ERA001
 
 
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
