@@ -1,11 +1,11 @@
 # We share the base in the builder and targets
-FROM python:3.13-slim-bookworm AS base
+FROM python:3.12-slim-bookworm AS base
 
 # The base of our builder
 FROM base AS builder
 
 # Copy in UV
-COPY --from=ghcr.io/astral-sh/uv:0.8.11 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.8.9 /uv /bin/uv
 
 # We use the system interpreter managed by uv
 ENV UV_PYTHON_DOWNLOADS=0
