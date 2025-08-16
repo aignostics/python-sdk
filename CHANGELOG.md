@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.146](https://github.com/aignostics/python-sdk/compare/v0.2.145..0.2.146) - 2025-08-16
+# [0.2.147](https://github.com/aignostics/python-sdk/compare/v0.2.146..0.2.147) - 2025-08-16
+
+### ⚙️ Miscellaneous Tasks
+
+- *(docker)* Bump to python 3.13 and latest uv - ([67c7141](https://github.com/aignostics/python-sdk/commit/67c714112759623f7020ebcae51648adc38b0b14))
+
+
+# [v0.2.146](https://github.com/aignostics/python-sdk/compare/v0.2.145..v0.2.146) - 2025-08-16
 
 ### 🚜 Refactor
 
