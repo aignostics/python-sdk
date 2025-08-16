@@ -21,12 +21,13 @@ from ._di import load_modules, locate_implementations, locate_subclasses
 from ._fs import get_user_data_directory, open_user_data_directory, sanitize_path, sanitize_path_component
 from ._health import Health
 from ._log import LogSettings, get_logger
-from ._process import ProcessInfo, get_process_info
+from ._process import SUBPROCESS_CREATION_FLAGS, ProcessInfo, get_process_info
 from ._service import BaseService
 from ._settings import UNHIDE_SENSITIVE_INFO, OpaqueSettings, load_settings, strip_to_none_before_validator
 from .boot import boot
 
 __all__ = [
+    "SUBPROCESS_CREATION_FLAGS",
     "UNHIDE_SENSITIVE_INFO",
     "BaseService",
     "Health",

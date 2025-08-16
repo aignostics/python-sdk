@@ -17,15 +17,22 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, urlsplit
 
-import appdirs
 import ijson
+import platformdirs
 import psutil
 import requests
 from packaging.version import Version
 from psutil import Process, wait_procs
 from pydantic import BaseModel, computed_field
 
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, __project_name__, get_logger
+from aignostics.utils import (
+    SUBPROCESS_CREATION_FLAGS,
+    UNHIDE_SENSITIVE_INFO,
+    BaseService,
+    Health,
+    __project_name__,
+    get_logger,
+)
 
 from ._settings import Settings
 
@@ -333,6 +340,7 @@ class Service(BaseService):
                 text=True,
                 check=True,
                 timeout=QUPATH_LAUNCH_MAX_WAIT_TIME,
+                creationflags=SUBPROCESS_CREATION_FLAGS,
             )
 
             output = result.stdout.strip()
@@ -449,7 +457,7 @@ class Service(BaseService):
         Returns:
             Path: The directory QuPath will be installed into.
         """
-        return Path(appdirs.user_data_dir(__project_name__)).resolve()
+        return Path(platformdirs.user_data_dir(__project_name__)).resolve()
 
     @staticmethod
     def _download_qupath(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
@@ -702,6 +710,7 @@ class Service(BaseService):
                         command,
                         capture_output=True,
                         check=True,
+                        creationflags=SUBPROCESS_CREATION_FLAGS,
                     )
                 except subprocess.CalledProcessError as e:
                     stderr_output = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
@@ -735,6 +744,7 @@ class Service(BaseService):
                         command,
                         capture_output=True,
                         check=True,
+                        creationflags=SUBPROCESS_CREATION_FLAGS,
                     )
                 except subprocess.CalledProcessError as e:
                     stderr_output = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""

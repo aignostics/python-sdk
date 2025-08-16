@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated, TypeVar
 from urllib.parse import urlparse
 
-import appdirs
+import platformdirs
 from pydantic import (
     Field,
     FieldSerializationInfo,
@@ -180,7 +180,7 @@ class Settings(OpaqueSettings):
         Field(description="Refresh token for OAuth authentication", min_length=10, max_length=1000, default=None),
     ] = None
 
-    cache_dir: str = appdirs.user_cache_dir(__project_name__)
+    cache_dir: str = platformdirs.user_cache_dir(__project_name__)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
