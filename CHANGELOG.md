@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.144](https://github.com/aignostics/python-sdk/compare/v0.2.143..0.2.144) - 2025-08-16
+# [0.2.145](https://github.com/aignostics/python-sdk/compare/v0.2.144..0.2.145) - 2025-08-16
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump in GHA and Dockerfile - ([4144534](https://github.com/aignostics/python-sdk/commit/41445345033c40bfdede91cdfdbe96c7107eb2cf))
+
+
+# [v0.2.144](https://github.com/aignostics/python-sdk/compare/v0.2.143..v0.2.144) - 2025-08-16
 
 ### 🐛 Bug Fixes
 
