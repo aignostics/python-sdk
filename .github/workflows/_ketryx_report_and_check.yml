@@ -51,4 +51,4 @@ jobs:
             reports/mypy_junit.xml
             reports/coverage.xml
             reports/coverage.md
-            aignostics.log
+            # aignostics.log
