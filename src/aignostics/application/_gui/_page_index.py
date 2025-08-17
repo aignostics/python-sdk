@@ -1,5 +1,6 @@
 """GUI of application module including homepage of Aignostics Launchpad."""
 
+import platform
 from importlib.util import find_spec
 
 from nicegui import Client, app, ui  # noq
@@ -10,13 +11,27 @@ from ._frame import _frame
 
 logger = get_logger(__name__)
 
+pyi_splash = None
+if platform.system() != "Darwin":
+    try:  # noqa: SIM105
+        import pyi_splash  # type: ignore
+
+    except ImportError:
+        pass
+
 
 async def _page_index(client: Client) -> None:
     """Homepage of Applications."""
     client.content.classes(remove="nicegui-content")
     client.content.classes(add="pl-5 pt-5")
 
+    if pyi_splash and pyi_splash.is_alive():
+        pyi_splash.update_text("Loading applications  ...")
+
     await _frame("Analyze your Whole Slide Images with AI", left_sidebar=True)
+
+    if pyi_splash and pyi_splash.is_alive():
+        pyi_splash.close()
 
     with ui.row().classes("p-4 pt-2 pr-0"), ui.column():
         await ui.context.client.connected()
