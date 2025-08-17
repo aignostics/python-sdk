@@ -4,6 +4,7 @@ import json
 import os
 import platform
 import re
+import ssl
 import sys
 import typing as t
 from http import HTTPStatus
@@ -333,6 +334,9 @@ class Service(BaseService):
                         "public_ipv4": Service._get_public_ipv4(),
                         "proxies": getproxies(),
                         "requests_ca_bundle": os.getenv("REQUESTS_CA_BUNDLE"),
+                        "ssl_cert_file": os.getenv("SSL_CERT_FILE"),
+                        "ssl_cert_dir": os.getenv("SSL_CERT_DIR"),
+                        "ssl_default_verify_paths": ssl.get_default_verify_paths()._asdict(),
                     },
                     "uptime": {
                         "seconds": uptime(),

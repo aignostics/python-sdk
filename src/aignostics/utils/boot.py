@@ -6,13 +6,12 @@ import sys
 from pathlib import Path
 
 import certifi
+import truststore
 
 from ._log import logging_initialize
 
 _boot_called = False
 
-if ssl.get_default_verify_paths().cafile is None and os.environ.get("SSL_CERT_FILE") is None:
-    os.environ["SSL_CERT_FILE"] = certifi.where()
 
 # Import third party dependencies
 third_party_dir = Path(__file__).parent.absolute() / ".." / "third_party"
@@ -32,6 +31,11 @@ def boot(modules_to_instrument: list[str]) -> None:
     if _boot_called:
         return
     _boot_called = True
+
+    truststore.inject_into_ssl()
+
+    if ssl.get_default_verify_paths().cafile is None and os.environ.get("SSL_CERT_FILE") is None:
+        os.environ["SSL_CERT_FILE"] = certifi.where()
 
     from ._sentry import sentry_initialize  # noqa: PLC0415
 
