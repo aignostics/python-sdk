@@ -91,8 +91,8 @@ dist_native:
 			echo "Creating 7z archive for macOS app bundle..."; \
 			7z a -t7z -mx=9 -mqs=on aignostics.7z aignostics.app/; \
 		else \
-			echo "Creating 7z archive of dist_native contents..."; \
-			7z a -t7z -mx=9 -mqs=on aignostics.7z . -x!aignostics.7z; \
+			echo "Creating 7z archive of dist_native/aignostics contents..."; \
+			7z a -t7z -mx=9 -mqs=on aignostics.7z aignostics/; \
 		fi; \
 	else \
 		echo "Warning: 7z not available, skipping archive creation"; \

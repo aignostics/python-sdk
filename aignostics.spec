@@ -25,6 +25,9 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 # layer gui
 datas += collect_data_files('nicegui')
 
+# module platform
+datas += collect_data_files('rfc3987_syntax')
+
 # module wsi
 binaries += collect_dynamic_libs('openslide_bin')
 
