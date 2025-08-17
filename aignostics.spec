@@ -56,10 +56,20 @@ a = Analysis(
     noarchive=False,
     optimize=2 if platform.system() == "Darwin" else 0,
 )
+
+splash = Splash('logo.png',
+                binaries=a.binaries,
+                datas=a.datas,
+                text_pos=(10, 50),
+                text_size=12,
+                text_color='black')
+
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
+    splash,
     a.scripts,
     [('O', None, 'OPTION'), ('O', None, 'OPTION')], # https://github.com/numpy/numpy/issues/13248
     exclude_binaries=True,
@@ -78,6 +88,7 @@ exe = EXE(
 )
 coll = COLLECT(
     exe,
+    splash.binaries
     a.binaries,
     a.datas,
     strip=True if platform.system() == "Darwin" else False,
