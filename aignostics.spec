@@ -88,7 +88,7 @@ exe = EXE(
 )
 coll = COLLECT(
     exe,
-    splash.binaries
+    splash.binaries,
     a.binaries,
     a.datas,
     strip=True if platform.system() == "Darwin" else False,
