@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.148](https://github.com/aignostics/python-sdk/compare/v0.2.147..0.2.148) - 2025-08-17
+# [0.2.149](https://github.com/aignostics/python-sdk/compare/v0.2.148..0.2.149) - 2025-08-17
+
+### 🚜 Refactor
+
+- Linter - ([f88bdac](https://github.com/aignostics/python-sdk/commit/f88bdac9597f5169ee8d10458e7618847c942da1))
+
+
+# [v0.2.148](https://github.com/aignostics/python-sdk/compare/v0.2.147..v0.2.148) - 2025-08-17
 
 ### ⛰️  Features
 
@@ -10,9 +17,6 @@
 
 - *(python)* 3.13.6 - ([8c53d71](https://github.com/aignostics/python-sdk/commit/8c53d71c9f307e8e66fbb084cbb3be0b6fac8faf))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution in [#90](https://github.com/aignostics/python-sdk/pull/90)
 
 # [v0.2.147](https://github.com/aignostics/python-sdk/compare/v0.2.146..v0.2.147) - 2025-08-16
 
