@@ -54,7 +54,7 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=2 if platform.system() == "Darwin" else 0,
+    optimize=2 if platform.system() == "Darwin" else 1,
 )
 
 pyz = PYZ(a.pure)
