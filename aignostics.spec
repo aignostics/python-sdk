@@ -64,10 +64,10 @@ if platform.system() != "Darwin":
     splash = Splash('logo.png',
                     binaries=a.binaries,
                     datas=a.datas,
-                    text_pos=(308, 760),
-                    text_size=18,
+                    text_pos=(10, 50),
+                    text_size=12,
                     text_color='white',
-                    text_default='Loading packages ...'
+                    text_default='Loading application ...'
                     )
 
     exe = EXE(

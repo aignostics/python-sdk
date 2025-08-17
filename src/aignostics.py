@@ -17,7 +17,7 @@ if platform.system() != "Darwin":
         pass
 
 if pyi_splash and pyi_splash.is_alive():
-    pyi_splash.update_text("Booting Launchpad ...")
+    pyi_splash.update_text("Initializing services ...")
 
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
@@ -79,5 +79,5 @@ elif len(sys.argv) > 1 and sys.argv[1] == DEBUG_FLAG:
     print(ssl.get_default_verify_paths())
 else:
     if pyi_splash and pyi_splash.is_alive():
-        pyi_splash.update_text("Launching GUI ...")
+        pyi_splash.update_text("Opening user interface ...")
     gui_run(native=True, with_api=False, title="Aignostics Launchpad", icon="🔬")

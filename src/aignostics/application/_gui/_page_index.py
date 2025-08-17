@@ -26,7 +26,7 @@ async def _page_index(client: Client) -> None:
     client.content.classes(add="pl-5 pt-5")
 
     if pyi_splash and pyi_splash.is_alive():
-        pyi_splash.update_text("Loading applications  ...")
+        pyi_splash.update_text("Connecting with API ...")
 
     await _frame("Analyze your Whole Slide Images with AI", left_sidebar=True)
 
