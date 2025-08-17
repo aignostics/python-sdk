@@ -28,6 +28,8 @@ jobs:
             experimental: true
           - runner: windows-latest
             experimental: true
+          - runner: windows-11-arm
+            experimental: true
 
     permissions:
       attestations: write
@@ -47,6 +49,12 @@ jobs:
           version-file: "pyproject.toml"
           enable-cache: true
           cache-dependency-glob: uv.lock
+
+      - name: Install upx for native Windows version
+        if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'windows-11-arm' }}
+        shell: bash
+        run: |
+          choco install upx --no-progress
 
       - name: Build native distribution into dist_native/
         shell: bash
