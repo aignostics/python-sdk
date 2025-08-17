@@ -1,18 +1,21 @@
 """Aignostics Launchpad launcher for pyinstaller."""
 
 import os
+import platform
 import ssl
 import sys
 from multiprocessing import freeze_support
 
 freeze_support()
 
-try:
-    import pyi_splash  # type: ignore
+pyi_splash = None
+if platform.system() != "Darwin":
+    try:
+        import pyi_splash  # type: ignore
 
-    pyi_splash.update_text("Booting Launchpad ...")
-except ImportError:
-    pyi_splash = None
+        pyi_splash.update_text("Booting Launchpad ...")
+    except ImportError:
+        pass
 
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
