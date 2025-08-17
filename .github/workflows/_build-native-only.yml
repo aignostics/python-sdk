@@ -43,6 +43,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dev tools
+        if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'windows-11-arm' }}
+        shell: bash
+        run: |
+          choco install upx
+
       - name: Install uv
         uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
         with:
