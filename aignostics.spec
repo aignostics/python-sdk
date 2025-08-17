@@ -66,7 +66,9 @@ if platform.system() != "Darwin":
                     datas=a.datas,
                     text_pos=(10, 50),
                     text_size=12,
-                    text_color='black')
+                    text_color='white',
+                    text_default='loading packages ...'
+                    )
 
     exe = EXE(
         pyz,
