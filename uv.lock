@@ -82,6 +82,7 @@ dependencies = [
     { name = "shapely" },
     { name = "show-in-file-manager" },
     { name = "tqdm" },
+    { name = "truststore" },
     { name = "typer" },
     { name = "uptime" },
     { name = "urllib3" },
@@ -156,7 +157,7 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.40.11" },
     { name = "certifi", specifier = ">=2025.8.3" },
     { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.21.1" },
-    { name = "dicom-validator", specifier = ">=0.7.1" },
+    { name = "dicom-validator", specifier = ">=0.7.2" },
     { name = "dicomweb-client", extras = ["gcp"], specifier = ">=0.59.2" },
     { name = "duckdb", specifier = ">=0.10.0,<=1.4.0" },
     { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.116.1" },
@@ -205,6 +206,7 @@ requires-dist = [
     { name = "shapely", marker = "extra == 'marimo'", specifier = ">=2.1.0" },
     { name = "show-in-file-manager", specifier = ">=1.1.5" },
     { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "truststore", specifier = ">=0.10.4" },
     { name = "typer", specifier = ">=0.16.0" },
     { name = "uptime", specifier = ">=3.0.1" },
     { name = "urllib3", specifier = ">=2.5.0" },
@@ -1376,16 +1378,16 @@ wheels = [
 
 [[package]]
 name = "dicom-validator"
-version = "0.7.1"
+version = "0.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
     { name = "pydicom" },
     { name = "pyparsing" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/d9/636c71330db926bd1ceac9f87d38dbb58db0224c38887d493ad20367fd4a/dicom_validator-0.7.1.tar.gz", hash = "sha256:95d372ebcbb1116211d5472bd122bde7e27e46ee0507401fc395ea673de19092", size = 62550, upload-time = "2025-05-25T12:27:42.39Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/d8/d32e0ae83bd66a563f31afdba863bbd2e2ac23cfc67d29ccc5521f4a81cc/dicom_validator-0.7.2.tar.gz", hash = "sha256:0be29c15cedf2ee8c55f90a166f1c09b7dbfee063a1d2c479e7924d650b2b1a4", size = 62766, upload-time = "2025-08-16T16:32:40.431Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e9/e2/d5e18fcbbb41fd3ee14b8d09bac5dab03c1bacb8032627822ce02c3bdc57/dicom_validator-0.7.1-py3-none-any.whl", hash = "sha256:3546e3820dc8d6b873df0d5891d885be275a83449bca78dc6a165836e8bb6372", size = 71260, upload-time = "2025-05-25T12:27:40.885Z" },
+    { url = "https://files.pythonhosted.org/packages/78/00/a8a1d94c06aabb2cfb1dd2c4fcf62b146ee8d779738572004ae394c4f964/dicom_validator-0.7.2-py3-none-any.whl", hash = "sha256:822fdc700fbe5ac246c24cb3723076aed1f44eed082e634f73de7f1b7aebec8e", size = 71501, upload-time = "2025-08-16T16:32:38.922Z" },
 ]
 
 [[package]]
@@ -6499,6 +6501,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d1/3c/8b4358e81f2f2cfe71b66a267f023a91db20a817b9425dd964873796980a/trio_websocket-0.12.2.tar.gz", hash = "sha256:22c72c436f3d1e264d0910a3951934798dcc5b00ae56fc4ee079d46c7cf20fae", size = 33549, upload-time = "2025-02-25T05:16:58.947Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/19/eb640a397bba49ba49ef9dbe2e7e5c04202ba045b6ce2ec36e9cadc51e04/trio_websocket-0.12.2-py3-none-any.whl", hash = "sha256:df605665f1db533f4a386c94525870851096a223adcb97f72a07e8b4beba45b6", size = 21221, upload-time = "2025-02-25T05:16:57.545Z" },
+]
+
+[[package]]
+name = "truststore"
+version = "0.10.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/a3/1585216310e344e8102c22482f6060c7a6ea0322b63e026372e6dcefcfd6/truststore-0.10.4.tar.gz", hash = "sha256:9d91bd436463ad5e4ee4aba766628dd6cd7010cf3e2461756b3303710eebc301", size = 26169, upload-time = "2025-08-12T18:49:02.73Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/97/56608b2249fe206a67cd573bc93cd9896e1efb9e98bce9c163bcdc704b88/truststore-0.10.4-py3-none-any.whl", hash = "sha256:adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981", size = 18660, upload-time = "2025-08-12T18:49:01.46Z" },
 ]
 
 [[package]]
