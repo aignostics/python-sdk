@@ -10,7 +10,7 @@ freeze_support()
 
 if platform.system() != "Darwin":
     try:
-        import pyi_splash
+        import pyi_splash  # pyright: ignore[reportMissingModuleSource]
     except ImportError:
         pyi_splash = None
 else:
