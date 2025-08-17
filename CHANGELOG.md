@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.149](https://github.com/aignostics/python-sdk/compare/v0.2.148..0.2.149) - 2025-08-17
+# [0.2.150](https://github.com/aignostics/python-sdk/compare/v0.2.149..0.2.150) - 2025-08-17
+
+### ⛰️  Features
+
+- *(native)* Show progress on splash screen ([#91](https://github.com/orhun/git-cliff/issues/91)) - ([c027531](https://github.com/aignostics/python-sdk/commit/c02753148772afd33895ca08612f0604576b4d1a))
+
+
+# [v0.2.149](https://github.com/aignostics/python-sdk/compare/v0.2.148..v0.2.149) - 2025-08-17
 
 ### 🚜 Refactor
 
