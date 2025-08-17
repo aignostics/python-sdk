@@ -7,13 +7,24 @@ from multiprocessing import freeze_support
 
 freeze_support()
 
+try:
+    import pyi_splash  # type: ignore
+
+    pyi_splash.update_text("Booting Launchpad ...")
+except ImportError:
+    pyi_splash = None
+
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
 from aignostics.constants import MODULES_TO_INSTRUMENT  # noqa: E402
 from aignostics.utils import boot, get_logger, gui_run  # noqa: E402
 
 boot(MODULES_TO_INSTRUMENT)
+
 logger = get_logger(__name__)
+
+if pyi_splash:
+    pyi_splash.close()
 
 # Constants for command line argument handling
 EXEC_SCRIPT_FLAG = "--exec-script"
