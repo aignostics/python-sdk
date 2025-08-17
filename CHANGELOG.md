@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.150](https://github.com/aignostics/python-sdk/compare/v0.2.149..0.2.150) - 2025-08-17
+# [0.2.151](https://github.com/aignostics/python-sdk/compare/v0.2.150..0.2.151) - 2025-08-17
+
+### ⛰️  Features
+
+- *(networking)* Support system truststore for ssl trust chain [no:ci] ([#92](https://github.com/orhun/git-cliff/issues/92)) - ([e0a4565](https://github.com/aignostics/python-sdk/commit/e0a45658d2be8a9ceb2dddab7ed2b6c234c6b73f))
+
+
+# [v0.2.150](https://github.com/aignostics/python-sdk/compare/v0.2.149..v0.2.150) - 2025-08-17
 
 ### ⛰️  Features
 
