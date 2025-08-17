@@ -1,6 +1,5 @@
 """GUI of application module including homepage of Aignostics Launchpad."""
 
-import platform
 from importlib.util import find_spec
 
 from nicegui import Client, app, ui  # noq
@@ -11,12 +10,9 @@ from ._frame import _frame
 
 logger = get_logger(__name__)
 
-if platform.system() != "Darwin":
-    try:
-        import pyi_splash  # pyright: ignore[reportMissingModuleSource]
-    except ImportError:
-        pyi_splash = None
-else:
+try:
+    import pyi_splash  # pyright: ignore[reportMissingModuleSource]
+except ImportError:
     pyi_splash = None
 
 

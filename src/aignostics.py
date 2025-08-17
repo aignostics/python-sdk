@@ -1,19 +1,15 @@
 """Aignostics Launchpad launcher for pyinstaller."""
 
 import os
-import platform
 import ssl
 import sys
 from multiprocessing import freeze_support
 
 freeze_support()
 
-if platform.system() != "Darwin":
-    try:
-        import pyi_splash  # pyright: ignore[reportMissingModuleSource]
-    except ImportError:
-        pyi_splash = None
-else:
+try:
+    import pyi_splash  # pyright: ignore[reportMissingModuleSource]
+except ImportError:
     pyi_splash = None
 
 if pyi_splash and pyi_splash.is_alive():
