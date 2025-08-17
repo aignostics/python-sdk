@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.151](https://github.com/aignostics/python-sdk/compare/v0.2.150..0.2.151) - 2025-08-17
+# [0.2.152](https://github.com/aignostics/python-sdk/compare/v0.2.151..0.2.152) - 2025-08-17
+
+### ⛰️  Features
+
+- *(core)* Support Windows on ARM - ([b49fb28](https://github.com/aignostics/python-sdk/commit/b49fb28e288d50156b2d3c0078e7cf6cd9a7c3bc))
+
+### 🚜 Refactor
+
+- *(native)* Compress native installation using UPX on Windows - ([b49fb28](https://github.com/aignostics/python-sdk/commit/b49fb28e288d50156b2d3c0078e7cf6cd9a7c3bc))
+
+
+# [v0.2.151](https://github.com/aignostics/python-sdk/compare/v0.2.150..v0.2.151) - 2025-08-17
 
 ### ⛰️  Features
 
