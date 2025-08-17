@@ -25,6 +25,9 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 # layer gui
 datas += collect_data_files('nicegui')
 
+# module platform
+datas += collect_data_files('rfc3987_syntax')
+
 # module wsi
 binaries += collect_dynamic_libs('openslide_bin')
 
@@ -53,44 +56,91 @@ a = Analysis(
     noarchive=False,
     optimize=2 if platform.system() == "Darwin" else 0,
 )
+
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [('O', None, 'OPTION'), ('O', None, 'OPTION')], # https://github.com/numpy/numpy/issues/13248
-    exclude_binaries=True,
-    name='aignostics',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=True if platform.system() == "Darwin" else False,
-    upx=True,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon=['logo.ico'],
-)
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=True if platform.system() == "Darwin" else False,
-    upx=True,
-    upx_exclude=[],
-    name='aignostics',
-)
-app = BUNDLE(
-    coll,
-    name='aignostics.app',
-    icon='logo.ico',
-    bundle_identifier='com.aignostics.launchpad',
-    version='0.2.147',
-    info_plist={
-        'NSPrincipalClass': 'NSApplication',
-        'NSAppleScriptEnabled': False,
-        'CFBundleDocumentTypes': []
-    },
-)
+if platform.system() != "Darwin":
+
+    splash = Splash('logo.png',
+                    binaries=a.binaries,
+                    datas=a.datas,
+                    text_pos=(100, 400),
+                    text_size=12,
+                    text_color='white',
+                    text_default='Loading application ...'
+                    )
+
+    exe = EXE(
+        pyz,
+        splash,
+        a.scripts,
+        [('O', None, 'OPTION'), ('O', None, 'OPTION')], # https://github.com/numpy/numpy/issues/13248
+        exclude_binaries=True,
+        name='aignostics',
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=True if platform.system() == "Darwin" else False,
+        upx=True,
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon=['logo.ico'],
+    )
+
+    coll = COLLECT(
+        exe,
+        splash.binaries,
+        a.binaries,
+        a.datas,
+        strip=True if platform.system() == "Darwin" else False,
+        upx=True,
+        upx_exclude=[],
+        name='aignostics',
+    )
+
+else:
+
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [('O', None, 'OPTION'), ('O', None, 'OPTION')], # https://github.com/numpy/numpy/issues/13248
+        exclude_binaries=True,
+        name='aignostics',
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=True if platform.system() == "Darwin" else False,
+        upx=True,
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon=['logo.ico'],
+    )
+
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.datas,
+        strip=True if platform.system() == "Darwin" else False,
+        upx=True,
+        upx_exclude=[],
+        name='aignostics',
+    )
+
+    app = BUNDLE(
+        coll,
+        name='aignostics.app',
+        icon='logo.ico',
+        bundle_identifier='com.aignostics.launchpad',
+        version='0.2.147',
+        info_plist={
+            'NSPrincipalClass': 'NSApplication',
+            'NSAppleScriptEnabled': False,
+            'CFBundleDocumentTypes': []
+        },
+    )

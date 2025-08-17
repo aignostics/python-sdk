@@ -110,7 +110,7 @@ dependencies = [
     "idc-index-data==21.0.0",
     "ijson>=3.4.0",
     "jsf>=0.11.2",
-    "jsonschema>=4.24.1",
+    "jsonschema[format-nongpl]>=4.24.1",
     "openslide-bin>=4.0.0.8",
     "openslide-python>=1.4.2",
     "pandas<=2.3.1",
