@@ -21,7 +21,7 @@ jobs:
           if [[ "${{ github.event.head_commit.message }}" == *"skip:test:matrix-runner"* ]]; then
             echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
           else
-            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true}]}' >> $GITHUB_OUTPUT
+            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true},{"runner":"windows-11-arm","experimental":true}]}' >> $GITHUB_OUTPUT
           fi
 
   test:
