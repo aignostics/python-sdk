@@ -1,6 +1,20 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.147](https://github.com/aignostics/python-sdk/compare/v0.2.146..0.2.147) - 2025-08-16
+# [0.2.148](https://github.com/aignostics/python-sdk/compare/v0.2.147..0.2.148) - 2025-08-17
+
+### ⛰️  Features
+
+- *(native)* Splash screen for Windows and Linux ([#90](https://github.com/orhun/git-cliff/issues/90)) - ([8261771](https://github.com/aignostics/python-sdk/commit/8261771bd8abf980eca2a268e09a9d38539c2646))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(python)* 3.13.6 - ([8c53d71](https://github.com/aignostics/python-sdk/commit/8c53d71c9f307e8e66fbb084cbb3be0b6fac8faf))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution in [#90](https://github.com/aignostics/python-sdk/pull/90)
+
+# [v0.2.147](https://github.com/aignostics/python-sdk/compare/v0.2.146..v0.2.147) - 2025-08-16
 
 ### ⚙️ Miscellaneous Tasks
 
