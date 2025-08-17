@@ -8,13 +8,13 @@ from multiprocessing import freeze_support
 
 freeze_support()
 
-pyi_splash = None
 if platform.system() != "Darwin":
-    try:  # noqa: SIM105
-        import pyi_splash  # type: ignore
-
+    try:
+        import pyi_splash
     except ImportError:
-        pass
+        pyi_splash = None
+else:
+    pyi_splash = None
 
 if pyi_splash and pyi_splash.is_alive():
     pyi_splash.update_text("Initializing services ...")

@@ -11,13 +11,13 @@ from ._frame import _frame
 
 logger = get_logger(__name__)
 
-pyi_splash = None
 if platform.system() != "Darwin":
-    try:  # noqa: SIM105
-        import pyi_splash  # type: ignore
-
+    try:
+        import pyi_splash
     except ImportError:
-        pass
+        pyi_splash = None
+else:
+    pyi_splash = None
 
 
 async def _page_index(client: Client) -> None:
