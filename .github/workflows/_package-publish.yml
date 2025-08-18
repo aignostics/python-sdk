@@ -137,6 +137,12 @@ jobs:
           cd ..
           ls -la dist_native_zipped/
 
+
+      - name: Final smoke test
+        shell: bash
+        run: |
+          uv run --no-dev aignostics --help
+
       - name: Docs
         shell: bash
         run: make docs
