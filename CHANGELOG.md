@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.152](https://github.com/aignostics/python-sdk/compare/v0.2.151..0.2.152) - 2025-08-17
+# [0.2.153](https://github.com/aignostics/python-sdk/compare/v0.2.152..0.2.153) - 2025-08-18
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Add final smoke test before publish - ([54304ad](https://github.com/aignostics/python-sdk/commit/54304adb4959a52da83a672473ed4b0fc8195711))
+
+
+# [v0.2.152](https://github.com/aignostics/python-sdk/compare/v0.2.151..v0.2.152) - 2025-08-17
 
 ### ⛰️  Features
 
