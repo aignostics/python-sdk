@@ -329,5 +329,3 @@ uvx aignostics bucket [subcommand] [options]
 - **Async Operations**: Generator-based progress callbacks for non-blocking UI updates
 - **Thread Safety**: Immutable progress models, thread-safe logging configuration
 - **Resource Management**: Proper cleanup of S3 client connections and file handles
-
----
