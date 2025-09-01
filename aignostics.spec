@@ -73,11 +73,7 @@ app = BUNDLE(
     name='aignostics.app',
     icon='logo.ico',
     bundle_identifier='com.aignostics.launchpad',
-<<<<<<< HEAD
-    version='0.2.105',
-=======
     version='0.2.140',
->>>>>>> origin/main
     info_plist={
         'NSPrincipalClass': 'NSApplication',
         'NSAppleScriptEnabled': False,

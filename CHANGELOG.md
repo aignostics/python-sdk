@@ -1,30 +1,5 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-<<<<<<< HEAD
-# [0.2.105](https://github.com/aignostics/python-sdk/compare/v0.2.104..0.2.105) - 2025-07-22
-
-### 🚜 Refactor
-
-- *(gha)* Remove setting set to default - ([bad3da2](https://github.com/aignostics/python-sdk/commit/bad3da21add2e81f320a541cc1feafc0c57fdbfb))
-
-### 📚 Documentation
-
-- *(contributing)* Add skip [skip:ci] - ([1a88d8d](https://github.com/aignostics/python-sdk/commit/1a88d8d9b495c4bd3dddf3cd98cad55dbcd01cec))
-- Start with reqs (md), specs (md), testcases (cucumber), wiring tests (pytest) - ([cb21058](https://github.com/aignostics/python-sdk/commit/cb21058a484455e40faf74a8524f21d8999f8a27))
-
-### ⚙️ Miscellaneous Tasks
-
-- *(deps)* Bump - ([0f1d384](https://github.com/aignostics/python-sdk/commit/0f1d384cdb6f1b6eaca1dd01b0e889fa36b5db51))
-- *(gha)* Conditional matrix testing [skip:test:long-running, skip:test:matrix-runner] - ([f34c7fa](https://github.com/aignostics/python-sdk/commit/f34c7fa588717c9b1d2c40b2a9ccfba28e832c61))
-- *(gha)* Better skips, i.e. in commit message enabling skip:test:long-running etc. - ([f90e7f8](https://github.com/aignostics/python-sdk/commit/f90e7f84e5d9ef3fb5d82a213e9352b5fa075273))
-- *(gha)* Integrate ketryx - ([cb21058](https://github.com/aignostics/python-sdk/commit/cb21058a484455e40faf74a8524f21d8999f8a27))
-
-### 🛡️ Security
-
-- *(dep)* Bump starlette given GHSA-2c2j-9gv5-cj73 - ([8b2299b](https://github.com/aignostics/python-sdk/commit/8b2299bedfb9418dfa627d76c19df2665e6e7dc7))
-
-
-=======
 # [0.2.140](https://github.com/aignostics/python-sdk/compare/v0.2.139..0.2.140) - 2025-08-14
 
 ### ⚙️ Miscellaneous Tasks
@@ -349,7 +324,6 @@
 
 * @idelsink made their first contribution in [#61](https://github.com/aignostics/python-sdk/pull/61)
 
->>>>>>> origin/main
 # [v0.2.104](https://github.com/aignostics/python-sdk/compare/v0.2.103..v0.2.104) - 2025-07-15
 
 ### 📚 Documentation
