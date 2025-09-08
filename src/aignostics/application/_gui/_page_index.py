@@ -20,11 +20,11 @@ async def _page_index(client: Client) -> None:
 
     with ui.row().classes("p-4 pt-2 pr-0"), ui.column():
         await ui.context.client.connected()
-        ui.label("Welcome to the Aignostics Launchpad").bind_text_from(
+        ui.label("Hala walah to the Aignostics Launchpad").bind_text_from(
             app.storage.tab,
             "user_info",
             lambda user_info: (
-                f"Welcome "
+                f"Hala walah "
                 f"{user_info.profile.given_name if hasattr(user_info, 'profile') and user_info.profile else ''} "
                 f"to the Aignostics Launchpad"
             ),
@@ -64,6 +64,12 @@ async def _page_index(client: Client) -> None:
                 if find_spec("marimo"):
                     ui.label("Analyze results in Python Notebooks?").classes("text-xl")
                     ui.label('On completed runs click "Marimo" to directly open the notebook.').classes("text")
+
+                ui.label("Want to see how modules work?").classes("text-xl")
+                with ui.row().classes("text"):
+                    ui.label("Check out our")
+                    ui.link("Example Module", "/example").classes("text-blue-600 underline")
+                    ui.label("to understand the SDK architecture.")
 
             with (
                 ui.carousel(animated=True, arrows=True, navigation=True)
