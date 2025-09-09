@@ -93,21 +93,21 @@ _[Identify architectural patterns used in this module]_
 
 _[Define what data/parameters the module accepts]_
 
-| Input Type | Source        | Format/Type | Validation Rules         |
-| ---------- | ------------- | ----------- | ------------------------ |
-| [Input1]   | [CLI/GUI/API] | [Data type] | [Validation description] |
-| [Input2]   | [CLI/GUI/API] | [Data type] | [Validation description] |
-| [Input3]   | [CLI/GUI/API] | [Data type] | [Validation description] |
+| Input Type | Source        | Format/Type | Validation Rules         | Code Location   |
+| ---------- | ------------- | ----------- | ------------------------ | --------------- |
+| [Input1]   | [CLI/GUI/API] | [Data type] | [Validation description] | [File/Function] |
+| [Input2]   | [CLI/GUI/API] | [Data type] | [Validation description] | [File/Function] |
+| [Input3]   | [CLI/GUI/API] | [Data type] | [Validation description] | [File/Function] |
 
 ### 3.2 Outputs
 
 _[Define what data/responses the module produces]_
 
-| Output Type | Destination     | Format/Type | Success Criteria     |
-| ----------- | --------------- | ----------- | -------------------- |
-| [Output1]   | [Target system] | [Data type] | [Success definition] |
-| [Output2]   | [Target system] | [Data type] | [Success definition] |
-| [Output3]   | [Target system] | [Data type] | [Success definition] |
+| Output Type | Destination     | Format/Type | Success Criteria     | Code Location   |
+| ----------- | --------------- | ----------- | -------------------- | --------------- |
+| [Output1]   | [Target system] | [Data type] | [Success definition] | [File/Function] |
+| [Output2]   | [Target system] | [Data type] | [Success definition] | [File/Function] |
+| [Output3]   | [Target system] | [Data type] | [Success definition] | [File/Function] |
 
 ### 3.3 Data Flow
 

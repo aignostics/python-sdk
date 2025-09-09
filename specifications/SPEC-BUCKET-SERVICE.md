@@ -4,11 +4,11 @@
 
 **Item ID:** SPEC-BUCKET-SERVICE  
 **Item Type:** Software Item Spec  
-**Item Fulfills:** FE-6386  
+**Item Fulfills:** SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3  
 **Module:** Bucket  
 **Layer:** Domain Service  
 **Version:** 0.2.105  
-**Date:** August 28, 2025
+**Date:** September 9, 2025
 
 ---
 
@@ -93,23 +93,23 @@ def read_in_chunks():
 
 ### 3.1 Inputs
 
-| Input Type         | Source        | Format/Type     | Validation Rules                                          |
-| ------------------ | ------------- | --------------- | --------------------------------------------------------- |
-| Bucket Name        | CLI/GUI/API   | String          | Must match GCS bucket naming conventions                  |
-| Object Key/Pattern | CLI/GUI/API   | String/Regex    | Valid path characters, regex patterns for bulk operations |
-| Local File Path    | CLI/GUI/API   | Path            | Must exist for upload, valid directory for download       |
-| Credentials        | Environment   | HMAC Key Pair   | Required AIGNOSTICS_BUCKET_HMAC_* variables              |
-| Protocol           | Configuration | String          | Must be "gs" or "s3"                                     |
+| Input Type         | Source        | Format/Type     | Validation Rules                                          | Code Location                                          |
+| ------------------ | ------------- | --------------- | --------------------------------------------------------- | ------------------------------------------------------ |
+| Bucket Name        | CLI/GUI/API   | String          | Must match GCS bucket naming conventions                  | `_service.py::Service.get_bucket_name()` method       |
+| Object Key/Pattern | CLI/GUI/API   | String/Regex    | Valid path characters, regex patterns for bulk operations | `_service.py` upload/download methods, `_cli.py` args |
+| Local File Path    | CLI/GUI/API   | Path            | Must exist for upload, valid directory for download       | `_cli.py` typer Path validation, `_service.py` checks |
+| Credentials        | Environment   | HMAC Key Pair   | Required AIGNOSTICS_BUCKET_HMAC_* variables              | `_settings.py::Settings` environment variable binding |
+| Protocol           | Configuration | String          | Must be "gs" or "s3"                                     | `_settings.py::BucketProtocol` enum validation        |
 
 ### 3.2 Outputs
 
-| Output Type      | Destination     | Format/Type      | Success Criteria                              |
-| ---------------- | --------------- | ---------------- | --------------------------------------------- |
-| Uploaded Files   | Cloud Storage   | Binary/Metadata  | Successful S3 PUT with ETag confirmation      |
-| Downloaded Files | Local Filesystem| Binary           | Complete download with ETag validation        |
-| Signed URLs      | Client/Platform | HTTPS URL        | Valid URL with correct expiration time        |
-| Progress Updates | CLI/GUI         | Progress Models  | Real-time byte-level progress information     |
-| Operation Status | Logs/Console    | Structured Logs  | Success/failure with detailed error messages  |
+| Output Type      | Destination     | Format/Type      | Success Criteria                              | Code Location                                           |
+| ---------------- | --------------- | ---------------- | --------------------------------------------- | ------------------------------------------------------- |
+| Uploaded Files   | Cloud Storage   | Binary/Metadata  | Successful S3 PUT with ETag confirmation      | `_service.py::Service.upload()` method return          |
+| Downloaded Files | Local Filesystem| Binary           | Complete download with ETag validation        | `_service.py::Service.download()` method with progress |
+| Signed URLs      | Client/Platform | HTTPS URL        | Valid URL with correct expiration time        | `_service.py::Service.create_signed_*_url()` methods   |
+| Progress Updates | CLI/GUI         | Progress Models  | Real-time byte-level progress information     | `_service.py::DownloadProgress/UploadProgress` models  |
+| Operation Status | Logs/Console    | Structured Logs  | Success/failure with detailed error messages  | `_cli.py` console output, `_service.py` logger calls   |
 
 ### 3.3 Data Flow
 
@@ -135,47 +135,61 @@ graph LR
 class Service(BaseService):
     """Bucket service for S3-compatible cloud storage operations."""
 
-    def upload(self, source: Path, bucket: str, key: str | None = None,
-              progress_callback: Callable[[UploadProgress], None] | None = None) -> str:
+    def upload(self, source_path: Path, destination_prefix: str,
+              callback: Callable[[int, Path], None] | None = None) -> dict[str, list[str]]:
         """Upload file or directory to cloud storage.
+
         Args:
-            source: Local file or directory path to upload
-            bucket: Target bucket name
-            key: Optional object key (auto-generated if None)
-            progress_callback: Optional callback for progress updates
+            source_path: Local file or directory path to upload
+            destination_prefix: Prefix for object keys (e.g. username)
+            callback: Optional callback for upload progress updates
+
         Returns:
-            Cloud storage URL of uploaded object
+            Dictionary with 'success' and 'failed' lists containing object keys
+
         Raises:
-            ValueError: Invalid source path or bucket name
+            ValueError: Invalid source path or destination prefix
             BotoClientError: S3 API operation failure
         """
 
-    def download(self, source_url: str, destination: Path | None = None,
-                pattern: str | None = None,
-                progress_callback: Callable[[DownloadProgress], None] | None = None) -> list[Path]:
+    def download(self, what: list[str] | None = None,
+                destination: Path = get_user_data_directory("bucket_downloads"),
+                what_is_key: bool = False,
+                progress_callback: Callable[[DownloadProgress], None] | None = None) -> DownloadResult:
         """Download files from cloud storage with optional pattern matching.
+
         Args:
-            source_url: Cloud storage URL (gs:// or s3://)
+            what: Patterns or keys to match object keys against (all if None)
             destination: Local destination directory
-            pattern: Optional regex pattern for selective download
+            what_is_key: If True, treat pattern as key, else as regex
             progress_callback: Optional callback for progress updates
+
         Returns:
-            List of downloaded file paths
+            DownloadResult with downloaded and failed object lists
+
         Raises:
-            ValueError: Invalid URL format or destination
+            ValueError: Invalid regex pattern or destination
             BotoClientError: S3 API operation failure
         """
 
-    def list(self, source_url: str, pattern: str | None = None,
-            detailed: bool = False) -> list[dict[str, Any]]:
-        """List bucket contents with optional pattern filtering.
+    def delete(self, what: list[str] | None, what_is_key: bool = False,
+              dry_run: bool = True) -> int:
+        """Delete objects from cloud storage.
+
+        Args:
+            what: Patterns or keys to match object keys against
+            what_is_key: If True, treat pattern as key, else as regex
+            dry_run: If True, only show what would be deleted
+
         Returns:
-            List of object metadata dictionaries
+            Number of objects deleted (or would be deleted if dry_run)
         """
 
-    def generate_signed_url(self, bucket: str, key: str, operation: str = "download",
-                           expiration: int | None = None) -> str:
-        """Generate time-limited signed URL for secure access."""
+    def create_signed_upload_url(self, object_key: str) -> str:
+        """Generate time-limited signed URL for secure upload access."""
+
+    def create_signed_download_url(self, object_key: str) -> str:
+        """Generate time-limited signed URL for secure download access."""
 ```
 
 ### 4.2 CLI Interface
@@ -188,10 +202,11 @@ uvx aignostics bucket [subcommand] [options]
 
 **Available Commands:**
 
-- `upload <source> <bucket> [key]`: Upload file or directory to bucket
-- `download <url> [destination] [--pattern REGEX]`: Download from bucket with optional pattern
-- `list <url> [--pattern REGEX] [--detailed]`: List bucket contents
-- `delete <url> [--pattern REGEX] [--dry-run]`: Delete objects from bucket
+- `upload <source> <destination_prefix>`: Upload file or directory to bucket with destination prefix
+- `find [patterns...] [--what-is-key] [--detailed]`: Find and list bucket contents with optional pattern matching
+- `download [patterns...] [--destination] [--what-is-key]`: Download from bucket with optional pattern filtering
+- `delete [patterns...] [--what-is-key] [--dry-run]`: Delete objects from bucket with pattern matching
+- `url <object_key> [--download/--upload]`: Generate signed URLs for secure access
 
 ### 4.3 GUI Interface
 
