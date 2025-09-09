@@ -7,4 +7,4 @@ Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 
-System shall scan selected directories and identify compatible slide files for analysis processing.
+System shall scan selected directories recursively and identify compatible slide files for analysis processing.

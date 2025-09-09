@@ -7,4 +7,4 @@ Requirement type: ENVIRONMENT
 
 ## Description
 
-Users shall be able to view available AI applications and navigate to specific application pages to access application functionality.
+Users shall be able to view available AI applications and navigate to specific application views to access application functionality.

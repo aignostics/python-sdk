@@ -7,4 +7,4 @@ Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 
-System shall generate metadata from slide files including resolution, dimensions, checksum, and file path information for application processing.
+System shall generate technical file metadata from slide files and shall combine this with required user-provided medical metadata for complete slide metadata used in application processing.

@@ -7,4 +7,4 @@ Requirement type: FUNCTIONAL
 Layer: User Interface (frontend)
 ---
 
-System shall provide file selection interface that allows users to choose directories containing slide files for analysis.
+System shall provide a file selection interface that allows users to choose directories containing slide files for analysis.
