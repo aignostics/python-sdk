@@ -4,7 +4,7 @@
 
 **Item ID:** SPEC-APPLICATION-SERVICE  
 **Item Type:** Software Item Spec  
-**Item Fulfills:** SWR-APPLICATION-1, SWR-APPLICATION-2, SWR-APPLICATION-3  
+**Item Fulfills:** SWR-APPLICATION-1-1, SWR-APPLICATION-1-2  
 **Module:** Application  
 **Layer:** Domain Service  
 **Version:** 0.2.106  
@@ -112,21 +112,69 @@ application/
 ### 3.3 Data Flow
 
 ```mermaid
-graph LR
-    A[WSI Files] --> B[Metadata Generation]
-    B --> C[File Upload]
-    C --> D[Run Submission]
-    D --> E[Platform Processing]
-    E --> F[Result Download]
-    F --> G[QuPath Integration]
+graph TD
+    A[WSI Files] --> B[WSI Service]
+    B --> C[Metadata Extraction]
+    C --> D[Input Items Creation]
 
-    H[Configuration] --> B
-    H --> C
-    H --> D
+    D --> E[Bucket Service]
+    E --> F[File Upload to Cloud Storage]
+    F --> G[Platform API]
+    G --> H[Application Run Submission]
 
-    I[Progress Tracking] --> B
-    I --> C
-    I --> F
+    H --> I[Platform Processing]
+    I --> J[Run Status Monitoring]
+    J --> K{Run Complete?}
+    K -->|No| J
+    K -->|Yes| L[Result Download]
+
+    L --> M[Bucket Service Download]
+    M --> N[Local File System]
+    N --> O{QuPath Available?}
+    O -->|Yes| P[QuPath Integration]
+    O -->|No| Q[Results Only]
+
+    R[Settings/_settings.py] --> B
+    R --> E
+    R --> G
+
+    S[Progress Tracking] --> F
+    S --> L
+    S --> P
+
+    T[CLI/GUI Input] --> A
+    U[DownloadProgress Model] --> S
+
+    subgraph "Application Service Layer"
+        V[Service.applications]
+        W[Service.application_run_submit]
+        X[Service.application_run_download]
+        Y[Service.application_run_cancel]
+    end
+
+    D --> W
+    L --> X
+    J --> Y
+
+    subgraph "External Dependencies"
+        G
+        E
+        B
+    end
+
+    subgraph "Progress States"
+        Z1[INITIALIZING]
+        Z2[CHECKING]
+        Z3[DOWNLOADING]
+        Z4[QUPATH_ADD_RESULTS]
+        Z5[COMPLETED]
+    end
+
+    S --> Z1
+    Z1 --> Z2
+    Z2 --> Z3
+    Z3 --> Z4
+    Z4 --> Z5
 ```
 
 ---
