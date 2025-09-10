@@ -114,7 +114,7 @@ def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog, record_p
 
 @pytest.mark.skipif(
     not os.getenv("GOOGLE_APPLICATION_CREDENTIALS") and not os.getenv("CI"),
-    reason="Requires Google Cloud credentials or CI environment"
+    reason="Requires Google Cloud credentials or CI environment",
 )
 def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check download functionality with dry-run option."""
