@@ -463,9 +463,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## aignostics (0.2.104) - MIT License
-=======
 ## accessible-pygments (0.0.5) - BSD License
 
 A collection of accessible pygments styles
@@ -509,8 +506,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.106) - MIT License
->>>>>>> origin/main
+## aignostics (0.2.140) - MIT License
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -3314,11 +3310,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## boto3 (1.39.8) - Apache Software License
-=======
-## boto3 (1.40.3) - Apache Software License
->>>>>>> origin/main
+## boto3 (1.40.10) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3516,11 +3508,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-<<<<<<< HEAD
-## botocore (1.39.8) - Apache Software License
-=======
-## botocore (1.40.3) - Apache Software License
->>>>>>> origin/main
+## botocore (1.40.10) - Apache Software License
 
 Low-level, data-driven core of boto 3.
 
@@ -4529,7 +4517,7 @@ That's all there is to it!
 
 ```
 
-## charset-normalizer (3.4.2) - MIT License
+## charset-normalizer (3.4.3) - MIT
 
 The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet.
 
@@ -4803,12 +4791,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## coverage (7.10.2) - Apache-2.0
+## coverage (7.10.3) - Apache-2.0
 
 Code coverage measurement for Python
 
 * URL: https://github.com/nedbat/coveragepy
-* Author(s): Ned Batchelder and 242 others
+* Author(s): Ned Batchelder and 243 others
 
 ### License Text
 
@@ -5719,7 +5707,7 @@ CycloneDX community (https://cyclonedx.org/).
 
 ```
 
-## debugpy (1.8.15) - MIT License
+## debugpy (1.8.16) - MIT License
 
 An implementation of the Debug Adapter Protocol for Python
 
@@ -7389,7 +7377,7 @@ THE SOFTWARE.
 
 ```
 
-## fastjsonschema (2.21.1) - BSD License
+## fastjsonschema (2.21.2) - BSD License
 
 Fastest Python implementation of JSON schema
 
@@ -7618,7 +7606,7 @@ Python support for Parquet file format
    END OF TERMS AND CONDITIONS
 ```
 
-## filelock (3.18.0) - The Unlicense (Unlicense)
+## filelock (3.19.1) - The Unlicense (Unlicense)
 
 A platform independent file lock.
 
@@ -7655,7 +7643,7 @@ For more information, please refer to <http://unlicense.org>
 
 ```
 
-## fonttools (4.59.0) - MIT
+## fonttools (4.59.1) - MIT
 
 Tools to manipulate font files
 
@@ -9015,7 +9003,7 @@ Google Cloud API client core library
 
 ```
 
-## google-cloud-storage (3.2.0) - Apache Software License
+## google-cloud-storage (3.3.0) - Apache Software License
 
 Google Cloud Storage API client library
 
@@ -9910,7 +9898,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## highdicom (0.26.0) - MIT License
+## highdicom (0.26.1) - MIT License
 
 High-level DICOM abstractions.
 
@@ -10129,7 +10117,7 @@ SOFTWARE.
 
 ```
 
-## identify (2.6.12) - MIT
+## identify (2.6.13) - MIT
 
 File identification library for Python
 
@@ -10960,7 +10948,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## json5 (0.12.0) - Apache Software License
+## json5 (0.12.1) - Apache Software License
 
 A Python implementation of the JSON5 data format.
 
@@ -11293,11 +11281,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## jsonschema (4.24.1) - UNKNOWN
-=======
 ## jsonschema (4.25.0) - UNKNOWN
->>>>>>> origin/main
 
 An implementation of JSON Schema validation for Python
 
@@ -12136,7 +12120,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## kiwisolver (1.4.8) - BSD License
+## kiwisolver (1.4.9) - BSD License
 
 A fast implementation of the Cassowary constraint solver
 
@@ -12153,7 +12137,7 @@ A fast implementation of the Cassowary constraint solver
 Kiwi is licensed under the terms of the Modified BSD License (also known as
 New or Revised BSD), as follows:
 
-Copyright (c) 2013-2024, Nucleic Development Team
+Copyright (c) 2013-2025, Nucleic Development Team
 
 All rights reserved.
 
@@ -12212,7 +12196,7 @@ With this in mind, the following banner should be used in any source code file
 to indicate the copyright and license terms:
 
 #------------------------------------------------------------------------------
-# Copyright (c) 2013-2024, Nucleic Development Team.
+# Copyright (c) 2013-2025, Nucleic Development Team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -12302,11 +12286,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-<<<<<<< HEAD
-## logfire (3.24.2) - MIT License
-=======
-## logfire (4.1.0) - MIT License
->>>>>>> origin/main
+## logfire (4.3.3) - MIT License
 
 The best Python observability tool! 🪵🔥
 
@@ -12340,7 +12320,7 @@ SOFTWARE.
 
 ```
 
-## loro (1.5.3) - UNKNOWN
+## loro (1.5.4) - UNKNOWN
 
 Python bindings for [Loro](https://loro.dev)
 
@@ -12452,17 +12432,13 @@ Copyright 2010-2020 - Ronald Oussoren
 
 ```
 
-<<<<<<< HEAD
-## marimo (0.14.11) - Apache Software License
-=======
-## marimo (0.14.16) - Apache Software License
->>>>>>> origin/main
+## marimo (0.14.17) - Apache Software License
 
 A library for making reactive notebooks and apps
 
 * URL: https://github.com/marimo-team/marimo
 
-## markdown-it-py (3.0.0) - MIT License
+## markdown-it-py (4.0.0) - MIT License
 
 Python port of markdown-it. Markdown parsing, done right!
 
@@ -12934,7 +12910,7 @@ Copyright (C) 2008-2011 INADA Naoki <songofacandy@gmail.com>
 
 ```
 
-## multidict (6.6.3) - Apache License 2.0
+## multidict (6.6.4) - Apache License 2.0
 
 multidict implementation
 
@@ -12960,11 +12936,7 @@ multidict implementation
 
 ```
 
-<<<<<<< HEAD
-## mypy (1.17.0) - MIT License
-=======
 ## mypy (1.17.1) - MIT License
->>>>>>> origin/main
 
 Optional static typing for Python
 
@@ -13246,7 +13218,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## narwhals (2.0.1) - MIT License
+## narwhals (2.1.1) - MIT License
 
 Extremely lightweight compatibility layer between dataframe libraries
 
@@ -13481,7 +13453,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (2.22.1) - MIT License
+## nicegui (2.22.2) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -19311,12 +19283,11 @@ Web util for OpenTelemetry
 * URL: https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/util/opentelemetry-util-http
 * Author(s): OpenTelemetry Authors <cncf-opentelemetry-contributors@lists.cncf.io>
 
-## orjson (3.11.1) - Apache Software License; MIT License
+## orjson (3.11.2) - Apache Software License; MIT License
 
-Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy
+UNKNOWN
 
 * URL: https://github.com/ijl/orjson
-* Author(s): ijl <ijl@mailbox.org>
 
 ### License Text
 
@@ -19756,7 +19727,7 @@ A decorator to automatically detect mismatch when overriding a method.
 
 ```
 
-## packageurl-python (0.17.4) - MIT License
+## packageurl-python (0.17.5) - MIT License
 
 A purl aka. Package URL parser and builder
 
@@ -23653,7 +23624,7 @@ SOFTWARE.
 
 ```
 
-## pre_commit (4.2.0) - MIT License
+## pre_commit (4.3.0) - MIT
 
 A framework for managing and maintaining multi-language pre-commit hooks.
 
@@ -24444,7 +24415,7 @@ Beautiful, Pythonic protocol buffers
 
 ```
 
-## protobuf (6.31.1) - 3-Clause BSD License
+## protobuf (6.32.0) - 3-Clause BSD License
 
 UNKNOWN
 
@@ -26492,7 +26463,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ```
 
-## pytest-regressions (2.8.1) - MIT License
+## pytest-regressions (2.8.2) - MIT License
 
 Easy to use fixtures to write regression tests.
 
@@ -27817,7 +27788,7 @@ SOFTWARE.
 
 ```
 
-## rich-toolkit (0.14.9) - MIT License
+## rich-toolkit (0.15.0) - MIT License
 
 Rich toolkit for building command-line applications
 
@@ -28043,7 +28014,7 @@ d. Affirmer understands and acknowledges that Creative Commons is not a
 
 ```
 
-## rpds-py (0.26.0) - MIT
+## rpds-py (0.27.0) - UNKNOWN
 
 Python bindings to Rust's persistent data structures (rpds)
 
@@ -28210,11 +28181,7 @@ C version of reader, parser and emitter for ruamel.yaml derived from libyaml
 
 ```
 
-<<<<<<< HEAD
-## ruff (0.12.4) - MIT License
-=======
-## ruff (0.12.7) - MIT License
->>>>>>> origin/main
+## ruff (0.12.9) - MIT License
 
 An extremely fast Python linter and code formatter, written in Rust.
 
@@ -29880,7 +29847,7 @@ SOFTWARE.
 
 ```
 
-## scalene (1.5.51) - Apache Software License
+## scalene (1.5.53) - Apache Software License
 
 Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Python with AI-powered optimization suggestions
 
@@ -30095,7 +30062,7 @@ Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Pytho
 
 ```
 
-## selenium (4.34.2) - Apache 2.0
+## selenium (4.35.0) - Apache-2.0
 
 Official Python bindings for Selenium WebDriver
 
@@ -30309,6 +30276,14 @@ Official Python bindings for Selenium WebDriver
 
 ```
 
+### Notice
+
+```
+Copyright 2011-2025 Software Freedom Conservancy
+Copyright 2004-2011 Selenium committers
+
+```
+
 ## semver (3.0.4) - BSD License
 
 Python helper for Semantic Versioning (https://semver.org)
@@ -30350,11 +30325,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## sentry-sdk (2.33.0) - BSD License
-=======
-## sentry-sdk (2.34.1) - BSD License
->>>>>>> origin/main
+## sentry-sdk (2.35.0) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -30926,7 +30897,7 @@ SOFTWARE.
 
 ```
 
-## sphinx-jinja2-compat (0.4.0) - MIT License
+## sphinx-jinja2-compat (0.4.1) - MIT License
 
 Patches Jinja2 v3 to restore compatibility with earlier Sphinx versions.
 
@@ -30958,7 +30929,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## sphinx-prompt (1.10.0) - BSD License
+## sphinx-prompt (1.10.1) - BSD License
 
 Sphinx directive to add unselectable prompt
 
@@ -31460,7 +31431,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## swagger-plugin-for-sphinx (5.1.2) - UNKNOWN
+## swagger-plugin-for-sphinx (5.1.3) - UNKNOWN
 
 Sphinx plugin which renders a OpenAPI specification with Swagger
 
@@ -32178,7 +32149,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## tornado (6.5.1) - Apache Software License
+## tornado (6.5.2) - Apache Software License
 
 Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed.
 
@@ -32616,7 +32587,7 @@ THE SOFTWARE.
 
 ```
 
-## types-PyYAML (6.0.12.20250516) - UNKNOWN
+## types-PyYAML (6.0.12.20250809) - UNKNOWN
 
 Typing stubs for PyYAML
 
@@ -32865,7 +32836,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## types-python-dateutil (2.9.0.20250708) - UNKNOWN
+## types-python-dateutil (2.9.0.20250809) - UNKNOWN
 
 Typing stubs for python-dateutil
 
@@ -33114,7 +33085,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## types-requests (2.32.4.20250611) - UNKNOWN
+## types-requests (2.32.4.20250809) - UNKNOWN
 
 Typing stubs for requests
 
@@ -33983,7 +33954,7 @@ SOFTWARE.
 
 ```
 
-## uv (0.8.5) - Apache Software License; MIT License
+## uv (0.8.11) - Apache Software License; MIT License
 
 An extremely fast Python package and project manager, written in Rust.
 
@@ -34487,7 +34458,7 @@ SOFTWARE.
 
 ```
 
-## virtualenv (20.33.1) - MIT License
+## virtualenv (20.34.0) - MIT License
 
 Virtual Python Environment builder
 
@@ -34959,41 +34930,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## wheel (0.45.1) - MIT License
-
-A built-package format for Python
-
-* URL: https://github.com/pypa/wheel
-* Author(s): Daniel Holth <dholth@fastmail.fm>
-* Maintainer(s): Alex Grönholm <alex.gronholm@nextday.fi>
-
-### License Text
-
-```
-MIT License
-
-Copyright (c) 2012 Daniel Holth <dholth@fastmail.fm> and contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
-```
-
 ## widgetsnbextension (4.0.14) - BSD License
 
 Jupyter interactive widgets for Jupyter Notebook
@@ -35034,7 +34970,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## wrapt (1.17.2) - BSD License
+## wrapt (1.17.3) - BSD License
 
 Module for decorators, wrappers and monkey patching.
 
