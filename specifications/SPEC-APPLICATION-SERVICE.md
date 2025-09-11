@@ -1,16 +1,15 @@
 # Software Item Specification: Application Module
-
+---
+itemId: SPEC-APPLICATION-SERVICE  
+itemTitle: Application Module Specification
+itemType: Software Item Spec  
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2  
+Layer: Domain Service  
+Module: Application  
+Version: 0.2.106  
+Date: September 9, 2025
 ---
 
-**Item ID:** SPEC-APPLICATION-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** SWR-APPLICATION-1-1, SWR-APPLICATION-1-2  
-**Module:** Application  
-**Layer:** Domain Service  
-**Version:** 0.2.106  
-**Date:** September 9, 2025
-
----
 
 ## 1. Description
 
