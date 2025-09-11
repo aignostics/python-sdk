@@ -12,6 +12,33 @@
 
 ---
 
+## Documentation Guidelines
+
+### Code in Specifications - Best Practices
+
+**INCLUDE Code When:**
+
+- ✅ Public API signatures (stable contracts)
+- ✅ Data structure schemas for inputs/outputs
+- ✅ Configuration parameter definitions
+- ✅ Error type hierarchies
+
+**AVOID Code When:**
+
+- ❌ Internal implementation details
+- ❌ Private methods or functions
+- ❌ Complete code blocks or algorithms
+- ❌ Version-specific dependency details
+
+**Preferred Approaches:**
+
+- 📋 Reference interfaces by name and purpose
+- 📋 Use schemas (JSON Schema, OpenAPI) for data structures
+- 📋 Link to auto-generated documentation for details
+- 📋 Focus on behavior and contracts, not implementation
+
+---
+
 ## 1. Description
 
 ### 1.1 Purpose
@@ -69,13 +96,15 @@ _[Describe the internal organization of the module]_
 
 ### 2.2 Key Components
 
-_[List and describe the main classes, functions, and interfaces]_
+_[List and describe the main classes, functions, and interfaces, focusing on purpose not implementation]_
 
-| Component      | Type           | Purpose               | Public API              |
-| -------------- | -------------- | --------------------- | ----------------------- |
-| `[Component1]` | Class/Function | [Purpose description] | [Key methods/functions] |
-| `[Component2]` | Class/Function | [Purpose description] | [Key methods/functions] |
-| `[Component3]` | Class/Function | [Purpose description] | [Key methods/functions] |
+| Component      | Type           | Purpose               | Public Interface   | Dependencies |
+| -------------- | -------------- | --------------------- | ------------------ | ------------ |
+| `[Component1]` | Class/Function | [Purpose description] | [Key capabilities] | [Major deps] |
+| `[Component2]` | Class/Function | [Purpose description] | [Key capabilities] | [Major deps] |
+| `[Component3]` | Class/Function | [Purpose description] | [Key capabilities] | [Major deps] |
+
+_Note: For detailed implementation, refer to the source code in the module directory._
 
 ### 2.3 Design Patterns
 
@@ -91,25 +120,64 @@ _[Identify architectural patterns used in this module]_
 
 ### 3.1 Inputs
 
-_[Define what data/parameters the module accepts]_
+_[Define what data/parameters the module accepts, focusing on contracts not implementation]_
 
-| Input Type | Source        | Format/Type | Validation Rules         | Code Location   |
-| ---------- | ------------- | ----------- | ------------------------ | --------------- |
-| [Input1]   | [CLI/GUI/API] | [Data type] | [Validation description] | [File/Function] |
-| [Input2]   | [CLI/GUI/API] | [Data type] | [Validation description] | [File/Function] |
-| [Input3]   | [CLI/GUI/API] | [Data type] | [Validation description] | [File/Function] |
+| Input Type | Source        | Data Type/Format | Validation Rules         | Business Rules   |
+| ---------- | ------------- | ---------------- | ------------------------ | ---------------- |
+| [Input1]   | [CLI/GUI/API] | [Schema/Format]  | [Validation description] | [Business logic] |
+| [Input2]   | [CLI/GUI/API] | [Schema/Format]  | [Validation description] | [Business logic] |
+| [Input3]   | [CLI/GUI/API] | [Schema/Format]  | [Validation description] | [Business logic] |
 
 ### 3.2 Outputs
 
-_[Define what data/responses the module produces]_
+_[Define what data/responses the module produces, focusing on contracts not implementation]_
 
-| Output Type | Destination     | Format/Type | Success Criteria     | Code Location   |
-| ----------- | --------------- | ----------- | -------------------- | --------------- |
-| [Output1]   | [Target system] | [Data type] | [Success definition] | [File/Function] |
-| [Output2]   | [Target system] | [Data type] | [Success definition] | [File/Function] |
-| [Output3]   | [Target system] | [Data type] | [Success definition] | [File/Function] |
+| Output Type | Destination     | Data Type/Format | Success Criteria     | Error Conditions |
+| ----------- | --------------- | ---------------- | -------------------- | ---------------- |
+| [Output1]   | [Target system] | [Schema/Format]  | [Success definition] | [Error cases]    |
+| [Output2]   | [Target system] | [Schema/Format]  | [Success definition] | [Error cases]    |
+| [Output3]   | [Target system] | [Schema/Format]  | [Success definition] | [Error cases]    |
 
-### 3.3 Data Flow
+### 3.3 Data Schemas
+
+_[Define data structures using schemas rather than code snippets]_
+
+**Input Data Schema:**
+
+```yaml
+# Example using YAML schema format
+InputType1:
+  type: object
+  properties:
+    field1:
+      type: string
+      description: [Field description]
+      validation: [Validation rules]
+    field2:
+      type: integer
+      minimum: 0
+      description: [Field description]
+  required: [field1]
+```
+
+**Output Data Schema:**
+
+```yaml
+# Example using YAML schema format
+OutputType1:
+  type: object
+  properties:
+    result:
+      type: string
+      description: [Result description]
+    metadata:
+      type: object
+      description: [Metadata structure]
+```
+
+_Note: Actual schemas may be defined in OpenAPI specifications or JSON Schema files._
+
+### 3.4 Data Flow
 
 _[Describe the flow of data through the module]_
 
@@ -126,37 +194,28 @@ graph LR
 
 ### 4.1 Public API
 
-_[Document the main public interfaces that other modules or external systems use]_
+_[Document the main public interfaces that other modules or external systems use. Focus on contracts, not implementation.]_
 
 #### Core Service Interface
 
-```python
-class [ModuleName]Service:
-    """[Service class description]"""
+**Service Class**: `[ModuleName]Service`
 
-    def [method1](self, param1: Type1, param2: Type2) -> ReturnType:
-        """[Method description]
+- **Purpose**: [Brief description of the service's responsibility]
+- **Key Methods**:
+  - `[method1](param1: Type1, param2: Type2) -> ReturnType`: [Method purpose and behavior]
+  - `[method2](param: Type) -> ReturnType`: [Method purpose and behavior]
 
-        Args:
-            param1: [Parameter description]
-            param2: [Parameter description]
+**Input/Output Contracts**:
 
-        Returns:
-            [Return value description]
+- **Input Types**: [List expected input data types and validation rules]
+- **Output Types**: [List return data types and success criteria]
+- **Error Conditions**: [List exception types and when they occur]
 
-        Raises:
-            [Exception]: [When this exception is raised]
-        """
-        pass
-
-    def [method2](self, param: Type) -> ReturnType:
-        """[Method description]"""
-        pass
-```
+_Note: For detailed method signatures, refer to the module's `__init__.py` and service class documentation._
 
 ### 4.2 CLI Interface (if applicable)
 
-_[Document command-line interface specifications]_
+_[Document command-line interface specifications focusing on behavior, not implementation]_
 
 **Command Structure:**
 
@@ -166,16 +225,30 @@ uvx aignostics [module-name] [subcommand] [options]
 
 **Available Commands:**
 
-- `[command1]`: [Description of command]
-- `[command2]`: [Description of command]
+| Command      | Purpose                       | Input Requirements            | Output Format        |
+| ------------ | ----------------------------- | ----------------------------- | -------------------- |
+| `[command1]` | [Description of what it does] | [Required parameters/options] | [Output description] |
+| `[command2]` | [Description of what it does] | [Required parameters/options] | [Output description] |
 
-### 4.3 GUI Interface (if applicable)
+**Common Options:**
 
-_[Document graphical user interface specifications]_
+- `--help`: Display command help
+- `--verbose`: Enable detailed output
+- `[other-options]`: [Description]
 
-- **Navigation**: [How users access this module in the GUI]
-- **Key UI Components**: [Forms, tables, buttons, etc.]
-- **User Workflows**: [Primary user interaction flows]
+### 4.3 HTTP/Web Interface (if applicable)
+
+_[Document web interface specifications]_
+
+**Endpoint Structure:**
+
+| Method | Endpoint       | Purpose       | Request Format      | Response Format |
+| ------ | -------------- | ------------- | ------------------- | --------------- |
+| `GET`  | `/[endpoint1]` | [Description] | [Query params/body] | [Response type] |
+| `POST` | `/[endpoint2]` | [Description] | [Query params/body] | [Response type] |
+
+**Authentication**: [Authentication requirements, if any]
+**Error Responses**: [Standard error response format]
 
 ---
 
@@ -183,22 +256,24 @@ _[Document graphical user interface specifications]_
 
 ### 5.1 Internal Dependencies
 
-_[List dependencies on other SDK modules]_
+_[List dependencies on other SDK modules, focusing on interfaces used not implementation details]_
 
-| Dependency Module | Usage Purpose       | Interface Used             |
-| ----------------- | ------------------- | -------------------------- |
-| Platform Service  | [Usage description] | [Specific methods/classes] |
-| Utils Module      | [Usage description] | [Specific methods/classes] |
-| [Other Module]    | [Usage description] | [Specific methods/classes] |
+| Dependency Module | Usage Purpose       | Interface/Contract Used      | Criticality         |
+| ----------------- | ------------------- | ---------------------------- | ------------------- |
+| Platform Service  | [Usage description] | [Interface name/description] | [Required/Optional] |
+| Utils Module      | [Usage description] | [Interface name/description] | [Required/Optional] |
+| [Other Module]    | [Usage description] | [Interface name/description] | [Required/Optional] |
 
 ### 5.2 External Dependencies
 
-_[List third-party libraries and external services]_
+_[List third-party libraries and external services, focusing on purpose not versions]_
 
-| Dependency         | Version       | Purpose   | Optional/Required   |
-| ------------------ | ------------- | --------- | ------------------- |
-| [Library1]         | [Version]     | [Purpose] | [Required/Optional] |
-| [External Service] | [API Version] | [Purpose] | [Required/Optional] |
+| Dependency         | Min Version | Purpose   | Optional/Required   | Fallback Behavior |
+| ------------------ | ----------- | --------- | ------------------- | ----------------- |
+| [Library1]         | [Min Ver]   | [Purpose] | [Required/Optional] | [If unavailable]  |
+| [External Service] | [API Ver]   | [Purpose] | [Required/Optional] | [If unavailable]  |
+
+_Note: For exact version requirements, refer to `pyproject.toml` and dependency lock files._
 
 ### 5.3 Integration Points
 
@@ -281,24 +356,50 @@ _[List specific security implementations]_
 
 ## 9. Implementation Details
 
-### 9.1 Key Algorithms
+### 9.1 Key Algorithms and Business Logic
 
-_[Describe any significant algorithms or processing logic]_
+_[Describe significant algorithms or processing logic at a conceptual level]_
 
-- **[Algorithm1]**: [Purpose and high-level description]
-- **[Algorithm2]**: [Purpose and high-level description]
+- **[Algorithm1]**: [Purpose and high-level approach, not implementation details]
+- **[Algorithm2]**: [Purpose and high-level approach, not implementation details]
+- **[Business Rule]**: [Important business logic or processing rules]
 
-### 9.2 State Management
+### 9.2 State Management and Data Flow
 
-_[Describe how the module manages state and data persistence]_
+_[Describe how the module manages state and data flow patterns]_
 
-- **Configuration State**: [How settings are stored and managed]
-- **Runtime State**: [How operational state is maintained]
-- **Cache Management**: [Caching strategies used]
+- **State Type**: [Stateless/Stateful and why]
+- **Data Persistence**: [How data is stored and managed]
+- **Session Management**: [How user sessions or context is handled]
+- **Cache Strategy**: [Caching approach, if applicable]
 
-### 9.3 Concurrency and Threading
+### 9.3 Performance and Scalability Considerations
 
-_[Describe concurrent processing approaches]_
+_[Describe performance characteristics and scalability approaches]_
 
-- **Async Operations**: [How asynchronous operations are handled]
-- **Thread Safety**: [Thread safety guarantees and mechanisms]
+- **Performance Characteristics**: [Expected performance behavior]
+- **Scalability Patterns**: [How the module scales with load]
+- **Resource Management**: [Memory, CPU, I/O considerations]
+- **Concurrency Model**: [Thread safety, async patterns]
+
+---
+
+## Documentation Maintenance
+
+### Verification and Updates
+
+**Last Verified**: [Date when spec was verified against implementation]  
+**Verification Method**: [How accuracy was confirmed - code review, testing, etc.]  
+**Next Review Date**: [When this spec should be reviewed again]
+
+### Change Management
+
+**Interface Changes**: Changes to public APIs require spec updates and version bumps  
+**Implementation Changes**: Internal changes don't require spec updates unless behavior changes  
+**Dependency Changes**: Major dependency changes should be reflected in constraints section
+
+### References
+
+**Implementation**: See `src/aignostics/[module_name]/` for current implementation  
+**Tests**: See `tests/aignostics/[module_name]/` for usage examples and verification  
+**API Documentation**: [Link to auto-generated API docs if available]
