@@ -6,9 +6,10 @@ itemType: Software Item Spec
 itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2  
 Layer: Domain Service  
 Module: Application  
+---
+
 Version: 0.2.106  
 Date: September 9, 2025
----
 
 
 ## 1. Description
