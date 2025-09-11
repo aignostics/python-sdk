@@ -1,7 +1,6 @@
 # Software Item Specification: Application Module
 ---
 itemId: SPEC-APPLICATION-SERVICE  
-itemTitle: Application Module Specification
 itemType: Software Item Spec  
 itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2  
 Layer: Domain Service  
