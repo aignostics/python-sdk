@@ -1,14 +1,13 @@
-# Software Item Specification: WSI Module
-
 ---
-
-**Item ID:** SPEC-WSI-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** TBD  
-**Module:** WSI  
-**Layer:** Domain Service  
-**Version:** 0.2.105  
-**Date:** September 10, 2025
+itemId: SPEC-WSI-SERVICE  
+itemTitle: WSI Module Specification
+itemType: Software Item Spec  
+itemFulfills: TBD  
+Module: WSI  
+Layer: Domain Service  
+Version: 0.2.105  
+Date: 2025-09-10
+---
 
 ## 1. Description
 

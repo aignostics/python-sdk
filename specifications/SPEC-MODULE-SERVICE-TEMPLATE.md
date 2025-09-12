@@ -1,15 +1,12 @@
-# Software Item Specification: [MODULE_NAME] Module
-
 ---
-
-**Item ID:** SPEC-[MODULE_NAME_UPPER]-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** [REQUIREMENT_ID] _(e.g., FE-6386)_  
-**Module:** [Module Name] _(e.g., Bucket, Application, Dataset)_  
-**Layer:** [Layer Type] _(Domain Service, Platform Service, Infrastructure Service, Presentation Interface)_  
-**Version:** [VERSION] _(e.g., 0.2.105)_  
-**Date:** [DATE]
-
+itemId: SPEC-[MODULE_NAME_UPPER]-SERVICE  
+itemTitle: [MODULE_NAME] Module Specification
+itemType: Software Item Spec  
+itemFulfills: [REQUIREMENT_ID] _(e.g., FE-6386)_  
+Module: [Module Name] _(e.g., Bucket, Application, Dataset)_  
+Layer: [Layer Type] _(Domain Service, Platform Service, Infrastructure Service, Presentation Interface)_  
+Version: [VERSION] _(e.g., 0.2.105)_  
+Date: [DATE]
 ---
 
 ## Documentation Guidelines

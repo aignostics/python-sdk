@@ -1,15 +1,12 @@
-# Software Item Specification: System Module
-
 ---
-
-**Item ID:** SPEC-SYSTEM-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** TBD  
-**Module:** System _(Core Platform Services)_  
-**Layer:** Platform Service  
-**Version:** 1.0.0  
-**Date:** 2025-09-11
-
+itemId: SPEC-SYSTEM-SERVICE  
+itemTitle: System Module Specification
+itemType: Software Item Spec  
+itemFulfills: TBD  
+Module: System _(Core Platform Services)_  
+Layer: Platform Service  
+Version: 1.0.0  
+Date: 2025-09-11
 ---
 
 ## 1. Description

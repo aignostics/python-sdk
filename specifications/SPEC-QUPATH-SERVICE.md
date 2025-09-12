@@ -1,15 +1,12 @@
-# Software Item Specification: QuPath Module
-
 ---
-
-**Item ID:** SPEC-QUPATH-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** SWR-VISUALIZATION-1-1, SWR-VISUALIZATION-1-2, SWR-VISUALIZATION-1-3
-**Module:** QuPath  
-**Layer:** Domain Service  
-**Version:** 0.2.105  
-**Date:** September 3, 2025
-
+itemId: SPEC-QUPATH-SERVICE  
+itemTitle: QuPath Module Specification
+itemType: Software Item Spec  
+itemFulfills: SWR-VISUALIZATION-1-1, SWR-VISUALIZATION-1-2, SWR-VISUALIZATION-1-3
+Module: QuPath  
+Layer: Domain Service  
+Version: 0.2.105  
+Date: 2025-09-03
 ---
 
 ## 1. Description

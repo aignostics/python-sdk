@@ -1,14 +1,13 @@
-# Software Item Specification: Utils Module
-
 ---
-
-**Item ID:** SPEC-UTILS-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** TBD  
-**Module:** Utils  
-**Layer:** Infrastructure Service  
-**Version:** 0.2.105  
-**Date:** September 11, 2025
+itemId: SPEC-UTILS-SERVICE  
+itemTitle: Utils Module Specification
+itemType: Software Item Spec  
+itemFulfills: TBD  
+Module: Utils  
+Layer: Infrastructure Service  
+Version: 0.2.105  
+Date: 2025-09-11
+---
 
 ## 1. Description
 

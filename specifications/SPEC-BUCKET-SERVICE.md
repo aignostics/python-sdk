@@ -1,15 +1,12 @@
-# Software Item Specification: Bucket Module
-
 ---
-
-**Item ID:** SPEC-BUCKET-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3  
-**Module:** Bucket  
-**Layer:** Domain Service  
-**Version:** 0.2.105  
-**Date:** September 9, 2025
-
+itemId: SPEC-BUCKET-SERVICE  
+itemTitle: Bucket Module Specification
+itemType: Software Item Spec  
+itemFulfills: SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3  
+Module: Bucket  
+Layer: Domain Service  
+Version: 0.2.105  
+Date: 2025-09-09
 ---
 
 ## 1. Description

@@ -1,14 +1,13 @@
-# Software Item Specification: GUI Module
-
 ---
-
-**Item ID:** SPEC-GUI-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** TBD  
-**Module:** GUI  
-**Layer:** Presentation Interface  
-**Version:** 0.2.105  
-**Date:** September 11, 2025
+itemId: SPEC-GUI-SERVICE 
+itemTitle: GUI Module Specification
+itemType: Software Item Spec  
+itemFulfills: TBD  
+Module: GUI  
+Layer: Presentation Interface  
+Version: 0.2.105  
+Date: 2025-09-11
+---
 
 ## 1. Description
 

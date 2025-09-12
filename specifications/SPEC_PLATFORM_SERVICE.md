@@ -1,15 +1,12 @@
-# Software Item Specification: Platform Module
-
 ---
-
-**Item ID:** SPEC-PLATFORM-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** TBD - Platform infrastructure requirements (authentication, API client management, health monitoring)
-**Module:** Platform  
-**Layer:** Platform Service  
-**Version:** 1.0.0  
-**Date:** September 9, 2025
-
+itemId: SPEC-PLATFORM-SERVICE
+itemTitle: Platform Module Specification
+itemType: Software Item Spec  
+itemFulfills: TBD - Platform infrastructure requirements (authentication, API client management, health monitoring)
+Module: Platform  
+Layer: Platform Service  
+Version: 1.0.0  
+Date: 2025-09-09
 ---
 
 ## 1. Description

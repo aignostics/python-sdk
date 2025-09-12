@@ -1,16 +1,12 @@
-````markdown
-# Software Item Specification: Dataset Module
-
 ---
-
-**Item ID:** SPEC-DATASET-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** FE-6386  
-**Module:** Dataset  
-**Layer:** Domain Service  
-**Version:** 0.2.105  
-**Date:** September 11, 2025
-
+itemId: SPEC-DATASET-SERVICE
+itemTitle: Dataset Module Specification
+itemType: Software Item Spec  
+itemFulfills: FE-6386  
+Module: Dataset  
+Layer: Domain Service  
+Version: 0.2.105  
+Date: 2025-09-11
 ---
 
 ## Documentation Guidelin| Parameter | Type | Default | Description | Required |

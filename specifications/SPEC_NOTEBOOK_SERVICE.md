@@ -1,15 +1,12 @@
-# Software Item Specification: Notebook Module
-
 ---
-
-**Item ID:** SPEC-NOTEBOOK-SERVICE  
-**Item Type:** Software Item Spec  
-**Item Fulfills:** TBD
-**Module:** Notebook _(Interactive Data Analysis)_  
-**Layer:** Presentation Interface  
-**Version:** 1.0.0  
-**Date:** 2025-09-11
-
+itemId: SPEC-NOTEBOOK-SERVICE 
+itemTitle: Notebook Module Specification
+itemType: Software Item Spec  
+itemFulfills: TBD
+Module: Notebook _(Interactive Data Analysis)_  
+Layer: Presentation Interface  
+Version: 1.0.0  
+Date: 2025-09-11
 ---
 
 ## 1. Description
