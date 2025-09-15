@@ -1,11 +1,11 @@
 ---
-itemId: SPEC-GUI-SERVICE 
+itemId: SPEC-GUI-SERVICE
 itemTitle: GUI Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD  
-Module: GUI  
-Layer: Presentation Interface  
-Version: 0.2.105  
+itemType: Software Item Spec
+itemFulfills: SHR-APPLICATION-1
+Module: GUI _(Graphical User Interface Framework)_
+Layer: Presentation Interface
+Version: 1.0.0
 Date: 2025-09-11
 ---
 

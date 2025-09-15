@@ -1,11 +1,11 @@
 ---
-itemId: SPEC-SYSTEM-SERVICE  
+itemId: SPEC-SYSTEM-SERVICE
 itemTitle: System Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD  
-Module: System _(Core Platform Services)_  
-Layer: Platform Service  
-Version: 1.0.0  
+itemType: Software Item Spec
+itemFulfills: SHR-SYSTEM-1, SHR-SYSTEM-2, SHR-SYSTEM-3
+Module: System _(Core Platform Services)_
+Layer: Platform Service
+Version: 1.0.0
 Date: 2025-09-11
 ---
 

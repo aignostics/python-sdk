@@ -1,12 +1,12 @@
 ---
-itemId: SPEC-WSI-SERVICE  
+itemId: SPEC-WSI-SERVICE
 itemTitle: WSI Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD  
-Module: WSI  
-Layer: Domain Service  
-Version: 0.2.105  
-Date: 2025-09-10
+itemType: Software Item Spec
+itemFulfills: SWR-VISUALIZATION-1
+Module: WSI _(Whole Slide Image Processing)_
+Layer: Domain Service
+Version: 1.0.0
+Date: 2025-09-11
 ---
 
 ## 1. Description

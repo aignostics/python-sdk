@@ -2,8 +2,7 @@
 itemId: SPEC-BUILD-CHAIN-CICD-SERVICE
 itemTitle: Build Chain and CI/CD Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-BUILD-CHAIN-1 _(Comprehensive Build Chain and CI/CD Pipeline)_
-Module: Build Chain and CI/CD
+itemFulfills: TBD _(No infrastructure requirements currently defined)_Module: Build Chain and CI/CD
 Layer: Infrastructure Service
 Version: 0.2.140
 Date: 2025-09-11

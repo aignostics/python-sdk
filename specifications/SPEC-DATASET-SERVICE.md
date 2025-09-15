@@ -1,11 +1,11 @@
 ---
 itemId: SPEC-DATASET-SERVICE
 itemTitle: Dataset Module Specification
-itemType: Software Item Spec  
-itemFulfills: FE-6386  
-Module: Dataset  
-Layer: Domain Service  
-Version: 0.2.105  
+itemType: Software Item Spec
+itemFulfills: SHR-DATASET-1, SWR-DATASET-1-1, SWR-DATASET-1-3
+Module: Dataset
+Layer: Domain Service
+Version: 0.2.105
 Date: 2025-09-11
 ---
 
@@ -380,4 +380,7 @@ _Note: For exact version requirements, refer to `pyproject.toml` and dependency 
 **API Documentation**: Auto-generated from docstrings in service classes
 
 ---
-````
+
+```
+
+```

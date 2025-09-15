@@ -1,11 +1,11 @@
 ---
-itemId: SPEC-UTILS-SERVICE  
+itemId: SPEC-UTILS-SERVICE
 itemTitle: Utils Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD  
-Module: Utils  
-Layer: Infrastructure Service  
-Version: 0.2.105  
+itemType: Software Item Spec
+itemFulfills: TBD _(Core infrastructure services - enables other modules to fulfill user requirements)_
+Module: Utils _(Core Infrastructure Services)_
+Layer: Infrastructure Service
+Version: 1.0.0
 Date: 2025-09-11
 ---
 

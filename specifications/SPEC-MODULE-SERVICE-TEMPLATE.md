@@ -11,31 +11,6 @@ Date: [DATE]
 
 ## Documentation Guidelines
 
-### Code in Specifications - Best Practices
-
-**INCLUDE Code When:**
-
-- ✅ Public API signatures (stable contracts)
-- ✅ Data structure schemas for inputs/outputs
-- ✅ Configuration parameter definitions
-- ✅ Error type hierarchies
-
-**AVOID Code When:**
-
-- ❌ Internal implementation details
-- ❌ Private methods or functions
-- ❌ Complete code blocks or algorithms
-- ❌ Version-specific dependency details
-
-**Preferred Approaches:**
-
-- 📋 Reference interfaces by name and purpose
-- 📋 Use schemas (JSON Schema, OpenAPI) for data structures
-- 📋 Link to auto-generated documentation for details
-- 📋 Focus on behavior and contracts, not implementation
-
----
-
 ## 1. Description
 
 ### 1.1 Purpose
