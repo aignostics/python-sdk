@@ -1,11 +1,11 @@
 ---
-itemId: SPEC-QUPATH-SERVICE  
+itemId: SPEC-QUPATH-SERVICE
 itemTitle: QuPath Module Specification
-itemType: Software Item Spec  
+itemType: Software Item Spec
 itemFulfills: SWR-VISUALIZATION-1-1, SWR-VISUALIZATION-1-2, SWR-VISUALIZATION-1-3
-Module: QuPath  
-Layer: Domain Service  
-Version: 0.2.105  
+Module: QuPath
+Layer: Domain Service
+Version: 0.2.105
 Date: 2025-09-03
 ---
 
@@ -73,14 +73,16 @@ qupath/
 
 ### 2.2 Key Components
 
-| Component       | Type   | Purpose                                                      | Public API                                                                                        |
-| --------------- | ------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `Service`       | Class  | Core QuPath management, installation, and project operations | `install_qupath()`, `uninstall_qupath()`, `health()`, `add()`, `annotate()`, `inspect()`          |
-| `QuPathVersion` | Model  | Version information storage and validation                   | `version`, `build_time`, `commit_tag` properties                                                  |
-| `QuPathProject` | Model  | Project information and image metadata                       | `uri`, `version`, `images` properties                                                             |
-| `QuPathImage`   | Model  | Individual image information in projects                     | Image metadata, hierarchy, and file path information                                              |
-| `CLI`           | Module | Command-line interface with Typer commands                   | `install`, `uninstall`, `launch`, `add`, `annotate`, `inspect`, `processes`, `terminate` commands |
-| `GUI`           | Module | Web-based interface using GUI framework                      | Interactive QuPath management dashboard                                                           |
+| Component          | Type   | Purpose                                                      | Public API                                                                                                      |
+| ------------------ | ------ | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `Service`          | Class  | Core QuPath management, installation, and project operations | `install_qupath()`, `uninstall_qupath()`, `health()`, `add()`, `annotate()`, `inspect()`                        |
+| `QuPathVersion`    | Model  | Version information storage and validation                   | `version`, `build_time`, `commit_tag` properties                                                                |
+| `QuPathProject`    | Model  | Project information and image metadata                       | `uri`, `version`, `images` properties                                                                           |
+| `QuPathImage`      | Model  | Individual image information in projects                     | Image metadata, hierarchy, and file path information                                                            |
+| `AddProgress`      | Model  | Progress tracking for image addition operations              | `status`, `image_count`, `image_index`, `progress_normalized` properties                                        |
+| `AnnotateProgress` | Model  | Progress tracking for annotation import operations           | `status`, `annotation_count`, `annotation_index`, `progress_normalized` properties                              |
+| `CLI`              | Module | Command-line interface with Typer commands                   | `install`, `launch`, `processes`, `terminate`, `uninstall`, `add`, `annotate`, `inspect`, `run-script` commands |
+| `GUI`              | Module | Web-based interface using GUI framework                      | Interactive QuPath management dashboard                                                                         |
 
 ### 2.3 Design Patterns
 
@@ -117,7 +119,49 @@ qupath/
 | Annotation Import Results | CLI/API      | Integer Count       | Number of annotations successfully imported to image             |
 | Project Information       | CLI/API      | QuPathProject Model | Complete project metadata including images and hierarchy info    |
 
-### 3.3 Data Flow
+### 3.3 Data Schemas
+
+**QuPath Version Schema:**
+
+```yaml
+QuPathVersion:
+  type: object
+  properties:
+    version:
+      type: string
+      description: QuPath version string
+      pattern: "^[0-9]+\.[0-9]+\.[0-9]+.*$"
+    build_time:
+      type: string
+      description: Build timestamp
+      format: date-time
+    commit_tag:
+      type: string
+      description: Git commit tag
+      pattern: "^[a-f0-9]+$"
+```
+
+**QuPath Project Schema:**
+
+```yaml
+QuPathProject:
+  type: object
+  properties:
+    uri:
+      type: string
+      description: Project file URI
+      format: uri
+    version:
+      type: string
+      description: QuPath version used
+    images:
+      type: array
+      items:
+        $ref: "#/definitions/QuPathImage"
+      description: List of images in project
+```
+
+### 3.4 Data Flow
 
 ```mermaid
 graph LR
@@ -153,8 +197,9 @@ class Service(BaseService):
         reinstall: bool = True,
         platform_system: str | None = None,
         platform_machine: str | None = None,
-        download_progress: Callable[[Path, int, int], None] | None = None,
-        extract_progress: Callable[[Path, int], None] | None = None,
+        download_progress: Callable | None = None,
+        extract_progress: Callable | None = None,
+        progress_queue: queue.Queue[InstallProgress] | None = None,
     ) -> Path: ...
 
     @staticmethod
@@ -197,10 +242,10 @@ uvx aignostics qupath [subcommand] [options]
 **Available Commands:**
 
 - `install`: Download and install QuPath with version and platform options
-- `uninstall`: Remove QuPath installation with platform-specific cleanup
 - `launch`: Launch QuPath application with optional project and script parameters
 - `processes`: List running QuPath processes with detailed information
 - `terminate`: Terminate all running QuPath processes
+- `uninstall`: Remove QuPath installation with platform-specific cleanup
 - `add`: Add images to QuPath project (creates project if needed)
 - `annotate`: Import GeoJSON annotations to specific image in project
 - `inspect`: Examine project structure and metadata
@@ -260,7 +305,7 @@ uvx aignostics qupath terminate
 | ----------------- | -------------------------------------------------- | --------------------------------------------- |
 | Utils Module      | Logging, base service class, and common utilities  | `BaseService`, `get_logger()`, `console`      |
 | CLI Module        | Command registration and CLI framework integration | CLI router registration and command discovery |
-| GUI Module        | Web interface framework and component libraries    | Streamlit components and page registration    |
+| GUI Module        | Web interface framework and component libraries    | NiceGUI components and page registration      |
 
 ### 5.2 External Dependencies
 
@@ -346,20 +391,20 @@ uvx aignostics qupath terminate
 
 ## 9. Implementation Details
 
-### 10.1 Key Algorithms
+### 9.1 Key Algorithms and Business Logic
 
 - **Platform Detection**: Automatic detection of OS and architecture for QuPath binary selection
 - **Chunked Download**: Efficient download of large QuPath archives with progress tracking
 - **Streaming JSON Processing**: Memory-efficient processing of large annotation datasets using ijson
 - **Process Management**: Safe execution and monitoring of QuPath subprocess with timeout handling
 
-### 10.2 State Management
+### 9.2 State Management and Data Flow
 
 - **Configuration State**: Module settings stored using Pydantic settings with environment variable override
 - **Runtime State**: QuPath process information tracked in memory with psutil integration
 - **Installation State**: QuPath installation status persisted in user data directory
 
-### 10.3 Concurrency and Threading
+### 9.3 Performance and Scalability Considerations
 
 - **Async Operations**: Download and extraction operations run in background with progress callbacks
 - **Thread Safety**: All service methods are thread-safe for concurrent access

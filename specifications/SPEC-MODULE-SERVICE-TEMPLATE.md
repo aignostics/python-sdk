@@ -9,7 +9,32 @@ Version: [VERSION] _(e.g., 0.2.105)_
 Date: [DATE]
 ---
 
-## Documentation Guidelines
+## Documentation Guidelines [DO NOT ADD]
+
+### Code in Specifications - Best Practices
+
+**INCLUDE Code When:**
+
+- ✅ Public API signatures (stable contracts)
+- ✅ Data structure schemas for inputs/outputs
+- ✅ Configuration parameter definitions
+- ✅ Error type hierarchies
+
+**AVOID Code When:**
+
+- ❌ Internal implementation details
+- ❌ Private methods or functions
+- ❌ Complete code blocks or algorithms
+- ❌ Version-specific dependency details
+
+**Preferred Approaches:**
+
+- 📋 Reference interfaces by name and purpose
+- 📋 Use schemas (JSON Schema, OpenAPI) for data structures
+- 📋 Link to auto-generated documentation for details
+- 📋 Focus on behavior and contracts, not implementation
+
+---
 
 ## 1. Description
 

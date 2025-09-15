@@ -9,14 +9,6 @@ Version: 0.2.105
 Date: 2025-09-11
 ---
 
-## Documentation Guidelin| Parameter | Type | Default | Description | Required |
-
-| -------------------- | ---- | ---------------------------------------------------------------- | --------------------------------- | -------- |
-| `target_layout` | str | `%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/` | Directory layout template | No |
-| `portal_url` | str | `https://portal.imaging.datacommons.cancer.gov/explore/` | IDC portal base URL | No |
-| `example_dataset_id` | str | `1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0` | Example dataset for testing | No |
-| `path_length_max` | int | 260 | Maximum path length (Windows) | No |# Code in Specifications - Best Practices
-
 ## 1. Description
 
 ### 1.1 Purpose

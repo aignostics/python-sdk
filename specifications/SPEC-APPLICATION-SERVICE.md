@@ -88,25 +88,73 @@ application/
 
 ### 3.1 Inputs
 
-| Input Type                 | Source        | Code Location                                                 |
-| -------------------------- | ------------- | ------------------------------------------------------------- |
-| **Supported WSI Files**    | CLI/GUI       | `WSI_SUPPORTED_FILE_EXTENSIONS` in `constants.py`             |
-| **Application Version ID** | API           | `Service.application_run_submit(application_version_id: str)` |
-| **Input Items**            | API           | `Service.application_run_submit(items: list[InputItem])`      |
-| **Run ID**                 | API           | `Service.application_run_download(run_id: str)`               |
-| **Upload Chunks**          | Configuration | Constants in `_service.py`                                    |
+| Input Type                 | Source        | Data Type/Format | Validation Rules                                       | Business Rules                                  |
+| -------------------------- | ------------- | ---------------- | ------------------------------------------------------ | ----------------------------------------------- |
+| **Supported WSI Files**    | CLI/GUI       | Path object      | Must exist, extension in WSI_SUPPORTED_FILE_EXTENSIONS | File must be readable, format must be supported |
+| **Application Version ID** | API           | String           | Must be valid UUID format                              | Must correspond to existing application version |
+| **Input Items**            | API           | List[InputItem]  | Each item must have valid metadata                     | Items must match application input schema       |
+| **Run ID**                 | API           | String           | Must be valid UUID format                              | Must correspond to existing application run     |
+| **Upload Chunks**          | Configuration | Integer          | Must be positive value                                 | Configurable based on platform limits           |
 
 ### 3.2 Outputs
 
-| Output Type            | Destination      | Code Location                                    |
-| ---------------------- | ---------------- | ------------------------------------------------ |
-| **Application Runs**   | Platform API     | `Service.application_run_submit()` return value  |
-| **Downloaded Results** | Local filesystem | `Service.application_run_download()` side effect |
-| **QuPath Projects**    | Local filesystem | QuPath integration when `has_qupath_extra=True`  |
-| **Progress Updates**   | Callback/GUI     | `DownloadProgress` model with computed fields    |
-| **Metadata Reports**   | CLI/GUI          | CLI commands and service methods                 |
+| Output Type            | Destination      | Data Type/Format      | Success Criteria                                   | Error Conditions                        |
+| ---------------------- | ---------------- | --------------------- | -------------------------------------------------- | --------------------------------------- |
+| **Application Runs**   | Platform API     | ApplicationRun object | Run successfully submitted with valid ID           | Platform API failure, validation errors |
+| **Downloaded Results** | Local filesystem | Directory structure   | All artifacts downloaded to organized directories  | Network failure, permission errors      |
+| **QuPath Projects**    | Local filesystem | .qpproj file          | Valid QuPath project with input/result integration | QuPath dependency missing, file errors  |
+| **Progress Updates**   | Callback/GUI     | DownloadProgress      | Real-time progress tracking with normalized values | Callback execution errors               |
+| **Metadata Reports**   | CLI/GUI          | Formatted text/JSON   | Human-readable metadata display                    | Processing errors, missing files        |
 
-### 3.3 Data Flow
+### 3.3 Data Schemas
+
+**InputItem Schema:**
+
+```yaml
+InputItem:
+  type: object
+  properties:
+    path:
+      type: string
+      description: File system path to WSI file
+    metadata:
+      type: object
+      description: Extracted WSI metadata including dimensions and format
+    bucket_key:
+      type: string
+      description: Cloud storage key after upload
+  required: [path, metadata]
+```
+
+**DownloadProgress Schema:**
+
+```yaml
+DownloadProgress:
+  type: object
+  properties:
+    state:
+      type: string
+      enum: [INITIALIZING, CHECKING, DOWNLOADING, QUPATH_ADD_RESULTS, COMPLETED]
+    total_artifact_count:
+      type: integer
+      description: Total number of artifacts to download
+    total_artifact_index:
+      type: integer
+      description: Current artifact being processed
+    item_progress_normalized:
+      type: number
+      minimum: 0
+      maximum: 1
+      description: Progress for current item (0-1)
+    artifact_progress_normalized:
+      type: number
+      minimum: 0
+      maximum: 1
+      description: Overall progress across all artifacts (0-1)
+  required: [state, total_artifact_count, total_artifact_index]
+```
+
+### 3.4 Data Flow
 
 ```mermaid
 graph TD
@@ -371,20 +419,22 @@ Configuration is managed through environment variables with the prefix `AIGNOSTI
 
 ## 9. Implementation Details
 
-### 9.1 Key Algorithms
+### 9.1 Key Algorithms and Business Logic
 
 - **Metadata Generation Pipeline**: Multi-stage pipeline for WSI file discovery, metadata extraction, and validation
 - **Progress Tracking Algorithm**: Normalized progress calculation with multi-level aggregation across files and operations
 - **Chunked Upload Algorithm**: Memory-efficient streaming upload with integrity verification and resume capability
 
-### 9.2 State Management
+### 9.2 State Management and Data Flow
 
 - **Configuration State**: Environment-aware settings management with Pydantic validation and secure credential handling
 - **Runtime State**: Progress tracking state persistence for resumable operations and error recovery
 - **Cache Management**: Platform client caching with lazy initialization and automatic session management
 
-### 9.3 Concurrency and Threading
+### 9.3 Performance and Scalability Considerations
 
 - **Async Operations**: Asynchronous file upload/download operations with configurable concurrency limits
 - **Thread Safety**: Thread-safe progress tracking and state management with queue-based communication
 - **Resource Management**: Proper cleanup of network connections and file handles with context managers
+- **Memory Efficiency**: Handle multi-gigabyte files through streaming and chunked operations
+- **Scalability Patterns**: Integration with cloud storage services for horizontal scaling
