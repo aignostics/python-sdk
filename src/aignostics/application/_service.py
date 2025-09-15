@@ -679,6 +679,17 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         logger.debug("Submitting application run with metadata: %s", metadata)
+        application_version = self.application_version(application_version_id, use_latest_if_no_version_given=True)
+        if len(application_version.input_artifacts) != 1:
+            message = (
+                f"Application version '{application_version_id}' has "
+                f"{len(application_version.input_artifacts)} input artifacts, "
+                "but only 1 is supported."
+            )
+            logger.warning(message)
+            raise RuntimeError(message)
+        input_artifact_name = application_version.input_artifacts[0].name
+
         items = []
         for row in metadata:
             platform_bucket_url = row["platform_bucket_url"]
@@ -697,7 +708,7 @@ class Service(BaseService):
                     reference=row["reference"],
                     input_artifacts=[
                         InputArtifact(
-                            name="user_slide",
+                            name=input_artifact_name,
                             download_url=download_url,
                             metadata={
                                 "checksum_base64_crc32c": row["checksum_base64_crc32c"],
@@ -722,8 +733,8 @@ class Service(BaseService):
                 )
             )
         logger.debug("Items for application run submission: %s", items)
+
         try:
-            application_version = self.application_version(application_version_id, use_latest_if_no_version_given=True)
             run = self.application_run_submit(application_version.application_version_id, items)
             logger.info(
                 "Submitted application run with items: %s, application run id %s", items, run.application_run_id
