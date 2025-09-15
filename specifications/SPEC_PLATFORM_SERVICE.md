@@ -1,11 +1,11 @@
 ---
 itemId: SPEC-PLATFORM-SERVICE
 itemTitle: Platform Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD - Platform infrastructure requirements (authentication, API client management, health monitoring)
-Module: Platform  
-Layer: Platform Service  
-Version: 1.0.0  
+itemType: Software Item Spec
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-2-1, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-9, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3
+Module: Platform
+Layer: Platform Service
+Version: 1.0.0
 Date: 2025-09-09
 ---
 
@@ -115,7 +115,59 @@ platform/
 | Health Status    | Monitoring systems  | Health object          | Accurate service and dependency status              | `_service.py::Service.health()` method               |
 | Downloaded Files | Local filesystem    | Binary/structured data | Verified checksums and complete downloads           | `_utils.py` download functions and `ApplicationRun`  |
 
-### 3.3 Data Flow
+### 3.3 Data Schemas
+
+**Authentication Token Schema:**
+
+```yaml
+JWTToken:
+  type: object
+  properties:
+    access_token:
+      type: string
+      description: JWT access token for API authentication
+    token_type:
+      type: string
+      enum: ["Bearer"]
+      description: Token type for authorization header
+    expires_in:
+      type: integer
+      description: Token expiration time in seconds
+    refresh_token:
+      type: string
+      description: Long-lived token for access token renewal
+  required: [access_token, token_type, expires_in]
+```
+
+**User Information Schema:**
+
+```yaml
+UserInfo:
+  type: object
+  properties:
+    user:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        picture: { type: string, nullable: true }
+    organization:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string, nullable: true }
+    role:
+      type: string
+      description: User role within organization
+    token:
+      type: object
+      properties:
+        expires_in: { type: integer }
+  required: [user, organization, role, token]
+```
+
+### 3.4 Data Flow
 
 ```mermaid
 graph TD
@@ -431,60 +483,23 @@ The Platform module provides foundational services but does not directly expose 
 
 ---
 
-## 9. Testing and Quality Assurance
+## 9. Implementation Details
 
-### 9.1 Testing Strategy
-
-- **Unit Tests**: Pytest-based testing with mocked external dependencies covering authentication, CLI, settings, and resource modules
-- **Integration Tests**: Scheduled end-to-end tests with real API calls marked with `@pytest.mark.scheduled` and configurable timeouts
-- **Mock Testing**: External services mocked using `unittest.mock` including OAuth flows, API clients, and file operations
-- **Error Scenario Testing**: Comprehensive failure mode testing including network errors, authentication failures, and invalid configurations
-
-### 9.2 Quality Metrics
-
-- **Test Coverage**: Eight test modules covering all major components: authentication, CLI, settings, utils, applications, runs, and resources
-- **Test Categories**: Sequential tests for order-dependent operations and long-running tests for performance validation
-- **Fixture-based Setup**: Pytest fixtures for consistent test environments and mock configurations
-
----
-
-## 10. Implementation Details
-
-### 10.1 Key Algorithms
+### 9.1 Key Algorithms and Business Logic
 
 - **PKCE Flow**: OAuth 2.0 Authorization Code flow with Proof Key for Code Exchange for enhanced security in public clients
 - **Token Caching**: File-based token persistence with expiration tracking and automatic cleanup
 - **Health Monitoring**: Multi-layer health checks including public endpoint availability and authenticated API access
 
-### 10.2 State Management
+### 9.2 State Management and Data Flow
 
 - **Configuration State**: Pydantic-based settings with environment variable override hierarchy
 - **Runtime State**: In-memory API client instances with lazy initialization
 - **Cache Management**: File-based token cache with automatic expiration and cleanup
 
-### 10.3 Concurrency and Threading
+### 9.3 Performance and Scalability Considerations
 
 - **Async Operations**: Synchronous design with thread-safe token operations
 - **Thread Safety**: File-based locking for token cache operations; atomic file writes for token storage
-
----
-
-## 11. Ketryx Field Mappings
-
-**For Ketryx Software Item Spec creation:**
-
-- **Description**: Platform authentication and API client management service for biomedical data analysis workflows
-- **Introduced in version**: 1.0.0
-- **Parent software items**: Aignostics Python SDK Core
-- **Fulfilled requirements**: REQ-PLATFORM-AUTH, REQ-TOKEN-MGMT, REQ-API-CLIENT
-- **Software item type**: Platform Service
-- **Safety risk class**: Class B - Handles authentication for medical data access but does not directly process patient data
-- **Security risk class**: High - Manages authentication tokens and API access for biomedical platform
-- **Inputs**: User credentials, environment configuration, API endpoints, file system access
-- **Outputs**: Authenticated API clients, user information, health status, cached tokens
-- **Used items**: OAuth 2.0 service, JWT validation, HTTP client libraries, file system operations
-- **Rationale**: Provides secure, scalable authentication foundation required for biomedical data platform integration
-- **Introduced risks**: RISK-AUTH-TOKEN (token security), RISK-NET-DEPEND (network dependency)
-- **Context**: Platform Service for digital pathology and AI platform integration enabling secure access to biomedical analysis workflows
 
 ---

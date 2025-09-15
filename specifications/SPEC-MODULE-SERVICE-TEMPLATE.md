@@ -9,7 +9,7 @@ Version: [VERSION] _(e.g., 0.2.105)_
 Date: [DATE]
 ---
 
-## Documentation Guidelines
+## Documentation Guidelines [DO NOT ADD]
 
 ### Code in Specifications - Best Practices
 

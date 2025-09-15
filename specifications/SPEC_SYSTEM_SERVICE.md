@@ -1,11 +1,11 @@
 ---
-itemId: SPEC-SYSTEM-SERVICE  
+itemId: SPEC-SYSTEM-SERVICE
 itemTitle: System Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD  
-Module: System _(Core Platform Services)_  
-Layer: Platform Service  
-Version: 1.0.0  
+itemType: Software Item Spec
+itemFulfills: SHR-SYSTEM-1, SHR-SYSTEM-2, SHR-SYSTEM-3
+Module: System _(Core Platform Services)_
+Layer: Platform Service
+Version: 1.0.0
 Date: 2025-09-11
 ---
 
@@ -198,27 +198,24 @@ graph LR
 
 - **Purpose**: Provides core system management, health monitoring, and configuration services
 - **Key Methods**:
-  - `health() -> Health`: Get aggregate system health including component status
+  - `health() -> Health`: Get aggregate system health including component status (instance method)
   - `health_static() -> Health`: Static method to get system health without instance
-  - `info(include_environ: bool, mask_secrets: bool) -> dict`: Static method to get comprehensive system information
-  - `is_token_valid(token: str) -> bool`: Validate authentication token
+  - `info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]`: Static method to get comprehensive system information
+  - `is_token_valid(token: str) -> bool`: Validate authentication token (instance method)
   - `dotenv_set(key: str, value: str) -> None`: Static method to set environment variable in .env files
   - `dotenv_get(key: str) -> str | None`: Static method to get environment variable value
   - `dotenv_unset(key: str) -> int`: Static method to remove environment variable from .env files
+  - `remote_diagnostics_enable() -> None`: Static method to enable remote diagnostics
+  - `remote_diagnostics_disable() -> None`: Static method to disable remote diagnostics
+  - `http_proxy_enable(host: str, port: int, scheme: str, ssl_cert_file: str | None = None, no_ssl_verify: bool = False) -> None`: Static method to configure HTTP proxy
+  - `http_proxy_disable() -> None`: Static method to disable HTTP proxy
+  - `openapi_schema() -> JsonType`: Static method to get OpenAPI specification
 
 **Input/Output Contracts**:
 
-- **Input Types**: Strings for tokens/keys/values, booleans for flags, timeout integers
-- **Output Types**: Health objects, dictionaries for info, strings for configuration values
+- **Input Types**: Strings for tokens/keys/values, booleans for flags, timeout integers, optional SSL certificate paths
+- **Output Types**: Health objects, dictionaries for info, strings for configuration values, JSON for OpenAPI schema
 - **Error Conditions**: RuntimeError for network failures, ValueError for configuration errors, OpenAPISchemaError for schema issues
-
-#### Static Methods Interface
-
-**Configuration Management**:
-
-- `remote_diagnostics_enable/disable() -> None`: Static methods to control remote diagnostics
-- `http_proxy_enable/disable() -> None`: Static methods to configure HTTP proxy settings
-- `openapi_schema() -> JsonType`: Static method to get OpenAPI specification
 
 ### 4.2 CLI Interface
 
@@ -230,25 +227,22 @@ uvx aignostics system [subcommand] [options]
 
 **Available Commands:**
 
-| Command                    | Purpose                        | Input Requirements             | Output Format   |
-| -------------------------- | ------------------------------ | ------------------------------ | --------------- |
-| `health`                   | Display system health status   | Optional output format         | JSON/YAML       |
-| `info`                     | Show comprehensive system info | Optional environ/masking flags | JSON/YAML       |
-| `serve`                    | Start web GUI server           | Host, port, browser options    | Server startup  |
-| `openapi`                  | Display OpenAPI schema         | API version, output format     | JSON/YAML       |
-| `install`                  | Complete installation          | None                           | Success message |
-| `config get <key>`         | Get configuration value        | Configuration key name         | Key value       |
-| `config set <key> <value>` | Set configuration value        | Key name and value             | Success message |
-| `config unset <key>`       | Remove configuration value     | Configuration key name         | Success message |
+| Command   | Purpose                        | Input Requirements             | Output Format   |
+| --------- | ------------------------------ | ------------------------------ | --------------- |
+| `health`  | Display system health status   | Optional output format         | JSON/YAML       |
+| `info`    | Show comprehensive system info | Optional environ/masking flags | JSON/YAML       |
+| `serve`   | Start web GUI server           | Host, port, browser options    | Server startup  |
+| `openapi` | Display OpenAPI schema         | API version, output format     | JSON/YAML       |
+| `install` | Complete installation          | None                           | Success message |
 
 **Configuration Subcommands:**
 
 | Command                             | Purpose                    | Input Requirements      | Output          |
 | ----------------------------------- | -------------------------- | ----------------------- | --------------- |
+| `config get <key>`                  | Get configuration value    | Configuration key name  | Key value       |
+| `config set <key> <value>`          | Set configuration value    | Key name and value      | Success message |
+| `config unset <key>`                | Remove configuration value | Configuration key name  | Success message |
 | `config remote-diagnostics-enable`  | Enable remote diagnostics  | None                    | Success message |
-| `config remote-diagnostics-disable` | Disable remote diagnostics | None                    | Success message |
-| `config http-proxy-enable`          | Configure HTTP proxy       | Host, port, SSL options | Success message |
-| `config http-proxy-disable`         | Disable HTTP proxy         | None                    | Success message |
 | `config remote-diagnostics-disable` | Disable remote diagnostics | None                    | Success message |
 | `config http-proxy-enable`          | Configure HTTP proxy       | Host, port, SSL options | Success message |
 | `config http-proxy-disable`         | Disable HTTP proxy         | None                    | Success message |
@@ -366,14 +360,7 @@ _Note: For exact version requirements, refer to `pyproject.toml` and dependency 
 - **Token Security**: SecretStr usage for secure token storage and comparison
 - **Audit Logging**: Comprehensive logging of configuration changes and access
 
-### 8.3 Secret Detection Algorithm
-
-The module implements sophisticated secret detection for environment variables:
-
-- **Word Boundary Matching**: Terms like "id" use regex word boundaries to avoid false positives
-- **String Matching**: Unambiguous terms like "token", "key", "secret", "password" use substring matching
-- **Case Insensitive**: All detection is case-insensitive for robustness
-- **Real-world Patterns**: Handles common environment variable naming conventions
+- **Token Security**: Automatic expiration, secure storage, validation on each use
 
 ---
 
@@ -382,9 +369,19 @@ The module implements sophisticated secret detection for environment variables:
 ### 9.1 Key Algorithms and Business Logic
 
 - **Health Aggregation**: Automatic discovery and aggregation of BaseService implementations
-- **System Information Gathering**: Comprehensive runtime, hardware, and process data collection
-- **Secret Detection**: Dual-strategy pattern matching for environment variable classification
+- **System Information Gathering**: Comprehensive runtime, hardware, and process data collection with configurable intervals
+- **Secret Detection**: Dual-strategy pattern matching for environment variable classification using sophisticated algorithms:
+  - Word Boundary Matching: Terms like "id" use regex word boundaries to avoid false positives
+  - String Matching: Unambiguous terms like "token", "key", "secret", "password" use substring matching
+  - Case Insensitive: All detection is case-insensitive for robustness
+  - Real-world Patterns: Handles common environment variable naming conventions
 - **Configuration Management**: Atomic .env file operations with rollback capability
+
+**Key Constants:**
+
+- `NETWORK_TIMEOUT = 5`: Network health check timeout in seconds
+- `MEASURE_INTERVAL_SECONDS = 2`: CPU measurement interval for system info gathering
+- `IPIFY_URL`: External service URL for network connectivity validation
 
 ### 9.2 State Management and Data Flow
 

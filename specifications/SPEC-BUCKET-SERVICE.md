@@ -1,11 +1,11 @@
 ---
-itemId: SPEC-BUCKET-SERVICE  
+itemId: SPEC-BUCKET-SERVICE
 itemTitle: Bucket Module Specification
-itemType: Software Item Spec  
-itemFulfills: SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3  
-Module: Bucket  
-Layer: Domain Service  
-Version: 0.2.105  
+itemType: Software Item Spec
+itemFulfills: SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3
+Module: Bucket
+Layer: Domain Service
+Version: 0.2.105
 Date: 2025-09-09
 ---
 
@@ -90,25 +90,71 @@ def read_in_chunks():
 
 ### 3.1 Inputs
 
-| Input Type         | Source        | Format/Type     | Validation Rules                                          | Code Location                                          |
-| ------------------ | ------------- | --------------- | --------------------------------------------------------- | ------------------------------------------------------ |
-| Bucket Name        | CLI/GUI/API   | String          | Must match GCS bucket naming conventions                  | `_service.py::Service.get_bucket_name()` method       |
-| Object Key/Pattern | CLI/GUI/API   | String/Regex    | Valid path characters, regex patterns for bulk operations | `_service.py` upload/download methods, `_cli.py` args |
-| Local File Path    | CLI/GUI/API   | Path            | Must exist for upload, valid directory for download       | `_cli.py` typer Path validation, `_service.py` checks |
-| Credentials        | Environment   | HMAC Key Pair   | Required AIGNOSTICS_BUCKET_HMAC_* variables              | `_settings.py::Settings` environment variable binding |
-| Protocol           | Configuration | String          | Must be "gs" or "s3"                                     | `_settings.py::BucketProtocol` enum validation        |
+| Input Type         | Source        | Data Type/Format | Validation Rules                                          | Business Rules                                          |
+| ------------------ | ------------- | ---------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| Bucket Name        | CLI/GUI/API   | String           | Must match GCS bucket naming conventions                  | Must correspond to accessible cloud storage bucket     |
+| Object Key/Pattern | CLI/GUI/API   | String/Regex     | Valid path characters, regex patterns for bulk operations | Keys must follow cloud storage path conventions        |
+| Local File Path    | CLI/GUI/API   | Path             | Must exist for upload, valid directory for download       | File must be readable, directories must be writable    |
+| Credentials        | Environment   | HMAC Key Pair    | Required AIGNOSTICS_BUCKET_HMAC_* variables              | Keys must have appropriate bucket permissions          |
+| Protocol           | Configuration | String           | Must be "gs" or "s3"                                     | Protocol must match configured cloud storage provider  |
 
 ### 3.2 Outputs
 
-| Output Type      | Destination     | Format/Type      | Success Criteria                              | Code Location                                           |
-| ---------------- | --------------- | ---------------- | --------------------------------------------- | ------------------------------------------------------- |
-| Uploaded Files   | Cloud Storage   | Binary/Metadata  | Successful S3 PUT with ETag confirmation      | `_service.py::Service.upload()` method return          |
-| Downloaded Files | Local Filesystem| Binary           | Complete download with ETag validation        | `_service.py::Service.download()` method with progress |
-| Signed URLs      | Client/Platform | HTTPS URL        | Valid URL with correct expiration time        | `_service.py::Service.create_signed_*_url()` methods   |
-| Progress Updates | CLI/GUI         | Progress Models  | Real-time byte-level progress information     | `_service.py::DownloadProgress/UploadProgress` models  |
-| Operation Status | Logs/Console    | Structured Logs  | Success/failure with detailed error messages  | `_cli.py` console output, `_service.py` logger calls   |
+| Output Type      | Destination      | Data Type/Format | Success Criteria                              | Error Conditions                            |
+| ---------------- | ---------------- | ---------------- | --------------------------------------------- | ------------------------------------------- |
+| Uploaded Files   | Cloud Storage    | Binary/Metadata  | Successful S3 PUT with ETag confirmation      | Network failure, permission errors         |
+| Downloaded Files | Local Filesystem | Binary           | Complete download with ETag validation        | Disk space issues, permission errors       |
+| Signed URLs      | Client/Platform  | HTTPS URL        | Valid URL with correct expiration time        | Credential errors, invalid object keys     |
+| Progress Updates | CLI/GUI          | Progress Models  | Real-time byte-level progress information     | Callback execution errors                  |
+| Operation Status | Logs/Console     | Structured Logs  | Success/failure with detailed error messages  | Logging system failures                    |
 
-### 3.3 Data Flow
+### 3.3 Data Schemas
+
+**DownloadProgress Schema:**
+
+```yaml
+DownloadProgress:
+  type: object
+  properties:
+    total_bytes:
+      type: integer
+      description: Total bytes to download
+    downloaded_bytes:
+      type: integer
+      description: Bytes downloaded so far
+    current_file:
+      type: string
+      description: Current file being downloaded
+    progress_percentage:
+      type: number
+      minimum: 0
+      maximum: 100
+      description: Download progress as percentage
+  required: [total_bytes, downloaded_bytes]
+```
+
+**UploadProgress Schema:**
+
+```yaml
+UploadProgress:
+  type: object
+  properties:
+    total_bytes:
+      type: integer
+      description: Total bytes to upload
+    uploaded_bytes:
+      type: integer
+      description: Bytes uploaded so far
+    current_file:
+      type: string
+      description: Current file being uploaded
+    upload_speed:
+      type: number
+      description: Upload speed in bytes per second
+  required: [total_bytes, uploaded_bytes]
+```
+
+### 3.4 Data Flow
 
 ```mermaid
 graph LR
@@ -305,39 +351,26 @@ uvx aignostics bucket [subcommand] [options]
 
 ---
 
-## 9. Testing and Quality Assurance
+## 9. Implementation Details
 
-### 9.1 Testing Strategy
-
-- **Unit Tests**: Mock S3 client for isolated service testing, validate all public methods
-- **Integration Tests**: Real cloud storage operations in test environment
-- **Performance Tests**: Large file upload/download benchmarks, concurrent operation testing
-- **Security Tests**: Credential handling validation, input sanitization verification
-
-### 9.2 Quality Metrics
-
-- **Code Coverage**: Minimum 80% test coverage for service layer
-- **Performance Benchmarks**: <30s for 1GB file operations, <5s for signed URL generation
-- **Reliability Targets**: 99.9% operation success rate, <1% data corruption tolerance
-
----
-
-## 10. Implementation Details
-
-### 10.1 Key Algorithms
+### 9.1 Key Algorithms and Business Logic
 
 - **Chunked Transfer**: Adaptive chunk sizing based on operation type (1MB upload, 10MB download, 100MB ETag)
 - **ETag Caching**: MD5-based content comparison to avoid redundant downloads
 - **Progress Calculation**: Byte-level progress tracking with transfer speed estimation
+- **Pattern Matching**: Regex-based object filtering for bulk operations and content discovery
 
-### 10.2 State Management
+### 9.2 State Management and Data Flow
 
 - **Configuration State**: Settings cached from environment variables with lazy loading
 - **Runtime State**: Progress models maintain operation state with real-time updates
 - **Cache Management**: ETag-based file validation cache for efficient re-download detection
+- **Session Management**: S3 client connection pooling and automatic retry mechanisms
 
-### 10.3 Concurrency and Threading
+### 9.3 Performance and Scalability Considerations
 
-- **Async Operations**: Generator-based progress callbacks for non-blocking UI updates
-- **Thread Safety**: Immutable progress models, thread-safe logging configuration
+- **Memory Efficiency**: Streaming operations for large files with configurable chunk sizes
+- **Network Optimization**: Connection pooling, retry mechanisms, and bandwidth throttling
+- **Concurrent Operations**: Thread-safe progress tracking and parallel transfer support
 - **Resource Management**: Proper cleanup of S3 client connections and file handles
+- **Scalability Patterns**: Support for high-throughput operations with memory constraints

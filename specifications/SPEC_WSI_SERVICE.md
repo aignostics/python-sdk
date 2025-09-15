@@ -1,12 +1,12 @@
 ---
-itemId: SPEC-WSI-SERVICE  
+itemId: SPEC-WSI-SERVICE
 itemTitle: WSI Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD  
-Module: WSI  
-Layer: Domain Service  
-Version: 0.2.105  
-Date: 2025-09-10
+itemType: Software Item Spec
+itemFulfills: SWR-VISUALIZATION-1
+Module: WSI _(Whole Slide Image Processing)_
+Layer: Domain Service
+Version: 1.0.0
+Date: 2025-09-11
 ---
 
 ## 1. Description
@@ -38,10 +38,14 @@ The WSI Module shall:
 
 ### 1.4 Constraints and Limitations
 
-- **File Format Support**: Limited to extensions defined in `WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}`
+- **File Format Support**: Limited to extensions defined in `WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}` with format-specific capabilities:
+  - DICOM (.dcm): Complete metadata, pyramidal support, annotation support via PydicomHandler
+  - TIFF/BigTIFF (.tiff, .tif): Standard metadata, pyramidal support, limited annotations via OpenSlideHandler
+  - Aperio SVS (.svs): Vendor-specific metadata, pyramidal support, no annotation support via OpenSlideHandler
 - **OpenSlide Dependency**: Non-DICOM formats require OpenSlide library installation for processing
 - **Memory Constraints**: Large WSI files require careful memory management and streaming operations
 - **Platform Dependencies**: Requires platform-specific compilation of OpenSlide and image processing libraries
+- **Coordinate Systems**: Supports DICOM image coordinates (pixel-based), QuPath coordinates (micron-based), and GeoJSON standard adaptation for pathology
 
 ---
 
@@ -513,23 +517,3 @@ _Note: For exact version requirements, refer to `pyproject.toml` and dependency 
 **Implementation**: See `src/aignostics/wsi/` for current implementation  
 **Tests**: See `tests/aignostics/wsi/` for usage examples and verification  
 **API Documentation**: Auto-generated from docstrings in service classes
-
----
-
-## Appendix A: File Format Support Matrix
-
-| Format | Extension   | Handler          | Pyramidal | Annotations | Metadata Level  |
-| ------ | ----------- | ---------------- | --------- | ----------- | --------------- |
-| DICOM  | .dcm        | PydicomHandler   | ✓         | ✓           | Complete        |
-| TIFF   | .tiff, .tif | OpenSlideHandler | ✓         | Limited     | Standard        |
-| SVS    | .svs        | OpenSlideHandler | ✓         | ✗           | Vendor-specific |
-
-## Appendix B: Supported Coordinate Systems
-
-- **DICOM Image Coordinates**: Pixel-based with origin at top-left
-- **QuPath Coordinates**: Micron-based world coordinates
-- **GeoJSON Standard**: Geographic coordinate system adaptation for pathology
-
----
-
-**Verification Status**: This specification has been verified against the actual source code implementation in the WSI module directory structure as of September 10, 2025.

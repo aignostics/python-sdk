@@ -1,11 +1,11 @@
 ---
-itemId: SPEC-NOTEBOOK-SERVICE 
+itemId: SPEC-NOTEBOOK-SERVICE
 itemTitle: Notebook Module Specification
-itemType: Software Item Spec  
-itemFulfills: TBD
-Module: Notebook _(Interactive Data Analysis)_  
-Layer: Presentation Interface  
-Version: 1.0.0  
+itemType: Software Item Spec
+itemFulfills: SHR-NOTEBOOK-1, SWR-NOTEBOOK-1-1
+Module: Notebook _(Interactive Data Analysis)_
+Layer: Presentation Interface
+Version: 1.0.0
 Date: 2025-09-11
 ---
 
