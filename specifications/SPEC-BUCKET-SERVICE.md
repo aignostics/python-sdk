@@ -2,7 +2,7 @@
 itemId: SPEC-BUCKET-SERVICE
 itemTitle: Bucket Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3
+itemFulfills: SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3, SWR-BUCKET-1-4, SWR-BUCKET-1-5, SWR-BUCKET-1-6, SWR-BUCKET-1-7, SWR-BUCKET-1-8, SWR-BUCKET-1-9
 Module: Bucket
 Layer: Domain Service
 Version: 0.2.105
