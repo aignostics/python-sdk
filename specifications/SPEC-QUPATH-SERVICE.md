@@ -2,7 +2,7 @@
 itemId: SPEC-QUPATH-SERVICE
 itemTitle: QuPath Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-VISUALIZATION-1-1, SWR-VISUALIZATION-1-2, SWR-VISUALIZATION-1-3
+itemFulfills: SWR-VISUALIZATION-1-1, SWR-VISUALIZATION-1-2, SWR-VISUALIZATION-1-3, SHR-APPLICATION-2, SWR-VISUALIZATION-1-4
 Module: QuPath
 Layer: Domain Service
 Version: 0.2.105
