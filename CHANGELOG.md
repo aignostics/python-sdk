@@ -1,6 +1,20 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.153](https://github.com/aignostics/python-sdk/compare/v0.2.152..0.2.153) - 2025-08-18
+# [0.2.154](https://github.com/aignostics/python-sdk/compare/v0.2.153..0.2.154) - 2025-09-17
+
+### 🐛 Bug Fixes
+
+- Update the input artifact name for HETA to whole_slide_image ([#121](https://github.com/orhun/git-cliff/issues/121)) - ([bccf3f5](https://github.com/aignostics/python-sdk/commit/bccf3f5de896667b182e6a536d8a0627756d0296))
+
+### 📚 Documentation
+
+- Update - ([9bcb7e5](https://github.com/aignostics/python-sdk/commit/9bcb7e58774ebdc2aaa21673767f4f9dd2760fa7))
+
+
+
+* @jstriebel made their first contribution in [#121](https://github.com/aignostics/python-sdk/pull/121)
+
+# [v0.2.153](https://github.com/aignostics/python-sdk/compare/v0.2.152..v0.2.153) - 2025-08-18
 
 ### ⚙️ Miscellaneous Tasks
 
