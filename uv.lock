@@ -34,7 +34,7 @@ wheels = [
 
 [[package]]
 name = "aignostics"
-version = "0.2.156"
+version = "0.2.157"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },

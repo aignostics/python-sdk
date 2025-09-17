@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.156](https://github.com/aignostics/python-sdk/compare/v0.2.155..0.2.156) - 2025-09-17
+# [0.2.157](https://github.com/aignostics/python-sdk/compare/v0.2.156..0.2.157) - 2025-09-17
+
+### ⚙️ Miscellaneous Tasks
+
+- Skip:test:all - ([74a8e5e](https://github.com/aignostics/python-sdk/commit/74a8e5e233b9d66d91341d2892593500501dc43e))
+
+
+# [v0.2.156](https://github.com/aignostics/python-sdk/compare/v0.2.155..v0.2.156) - 2025-09-17
 
 ### ⚙️ Miscellaneous Tasks
 
