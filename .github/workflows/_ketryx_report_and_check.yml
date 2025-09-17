@@ -22,16 +22,19 @@ jobs:
           fetch-depth: 0
 
       - name: Download test results for ubuntu-latest generated in _test.yml
+        if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: test-results-ubuntu-latest          
 
       - name: Download audit results generated in _audit.yml
+        if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: audit-results          
 
       - name: Report build to Ketryx and check for approval
+        if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
         uses: Ketryx/ketryx-github-action@v1.4.0
         continue-on-error: true # TODO(Helmut): Remove post having Ketryx configured to inspect the main branch
         with:
