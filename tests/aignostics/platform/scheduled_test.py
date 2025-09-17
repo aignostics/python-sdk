@@ -29,7 +29,7 @@ def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
             reference="1",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
                         HETA_APPLICATION_TIMEOUT_SECONDS,
@@ -136,7 +136,7 @@ def single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
             reference="1",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
                         HETA_APPLICATION_TIMEOUT_SECONDS,

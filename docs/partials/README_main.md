@@ -252,7 +252,8 @@ string. This is used to identify the item in the results later on. The
 data & metadata you need to provide for each item. The required artifacts depend
 on the application version you want to run - in the case of test application,
 there is only one artifact required, which is the image to process on. The
-artifact name is defined as `user_slide`.
+artifact name is defined as `user_slide` for the `two-task-dummy` application
+and `whole_slide_image` for the `he-tme` application.
 
 The `download_url` is a signed URL that allows the Aignostics Platform to
 download the image data later during processing.
