@@ -506,7 +506,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.106) - MIT License
+## aignostics (0.2.147) - MIT License
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -1644,43 +1644,6 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-```
-
-## appdirs (1.4.4) - MIT License
-
-A small Python module for determining appropriate platform-specific dirs, e.g. a "user data dir".
-
-* URL: http://github.com/ActiveState/appdirs
-* Author(s): Trent Mick
-* Maintainer(s): Jeff Rouse
-
-### License Text
-
-```
-# This is the MIT license
-
-Copyright (c) 2010 ActiveState Software Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 
 ```
 
@@ -3310,7 +3273,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.40.3) - Apache Software License
+## boto3 (1.40.11) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3508,7 +3471,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.40.3) - Apache Software License
+## botocore (1.40.11) - Apache Software License
 
 Low-level, data-driven core of boto 3.
 
@@ -5707,7 +5670,7 @@ CycloneDX community (https://cyclonedx.org/).
 
 ```
 
-## debugpy (1.8.15) - MIT License
+## debugpy (1.8.16) - MIT License
 
 An implementation of the Debug Adapter Protocol for Python
 
@@ -9003,7 +8966,7 @@ Google Cloud API client core library
 
 ```
 
-## google-cloud-storage (3.2.0) - Apache Software License
+## google-cloud-storage (3.3.0) - Apache Software License
 
 Google Cloud Storage API client library
 
@@ -9898,7 +9861,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## highdicom (0.26.0) - MIT License
+## highdicom (0.26.1) - MIT License
 
 High-level DICOM abstractions.
 
@@ -12286,7 +12249,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (4.1.0) - MIT License
+## logfire (4.3.3) - MIT License
 
 The best Python observability tool! 🪵🔥
 
@@ -12432,7 +12395,7 @@ Copyright 2010-2020 - Ronald Oussoren
 
 ```
 
-## marimo (0.14.16) - Apache Software License
+## marimo (0.14.17) - Apache Software License
 
 A library for making reactive notebooks and apps
 
@@ -13453,7 +13416,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (2.22.1) - MIT License
+## nicegui (2.22.2) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -19728,7 +19691,7 @@ A decorator to automatically detect mismatch when overriding a method.
 
 ```
 
-## packageurl-python (0.17.4) - MIT License
+## packageurl-python (0.17.5) - MIT License
 
 A purl aka. Package URL parser and builder
 
@@ -23625,7 +23588,7 @@ SOFTWARE.
 
 ```
 
-## pre_commit (4.2.0) - MIT License
+## pre_commit (4.3.0) - MIT
 
 A framework for managing and maintaining multi-language pre-commit hooks.
 
@@ -26464,7 +26427,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ```
 
-## pytest-regressions (2.8.1) - MIT License
+## pytest-regressions (2.8.2) - MIT License
 
 Easy to use fixtures to write regression tests.
 
@@ -28015,7 +27978,7 @@ d. Affirmer understands and acknowledges that Creative Commons is not a
 
 ```
 
-## rpds-py (0.26.0) - MIT
+## rpds-py (0.27.0) - UNKNOWN
 
 Python bindings to Rust's persistent data structures (rpds)
 
@@ -28182,7 +28145,7 @@ C version of reader, parser and emitter for ruamel.yaml derived from libyaml
 
 ```
 
-## ruff (0.12.7) - MIT License
+## ruff (0.12.9) - MIT License
 
 An extremely fast Python linter and code formatter, written in Rust.
 
@@ -29848,7 +29811,7 @@ SOFTWARE.
 
 ```
 
-## scalene (1.5.51) - Apache Software License
+## scalene (1.5.53) - Apache Software License
 
 Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Python with AI-powered optimization suggestions
 
@@ -30318,7 +30281,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## sentry-sdk (2.34.1) - BSD License
+## sentry-sdk (2.35.0) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -30890,7 +30853,7 @@ SOFTWARE.
 
 ```
 
-## sphinx-jinja2-compat (0.4.0) - MIT License
+## sphinx-jinja2-compat (0.4.1) - MIT License
 
 Patches Jinja2 v3 to restore compatibility with earlier Sphinx versions.
 
@@ -31424,7 +31387,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## swagger-plugin-for-sphinx (5.1.2) - UNKNOWN
+## swagger-plugin-for-sphinx (5.1.3) - UNKNOWN
 
 Sphinx plugin which renders a OpenAPI specification with Swagger
 
@@ -32580,7 +32543,7 @@ THE SOFTWARE.
 
 ```
 
-## types-PyYAML (6.0.12.20250516) - UNKNOWN
+## types-PyYAML (6.0.12.20250809) - UNKNOWN
 
 Typing stubs for PyYAML
 
@@ -33078,7 +33041,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## types-requests (2.32.4.20250611) - UNKNOWN
+## types-requests (2.32.4.20250809) - UNKNOWN
 
 Typing stubs for requests
 
@@ -33947,7 +33910,7 @@ SOFTWARE.
 
 ```
 
-## uv (0.8.5) - Apache Software License; MIT License
+## uv (0.8.9) - Apache Software License; MIT License
 
 An extremely fast Python package and project manager, written in Rust.
 
@@ -34920,41 +34883,6 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-```
-
-## wheel (0.45.1) - MIT License
-
-A built-package format for Python
-
-* URL: https://github.com/pypa/wheel
-* Author(s): Daniel Holth <dholth@fastmail.fm>
-* Maintainer(s): Alex Grönholm <alex.gronholm@nextday.fi>
-
-### License Text
-
-```
-MIT License
-
-Copyright (c) 2012 Daniel Holth <dholth@fastmail.fm> and contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
