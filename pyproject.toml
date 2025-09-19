@@ -370,11 +370,14 @@ ignore_missing_files = false
 tag = true
 sign_tags = false
 tag_name = "v{new_version}"
-tag_message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx"
 allow_dirty = false
 commit = true
-message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
 commit_args = "--no-verify"
+tag_message = "Bump version: {current_version} → {new_version}"
+message = "Bump version: {current_version} → {new_version}"
+# Note: Uncomment the following line to avoid running tests and ketryx during version bumps
+# message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
+# tag_message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
 setup_hooks = []
 pre_commit_hooks = [
     "uv sync",
