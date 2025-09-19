@@ -496,7 +496,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         color="red",
                         on_click=lambda: _delete(run.application_run_id),
                         icon="delete results",
-                    ).mark("BUTTON_APPLICATION_RUN_DELETE")
+                    ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
 
         with ui.list().classes("full-width"):
             results = list(run.results())

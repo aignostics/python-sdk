@@ -311,9 +311,9 @@ def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Pat
     assert result.exit_code == 2
 
 
-def test_cli_run_delete_fails_on_no_arg(runner: CliRunner) -> None:
+def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
     """Check run result delete command runs successfully."""
-    result = runner.invoke(cli, ["application", "run", "delete"])
+    result = runner.invoke(cli, ["application", "run", "result", "delete"])
     assert "Missing argument 'RUN_ID'." in normalize_output(result.stderr)
     assert result.exit_code == 2
 
