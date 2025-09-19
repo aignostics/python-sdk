@@ -98,7 +98,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             return False
 
     async def _delete(run_id: str) -> bool:
-        """Delete the application run and navigate to the main page.
+        """Delete the application run results and navigate to the main page.
 
         Args:
             run_id (str): The ID of the run to cancel.
@@ -106,7 +106,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         Returns:
             bool: True if the run was cancelled, False otherwise.
         """
-        ui.notify(f"Deleting application run with id '{run_id}' ...", type="info")
+        ui.notify(f"Deleting results of application run with id '{run_id}' ...", type="info")
         try:
             delete_button.disable()
             delete_button.props(add="loading")
@@ -118,7 +118,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         except Exception as e:  # noqa: BLE001
             delete_button.enable()
             delete_button.props(remove="loading")
-            ui.notify(f"Failed to delete application run: {e}.", type="warning")
+            ui.notify(f"Failed to delete results of application run: {e}.", type="warning")
             return False
 
     @ui.refreshable
@@ -495,7 +495,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         "Delete",
                         color="red",
                         on_click=lambda: _delete(run.application_run_id),
-                        icon="delete",
+                        icon="delete results",
                     ).mark("BUTTON_APPLICATION_RUN_DELETE")
 
         with ui.list().classes("full-width"):

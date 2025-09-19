@@ -464,6 +464,7 @@ class Service(BaseService):
                             "file_size_human": file_size_human,
                             "file_upload_progress": 0.0,
                             "platform_bucket_url": None,
+                            "extra": image_metadata["extra"],
                         }
                         if not with_gui_metadata:
                             entry.pop("reference_short", None)

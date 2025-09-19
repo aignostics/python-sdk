@@ -436,6 +436,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.metadata_grid = (
                 ui.aggrid({
                     "columnDefs": [
+                        {"headerName": "Extra", "field": "extra"},
                         {"headerName": "Reference", "field": "reference_short", "checkboxSelection": True},
                         {
                             "headerName": "Thumbnail",

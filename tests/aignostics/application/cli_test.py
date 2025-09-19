@@ -224,10 +224,10 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
         assert download_result.exit_code == 2
         assert f"Failed to create destination directory '/4711/{run_id}'" in normalize_output(download_result.stdout)
 
-    # Test the delete command with the extracted run ID
-    delete_result = runner.invoke(cli, ["application", "run", "delete", run_id])
+    # Test the result delete command with the extracted run ID
+    delete_result = runner.invoke(cli, ["application", "run", "result", "delete", run_id])
     assert delete_result.exit_code == 0
-    assert f"Run with ID '{run_id}' has been deleted." in normalize_output(delete_result.stdout)
+    assert f"Results for run with ID '{run_id}' have been deleted." in normalize_output(delete_result.stdout)
 
     # Test the describe command with the extracted run ID on deleted run
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
