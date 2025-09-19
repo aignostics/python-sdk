@@ -93,7 +93,7 @@ dependencies = [
     "pywin32>=310 ; sys_platform == 'win32'",
     "pyyaml>=6.0",
     "sentry-sdk>=2.38.0",
-    "typer>=0.17.5",
+    "typer>=0.18.0",
     "uptime>=3.0.1",
     # Custom
     "platformdirs>=4.3.8",
@@ -113,7 +113,7 @@ dependencies = [
     "jsonschema[format-nongpl]>=4.25.1",
     "openslide-bin>=4.0.0.8",
     "openslide-python>=1.4.2",
-    "pandas<=2.3.2",
+    "pandas>=2.3.2",
     "pyjwt[crypto]>=2.10.1",
     "python-dateutil>=2.9.0.post0",
     # "pywebview[qt6]>=5.4; sys_platform == 'linux'",
