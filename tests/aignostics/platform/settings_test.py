@@ -236,7 +236,7 @@ def test_issuer_computed_field_staging(mock_env_vars) -> None:
     )
     # Staging authorization_base_url is https://todo (placeholder)
     # So issuer should be https://todo/
-    expected_issuer = "https://todo/"
+    expected_issuer = "https://aignostics-platform-staging.eu.auth0.com/"
     assert settings.issuer == expected_issuer
 
 
