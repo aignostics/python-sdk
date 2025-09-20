@@ -8,7 +8,11 @@ import openslide
 from openslide import ImageSlide, OpenSlide, open_slide
 from PIL.Image import Image
 
+from aignostics.utils import get_logger
+
 TIFF_IMAGE_DESCRIPTION = "tiff.ImageDescription"
+
+logger = get_logger(__name__)
 
 
 class OpenSlideHandler:
@@ -196,18 +200,30 @@ class OpenSlideHandler:
             },
             "bounds": {
                 "x": int(props.get(openslide.PROPERTY_NAME_BOUNDS_X, 0)),
-                "y": int(props.get(openslide.PROPERTY_NAME_BOUNDS_X, 0)),
-                "width": int(props.get(openslide.PROPERTY_NAME_BOUNDS_X, base_width)),
-                "height": int(props.get(openslide.PROPERTY_NAME_BOUNDS_X, base_height)),
+                "y": int(props.get(openslide.PROPERTY_NAME_BOUNDS_Y, 0)),
+                "width": int(props.get(openslide.PROPERTY_NAME_BOUNDS_WIDTH, base_width)),
+                "height": int(props.get(openslide.PROPERTY_NAME_BOUNDS_HEIGHT, base_height)),
             },
             "tile": {
                 "width": int(props.get("openslide.level[0].tile-width", 256)),
                 "height": int(props.get("openslide.level[0].tile-height", 256)),
             },
             "levels": {"count": self.slide.level_count, "data": self._get_level_info()},
-            "properties": {},
+            "extra": ", ".join([
+                props.get("dicom.ImageType[0]", "0"),
+                props.get("dicom.ImageType[1]", "1"),
+                props.get("dicom.ImageType[2]", "2"),
+                props.get("dicom.ImageType[3]", "3"),
+                props.get("dicom.ImageType[4]", "4"),
+                props.get("dicom.SOPInstanceUID", "S"),
+                props.get("dicom.SeriesInstanceUID", "S"),
+                props.get("dicom.PyramidUID", "P"),
+                props.get("openslide.level-count", "L"),
+            ]),
+            "properties": dict(self.slide.properties),
         }
 
+        logger.debug("Slide metadata extracted: %s", metadata)
         # Parse image description if available
         if TIFF_IMAGE_DESCRIPTION in props:
             image_desc = self._parse_xml_image_description(props[TIFF_IMAGE_DESCRIPTION])
