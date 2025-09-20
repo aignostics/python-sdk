@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.153 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.157 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -160,7 +160,6 @@ $ aignostics application run [OPTIONS] COMMAND [ARGS]...
 * `list`: List runs.
 * `describe`: Describe run.
 * `cancel`: Cancel run.
-* `delete`: Delete run.
 * `result`: Download or delete run results.
 
 #### `aignostics application run execute`
@@ -197,7 +196,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1758122023926.134]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1758351215599.642]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -253,7 +252,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1758122023926.322]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1758351215599.7068]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -332,24 +331,6 @@ $ aignostics application run cancel [OPTIONS] RUN_ID
 
 * `--help`: Show this message and exit.
 
-#### `aignostics application run delete`
-
-Delete run.
-
-**Usage**:
-
-```console
-$ aignostics application run delete [OPTIONS] RUN_ID
-```
-
-**Arguments**:
-
-* `RUN_ID`: Id of the run to delete  [required]
-
-**Options**:
-
-* `--help`: Show this message and exit.
-
 #### `aignostics application run result`
 
 Download or delete run results.
@@ -367,6 +348,7 @@ $ aignostics application run result [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `download`: Download results of a run.
+* `delete`: Delete results of run.
 
 ##### `aignostics application run result download`
 
@@ -390,8 +372,26 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results. 
 The QuPath project will be created in a subfolder of the destination directory. 
-This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...` 
+This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...`
 This options requires installation of the QuPath application: Run uvx --with &quot;aignostics&quot; aignostics qupath install  [default: no-qupath-project]
+* `--help`: Show this message and exit.
+
+##### `aignostics application run result delete`
+
+Delete results of run.
+
+**Usage**:
+
+```console
+$ aignostics application run result delete [OPTIONS] RUN_ID
+```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run to delete results for  [required]
+
+**Options**:
+
 * `--help`: Show this message and exit.
 
 ## `aignostics bucket`
@@ -666,7 +666,7 @@ $ aignostics dataset aignostics [OPTIONS] COMMAND [ARGS]...
 
 #### `aignostics dataset aignostics download`
 
-Download from bucket to folder via a signed URL.
+Download from bucket to folder via a bucket URL.
 
 **Usage**:
 

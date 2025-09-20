@@ -52,8 +52,8 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     console.print(f"[bold]App Version:[/bold] {run_data.application_version_id}")
     console.print(f"[bold]Status:[/bold] {run_data.status.value}")
     console.print(f"[bold]Triggered at:[/bold] {run_data.triggered_at}")
-    console.print(f"[bold]Organization:[/bold] {run_data.organization_id}")
     console.print(f"[bold]Triggered by:[/bold] {run_data.triggered_by}")
+    console.print(f"[bold]Organization:[/bold] {run_data.organization_id}")
 
     # Get and display detailed item status
     console.print()
@@ -89,6 +89,7 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
                 console.print(f"    - Name: {artifact.name}")
                 console.print(f"      MIME Type: {get_mime_type_for_artifact(artifact)}")
                 console.print(f"      Artifact ID: {artifact.output_artifact_id}")
+                console.print(f"      Download URL: {artifact.download_url}")
 
         console.print()
 

@@ -61,8 +61,8 @@ async def test_gui_home_to_application(
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_logging) -> None:
-    """Test that the user sees the index page, and sees the intro."""
+async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner, silent_logging) -> None:
+    """Test that the user can submit a run via the CLI up to deleting the run results."""
     with tempfile.TemporaryDirectory() as tmpdir:
         gui_register_pages()
 
@@ -109,11 +109,11 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_loggi
         await user.should_see("status CANCELED_USER", retries=200)
 
         # ... and user can delete run
-        await user.should_see(marker="BUTTON_APPLICATION_RUN_DELETE")
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE")
 
         # Have user delete run
-        user.find(marker="BUTTON_APPLICATION_RUN_DELETE").click()
-        await assert_notified(user, f"Deleting application run with id '{run_id}' ...")
+        user.find(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE").click()
+        await assert_notified(user, f"Deleting results of application run with id '{run_id}' ...")
         await assert_notified(user, "Application run deleted!")
 
         # Assert user was auto-navigated to Homepage

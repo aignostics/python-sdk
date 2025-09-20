@@ -272,7 +272,7 @@ class Service(BaseService):
         cpu_times_percent = psutil.cpu_times_percent(interval=MEASURE_INTERVAL_SECONDS)
         cpu_freq = None
         try:
-            cpu_freq = psutil.cpu_freq()
+            cpu_freq = psutil.cpu_freq() if hasattr(psutil, "cpu_freq") else None  # Happens on macOS latest VM on GHA
         except RuntimeError:
             logger.warning("Failed to get CPU frequency.")  # Happens on macOS VM on GHA
 

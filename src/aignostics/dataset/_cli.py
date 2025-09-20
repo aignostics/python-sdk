@@ -214,7 +214,7 @@ def aignostics_download(
         ),
     ] = get_user_data_directory("datasets/aignostics"),  # noqa: B008
 ) -> None:
-    """Download from bucket to folder via a signed URL."""
+    """Download from bucket to folder via a bucket URL."""
     from rich.progress import (  # noqa: PLC0415
         BarColumn,
         FileSizeColumn,

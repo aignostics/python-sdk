@@ -392,6 +392,7 @@ class Service(BaseService):
         source_directory: Path,
         with_gui_metadata: bool = False,
         mappings: list[str] | None = None,
+        with_extra_metadata: bool = False,
     ) -> list[dict[str, Any]]:
         """Generate metadata from the source directory.
 
@@ -415,6 +416,7 @@ class Service(BaseService):
             mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
                 The regular expression is matched against the reference attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
+            with_extra_metadata (bool): If True, include extra metadata from the WSIService.
 
         Returns:
             dict[str, Any]: The generated metadata.
@@ -465,6 +467,9 @@ class Service(BaseService):
                             "file_upload_progress": 0.0,
                             "platform_bucket_url": None,
                         }
+                        if with_extra_metadata:
+                            entry["extra"] = image_metadata.get("extra", {})
+
                         if not with_gui_metadata:
                             entry.pop("reference_short", None)
                             entry.pop("source", None)

@@ -198,6 +198,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     submit_form.source,
                     True,
                     [".*:staining_method=H&E"],
+                    True,
                 )
                 if submit_form.metadata_grid.options["rowData"] is None:
                     msg = "nicegui_run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
@@ -436,6 +437,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.metadata_grid = (
                 ui.aggrid({
                     "columnDefs": [
+                        {"headerName": "Extra", "field": "extra"},
                         {"headerName": "Reference", "field": "reference_short", "checkboxSelection": True},
                         {
                             "headerName": "Thumbnail",

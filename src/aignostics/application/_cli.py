@@ -819,22 +819,22 @@ def result_download(  # noqa: PLR0913, PLR0917
         sys.exit(1)
 
 
-@run_app.command("delete")
-def run_delete(
-    run_id: Annotated[str, typer.Argument(..., help="Id of the run to delete")],
+@result_app.command("delete")
+def result_delete(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to delete results for")],
 ) -> None:
-    """Delete run."""
-    logger.debug("Deleting run with ID '%s'", run_id)
+    """Delete results of run."""
+    logger.debug("Deleting results for run with ID '%s'", run_id)
 
     try:
         Service().application_run_delete(run_id)
         logger.info("Deleted run with ID '%s'.", run_id)
-        console.print(f"Run with ID '{run_id}' has been deleted.")
+        console.print(f"Results for run with ID '{run_id}' have been deleted.")
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning("Results for with ID '%s' not found.", run_id)
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
         logger.exception("Failed to delete run with ID '%s'", run_id)
-        console.print(f"[bold red]Error:[/bold red] Failed to delete run with ID '{run_id}': {e}")
+        console.print(f"[bold red]Error:[/bold red] Failed to delete results for with ID '{run_id}': {e}")
         sys.exit(1)

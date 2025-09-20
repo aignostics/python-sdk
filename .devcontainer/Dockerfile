@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/python:1-3.11-bullseye
+FROM mcr.microsoft.com/devcontainers/python:2-3.11-bullseye
 
 # No healthcheck by default
 HEALTHCHECK NONE

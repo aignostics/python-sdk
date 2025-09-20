@@ -21,7 +21,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from aignostics.utils import OpaqueSettings, __project_name__, load_settings
 
 from ._constants import (
+    API_ROOT_DEV,
     API_ROOT_PRODUCTION,
+    API_ROOT_STAGING,
     AUDIENCE_DEV,
     AUDIENCE_PRODUCTION,
     AUDIENCE_STAGING,
@@ -236,7 +238,7 @@ class Settings(OpaqueSettings):
             return values
 
         match api_root:
-            case "https://platform.aignostics.com":
+            case x if x == API_ROOT_PRODUCTION:
                 values["audience"] = AUDIENCE_PRODUCTION
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_PRODUCTION
                 values["token_url"] = TOKEN_URL_PRODUCTION
@@ -244,7 +246,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_PRODUCTION
                 values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_PRODUCTION
-            case "https://platform-staging.aignostics.com":
+            case x if x == API_ROOT_STAGING:
                 values["audience"] = AUDIENCE_STAGING
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
                 values["token_url"] = TOKEN_URL_STAGING
@@ -252,7 +254,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_STAGING
                 values["jws_json_url"] = JWS_JSON_URL_STAGING
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_STAGING
-            case "https://platform-dev.aignostics.com":
+            case x if x == API_ROOT_DEV:
                 values["audience"] = AUDIENCE_DEV
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_DEV
                 values["token_url"] = TOKEN_URL_DEV
