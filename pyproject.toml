@@ -512,6 +512,8 @@ split_commits = true
 # regex for preprocessing the commit messages
 commit_preprocessors = [
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))" },
+    { pattern = '^[-*]?\s+(\w+)\s+\(([^)]+)\):', replace = "* ${1}(${2}):" },
+    { pattern = '^[-*]\s+', replace = "" },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
