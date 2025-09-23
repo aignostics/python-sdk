@@ -107,7 +107,7 @@ dependencies = [
     "google-crc32c>=1.7.1",
     "highdicom>=0.26.1",
     "httpx>=0.28.1",
-    "idc-index-data==22.0.0",
+    "idc-index-data==22.0.1",
     "ijson>=3.4.0",
     "jsf>=0.11.2",
     "jsonschema[format-nongpl]>=4.25.1",
