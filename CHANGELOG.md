@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.160](https://github.com/aignostics/python-sdk/compare/v0.2.159..0.2.160) - 2025-09-28
+# [0.2.161](https://github.com/aignostics/python-sdk/compare/v0.2.160..0.2.161) - 2025-09-28
+
+### 🐛 Bug Fixes
+
+- *(dataset)* Custom download folder selection - ([af8adfb](https://github.com/aignostics/python-sdk/commit/af8adfb2c7afc72a0efe5154fa53be18c320a4a9))
+
+
+# [v0.2.160](https://github.com/aignostics/python-sdk/compare/v0.2.159..v0.2.160) - 2025-09-28
 
 ### 🚜 Refactor
 
