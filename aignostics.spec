@@ -137,7 +137,7 @@ else:
         name='aignostics.app',
         icon='logo.ico',
         bundle_identifier='com.aignostics.launchpad',
-        version='0.2.159',
+        version='0.2.160',
         info_plist={
             'NSPrincipalClass': 'NSApplication',
             'NSAppleScriptEnabled': False,
