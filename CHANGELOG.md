@@ -1,6 +1,26 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.159](https://github.com/aignostics/python-sdk/compare/v0.2.158..0.2.159) - 2025-09-20
+# [0.2.160](https://github.com/aignostics/python-sdk/compare/v0.2.159..0.2.160) - 2025-09-28
+
+### 🚜 Refactor
+
+- *(io)* Don't use synchronous fileio in async functions - ([5907231](https://github.com/aignostics/python-sdk/commit/590723198e88194635b35225039a846fc69a6cdd))
+- *(lint)* New ruff rules - ([58c009e](https://github.com/aignostics/python-sdk/commit/58c009effeb316be492b6c2e6b8561976504dd4a))
+
+### 📚 Documentation
+
+- *(claude)* Claude.md - ([c063fe2](https://github.com/aignostics/python-sdk/commit/c063fe22722c3e62b7f7a252c0d8df5dfd886e71))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([fa7b565](https://github.com/aignostics/python-sdk/commit/fa7b5651d5c19ac2668929c16eb47408d99b06eb))
+
+### 🛡️ Security
+
+- *(jupyterlab)* CVE-2025-59842 - ([57e3399](https://github.com/aignostics/python-sdk/commit/57e339909ac27efe253054f7b06b8e4e166cb7f3))
+
+
+# [v0.2.159](https://github.com/aignostics/python-sdk/compare/v0.2.158..v0.2.159) - 2025-09-20
 
 ### 🎨 Styling
 
