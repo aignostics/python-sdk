@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
 from showinfm.showinfm import show_in_file_manager
@@ -151,10 +152,10 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         with ui.row().classes("w-full"):
 
             async def _select_download_destination() -> None:
-                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
+                result = await GUILocalFilePicker(str(await AsyncPath.home()), multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
-                    folder_path = Path(result[0])
-                    if folder_path.is_dir():
+                    folder_path = AsyncPath(result[0])
+                    if await folder_path.is_dir():
                         selected_folder.value = str(folder_path)
                     else:
                         selected_folder.value = str(folder_path.parent)
@@ -517,8 +518,8 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         ui.card().tight().classes("h-full"),
                         ui.row().classes("w-full"),
                     ):
-                        image_file: Path | None = Path(item.reference).resolve()
-                        if image_file and image_file.is_file():
+                        image_file: AsyncPath | None = await AsyncPath(item.reference).resolve()
+                        if image_file and await image_file.is_file():
                             image_url = "/thumbnail?source=" + quote(image_file.as_posix())
                         else:
                             image_file = None

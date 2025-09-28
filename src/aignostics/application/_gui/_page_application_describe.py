@@ -6,6 +6,7 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 
+from aiopath import AsyncPath
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
@@ -127,11 +128,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         from nicegui import ui  # noqa: PLC0415
 
         result = await GUILocalFilePicker(
-            str(get_user_data_directory("datasets") if data else Path.home()), multiple=False
+            str(get_user_data_directory("datasets") if data else await AsyncPath.home()), multiple=False
         )  # type: ignore
         if result and len(result) > 0:
-            path = Path(result[0])
-            if not path.is_dir():
+            path = AsyncPath(result[0])
+            if not await path.is_dir():
                 submit_form.source = None
                 submit_form.wsi_step_label.set_text(
                     "Select a folder with whole slide images you want to analyze"
@@ -159,11 +160,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 type="warning",
             )
 
-    async def _pytest_home() -> None:  # noqa: RUF029
+    async def _pytest_home() -> None:
         """Select home folder."""
         from nicegui import ui  # noqa: PLC0415
 
-        submit_form.source = Path.home()
+        submit_form.source = await AsyncPath.home()
         submit_form.wsi_step_label.set_text(
             f"Selected folder {submit_form.source} to analyze."
         ) if submit_form.wsi_step_label else None
