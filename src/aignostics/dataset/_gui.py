@@ -112,7 +112,7 @@ class PageBuilder(BasePageBuilder):
                 ):
                     return
 
-                result = await GUILocalFilePicker(str(await Path.home()), multiple=False)  # type: ignore
+                result = await GUILocalFilePicker(str(await AsyncPath.home()), multiple=False)  # type: ignore
                 if result and len(result) > 0:
                     path = AsyncPath(result[0])
                     if not await path.is_dir():
