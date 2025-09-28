@@ -148,7 +148,7 @@ jobs:
         run: make docs
 
       - name: Generate release notes
-        uses: orhun/git-cliff-action@98c93442bb05a455a77bee982867857ae748eeea # v4.5.1
+        uses: orhun/git-cliff-action@d77b37db2e3f7398432d34b72a12aa3e2ba87e51 # v4.6.0
         id: git-cliff
         with:
           config: pyproject.toml
