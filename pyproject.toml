@@ -124,9 +124,10 @@ dependencies = [
     "shapely>=2.1.2",
     "show-in-file-manager>=1.1.5",
     "tqdm>=4.67.1",
+    "truststore>=0.10.4",
     "urllib3>=2.5.0",
     "wsidicom>=0.27.1",
-    "truststore>=0.10.4",
+    "aiopath>=0.6.11",
 ]
 
 [project.optional-dependencies]
@@ -264,7 +265,6 @@ ignore = [
     "PTH123",   # use of open to be replaced with Path.open,
     "T201",     # Remove `print`
     "INP001",   # Checks for packages that are missing an __init__.py file.
-    "ASYNC240", # TODO(Helmut)
 ]
 
 [tool.ruff.lint.per-file-ignores]

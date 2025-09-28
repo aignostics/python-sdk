@@ -4,6 +4,7 @@ from multiprocessing import Manager
 from pathlib import Path
 
 import humanize
+from aiopath import AsyncPath
 from showinfm.showinfm import show_in_file_manager
 
 from aignostics.gui import frame
@@ -306,10 +307,10 @@ class PageBuilder(BasePageBuilder):
                 ):
                     return
 
-                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore
+                result = await GUILocalFilePicker(str(await AsyncPath.home()), multiple=False)  # type: ignore
                 if result and len(result) > 0:
-                    path = Path(result[0])
-                    if not path.is_dir():
+                    path = AsyncPath(result[0])
+                    if not await path.is_dir():
                         bucket_form.destination = None
                         bucket_form.destination_label.set_text(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
                         bucket_form.destination_open_button.disable()
