@@ -100,7 +100,7 @@ dependencies = [
     "boto3>=1.40.40",
     "certifi>=2025.8.3",
     "dicom-validator>=0.7.2",
-    "dicomweb-client[gcp]>=0.60.1",
+    "dicomweb-client[gcp]>=0.59.3",
     "duckdb>=0.10.0,<=1.4.0",
     "fastparquet>=2024.11.0",
     "google-cloud-storage>=3.4.0",
