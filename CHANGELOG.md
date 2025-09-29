@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.163](https://github.com/aignostics/python-sdk/compare/v0.2.161..0.2.163) - 2025-09-29
+# [0.2.164](https://github.com/aignostics/python-sdk/compare/v0.2.163..0.2.164) - 2025-09-29
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Bump login-action in claude and docker workflows - ([d55b0ce](https://github.com/aignostics/python-sdk/commit/d55b0ce49cb7f82eddc5c00fc7441d41bfa2d2f5))
+
+
+# [v0.2.163](https://github.com/aignostics/python-sdk/compare/v0.2.161..v0.2.163) - 2025-09-29
 
 ### 🐛 Bug Fixes
 
