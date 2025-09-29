@@ -2,7 +2,15 @@ name: "Scheduled Audit"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE:
+        required: false
+      AIGNOSTICS_REFRESH_TOKEN:
+        required: false
+      GCP_CREDENTIALS:
+        required: false
+      BETTERSTACK_AUDIT_HEARTBEAT_URL:
+        required: false
 
 jobs:
   audit-scheduled:
@@ -40,8 +48,10 @@ jobs:
 
       - name: Set up GCP credentials for bucket access
         shell: bash
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
+          echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Audit

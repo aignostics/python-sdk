@@ -2,7 +2,13 @@ name: "Publish Docker Image"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      DOCKER_USERNAME:
+        required: false
+      DOCKER_PASSWORD:
+        required: false
+      GITHUB_TOKEN:
+        required: false
 
 jobs:
   docker_publish:

@@ -2,7 +2,11 @@ name: "Report build to Ketryx and check for approval"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      KETRYX_PROJECT:
+        required: false
+      KETRYX_API_KEY:
+        required: false
 
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -35,7 +39,7 @@ jobs:
 
       - name: Report build to Ketryx and check for approval
         if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
-        uses: Ketryx/ketryx-github-action@v1.4.0
+        uses: Ketryx/ketryx-github-action@40b13ef68c772e96e58ec01a81f5b216d7710186 # v1.4.0
         continue-on-error: true # TODO(Helmut): Remove post having Ketryx configured to inspect the main branch
         with:
           project: ${{ secrets.KETRYX_PROJECT }}

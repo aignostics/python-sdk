@@ -12,4 +12,3 @@ jobs:
       contents: read
       packages: read
       security-events: write
-    secrets: inherit
