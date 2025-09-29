@@ -186,7 +186,7 @@ def test_serve_tiff_to_jpeg(user: User, silent_logging) -> None:
     assert image.height > 0
 
 
-def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
+def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir, silent_logging) -> None:
     """Test that the tiff route falls back as expected on broken tiff.
 
     - Spin up local webserver serving 4711 random bytes
