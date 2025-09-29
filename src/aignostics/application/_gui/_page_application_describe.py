@@ -128,7 +128,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         from nicegui import ui  # noqa: PLC0415
 
         result = await GUILocalFilePicker(
-            str(get_user_data_directory("datasets") if data else await AsyncPath.home()), multiple=False
+            str(get_user_data_directory("datasets") if data else str(Path(await AsyncPath.home()))), multiple=False
         )  # type: ignore
         if result and len(result) > 0:
             path = AsyncPath(result[0])
@@ -140,7 +140,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
                 ui.notify("The selected path is not a directory. Please select a valid directory.", type="warning")
             else:
-                submit_form.source = path
+                submit_form.source = Path(path)
                 submit_form.wsi_step_label.set_text(
                     f"Selected folder {submit_form.source} to analyze."
                 ) if submit_form.wsi_step_label else None
@@ -164,7 +164,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         """Select home folder."""
         from nicegui import ui  # noqa: PLC0415
 
-        submit_form.source = await AsyncPath.home()
+        submit_form.source = Path(await AsyncPath.home())
         submit_form.wsi_step_label.set_text(
             f"Selected folder {submit_form.source} to analyze."
         ) if submit_form.wsi_step_label else None
