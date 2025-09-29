@@ -18,20 +18,20 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class OutputArtifactScope(str, Enum):
+class OutputArtifactVisibility(str, Enum):
     """
-    OutputArtifactScope
+    OutputArtifactVisibility
     """
 
     """
     allowed enum values
     """
-    ITEM = 'ITEM'
-    GLOBAL = 'GLOBAL'
+    INTERNAL = 'INTERNAL'
+    EXTERNAL = 'EXTERNAL'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of OutputArtifactScope from a JSON string"""
+        """Create an instance of OutputArtifactVisibility from a JSON string"""
         return cls(json.loads(json_str))
 
 
