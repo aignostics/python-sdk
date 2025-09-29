@@ -140,7 +140,7 @@ help:
 	@echo "  audit                 - Run security and license compliance audit"
 	@echo "  bump patch|minor|major|x.y.z - Bump version"
 	@echo "  clean                 - Clean build artifacts and caches"
-	@echo "  codegen               - Generate API code"
+	@echo "  codegen               - Download openapi.json from Aignostics platform, generate API code"
 	@echo "  dist                  - Build wheel and sdist into dist/"
 	@echo "  dist_native		   - Build native app variant of Aignostics Launchpad into dist/native/"
 	@echo "  docs [pdf]            - Build documentation (add pdf for PDF format)"

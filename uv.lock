@@ -173,12 +173,12 @@ requires-dist = [
     { name = "humanize", specifier = ">=4.13.0" },
     { name = "idc-index-data", specifier = "==22.0.1" },
     { name = "ijson", specifier = ">=3.4.0" },
-    { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.5.0" },
+    { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.6.0" },
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.25.1" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1" },
     { name = "logfire", extras = ["system-metrics"], specifier = ">=4.10.0" },
-    { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.16.2" },
+    { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.16.3" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.6" },
     { name = "nicegui", extras = ["native"], specifier = ">=2.24.2" },
     { name = "openslide-bin", specifier = ">=4.0.0.8" },
@@ -215,7 +215,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.19.2" },
     { name = "uptime", specifier = ">=3.0.1" },
     { name = "urllib3", specifier = ">=2.5.0" },
-    { name = "wsidicom", specifier = ">=0.27.1" },
+    { name = "wsidicom", specifier = ">=0.28.0" },
 ]
 provides-extras = ["pyinstaller", "jupyter", "marimo", "qupath"]
 
@@ -250,7 +250,7 @@ dev = [
     { name = "ruff", specifier = ">=0.13.2" },
     { name = "scalene", specifier = ">=1.5.55" },
     { name = "sphinx", specifier = ">=8.2.3" },
-    { name = "sphinx-autobuild", specifier = ">=2024.10.3" },
+    { name = "sphinx-autobuild", specifier = ">=2025.8.25" },
     { name = "sphinx-click", specifier = ">=6.1.0" },
     { name = "sphinx-copybutton", specifier = ">=0.5.2" },
     { name = "sphinx-inline-tabs", specifier = ">=2023.4.21" },
@@ -2298,7 +2298,7 @@ wheels = [
 
 [[package]]
 name = "ipython"
-version = "9.5.0"
+version = "9.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
@@ -2313,9 +2313,9 @@ dependencies = [
     { name = "traitlets" },
     { name = "typing-extensions", marker = "python_full_version < '3.12'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/71/a86262bf5a68bf211bcc71fe302af7e05f18a2852fdc610a854d20d085e6/ipython-9.5.0.tar.gz", hash = "sha256:129c44b941fe6d9b82d36fc7a7c18127ddb1d6f02f78f867f402e2e3adde3113", size = 4389137, upload-time = "2025-08-29T12:15:21.519Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/34/29b18c62e39ee2f7a6a3bba7efd952729d8aadd45ca17efc34453b717665/ipython-9.6.0.tar.gz", hash = "sha256:5603d6d5d356378be5043e69441a072b50a5b33b4503428c77b04cb8ce7bc731", size = 4396932, upload-time = "2025-09-29T10:55:53.948Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/2a/5628a99d04acb2d2f2e749cdf4ea571d2575e898df0528a090948018b726/ipython-9.5.0-py3-none-any.whl", hash = "sha256:88369ffa1d5817d609120daa523a6da06d02518e582347c29f8451732a9c5e72", size = 612426, upload-time = "2025-08-29T12:15:18.866Z" },
+    { url = "https://files.pythonhosted.org/packages/48/c5/d5e07995077e48220269c28a221e168c91123ad5ceee44d548f54a057fc0/ipython-9.6.0-py3-none-any.whl", hash = "sha256:5f77efafc886d2f023442479b8149e7d86547ad0a979e9da9f045d252f648196", size = 616170, upload-time = "2025-09-29T10:55:47.676Z" },
 ]
 
 [[package]]
@@ -2937,7 +2937,7 @@ wheels = [
 
 [[package]]
 name = "marimo"
-version = "0.16.2"
+version = "0.16.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2958,9 +2958,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/62/d8def85c7ddf58a3a371eef3e553b8426e685b99a9cb8c3847c702422ec8/marimo-0.16.2.tar.gz", hash = "sha256:2bd90431846c470b4a83ded7ee8b4442854c47ad670b0aafa5fe697e54bddd5a", size = 33654187, upload-time = "2025-09-24T12:41:55.255Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/b6/ad9f00808e8f67fd7c179dc12e17ce6f219fbd382ba4f13d07e481b1f038/marimo-0.16.3.tar.gz", hash = "sha256:ce59bff2b7964a69faf65b20a57f3156ae845ddba364476720da89a3090670ef", size = 33680060, upload-time = "2025-09-29T18:38:46.556Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/0c/65a605b99486461babb6a44e516cff7cfd892a7476df8c9990e023c07625/marimo-0.16.2-py3-none-any.whl", hash = "sha256:4617864fec69a5114ce74d3200dd2f1fb38e3757afd00e0a89b2fe2b56532d09", size = 34058910, upload-time = "2025-09-24T12:41:59.721Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/f5/b830e8f532c3493bb1e8aa82c5151c232dd80bb382432c9d411e9ca644d3/marimo-0.16.3-py3-none-any.whl", hash = "sha256:6ed5c472368a56045007f5c6456b433ec59be15e6959e25469161e9f75f8d9b9", size = 34081814, upload-time = "2025-09-29T18:38:41.795Z" },
 ]
 
 [[package]]
@@ -6150,7 +6150,7 @@ wheels = [
 
 [[package]]
 name = "sphinx-autobuild"
-version = "2024.10.3"
+version = "2025.8.25"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama" },
@@ -6160,9 +6160,9 @@ dependencies = [
     { name = "watchfiles" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/2c/155e1de2c1ba96a72e5dba152c509a8b41e047ee5c2def9e9f0d812f8be7/sphinx_autobuild-2024.10.3.tar.gz", hash = "sha256:248150f8f333e825107b6d4b86113ab28fa51750e5f9ae63b59dc339be951fb1", size = 14023, upload-time = "2024-10-02T23:15:30.172Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/3c/a59a3a453d4133777f7ed2e83c80b7dc817d43c74b74298ca0af869662ad/sphinx_autobuild-2025.8.25.tar.gz", hash = "sha256:9cf5aab32853c8c31af572e4fecdc09c997e2b8be5a07daf2a389e270e85b213", size = 15200, upload-time = "2025-08-25T18:44:55.436Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/c0/eba125db38c84d3c74717008fd3cb5000b68cd7e2cbafd1349c6a38c3d3b/sphinx_autobuild-2024.10.3-py3-none-any.whl", hash = "sha256:158e16c36f9d633e613c9aaf81c19b0fc458ca78b112533b20dafcda430d60fa", size = 11908, upload-time = "2024-10-02T23:15:28.739Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/20/56411b52f917696995f5ad27d2ea7e9492c84a043c5b49a3a3173573cd93/sphinx_autobuild-2025.8.25-py3-none-any.whl", hash = "sha256:b750ac7d5a18603e4665294323fd20f6dcc0a984117026d1986704fa68f0379a", size = 12535, upload-time = "2025-08-25T18:44:54.164Z" },
 ]
 
 [[package]]
@@ -7204,7 +7204,7 @@ wheels = [
 
 [[package]]
 name = "wsidicom"
-version = "0.27.1"
+version = "0.28.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dicomweb-client" },
@@ -7215,9 +7215,9 @@ dependencies = [
     { name = "pydicom" },
     { name = "universal-pathlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/59/f6/1495405fe6c1331a7d024b195510be8a635449b2fbd2212df89b1de0500d/wsidicom-0.27.1.tar.gz", hash = "sha256:1b48d8c6608b769981e63c0fdc157647ec656df26e9101319b4ebfccfeaa80ec", size = 155938, upload-time = "2025-05-15T12:48:16.333Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/a0/59084824ddefbbea45b4b4d360693e86d2b9273b16d5f532570278086826/wsidicom-0.28.0.tar.gz", hash = "sha256:2e0bc8c9e8c86bafda24e9c9c8e2f45c906af99753d2a9cb9f93262278503d0a", size = 159142, upload-time = "2025-09-29T18:24:34.854Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/4c/aa9f7974870ae7f9aad23bc903275579962b4441fd9c26bd190de0d2368d/wsidicom-0.27.1-py3-none-any.whl", hash = "sha256:351d053b8a8be3dcbe404bf4b331e2c4c07348bad1aaeb9f93275df541e87668", size = 231287, upload-time = "2025-05-15T12:48:14.493Z" },
+    { url = "https://files.pythonhosted.org/packages/97/a7/59581e748038a5a300c0689e87f97dd308b3a0e33270b1e35444e1803a99/wsidicom-0.28.0-py3-none-any.whl", hash = "sha256:a959730d3c35e9306ee95fca44687ad3d313ca1dab31589acd13013b3b6e4454", size = 238641, upload-time = "2025-09-29T18:24:32.395Z" },
 ]
 
 [[package]]
