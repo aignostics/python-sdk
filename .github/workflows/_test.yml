@@ -11,8 +11,6 @@ on:
         required: false
       CODECOV_TOKEN:
         required: false
-      GITHUB_TOKEN:
-        required: false
       SONAR_TOKEN:
         required: false
   
