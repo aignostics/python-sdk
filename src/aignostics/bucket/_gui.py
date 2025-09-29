@@ -307,7 +307,7 @@ class PageBuilder(BasePageBuilder):
                 ):
                     return
 
-                result = await GUILocalFilePicker(str(await AsyncPath.home()), multiple=False)  # type: ignore
+                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore
                 if result and len(result) > 0:
                     path = AsyncPath(result[0])
                     if not await path.is_dir():
@@ -318,7 +318,7 @@ class PageBuilder(BasePageBuilder):
                             "The selected path is not a directory. Please select a valid directory.", type="warning"
                         )
                     else:
-                        bucket_form.destination = path
+                        bucket_form.destination = Path(path)
                         bucket_form.destination_label.set_text(f"Will download to {bucket_form.destination!s}")
                         bucket_form.destination_open_button.enable()
                         ui.notify(f"You chose directory {bucket_form.destination}.", type="info")

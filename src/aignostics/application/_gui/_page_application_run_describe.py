@@ -152,7 +152,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         with ui.row().classes("w-full"):
 
             async def _select_download_destination() -> None:
-                result = await GUILocalFilePicker(str(await AsyncPath.home()), multiple=False)  # type: ignore[misc]
+                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
                     folder_path = AsyncPath(result[0])
                     if await folder_path.is_dir():
