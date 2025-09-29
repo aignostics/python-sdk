@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.164](https://github.com/aignostics/python-sdk/compare/v0.2.163..0.2.164) - 2025-09-29
+# [0.2.165](https://github.com/aignostics/python-sdk/compare/v0.2.164..0.2.165) - 2025-09-29
+
+### ⚙️ Miscellaneous Tasks
+
+- *(wsi)* Don't fail test on log on broken tiff test - ([7392404](https://github.com/aignostics/python-sdk/commit/7392404eccafaa6cab1457f6e839ecab6a7f7d1a))
+
+
+# [v0.2.164](https://github.com/aignostics/python-sdk/compare/v0.2.163..v0.2.164) - 2025-09-29
 
 ### ⚙️ Miscellaneous Tasks
 
