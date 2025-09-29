@@ -1,6 +1,19 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.161](https://github.com/aignostics/python-sdk/compare/v0.2.160..0.2.161) - 2025-09-28
+# [0.2.163](https://github.com/aignostics/python-sdk/compare/v0.2.161..0.2.163) - 2025-09-29
+
+### 🐛 Bug Fixes
+
+- *(dataset)* Custom download folder selection - ([cedf5c2](https://github.com/aignostics/python-sdk/commit/cedf5c2f2237f90b18c267a0fd5d20f21b8ed3ab))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(AI)* Claude.md files for assisted coding - ([1bb2021](https://github.com/aignostics/python-sdk/commit/1bb20211b43e5d0d14e6162768db5bb8afa53edf))
+- *(GHA)* Claude PR Assistant workflow - ([1bb2021](https://github.com/aignostics/python-sdk/commit/1bb20211b43e5d0d14e6162768db5bb8afa53edf))
+- Chore(GHA) Claude Code Review workflow - ([1bb2021](https://github.com/aignostics/python-sdk/commit/1bb20211b43e5d0d14e6162768db5bb8afa53edf))
+
+
+# [v0.2.161](https://github.com/aignostics/python-sdk/compare/v0.2.160..v0.2.161) - 2025-09-28
 
 ### 🐛 Bug Fixes
 
