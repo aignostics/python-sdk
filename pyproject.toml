@@ -74,7 +74,7 @@ requires-python = ">=3.11, <4.0"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.117.1",
+    "fastapi[standard,all]>=0.118.0",
     "humanize>=4.13.0",
     "logfire[system-metrics]>=4.10.0",
     "nicegui[native]>=2.24.2",
