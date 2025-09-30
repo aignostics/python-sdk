@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.166](https://github.com/aignostics/python-sdk/compare/v0.2.165..0.2.166) - 2025-09-30
+# [0.2.167](https://github.com/aignostics/python-sdk/compare/v0.2.166..0.2.167) - 2025-09-30
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Adapt tests to asynchronous loading of apps in GUI - ([1b8bfb2](https://github.com/aignostics/python-sdk/commit/1b8bfb2428d52d44c53bfde30de78e187143b022))
+
+
+# [v0.2.166](https://github.com/aignostics/python-sdk/compare/v0.2.165..v0.2.166) - 2025-09-30
 
 ### 🚜 Refactor
 
@@ -11,9 +18,6 @@
 - *(GHA)* Apply security best practices for GitHub Workflows ([#139](https://github.com/orhun/git-cliff/issues/139)) - ([f0d8ac5](https://github.com/aignostics/python-sdk/commit/f0d8ac5ef361efe6cf0a261fb2f9365c83e85c16))
 - *(gha)* Security improvements in github workflow as identified by sonarqube - ([f0d8ac5](https://github.com/aignostics/python-sdk/commit/f0d8ac5ef361efe6cf0a261fb2f9365c83e85c16))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution in [#139](https://github.com/aignostics/python-sdk/pull/139)
 
 # [v0.2.165](https://github.com/aignostics/python-sdk/compare/v0.2.164..v0.2.165) - 2025-09-29
 
