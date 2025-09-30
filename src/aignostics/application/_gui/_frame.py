@@ -61,8 +61,9 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                 and args.get("application_id") == application.application_id
                                 else "normal"
                             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
+            logger.exception("Failed to load applications")
 
         async def application_runs_load_and_render(runs_column: ui.column, completed_only: bool = False) -> None:
             with runs_column:
