@@ -92,7 +92,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id, include=None)
+        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id)
 
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run.
