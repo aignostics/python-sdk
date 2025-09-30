@@ -174,9 +174,9 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     ui.input(
                         placeholder="Note",
                         on_change=_runs_list.refresh,
-                    ).bind_value(search_input, "query").props("rounded outlined dense").style("max-width: 12ch;").mark(
-                        "INPUT_RUNS_FILTER_NOTE"
-                    )
+                    ).bind_value(search_input, "query").props("rounded outlined dense clearable").style(
+                        "max-width: 12ch;"
+                    ).mark("INPUT_RUNS_FILTER_NOTE")
                     ui.space()
                     with RunFilterButton("done_all", size="sm").classes("mr-3").mark("BUTTON_RUNS_FILTER_COMPLETED"):
                         ui.tooltip("Show completed runs only")
