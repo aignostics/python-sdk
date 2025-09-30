@@ -769,12 +769,15 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(self, application_version_id: str, items: list[InputItem]) -> ApplicationRun:
+    def application_run_submit(
+        self, application_version_id: str, items: list[InputItem], custom_metadata: dict | None = None
+    ) -> ApplicationRun:
         """Submit a run for the given application.
 
         Args:
             application_version_id: The ID of the application version to run.
             items: The input items for the run.
+            custom_metadata: Optional custom metadata to attach to the run.
 
         Returns:
             ApplicationRun: The submitted run.
@@ -785,7 +788,9 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         try:
-            return self._get_platform_client().runs.create(application_version=application_version_id, items=items)
+            return self._get_platform_client().runs.create(
+                application_version=application_version_id, items=items, custom_metadata=custom_metadata
+            )
         except ValueError as e:
             message = f"Failed to submit application run for version '{application_version_id}': {e}"
             logger.warning(message)

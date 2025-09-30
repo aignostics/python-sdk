@@ -439,6 +439,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     * Triggered On: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
                     * Triggered by: {run_data.triggered_by}
                     * Organization: {run_data.organization_id}
+                    * Custom Metadata: {run_data.metadata or "None"}
                     """,
                     language="markdown",
                 )

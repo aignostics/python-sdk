@@ -4,6 +4,7 @@ This module provides classes for creating and managing application runs on the A
 It includes functionality for starting runs, monitoring status, and downloading results.
 """
 
+import platform
 import typing as t
 from collections.abc import Generator
 from pathlib import Path
@@ -36,6 +37,7 @@ from aignostics.platform._utils import (
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
+from aignostics.utils import __version__
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
@@ -270,12 +272,15 @@ class Runs:
         """
         return ApplicationRun(self._api, application_run_id)
 
-    def create(self, application_version: str, items: list[ItemCreationRequest]) -> ApplicationRun:
+    def create(
+        self, application_version: str, items: list[ItemCreationRequest], custom_metadata: dict | None = None
+    ) -> ApplicationRun:
         """Creates a new application run.
 
         Args:
             application_version (ApplicationVersion | str): The ID of the application version.
             items (list[ItemCreationRequest]): The run creation request payload.
+            custom_metadata (dict | None): Optional metadata to attach to the run.
 
         Returns:
             ApplicationRun: The created application run.
@@ -284,10 +289,11 @@ class Runs:
             ValueError: If the payload is invalid.
             Exception: If the API request fails.
         """
-        payload = RunCreationRequest(
-            application_version_id=application_version,
-            items=items,
-        )
+        if custom_metadata is None:
+            custom_metadata = {}
+        platform_qualifier = platform.system()
+        custom_metadata["user_agent"] = f"aignostics-python-sdk/{__version__} ({platform_qualifier})"
+        payload = RunCreationRequest(application_version_id=application_version, items=items, metadata=custom_metadata)
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
         return ApplicationRun(self._api, str(res.application_run_id))
