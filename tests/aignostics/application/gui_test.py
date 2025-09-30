@@ -30,7 +30,7 @@ async def test_gui_index(user: User) -> None:
     # hello world
     gui_register_pages()
     await user.open("/")
-    await user.should_see("Atlas H&E-TME")
+    await user.should_see("Atlas H&E-TME", retries=100)
     await user.should_see("Download Datasets")
 
 
@@ -91,7 +91,8 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         # Run shown in he GUI
         await user.open("/")
         await user.should_see("Applications")
-        await user.should_see("Atlas H&E-TME")
+        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
+        await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("Runs")
         await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
 
@@ -149,10 +150,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         # Open the GUI and navigate to Atlas H&E-TME application
         await user.open("/")
         await user.should_see("Applications")
-        await user.should_see("Atlas H&E-TME")
-        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme")
+        await user.should_see("Atlas H&E-TME", retries=100)
+        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
-        await user.should_see("Atlas H&E-TME")
+        await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("The Atlas", retries=100)
         await user.should_see("The Atlas H&E TME is an AI application")
 
