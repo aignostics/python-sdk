@@ -602,12 +602,15 @@ class Service(BaseService):
         return True
 
     @staticmethod
-    def application_runs_static(limit: int | None = None, completed_only: bool = False) -> list[dict[str, Any]]:
+    def application_runs_static(
+        limit: int | None = None, completed_only: bool = False, note_regex: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
             completed_only (bool): If True, only completed runs are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
 
         Returns:
             list[ApplicationRunData]: A list of all application runs.
@@ -623,18 +626,19 @@ class Service(BaseService):
                 "status": run.status,
             }
             for run in Service().application_runs(
-                limit=limit, status=ApplicationRunStatus.COMPLETED if completed_only else None
+                limit=limit, status=ApplicationRunStatus.COMPLETED if completed_only else None, note_regex=note_regex
             )
         ]
 
     def application_runs(
-        self, limit: int | None = None, status: ApplicationRunStatus | None = None
+        self, limit: int | None = None, status: ApplicationRunStatus | None = None, note_regex: str | None = None
     ) -> list[ApplicationRunData]:
         """Get a list of all application runs.
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
             status (ApplicationRunStatus | None): Filter runs by status. If None, all runs are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
 
         Returns:
             list[ApplicationRunData]: A list of all application runs.
@@ -647,7 +651,10 @@ class Service(BaseService):
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
-            run_iterator = self._get_platform_client().runs.list_data(sort="-triggered_at", page_size=page_size)
+            metadata = f'$.note ? (@ like_regex "{note_regex}")' if note_regex else None
+            run_iterator = self._get_platform_client().runs.list_data(
+                sort="-triggered_at", page_size=page_size, metadata=metadata
+            )
             for run in run_iterator:
                 if status is not None and run.status != status:
                     continue

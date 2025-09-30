@@ -318,6 +318,7 @@ class Runs:
     def list_data(
         self,
         for_application_version: str | None = None,
+        metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ) -> t.Iterator[ApplicationRunData]:
@@ -325,6 +326,7 @@ class Runs:
 
         Args:
             for_application_version (str | None): Optional application version ID to filter by.
+            metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
 
@@ -344,6 +346,7 @@ class Runs:
             res = paginate(
                 self._api.list_application_runs_v1_runs_get,
                 page_size=page_size,
+                metadata=metadata,
                 sort=[sort] if sort else None,
             )
         else:
@@ -351,6 +354,7 @@ class Runs:
                 self._api.list_application_runs_v1_runs_get,
                 page_size=page_size,
                 application_version_id=for_application_version,
+                metadata=metadata,
                 sort=[sort] if sort else None,
             )
         return res

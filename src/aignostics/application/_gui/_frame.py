@@ -18,6 +18,13 @@ STORAGE_TAB_RUNS_COMPLETED_ONLY = "runs_completed_only"
 service = Service()
 
 
+class SearchInput:
+    query: str = ""
+
+
+search_input = SearchInput()
+
+
 async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
     navigation_title: str,
     navigation_icon: str | None = None,
@@ -65,11 +72,16 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
             ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
             logger.exception("Failed to load applications")
 
-        async def application_runs_load_and_render(runs_column: ui.column, completed_only: bool = False) -> None:
+        async def application_runs_load_and_render(
+            runs_column: ui.column, completed_only: bool = False, note_query: str | None = None
+        ) -> None:
             with runs_column:
                 try:
                     runs = await nicegui_run.io_bound(
-                        Service.application_runs_static, limit=RUNS_LIMIT, completed_only=completed_only
+                        Service.application_runs_static,
+                        limit=RUNS_LIMIT,
+                        completed_only=completed_only,
+                        note_regex=f".*{note_query}.*" if note_query else None,
                     )
                     if runs is None:
                         message = "nicegui_run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
@@ -130,6 +142,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     coroutine=application_runs_load_and_render(
                         runs_column=runs_column,
                         completed_only=app.storage.tab.get(STORAGE_TAB_RUNS_COMPLETED_ONLY, False),
+                        note_query=search_input.query,
                     ),
                     name="_runs_list",
                 )
@@ -157,8 +170,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
             with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
                 with ui.row(align_items="center").classes("justify-center"):
                     ui.item_label("Runs").props("header")
-                    ui.space()
                     await ui.context.client.connected()
+                    ui.input(
+                        placeholder="Note",
+                        on_change=_runs_list.refresh,
+                    ).bind_value(search_input, "query").props("rounded outlined dense").style("max-width: 12ch;").mark(
+                        "INPUT_RUNS_FILTER_NOTE"
+                    )
+                    ui.space()
                     with RunFilterButton("done_all", size="sm").classes("mr-3").mark("BUTTON_RUNS_FILTER_COMPLETED"):
                         ui.tooltip("Show completed runs only")
                 ui.separator()
