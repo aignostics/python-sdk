@@ -55,6 +55,8 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     console.print(f"[bold]Triggered by:[/bold] {run_data.triggered_by}")
     console.print(f"[bold]Organization:[/bold] {run_data.organization_id}")
 
+    console.print(f"[bold]Custom Metadata:[/bold] {run_data.metadata or 'None'}")
+
     # Get and display detailed item status
     console.print()
     console.print("[bold]Items:[/bold]")

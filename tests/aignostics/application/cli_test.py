@@ -184,8 +184,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
     assert "Status: RUNNING" in normalize_output(describe_result.stdout)
-
-    return
+    assert "my note" in normalize_output(describe_result.stdout)
 
     # Test the download command spots the run is still running
     download_result = runner.invoke(

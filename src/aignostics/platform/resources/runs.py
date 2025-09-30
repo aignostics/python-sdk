@@ -272,7 +272,7 @@ class Runs:
         return ApplicationRun(self._api, application_run_id)
 
     def create(
-        self, application_version: str, items: list[ItemCreationRequest], custom_metadata: dict | None = None
+        self, application_version: str, items: list[ItemCreationRequest], custom_metadata: dict[str, str] | None = None
     ) -> ApplicationRun:
         """Creates a new application run.
 

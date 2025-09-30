@@ -31,7 +31,7 @@ WIDTH_1200px = "width: 1200px; max-width: none"
 service = Service()
 
 
-async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
+async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
     """Describe Application.
 
     Args:

@@ -680,7 +680,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run_submit_from_metadata(
-        self, application_version_id: str, metadata: list[dict[str, Any]], custom_metadata: dict | None = None
+        self, application_version_id: str, metadata: list[dict[str, Any]], custom_metadata: dict[str, str] | None = None
     ) -> ApplicationRun:
         """Submit a run for the given application.
 
@@ -774,7 +774,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run_submit(
-        self, application_version_id: str, items: list[InputItem], custom_metadata: dict | None = None
+        self, application_version_id: str, items: list[InputItem], custom_metadata: dict[str, str] | None = None
     ) -> ApplicationRun:
         """Submit a run for the given application.
 

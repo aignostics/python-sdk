@@ -40,7 +40,6 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 ui.item_label("Applications").props("header")
                 ui.separator()
                 applications = await nicegui_run.io_bound(Service.applications_static)
-                # applications = service.applications()
                 for application in applications:
                     with (
                         ui.item(
