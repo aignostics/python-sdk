@@ -22,7 +22,6 @@ def test_cli_application_list_non_verbose(runner: CliRunner) -> None:
     assert result.exit_code == 0
     assert HETA_APPLICATION_ID in normalize_output(result.output)
     assert TEST_APPLICATION_ID in normalize_output(result.output)
-    assert "bla" in normalize_output(result.output)
 
 
 def test_cli_application_list_verbose(runner: CliRunner) -> None:
