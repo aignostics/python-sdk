@@ -2,7 +2,13 @@ name: "Publish Package"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      UV_PUBLISH_TOKEN:
+        required: false
+      SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT:
+        required: false
+      SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT:
+        required: false
 
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -167,7 +173,11 @@ jobs:
 
       - name: Publish distribution to Python Package Index at pypi.org
         shell: bash
-        run: uv publish -t ${{ secrets.UV_PUBLISH_TOKEN }}
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
+        run: |
+          # Use uv's credential storage - uv will read from UV_PUBLISH_TOKEN env var automatically
+          uv publish
 
       - name: Download test results for ubuntu-latest generated in _test.yml
         if: (!contains(github.event.head_commit.message, 'skip:test:all'))

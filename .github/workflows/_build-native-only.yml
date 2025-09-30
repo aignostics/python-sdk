@@ -2,7 +2,7 @@ name: "Build Native Only"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    # No secrets needed
 
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15

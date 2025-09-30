@@ -2,7 +2,7 @@ name: "CodeQL Analysis"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    # No secrets needed
 
 jobs:
   analyze:
