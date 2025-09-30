@@ -96,7 +96,7 @@ dependencies = [
     "typer>=0.19.2",
     "uptime>=3.0.1",
     # Custom
-    "platformdirs>=4.3.8",
+    "aiopath>=0.6.11",
     "boto3>=1.40.40",
     "certifi>=2025.8.3",
     "dicom-validator>=0.7.2",
@@ -114,6 +114,7 @@ dependencies = [
     "openslide-bin>=4.0.0.8",
     "openslide-python>=1.4.2",
     "pandas>=2.3.2",
+    "platformdirs>=4.3.8",
     "pyjwt[crypto]>=2.10.1",
     "python-dateutil>=2.9.0.post0",
     # "pywebview[qt6]>=5.4; sys_platform == 'linux'",
@@ -128,6 +129,7 @@ dependencies = [
     "urllib3>=2.5.0",
     "wsidicom>=0.28.0",
     "aiopath>=0.6.11",
+    "wsidicom>=0.27.1",
 ]
 
 [project.optional-dependencies]
@@ -140,7 +142,6 @@ marimo = [
     "matplotlib>=3.10.6",
     "shapely>=2.1.0",
 ]
-qupath = [] # Making this a default extra
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",
@@ -186,7 +187,6 @@ dev = [
     "types-pyyaml>=6.0.12.20250915",
     "types-requests>=2.32.4.20250913",
     "watchdog>=6.0.0",
-    "uv>=0.8.9",                                                             # CVE-2025-54368                                                       # CVE-2025-54368
 ]
 
 [project.scripts]
@@ -213,6 +213,7 @@ packages = ["src/aignostics", "codegen/out/aignx", "examples"]
 allow-direct-references = true
 
 [tool.uv]
+required-version = ">=0.8.9" # CVE-2025-54368
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
@@ -222,10 +223,10 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pillow>=11.3.0",                   # CVE-2025-48379,
     "aiohttp>=3.12.14",                 # CVE-2025-53643
     "starlette>=0.47.2",                # CVE-2025-54121
+    "uv>=0.8.9",                        # CVE-2025-54368
     "jupyterlab>=4.4.9",                # CVE-2025-59842
     "pip>=5.3",                         # CVE-2025-8869  
 ]
-required-version = ">=0.8.6" # CVE-2025-54368
 
 [tool.ruff]
 target-version = "py311"
@@ -447,7 +448,7 @@ https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
 
 {% if version %}\
     {% if previous.version %}\
-          # [{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+        # [{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
     {% else %}\
     {% endif %}\
 {% else %}\
