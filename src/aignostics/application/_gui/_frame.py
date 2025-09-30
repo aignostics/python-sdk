@@ -39,7 +39,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
             with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
                 ui.item_label("Applications").props("header")
                 ui.separator()
-                for application in service.applications():
+                applications = await nicegui_run.io_bound(Service.applications_static)
+                for application in applications:
                     with (
                         ui.item(
                             on_click=lambda app_id=application.application_id: ui.navigate.to(f"/application/{app_id}")
@@ -66,7 +67,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
         async def application_runs_load_and_render(runs_column: ui.column, completed_only: bool = False) -> None:
             with runs_column:
                 try:
-                    runs = await nicegui_run.cpu_bound(
+                    runs = await nicegui_run.io_bound(
                         Service.application_runs_static, limit=RUNS_LIMIT, completed_only=completed_only
                     )
                     if runs is None:
