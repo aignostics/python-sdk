@@ -212,6 +212,21 @@ class Service(BaseService):
             logger.debug("Reusing platform service.")
         return self._platform_service
 
+    @staticmethod
+    def applications_static() -> list[Application]:
+        """Get a list of all applications, static variant.
+
+        Returns:
+            list[str]: A list of all applications.
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            Exception: If the application list cannot be retrieved.
+        """
+        return Service().applications()
+
     def applications(self) -> list[Application]:
         """Get a list of all applications.
 
