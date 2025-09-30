@@ -31,7 +31,7 @@ async def test_gui_index(user: User) -> None:
     gui_register_pages()
     await user.open("/")
     await user.should_see("Atlas H&E-TME", retries=100)
-    await user.should_see("Download Datasets", retries=100)
+    await user.should_see("Download Datasets")
 
 
 @pytest.mark.parametrize(
