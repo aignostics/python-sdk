@@ -15,6 +15,7 @@ overrides = [
     { name = "jupyter-core", specifier = ">=5.8.1" },
     { name = "jupyterlab", specifier = ">=4.4.9" },
     { name = "pillow", specifier = ">=11.3.0" },
+    { name = "pip", specifier = ">=5.3" },
     { name = "rfc3987", marker = "sys_platform == 'never'" },
     { name = "starlette", specifier = ">=0.47.2" },
     { name = "tornado", specifier = ">=6.5.0" },

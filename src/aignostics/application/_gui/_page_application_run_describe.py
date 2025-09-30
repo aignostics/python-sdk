@@ -439,10 +439,20 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     * Triggered On: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
                     * Triggered by: {run_data.triggered_by}
                     * Organization: {run_data.organization_id}
-                    * Custom Metadata: {run_data.metadata or "None"}
                     """,
                     language="markdown",
                 )
+                if run_data.metadata:
+                    properties = {
+                        "content": {"json": run_data.metadata},
+                        "mode": "tree",
+                        "readOnly": True,
+                        "mainMenuBar": False,
+                        "navigationBar": False,
+                        "statusBar": False,
+                    }
+                    ui.label("Custom metadata:").classes("text-h6 mt-4")
+                    ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
                 if run_data.status.value == ApplicationRunStatus.COMPLETED:

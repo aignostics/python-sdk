@@ -223,6 +223,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "aiohttp>=3.12.14",                 # CVE-2025-53643
     "starlette>=0.47.2",                # CVE-2025-54121
     "jupyterlab>=4.4.9",                # CVE-2025-59842
+    "pip>=5.3",                         # CVE-2025-8869  
 ]
 required-version = ">=0.8.6" # CVE-2025-54368
 

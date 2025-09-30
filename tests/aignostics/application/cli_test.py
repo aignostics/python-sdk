@@ -16,12 +16,13 @@ from tests.contants_test import HETA_APPLICATION_ID, TEST_APPLICATION_ID
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
 
-def test_cli_application_list(runner: CliRunner) -> None:
+def test_cli_application_list_non_verbose(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list"])
     assert result.exit_code == 0
     assert HETA_APPLICATION_ID in normalize_output(result.output)
     assert TEST_APPLICATION_ID in normalize_output(result.output)
+    assert "bla" in normalize_output(result.output)
 
 
 def test_cli_application_list_verbose(runner: CliRunner) -> None:
@@ -163,7 +164,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+    result = runner.invoke(
+        cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path), "--note", "my note"]
+    )
     output = normalize_output(result.stdout)
     assert re.search(
         r"Submitted run with id '[0-9a-f-]+' for '",

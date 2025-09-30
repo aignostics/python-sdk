@@ -13,6 +13,9 @@ load_dotenv(os.getenv(f"{__project_name__.upper()}_ENV_FILE", Path.home() / f".{
 
 __project_path__ = str(Path(__file__).parent.parent.parent)
 __version__ = metadata.version(__project_name__)
+__build_number__ = os.getenv("GITHUB_RUN_NUMBER") or os.getenv("BUILD_NUMBER") or None
+__version_full__ = f"{__version__}+{__build_number__}" if __build_number__ else __version__
+
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
 __is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
 

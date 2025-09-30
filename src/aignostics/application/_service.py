@@ -680,7 +680,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run_submit_from_metadata(
-        self, application_version_id: str, metadata: list[dict[str, Any]]
+        self, application_version_id: str, metadata: list[dict[str, Any]], custom_metadata: dict | None = None
     ) -> ApplicationRun:
         """Submit a run for the given application.
 
@@ -688,6 +688,7 @@ class Service(BaseService):
             application_version_id: The ID of the application version to run.
                 If application id is given, the latest version of that application is used.
             metadata: The metadata for the run.
+            custom_metadata: Optional custom metadata to attach to the run.
 
         Returns:
             ApplicationRun: The submitted run.
@@ -755,9 +756,12 @@ class Service(BaseService):
         logger.debug("Items for application run submission: %s", items)
 
         try:
-            run = self.application_run_submit(application_version.application_version_id, items)
+            run = self.application_run_submit(application_version.application_version_id, items, custom_metadata)
             logger.info(
-                "Submitted application run with items: %s, application run id %s", items, run.application_run_id
+                "Submitted application run with items: %s, application run id %s, custom metadata: %s",
+                items,
+                run.application_run_id,
+                custom_metadata,
             )
             return run
         except ValueError as e:
