@@ -1,6 +1,21 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.165](https://github.com/aignostics/python-sdk/compare/v0.2.164..0.2.165) - 2025-09-29
+# [0.2.166](https://github.com/aignostics/python-sdk/compare/v0.2.165..0.2.166) - 2025-09-30
+
+### 🚜 Refactor
+
+- *(application)* Load applications in left sidebar in thread to not block UI - ([7e3211b](https://github.com/aignostics/python-sdk/commit/7e3211baf29ff3f7c065af1d849805555dc0a322))
+
+### 🛡️ Security
+
+- *(GHA)* Apply security best practices for GitHub Workflows ([#139](https://github.com/orhun/git-cliff/issues/139)) - ([f0d8ac5](https://github.com/aignostics/python-sdk/commit/f0d8ac5ef361efe6cf0a261fb2f9365c83e85c16))
+- *(gha)* Security improvements in github workflow as identified by sonarqube - ([f0d8ac5](https://github.com/aignostics/python-sdk/commit/f0d8ac5ef361efe6cf0a261fb2f9365c83e85c16))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution in [#139](https://github.com/aignostics/python-sdk/pull/139)
+
+# [v0.2.165](https://github.com/aignostics/python-sdk/compare/v0.2.164..v0.2.165) - 2025-09-29
 
 ### ⚙️ Miscellaneous Tasks
 
