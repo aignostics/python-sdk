@@ -105,7 +105,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("Runs")
-        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
+        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100)
 
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
@@ -119,10 +119,10 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await assert_notified(user, "Application run cancelled!")
 
         # Check user sees refreshed run page and run is cancelled
-        await user.should_see("status CANCELED_USER", retries=200)
+        await user.should_see("status CANCELED_USER", retries=100)
 
         # ... and user can delete run
-        await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE")
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE", retries=100)
 
         # Have user delete run
         user.find(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE").click()
@@ -130,7 +130,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await assert_notified(user, "Application run deleted!")
 
         # Assert user was auto-navigated to Homepage
-        await user.should_see("Welcome to the Aignostics Launchpad", retries=1000)
+        await user.should_see("Welcome to the Aignostics Launchpad", retries=100)
 
 
 @pytest.mark.long_running
