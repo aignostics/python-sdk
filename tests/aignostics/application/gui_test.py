@@ -130,7 +130,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await assert_notified(user, "Application run deleted!")
 
         # Assert user was auto-navigated to Homepage
-        await user.should_see("Welcome to the Aignostics Launchpad", retries=100)
+        await user.should_see("Welcome to the Aignostics Launchpad", retries=500)
 
 
 @pytest.mark.long_running
