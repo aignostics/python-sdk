@@ -79,7 +79,18 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
         csv_path = tmp_path / "dummy.csv"
         csv_path.write_text(csv_content)
-        result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "submit",
+                HETA_APPLICATION_ID,
+                str(csv_path),
+                "--note",
+                "test_gui_cli_submit_to_run_result_delete",
+            ],
+        )
         assert result.exit_code == 0
 
         # Extract the run ID from the output
@@ -94,23 +105,24 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("Runs")
-        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
+        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100)
 
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
         await user.should_see(f"Run of {latest_version_id}")
-        await user.should_see(f"Application Version: {latest_version_id}")
-        await user.should_see("status RUNNING")
+        await user.should_see(f"Application Version: {latest_version_id}", retries=100)
+        await user.should_see("status RUNNING", retries=100)
+        await user.should_see("test_gui_cli_submit_to_run_result_delete", retries=100)
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
         await assert_notified(user, f"Canceling application run with id '{run_id}' ...")
         await assert_notified(user, "Application run cancelled!")
 
         # Check user sees refreshed run page and run is cancelled
-        await user.should_see("status CANCELED_USER", retries=200)
+        await user.should_see("status CANCELED_USER", retries=100)
 
         # ... and user can delete run
-        await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE")
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE", retries=100)
 
         # Have user delete run
         user.find(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE").click()
@@ -118,7 +130,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await assert_notified(user, "Application run deleted!")
 
         # Assert user was auto-navigated to Homepage
-        await user.should_see("Welcome to the Aignostics Launchpad", retries=1000)
+        await user.should_see("Welcome to the Aignostics Launchpad", retries=100)
 
 
 @pytest.mark.long_running
@@ -187,8 +199,6 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             "The Launchpad has found all compatible slide files in your selected folder.",
             retries=100,
         )
-
-        return
 
         user.find(marker="BUTTON_PYTEST_META").click()
         await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")

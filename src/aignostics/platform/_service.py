@@ -11,7 +11,7 @@ from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import UserReadResponse as User
 from pydantic import BaseModel, computed_field
 
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, __version__, get_logger
+from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
 from ._client import Client
@@ -175,7 +175,7 @@ class Service(BaseService):
             response = http.request(
                 method="GET",
                 url=f"{self._settings.api_root}/api/v1/health",
-                headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
+                headers={"User-Agent": user_agent()},
             )
 
             if response.status != HTTPStatus.OK:
