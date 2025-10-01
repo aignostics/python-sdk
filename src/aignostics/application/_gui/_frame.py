@@ -82,6 +82,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         limit=RUNS_LIMIT,
                         completed_only=completed_only,
                         note_regex=f".*{note_query}.*" if note_query else None,
+                        note_query_case_insensitive=True,
                     )
                     if runs is None:
                         message = "nicegui_run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]

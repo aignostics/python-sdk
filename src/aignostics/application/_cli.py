@@ -447,7 +447,13 @@ def run_upload(
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
         ),
-    ] = f"{time.time() * 1000}",
+    ] = str(time.time() * 1000),
+    onboard_to_aignostics_portal: Annotated[
+        bool,
+        typer.Option(
+            help="If set, the run will be onboarded to the Aignostics Portal.",
+        ),
+    ] = False,
 ) -> None:
     """Upload files referenced in the metadata CSV file to the Aignostics platform.
 
@@ -510,6 +516,7 @@ def run_upload(
         Service().application_run_upload(
             application_version_id=application_version_id,
             metadata=metadata_dict,
+            onboard_to_aignostics_portal=onboard_to_aignostics_portal,
             upload_prefix=upload_prefix,
             upload_progress_callable=update_progress,
         )

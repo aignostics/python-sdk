@@ -272,14 +272,14 @@ class Runs:
         return ApplicationRun(self._api, application_run_id)
 
     def create(
-        self, application_version: str, items: list[ItemCreationRequest], custom_metadata: dict[str, str] | None = None
+        self, application_version: str, items: list[ItemCreationRequest], custom_metadata: dict[str, Any] | None = None
     ) -> ApplicationRun:
         """Creates a new application run.
 
         Args:
             application_version (ApplicationVersion | str): The ID of the application version.
             items (list[ItemCreationRequest]): The run creation request payload.
-            custom_metadata (dict | None): Optional metadata to attach to the run.
+            custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
 
         Returns:
             ApplicationRun: The created application run.
