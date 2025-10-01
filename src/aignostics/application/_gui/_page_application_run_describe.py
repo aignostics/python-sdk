@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+import humanize
 from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
@@ -432,12 +433,25 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
             with ui.expansion(text=f"Run {run.application_run_id}"):
+                # Display run metadata, including duration if possible, using humanize
+
+                triggered_at = run_data.triggered_at.astimezone()
+                terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
+                if triggered_at and terminated_at:
+                    duration_seconds = (terminated_at - triggered_at).total_seconds()
+                    duration_str = humanize.precisedelta(duration_seconds, format="%0.0f")
+                else:
+                    duration_str = "N/A"
+
                 ui.code(
                     f"""
                     * Run ID: {run_data.application_run_id}
                     * Application Version: {run_data.application_version_id}
-                    * Triggered On: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
-                    * Triggered by: {run_data.triggered_by}
+                    * Message: {run_data.message}
+                    * Duration: {duration_str}
+                    * Triggered On: {triggered_at.strftime("%m-%d %H:%M")}
+                    * Terminated At: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"}
+                    * Triggered By: {run_data.triggered_by}
                     * Organization: {run_data.organization_id}
                     """,
                     language="markdown",
@@ -447,11 +461,10 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         "content": {"json": run_data.metadata},
                         "mode": "tree",
                         "readOnly": True,
-                        "mainMenuBar": False,
+                        "mainMenuBar": True,
                         "navigationBar": False,
                         "statusBar": False,
                     }
-                    ui.label("Custom metadata:").classes("text-h6 mt-4")
                     ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
@@ -543,12 +556,10 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         icon, color = run_item_status_to_icon_and_color(item.status.value)
                         with ui.row().classes("justify-center w-full"):
                             with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                if item.error:
-                                    ui.tooltip(
-                                        f"Item {item.item_id}, status {item.status.value.upper()}, error: {item.error}"
-                                    )
-                                else:
-                                    ui.tooltip(f"Item {item.item_id}, status {item.status.value.upper()}")
+                                tooltip_message = f"Item {item.item_id}, status {item.status.value.upper()}"
+                                if item.message:
+                                    tooltip_message += f", message {item.message}"
+                                ui.tooltip(tooltip_message)
                             ui.space()
                             with ui.button_group().props():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():

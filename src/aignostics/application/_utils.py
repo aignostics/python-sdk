@@ -11,6 +11,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
+import humanize
+
 from aignostics.platform import (
     ApplicationRun,
     ApplicationRunData,
@@ -51,7 +53,13 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     console.print("=" * 80)
     console.print(f"[bold]App Version:[/bold] {run_data.application_version_id}")
     console.print(f"[bold]Status:[/bold] {run_data.status.value}")
+    console.print(f"[bold]Message:[/bold] {run_data.message}")
+    if run_data.terminated_at and run_data.triggered_at:
+        duration = run_data.terminated_at - run_data.triggered_at
+        duration_str = humanize.precisedelta(duration)
+        console.print(f"[bold]Duration:[/bold] {duration_str}")
     console.print(f"[bold]Triggered at:[/bold] {run_data.triggered_at}")
+    console.print(f"[bold]Terminated at:[/bold] {run_data.terminated_at}")
     console.print(f"[bold]Triggered by:[/bold] {run_data.triggered_by}")
     console.print(f"[bold]Organization:[/bold] {run_data.organization_id}")
 
@@ -81,6 +89,7 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         console.print(f"  [bold]Item Reference:[/bold] {item.reference}")
         console.print(f"  [bold]Item ID:[/bold] {item.item_id}")
         console.print(f"  [bold]Status:[/bold] {item.status.value}")
+        console.print(f"  [bold]Message:[/bold] {item.message}")
 
         if item.error:
             console.print(f"  [error]Error:[/error] {item.error}")
