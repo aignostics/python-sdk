@@ -509,10 +509,11 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     @staticmethod
-    def application_run_upload(
+    def application_run_upload(  # noqa: PLR0913, PLR0917
         application_version_id: str,
         metadata: list[dict[str, Any]],
-        upload_prefix: str,
+        onboard_to_aignostics_portal: bool = False,
+        upload_prefix: str = str(time.time() * 1000),
         upload_progress_queue: Any | None = None,  # noqa: ANN401
         upload_progress_callable: Callable[[int, Path, str], None] | None = None,
     ) -> bool:
@@ -522,7 +523,8 @@ class Service(BaseService):
             application_version_id (str): The ID of the application version.
                 If application id is given, the latest version of that application is used.
             metadata (list[dict[str, Any]]): The metadata to upload.
-            upload_prefix (str): The prefix for the upload.
+            onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
+            upload_prefix (str): The prefix for the upload, defaults to current milliseconds.
             upload_progress_queue (Queue | None): The queue to send progress updates to.
             upload_progress_callable (Callable[[int, Path, str], None] | None): The task to update for progress updates.
 
@@ -542,12 +544,14 @@ class Service(BaseService):
             reference = row["reference"]
             source_file_path = Path(row["reference"])
             if not source_file_path.is_file():
-                logger.warning("Source file '%s' does not exist.", row["referebce"])
+                logger.warning("Source file '%s' does not exist.", row["reference"])
                 return False
             username = psutil.Process().username().replace("\\", "_")
             object_key = (
                 f"{username}/{upload_prefix}/{application_version.application_version_id}/{source_file_path.name}"
             )
+            if onboard_to_aignostics_portal:
+                object_key = f"onboard/{object_key}"
             platform_bucket_url = (
                 f"{BucketService().get_bucket_protocol()}://{BucketService().get_bucket_name()}/{object_key}"
             )
@@ -602,12 +606,19 @@ class Service(BaseService):
         return True
 
     @staticmethod
-    def application_runs_static(limit: int | None = None, completed_only: bool = False) -> list[dict[str, Any]]:
+    def application_runs_static(
+        limit: int | None = None,
+        completed_only: bool = False,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
+    ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
             completed_only (bool): If True, only completed runs are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+            note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
         Returns:
             list[ApplicationRunData]: A list of all application runs.
@@ -623,18 +634,27 @@ class Service(BaseService):
                 "status": run.status,
             }
             for run in Service().application_runs(
-                limit=limit, status=ApplicationRunStatus.COMPLETED if completed_only else None
+                limit=limit,
+                status=ApplicationRunStatus.COMPLETED if completed_only else None,
+                note_regex=note_regex,
+                note_query_case_insensitive=note_query_case_insensitive,
             )
         ]
 
     def application_runs(
-        self, limit: int | None = None, status: ApplicationRunStatus | None = None
+        self,
+        limit: int | None = None,
+        status: ApplicationRunStatus | None = None,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
     ) -> list[ApplicationRunData]:
         """Get a list of all application runs.
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
             status (ApplicationRunStatus | None): Filter runs by status. If None, all runs are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+            note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
         Returns:
             list[ApplicationRunData]: A list of all application runs.
@@ -647,7 +667,15 @@ class Service(BaseService):
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
-            run_iterator = self._get_platform_client().runs.list_data(sort="-triggered_at", page_size=page_size)
+            if note_regex:
+                flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
+                metadata = f'$.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
+            else:
+                metadata = None
+
+            run_iterator = self._get_platform_client().runs.list_data(
+                sort="-triggered_at", page_size=page_size, metadata=metadata
+            )
             for run in run_iterator:
                 if status is not None and run.status != status:
                     continue
@@ -680,7 +708,11 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run_submit_from_metadata(
-        self, application_version_id: str, metadata: list[dict[str, Any]]
+        self,
+        application_version_id: str,
+        metadata: list[dict[str, Any]],
+        custom_metadata: dict[str, Any] | None = None,
+        onboard_to_aignostics_portal: bool = False,
     ) -> ApplicationRun:
         """Submit a run for the given application.
 
@@ -688,6 +720,8 @@ class Service(BaseService):
             application_version_id: The ID of the application version to run.
                 If application id is given, the latest version of that application is used.
             metadata: The metadata for the run.
+            custom_metadata: Optional custom metadata to attach to the run.
+            onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
 
         Returns:
             ApplicationRun: The submitted run.
@@ -699,6 +733,10 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         logger.debug("Submitting application run with metadata: %s", metadata)
+        if onboard_to_aignostics_portal:
+            if custom_metadata is None:
+                custom_metadata = {}
+            custom_metadata["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
         application_version = self.application_version(application_version_id, use_latest_if_no_version_given=True)
         if len(application_version.input_artifacts) != 1:
             message = (
@@ -755,9 +793,12 @@ class Service(BaseService):
         logger.debug("Items for application run submission: %s", items)
 
         try:
-            run = self.application_run_submit(application_version.application_version_id, items)
+            run = self.application_run_submit(application_version.application_version_id, items, custom_metadata)
             logger.info(
-                "Submitted application run with items: %s, application run id %s", items, run.application_run_id
+                "Submitted application run with items: %s, application run id %s, custom metadata: %s",
+                items,
+                run.application_run_id,
+                custom_metadata,
             )
             return run
         except ValueError as e:
@@ -769,12 +810,15 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(self, application_version_id: str, items: list[InputItem]) -> ApplicationRun:
+    def application_run_submit(
+        self, application_version_id: str, items: list[InputItem], custom_metadata: dict[str, Any] | None = None
+    ) -> ApplicationRun:
         """Submit a run for the given application.
 
         Args:
             application_version_id: The ID of the application version to run.
             items: The input items for the run.
+            custom_metadata: Optional custom metadata to attach to the run.
 
         Returns:
             ApplicationRun: The submitted run.
@@ -785,7 +829,9 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         try:
-            return self._get_platform_client().runs.create(application_version=application_version_id, items=items)
+            return self._get_platform_client().runs.create(
+                application_version=application_version_id, items=items, custom_metadata=custom_metadata
+            )
         except ValueError as e:
             message = f"Failed to submit application run for version '{application_version_id}': {e}"
             logger.warning(message)
@@ -1014,7 +1060,6 @@ class Service(BaseService):
                 ApplicationRunStatus.CANCELED_SYSTEM,
                 ApplicationRunStatus.CANCELED_USER,
                 ApplicationRunStatus.COMPLETED,
-                ApplicationRunStatus.COMPLETED_WITH_ERROR,
                 ApplicationRunStatus.COMPLETED_WITH_ERROR,
                 ApplicationRunStatus.REJECTED,
             }:

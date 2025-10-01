@@ -447,7 +447,13 @@ def run_upload(
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
         ),
-    ] = f"{time.time() * 1000}",
+    ] = str(time.time() * 1000),
+    onboard_to_aignostics_portal: Annotated[
+        bool,
+        typer.Option(
+            help="If set, the run will be onboarded to the Aignostics Portal.",
+        ),
+    ] = False,
 ) -> None:
     """Upload files referenced in the metadata CSV file to the Aignostics platform.
 
@@ -510,6 +516,7 @@ def run_upload(
         Service().application_run_upload(
             application_version_id=application_version_id,
             metadata=metadata_dict,
+            onboard_to_aignostics_portal=onboard_to_aignostics_portal,
             upload_prefix=upload_prefix,
             upload_progress_callable=update_progress,
         )
@@ -539,6 +546,10 @@ def run_submit(
             resolve_path=True,
         ),
     ],
+    note: Annotated[
+        str | None,
+        typer.Option(help="Optional note to include with the run submission via custom metadata."),
+    ] = None,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -558,6 +569,7 @@ def run_submit(
         application_run = Service().application_run_submit_from_metadata(
             application_version_id=application_version_id,
             metadata=metadata_dict,
+            custom_metadata={"note": note} if note else None,
         )
         console.print(f"Submitted run with id '{application_run.application_run_id}' for '{application_version_id}'.")
         return application_run.application_run_id

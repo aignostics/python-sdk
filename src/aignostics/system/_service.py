@@ -32,6 +32,7 @@ from ..utils import (  # noqa: TID252
     get_process_info,
     load_settings,
     locate_subclasses,
+    user_agent,
 )
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
@@ -98,7 +99,7 @@ class Service(BaseService):
         try:
             response = get(
                 url=IPIFY_URL,
-                headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
+                headers={"User-Agent": user_agent()},
                 timeout=NETWORK_TIMEOUT,
             )
 

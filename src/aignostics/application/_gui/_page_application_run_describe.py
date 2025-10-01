@@ -31,7 +31,7 @@ WIDTH_1200px = "width: 1200px; max-width: none"
 service = Service()
 
 
-async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
+async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
     """Describe Application.
 
     Args:
@@ -442,6 +442,17 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     """,
                     language="markdown",
                 )
+                if run_data.metadata:
+                    properties = {
+                        "content": {"json": run_data.metadata},
+                        "mode": "tree",
+                        "readOnly": True,
+                        "mainMenuBar": False,
+                        "navigationBar": False,
+                        "statusBar": False,
+                    }
+                    ui.label("Custom metadata:").classes("text-h6 mt-4")
+                    ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
                 if run_data.status.value == ApplicationRunStatus.COMPLETED:
@@ -496,8 +507,12 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         "Delete",
                         color="red",
                         on_click=lambda: _delete(run.application_run_id),
-                        icon="delete results",
+                        icon="delete",
                     ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
+
+        if run_data.metadata and run_data.metadata.get("note"):
+            with ui.card().classes("full-width"):
+                ui.markdown(f"{run_data.metadata.get('note')}")
 
         with ui.list().classes("full-width"):
             results = list(run.results())

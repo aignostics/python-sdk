@@ -41,6 +41,8 @@ class SubmitForm:
     metadata_exclude_button: ui.button | None = None
     metadata_next_button: ui.button | None = None
     upload_and_submit_button: ui.button | None = None
+    note: str | None = None
+    onboard_to_aignostics_portal: bool = False
 
 
 submit_form = SubmitForm()
@@ -438,7 +440,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.metadata_grid = (
                 ui.aggrid({
                     "columnDefs": [
-                        {"headerName": "Extra", "field": "extra"},
                         {"headerName": "Reference", "field": "reference_short", "checkboxSelection": True},
                         {
                             "headerName": "Thumbnail",
@@ -556,6 +557,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 run = service.application_run_submit_from_metadata(
                     str(submit_form.application_version_id),
                     submit_form.metadata or [],
+                    {"note": submit_form.note} if submit_form.note else None,
+                    submit_form.onboard_to_aignostics_portal,
                 )
             except Exception as e:  # noqa: BLE001
                 ui.notify(f"Failed to submit application run: {e}.", type="warning")
@@ -579,6 +582,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 Service.application_run_upload,
                 str(submit_form.application_version_id),
                 submit_form.metadata or [],
+                submit_form.onboard_to_aignostics_portal,
                 str(time.time() * 1000),
                 upload_message_queue,
             )
@@ -590,6 +594,12 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Upload UI."""
             with ui.column(align_items="start"):
                 ui.label(f"Upload and submit your {len(metadata)} slide(s) for analysis.")
+                ui.textarea(label="Note (optional)", placeholder="Enter a note for this run").bind_value(
+                    submit_form, "note"
+                ).mark("TEXTAREA_NOTE").style(WIDTH_100)
+                ui.checkbox(
+                    text="Onboard to Aignostics Portal (optional)",
+                ).bind_value(submit_form, "onboard_to_aignostics_portal").mark("CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL")
                 upload_complete = True
                 for row in metadata or []:
                     upload_complete = upload_complete and row["file_upload_progress"] == 1

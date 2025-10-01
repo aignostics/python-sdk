@@ -83,7 +83,16 @@ def audit(session: nox.Session) -> None:
 
     # pip-audit to check for vulnerabilities
     try:
-        session.run("pip-audit", "-f", "json", "-o", "reports/vulnerabilities.json")
+        session.run(
+            # TODO(Helmut): Ignore pip vuln until pip achieved to build v5.3
+            "pip-audit",
+            "-f",
+            "json",
+            "-o",
+            "reports/vulnerabilities.json",
+            "--ignore-vuln",
+            "GHSA-4xh5-x5gv-qwph",
+        )  # https://pyinstaller.org/en/stable/license.html
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")
         session.log("pip-audit failed with JSON output, retrying with default format")

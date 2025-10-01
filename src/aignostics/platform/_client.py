@@ -11,7 +11,7 @@ from aignx.codegen.models import MeReadResponse as Me
 from aignostics.platform._authentication import get_token
 from aignostics.platform.resources.applications import Applications, Versions
 from aignostics.platform.resources.runs import ApplicationRun, Runs
-from aignostics.utils import get_logger
+from aignostics.utils import get_logger, user_agent
 
 from ._settings import settings
 
@@ -115,4 +115,5 @@ class Client:
             header_name="Authorization",
             header_value=f"Bearer {token}",
         )
+        client.user_agent = user_agent()
         return PublicApi(client)
