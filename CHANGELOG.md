@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.168](https://github.com/aignostics/python-sdk/compare/v0.2.167..0.2.168) - 2025-10-01
+# [0.2.169](https://github.com/aignostics/python-sdk/compare/v0.2.168..0.2.169) - 2025-10-01
+
+### ⛰️  Features
+
+- *(application)* Show duration, terminated at, run and item-level message ([#143](https://github.com/orhun/git-cliff/issues/143)) - ([17a0a54](https://github.com/aignostics/python-sdk/commit/17a0a54a6d188b4cebf90c46eb7602facd4397c6))
+
+
+# [v0.2.168](https://github.com/aignostics/python-sdk/compare/v0.2.167..v0.2.168) - 2025-10-01
 
 ### ⛰️  Features
 
