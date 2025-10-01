@@ -544,7 +544,7 @@ class Service(BaseService):
             reference = row["reference"]
             source_file_path = Path(row["reference"])
             if not source_file_path.is_file():
-                logger.warning("Source file '%s' does not exist.", row["referebce"])
+                logger.warning("Source file '%s' does not exist.", row["reference"])
                 return False
             username = psutil.Process().username().replace("\\", "_")
             object_key = (
@@ -1060,7 +1060,6 @@ class Service(BaseService):
                 ApplicationRunStatus.CANCELED_SYSTEM,
                 ApplicationRunStatus.CANCELED_USER,
                 ApplicationRunStatus.COMPLETED,
-                ApplicationRunStatus.COMPLETED_WITH_ERROR,
                 ApplicationRunStatus.COMPLETED_WITH_ERROR,
                 ApplicationRunStatus.REJECTED,
             }:

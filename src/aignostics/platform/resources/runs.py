@@ -277,7 +277,7 @@ class Runs:
         """Creates a new application run.
 
         Args:
-            application_version (ApplicationVersion | str): The ID of the application version.
+            application_version (str): The ID of the application version.
             items (list[ItemCreationRequest]): The run creation request payload.
             custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
 
