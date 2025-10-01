@@ -1,6 +1,40 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.167](https://github.com/aignostics/python-sdk/compare/v0.2.166..0.2.167) - 2025-09-30
+# [0.2.168](https://github.com/aignostics/python-sdk/compare/v0.2.167..0.2.168) - 2025-10-01
+
+### ⛰️  Features
+
+- *(application)* Allow to set note on run submission, and retrieve on run describe - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(application)* Allow live search of runs by note - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(application)* Allow to flag to onboard to Aignostics Portal - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(platform)* Adapt to breaking changes in Platform API 1.0.0-beta6 - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(platform,application)* Support custom metadata attached to runs - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(utils)* Generate dynamic user agent including version, build number, os, and test calling - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- API v1.0.0-beta.6 ([#141](https://github.com/orhun/git-cliff/issues/141)) - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- Use dynamic user agent in http requests and run submissions via custom metadata - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### 🐛 Bug Fixes
+
+- *(application)* Don't show extra column in meta edit - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(wsi)* Don't fail on log on broken tiff test - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- Fix typo in log message caught by claude code review - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### 🚜 Refactor
+
+- *(application)* Load applications in left sidebar in thread to not block UI - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(codegen)* Download and archive openapi.json - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(deps)* Bump - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### 🛡️ Security
+
+- *(dep)* Pip, CVE-2025-54368 - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(gha)* Security improvements in github workflow as identified by sonarqube - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+
+# [v0.2.167](https://github.com/aignostics/python-sdk/compare/v0.2.166..v0.2.167) - 2025-09-30
 
 ### ⚙️ Miscellaneous Tasks
 
