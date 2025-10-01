@@ -164,7 +164,16 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     csv_path.write_text(csv_content)
 
     result = runner.invoke(
-        cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path), "--note", "my note"]
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+            "--note",
+            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+        ],
     )
     output = normalize_output(result.stdout)
     assert re.search(
@@ -183,7 +192,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
     assert "Status: RUNNING" in normalize_output(describe_result.stdout)
-    assert "my note" in normalize_output(describe_result.stdout)
+    assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
+        describe_result.stdout
+    )
 
     # Test the download command spots the run is still running
     download_result = runner.invoke(

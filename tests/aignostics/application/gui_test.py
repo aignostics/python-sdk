@@ -79,7 +79,18 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
         csv_path = tmp_path / "dummy.csv"
         csv_path.write_text(csv_content)
-        result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "submit",
+                HETA_APPLICATION_ID,
+                str(csv_path),
+                "--note",
+                "test_gui_cli_submit_to_run_result_delete",
+            ],
+        )
         assert result.exit_code == 0
 
         # Extract the run ID from the output
@@ -99,8 +110,9 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
         await user.should_see(f"Run of {latest_version_id}")
-        await user.should_see(f"Application Version: {latest_version_id}")
-        await user.should_see("status RUNNING")
+        await user.should_see(f"Application Version: {latest_version_id}", retries=100)
+        await user.should_see("status RUNNING", retries=100)
+        await user.should_see("test_gui_cli_submit_to_run_result_delete", retries=100)
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
         await assert_notified(user, f"Canceling application run with id '{run_id}' ...")
