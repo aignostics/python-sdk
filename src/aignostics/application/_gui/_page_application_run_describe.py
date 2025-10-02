@@ -641,11 +641,11 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         ItemStatus.CANCELED_SYSTEM,
                     }:
                         if item.message:
-                            with (
-                                ui.row().classes("w-1/2 justify-start items-start content-start"),
-                                ui.card().classes("w-full ml-4"),
-                            ):
-                                ui.label(item.message).classes("break-all")
+                            with ui.row().classes("w-1/2 justify-start items-start content-start ml-4"):
+                                ui.code(
+                                    item.message,
+                                    language="markdown",
+                                ).classes("full-width break-all ml-8")
                         else:
                             with ui.row().classes("w-1/2 justify-center content-center"):
                                 ui.space()
