@@ -204,7 +204,6 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
         user.find(marker="BUTTON_METADATA_NEXT").click()
         await assert_notified(user, "Prepared upload UI.")
-        print(user.current_layout)
         await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
 
         # Trigger upload and submission
@@ -222,7 +221,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("status RUNNING")
 
         # Check user can cancel run
-        await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
         await assert_notified(user, "Canceling application run with id")
         await assert_notified(user, "Application run cancelled!")

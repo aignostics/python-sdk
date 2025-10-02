@@ -47,6 +47,10 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 ui.item_label("Applications").props("header")
                 ui.separator()
                 applications = await nicegui_run.io_bound(Service.applications_static)
+                if applications is None:
+                    message = "nicegui_run.io_bound(Service.applications_static) returned None"  # type: ignore[unreachable]
+                    logger.error(message)
+                    raise RuntimeError(message)  # noqa: TRY301
                 for application in applications:
                     with (
                         ui.item(
