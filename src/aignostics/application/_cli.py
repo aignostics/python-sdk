@@ -569,7 +569,7 @@ def run_submit(
         application_run = Service().application_run_submit_from_metadata(
             application_version_id=application_version_id,
             metadata=metadata_dict,
-            custom_metadata={"note": note} if note else None,
+            custom_metadata={"sdk": {"note": note}} if note else None,
         )
         console.print(f"Submitted run with id '{application_run.application_run_id}' for '{application_version_id}'.")
         return application_run.application_run_id

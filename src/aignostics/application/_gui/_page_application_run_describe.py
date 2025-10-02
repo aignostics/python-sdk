@@ -522,9 +522,10 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         icon="delete",
                     ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
 
-        if run_data.metadata and run_data.metadata.get("note"):
+        note = run_data.metadata.get("sdk", {}).get("note") if run_data.metadata else None
+        if note:
             with ui.card().classes("full-width"):
-                ui.markdown(f"{run_data.metadata.get('note')}")
+                ui.markdown(str(note))
 
         with ui.list().classes("full-width"):
             results = list(run.results())

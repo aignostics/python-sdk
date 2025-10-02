@@ -288,9 +288,9 @@ class Runs:
             ValueError: If the payload is invalid.
             Exception: If the API request fails.
         """
-        if custom_metadata is None:
-            custom_metadata = {}
-        custom_metadata["user_agent"] = user_agent()
+        custom_metadata = custom_metadata or {}
+        custom_metadata.setdefault("sdk", {})
+        custom_metadata["sdk"]["user_agent"] = user_agent()
         payload = RunCreationRequest(application_version_id=application_version, items=items, metadata=custom_metadata)
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)

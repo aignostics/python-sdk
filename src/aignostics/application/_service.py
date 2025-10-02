@@ -669,7 +669,7 @@ class Service(BaseService):
         try:
             if note_regex:
                 flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
-                metadata = f'$.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
+                metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
             else:
                 metadata = None
 
@@ -734,9 +734,9 @@ class Service(BaseService):
         """
         logger.debug("Submitting application run with metadata: %s", metadata)
         if onboard_to_aignostics_portal:
-            if custom_metadata is None:
-                custom_metadata = {}
-            custom_metadata["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
+            custom_metadata = custom_metadata or {}
+            custom_metadata.setdefault("sdk", {})
+            custom_metadata["sdk"]["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
         application_version = self.application_version(application_version_id, use_latest_if_no_version_given=True)
         if len(application_version.input_artifacts) != 1:
             message = (
