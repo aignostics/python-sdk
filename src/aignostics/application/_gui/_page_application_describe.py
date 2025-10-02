@@ -556,7 +556,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 run = service.application_run_submit_from_metadata(
                     str(submit_form.application_version_id),
                     submit_form.metadata or [],
-                    {"note": submit_form.note} if submit_form.note else None,
+                    {"sdk": {"note": submit_form.note}} if submit_form.note else None,
                     submit_form.onboard_to_aignostics_portal,
                 )
             except Exception as e:  # noqa: BLE001
