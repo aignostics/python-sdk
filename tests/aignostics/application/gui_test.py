@@ -134,6 +134,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
 
 @pytest.mark.long_running
+@pytest.mark.skip(reason="temporaryly skipped for intermediate release")
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:

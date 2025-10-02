@@ -22,7 +22,6 @@ from ._utils import (
 
 logger = get_logger(__name__)
 
-WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 
@@ -246,7 +245,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 "mainMenuBar": False,
                                 "navigationBar": True,
                                 "statusBar": False,
-                            }).style(WIDTH_100)
+                            }).classes("full-width")
                     ui.label("Generated output artifacts:").classes("text-h5")
                     for artifact in application_version.output_artifacts:
                         with ui.expansion(
@@ -262,7 +261,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 "mainMenuBar": False,
                                 "navigationBar": True,
                                 "statusBar": False,
-                            }).style(WIDTH_100)
+                            }).classes("full-width")
                     break
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
@@ -594,9 +593,14 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Upload UI."""
             with ui.column(align_items="start"):
                 ui.label(f"Upload and submit your {len(metadata)} slide(s) for analysis.")
-                ui.textarea(label="Note (optional)", placeholder="Enter a note for this run").bind_value(
-                    submit_form, "note"
-                ).mark("TEXTAREA_NOTE").style(WIDTH_100)
+                ui.textarea(
+                    label="Note (optional)",
+                    placeholder=(
+                        "Enter a note for this run. "
+                        "Tip: You can later use the search box in the left sidebar "
+                        "(see magnifying glass icon) to find runs by searching for text in this note."
+                    ),
+                ).bind_value(submit_form, "note").mark("TEXTAREA_NOTE").classes("full-width")
                 ui.checkbox(
                     text="Onboard to Aignostics Portal (optional)",
                 ).bind_value(submit_form, "onboard_to_aignostics_portal").mark("CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL")

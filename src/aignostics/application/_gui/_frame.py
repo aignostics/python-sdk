@@ -48,7 +48,10 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 ui.separator()
                 applications = await nicegui_run.io_bound(Service.applications_static)
                 if applications is None:
-                    message = "nicegui_run.io_bound(Service.applications_static) returned None"  # type: ignore[unreachable]
+                    message = (  # type: ignore[unreachable]
+                        "nicegui_run.io_bound(Service.applications_static) returned None, "
+                        "likely canceled by appliction shutdown."
+                    )
                     logger.error(message)
                     raise RuntimeError(message)  # noqa: TRY301
                 for application in applications:
@@ -89,7 +92,10 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         note_query_case_insensitive=True,
                     )
                     if runs is None:
-                        message = "nicegui_run.io_bound(Service.application_runs_static) returned None"  # type: ignore[unreachable]
+                        message = (  # type: ignore[unreachable]
+                            "nicegui_run.io_bound(Service.application_runs_static) returned None, "
+                            "likely canceled by shutdown."
+                        )
                         logger.error(message)
                         raise RuntimeError(message)  # noqa: TRY301
                     runs_column.clear()
@@ -173,16 +179,15 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
         try:
             with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
-                with ui.row(align_items="center").classes("justify-center"):
+                with ui.row(align_items="center").classes("justify-between"):
                     ui.item_label("Runs").props("header")
                     await ui.context.client.connected()
                     ui.input(
-                        placeholder="Note",
+                        placeholder="Filter by note",
                         on_change=_runs_list.refresh,
                     ).bind_value(search_input, "query").props("rounded outlined dense clearable").style(
-                        "max-width: 12ch;"
-                    ).mark("INPUT_RUNS_FILTER_NOTE")
-                    ui.space()
+                        "max-width: 15ch;"
+                    ).classes("text-xs").mark("INPUT_RUNS_FILTER_NOTE")
                     with RunFilterButton("done_all", size="sm").classes("mr-3").mark("BUTTON_RUNS_FILTER_COMPLETED"):
                         ui.tooltip("Show completed runs only")
                 ui.separator()
