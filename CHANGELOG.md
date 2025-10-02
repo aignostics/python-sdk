@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.171](https://github.com/aignostics/python-sdk/compare/v0.2.170..0.2.171) - 2025-10-02
+# [0.2.172](https://github.com/aignostics/python-sdk/compare/v0.2.171..0.2.172) - 2025-10-02
+
+### 🎨 Styling
+
+- *(application)* More prominent placement of per item message - ([5c93b56](https://github.com/aignostics/python-sdk/commit/5c93b5610bbeeffa441b1827aba8ce3824344189))
+
+
+# [v0.2.171](https://github.com/aignostics/python-sdk/compare/v0.2.170..v0.2.171) - 2025-10-02
 
 ### ⚙️ Miscellaneous Tasks
 
