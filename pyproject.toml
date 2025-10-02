@@ -142,6 +142,7 @@ marimo = [
     "matplotlib>=3.10.6",
     "shapely>=2.1.0",
 ]
+qupath = []
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",
