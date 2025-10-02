@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.176](https://github.com/aignostics/python-sdk/compare/v0.2.175..0.2.176) - 2025-10-02
+# [0.2.177](https://github.com/aignostics/python-sdk/compare/v0.2.176..0.2.177) - 2025-10-02
+
+### ⛰️  Features
+
+- *(application)* Allow to copy error message - ([8f9cada](https://github.com/aignostics/python-sdk/commit/8f9cada004ca154d250cd57e384178f28c0cf5cb))
+
+
+# [v0.2.176](https://github.com/aignostics/python-sdk/compare/v0.2.175..v0.2.176) - 2025-10-02
 
 ### ⚙️ Miscellaneous Tasks
 
