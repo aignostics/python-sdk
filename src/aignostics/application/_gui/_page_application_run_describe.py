@@ -26,7 +26,6 @@ from ._utils import (
 
 logger = get_logger(__name__)
 
-WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 
 service = Service()
@@ -356,7 +355,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     "mainMenuBar": False,
                     "navigationBar": True,
                     "statusBar": False,
-                }).style(WIDTH_100)
+                }).classes("full-width")
             except Exception as e:  # noqa: BLE001
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
@@ -455,7 +454,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     * Organization: {run_data.organization_id}
                     """,
                     language="markdown",
-                )
+                ).classes("full-width")
                 if run_data.metadata:
                     properties = {
                         "content": {"json": run_data.metadata},
@@ -465,7 +464,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         "navigationBar": False,
                         "statusBar": False,
                     }
-                    ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_HEALTH")
+                    ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
                 if run_data.status.value == ApplicationRunStatus.COMPLETED:
@@ -556,10 +555,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         icon, color = run_item_status_to_icon_and_color(item.status.value)
                         with ui.row().classes("justify-center w-full"):
                             with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                tooltip_message = f"Item {item.item_id}, status {item.status.value.upper()}"
-                                if item.message:
-                                    tooltip_message += f", message {item.message}"
-                                ui.tooltip(tooltip_message)
+                                ui.tooltip(f"Item {item.item_id}, status {item.status.value.upper()}")
                             ui.space()
                             with ui.button_group().props():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():
@@ -643,18 +639,25 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         ItemStatus.CANCELED_USER,
                         ItemStatus.CANCELED_SYSTEM,
                     }:
-                        with ui.row().classes("w-1/2 justify-center content-center"):
-                            ui.space()
-                            animation_file = {
-                                ItemStatus.PENDING: "pending.lottie",
-                                ItemStatus.ERROR_USER: "error.lottie",
-                                ItemStatus.ERROR_SYSTEM: "error.lottie",
-                                ItemStatus.CANCELED_USER: "canceled.lottie",
-                                ItemStatus.CANCELED_SYSTEM: "canceled.lottie",
-                            }[item.status]
-                            ui.html(
-                                f'<dotlottie-player src="/application_assets/{animation_file}" '
-                                'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                                'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
-                            )
-                            ui.space()
+                        if item.message:
+                            with (
+                                ui.row().classes("w-1/2 justify-start items-start content-start"),
+                                ui.card().classes("w-full ml-4"),
+                            ):
+                                ui.label(item.message).classes("break-all")
+                        else:
+                            with ui.row().classes("w-1/2 justify-center content-center"):
+                                ui.space()
+                                animation_file = {
+                                    ItemStatus.PENDING: "pending.lottie",
+                                    ItemStatus.ERROR_USER: "error.lottie",
+                                    ItemStatus.ERROR_SYSTEM: "error.lottie",
+                                    ItemStatus.CANCELED_USER: "canceled.lottie",
+                                    ItemStatus.CANCELED_SYSTEM: "canceled.lottie",
+                                }[item.status]
+                                ui.html(
+                                    f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                    'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                                )
+                                ui.space()
