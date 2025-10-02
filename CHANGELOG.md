@@ -1,6 +1,16 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.173](https://github.com/aignostics/python-sdk/compare/v0.2.172..0.2.173) - 2025-10-02
+# [0.2.174](https://github.com/aignostics/python-sdk/compare/v0.2.173..0.2.174) - 2025-10-02
+
+### 🐛 Bug Fixes
+
+- *(platform)* Token refresh on long living api client - ([6494bcc](https://github.com/aignostics/python-sdk/commit/6494bcc0f10bb1dc85f0dd69753527effcf46476))
+
+
+
+* @akunft made their first contribution in [#123](https://github.com/aignostics/python-sdk/pull/123)
+
+# [v0.2.173](https://github.com/aignostics/python-sdk/compare/v0.2.172..v0.2.173) - 2025-10-02
 
 ### 🚜 Refactor
 
