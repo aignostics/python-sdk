@@ -156,7 +156,8 @@ codegen:
 	# format via jq, and save as codegen/in/openapi_$version.json, with the 
 	# version extracted from the info.version field in the JSON
 	mkdir -p codegen/in/archive
-	curl -s https://platform.aignostics.com/api/v1/openapi.json | jq . > codegen/in/openapi.json
+	# curl -s https://platform.aignostics.com/api/v1/openapi.json | jq . > codegen/in/openapi.json
+	curl -s https://platform-dev.aignostics.ai/api/v1/openapi.json | jq . > codegen/in/openapi.json
 	version=$$(jq -r .info.version codegen/in/openapi.json); \
 	echo "Detected version $$version"; \
 	cp -f codegen/in/openapi.json codegen/in/archive/openapi_$${version}.json

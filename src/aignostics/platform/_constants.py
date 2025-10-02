@@ -18,7 +18,7 @@ REDIRECT_URI_STAGING = "http://localhost:8989/"
 DEVICE_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/.well-known/jwks.json"
 
-API_ROOT_DEV = "https://platform-dev.aignostics.com"
+API_ROOT_DEV = "https://platform-dev.aignostics.ai"
 CLIENT_ID_INTERACTIVE_DEV = "gqduveFvx7LX90drQPGzr4JGUYdh24gA"  # not a secret, but a public client ID
 AUDIENCE_DEV = "https://dev-8ouohmmrbuh2h4vu-samia"
 AUTHORIZATION_BASE_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize"

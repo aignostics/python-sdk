@@ -18,20 +18,21 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class OutputArtifactVisibility(str, Enum):
+class RunState(str, Enum):
     """
-    OutputArtifactVisibility
+    RunState
     """
 
     """
     allowed enum values
     """
-    INTERNAL = 'INTERNAL'
-    EXTERNAL = 'EXTERNAL'
+    PENDING = 'PENDING'
+    PROCESSING = 'PROCESSING'
+    TERMINATED = 'TERMINATED'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of OutputArtifactVisibility from a JSON string"""
+        """Create an instance of RunState from a JSON string"""
         return cls(json.loads(json_str))
 
 

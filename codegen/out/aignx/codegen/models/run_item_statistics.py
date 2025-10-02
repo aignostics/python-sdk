@@ -17,20 +17,23 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List
-from aignx.codegen.models.organization_read_response import OrganizationReadResponse
-from aignx.codegen.models.user_read_response import UserReadResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
-class MeReadResponse(BaseModel):
+class RunItemStatistics(BaseModel):
     """
-    Response schema for `Get current user` endpoint
+    RunItemStatistics
     """ # noqa: E501
-    user: UserReadResponse
-    organization: OrganizationReadResponse
-    __properties: ClassVar[List[str]] = ["user", "organization"]
+    item_count: StrictInt = Field(description="Total number of the items in the run")
+    item_pending_count: StrictInt = Field(description="The number of items in `PENDING` state")
+    item_processing_count: StrictInt = Field(description="The number of items in `PROCESSING` state")
+    item_user_error_count: StrictInt = Field(description="The number of items in `TERMINATED` state, and the item termination reason is `USER_ERROR`")
+    item_system_error_count: StrictInt = Field(description="The number of items in `TERMINATED` state, and the item termination reason is `SYSTEM_ERROR`")
+    item_skipped_count: StrictInt = Field(description="The number of items in `TERMINATED` state, and the item termination reason is `SKIPPED`")
+    item_succeeded_count: StrictInt = Field(description="The number of items in `TERMINATED` state, and the item termination reason is `SUCCEEDED`")
+    __properties: ClassVar[List[str]] = ["item_count", "item_pending_count", "item_processing_count", "item_user_error_count", "item_system_error_count", "item_skipped_count", "item_succeeded_count"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,7 +53,7 @@ class MeReadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of MeReadResponse from a JSON string"""
+        """Create an instance of RunItemStatistics from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,17 +74,11 @@ class MeReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of user
-        if self.user:
-            _dict['user'] = self.user.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of organization
-        if self.organization:
-            _dict['organization'] = self.organization.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of MeReadResponse from a dict"""
+        """Create an instance of RunItemStatistics from a dict"""
         if obj is None:
             return None
 
@@ -89,8 +86,13 @@ class MeReadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "user": UserReadResponse.from_dict(obj["user"]) if obj.get("user") is not None else None,
-            "organization": OrganizationReadResponse.from_dict(obj["organization"]) if obj.get("organization") is not None else None
+            "item_count": obj.get("item_count"),
+            "item_pending_count": obj.get("item_pending_count"),
+            "item_processing_count": obj.get("item_processing_count"),
+            "item_user_error_count": obj.get("item_user_error_count"),
+            "item_system_error_count": obj.get("item_system_error_count"),
+            "item_skipped_count": obj.get("item_skipped_count"),
+            "item_succeeded_count": obj.get("item_succeeded_count")
         })
         return _obj
 

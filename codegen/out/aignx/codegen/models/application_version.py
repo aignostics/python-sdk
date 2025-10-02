@@ -17,20 +17,19 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List
-from aignx.codegen.models.organization_read_response import OrganizationReadResponse
-from aignx.codegen.models.user_read_response import UserReadResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
-class MeReadResponse(BaseModel):
+class ApplicationVersion(BaseModel):
     """
-    Response schema for `Get current user` endpoint
+    ApplicationVersion
     """ # noqa: E501
-    user: UserReadResponse
-    organization: OrganizationReadResponse
-    __properties: ClassVar[List[str]] = ["user", "organization"]
+    number: StrictStr = Field(description="The number of the latest version")
+    released_at: datetime = Field(description="The timestamp for when the application version was made available in the Platform")
+    __properties: ClassVar[List[str]] = ["number", "released_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,7 +49,7 @@ class MeReadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of MeReadResponse from a JSON string"""
+        """Create an instance of ApplicationVersion from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,17 +70,11 @@ class MeReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of user
-        if self.user:
-            _dict['user'] = self.user.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of organization
-        if self.organization:
-            _dict['organization'] = self.organization.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of MeReadResponse from a dict"""
+        """Create an instance of ApplicationVersion from a dict"""
         if obj is None:
             return None
 
@@ -89,8 +82,8 @@ class MeReadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "user": UserReadResponse.from_dict(obj["user"]) if obj.get("user") is not None else None,
-            "organization": OrganizationReadResponse.from_dict(obj["organization"]) if obj.get("organization") is not None else None
+            "number": obj.get("number"),
+            "released_at": obj.get("released_at")
         })
         return _obj
 
