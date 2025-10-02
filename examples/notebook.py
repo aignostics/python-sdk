@@ -2,7 +2,7 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
-#     "aignostics==0.2.176",
+#     "aignostics==0.2.177",
 # ]
 # ///
 
