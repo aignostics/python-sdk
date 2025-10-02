@@ -1,9 +1,10 @@
 import os
+from collections.abc import Callable
 from urllib.request import getproxies
 
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
-from aignx.codegen.configuration import Configuration
+from aignx.codegen.configuration import AuthSettings, Configuration
 from aignx.codegen.exceptions import NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import MeReadResponse as Me
@@ -16,6 +17,34 @@ from aignostics.utils import get_logger, user_agent
 from ._settings import settings
 
 logger = get_logger(__name__)
+
+
+class _OAuth2TokenProviderConfiguration(Configuration):
+    """
+    Overwrites the original Configuration to call a function to obtain a refresh token.
+
+    The base class does not support callbacks. This is necessary for integrations where
+    tokens may expire or need to be refreshed automatically.
+    """
+
+    def __init__(
+        self, host: str, ssl_ca_cert: str | None = None, token_provider: Callable[[], str] | None = None
+    ) -> None:
+        super().__init__(host=host, ssl_ca_cert=ssl_ca_cert)
+        self.token_provider = token_provider
+
+    def auth_settings(self) -> AuthSettings:
+        token = self.token_provider() if self.token_provider else None
+        if not token:
+            return {}
+        return {
+            "OAuth2AuthorizationCodeBearer": {
+                "type": "oauth2",
+                "in": "header",
+                "key": "Authorization",
+                "value": f"Bearer {token}",
+            }
+        }
 
 
 class Client:
@@ -92,28 +121,29 @@ class Client:
 
     @staticmethod
     def get_api_client(cache_token: bool = True) -> PublicApi:
-        """Creates and configures an authenticated API client.
+        """Create and configure an authenticated API client.
 
         Args:
             cache_token (bool): If True, caches the authentication token.
                 Defaults to True.
 
         Returns:
-            ExternalsApi: Configured API client with authentication token.
+            PublicApi: Configured API client with authentication token.
 
         Raises:
             RuntimeError: If authentication fails.
         """
-        token = get_token(use_cache=cache_token)
-        config = Configuration(
-            host=settings().api_root,
-            ssl_ca_cert=os.getenv("REQUESTS_CA_BUNDLE"),  # point to .cer file of proxy if defined
+
+        def token_provider() -> str:
+            return get_token(use_cache=cache_token)
+
+        ca_file = os.getenv("REQUESTS_CA_BUNDLE")  # point to .cer file of proxy if defined
+        config = _OAuth2TokenProviderConfiguration(
+            host=settings().api_root, ssl_ca_cert=ca_file, token_provider=token_provider
         )
         config.proxy = getproxies().get("https")  # use system proxy
         client = ApiClient(
             config,
-            header_name="Authorization",
-            header_value=f"Bearer {token}",
         )
         client.user_agent = user_agent()
         return PublicApi(client)
