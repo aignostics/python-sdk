@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.175](https://github.com/aignostics/python-sdk/compare/v0.2.174..0.2.175) - 2025-10-02
+# [0.2.176](https://github.com/aignostics/python-sdk/compare/v0.2.175..0.2.176) - 2025-10-02
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix pyproject - ([ebc3fa8](https://github.com/aignostics/python-sdk/commit/ebc3fa8021959ef23ae4277c4a830af95b4942c4))
+
+
+# [v0.2.175](https://github.com/aignostics/python-sdk/compare/v0.2.174..v0.2.175) - 2025-10-02
 
 ### ⚙️ Miscellaneous Tasks
 
