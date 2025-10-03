@@ -53,6 +53,7 @@ jobs:
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
     with:
+      #TODO(Andreas): Note that you can chose between staging and production here. You can remove this todo when read.
       platform_environment: "staging"
     permissions:
       attestations: write
