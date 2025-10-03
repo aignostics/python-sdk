@@ -60,6 +60,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     """
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     application = await nicegui_run.io_bound(service.application, application_id)
+    application_versions = await nicegui_run.io_bound(service.application_versions, application_id)
     spinner.set_visibility(False)
 
     if application is None:
@@ -90,10 +91,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     with ui.dialog() as release_notes_dialog, ui.card().style(WIDTH_1200px):
         ui.label(f"Release notes of {application.name}").classes("text-h5")
         with ui.scroll_area().classes("w-full h-100"):
-            for version in application.versions:
-                ui.label(f"Version {version.number}").classes("text-h6")
-                # TODO(Helmut): Util to compile changelog
-                ui.markdown("TODO")
+            for application_version in application_versions:
+                ui.label(f"Version {application_version.version_number}").classes("text-h6")
+                ui.markdown(application_version.changelog.replace("\n", "\n\n"))
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=release_notes_dialog.close)
 
@@ -230,11 +230,10 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         if submit_form.application_version is None:
             return
         with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
-            for application_version in application.versions:
-                if application_version.number == submit_form.application_version:
-                    ui.label(f"Latest changes in v{application_version.number}").classes("text-h5")
-                    # TODO(Helmut): Util to compile changelog
-                    ui.markdown("TK")
+            for application_version in application_versions:
+                if application_version.version_number == submit_form.application_version:
+                    ui.label(f"Latest changes in v{application_version.version_number}").classes("text-h5")
+                    ui.markdown(application_version.changelog.replace("\n", "\n\n"))
                     ui.label("Expected Input Artifacts:").classes("text-h5")
                     for artifact in application_version.input_artifacts:
                         with ui.expansion(

@@ -5,14 +5,15 @@ It includes functionality for listing applications and managing application vers
 """
 
 import builtins
-import re
 import typing as t
 from operator import itemgetter
 
 import semver
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.models import ApplicationReadShortResponse as Application
-from aignx.codegen.models import ApplicationVersion
+from aignx.codegen.models import ApplicationReadResponse as Application
+from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
+from aignx.codegen.models import ApplicationVersion as VersionTuple
+from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 
 from aignostics.platform.resources.utils import paginate
 
@@ -23,8 +24,6 @@ class Versions:
     Provides operations to list and retrieve application versions.
     """
 
-    APPLICATION_VERSION_REGEX = re.compile(r"^(?P<application_id>[^:]+):v(?P<version>[^:].+)$")
-
     def __init__(self, api: PublicApi) -> None:
         """Initializes the Versions resource with the API platform.
 
@@ -33,7 +32,8 @@ class Versions:
         """
         self._api = api
 
-    def list(self, application: Application | str) -> t.Iterator[ApplicationVersion]:
+    # TODO(Helmut): Possibly remove later, same for sorted variant
+    def list(self, application: Application | str) -> list[VersionTuple]:
         """Find all versions for a specific application.
 
         Args:
@@ -47,56 +47,51 @@ class Versions:
         """
         application_id = application.application_id if isinstance(application, Application) else application
 
-        return paginate(
-            self._api.list_versions_by_application_id_v1_applications_application_id_versions_get,
-            application_id=application_id,
-        )
+        app = self._api.read_application_by_id_v1_applications_application_id_get(application_id=application_id)
+        return app.versions if app.versions is not None else []
 
-    def details(self, application_version: ApplicationVersion | str) -> ApplicationVersion:
+    def details(self, application_id: str, application_version: VersionTuple | str | None = None) -> ApplicationVersion:
         """Retrieves details for a specific application version.
 
         Args:
-            application_version (ApplicationVersion | str): The ID of the application version.
+            application_id (str): The ID of the application.
+            application_version (VersionTuple | str | None): The version of the application.
+                If None, the latest version will be retrieved.
 
         Returns:
             ApplicationVersion: The version details.
 
         Raises:
-            RuntimeError: If the application version ID is invalid or if the API request fails.
+            ValueError: If the version is not valid semver.
+            RuntimeError: If the API request fails.
             Exception: If the API request fails.
         """
-        if isinstance(application_version, ApplicationVersion):
-            application_id = application_version.application_id
-            version = application_version.version
-        else:
-            # Parse and validate the application version ID
-            match = self.APPLICATION_VERSION_REGEX.match(application_version)
-            if not match:
-                msg = f"Invalid application_version_id: {application_version}"
-                raise RuntimeError(msg)
+        if application_version is None:
+            application_version = self.latest(application=application_id)
+            if application_version is None:
+                message = f"No versions found for application '{application_id}'."
+                raise RuntimeError(message)
+            application_version = application_version.number
+        elif isinstance(application_version, VersionTuple):
+            application_version = application_version.number
+        elif application_version and not semver.Version.is_valid(application_version):
+            message = f"Invalid version format: '{application_version}'. Must be a valid semantic version."
+            raise ValueError(message)
 
-            application_id = match.group("application_id")
-            version = match.group("version")
-
-        application_versions = self._api.list_versions_by_application_id_v1_applications_application_id_versions_get(
+        return self._api.application_version_details_v1_applications_application_id_versions_version_get(
             application_id=application_id,
-            version=version,
+            version=application_version,
         )
-        if len(application_versions) != 1:
-            # this invariance is enforced by the system. If that error occurs, we have an internal error
-            msg = "Internal server error. Please contact Aignostics support."
-            raise RuntimeError(msg)
-        return application_versions[0]
 
     # TODO(Andreas): Remove when supported in backend
-    def list_sorted(self, application: Application | str) -> builtins.list[ApplicationVersion]:
+    def list_sorted(self, application: Application | str) -> builtins.list[VersionTuple]:
         """Get application versions sorted by semver, descending.
 
         Args:
             application (Application | str): The application to find versions for, either object or id
 
         Returns:
-            list[ApplicationVersion]: List of version objects sorted by semantic versioning (latest first),
+            list[VersionTuple]: List of version objects sorted by semantic versioning (latest first),
                 or empty list if no versions are found
         """
         versions = builtins.list(self.list(application=application))
@@ -109,7 +104,7 @@ class Versions:
         versions_with_semver = []
         for v in versions:
             try:
-                parsed_version = semver.Version.parse(v.version)
+                parsed_version = semver.Version.parse(v.number)
                 versions_with_semver.append((v, parsed_version))
             except (ValueError, AttributeError):
                 # If we can't parse the version or version attribute doesn't exist, skip it
@@ -124,14 +119,14 @@ class Versions:
         # If we couldn't parse any versions, return all versions as is
         return versions
 
-    def latest(self, application: Application | str) -> ApplicationVersion | None:
+    def latest(self, application: Application | str) -> VersionTuple | None:
         """Get latest version.
 
         Args:
             application (Application | str): The application to find versions for, either object or id
 
         Returns:
-            ApplicationVersion | None: The latest version id, or None if no versions found.
+            VersionTuple | None: The latest version, or None if no versions found.
         """
         sorted_versions = self.list_sorted(application=application)
         return sorted_versions[0] if sorted_versions else None
@@ -152,7 +147,18 @@ class Applications:
         self._api = api
         self.versions: Versions = Versions(self._api)
 
-    def list(self) -> t.Iterator[Application]:
+    def details(self, application_id: str) -> Application:
+        """Find application by id.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            Application: The application object
+        """
+        return self._api.read_application_by_id_v1_applications_application_id_get(application_id)
+
+    def list(self) -> t.Iterator[ApplicationSummary]:
         """Find all available applications.
 
         Returns:

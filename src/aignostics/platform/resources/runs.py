@@ -384,7 +384,9 @@ class Runs:
             Exception: If the API request fails.
         """
         # validate metadata based on schema of application version
-        app_version = Versions(self._api).details(application_version=payload.application_version_id)
+        app_version = Versions(self._api).details(
+            application_id=payload.application_id, application_version=payload.version_number
+        )
         schema_idx = {
             input_artifact.name: input_artifact.metadata_schema for input_artifact in app_version.input_artifacts
         }
