@@ -10,6 +10,7 @@ from operator import itemgetter
 
 import semver
 from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.exceptions import NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import ApplicationVersion as VersionTuple
@@ -63,19 +64,19 @@ class Versions:
 
         Raises:
             ValueError: If the version is not valid semver.
+            NotFoundException: If the application or version is not found.
             RuntimeError: If the API request fails.
-            Exception: If the API request fails.
         """
         if application_version is None:
             application_version = self.latest(application=application_id)
             if application_version is None:
                 message = f"No versions found for application '{application_id}'."
-                raise RuntimeError(message)
+                raise NotFoundException(message)
             application_version = application_version.number
         elif isinstance(application_version, VersionTuple):
             application_version = application_version.number
         elif application_version and not semver.Version.is_valid(application_version):
-            message = f"Invalid version format: '{application_version}'. Must be a valid semantic version."
+            message = f"Invalid version format: '{application_version}' not compliant with semantic versioning."
             raise ValueError(message)
 
         return self._api.application_version_details_v1_applications_application_id_versions_version_get(

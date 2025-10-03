@@ -287,6 +287,8 @@ class Service(BaseService):
         """
         try:
             return self._get_platform_client().application_version(application_id, application_version)
+        except ValueError:
+            raise
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
@@ -666,12 +668,12 @@ class Service(BaseService):
         try:
             if note_regex:
                 flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
-                metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
+                custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
             else:
-                metadata = None
+                custom_metadata = None
 
             run_iterator = self._get_platform_client().runs.list_data(
-                sort="-submitted_at", page_size=page_size, metadata=metadata
+                sort="-submitted_at", page_size=page_size, custom_metadata=custom_metadata
             )
             for run in run_iterator:
                 if status is not None and run.state != status:

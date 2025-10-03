@@ -336,7 +336,7 @@ class Runs:
         self,
         application_id: str | None = None,
         application_version: str | None = None,
-        metadata: str | None = None,
+        custom_metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ) -> t.Iterator[ApplicationRunData]:
@@ -345,7 +345,7 @@ class Runs:
         Args:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version ID to filter by.
-            metadata (str | None): Optional metadata filter in JSONPath format.
+            custom_metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
 
@@ -366,7 +366,7 @@ class Runs:
             page_size=page_size,
             application_id=application_id,
             application_version=application_version,
-            metadata=metadata,
+            custom_metadata=custom_metadata,
             sort=[sort] if sort else None,
         )
 
