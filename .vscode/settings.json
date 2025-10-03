@@ -49,6 +49,7 @@
     "github.copilot.chat.edits.temporalContext.enabled": true,
     "github.copilot.chat.codesearch.enabled": true,
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "github.copilot.chat.generateTests.codeLens": true,
     "github.copilot.chat.languageContext.typescript.enabled": true,
     "github.copilot.chat.reviewSelection.instructions": [],
