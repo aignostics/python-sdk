@@ -157,8 +157,7 @@ def application_dump_schemata(  # noqa: C901
         if input_artifact.metadata_schema:
             file_path: Path = sanitize_path(
                 Path(
-                    destination
-                    / f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
+                    destination / f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
                 )
             )  # type: ignore
             file_path.write_text(data=json.dumps(input_artifact.metadata_schema, indent=2), encoding="utf-8")

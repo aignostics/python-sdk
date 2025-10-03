@@ -29,6 +29,9 @@ from aignx.codegen.models import (
 from aignx.codegen.models import (
     RunReadResponse as ApplicationRunData,
 )
+from aignx.codegen.models import (
+    RunState as ApplicationRunStatus,
+)
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
