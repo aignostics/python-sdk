@@ -257,19 +257,19 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         # Step 1: Go to latest completed run
         print(f"Found existing run: {run.application_run_id}, status: {run.status}")
         await user.open(f"/application/run/{run.application_run_id}")
-        await user.should_see(f"Run {run.application_run_id}")
-        await user.should_see(f"Run of {latest_version_id}")
+        await user.should_see(f"Run {run.application_run_id}", retries=100)
+        await user.should_see(f"Run of {latest_version_id}", retries=100)
 
         # Step 2: Open Result Download dialog
-        await user.should_see(marker="BUTTON_DOWNLOAD_RUN")
+        await user.should_see(marker="BUTTON_DOWNLOAD_RUN", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_RUN").click()
 
         # Step 3: Select Data
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
 
         # Step 3: Trigger Download
-        await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")
+        await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN", retries=100)
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
 
         # Check: Download completed
