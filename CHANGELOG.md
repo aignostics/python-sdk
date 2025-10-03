@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.178](https://github.com/aignostics/python-sdk/compare/v0.2.177..0.2.178) - 2025-10-03
+# [0.2.179](https://github.com/aignostics/python-sdk/compare/v0.2.178..0.2.179) - 2025-10-03
+
+### 🛡️ Security
+
+- *(gha)* Don't use direct interpolation of user provided data in github workflows - ([3d0aef8](https://github.com/aignostics/python-sdk/commit/3d0aef8d4d717eabbfdef824606641936592f9f2))
+
+
+# [v0.2.178](https://github.com/aignostics/python-sdk/compare/v0.2.177..v0.2.178) - 2025-10-03
 
 ### ⚙️ Miscellaneous Tasks
 
