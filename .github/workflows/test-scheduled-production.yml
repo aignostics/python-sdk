@@ -13,6 +13,8 @@ jobs:
       contents: read
       id-token: write
     secrets:
+      #TODO(Andreas): Note that you will have to provide the secrets for both staging and production in GitHub. 
+      # The right ones are chosen in the resuable template, see this file and the -staging.yml equivalent.
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
       GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}

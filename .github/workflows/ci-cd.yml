@@ -53,6 +53,7 @@ jobs:
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
     with:
+      #TODO(Andreas): Note that you can chose between staging and production here. You can remove this todo when read.
       platform_environment: "staging"
     permissions:
       attestations: write
@@ -60,9 +61,12 @@ jobs:
       id-token: write
       packages: write
     secrets:
-      AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
-      AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
-      GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
+      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
+      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
