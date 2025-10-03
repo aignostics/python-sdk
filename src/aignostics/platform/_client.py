@@ -196,14 +196,15 @@ class Client:
         Returns:
             Application: The application object.
         """
-        return self._api.read_application_by_id_v1_applications_application_id_get(application_id)
+        return Applications(self._api).details(application_id)
 
-    def application_version(self, application_id: str, version_number: str) -> ApplicationVersion:
+    def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
         """Find application version by id.
 
         Args:
             application_id (str): The ID of the application.
-            version_number (str): The version number of the application.
+            version_number (str | None): The version number of the application.
+                If None, the latest version will be retrieved.
 
         Raises:
             NotFoundException: If the application with the given ID and version numberis not found.
@@ -211,9 +212,7 @@ class Client:
         Returns:
             ApplicationVersion: The application version object.
         """
-        return self._api.application_version_details_v1_applications_application_id_versions_version_get(
-            application_id=application_id, version=version_number
-        )
+        return Versions(self._api).details(application_id=application_id, application_version=version_number)
 
     def run(self, run_id: str) -> ApplicationRun:
         """Finds run by id.

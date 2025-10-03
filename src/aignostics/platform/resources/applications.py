@@ -10,8 +10,10 @@ from operator import itemgetter
 
 import semver
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.models import ApplicationReadShortResponse as Application
-from aignx.codegen.models import ApplicationVersion
+from aignx.codegen.models import ApplicationReadResponse as Application
+from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
+from aignx.codegen.models import ApplicationVersion as VersionTuple
+from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 
 from aignostics.platform.resources.utils import paginate
 

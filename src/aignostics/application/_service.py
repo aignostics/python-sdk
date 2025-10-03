@@ -287,20 +287,6 @@ class Service(BaseService):
             NotFoundException: If the application version with the given ID and number is not found.
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
-        if application_version is None:
-            application = self.application(application_id)
-            latest_version = application.versions[0] if application.versions else None
-            if latest_version is None:
-                message = f"No latest version found for application '{application_id}'."
-                logger.error(message)
-                raise NotFoundException(message)
-            application_version = latest_version.number
-
-        if not semver.Version.is_valid(application_version):
-            message = f"Invalid application version: '{application_version}', expected semver."
-            logger.warning(message)
-            raise ValueError(message)
-
         try:
             return self._get_platform_client().application_version(application_id, application_version)
         except NotFoundException as e:
@@ -352,6 +338,96 @@ class Service(BaseService):
         # TODO(Andreas): Have to make calls for all application versions to construct
         # Changelog dialog on run describe page. Can be optimized to one call if API would support it.
         # Let's discuss if we should re-add the endpoint that existed.
+        try:
+            client = self._get_platform_client()
+            return [
+                client.application_version(application_id, version.number)
+                for version in client.versions.list(application_id)
+            ]
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve versions for application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_versions_static(application_id: str) -> list[ApplicationVersion]:
+        """Get a list of all versions for a specific application, static variant.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            list[ApplicationVersion]: A list of all versions for the application.
+
+        Raises:
+            Exception: If the application versions cannot be retrieved.
+        """
+        return Service().application_versions(application_id)
+
+    def application_versions(self, application_id: str) -> list[ApplicationVersion]:
+        """Get a list of all versions for a specific application.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            list[ApplicationVersion]: A list of all versions for the application.
+
+        Raises:
+            NotFoundException: If the application with the given ID is not found.
+            RuntimeError: If the versions cannot be retrieved unexpectedly.
+        """
+        # TODO(Andreas): Have to make calls for all application versions to construct
+        # Changelog dialog on run describe page. Can be optimized to one call when API supports it.
+        try:
+            client = self._get_platform_client()
+            return [
+                client.application_version(application_id, version.number)
+                for version in client.versions.list(application_id)
+            ]
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve versions for application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_versions_static(application_id: str) -> list[ApplicationVersion]:
+        """Get a list of all versions for a specific application, static variant.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            list[ApplicationVersion]: A list of all versions for the application.
+
+        Raises:
+            Exception: If the application versions cannot be retrieved.
+        """
+        return Service().application_versions(application_id)
+
+    def application_versions(self, application_id: str) -> list[ApplicationVersion]:
+        """Get a list of all versions for a specific application.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            list[ApplicationVersion]: A list of all versions for the application.
+
+        Raises:
+            NotFoundException: If the application with the given ID is not found.
+            RuntimeError: If the versions cannot be retrieved unexpectedly.
+        """
+        # TODO(Andreas): Have to make calls for all application versions to construct
+        # Changelog dialog on run describe page. Can be optimized to one call when API supports it.
         try:
             client = self._get_platform_client()
             return [
