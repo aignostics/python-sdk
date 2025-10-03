@@ -53,7 +53,11 @@ async def test_gui_index(user: User) -> None:
     ],
 )
 async def test_gui_home_to_application(
-    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None
+    user: User,
+    application_id: str,
+    application_name: str,
+    expected_text: str,
+    silent_logging: None,
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
     await user.open("/")
@@ -67,18 +71,20 @@ async def test_gui_home_to_application(
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
-async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner, silent_logging) -> None:
+async def test_gui_cli_submit_to_run_result_delete(
+    user: User, runner: CliRunner, silent_logging
+) -> None:
     """Test that the user can submit a run via the CLI up to deleting the run results."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
         application = Service().application(HETA_APPLICATION_ID)
-        latest_version_number = application.versions[0].version if application.versions else None
+        latest_version_number = (
+            application.versions[0].version if application.versions else None
+        )
 
         # Submit run
-        csv_content = (
-            "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-        )
+        csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         csv_content += "platform_bucket_url\n"
         csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
         csv_path = tmp_path / "dummy.csv"
@@ -100,7 +106,9 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         # Extract the run ID from the output
         output = normalize_output(result.output)
         run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
-        assert run_id_match is not None, f"Could not extract run ID from output: {output}"
+        assert run_id_match is not None, (
+            f"Could not extract run ID from output: {output}"
+        )
         run_id = run_id_match.group(1)
 
         # Run shown in he GUI
@@ -109,13 +117,21 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("Runs")
-        await user.should_see(HETA_APPLICATION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100)
+        await user.should_see(
+            HETA_APPLICATION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100
+        )
         await user.should_see(HETA_APPLICATION_VERSION, marker="SIDEBAR_RUN_ITEM:0")
 
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
-        await user.should_see(f"Run of {application.application_id} ({latest_version_number})", retries=100)
-        await user.should_see(f"Application: {application.application_id} ({latest_version_number})", retries=100)
+        await user.should_see(
+            f"Run of {application.application_id} ({latest_version_number})",
+            retries=100,
+        )
+        await user.should_see(
+            f"Application: {application.application_id} ({latest_version_number})",
+            retries=100,
+        )
         await user.should_see("status RUNNING", retries=100)
         await user.should_see("test_gui_cli_submit_to_run_result_delete", retries=100)
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
@@ -127,11 +143,15 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see("status CANCELED_USER", retries=100)
 
         # ... and user can delete run
-        await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE", retries=100)
+        await user.should_see(
+            marker="BUTTON_APPLICATION_RUN_RESULT_DELETE", retries=100
+        )
 
         # Have user delete run
         user.find(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE").click()
-        await assert_notified(user, f"Deleting results of application run with id '{run_id}' ...")
+        await assert_notified(
+            user, f"Deleting results of application run with id '{run_id}' ..."
+        )
         await assert_notified(user, "Application run deleted!")
 
         # Assert user was auto-navigated to Homepage
@@ -147,7 +167,12 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
-    with patch("aignostics.application._gui._page_application_describe.Path.home", return_value=tmp_path):
+    with patch(
+        "aignostics.application._gui._page_application_describe.Path.home",
+        return_value=tmp_path,
+    ):
+        gui_register_pages()
+
         # Download example wsi
         result = runner.invoke(
             cli,
@@ -161,7 +186,9 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         )
         assert result.exit_code == 0
         assert "Successfully downloaded" in normalize_output(result.stdout)
-        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
+        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(
+            result.stdout
+        )
         expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
         assert expected_file.exists(), f"Expected file {expected_file} not found"
         assert expected_file.stat().st_size == 14681750
@@ -183,7 +210,9 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         user.find(marker="BUTTON_APPLICATION_VERSION_NEXT").click()
 
         # Check the file picker opens and closes
-        await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
+        await user.should_see(
+            "Select the folder with the whole slide images you want to analyze then click Next"
+        )
         user.find(marker="BUTTON_WSI_SELECT_DATA").click()
         await user.should_see("Ok")
         await user.should_see("Cancel")
@@ -209,26 +238,41 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         )
 
         user.find(marker="BUTTON_PYTEST_META").click()
-        await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
+        await assert_notified(
+            user, "Your metadata is now valid! Feel free to continue to the next step."
+        )
         user.find(marker="BUTTON_METADATA_NEXT").click()
         await assert_notified(user, "Prepared upload UI.")
-        await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
+        await user.should_see(
+            "Upload and submit your 1 slide(s) for analysis.", retries=100
+        )
 
         # Trigger upload and submission
         await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
         button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
         assert button_submission_upload.enabled, "Upload button should be enabled"
         user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
-        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...", 10)
-        button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
-        assert not button_submission_upload.enabled, "Upload button should be disabled after click"
-        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=60)
+        await assert_notified(
+            user, "Uploading whole slide images to Aignostics Platform ..."
+        )
+        button_submission_upload: ui.button = user.find(
+            marker="BUTTON_SUBMISSION_UPLOAD"
+        ).elements.pop()
+        assert not button_submission_upload.enabled, (
+            "Upload button should be disabled after click"
+        )
+        await assert_notified(
+            user, "Upload to Aignostics Platform completed.", wait_seconds=30
+        )
         await assert_notified(user, "Submitting application run ...")
-        await assert_notified(user, "Application run submitted with id", wait_seconds=30)
+        await assert_notified(
+            user, "Application run submitted with id", wait_seconds=10
+        )
 
         # Check user is redirected to the run page and run is running
-        await sleep(2)
-        await user.should_see(f"Run of he-tme:v{latest_application_version.version}", retries=200)
+        await user.should_see(
+            f"Run of he-tme:v{latest_application_version.version}", retries=200
+        )
         await user.should_see("status RUNNING")
 
         # Check user can cancel run
@@ -241,21 +285,24 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("status CANCELED_USER", retries=200)
 
 
-@pytest.mark.e2e
-@pytest.mark.long_running
-@pytest.mark.flaky(retries=1, delay=5)
-@pytest.mark.timeout(timeout=60 * 5)
-@pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+@pytest.mark.sequential
+async def test_gui_run_download(
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
+) -> None:
     """Test that the user can download a run result via the GUI."""
     with patch(
-        "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
+        "aignostics.application._gui._page_application_run_describe.get_user_data_directory",
+        return_value=tmp_path,
     ):
         gui_register_pages()
 
         application = Service().application(HETA_APPLICATION_ID)
-        latest_version_number = application.versions[0].version if application.versions else None
-        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+        latest_version_number = (
+            application.versions[0].version if application.versions else None
+        )
+        runs = Service().application_runs(
+            limit=1, status=ApplicationRunStatus.COMPLETED
+        )
 
         if not runs:
             pytest.fail("No completed runs found, please run other tests first.")
@@ -269,13 +316,18 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
                 run = potential_run
                 break
         if not run:
-            pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
+            pytest.skip(
+                f"No completed runs found with {application.application_id} ({latest_version_number})"
+            )
 
         # Step 1: Go to latest completed run
         print(f"Found existing run: {run.run_id}, status: {run.status}")
         await user.open(f"/application/run/{run.run_id}")
         await user.should_see(f"Run {run.run_id}", retries=100)
-        await user.should_see(f"Run of {application.application_id} ({latest_version_number})", retries=100)
+        await user.should_see(
+            f"Run of {application.application_id} ({latest_version_number})",
+            retries=100,
+        )
 
         # Step 2: Open Result Download dialog
         await user.should_see(marker="BUTTON_DOWNLOAD_RUN", retries=100)
@@ -301,7 +353,9 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
         # Find any subdirectory in the run_out_dir
         subdirs = [d for d in run_out_dir.iterdir() if d.is_dir()]
-        assert len(subdirs) > 0, f"Expected at least one subdirectory in {run_out_dir}, but found none"
+        assert len(subdirs) > 0, (
+            f"Expected at least one subdirectory in {run_out_dir}, but found none"
+        )
 
         # Take the first subdirectory found (item_out_dir)
         item_out_dir = subdirs[0]
