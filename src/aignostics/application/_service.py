@@ -24,6 +24,7 @@ from aignostics.platform import (
     ApplicationRun,
     ApplicationRunData,
     ApplicationRunStatus,
+    ApplicationSummary,
     ApplicationVersion,
     Client,
     InputArtifact,
@@ -213,7 +214,7 @@ class Service(BaseService):
         return self._platform_service
 
     @staticmethod
-    def applications_static() -> list[Application]:
+    def applications_static() -> list[ApplicationSummary]:
         """Get a list of all applications, static variant.
 
         Returns:
@@ -227,7 +228,7 @@ class Service(BaseService):
         """
         return Service().applications()
 
-    def applications(self) -> list[Application]:
+    def applications(self) -> list[ApplicationSummary]:
         """Get a list of all applications.
 
         Returns:
@@ -270,12 +271,13 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_version(
-        self, application_version_id: str, use_latest_if_no_version_given: bool = False
+        self, application_id: str, version_number: str, use_latest_if_no_version_given: bool = False
     ) -> ApplicationVersion:
         """Get a specific application version.
 
         Args:
-            application_version_id (str): The ID of the application version
+            application_id (str): The ID of the application
+            version_number (str): The number of the application version
             use_latest_if_no_version_given (bool): If True, use the latest version if no specific version is given.
 
         Returns:
@@ -289,27 +291,22 @@ class Service(BaseService):
         # Validate format: application_id:vX.Y.Z (where X.Y.Z is a semver)
         # This checks for proper format like "he-tme:v0.50.0" where "he-tme" is the application id
         # and "v0.50.0" is the version with proper semver format
-        match = re.match(r"^([^:]+):v(.+)$", application_version_id)
-        if not match or not semver.Version.is_valid(match.group(2)):
-            if use_latest_if_no_version_given:
-                application_id = match.group(1) if match else application_version_id
-                latest_version = self.application_version_latest(self.application(application_id))
-                if latest_version:
-                    return latest_version
-                message = (
-                    f"No valid application version found for '{application_version_id}'no latest version available."
-                )
-                logger.warning(message)
-                raise ValueError(message)
-            message = f"Invalid application version id format: {application_version_id}. "
-            message += "Expected format: application_id:vX.Y.Z"
+        if not semver.Version.is_valid(version_number):
+            message = f"Invalid application version number format: {version_number}. Expected format: vX.Y.Z"
+            logger.warning(message)
             raise ValueError(message)
 
-        application_id = match.group(1)
-        application = self.application(application_id)
-        for version in self.application_versions(application):
-            if version.application_version_id == application_version_id:
-                return version
+        try:
+            return self._get_platform_client().
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
         message = f"Application version with ID {application_version_id} not found in application {application_id}"
         raise NotFoundException(message)
 

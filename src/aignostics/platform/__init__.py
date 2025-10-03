@@ -12,6 +12,7 @@ Higher level abstractions are provided in the application module.
 
 from aignx.codegen.exceptions import ApiException, NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
+from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import ApplicationRunStatus, ItemStatus
 from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
 from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
@@ -102,6 +103,7 @@ __all__ = [
     "ApplicationRunData",
     "ApplicationRunStatus",
     "ApplicationRunStatus",
+    "ApplicationSummary",
     "ApplicationVersion",
     "Client",
     "InputArtifact",

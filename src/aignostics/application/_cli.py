@@ -43,7 +43,7 @@ def application_list(
 ) -> None:
     """List available applications."""
     try:
-        applications = Service().applications()
+        apps = Service().applications()
     except Exception as e:
         logger.exception("Could not load applications")
         console.print(f"[error]Error:[/error] Could not load applications: {e}")
@@ -55,29 +55,30 @@ def application_list(
         console.print("[bold]Available Applications:[/bold]")
         console.print("=" * 80)
 
-        for app in applications:
+        for app in apps:
             app_count += 1
             console.print(f"[bold]Application ID:[/bold] {app.application_id}")
             console.print(f"[bold]Name:[/bold] {app.name}")
             console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
 
             try:
-                versions = Service().application_versions(app)
+                application = Service().application(app.application_id)
             except Exception as e:
-                logger.exception("Failed to list versions for application '%s'", app.application_id)
+                logger.exception("Failed to get application details for application '%s'", app.application_id)
                 console.print(
-                    f"[error]Error:[/error] Failed to list versions for application '{app.application_id}': {e}"
+                    f"[error]Error:[/error] Failed to get application details for application '{app.application_id}': {e}"
                 )
                 continue
-            if versions:
-                console.print("[bold]Available Versions:[/bold]")
-                for version in versions:
-                    console.print(f"  - {version.version} ({version.application_version_id})")
-                    console.print(f"    Changelog: {version.changelog}")
+            console.print("[bold]Available Versions:[/bold]")
+            for version in application.versions:
+                console.print(f"  - {version.number} ({version.released_at})")
 
-                    num_inputs = len(version.input_artifacts)
-                    num_outputs = len(version.output_artifacts)
-                    console.print(f"    Artifacts: {num_inputs} input(s), {num_outputs} output(s)")
+                applicationVersion = Service().application_version(version.number)
+                console.print(f"    Changelog: {version.changelog}")
+
+                num_inputs = len(version.input_artifacts)
+                num_outputs = len(version.output_artifacts)
+                console.print(f"    Artifacts: {num_inputs} input(s), {num_outputs} output(s)")
 
             console.print("[bold]Description:[/bold]")
             for line in app.description.strip().split("\n"):
@@ -88,10 +89,8 @@ def application_list(
         console.print("[bold]Available Aignostics Applications:[/bold]")
         for app in applications:
             app_count += 1
-            latest_version = Service().application_version_latest(app)
             console.print(
-                f"- [bold]{app.application_id}[/bold] - latest application version id: "
-                f"`{latest_version.application_version_id if latest_version else 'None'}`"
+                f"- [bold]{app.application_id}[/bold] - latest application version: `{app.latest_version or 'None'}`"
             )
 
     if app_count == 0:
