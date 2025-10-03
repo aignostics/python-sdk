@@ -77,6 +77,7 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> Non
         cli, ["application", "dump-schemata", HETA_APPLICATION_ID, "--destination", str(tmp_path), "--zip"]
     )
     application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
+    application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
     assert result.exit_code == 0
     assert "Zipped 11 files" in normalize_output(result.output)
     zip_file = sanitize_path(
@@ -160,6 +161,9 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
     assert "Warning: Could not find application version" in normalize_output(result.stdout)
     assert result.exit_code == 2
+    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
+    # Test likely passes when that is fixed on the platform side
+    assert "Error: Failed to create run for application version" in normalize_output(result.stdout)
 
 
 @pytest.mark.e2e
@@ -208,6 +212,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
+
+    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
+    # Test likely passes when that is fixed on the platform side
 
     result = runner.invoke(
         cli,
@@ -311,6 +318,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
+    # TODO(Andreas): Currently fails with HTTP response body: {"detail":"field must be one of ['application_run_id', 'application_version_id', 'message', 'metadata', 'organization_id', 'status', 'terminated_at', 'triggered_at', 'triggered_by', 'user_payload'] but is submitted_at","trace_id":"efd2b9a29e2912563d12548fa5e2a453"}
+    # seems the backend is not compliant to it's own spec
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
     output = normalize_output(result.stdout)
@@ -327,16 +336,7 @@ def test_cli_run_list_limit_10(runner: CliRunner) -> None:
 def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
-    # TODO(Andreas): Currently fails with FAILED
-    # tests/aignostics/application/cli_test.py::test_cli_run_list_verbose_limit_1 -
-    # assert 'Application Runs:' in 'Error: Failed to list runs: Failed to retrieve application runs:
-    # (400)Reason: Bad RequestHTTP response headers: HTTPHeaderDict({\'date\': \'Fri, 03 Oct 2025 18:50:55 GMT\',
-    # \'server\': \'envoy\', \'x-trace-id\': \'8c2ea8f561beebde96b71cde41bba745\', \'content-length\': \'265\',
-    # \'content-type\': \'application/json\', \'x-envoy-upstream-service-time\': \'3\',
-    # \'vary\': \'Accept-Encoding\'})HTTP response body: {"detail":"field must be one of
-    # [\'application_run_id\', \'application_version_id\', \'message\', \'metadata\', \'organization_id\',
-    # \'status\', \'terminated_at\', \'triggered_at\', \'triggered_by\', \'user_payload\'] but is submitted_at",
-    # "trace_id":"8c2ea8f561beebde96b71cde41bba745"}'
+    # TODO(Andreas): Currently fails with FAILED tests/aignostics/application/cli_test.py::test_cli_run_list_verbose_limit_1 - assert 'Application Runs:' in 'Error: Failed to list runs: Failed to retrieve application runs: (400)Reason: Bad RequestHTTP response headers: HTTPHeaderDict({\'date\': \'Fri, 03 Oct 2025 18:50:55 GMT\', \'server\': \'envoy\', \'x-trace-id\': \'8c2ea8f561beebde96b71cde41bba745\', \'content-length\': \'265\', \'content-type\': \'application/json\', \'x-envoy-upstream-service-time\': \'3\', \'vary\': \'Accept-Encoding\'})HTTP response body: {"detail":"field must be one of [\'application_run_id\', \'application_version_id\', \'message\', \'metadata\', \'organization_id\', \'status\', \'terminated_at\', \'triggered_at\', \'triggered_by\', \'user_payload\'] but is submitted_at","trace_id":"8c2ea8f561beebde96b71cde41bba745"}'
     # seems the backend is not compliant to it's own spec
     assert result.exit_code == 0
     output = normalize_output(result.stdout)

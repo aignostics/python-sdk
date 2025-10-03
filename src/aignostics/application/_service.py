@@ -289,6 +289,8 @@ class Service(BaseService):
         """
         try:
             return self._get_platform_client().application_version(application_id, application_version)
+        except ValueError:
+            raise
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)

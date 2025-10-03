@@ -67,6 +67,7 @@ def test_runs_list_with_pagination(runs, mock_api) -> None:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    # TODO(Andreas): Please adapt yourself
     # Arrange
     page1 = [Mock(spec=RunReadResponse, application_run_id=f"run-{i}") for i in range(PAGE_SIZE)]
     page2 = [Mock(spec=RunReadResponse, application_run_id=f"run-{i + PAGE_SIZE}") for i in range(5)]
@@ -96,6 +97,7 @@ def test_runs_list_with_application_version_filter(runs, mock_api) -> None:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    # TODO(Andreas): Please adapt yourself
     # Arrange
     app_id = "test-app"
     app_version = "version"
@@ -169,6 +171,7 @@ def test_runs_create_returns_application_run(runs, mock_api) -> None:
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    # TODO(Andreas): Please adapt yourself
     # Arrange
     run_id = "new-run-id"
     mock_items = [
@@ -209,6 +212,7 @@ def test_paginate_with_not_found_exception_on_first_page(runs, mock_api) -> None
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    # TODO(Andreas): Please adapt yourself
     # Arrange
     from aignx.codegen.exceptions import NotFoundException
 
@@ -237,6 +241,7 @@ def test_paginate_with_not_found_exception_after_full_page(runs, mock_api) -> No
         runs: Runs instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
+    # TODO(Andreas): Please adapt yourself
     # Arrange
     from aignx.codegen.exceptions import NotFoundException
 
