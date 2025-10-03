@@ -73,11 +73,11 @@ def application_list(
             for version in application.versions:
                 console.print(f"  - {version.number} ({version.released_at})")
 
-                applicationVersion = Service().application_version(version.number)
-                console.print(f"    Changelog: {version.changelog}")
+                application_version = Service().application_version(app.application_id, version.number)
+                console.print(f"    Changelog: {application_version.changelog}")
 
-                num_inputs = len(version.input_artifacts)
-                num_outputs = len(version.output_artifacts)
+                num_inputs = len(application_version.input_artifacts)
+                num_outputs = len(application_version.output_artifacts)
                 console.print(f"    Artifacts: {num_inputs} input(s), {num_outputs} output(s)")
 
             console.print("[bold]Description:[/bold]")
@@ -87,7 +87,7 @@ def application_list(
             console.print("-" * 80)
     else:
         console.print("[bold]Available Aignostics Applications:[/bold]")
-        for app in applications:
+        for app in apps:
             app_count += 1
             console.print(
                 f"- [bold]{app.application_id}[/bold] - latest application version: `{app.latest_version or 'None'}`"

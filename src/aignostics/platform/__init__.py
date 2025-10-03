@@ -13,18 +13,19 @@ Higher level abstractions are provided in the application module.
 from aignx.codegen.exceptions import ApiException, NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
-from aignx.codegen.models import ApplicationRunStatus, ItemStatus
-from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
+from aignx.codegen.models import InputArtifact as InputArtifactData
 from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
-from aignx.codegen.models import InputArtifactReadResponse as InputArtifactData
 from aignx.codegen.models import ItemCreationRequest as InputItem
 from aignx.codegen.models import ItemResultReadResponse as ItemResult
+from aignx.codegen.models import ItemStatus
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
-from aignx.codegen.models import OutputArtifactReadResponse as OutputArtifactData
+from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from aignx.codegen.models import RunReadResponse as ApplicationRunData
+from aignx.codegen.models import RunState as ApplicationRunStatus  # TODO(refactor)
 from aignx.codegen.models import UserReadResponse as User
+from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 
 from ._cli import cli
 from ._client import Client

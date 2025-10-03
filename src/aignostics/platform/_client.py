@@ -10,18 +10,9 @@ from urllib.request import getproxies
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import AuthSettings, Configuration
-from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import MeReadResponse as Me
-from tenacity import (
-    Retrying,
-    before_sleep_log,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential_jitter,
-)
-from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
-from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
+from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 
 from aignostics.platform._authentication import get_token
 from aignostics.platform.resources.applications import Applications, Versions
@@ -84,8 +75,8 @@ class Client:
     _api_client_uncached: ClassVar[PublicApi | None] = None
 
     applications: Applications
-    runs: Runs
     versions: Versions
+    runs: Runs
 
     def __init__(self, cache_token: bool = True) -> None:
         """Initializes a client instance with authenticated API access.
@@ -182,20 +173,8 @@ class Client:
             )
         )  # Retryer will pass down arguments
 
-    def run(self, application_run_id: str) -> ApplicationRun:
-        """Finds a specific run by id.
-
-        Args:
-            application_run_id (str): The ID of the application run.
-
-        Returns:
-            Run: The run object.
-        """
-        return ApplicationRun(self._api, application_run_id)
-
-    # TODO(Andreas): Provide a /v1/applications/{application_id} endpoint and use that
     def application(self, application_id: str) -> Application:
-        """Finds a specific application by id.
+        """Find application by id.
 
         Args:
             application_id (str): The ID of the application.
@@ -206,12 +185,35 @@ class Client:
         Returns:
             Application: The application object.
         """
-        applications = self.applications.list()
-        for application in applications:
-            if application.application_id == application_id:
-                return application
-        logger.warning("Application with ID '%s' not found.", application_id)
-        raise NotFoundException
+        return self._api.read_application_by_id_v1_applications_application_id_get(application_id)
+
+    def application_version(self, application_id: str, version_number: str) -> ApplicationVersion:
+        """Find application version by id.
+
+        Args:
+            application_id (str): The ID of the application.
+            version_number (str): The version number of the application.
+
+        Raises:
+            NotFoundException: If the application with the given ID and version numberis not found.
+
+        Returns:
+            ApplicationVersion: The application version object.
+        """
+        return self._api.application_version_details_v1_applications_application_id_versions_version_get(
+            application_id=application_id, version=version_number
+        )
+
+    def run(self, application_run_id: str) -> ApplicationRun:
+        """Finds run by id.
+
+        Args:
+            application_run_id (str): The ID of the application run.
+
+        Returns:
+            Run: The run object.
+        """
+        return ApplicationRun(self._api, application_run_id)
 
     @staticmethod
     def get_api_client(cache_token: bool = True) -> PublicApi:

@@ -12,7 +12,6 @@ from typing import Any
 
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import (
-    ApplicationRunStatus,
     ItemCreationRequest,
     ItemResultReadResponse,
     ItemStatus,
@@ -24,6 +23,9 @@ from aignx.codegen.models import (
 )
 from aignx.codegen.models import (
     RunReadResponse as ApplicationRunData,
+)
+from aignx.codegen.models import (
+    RunState as ApplicationRunStatus,
 )
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate

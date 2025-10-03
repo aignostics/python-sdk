@@ -20,8 +20,8 @@ from typing import IO, Any
 
 import google_crc32c
 import requests
-from aignx.codegen.models import InputArtifactReadResponse as InputArtifactData
-from aignx.codegen.models import OutputArtifactReadResponse as OutputArtifactData
+from aignx.codegen.models import InputArtifact as InputArtifactData
+from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from tqdm.auto import tqdm
 

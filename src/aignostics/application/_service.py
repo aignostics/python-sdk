@@ -247,7 +247,7 @@ class Service(BaseService):
         ]
 
     def application(self, application_id: str) -> Application:
-        """Get a specific application.
+        """Get application.
 
         Args:
             application_id (str): The ID of the application.
@@ -270,34 +270,37 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_version(
-        self, application_id: str, version_number: str, use_latest_if_no_version_given: bool = False
-    ) -> ApplicationVersion:
+    def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
         """Get a specific application version.
 
         Args:
             application_id (str): The ID of the application
-            version_number (str): The number of the application version
-            use_latest_if_no_version_given (bool): If True, use the latest version if no specific version is given.
+            version_number (str|None): The number of the application version. Use latest if not given.
 
         Returns:
             ApplicationVersion: The application version
 
         Raises:
-            ValueError: If the application version ID is invalid.
-            NotFoundException: If the application with the given ID is not found.
+            ValueError: If the application version number is invalid.
+            NotFoundException: If the application version with the given ID and number is not found.
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
-        # Validate format: application_id:vX.Y.Z (where X.Y.Z is a semver)
-        # This checks for proper format like "he-tme:v0.50.0" where "he-tme" is the application id
-        # and "v0.50.0" is the version with proper semver format
+        if version_number is None:
+            application_summary = self.application(application_id)
+            latest_version = application_summary.versions[0] if application_summary.versions else None
+            if latest_version is None:
+                message = f"No latest version found for application '{application_id}'."
+                logger.error(message)
+                raise NotFoundException(message)
+            version_number = latest_version.number
+
         if not semver.Version.is_valid(version_number):
-            message = f"Invalid application version number format: {version_number}. Expected format: vX.Y.Z"
+            message = f"Invalid application version number: '{version_number}', expected semver."
             logger.warning(message)
             raise ValueError(message)
 
         try:
-            return self._get_platform_client().
+            return self._get_platform_client().application_version(application_id, version_number)
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
@@ -306,46 +309,6 @@ class Service(BaseService):
             message = f"Failed to retrieve application with ID '{application_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
-
-        message = f"Application version with ID {application_version_id} not found in application {application_id}"
-        raise NotFoundException(message)
-
-    def application_versions(self, application: Application | str) -> list[ApplicationVersion]:
-        """Get a list of all versions of the given application.
-
-        Args:
-            application (Application | str): The application to check for versions.
-
-        Returns:
-            list[ApplicationVersion]: A list of all application versions sorted by semantic versioning (latest first).
-
-        Raises:
-            RuntimeError: If version list cannot be retrieved unexpectedly.
-        """
-        try:
-            return self._get_platform_client().applications.versions.list_sorted(application=application)
-        except Exception as e:
-            app_id = application if isinstance(application, str) else application.application_id
-            message = f"Failed to retrieve application versions for application '{app_id}': {e}"
-            logger.exception(message)
-            raise RuntimeError(message) from e
-
-    def application_version_latest(self, application: Application | str) -> ApplicationVersion | None:
-        """Get a latest application version.
-
-        Args:
-            application (Application | str): The application to check for versions.
-
-        Returns:
-            ApplicationVersion | None: The latest version of the given application,
-                or None if no latest version found.
-
-        Raises:
-            NotFoundException: If the application with the given ID is not found.
-            RuntimeError: If version list cannot be retrieved unexpectedly.
-        """
-        versions = self.application_versions(application)
-        return versions[0] if versions else None
 
     @staticmethod
     def _process_key_value_pair(entry: dict[str, Any], key_value: str, reference: str) -> None:
