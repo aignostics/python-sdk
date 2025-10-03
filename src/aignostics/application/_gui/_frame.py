@@ -106,9 +106,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     for index, run_data in enumerate(runs):
                         with (
                             ui.item(
-                                on_click=lambda run_id=run_data["application_run_id"]: ui.navigate.to(
-                                    f"/application/run/{run_id}"
-                                )
+                                on_click=lambda run_id=run_data["run_id"]: ui.navigate.to(f"/application/run/{run_id}")
                             )
                             .props("clickable")
                             .classes("w-full")
@@ -117,20 +115,17 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                             with ui.item_section().props("avatar"):
                                 icon, color = run_status_to_icon_and_color(run_data["status"])
                                 with ui.icon(icon, color=color):
-                                    ui.tooltip(
-                                        f"Run {run_data['application_run_id']}, "
-                                        f"status {run_data['status'].value.upper()}"
-                                    )
+                                    ui.tooltip(f"Run {run_data['run_id']}, status {run_data['status'].value.upper()}")
                             with ui.item_section():
-                                ui.label(f"{run_data['application_version_id']}").classes(
+                                ui.label(f"{run_data['run_id']}").classes(
                                     "font-bold"
-                                    if context.client.page.path == "/application/run/{application_run_id}"
+                                    if context.client.page.path == "/application/run/{run_id}"
                                     and args
-                                    and args.get("application_run_id") == run_data["application_run_id"]
+                                    and args.get("run_id") == run_data["run_id"]
                                     else "font-normal"
                                 )
                                 ui.label(
-                                    f"triggered on {run_data['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
+                                    f"triggered on {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}"
                                 )
                     if not runs:
                         with ui.item():

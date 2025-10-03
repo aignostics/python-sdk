@@ -37,6 +37,7 @@ The application module provides high-level orchestration for AI/ML applications 
 **Service Layer (`_service.py`):**
 
 Core application operations:
+
 - Application listing and version management (semver validation)
 - Run lifecycle management (submit, monitor, complete)
 - File upload with chunking (1MB chunks) and CRC32C verification
@@ -161,7 +162,7 @@ class DownloadProgress(BaseModel):
     item: ItemResult | None = None
     item_count: int | None = None
     item_index: int | None = None
-    item_reference: str | None = None
+    item_external_id: str | None = None
 
     # Artifact tracking
     artifact: OutputArtifactElement | None = None
@@ -422,6 +423,7 @@ logger.error("Application version validation failed", extra={
 **Problem:** Missing 'v' prefix in version
 
 **Solution:**
+
 ```python
 # Always include 'v' prefix
 version_id = "app-id:v1.2.3"  # Correct
@@ -433,6 +435,7 @@ version_id = "app-id:v1.2.3"  # Correct
 **Problem:** QuPath features not working
 
 **Solution:**
+
 ```python
 # Check if ijson is installed
 if not has_qupath_extra:
@@ -444,6 +447,7 @@ if not has_qupath_extra:
 **Problem:** Memory issues with large files
 
 **Solution:**
+
 ```python
 # Use streaming with appropriate chunk size
 chunk_size = APPLICATION_RUN_FILE_READ_CHUNK_SIZE  # 1GB

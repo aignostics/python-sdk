@@ -77,7 +77,7 @@ class DownloadProgress(BaseModel):
     item: ItemResult | None = None
     item_count: int | None = None
     item_index: int | None = None
-    item_reference: str | None = None
+    item_external_id: str | None = None
     artifact: OutputArtifactElement | None = None
     artifact_count: int | None = None
     artifact_index: int | None = None
@@ -253,7 +253,7 @@ class Service(BaseService):
             application_id (str): The ID of the application.
 
         Returns:
-            Application: The application or None if not found.
+            Application: The application.
 
         Raises:
             NotFoundException: If the application with the given ID is not found.
@@ -270,12 +270,13 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
+    def application_version(self, application_id: str, application_version: str | None = None) -> ApplicationVersion:
         """Get a specific application version.
 
         Args:
             application_id (str): The ID of the application
-            version_number (str|None): The number of the application version. Use latest if not given.
+            application_version (str|None): The version of the application (semver).
+                If not given latest version is used.
 
         Returns:
             ApplicationVersion: The application version
@@ -285,22 +286,22 @@ class Service(BaseService):
             NotFoundException: If the application version with the given ID and number is not found.
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
-        if version_number is None:
-            application_summary = self.application(application_id)
-            latest_version = application_summary.versions[0] if application_summary.versions else None
+        if application_version is None:
+            application = self.application(application_id)
+            latest_version = application.versions[0] if application.versions else None
             if latest_version is None:
                 message = f"No latest version found for application '{application_id}'."
                 logger.error(message)
                 raise NotFoundException(message)
-            version_number = latest_version.number
+            application_version = latest_version.number
 
-        if not semver.Version.is_valid(version_number):
-            message = f"Invalid application version number: '{version_number}', expected semver."
+        if not semver.Version.is_valid(application_version):
+            message = f"Invalid application version: '{application_version}', expected semver."
             logger.warning(message)
             raise ValueError(message)
 
         try:
-            return self._get_platform_client().application_version(application_id, version_number)
+            return self._get_platform_client().application_version(application_id, application_version)
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
@@ -311,13 +312,13 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     @staticmethod
-    def _process_key_value_pair(entry: dict[str, Any], key_value: str, reference: str) -> None:
+    def _process_key_value_pair(entry: dict[str, Any], key_value: str, external_id: str) -> None:
         """Process a single key-value pair from a mapping.
 
         Args:
             entry: The entry dictionary to update
             key_value: String in the format "key=value"
-            reference: The reference value for logging
+            external_id: The external_id value for logging
         """
         key, value = key_value.split("=", 1)
         key = key.strip()
@@ -326,42 +327,43 @@ class Service(BaseService):
             return
 
         if key not in entry:
-            logger.warning("key '%s' not found in entry, ignoring mapping for '%s'", key, reference)
+            logger.warning("key '%s' not found in entry, ignoring mapping for '%s'", key, external_id)
             return
 
-        logger.debug("Updating key '%s' with value '%s' for reference '%s'.", key, value, reference)
+        logger.debug("Updating key '%s' with value '%s' for external_id '%s'.", key, value, external_id)
         entry[key.strip()] = value.strip()
 
     @staticmethod
     def _apply_mappings_to_entry(entry: dict[str, Any], mappings: list[str]) -> None:
         """Apply key/value mappings to an entry.
 
-        If the reference attribute of the entry matches the regex pattern in the mapping,
+        If the external_id attribute of the entry matches the regex pattern in the mapping,
             the key/value pairs are applied.
 
         Args:
             entry: The entry dictionary to update with mapped values
             mappings: List of strings with format 'regex:key=value,...'
-                where regex ismatched against the reference attribute in the entry
+                where regex ismatched against the external_id attribute in the entry
         """
-        reference = entry["reference"]
+        external_id = entry["external_id"]
         for mapping in mappings:
             parts = mapping.split(":", 1)
             if len(parts) != 2:  # noqa: PLR2004
                 continue
 
             pattern = parts[0].strip()
-            if not re.search(pattern, reference):
+            if not re.search(pattern, external_id):
                 continue
 
             key_value_pairs = parts[1].split(",")
             for key_value in key_value_pairs:
-                Service._process_key_value_pair(entry, key_value, reference)
+                Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
-    def generate_metadata_from_source_directory(
-        application_version_id: str,
+    def generate_metadata_from_source_directory(  # noqa: PLR0913, PLR0917
         source_directory: Path,
+        application_id: str,
+        application_version: str | None = None,
         with_gui_metadata: bool = False,
         mappings: list[str] | None = None,
         with_extra_metadata: bool = False,
@@ -371,7 +373,7 @@ class Service(BaseService):
         Steps:
         1. Recursively files ending with supported extensions in the source directory
         2. Creates a dict with the following columns
-            - reference (str): The reference of the file, by default equivalent to the absolute file name
+            - external_id (str): The external_id of the file, by default equivalent to the absolute file name
             - source (str): The absolute filename
             - checksum_base64_crc32c (str): The CRC32C checksum of the file constructed, base64 encoded
             - resolution_mpp (float): The microns per pixel, inspecting the base layer
@@ -381,12 +383,13 @@ class Service(BaseService):
         3. Applies the optional mappings to fill in additional metadata fields in the dict.
 
         Args:
-            application_version_id (str): The ID of the application version.
-                If application id is given, the latest version of that application is used.
             source_directory (Path): The source directory to generate metadata from.
+            application_id (str): The ID of the application.
+            application_version (str|None): The version of the application (semver).
+                If not given latest version is used.
             with_gui_metadata (bool): If True, include additional metadata for GUI.
             mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
-                The regular expression is matched against the reference attribute of the entry.
+                The regular expression is matched against the external_id attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
             with_extra_metadata (bool): If True, include extra metadata from the WSIService.
 
@@ -404,7 +407,7 @@ class Service(BaseService):
         logger.debug("Generating metadata from source directory: %s", source_directory)
 
         # TODO(Helmut): Use it
-        _ = Service().application_version(application_version_id, use_latest_if_no_version_given=True)
+        _ = Service().application_version(application_id, application_version)
 
         metadata = []
 
@@ -423,10 +426,10 @@ class Service(BaseService):
                         height = image_metadata["dimensions"]["height"]
                         mpp = image_metadata["resolution"]["mpp_x"]
                         file_size_human = image_metadata["file"]["size_human"]
-                        reference = file_path.absolute()
+                        path = file_path.absolute()
                         entry = {
-                            "reference": str(reference),
-                            "reference_short": str(reference.name),
+                            "external_id": str(path),
+                            "path_name": str(path.name),
                             "source": str(file_path),
                             "checksum_base64_crc32c": checksum,
                             "resolution_mpp": mpp,
@@ -443,7 +446,7 @@ class Service(BaseService):
                             entry["extra"] = image_metadata.get("extra", {})
 
                         if not with_gui_metadata:
-                            entry.pop("reference_short", None)
+                            entry.pop("path_name", None)
                             entry.pop("source", None)
                             entry.pop("file_size_human", None)
                             entry.pop("file_upload_progress", None)
@@ -467,8 +470,9 @@ class Service(BaseService):
 
     @staticmethod
     def application_run_upload(  # noqa: PLR0913, PLR0917
-        application_version_id: str,
+        application_id: str,
         metadata: list[dict[str, Any]],
+        application_version: str | None = None,
         onboard_to_aignostics_portal: bool = False,
         upload_prefix: str = str(time.time() * 1000),
         upload_progress_queue: Any | None = None,  # noqa: ANN401
@@ -477,9 +481,10 @@ class Service(BaseService):
         """Upload files with a progress queue.
 
         Args:
-            application_version_id (str): The ID of the application version.
-                If application id is given, the latest version of that application is used.
+            application_id (str): The ID of the application.
             metadata (list[dict[str, Any]]): The metadata to upload.
+            application_version (str|None): The version ID of the application.
+                If not given latest version is used.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
             upload_prefix (str): The prefix for the upload, defaults to current milliseconds.
             upload_progress_queue (Queue | None): The queue to send progress updates to.
@@ -496,16 +501,16 @@ class Service(BaseService):
         import psutil  # noqa: PLC0415
 
         logger.debug("Uploading files with upload ID '%s'", upload_prefix)
-        application_version = Service().application_version(application_version_id, use_latest_if_no_version_given=True)
+        app_version = Service().application_version(application_id, application_version=application_version)
         for row in metadata:
-            reference = row["reference"]
-            source_file_path = Path(row["reference"])
+            external_id = row["external_id"]
+            source_file_path = Path(row["external_id"])
             if not source_file_path.is_file():
-                logger.warning("Source file '%s' does not exist.", row["reference"])
+                logger.warning("Source file '%s' does not exist.", row["external_id"])
                 return False
             username = psutil.Process().username().replace("\\", "_")
             object_key = (
-                f"{username}/{upload_prefix}/{application_version.application_version_id}/{source_file_path.name}"
+                f"{username}/{upload_prefix}/{application_id}/{app_version.version_number}/{source_file_path.name}"
             )
             if onboard_to_aignostics_portal:
                 object_key = f"onboard/{object_key}"
@@ -516,7 +521,7 @@ class Service(BaseService):
             logger.debug("Generated signed upload URL '%s' for object '%s'", signed_upload_url, platform_bucket_url)
             if upload_progress_queue:
                 upload_progress_queue.put_nowait({
-                    "reference": reference,
+                    "external_id": external_id,
                     "platform_bucket_url": platform_bucket_url,
                 })
             file_size = source_file_path.stat().st_size
@@ -532,7 +537,7 @@ class Service(BaseService):
             ):
 
                 def read_in_chunks(  # noqa: PLR0913, PLR0917
-                    reference: str,
+                    external_id: str,
                     file_size: int,
                     upload_progress_queue: Any | None = None,  # noqa: ANN401
                     upload_progress_callable: Callable[[int, Path, str], None] | None = None,
@@ -545,7 +550,7 @@ class Service(BaseService):
                             break
                         if upload_progress_queue:
                             upload_progress_queue.put_nowait({
-                                "reference": reference,
+                                "external_id": external_id,
                                 "file_upload_progress": min(100.0, f.tell() / file_size),
                             })
                         if upload_progress_callable:
@@ -554,7 +559,7 @@ class Service(BaseService):
 
                 response = requests.put(
                     signed_upload_url,
-                    data=read_in_chunks(reference, file_size, upload_progress_queue, upload_progress_callable),
+                    data=read_in_chunks(external_id, file_size, upload_progress_queue, upload_progress_callable),
                     headers={"Content-Type": "application/octet-stream"},
                     timeout=60,
                 )
@@ -585,10 +590,11 @@ class Service(BaseService):
         """
         return [
             {
-                "application_run_id": run.application_run_id,
-                "application_version_id": run.application_version_id,
-                "triggered_at": run.triggered_at,
-                "status": run.status,
+                "run_id": run.run_id,
+                "application_id": run.application_id,
+                "version_number": run.version_number,
+                "submitted_at": run.submitted_at,
+                "state": run.state,
             }
             for run in Service().application_runs(
                 limit=limit,
@@ -631,10 +637,10 @@ class Service(BaseService):
                 metadata = None
 
             run_iterator = self._get_platform_client().runs.list_data(
-                sort="-triggered_at", page_size=page_size, metadata=metadata
+                sort="-submitted_at", page_size=page_size, metadata=metadata
             )
             for run in run_iterator:
-                if status is not None and run.status != status:
+                if status is not None and run.state != status:
                     continue
                 runs.append(run)
                 if limit is not None and len(runs) >= limit:
@@ -666,17 +672,19 @@ class Service(BaseService):
 
     def application_run_submit_from_metadata(
         self,
-        application_version_id: str,
+        application_id: str,
         metadata: list[dict[str, Any]],
+        application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         onboard_to_aignostics_portal: bool = False,
     ) -> ApplicationRun:
         """Submit a run for the given application.
 
         Args:
-            application_version_id: The ID of the application version to run.
-                If application id is given, the latest version of that application is used.
+            application_id: The ID of the application to run.
             metadata: The metadata for the run.
+            application_version: The version of the application.
+                If not given latest version is used.
             custom_metadata: Optional custom metadata to attach to the run.
             onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
 
@@ -694,16 +702,16 @@ class Service(BaseService):
             custom_metadata = custom_metadata or {}
             custom_metadata.setdefault("sdk", {})
             custom_metadata["sdk"]["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
-        application_version = self.application_version(application_version_id, use_latest_if_no_version_given=True)
-        if len(application_version.input_artifacts) != 1:
+        app_version = self.application_version(application_id, application_version=application_version)
+        if len(app_version.input_artifacts) != 1:
             message = (
-                f"Application version '{application_version_id}' has "
-                f"{len(application_version.input_artifacts)} input artifacts, "
+                f"Application version '{app_version.version_number}' has "
+                f"{len(app_version.input_artifacts)} input artifacts, "
                 "but only 1 is supported."
             )
             logger.warning(message)
             raise RuntimeError(message)
-        input_artifact_name = application_version.input_artifacts[0].name
+        input_artifact_name = app_version.input_artifacts[0].name
 
         items = []
         for row in metadata:
@@ -720,7 +728,7 @@ class Service(BaseService):
 
             items.append(
                 InputItem(
-                    reference=row["reference"],
+                    external_id=row["external_id"],
                     input_artifacts=[
                         InputArtifact(
                             name=input_artifact_name,
@@ -731,9 +739,9 @@ class Service(BaseService):
                                 "width_px": int(row["width_px"]),
                                 "media_type": (
                                     "image/tiff"
-                                    if row["reference"].lower().endswith((".tif", ".tiff"))
+                                    if row["external_id"].lower().endswith((".tif", ".tiff"))
                                     else "application/dicom"
-                                    if row["reference"].lower().endswith(".dcm")
+                                    if row["external_id"].lower().endswith(".dcm")
                                     else "application/octet-stream"
                                 ),
                                 "resolution_mpp": float(row["resolution_mpp"]),
@@ -750,31 +758,44 @@ class Service(BaseService):
         logger.debug("Items for application run submission: %s", items)
 
         try:
-            run = self.application_run_submit(application_version.application_version_id, items, custom_metadata)
+            run = self.application_run_submit(
+                app_version.application_id, items, app_version.version_number, custom_metadata
+            )
             logger.info(
                 "Submitted application run with items: %s, application run id %s, custom metadata: %s",
                 items,
-                run.application_run_id,
+                run.run_id,
                 custom_metadata,
             )
             return run
         except ValueError as e:
-            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            message = (
+                f"Failed to submit application run for application '{app_version.application_id}' "
+                f"(version: {app_version.version_number}): {e}"
+            )
             logger.warning(message)
             raise ValueError(message) from e
         except Exception as e:
-            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            message = (
+                f"Failed to submit application run for application '{app_version.application_id}' "
+                f"(version: {app_version.version_number}): {e}"
+            )
             logger.exception(message)
             raise RuntimeError(message) from e
 
     def application_run_submit(
-        self, application_version_id: str, items: list[InputItem], custom_metadata: dict[str, Any] | None = None
+        self,
+        application_id: str,
+        items: list[InputItem],
+        application_version: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
     ) -> ApplicationRun:
         """Submit a run for the given application.
 
         Args:
-            application_version_id: The ID of the application version to run.
+            application_id: The ID of the application to run.
             items: The input items for the run.
+            application_version: The version of the application to run.
             custom_metadata: Optional custom metadata to attach to the run.
 
         Returns:
@@ -786,15 +807,21 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         try:
+            # TODO (Andreas): This is broken in the openapi.json - runs.create certainly
+            # needs the application_id and the application_version, not just the version
+            # Below must be changed post fix in openapi.json
             return self._get_platform_client().runs.create(
-                application_version=application_version_id, items=items, custom_metadata=custom_metadata
+                application_id=application_id,
+                items=items,
+                version_number=application_version,
+                custom_metadata=custom_metadata,
             )
         except ValueError as e:
-            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
             logger.warning(message)
             raise ValueError(message) from e
         except Exception as e:
-            message = f"Failed to submit application run for version '{application_version_id}': {e}"
+            message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
@@ -884,7 +911,7 @@ class Service(BaseService):
             create_subdirectory_for_run (bool): Whether to create a subdirectory for the run.
             create_subdirectory_per_item (bool): Whether to create a subdirectory for each item,
                 if not set, all items will be downloaded to the same directory but prefixed
-                with the item reference and underscore.
+                with the item external ID and underscore.
             wait_for_completion (bool): Whether to wait for run completion. Defaults to True.
             qupath_project (bool): If True, create QuPath project referencing input slides and results.
                 This requires QuPath to be installed. The QuPath project will be created in a subfolder
@@ -973,7 +1000,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
         if create_subdirectory_for_run:
-            final_destination_directory = destination_directory / details.application_run_id
+            final_destination_directory = destination_directory / details.run_id
         try:
             final_destination_directory.mkdir(parents=True, exist_ok=True)
         except OSError as e:
@@ -991,7 +1018,7 @@ class Service(BaseService):
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
             for item in application_run.results():
-                image_path = Path(item.reference)
+                image_path = Path(item.external_id)
                 if image_path.is_file():
                     image_paths.append(image_path.resolve())
             added = QuPathService.add(
@@ -1021,19 +1048,14 @@ class Service(BaseService):
                 download_progress_callable,
             )
 
-            if run_details.status in {
+            if run_details.state in {
                 ApplicationRunStatus.CANCELED_SYSTEM,
                 ApplicationRunStatus.CANCELED_USER,
                 ApplicationRunStatus.COMPLETED,
                 ApplicationRunStatus.COMPLETED_WITH_ERROR,
                 ApplicationRunStatus.REJECTED,
             }:
-                logger.debug(
-                    "Run '%s' reached final status '%s' with message '%s'.",
-                    run_id,
-                    run_details.status,
-                    run_details.message,
-                )
+                logger.debug("Run '%s' reached final status '%s'.", run_id, run_details.state)
                 break
 
             if not wait_for_completion:
@@ -1041,13 +1063,12 @@ class Service(BaseService):
                     "Run '%s' is in progress with status '%s' and message '%s', "
                     "but not requested to wait for completion.",
                     run_id,
-                    run_details.status,
-                    run_details.message,
+                    run_details.state,
                 )
                 break
 
             logger.debug(
-                "Run '%s' is in progress with status '%s', waiting for completion ...", run_id, run_details.status
+                "Run '%s' is in progress with status '%s', waiting for completion ...", run_id, run_details.state
             )
             progress.status = DownloadProgressState.WAITING
             Service._update_progress(progress, download_progress_callable, download_progress_queue)
@@ -1084,7 +1105,7 @@ class Service(BaseService):
                 progress.item_index = item_index
                 Service._update_progress(progress, download_progress_callable, download_progress_queue)
 
-                image_path = Path(item.reference)
+                image_path = Path(item.external_id)
                 if not image_path.is_file():
                     continue
                 for artifact in item.output_artifacts:
@@ -1094,8 +1115,8 @@ class Service(BaseService):
                     ):
                         artifact_name = artifact.name
                         if create_subdirectory_per_item:
-                            reference_path = Path(item.reference)
-                            stem_name = reference_path.stem
+                            path = Path(item.external_id)
+                            stem_name = path.stem
                             artifact_path = (
                                 final_destination_directory
                                 / stem_name
@@ -1159,24 +1180,24 @@ class Service(BaseService):
         items = list(application_run.results())
         progress.item_count = len(items)
         for item_index, item in enumerate(items):
-            if item.reference in downloaded_items:
+            if item.external_id in downloaded_items:
                 continue
 
             if item.status == ItemStatus.SUCCEEDED:
                 progress.status = DownloadProgressState.DOWNLOADING
                 progress.item_index = item_index
                 progress.item = item
-                progress.item_reference = item.reference
+                progress.item_external_id = item.external_id
 
                 progress.artifact_count = len(item.output_artifacts)
                 Service._update_progress(progress, download_progress_callable, download_progress_queue)
 
                 if create_subdirectory_per_item:
-                    reference_path = Path(item.reference)
-                    stem_name = reference_path.stem
+                    path = Path(item.external_id)
+                    stem_name = path.stem
                     try:
-                        # Handle case where reference might be relative to destination
-                        rel_path = reference_path.relative_to(destination_directory)
+                        # Handle case where path might be relative to destination
+                        rel_path = path.relative_to(destination_directory)
                         stem_name = rel_path.stem
                     except ValueError:
                         # Not a subfolder - just use the stem
@@ -1195,12 +1216,12 @@ class Service(BaseService):
                         progress,
                         artifact,
                         item_directory,
-                        item.reference if not create_subdirectory_per_item else "",
+                        item.external_id if not create_subdirectory_per_item else "",
                         download_progress_queue,
                         download_progress_callable,
                     )
 
-                downloaded_items.add(item.reference)
+                downloaded_items.add(item.external_id)
 
     def _download_item_artifact(  # noqa: PLR0913, PLR0917
         self,
@@ -1280,11 +1301,11 @@ class Service(BaseService):
             requests.HTTPError: If download fails.
         """
         logger.debug(
-            "Downloading artifact '%s' to '%s' with expected checksum '%s' for item reference '%s'",
+            "Downloading artifact '%s' to '%s' with expected checksum '%s' for item with external id '%s'",
             progress.artifact.name if progress.artifact else "unknown",
             artifact_path,
             metadata_checksum,
-            progress.item_reference or "unknown",
+            progress.item_external_id or "unknown",
         )
         progress.artifact_download_url = signed_url
         progress.artifact_path = artifact_path

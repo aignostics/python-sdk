@@ -147,7 +147,7 @@ def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
             )
             pytest.fail(error_msg)
 
-        if "application_run_id=4711" not in notebook_url:
+        if "run_id=4711" not in notebook_url:
             log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
             error_msg = (
                 f"run_id not found in iframe src: {notebook_url}\n"

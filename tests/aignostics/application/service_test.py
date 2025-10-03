@@ -5,7 +5,7 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
 from aignostics.platform import NotFoundException
-from tests.contants_test import HETA_APPLICATION_ID
+from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 
 
 @pytest.mark.unit
@@ -77,13 +77,13 @@ def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
 def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
-    """Test that use_latest_if_no_version_given works correctly."""
+    """Test that latest version works and tested."""
     service = ApplicationService()
 
     try:
-        result = service.application_version(HETA_APPLICATION_ID, use_latest_if_no_version_given=True)
-        assert result is not None
-        assert result.application_version_id.startswith(f"{HETA_APPLICATION_ID}:v")
+        app_version = service.application_version(HETA_APPLICATION_ID)
+        assert app_version is not None
+        assert app_version.version_number == HETA_APPLICATION_VERSION
     except ValueError as e:
         if "no latest version available" in str(e):
             pass  # This is expected behavior

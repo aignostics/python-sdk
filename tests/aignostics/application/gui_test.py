@@ -16,7 +16,7 @@ from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION_ID
+from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 
 if TYPE_CHECKING:
     from nicegui import ui
@@ -72,12 +72,12 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
-        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
-        latest_version_id = latest_version.application_version_id
+        application = Service().application(HETA_APPLICATION_ID)
+        latest_version_number = application.versions[0].version if application.versions else None
 
         # Submit run
         csv_content = (
-            "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+            "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         )
         csv_content += "platform_bucket_url\n"
         csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
@@ -109,12 +109,13 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("Runs")
-        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100)
+        await user.should_see(HETA_APPLICATION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100)
+        await user.should_see(HETA_APPLICATION_VERSION, marker="SIDEBAR_RUN_ITEM:0")
 
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
-        await user.should_see(f"Run of {latest_version_id}")
-        await user.should_see(f"Application Version: {latest_version_id}", retries=100)
+        await user.should_see(f"Run of {application.application_id} ({latest_version_number})", retries=100)
+        await user.should_see(f"Application: {application.application_id} ({latest_version_number})", retries=100)
         await user.should_see("status RUNNING", retries=100)
         await user.should_see("test_gui_cli_submit_to_run_result_delete", retries=100)
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
@@ -250,27 +251,31 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
-        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
-        latest_version_id = latest_version.application_version_id
-        # This assumes a successful HETA run is in the last 200 completed runs
-        runs = Service().application_runs(limit=200, status=ApplicationRunStatus.COMPLETED)
+        gui_register_pages()
+
+        application = Service().application(HETA_APPLICATION_ID)
+        latest_version_number = application.versions[0].version if application.versions else None
+        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
 
         if not runs:
             pytest.fail("No completed runs found, please run other tests first.")
         # Find a completed run with the latest application version ID
         run = None
         for potential_run in runs:
-            if potential_run.application_version_id == latest_version_id:
+            if (
+                potential_run.application_id == application.application_id
+                and potential_run.version_number == latest_version_number
+            ):
                 run = potential_run
                 break
         if not run:
-            pytest.skip(f"No completed runs found with version {latest_version_id}")
+            pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
 
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.application_run_id}, status: {run.status}")
-        await user.open(f"/application/run/{run.application_run_id}")
-        await user.should_see(f"Run {run.application_run_id}", retries=100)
-        await user.should_see(f"Run of {latest_version_id}", retries=100)
+        print(f"Found existing run: {run.run_id}, status: {run.status}")
+        await user.open(f"/application/run/{run.run_id}")
+        await user.should_see(f"Run {run.run_id}", retries=100)
+        await user.should_see(f"Run of {application.application_id} ({latest_version_number})", retries=100)
 
         # Step 2: Open Result Download dialog
         await user.should_see(marker="BUTTON_DOWNLOAD_RUN", retries=100)
@@ -292,7 +297,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         # Check: Download completed
         await assert_notified(user, "Download completed.", 60 * 4)
         print_directory_structure(tmp_path, "execute")
-        run_out_dir = tmp_path / run.application_run_id
+        run_out_dir = tmp_path / run.run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
         # Find any subdirectory in the run_out_dir
         subdirs = [d for d in run_out_dir.iterdir() if d.is_dir()]

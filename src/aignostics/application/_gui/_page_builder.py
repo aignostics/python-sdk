@@ -30,13 +30,13 @@ class PageBuilder(BasePageBuilder):
 
             await _page_application_describe(application_id)
 
-        @ui.page("/application/run/{application_run_id}")
-        async def page_application_run_describe(application_run_id: str) -> None:
+        @ui.page("/application/run/{run_id}")
+        async def page_application_run_describe(run_id: str) -> None:
             """Describe Application Run.
 
             Args:
-                application_run_id (str): The application run id
+                run_id (str): The application run id
             """
             from ._page_application_run_describe import _page_application_run_describe  # noqa: PLC0415
 
-            await _page_application_run_describe(application_run_id)
+            await _page_application_run_describe(run_id)

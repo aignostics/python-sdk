@@ -50,29 +50,29 @@ class ApplicationRun:
     Provides operations to check status, retrieve results, and download artifacts.
     """
 
-    def __init__(self, api: PublicApi, application_run_id: str) -> None:
+    def __init__(self, api: PublicApi, run_id: str) -> None:
         """Initializes an ApplicationRun instance.
 
         Args:
             api (PublicApi): The configured API client.
-            application_run_id (str): The ID of the application run.
+            run_id (str): The ID of the application run.
         """
         self._api = api
-        self.application_run_id = application_run_id
+        self.run_id = run_id
 
     @classmethod
-    def for_application_run_id(cls, application_run_id: str) -> "ApplicationRun":
+    def for_run_id(cls, run_id: str) -> "ApplicationRun":
         """Creates an ApplicationRun instance for an existing run.
 
         Args:
-            application_run_id (str): The ID of the application run.
+            run_id (str): The ID of the application run.
 
         Returns:
             ApplicationRun: The initialized ApplicationRun instance.
         """
         from aignostics.platform._client import Client  # noqa: PLC0415
 
-        return cls(Client.get_api_client(cache_token=False), application_run_id)
+        return cls(Client.get_api_client(cache_token=False), run_id)
 
     # TODO(Andreas): Deprecated, please remove when you updated your integration code
     def status(self) -> ApplicationRunData:
@@ -95,18 +95,18 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id)
+        return self._api.get_run_v1_runs_run_id_get(self.run_id)
 
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run.
 
         Returns:
-            dict[str, ItemStatus]: A dictionary mapping item references to their status.
+            dict[str, ItemStatus]: A dictionary mapping item external IDs to their status.
 
         Raises:
             Exception: If the API request fails.
         """
-        return {item.reference: item.status for item in self.results()}
+        return {item.external_id: item.status for item in self.results()}
 
     # TODO(Andreas): Fails with Internal Server Error if run canceled; don't throw generic exceptions
     def cancel(self) -> None:
@@ -115,7 +115,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        self._api.cancel_application_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
+        self._api.cancel_application_run_v1_runs_run_id_cancel_post(self.run_id)
 
     def delete(self) -> None:
         """Delete the application run.
@@ -123,7 +123,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        self._api.delete_application_run_results_v1_runs_application_run_id_results_delete(self.application_run_id)
+        self._api.delete_application_run_results_v1_runs_run_id_results_delete(self.run_id)
 
     def results(self) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
@@ -135,8 +135,8 @@ class ApplicationRun:
             Exception: If the API request fails.
         """
         return paginate(
-            self._api.list_run_results_v1_runs_application_run_id_results_get,
-            application_run_id=self.application_run_id,
+            self._api.list_run_results_v1_runs_run_id_results_get,
+            run_id=self.run_id,
         )
 
     def download_to_folder(
@@ -159,7 +159,7 @@ class ApplicationRun:
         if not download_base.is_dir():
             msg = f"{download_base} is not a directory"
             raise ValueError(msg)
-        application_run_dir = Path(download_base) / self.application_run_id
+        application_run_dir = Path(download_base) / self.run_id
 
         # incrementally check for available results
         application_run_status = self.details().status
@@ -177,7 +177,7 @@ class ApplicationRun:
                 case ItemStatus.SUCCEEDED:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 case ItemStatus.ERROR_SYSTEM | ItemStatus.ERROR_USER:
-                    print(f"{item.reference} failed with {item.status.value}: {item.error}")
+                    print(f"{item.external_id} failed with {item.status.value}: {item.error}")
 
     @staticmethod
     def ensure_artifacts_downloaded(
@@ -196,7 +196,7 @@ class ApplicationRun:
             ValueError: If checksums don't match.
             Exception: If downloads fail.
         """
-        item_dir = base_folder / item.reference
+        item_dir = base_folder / item.external_id
 
         downloaded_at_least_one_artifact = False
         for artifact in item.output_artifacts:
@@ -220,9 +220,9 @@ class ApplicationRun:
                 download_file(artifact.download_url, str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
-            print(f"Downloaded results for item: {item.reference} to {item_dir}")
+            print(f"Downloaded results for item: {item.external_id} to {item_dir}")
         else:
-            print(f"Results for item: {item.reference} already present in {item_dir}")
+            print(f"Results for item: {item.external_id} already present in {item_dir}")
 
     def __str__(self) -> str:
         """Returns a string representation of the application run.
@@ -245,7 +245,7 @@ class ApplicationRun:
                     error += 1
 
         items = f"{len(item_status)} items - ({pending}/{succeeded}/{error}) [pending/succeeded/error]"
-        return f"Application run `{self.application_run_id}`: {app_status}, {items}"
+        return f"Application run `{self.run_id}`: {app_status}, {items}"
 
 
 class Runs:
@@ -262,25 +262,31 @@ class Runs:
         """
         self._api = api
 
-    def __call__(self, application_run_id: str) -> ApplicationRun:
+    def __call__(self, run_id: str) -> ApplicationRun:
         """Retrieves an ApplicationRun instance for an existing run.
 
         Args:
-            application_run_id (str): The ID of the application run.
+            run_id (str): The ID of the application run.
 
         Returns:
             ApplicationRun: The initialized ApplicationRun instance.
         """
-        return ApplicationRun(self._api, application_run_id)
+        return ApplicationRun(self._api, run_id)
 
     def create(
-        self, application_version: str, items: list[ItemCreationRequest], custom_metadata: dict[str, Any] | None = None
+        self,
+        application_id: str,
+        items: list[ItemCreationRequest],
+        version_number: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
     ) -> ApplicationRun:
         """Creates a new application run.
 
         Args:
-            application_version (str): The ID of the application version.
+            application_id (str): The ID of the application.
             items (list[ItemCreationRequest]): The run creation request payload.
+            version_number (str|None): The version of the application to use.
+                If None, the latest version is used.
             custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
 
         Returns:
@@ -293,10 +299,15 @@ class Runs:
         custom_metadata = custom_metadata or {}
         custom_metadata.setdefault("sdk", {})
         custom_metadata["sdk"]["user_agent"] = user_agent()
-        payload = RunCreationRequest(application_version_id=application_version, items=items, metadata=custom_metadata)
+        payload = RunCreationRequest(
+            application_id=application_id,
+            version_number=version_number,
+            custom_metadata=custom_metadata,
+            items=items,
+        )
         self._validate_input_items(payload)
-        res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
-        return ApplicationRun(self._api, str(res.application_run_id))
+        res: RunCreationResponse = self._api.create_run_v1_runs_post(payload)
+        return ApplicationRun(self._api, str(res.run_id))
 
     def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
         """Find application runs, optionally filtered by application version.
@@ -314,7 +325,7 @@ class Runs:
             res = paginate(self._api.list_application_runs_v1_runs_get)
         else:
             res = paginate(self._api.list_application_runs_v1_runs_get, application_version_id=for_application_version)
-        return (ApplicationRun(self._api, response.application_run_id) for response in res)
+        return (ApplicationRun(self._api, response.run_id) for response in res)
 
     # TODO(Andreas): Think about merging by having list(...) above return active records that as well hold data
     def list_data(
@@ -364,7 +375,7 @@ class Runs:
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.
 
-        Checks that references are unique, all required artifacts are provided,
+        Checks that external ids are unique, all required artifacts are provided,
         and artifact metadata matches the expected schema.
 
         Args:
@@ -379,13 +390,13 @@ class Runs:
         schema_idx = {
             input_artifact.name: input_artifact.metadata_schema for input_artifact in app_version.input_artifacts
         }
-        references = set()
+        external_ids = set()
         for item in payload.items:
-            # verify references are unique
-            if item.reference in references:
-                msg = f"Duplicate reference `{item.reference}` in items."
+            # verify external IDs are unique
+            if item.external_id in external_ids:
+                msg = f"Duplicate external ID `{item.external_id}` in items."
                 raise ValueError(msg)
-            references.add(item.reference)
+            external_ids.add(item.external_id)
 
             schema_check = set(schema_idx.keys())
             for artifact in item.input_artifacts:

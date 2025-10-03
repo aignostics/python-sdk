@@ -49,21 +49,19 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
 
     """
     run_data = run.details()
-    console.print(f"[bold]Run Details for {run.application_run_id}[/bold]")
+    console.print(f"[bold]Run Details for {run.run_id}[/bold]")
     console.print("=" * 80)
-    console.print(f"[bold]App Version:[/bold] {run_data.application_version_id}")
-    console.print(f"[bold]Status:[/bold] {run_data.status.value}")
-    console.print(f"[bold]Message:[/bold] {run_data.message}")
-    if run_data.terminated_at and run_data.triggered_at:
-        duration = run_data.terminated_at - run_data.triggered_at
+    console.print(f"[bold]Application (Version):[/bold] {run_data.application_id} ({run_data.version_number})   ")
+    console.print(f"[bold]Status:[/bold] {run_data.state.value}")
+    console.print(f"[bold]Error:[/bold] {run_data.error_message or 'N/A'} ({run_data.error_code or 'N/A'})")
+    if run_data.terminated_at and run_data.submitted_at:
+        duration = run_data.terminated_at - run_data.submitted_at
         duration_str = humanize.precisedelta(duration)
         console.print(f"[bold]Duration:[/bold] {duration_str}")
-    console.print(f"[bold]Triggered at:[/bold] {run_data.triggered_at}")
-    console.print(f"[bold]Terminated at:[/bold] {run_data.terminated_at}")
-    console.print(f"[bold]Triggered by:[/bold] {run_data.triggered_by}")
-    console.print(f"[bold]Organization:[/bold] {run_data.organization_id}")
+    console.print(f"[bold]Submitted:[/bold] {run_data.submitted_at} ({run_data.submitted_by})")
+    console.print(f"[bold]Terminated:[/bold] {run_data.terminated_at} ({duration_str})")
 
-    console.print(f"[bold]Custom Metadata:[/bold] {run_data.metadata or 'None'}")
+    console.print(f"[bold]Custom Metadata:[/bold] {run_data.custom_metadata or 'None'}")
 
     # Get and display detailed item status
     console.print()
@@ -86,13 +84,14 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         return
 
     for item in results:
-        console.print(f"  [bold]Item Reference:[/bold] {item.reference}")
+        console.print(f"  [bold]Item Reference:[/bold] {item.external_id}")
         console.print(f"  [bold]Item ID:[/bold] {item.item_id}")
         console.print(f"  [bold]Status:[/bold] {item.status.value}")
         console.print(f"  [bold]Message:[/bold] {item.message}")
 
-        if item.error:
-            console.print(f"  [error]Error:[/error] {item.error}")
+        # TODO(Andreas): error_code is missing, see model,should be printed here as well
+        if item.error_message:
+            console.print(f"  [error]Error:[/error] {item.error_message}")
 
         if item.output_artifacts:
             console.print("  [bold]Output Artifacts:[/bold]")
@@ -117,7 +116,7 @@ def _print_run_status_summary(run: ApplicationRun) -> None:
         return
 
     status_counts: dict[
-        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "ERROR_USER", "ERROR_SYSTEM", "SUCCEEDED"], int
+        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "USER_ERROR", "SYSTEM_ERROR", "SUCCEEDED"], int
     ] = {}
     for status in item_statuses.values():
         status_counts[status.value] = status_counts.get(status.value, 0) + 1
@@ -139,14 +138,12 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
     try:
         item_statuses = run.item_status()
     except Exception as e:
-        logger.exception("Failed to get item status for run with ID '%s'", run.application_run_id)
-        console.print(
-            f"[error]Error:[/error] Failed to get item statuses for run with ID '{run.application_run_id}': {e}"
-        )
+        logger.exception("Failed to get item status for run with ID '%s'", run.run_id)
+        console.print(f"[error]Error:[/error] Failed to get item statuses for run with ID '{run.run_id}': {e}")
         return False
 
     status_counts: dict[
-        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "ERROR_USER", "ERROR_SYSTEM", "SUCCEEDED"], int
+        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "USER_ERROR", "SYSTEM_ERROR", "SUCCEEDED"], int
     ] = {}
     for status in item_statuses.values():
         status_counts[status.value] = status_counts.get(status.value, 0) + 1
@@ -160,7 +157,7 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
 
 
 def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
-    """Print detailed information about runs, sorted by triggered_at in descending order.
+    """Print detailed information about runs, sorted by submitted_at in descending order.
 
     Args:
         runs (list[ApplicationRunData]): List of run data
@@ -173,26 +170,28 @@ def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
     console.print("=" * 80)
 
     for run in runs:
-        console.print(f"[bold]Run ID:[/bold] {run.application_run_id}")
-        console.print(f"[bold]App Version:[/bold] {run.application_version_id}")
-        console.print(f"[bold]Status:[/bold] {run.status.value}")
-        console.print(f"[bold]Triggered at:[/bold] {run.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}")
-        console.print(f"[bold]Organization:[/bold] {run.organization_id}")
+        console.print(f"[bold]Run ID:[/bold] {run.run_id}")
+        console.print(f"[bold]Application:[/bold] {run.application_id} ({run.version_number})")
+        console.print(f"[bold]Status:[/bold] {run.state.value}")
+        console.print(
+            f"[bold]Submitted:[/bold] "
+            f"{run.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')} "
+            f"({run.submitted_by})"
+        )
 
         try:
-            _retrieve_and_print_item_status_counts(Service().application_run(run.application_run_id))
+            _retrieve_and_print_item_status_counts(Service().application_run(run.run_id))
         except Exception as e:
-            logger.exception("Failed to retrieve item status counts for run with ID '%s'", run.application_run_id)
+            logger.exception("Failed to retrieve item status counts for run with ID '%s'", run.run_id)
             console.print(
-                f"[error]Error:[/error] Failed to retrieve item status counts for run with ID "
-                f"'{run.application_run_id}': {e}"
+                f"[error]Error:[/error] Failed to retrieve item status counts for run with ID '{run.run_id}': {e}"
             )
             continue
         console.print("-" * 80)
 
 
 def print_runs_non_verbose(runs: list[ApplicationRunData]) -> None:
-    """Print simplified information about runs, sorted by triggered_at in descending order.
+    """Print simplified information about runs, sorted by submitted_at in descending order.
 
     Args:
         runs (list[ApplicationRunData]): List of runs
@@ -202,10 +201,10 @@ def print_runs_non_verbose(runs: list[ApplicationRunData]) -> None:
 
     for run_status in runs:
         console.print(
-            f"- [bold]{run_status.application_run_id}[/bold] of "
-            f"[bold]{run_status.application_version_id}[/bold] "
-            f"(triggered: {run_status.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
-            f"status: {run_status.status.value})"
+            f"- [bold]{run_status.run_id}[/bold] of "
+            f"[bold]{run_status.application_id} ({run_status.version_number})[/bold] "
+            f"(triggered: {run_status.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
+            f"status: {run_status.state.value})"
         )
 
 

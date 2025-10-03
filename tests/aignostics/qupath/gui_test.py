@@ -151,8 +151,10 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
-        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
-        latest_version_id = latest_version.application_version_id
+        gui_register_pages()
+
+        application = Service().application(HETA_APPLICATION_ID)
+        latest_version_number = application.versions[0].version if application.versions else None
         runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
 
         if not runs:
@@ -160,17 +162,17 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         # Find a completed run with the latest application version ID
         run = None
         for potential_run in runs:
-            if potential_run.application_version_id == latest_version_id:
+            if potential_run.application_id == application.id and potential_run.version_number == latest_version_number:
                 run = potential_run
                 break
         if not run:
-            pytest.skip(f"No completed runs found with version {latest_version_id}")
+            pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
 
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.application_run_id}, status: {run.status}")
-        await user.open(f"/application/run/{run.application_run_id}")
-        await user.should_see(f"Run {run.application_run_id}")
-        await user.should_see(f"Run of {latest_version_id}")
+        print(f"Found existing run: {run.run_id}, status: {run.status}")
+        await user.open(f"/application/run/{run.run_id}")
+        await user.should_see(f"Run {run.run_id}")
+        await user.should_see(f"Run of {application.application_id} ({latest_version_number})")
 
         # Step 2: Open Result Download dialog
         await user.should_see(marker="BUTTON_OPEN_QUPATH", retries=100)
@@ -187,7 +189,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         # Check: Download completed
         await assert_notified(user, "Download and QuPath project creation completed.", 60)
         print_directory_structure(tmp_path, "execute")
-        run_out_dir = tmp_path / run.application_run_id
+        run_out_dir = tmp_path / run.run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
         # Find any subdirectory in the run_out_dir that is not qupath
         subdirs = [d for d in run_out_dir.iterdir() if d.is_dir() and d.name != "qupath"]

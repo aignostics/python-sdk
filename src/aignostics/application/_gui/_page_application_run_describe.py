@@ -31,11 +31,11 @@ WIDTH_1200px = "width: 1200px; max-width: none"
 service = Service()
 
 
-async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
+async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
     """Describe Application.
 
     Args:
-        application_run_id (str): The ID of the application run to describe.
+        run_id (str): The ID of the application run to describe.
     """
     import pandas as pd  # noqa: PLC0415
 
@@ -43,35 +43,35 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         from aignostics.qupath import Service as QuPathService  # noqa: PLC0415
 
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
-    run = await nicegui_run.io_bound(service.application_run, application_run_id)
+    run = await nicegui_run.io_bound(service.application_run, run_id)
     spinner.set_visibility(False)
     run_data = run.details() if run else None
 
     if run and run_data:
-        icon, color = run_status_to_icon_and_color(run_data.status.value)
+        icon, color = run_status_to_icon_and_color(run_data.state.value)
         await _frame(
             navigation_title=(
-                f"Run of {run_data.application_version_id} "
-                f"on {run_data.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
+                f"Run of {run_data.application_id} ({run_data.version_number}) on "
+                f"{run_data.submitted_at.astimezone().strftime('%m-%d %H:%M')}"
             ),
             navigation_icon=icon,
             navigation_icon_color=color,
-            navigation_icon_tooltip=f"Run {run_data.application_run_id}, status {run_data.status.value.upper()}",
+            navigation_icon_tooltip=f"Run {run_data.run_id}, status {run_data.state.value.upper()}",
             left_sidebar=True,
-            args={"application_run_id": application_run_id},
+            args={"run_id": run_id},
         )
     else:
         await _frame(
-            navigation_title=f"Run {application_run_id}",
+            navigation_title=f"Run {run_id}",
             navigation_icon="bug_report",
             navigation_icon_color="negative",
             navigation_icon_tooltip="Could not load run data",
             left_sidebar=True,
-            args={"application_run_id": application_run_id},
+            args={"run_id": run_id},
         )
 
     if run is None:
-        ui.label(f"Failed to get run '{application_run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
+        ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
         return
 
     async def _cancel(run_id: str) -> bool:
@@ -256,7 +256,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                 download_button.props(add="loading")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
-                    run_id=run.application_run_id,
+                    run_id=run.run_id,
                     destination_directory=Path(selected_folder.value),
                     wait_for_completion=True,
                     qupath_project=qupath_project,
@@ -426,38 +426,35 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         if button:
             button.disable()
             button.props(add="loading")
-        ui.navigate.to(f"/notebook/{run.application_run_id}?results_folder={quote(results_folder.as_posix())}")
+        ui.navigate.to(f"/notebook/{run.run_id}?results_folder={quote(results_folder.as_posix())}")
         ui.navigate.reload()  # TODO(Helmut): Find out why this workaround works. Was just a hunch ...
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
-            with ui.expansion(text=f"Run {run.application_run_id}"):
+            with ui.expansion(text=f"Run {run.run_id}"):
                 # Display run metadata, including duration if possible, using humanize
 
-                triggered_at = run_data.triggered_at.astimezone()
+                submitted_at = run_data.submitted_at.astimezone()
                 terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
-                if triggered_at and terminated_at:
-                    duration_seconds = (terminated_at - triggered_at).total_seconds()
+                if submitted_at and terminated_at:
+                    duration_seconds = (terminated_at - submitted_at).total_seconds()
                     duration_str = humanize.precisedelta(duration_seconds, format="%0.0f")
                 else:
                     duration_str = "N/A"
 
                 ui.code(
                     f"""
-                    * Run ID: {run_data.application_run_id}
-                    * Application Version: {run_data.application_version_id}
-                    * Message: {run_data.message}
-                    * Duration: {duration_str}
-                    * Triggered On: {triggered_at.strftime("%m-%d %H:%M")}
-                    * Terminated At: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"}
-                    * Triggered By: {run_data.triggered_by}
-                    * Organization: {run_data.organization_id}
+                    * Run ID: {run_data.run_id}
+                    * Application: {run_data.application_id} ({run_data.version_number})
+                    * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
+                    * Submitted: {submitted_at.strftime("%m-%d %H:%M")} ({run_data.submitted_by})
+                    * Terminated: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"} ({duration_str})
                     """,
                     language="markdown",
                 ).classes("full-width")
-                if run_data.metadata:
+                if run_data.custom_metadata:
                     properties = {
-                        "content": {"json": run_data.metadata},
+                        "content": {"json": run_data.custom_metadata},
                         "mode": "tree",
                         "readOnly": True,
                         "mainMenuBar": True,
@@ -467,7 +464,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
-                if run_data.status.value == ApplicationRunStatus.COMPLETED:
+                if run_data.state.value == ApplicationRunStatus.COMPLETED:
                     with ui.button_group().props("push"):
                         with (
                             ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
@@ -498,15 +495,15 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                             ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
 
-                if run_data.status.value == ApplicationRunStatus.RUNNING:
+                if run_data.state.value == ApplicationRunStatus.RUNNING:
                     cancel_button = ui.button(
                         "Cancel",
                         color="red",
-                        on_click=lambda: _cancel(run.application_run_id),
+                        on_click=lambda: _cancel(run.run_id),
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-                if run_data.status.value in {
+                if run_data.state.value in {
                     ApplicationRunStatus.CANCELED_USER,
                     ApplicationRunStatus.CANCELED_SYSTEM,
                     ApplicationRunStatus.COMPLETED,
@@ -518,11 +515,11 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     delete_button = ui.button(
                         "Delete",
                         color="red",
-                        on_click=lambda: _delete(run.application_run_id),
+                        on_click=lambda: _delete(run.run_id),
                         icon="delete",
                     ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
 
-        note = run_data.metadata.get("sdk", {}).get("note") if run_data.metadata else None
+        note = run_data.custom_metadata.get("sdk", {}).get("note") if run_data.custom_metadata else None
         if note:
             with ui.card().classes("full-width"):
                 ui.markdown(str(note))
@@ -547,7 +544,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         ui.card().tight().classes("h-full"),
                         ui.row().classes("w-full"),
                     ):
-                        image_file: AsyncPath | None = await AsyncPath(item.reference).resolve()
+                        image_file: AsyncPath | None = await AsyncPath(item.external_id).resolve()
                         if image_file and await image_file.is_file():
                             image_url = "/thumbnail?source=" + quote(image_file.as_posix())
                         else:
@@ -583,7 +580,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         with ui.row().classes(
                             "absolute-bottom h-32 bg-indigo-700 bg-opacity-80 content-center w-full p-4"
                         ):
-                            ui.label(item.reference).classes(
+                            ui.label(item.external_id).classes(
                                 "text-center break-all text-white font-semibold text-shadow-lg/30"
                             )
                     if item.status is ItemStatus.SUCCEEDED:

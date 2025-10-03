@@ -11,7 +11,12 @@ from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
 from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
-from tests.contants_test import HETA_APPLICATION_ID, TEST_APPLICATION_ID
+from tests.contants_test import (
+    HETA_APPLICATION_ID,
+    HETA_APPLICATION_VERSION,
+    TEST_APPLICATION_ID,
+    TEST_APPLICATION_VERSION,
+)
 
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
@@ -34,15 +39,21 @@ def test_cli_application_list_verbose(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "list", "--verbose"])
     assert result.exit_code == 0
     assert HETA_APPLICATION_ID in normalize_output(result.output)
+    assert HETA_APPLICATION_VERSION in normalize_output(result.output)
     assert "Artifacts: 1 input(s), 6 output(s)" in normalize_output(result.output)
     assert TEST_APPLICATION_ID in normalize_output(result.output)
+    assert TEST_APPLICATION_VERSION in normalize_output(result.output)
 
 
-@pytest.mark.e2e
-@pytest.mark.timeout(timeout=60)
-def test_cli_application_describe(runner: CliRunner) -> None:
+def test_cli_application_describe_success(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID])
+    assert result.exit_code == 0
+
+
+def test_cli_application_describe_verbose(runner: CliRunner) -> None:
+    """Check application describe command runs successfully."""
+    result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID, "--verbose"])
     assert result.exit_code == 0
     assert "tissue_qc:geojson_polygons" in normalize_output(result.output)
 
@@ -66,7 +77,7 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> Non
     application_version = ApplicationService().application_version(HETA_APPLICATION_ID, True)
     assert result.exit_code == 0
     assert "Zipped 11 files" in normalize_output(result.output)
-    zip_file = sanitize_path(Path(tmp_path / f"{application_version.application_version_id}_schemata.zip"))
+    zip_file = sanitize_path(Path(tmp_path / f"{application_version.version_number}_schemata.zip"))
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
@@ -84,7 +95,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     assert metadata_csv.exists()
     assert (
         metadata_csv.read_text()
-        == "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+        == "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         "platform_bucket_url\n"
         f"{source_directory / 'small-pyramidal.dcm'};"
         "EfIIhA==;8.065226874391001;2054;1529;;;;\n"
@@ -93,7 +104,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     # Step 2: Simulate user now upading the metadata.csv file, by setting the tissue to "LUNG"
     # and disease to "LUNG_CANCER"
     metadata_csv.write_text(
-        "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+        "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         "platform_bucket_url\n"
         f"{source_directory / 'small-pyramidal.dcm'};"
         "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;\n"
@@ -117,7 +128,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     metadata_csv = tmp_path / "metadata.csv"
     metadata_csv.write_text(
-        "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+        "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
         "platform_bucket_url\n"
         "missing.file;"
         "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;\n"
@@ -132,7 +143,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
@@ -148,7 +159,7 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;aws://bucket/test"
     csv_path = tmp_path / "dummy.csv"
@@ -164,7 +175,7 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
-    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;"
     csv_path = tmp_path / "dummy.csv"
@@ -181,7 +192,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
 @pytest.mark.timeout(timeout=60 * 10)
 def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command runs successfully."""
-    csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"

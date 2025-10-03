@@ -23,7 +23,7 @@ from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from aignx.codegen.models import RunReadResponse as ApplicationRunData
-from aignx.codegen.models import RunState as ApplicationRunStatus  # TODO(refactor)
+from aignx.codegen.models import RunState as ApplicationRunStatus  # TODO(Helmut): Refactor
 from aignx.codegen.models import UserReadResponse as User
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 

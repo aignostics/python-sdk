@@ -80,9 +80,9 @@ class Client:
         """Get current user info."""
         return self._api.get_me_v1_me_get()
 
-    def run(self, application_run_id: str) -> ApplicationRun:
+    def run(self, run_id: str) -> ApplicationRun:
         """Get specific run by ID."""
-        return ApplicationRun(self._api, application_run_id)
+        return ApplicationRun(self._api, run_id)
 
     def application(self, application_id: str) -> Application:
         """Find application by ID (iterates through list)."""
@@ -200,7 +200,7 @@ run = client.run("run-id-123")
 # List runs with custom page size
 runs = client.runs.list(page_size=50)  # Max 100
 for run in runs:
-    print(f"Run: {run.application_run_id}")
+    print(f"Run: {run.run_id}")
 ```
 
 ### Error Handling
@@ -267,9 +267,9 @@ def expired_token() -> str:
 ```python
 def test_runs_list_with_pagination(runs, mock_api):
     # Setup pages
-    page1 = [Mock(spec=RunReadResponse, application_run_id=f"run-{i}")
+    page1 = [Mock(spec=RunReadResponse, run_id=f"run-{i}")
              for i in range(PAGE_SIZE)]
-    page2 = [Mock(spec=RunReadResponse, application_run_id=f"run-{i + PAGE_SIZE}")
+    page2 = [Mock(spec=RunReadResponse, run_id=f"run-{i + PAGE_SIZE}")
              for i in range(5)]
 
     mock_api.list_application_runs_v1_runs_get.side_effect = [page1, page2]

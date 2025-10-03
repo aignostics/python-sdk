@@ -6,10 +6,10 @@ that are shared across different test modules to ensure consistency and easy mai
 
 # Test Application constants
 TEST_APPLICATION_ID = "test-app"
-TEST_APPLICATION_VERSION_ID = "test-app:v0.0.1"
-TEST_APPLICATION_TIMEOUT_SECONDS = 60 * 45  # 45 minutes
+TEST_APPLICATION_VERSION = "0.0.1"
+TEST_APPLICATION_TIMEOUT_SECONDS = 2 * 60 * 60  # 1 hour
 
 # HETA Application constants
 HETA_APPLICATION_ID = "he-tme"
-HETA_APPLICATION_VERSION_ID = "he-tme:v1.0.0-beta.8"
-HETA_APPLICATION_TIMEOUT_SECONDS = 60 * 60 * 5  # 5 hours
+HETA_APPLICATION_VERSION = "1.0.0-beta.8"
+HETA_APPLICATION_TIMEOUT_SECONDS = 6 * 60 * 60  # 6 hours

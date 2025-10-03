@@ -30,7 +30,8 @@ MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 class SubmitForm:
     """Submit form."""
 
-    application_version_id: str | None = None
+    application_id: str | None = None
+    application_version: str | None = None
     source: Path | None = None
     wsi_step_label: ui.label | None = None
     wsi_next_button: ui.button | None = None
@@ -82,17 +83,17 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         args={"application_id": application_id},
     )
 
-    application_versions = service.application_versions(application)
-    latest_application_version = application_versions[0]
-    latest_application_version_id = latest_application_version.application_version_id
-    submit_form.application_version_id = latest_application_version_id
+    submit_form.application_id = application.application_id
+    latest_application_version = application.versions[0] or None
+    submit_form.application_version = latest_application_version.number if latest_application_version else None
 
     with ui.dialog() as release_notes_dialog, ui.card().style(WIDTH_1200px):
         ui.label(f"Release notes of {application.name}").classes("text-h5")
         with ui.scroll_area().classes("w-full h-100"):
-            for application_version in application_versions:
-                ui.label(f"Version {application_version.version}").classes("text-h6")
-                ui.markdown(application_version.changelog)
+            for version in application.versions:
+                ui.label(f"Version {version.number}").classes("text-h6")
+                # TODO(Helmut): Util to compile changelog
+                ui.markdown("TODO")
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=release_notes_dialog.close)
 
@@ -196,8 +197,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.wsi_next_button.set_visibility(False)
                 submit_form.metadata_grid.options["rowData"] = await nicegui_run.cpu_bound(
                     Service.generate_metadata_from_source_directory,
-                    str(submit_form.application_version_id),
                     submit_form.source,
+                    str(submit_form.application_id),
+                    str(submit_form.application_version),
                     True,
                     [".*:staining_method=H&E"],
                     True,
@@ -225,13 +227,14 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             ui.notify("No source directory selected", type="warning")
 
     with ui.dialog() as info_dialog, ui.card().style("width: 1200px; max-width: none; height: 1000px"):  # noqa: PLR1702
-        if submit_form.application_version_id is None:
+        if submit_form.application_version is None:
             return
         with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
-            for application_version in application_versions:
-                if application_version.application_version_id == submit_form.application_version_id:
-                    ui.label(f"Latest changes in v{application_version.version}").classes("text-h5")
-                    ui.markdown(application_version.changelog)
+            for application_version in application.versions:
+                if application_version.number == submit_form.application_version:
+                    ui.label(f"Latest changes in v{application_version.number}").classes("text-h5")
+                    # TODO(Helmut): Util to compile changelog
+                    ui.markdown("TK")
                     ui.label("Expected Input Artifacts:").classes("text-h5")
                     for artifact in application_version.input_artifacts:
                         with ui.expansion(
@@ -275,8 +278,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         "Click “Next” to auto-select the latest version"
                     )
                     ui.select(
-                        {version.application_version_id: version.version for version in application_versions},
-                        value=latest_application_version_id,
+                        {version.number: version.number for version in application.versions},
+                        value=latest_application_version.number if latest_application_version else None,
                     ).bind_value(submit_form, "application_version_id")
                 ui.space()
                 with ui.column(), ui.button(icon="info", on_click=info_dialog.open):
@@ -428,7 +431,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         this.eGui = document.createElement('img');
                         this.eGui.setAttribute('src', `/thumbnail?source=${encodeURIComponent(params.data.source)}`);
                         this.eGui.setAttribute('style', 'height:70px; width: 70px');
-                        this.eGui.setAttribute('alt', `${params.data.reference}`);
+                        this.eGui.setAttribute('alt', `${params.data.external_id}`);
                     }
                     getGui() {
                         return this.eGui;
@@ -439,7 +442,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.metadata_grid = (
                 ui.aggrid({
                     "columnDefs": [
-                        {"headerName": "Reference", "field": "reference_short", "checkboxSelection": True},
+                        {"headerName": "Reference", "field": "path_short", "checkboxSelection": True},
                         {
                             "headerName": "Thumbnail",
                             "field": "thumbnail",
@@ -554,8 +557,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             ui.notify("Submitting application run ...", type="info")
             try:
                 run = service.application_run_submit_from_metadata(
-                    str(submit_form.application_version_id),
+                    str(submit_form.application_id),
                     submit_form.metadata or [],
+                    str(submit_form.application_version),
                     {"sdk": {"note": submit_form.note}} if submit_form.note else None,
                     submit_form.onboard_to_aignostics_portal,
                 )
@@ -563,10 +567,10 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 ui.notify(f"Failed to submit application run: {e}.", type="warning")
                 return
             ui.notify(
-                f"Application run submitted with id '{run.application_run_id}'. Navigating to application run ...",
+                f"Application run submitted with id '{run.run_id}'. Navigating to application run ...",
                 type="positive",
             )
-            ui.navigate.to(f"/application/run/{run.application_run_id}")
+            ui.navigate.to(f"/application/run/{run.run_id}")
 
         async def _upload() -> None:
             """Upload prepared slides."""
@@ -580,8 +584,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.upload_and_submit_button.disable()
             await nicegui_run.io_bound(
                 Service.application_run_upload,
-                str(submit_form.application_version_id),
+                str(submit_form.application_id),
                 submit_form.metadata or [],
+                str(submit_form.application_version),
                 submit_form.onboard_to_aignostics_portal,
                 str(time.time() * 1000),
                 upload_message_queue,
@@ -622,9 +627,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 return
             while not upload_message_queue.empty():
                 message = upload_message_queue.get()
-                if message and isinstance(message, dict) and "reference" in message:
+                if message and isinstance(message, dict) and "external_id" in message:
                     for row in submit_form.metadata:
-                        if row["reference"] == message["reference"]:
+                        if row["external_id"] == message["external_id"]:
                             if "file_upload_progress" in message:
                                 row["file_upload_progress"] = message["file_upload_progress"]
                                 break
