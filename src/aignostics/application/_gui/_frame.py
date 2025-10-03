@@ -135,8 +135,15 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     tooltip_text += f"run id {run_data['run_id']}"
                                     ui.tooltip(tooltip_text)
                             with ui.item_section():
+<<<<<<< HEAD
                                 ui.label(f"{run_data['application_id']} ({run_data['version_number']})").classes(
                                     "font-bold"
+=======
+                                ui.label(
+                                    f"{run_data['application_id']} ({run_data['application_version']})"
+                                ).tailwind.font_weight(
+                                    "bold"
+>>>>>>> c016053 (chore: statistics)
                                     if context.client.page.path == "/application/run/{run_id}"
                                     and args
                                     and args.get("run_id") == run_data["run_id"]
