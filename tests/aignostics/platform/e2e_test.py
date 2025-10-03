@@ -120,7 +120,7 @@ def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
 
 def _run_application_test(
     application_id: str,
-    appkication_version: str,
+    application_version: str,
     payload: list[platform.InputItem],
     checksum_attribute_key: str,
 ) -> None:
@@ -132,6 +132,7 @@ def _run_application_test(
         timeout (int): Timeout for the test in seconds.
         application_id (str): The application ID to use for the test.
         application_version (str): The application version to use for the test.
+        payload (list[platform.InputItem]): The input items for the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
     Raises:
@@ -139,7 +140,7 @@ def _run_application_test(
     """
     client = platform.Client(cache_token=False)
     application_run = client.runs.create(
-        application_id=application_id, items=payload, application_version=application_version
+        application_id=application_id, application_version=application_version, items=payload
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -186,7 +187,7 @@ def test_application_runs_heta_version() -> None:
     """
     _run_application_test(
         application_id=HETA_APPLICATION_ID,
-        appliication_version=HETA_APPLICATION_VERSION,
+        application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta_v1_0_0(),
         checksum_attribute_key="checksum_base64_crc32c",
     )
@@ -208,9 +209,7 @@ def _validate_output(
     """
     run_details = application_run.details()
     assert run_details.status == ApplicationRunStatus.COMPLETED, (
-        f"Application run {application_run.application_run_id}: "
-        f"Did not finish in status COMPLETED but '{run_details.status}",
-        f"run error message: '{run_details.message}'",
+        f"Application run {application_run.run_id}: Did not finish in status COMPLETED but '{run_details.status}'."
     )
 
     run_result_folder = output_base_folder / application_run.run_id
@@ -221,9 +220,8 @@ def _validate_output(
     for item in run_results:
         # validate status
         assert item.status == ItemStatus.SUCCEEDED, (
-            f"Application run {application_run.application_run_id}: "
-            f"item {item.reference} status is {item.status}, expected SUCCEEDED, "
-            f"item error message: '{item.message}'"
+            f"Application run {application_run.run_id}: "
+            f"item {item.external_id} status is {item.status}, expected SUCCEEDED"
         )
         # validate results
         item_dir = run_result_folder / item.external_id

@@ -215,16 +215,16 @@ class Client:
             application_id=application_id, version=version_number
         )
 
-    def run(self, application_run_id: str) -> ApplicationRun:
+    def run(self, run_id: str) -> ApplicationRun:
         """Finds run by id.
 
         Args:
-            application_run_id (str): The ID of the application run.
+            run_id (str): The ID of the application run.
 
         Returns:
             Run: The run object.
         """
-        return ApplicationRun(self._api, application_run_id)
+        return ApplicationRun(self._api, run_id)
 
     @staticmethod
     def get_api_client(cache_token: bool = True) -> PublicApi:

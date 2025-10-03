@@ -3,6 +3,7 @@
 This module provides classes for creating and managing application runs on the Aignostics platform.
 It includes functionality for starting runs, monitoring status, and downloading results.
 """
+
 import json
 import typing as t
 from collections.abc import Generator
@@ -28,9 +29,6 @@ from aignx.codegen.models import (
 )
 from aignx.codegen.models import (
     RunReadResponse as ApplicationRunData,
-)
-from aignx.codegen.models import (
-    RunState as ApplicationRunStatus,
 )
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate

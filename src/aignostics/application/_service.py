@@ -269,12 +269,13 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
+    def application_version(self, application_id: str, application_version: str | None = None) -> ApplicationVersion:
         """Get a specific application version.
 
         Args:
             application_id (str): The ID of the application
-            version_number (str|None): The number of the application version. Use latest if not given.
+            application_version (str|None): The version of the application (semver).
+                If not given latest version is used.
 
         Returns:
             ApplicationVersion: The application version
@@ -286,22 +287,22 @@ class Service(BaseService):
             NotFoundException: If the application version with the given ID and number is not found.
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
-        if version_number is None:
-            application_summary = self.application(application_id)
-            latest_version = application_summary.versions[0] if application_summary.versions else None
+        if application_version is None:
+            application = self.application(application_id)
+            latest_version = application.versions[0] if application.versions else None
             if latest_version is None:
                 message = f"No latest version found for application '{application_id}'."
                 logger.error(message)
                 raise NotFoundException(message)
-            version_number = latest_version.number
+            application_version = latest_version.number
 
-        if not semver.Version.is_valid(version_number):
-            message = f"Invalid application version number: '{version_number}', expected semver."
+        if not semver.Version.is_valid(application_version):
+            message = f"Invalid application version: '{application_version}', expected semver."
             logger.warning(message)
             raise ValueError(message)
 
         try:
-            return self._get_platform_client().application_version(application_id, version_number)
+            return self._get_platform_client().application_version(application_id, application_version)
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
@@ -869,6 +870,9 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         try:
+            # TODO (Andreas): This is broken in the openapi.json - runs.create certainly
+            # needs the application_id and the application_version, not just the version
+            # Below must be changed post fix in openapi.json
             return self._get_platform_client().runs.create(
                 application_id=application_id,
                 items=items,
