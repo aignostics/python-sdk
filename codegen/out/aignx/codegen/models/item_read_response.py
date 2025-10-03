@@ -110,5 +110,3 @@ class ItemReadResponse(BaseModel):
             "terminated_at": obj.get("terminated_at")
         })
         return _obj
-
-

@@ -228,7 +228,7 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
     ("timeout", "appication_id", "application_version", "payload_type", "checksum_attribute_key"),
     TEST_PARAMETERS,
 )
-def test_application_runs(
+def test_application_runs(  # noqa: D417, PLR0913, PLR0917
     timeout: int,
     application_id: str,
     application_version: str,

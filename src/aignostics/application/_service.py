@@ -567,10 +567,11 @@ class Service(BaseService):
         logger.info("Upload completed successfully.")
         return True
 
+    # TODO(Helmut): Refactor to find runs with succeeded items
     @staticmethod
     def application_runs_static(
         limit: int | None = None,
-        completed_only: bool = False,
+        terminated_only: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
     ) -> list[dict[str, Any]]:
@@ -578,7 +579,7 @@ class Service(BaseService):
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
-            completed_only (bool): If True, only completed runs are retrieved.
+            terminated_only (bool): If True, only terminated runs are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
@@ -598,7 +599,7 @@ class Service(BaseService):
             }
             for run in Service().application_runs(
                 limit=limit,
-                status=ApplicationRunStatus.COMPLETED if completed_only else None,
+                status=ApplicationRunStatus.TERMINATED if terminated_only else None,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
             )
@@ -1048,13 +1049,8 @@ class Service(BaseService):
                 download_progress_callable,
             )
 
-            if run_details.state in {
-                ApplicationRunStatus.CANCELED_SYSTEM,
-                ApplicationRunStatus.CANCELED_USER,
-                ApplicationRunStatus.COMPLETED,
-                ApplicationRunStatus.COMPLETED_WITH_ERROR,
-                ApplicationRunStatus.REJECTED,
-            }:
+            # TODO(Helmut): More info
+            if run_details.state == ApplicationRunStatus.TERMINATED:
                 logger.debug("Run '%s' reached final status '%s'.", run_id, run_details.state)
                 break
 

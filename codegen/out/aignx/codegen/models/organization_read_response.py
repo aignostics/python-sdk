@@ -109,5 +109,3 @@ class OrganizationReadResponse(BaseModel):
             "aignostics_sentry_dsn": obj.get("aignostics_sentry_dsn")
         })
         return _obj
-
-

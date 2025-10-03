@@ -121,6 +121,7 @@ def lint(session: nox.Session) -> None:
         ".",
     )
     session.run("mypy", "src")
+    session.run("pyright", "src", "--pythonversion", PYTHON_VERSION, "--threads")
 
 
 @nox.session(python=[PYTHON_VERSION])

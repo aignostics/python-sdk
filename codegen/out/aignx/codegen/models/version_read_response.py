@@ -121,5 +121,3 @@ class VersionReadResponse(BaseModel):
             "flow_id": obj.get("flow_id")
         })
         return _obj
-
-

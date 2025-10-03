@@ -108,5 +108,3 @@ class ApplicationReadResponse(BaseModel):
 
         _obj = cls.model_validate(validation_dict)
         return _obj
-
-

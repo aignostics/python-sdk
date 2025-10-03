@@ -1,0 +1,9 @@
+{
+    "typeCheckingMode": "basic",
+    "ignore": [
+        "src/aignostics/third_party",
+        "src/aignostics/wsi",
+        "src/aignostics/notebook",
+        "src/aignostics/dataset"
+    ],
+}

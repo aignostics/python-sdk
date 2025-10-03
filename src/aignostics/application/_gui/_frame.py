@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
-STORAGE_TAB_RUNS_COMPLETED_ONLY = "runs_completed_only"
+STORAGE_TAB_RUNS_TERMINATED_ONLY = "runs_terminated_only"
 
 service = Service()
 
@@ -84,14 +84,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         logger.exception("Could not load applications")
 
         async def application_runs_load_and_render(
-            runs_column: ui.column, completed_only: bool = False, note_query: str | None = None
+            runs_column: ui.column, terminated_only: bool = False, note_query: str | None = None
         ) -> None:
             with runs_column:
                 try:
                     runs = await nicegui_run.io_bound(
                         Service.application_runs_static,
                         limit=RUNS_LIMIT,
-                        completed_only=completed_only,
+                        terminated_only=terminated_only,
                         note_regex=f".*{note_query}.*" if note_query else None,
                         note_query_case_insensitive=True,
                     )
@@ -113,7 +113,9 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                             .mark(f"SIDEBAR_RUN_ITEM:{index}")
                         ):
                             with ui.item_section().props("avatar"):
-                                icon, color = run_status_to_icon_and_color(run_data["status"])
+                                icon, color = run_status_to_icon_and_color(
+                                    run_data["state"], run_data["termination_reason"]
+                                )
                                 with ui.icon(icon, color=color):
                                     ui.tooltip(f"Run {run_data['run_id']}, status {run_data['status'].value.upper()}")
                             with ui.item_section():
@@ -124,9 +126,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     and args.get("run_id") == run_data["run_id"]
                                     else "font-normal"
                                 )
-                                ui.label(
-                                    f"triggered on {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}"
-                                )
+                                ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
                     if not runs:
                         with ui.item():
                             with ui.item_section().props("avatar"):
@@ -151,7 +151,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 background_tasks.create_lazy(
                     coroutine=application_runs_load_and_render(
                         runs_column=runs_column,
-                        completed_only=app.storage.tab.get(STORAGE_TAB_RUNS_COMPLETED_ONLY, False),
+                        terminated_only=app.storage.tab.get(STORAGE_TAB_RUNS_TERMINATED_ONLY, False),
                         note_query=search_input.query,
                     ),
                     name="_runs_list",
@@ -162,12 +162,12 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
             def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
                 super().__init__(*args, **kwargs)
-                self._state = app.storage.tab.get(STORAGE_TAB_RUNS_COMPLETED_ONLY, False)
+                self._state = app.storage.tab.get(STORAGE_TAB_RUNS_TERMINATED_ONLY, False)
                 self.on("click", self.toggle)
 
             def toggle(self) -> None:
                 self._state = not self._state
-                app.storage.tab[STORAGE_TAB_RUNS_COMPLETED_ONLY] = self._state
+                app.storage.tab[STORAGE_TAB_RUNS_TERMINATED_ONLY] = self._state
                 self.update()
                 _runs_list.refresh()
 

@@ -115,7 +115,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        self._api.cancel_application_run_v1_runs_run_id_cancel_post(self.run_id)
+        self._api.cancel_run_v1_runs_run_id_cancel_post(self.run_id)
 
     def delete(self) -> None:
         """Delete the application run.
@@ -123,7 +123,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        self._api.delete_application_run_results_v1_runs_run_id_results_delete(self.run_id)
+        self._api.delete_run_items_v1_runs_run_id_artifacts_delete(self.run_id)
 
     def results(self) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
@@ -135,7 +135,7 @@ class ApplicationRun:
             Exception: If the API request fails.
         """
         return paginate(
-            self._api.list_run_results_v1_runs_run_id_results_get,
+            self._api.list_run_items_v1_runs_run_id_items_get,
             run_id=self.run_id,
         )
 
@@ -162,13 +162,13 @@ class ApplicationRun:
         application_run_dir = Path(download_base) / self.run_id
 
         # incrementally check for available results
-        application_run_status = self.details().status
-        while application_run_status == ApplicationRunStatus.RUNNING:
+        application_run_status = self.details().state
+        while application_run_status == ApplicationRunStatus.PROCESSING:
             for item in self.results():
                 if item.status == ItemStatus.SUCCEEDED:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
             sleep(5)
-            application_run_status = self.details().status
+            application_run_status = self.details().state
             print(self)
 
         # check if last results have been downloaded yet and report on errors
@@ -176,8 +176,8 @@ class ApplicationRun:
             match item.status:
                 case ItemStatus.SUCCEEDED:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
-                case ItemStatus.ERROR_SYSTEM | ItemStatus.ERROR_USER:
-                    print(f"{item.external_id} failed with {item.status.value}: {item.error}")
+                case ItemStatus.SYSTEM_ERROR | ItemStatus.USER_ERROR:
+                    print(f"{item.external_id} failed with {item.status.value}: {item.error_message}")
 
     @staticmethod
     def ensure_artifacts_downloaded(
@@ -232,7 +232,7 @@ class ApplicationRun:
         Returns:
             str: String representation of the application run.
         """
-        app_status = self.details().status.value
+        app_status = self.details().state.value
         item_status = self.item_status()
         pending, succeeded, error = 0, 0, 0
         for item in item_status.values():
@@ -241,7 +241,7 @@ class ApplicationRun:
                     pending += 1
                 case ItemStatus.SUCCEEDED:
                     succeeded += 1
-                case ItemStatus.ERROR_USER | ItemStatus.ERROR_SYSTEM:
+                case ItemStatus.USER_ERROR | ItemStatus.SYSTEM_ERROR:
                     error += 1
 
         items = f"{len(item_status)} items - ({pending}/{succeeded}/{error}) [pending/succeeded/error]"
@@ -309,11 +309,14 @@ class Runs:
         res: RunCreationResponse = self._api.create_run_v1_runs_post(payload)
         return ApplicationRun(self._api, str(res.run_id))
 
-    def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
-        """Find application runs, optionally filtered by application version.
+    def list(
+        self, application_id: str | None = None, application_version: str | None = None
+    ) -> Generator[ApplicationRun, Any, None]:
+        """Find application runs, optionally filtered by application id and/or version.
 
         Args:
-            for_application_version (str | None): Optional application version ID to filter by.
+            application_id (str | None): Optional application ID to filter by.
+            application_version (str | None): Optional application version to filter by.
 
         Returns:
             Generator[ApplicationRun, Any, None]: A generator yielding application runs.
@@ -321,16 +324,18 @@ class Runs:
         Raises:
             Exception: If the API request fails.
         """
-        if not for_application_version:
-            res = paginate(self._api.list_application_runs_v1_runs_get)
-        else:
-            res = paginate(self._api.list_application_runs_v1_runs_get, application_version_id=for_application_version)
+        res = paginate(
+            self._api.list_runs_v1_runs_get,
+            application_id=application_id,
+            application_version=application_version,
+        )
         return (ApplicationRun(self._api, response.run_id) for response in res)
 
     # TODO(Andreas): Think about merging by having list(...) above return active records that as well hold data
     def list_data(
         self,
-        for_application_version: str | None = None,
+        application_id: str | None = None,
+        application_version: str | None = None,
         metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
@@ -338,7 +343,8 @@ class Runs:
         """Fetch application runs, optionally filtered by application version.
 
         Args:
-            for_application_version (str | None): Optional application version ID to filter by.
+            application_id (str | None): Optional application ID to filter by.
+            application_version (str | None): Optional application version ID to filter by.
             metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
@@ -355,22 +361,14 @@ class Runs:
                 f"page_size is must be less than or equal to {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}, but got {page_size}"
             )
             raise ValueError(message)
-        if not for_application_version:
-            res = paginate(
-                self._api.list_application_runs_v1_runs_get,
-                page_size=page_size,
-                metadata=metadata,
-                sort=[sort] if sort else None,
-            )
-        else:
-            res = paginate(
-                self._api.list_application_runs_v1_runs_get,
-                page_size=page_size,
-                application_version_id=for_application_version,
-                metadata=metadata,
-                sort=[sort] if sort else None,
-            )
-        return res
+        return paginate(
+            self._api.list_runs_v1_runs_get,
+            page_size=page_size,
+            application_id=application_id,
+            application_version=application_version,
+            metadata=metadata,
+            sort=[sort] if sort else None,
+        )
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.

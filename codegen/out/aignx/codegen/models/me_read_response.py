@@ -93,5 +93,3 @@ class MeReadResponse(BaseModel):
             "organization": OrganizationReadResponse.from_dict(obj["organization"]) if obj.get("organization") is not None else None
         })
         return _obj
-
-

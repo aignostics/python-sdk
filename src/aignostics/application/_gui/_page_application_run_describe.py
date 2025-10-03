@@ -48,7 +48,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
     run_data = run.details() if run else None
 
     if run and run_data:
-        icon, color = run_status_to_icon_and_color(run_data.state.value)
+        icon, color = run_status_to_icon_and_color(run_data.state.value, run_data.termination_reason)
         await _frame(
             navigation_title=(
                 f"Run of {run_data.application_id} ({run_data.version_number}) on "
@@ -464,7 +464,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
-                if run_data.state.value == ApplicationRunStatus.COMPLETED:
+                if (
+                    run_data.state.value == ApplicationRunStatus.TERMINATED
+                    and run_data.statistics.item_succeeded_count > 0
+                ):
                     with ui.button_group().props("push"):
                         with (
                             ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
@@ -495,7 +498,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
 
-                if run_data.state.value == ApplicationRunStatus.RUNNING:
+                if run_data.state.value in {ApplicationRunStatus.PENDING, ApplicationRunStatus.PROCESSING}:
                     cancel_button = ui.button(
                         "Cancel",
                         color="red",
@@ -503,15 +506,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-                if run_data.state.value in {
-                    ApplicationRunStatus.CANCELED_USER,
-                    ApplicationRunStatus.CANCELED_SYSTEM,
-                    ApplicationRunStatus.COMPLETED,
-                    ApplicationRunStatus.COMPLETED_WITH_ERROR,
-                    ApplicationRunStatus.REJECTED,
-                    ApplicationRunStatus.RUNNING,
-                    ApplicationRunStatus.SCHEDULED,
-                }:
+                if run_data:
                     delete_button = ui.button(
                         "Delete",
                         color="red",
@@ -633,8 +628,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                                         )
                     elif item.status in {
                         ItemStatus.PENDING,
-                        ItemStatus.ERROR_USER,
-                        ItemStatus.ERROR_SYSTEM,
+                        ItemStatus.USER_ERROR,
+                        ItemStatus.SYSTEM_ERROR,
                         ItemStatus.CANCELED_USER,
                         ItemStatus.CANCELED_SYSTEM,
                     }:
@@ -649,8 +644,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 ui.space()
                                 animation_file = {
                                     ItemStatus.PENDING: "pending.lottie",
-                                    ItemStatus.ERROR_USER: "error.lottie",
-                                    ItemStatus.ERROR_SYSTEM: "error.lottie",
+                                    ItemStatus.USER_ERROR: "error.lottie",
+                                    ItemStatus.SYSTEM_ERROR: "error.lottie",
                                     ItemStatus.CANCELED_USER: "canceled.lottie",
                                     ItemStatus.CANCELED_SYSTEM: "canceled.lottie",
                                 }[item.status]

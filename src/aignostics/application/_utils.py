@@ -203,7 +203,7 @@ def print_runs_non_verbose(runs: list[ApplicationRunData]) -> None:
         console.print(
             f"- [bold]{run_status.run_id}[/bold] of "
             f"[bold]{run_status.application_id} ({run_status.version_number})[/bold] "
-            f"(triggered: {run_status.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
+            f"(submitted: {run_status.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
             f"status: {run_status.state.value})"
         )
 
@@ -267,14 +267,9 @@ def application_run_status_to_str(
         str: Human-readable string representation of the status
     """
     status_mapping = {
-        ApplicationRunStatus.CANCELED_SYSTEM: "canceled by platform",
-        ApplicationRunStatus.CANCELED_USER: "canceled by user",
-        ApplicationRunStatus.COMPLETED: "completed",
-        ApplicationRunStatus.COMPLETED_WITH_ERROR: "completed with error",
-        ApplicationRunStatus.RECEIVED: "received by platform",
-        ApplicationRunStatus.REJECTED: "rejected by platform",
-        ApplicationRunStatus.RUNNING: "running on platform",
-        ApplicationRunStatus.SCHEDULED: "scheduled for processing",
+        ApplicationRunStatus.PENDING: "pending",
+        ApplicationRunStatus.PROCESSING: "processing",
+        ApplicationRunStatus.TERMINATED: "terminated",
     }
 
     if status in status_mapping:

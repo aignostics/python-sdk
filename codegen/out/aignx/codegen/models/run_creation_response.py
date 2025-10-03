@@ -83,5 +83,3 @@ class RunCreationResponse(BaseModel):
             "run_id": obj.get("run_id") if obj.get("run_id") is not None else 'Run id'
         })
         return _obj
-
-

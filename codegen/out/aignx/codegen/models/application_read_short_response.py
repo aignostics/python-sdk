@@ -100,5 +100,3 @@ class ApplicationReadShortResponse(BaseModel):
             "latest_version": ApplicationVersion.from_dict(obj["latest_version"]) if obj.get("latest_version") is not None else None
         })
         return _obj
-
-
