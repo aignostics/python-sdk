@@ -116,11 +116,29 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                 icon, color = run_status_to_icon_and_color(
                                     run_data["state"], run_data["termination_reason"]
                                 )
-                                with ui.icon(icon, color=color):
-                                    ui.tooltip(f"Run {run_data['run_id']}, status {run_data['status'].value.upper()}")
+                                with (
+                                    ui.circular_progress(
+                                        min=0,
+                                        max=run_data["item_count"] if run_data["item_count"] > 0 else 1,
+                                        value=run_data["item_succeeded_count"],
+                                        color=color,
+                                        show_value=False,
+                                    ),
+                                    ui.icon(icon, color=color),
+                                ):
+                                    tooltip_text = (
+                                        f"{run_data['item_succeeded_count']} of {run_data['item_count']} succeeded, "
+                                        f"status {run_data['state'].value.upper()}, "
+                                    )
+                                    if run_data["termination_reason"]:
+                                        tooltip_text += f"{run_data['termination_reason']}, "
+                                    tooltip_text += f"run id {run_data['run_id']}"
+                                    ui.tooltip(tooltip_text)
                             with ui.item_section():
-                                ui.label(f"{run_data['run_id']}").classes(
-                                    "font-bold"
+                                ui.label(
+                                    f"{run_data['application_id']} ({run_data['application_version']})"
+                                ).tailwind.font_weight(
+                                    "bold"
                                     if context.client.page.path == "/application/run/{run_id}"
                                     and args
                                     and args.get("run_id") == run_data["run_id"]

@@ -52,7 +52,20 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     console.print(f"[bold]Run Details for {run.run_id}[/bold]")
     console.print("=" * 80)
     console.print(f"[bold]Application (Version):[/bold] {run_data.application_id} ({run_data.version_number})   ")
-    console.print(f"[bold]Status:[/bold] {run_data.state.value}")
+    if run_data.state is ApplicationRunStatus.TERMINATED and run_data.termination_reason:
+        status_str = f"{run_data.state.value} ({run_data.termination_reason})"
+    else:
+        status_str = f"{run_data.state.value}"
+    console.print(f"[bold]Status:[/bold] {status_str}")
+    console.print(
+        f"  - {run_data.statistics.item_count} items\n"
+        f"  - {run_data.statistics.item_pending_count} pending\n"
+        f"  - {run_data.statistics.item_processing_count} processing\n"
+        f"  - {run_data.statistics.item_skipped_count} skipped\n"
+        f"  - {run_data.statistics.item_succeeded_count} succeeded\n"
+        f"  - {run_data.statistics.item_user_error_count} user errors\n"
+        f"  - {run_data.statistics.item_system_error_count} system errors\n"
+    )
     console.print(f"[bold]Error:[/bold] {run_data.error_message or 'N/A'} ({run_data.error_code or 'N/A'})")
     if run_data.terminated_at and run_data.submitted_at:
         duration = run_data.terminated_at - run_data.submitted_at

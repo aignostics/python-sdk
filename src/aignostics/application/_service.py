@@ -626,6 +626,9 @@ class Service(BaseService):
                 "version_number": run.version_number,
                 "submitted_at": run.submitted_at,
                 "state": run.state,
+                "termination_reason": run.termination_reason,
+                "item_count": run.statistics.item_count,
+                "item_succeeded_count": run.statistics.item_succeeded_count,
             }
             for run in Service().application_runs(
                 limit=limit,

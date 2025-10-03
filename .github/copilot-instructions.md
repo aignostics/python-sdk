@@ -224,4 +224,4 @@ for service_class in services:
 - Build tasks: `noxfile.py` (not tox)
 - Quality gates: Ruff (formatting/linting), MyPy (typing), 85% test coverage
 
-Always conform to the coding styles defined in [CODE_STYLE.md](../CODE_STYLE.md) and development processes in [CONTRIBUTING.md](../CONTRIBUTING.md).
+Always conform to the coding styles defined in [CODE_STYLE.md](../CODE_STYLE.md) and development processes in [CONTRIBUTING.md](../CONTRIBUTING.md), and have a look at [OPERATIONAL_EXCELLENCE.md](../OPERATIONAL_EXCELLENCE.md) for release readiness.

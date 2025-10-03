@@ -442,13 +442,26 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     duration_str = "N/A"
 
+                if run_data.state is ApplicationRunStatus.TERMINATED and run_data.termination_reason:
+                    status_str = f"{run_data.state.value} ({run_data.termination_reason})"
+                else:
+                    status_str = f"{run_data.state.value}"
+
                 ui.code(
                     f"""
                     * Run ID: {run_data.run_id}
                     * Application: {run_data.application_id} ({run_data.version_number})
-                    * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
+                    * Status: {status_str}
+                        - {run_data.statistics.item_count} items
+                        - {run_data.statistics.item_pending_count} pending
+                        - {run_data.statistics.item_processing_count} processing
+                        - {run_data.statistics.item_skipped_count} skipped
+                        - {run_data.statistics.item_succeeded_count} succeeded
+                        - {run_data.statistics.item_user_error_count} user errors
+                        - {run_data.statistics.item_system_error_count} system errors
                     * Submitted: {submitted_at.strftime("%m-%d %H:%M")} ({run_data.submitted_by})
                     * Terminated: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"} ({duration_str})
+                    * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
                     """,
                     language="markdown",
                 ).classes("full-width")
