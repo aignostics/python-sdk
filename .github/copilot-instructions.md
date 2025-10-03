@@ -1,9 +1,227 @@
-Always conform to the coding styles defined in CODE_STYLE.md in the root
-directory of this repository when generating code.
+# Copilot Instructions - Aignostics Python SDK
 
-Learn about tools to use in CONTRIBUTING.md in the root directory of this
-repository.
+## Project Overview
 
-## Important notice for creating pull requests
+The Aignostics Python SDK is a **computational pathology platform** providing multiple interfaces to process whole slide images (WSI) with AI/ML applications. It follows a **modulith architecture** with independent modules connected via dependency injection.
 
-If you are GitHub Copilot, and you are creating a pull request yourself, add a label skip:test_long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
+**Key Components:**
+- **Launchpad**: Desktop GUI (NiceGUI + webview)
+- **CLI**: Command-line interface (Typer)
+- **Client Library**: Python API wrapper
+- **Notebook Integration**: Marimo/Jupyter support
+
+## Architecture Principles
+
+### 1. Modulith Design Pattern
+Each module follows a consistent three-layer structure:
+```
+module/
+├── _service.py     # Business logic (inherits BaseService)
+├── _cli.py         # CLI commands (Typer)
+├── _gui.py         # GUI interface (NiceGUI)
+├── _settings.py    # Configuration (Pydantic)
+└── CLAUDE.md       # Detailed documentation
+```
+
+### 2. Service Discovery & Dependency Injection
+- All services inherit from `BaseService` and implement `health()` and `info()` methods
+- Use `locate_implementations(BaseService)` for runtime service discovery
+- No decorators - pure runtime DI container pattern
+- Services are singletons within the DI container
+
+### 3. Presentation Layer Independence
+```
+CLI Layer ─┐
+           ├─→ Service Layer
+GUI Layer ─┘
+```
+CLI and GUI layers depend on Service layer, never on each other.
+
+## Module Dependencies & Communication
+
+**Foundation Layer:**
+- `utils`: DI container, logging, settings, health checks
+
+**API Layer:**
+- `platform`: OAuth 2.0 auth, JWT tokens, API client
+
+**Domain Modules:**
+- `application`: ML run orchestration (depends on: platform, bucket, wsi, qupath optional)
+- `wsi`: Medical image processing (OpenSlide, PyDICOM)
+- `dataset`: IDC downloads with s5cmd
+- `bucket`: Cloud storage (S3/GCS)
+
+**Integration:**
+- `qupath`: Bioimage analysis (requires `ijson`)
+- `notebook`: Marimo server (requires `marimo`)
+- `gui`: Desktop launchpad (aggregates all GUIs)
+- `system`: Health monitoring (queries ALL services)
+
+## Development Workflow Commands
+
+**Primary Commands:**
+```bash
+make install          # Install dev deps + pre-commit hooks
+make all             # Full CI pipeline (lint, test, docs, audit)
+make test            # Run tests with coverage (85% minimum)
+make test 3.12       # Run on specific Python version
+make lint            # Ruff formatting + MyPy type checking
+```
+
+**Package Management:**
+- Uses `uv` (not pip/poetry): `uv sync --all-extras`
+- Add dependencies: `uv add <package>`
+
+**Testing:**
+- Pytest with markers: `sequential`, `long_running`, `scheduled`, `docker`, `skip_with_act`
+- Run specific tests: `uv run pytest tests/path/test.py::test_function`
+- Docker integration: `make test-docker`
+
+## Code Patterns & Standards
+
+### Service Implementation
+```python
+from aignostics.utils import BaseService, Health
+
+class Service(BaseService):
+    def __init__(self):
+        super().__init__(SettingsClass)  # Optional settings
+    
+    def health(self) -> Health:
+        return Health(status=Health.Code.UP)
+    
+    def info(self, mask_secrets: bool = True) -> dict:
+        return {"version": "1.0.0"}
+```
+
+### CLI Pattern
+```python
+import typer
+from ._service import Service
+
+cli = typer.Typer(name="module", help="Module description")
+
+@cli.command("action")
+def action_command(param: str):
+    """Command description."""
+    service = Service()
+    result = service.perform_action(param)
+    console.print(result)
+```
+
+### GUI Pattern
+```python
+from nicegui import ui
+
+def create_page():
+    ui.label("Module Interface")
+    # Components auto-register with GUI launcher
+```
+
+## Testing Conventions
+
+**File Structure:**
+- Tests in `tests/aignostics/<module>/`
+- Use `conftest.py` fixtures for common setup
+- Mock external dependencies
+
+**Patterns:**
+- Use `CliRunner` from `typer.testing` for CLI tests
+- Use `normalize_output()` helper for cross-platform CLI output
+- Cleanup fixtures for processes (e.g., `qupath_teardown`)
+
+## Medical Domain Context
+
+**Key Technologies:**
+- **DICOM**: Medical imaging standard
+- **WSI**: Gigapixel pathology images (pyramidal multi-resolution)
+- **IDC**: NCI Imaging Data Commons for public datasets
+- **QuPath**: Leading bioimage analysis platform
+- **H&E**: Hematoxylin & Eosin histological staining
+
+**Processing Patterns:**
+- Tile-based processing for memory efficiency
+- Streaming for large file transfers
+- Chunked uploads/downloads (1MB/10MB chunks)
+- Signed URLs for secure data access
+
+## Security & Performance
+
+**Authentication:**
+- OAuth 2.0 device flow via `platform` module
+- Tokens cached in `~/.aignostics/token.json`
+- 5-minute refresh buffer before expiry
+
+**Performance:**
+- Lazy evaluation for large datasets
+- Process management for subprocesses
+- Memory-efficient WSI processing in tiles
+- Async operations for I/O-bound tasks
+
+## Configuration & Environment
+
+**Settings Pattern:**
+```python
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    api_root: str = "https://platform.aignostics.com"
+    
+    class Config:
+        env_prefix = "AIGNOSTICS_"
+```
+
+**Environment Variables:**
+- `AIGNOSTICS_API_ROOT`: Platform endpoint
+- `AIGNOSTICS_CLIENT_ID_DEVICE`: OAuth client ID
+- `AIGNOSTICS_REFRESH_TOKEN`: Auth token
+
+## Common Integration Points
+
+**Application Run Workflow:**
+```python
+# 1. Authenticate
+client = platform.Client()
+
+# 2. Submit run
+run = client.runs.create(
+    application_version="heta:v1.0.0",
+    items=[platform.InputItem(...)]
+)
+
+# 3. Monitor & download
+run.download_to_folder("./results")
+```
+
+**Service Health Monitoring:**
+```python
+from aignostics.utils import locate_implementations, BaseService
+
+# Discover all services
+services = locate_implementations(BaseService)
+
+# Check health of all services
+for service_class in services:
+    service = service_class()
+    health = service.health()
+    print(f"{service.key()}: {health.status}")
+```
+
+## Important Notes
+
+**Optional Dependencies:**
+- GUI requires: `pip install "aignostics[gui]"`
+- QuPath requires: `pip install "aignostics[qupath]"`
+- Notebooks require: `pip install "aignostics[notebook]"`
+
+**Platform Constraints:**
+- Windows path length limitations
+- Memory usage for large WSI files
+- Token expiry handling (force refresh with `remove_cached_token()`)
+
+**Build System:**
+- Main config: `pyproject.toml`
+- Build tasks: `noxfile.py` (not tox)
+- Quality gates: Ruff (formatting/linting), MyPy (typing), 85% test coverage
+
+Always conform to the coding styles defined in [CODE_STYLE.md](../CODE_STYLE.md) and development processes in [CONTRIBUTING.md](../CONTRIBUTING.md).

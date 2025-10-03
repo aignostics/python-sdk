@@ -26,30 +26,7 @@
     "python.analysis.aiCodeActions": {
         "generateDocstring": true
     },
-    "python.analysis.typeCheckingMode": "basic",
     "python.analysis.diagnosticMode": "workspace",
-    "python.analysis.exclude": [
-        "**/.nox/**",
-        "**/.venv/**",
-        "**/dist-packages/**",
-        "**/dist_vercel/.vercel/**",
-        "**/dist_native/**",
-        "**/site-packages/**",
-    ],
-    "python.analysis.ignore": [
-        "**/third_party/**",
-        "dist/**",
-        "dist_vercel/**",
-        "dist_native/**",
-        "template/**",
-        "tests/**",
-        "codegen/**",
-        "_notebook.py",
-        "e2e.py",
-        "src/aignostics/wsi/_pydicom_handler.py",
-        "src/aignostics/third_party/idc_index.py",
-        "src/aignostics/notebook/_notebook.py"
-    ],
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
@@ -71,26 +48,14 @@
     "github.copilot.chat.editor.temporalContext.enabled": true,
     "github.copilot.chat.edits.temporalContext.enabled": true,
     "github.copilot.chat.codesearch.enabled": true,
-    "github.copilot.chat.codeGeneration.instructions": [
-        {
-            "file": "CODE_STYLE.md"
-        },
-        {
-            "file": "CONTRIBUTING.md"
-        }
-    ],
-    "github.copilot.chat.completionContext.typescript.mode": "on",
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "github.copilot.chat.generateTests.codeLens": true,
     "github.copilot.chat.languageContext.typescript.enabled": true,
     "github.copilot.chat.reviewSelection.instructions": [],
     "github.copilot.chat.scopeSelection": true,
-    "github.copilot.chat.search.semanticTextResults": true,
     "sonarlint.connectedMode.project": {
         "connectionId": "aignostics",
         "projectKey": "aignostics_python-sdk"
     },
     "makefile.configureOnOpen": false,
-    "python.analysis.extraPaths": [
-        "./src/aignostics/utils/_"
-    ]
 }

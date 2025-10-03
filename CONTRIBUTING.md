@@ -16,7 +16,7 @@ make install
 
 ## Directory Layout
 
-```
+```text
 ├── Makefile               # Central entrypoint for build, test, release and deploy
 ├── noxfile.py             # Noxfile for running tests in multiple python environments and other tasks
 ├── .pre-commit-config.yaml # Definition of hooks run on commits

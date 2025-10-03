@@ -9,10 +9,10 @@ client = platform.Client()
 # create application run
 # for details, see the IPython or Marimo notebooks for a detailed explanation of the payload
 application_run = client.runs.create(
-    application_version="two-task-dummy:v0.35.0",
+    application_id="two-task-dummy",
     items=[
         platform.InputItem(
-            reference="1",
+            external_id="1",
             input_artifacts=[
                 platform.InputArtifact(
                     name="user_slide",
