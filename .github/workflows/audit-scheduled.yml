@@ -10,8 +10,3 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    secrets:
-      AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
-      AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
-      GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-      BETTERSTACK_AUDIT_HEARTBEAT_URL: ${{ secrets.BETTERSTACK_AUDIT_HEARTBEAT_URL }}
