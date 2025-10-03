@@ -2,12 +2,24 @@ name: "Test"
 
 on:
   workflow_call:
+    inputs:
+      platform_environment:
+        description: 'Environment to test against, that is staging or production'
+        required: false
+        default: 'staging'
+        type: string
     secrets:
-      AIGNOSTICS_CLIENT_ID_DEVICE:
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
         required: false
-      AIGNOSTICS_REFRESH_TOKEN:
+      AIGNOSTICS_REFRESH_TOKEN_STAGING:
         required: false
-      GCP_CREDENTIALS:
+      GCP_CREDENTIALS_STAGING:
+        required: false
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
+        required: false
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
+        required: false
+      GCP_CREDENTIALS_PRODUCTION:
         required: false
       CODECOV_TOKEN:
         required: false
@@ -99,14 +111,15 @@ jobs:
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
-          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
-          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+          envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
+          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access
         shell: bash
         env:
-          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          GCP_CREDENTIALS: ${{ inputs.platform_environment == 'staging' && secrets.GCP_CREDENTIALS_STAGING || secrets.GCP_CREDENTIALS_PRODUCTION }}
         run: |
           echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV

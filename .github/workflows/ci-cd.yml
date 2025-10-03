@@ -52,6 +52,8 @@ jobs:
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
+    with:
+      platform_environment: "staging"
     permissions:
       attestations: write
       contents: read
