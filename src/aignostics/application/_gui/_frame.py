@@ -68,12 +68,12 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ):
                             ui.tooltip(application.application_id)
                         with ui.item_section():
-                            ui.label(f"{application.name}").tailwind.font_weight(
-                                "bold"
+                            ui.label(f"{application.name}").classes(
+                                "font-bold"
                                 if context.client.page.path == "/application/{application_id}"
                                 and args
                                 and args.get("application_id") == application.application_id
-                                else "normal"
+                                else "font-normal"
                             )
         except Exception as e:
             ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
@@ -118,12 +118,12 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                         f"status {run_data['status'].value.upper()}"
                                     )
                             with ui.item_section():
-                                ui.label(f"{run_data['application_version_id']}").tailwind.font_weight(
-                                    "bold"
+                                ui.label(f"{run_data['application_version_id']}").classes(
+                                    "font-bold"
                                     if context.client.page.path == "/application/run/{application_run_id}"
                                     and args
                                     and args.get("application_run_id") == run_data["application_run_id"]
-                                    else "normal"
+                                    else "font-normal"
                                 )
                                 ui.label(
                                     f"triggered on {run_data['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
@@ -159,6 +159,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 )
 
         class RunFilterButton(ui.icon):
+            _state: bool = False
+
             def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
                 super().__init__(*args, **kwargs)
                 self._state = app.storage.tab.get(STORAGE_TAB_RUNS_COMPLETED_ONLY, False)
