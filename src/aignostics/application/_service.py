@@ -795,7 +795,10 @@ class Service(BaseService):
 
         try:
             run = self.application_run_submit(
-                app_version.application_id, items, app_version.version_number, custom_metadata
+                application_id=app_version.application_id,
+                items=items,
+                application_version=app_version.version_number,
+                custom_metadata=custom_metadata,
             )
             logger.info(
                 "Submitted application run with items: %s, application run id %s, custom metadata: %s",
@@ -849,7 +852,7 @@ class Service(BaseService):
             return self._get_platform_client().runs.create(
                 application_id=application_id,
                 items=items,
-                version_number=application_version,
+                application_version=application_version,
                 custom_metadata=custom_metadata,
             )
         except ValueError as e:

@@ -9,10 +9,10 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from aignx.codegen.models import ApplicationRunStatus, ItemStatus
+from _pytest.fixtures import FixtureRequest
 
 from aignostics import platform
-from aignostics.platform.resources.runs import ApplicationRun
+from aignostics.platform.resources.runs import ApplicationRun, ApplicationRunStatus, ItemStatus
 from tests.contants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_TIMEOUT_SECONDS,
@@ -225,7 +225,7 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
 @pytest.mark.scheduled
 @pytest.mark.long_running
 @pytest.mark.parametrize(
-    ("timeout", "appication_id", "application_version", "payload_type", "checksum_attribute_key"),
+    ("timeout", "application_id", "application_version", "payload_type", "checksum_attribute_key"),
     TEST_PARAMETERS,
 )
 def test_application_runs(  # noqa: D417, PLR0913, PLR0917

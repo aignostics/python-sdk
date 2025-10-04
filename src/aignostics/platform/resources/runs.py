@@ -277,7 +277,7 @@ class Runs:
         self,
         application_id: str,
         items: list[ItemCreationRequest],
-        version_number: str | None = None,
+        application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
     ) -> ApplicationRun:
         """Creates a new application run.
@@ -285,7 +285,7 @@ class Runs:
         Args:
             application_id (str): The ID of the application.
             items (list[ItemCreationRequest]): The run creation request payload.
-            version_number (str|None): The version of the application to use.
+            application_version (str|None): The version of the application to use.
                 If None, the latest version is used.
             custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
 
@@ -301,7 +301,7 @@ class Runs:
         custom_metadata["sdk"]["user_agent"] = user_agent()
         payload = RunCreationRequest(
             application_id=application_id,
-            version_number=version_number,
+            version_number=application_version,
             custom_metadata=custom_metadata,
             items=items,
         )
