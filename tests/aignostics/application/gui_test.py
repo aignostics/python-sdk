@@ -14,7 +14,7 @@ from typer.testing import CliRunner
 from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
-from aignostics.utils import get_logger, gui_register_pages
+from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION_ID
 
@@ -28,7 +28,6 @@ logger = get_logger(__name__)
 async def test_gui_index(user: User) -> None:
     """Test that the user sees the index page, and sees the intro."""
     # hello world
-    gui_register_pages()
     await user.open("/")
     await user.should_see("Atlas H&E-TME", retries=100)
     await user.should_see("Download Datasets")
@@ -53,19 +52,16 @@ async def test_gui_home_to_application(
     user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
-    gui_register_pages()
     await user.open("/")
     await user.should_see(application_name, retries=100)
     user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
-    await user.should_see(expected_text, retries=100)
+    await user.should_see(expected_text, retries=200)
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner, silent_logging) -> None:
     """Test that the user can submit a run via the CLI up to deleting the run results."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        gui_register_pages()
-
         tmp_path = Path(tmpdir)
 
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
@@ -140,8 +136,6 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
     with patch("aignostics.application._gui._page_application_describe.Path.home", return_value=tmp_path):
-        gui_register_pages()
-
         # Download example wsi
         result = runner.invoke(
             cli,
@@ -237,8 +231,6 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
-        gui_register_pages()
-
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
         latest_version_id = latest_version.application_version_id
         runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
