@@ -92,6 +92,8 @@ def audit(session: nox.Session) -> None:
             "reports/vulnerabilities.json",
             "--ignore-vuln",
             "GHSA-4xh5-x5gv-qwph",
+            "--ignore-vuln",
+            "GHSA-8c95-hpq2-w46f",
         )  # https://pyinstaller.org/en/stable/license.html
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")
