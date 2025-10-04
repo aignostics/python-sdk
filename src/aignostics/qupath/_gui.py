@@ -2,6 +2,7 @@
 
 import platform
 from multiprocessing import Manager
+from pathlib import Path
 
 import humanize
 
@@ -16,7 +17,7 @@ logger = get_logger(__name__)
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: C901, PLR0915
-        from nicegui import run, ui  # noq  # noqa: PLC0415
+        from nicegui import app, run, ui  # noq  # noqa: PLC0415
 
         app.add_static_files("/qupath_assets", Path(__file__).parent / "assets")
 

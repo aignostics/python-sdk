@@ -45,6 +45,10 @@ def theme() -> None:
                 font-weight: normal;
                 font-style: normal;
             }
+            body
+            {
+                font-family: "Cabin";
+            }
             ::-webkit-scrollbar {
                 display: none;
             }
@@ -62,10 +66,6 @@ def theme() -> None:
             }
             .q-drawer.q-dark {
                 background-color: #000000 !important;
-            }
-            html *
-            {
-                font-family: "Cabin";
             }
             header {
                 color: white

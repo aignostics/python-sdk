@@ -42,42 +42,45 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
         navigation_icon_tooltip=navigation_icon_tooltip,
         left_sidebar=left_sidebar,
     ):
-        try:
-            with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
-                ui.item_label("Applications").props("header")
-                ui.separator()
+        with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
+            ui.item_label("Applications").props("header")
+            ui.separator()
+            try:
                 applications = await nicegui_run.io_bound(Service.applications_static)
-                if applications is None:
-                    message = (  # type: ignore[unreachable]
-                        "nicegui_run.io_bound(Service.applications_static) returned None, "
-                        "likely canceled by appliction shutdown."
-                    )
-                    logger.error(message)
-                    raise RuntimeError(message)  # noqa: TRY301
-                for application in applications:
+            except Exception as e:
+                with ui.item():
+                    with ui.item_section().props("avatar"):
+                        ui.icon("error", color="red")
+                    with ui.item_section():
+                        ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
+                        logger.exception("Could not load applications")
+                raise
+            if applications is None:
+                message = (  # type: ignore[unreachable]
+                    "nicegui_run.io_bound(Service.applications_static) returned None, "
+                    "likely canceled by appliction shutdown."
+                )
+                logger.error(message)
+                raise RuntimeError(message)
+            for application in applications:
+                with (
+                    ui.item(on_click=lambda app_id=application.application_id: ui.navigate.to(f"/application/{app_id}"))
+                    .mark(f"SIDEBAR_APPLICATION:{application.application_id}")
+                    .props("clickable")
+                ):
                     with (
-                        ui.item(
-                            on_click=lambda app_id=application.application_id: ui.navigate.to(f"/application/{app_id}")
-                        )
-                        .mark(f"SIDEBAR_APPLICATION:{application.application_id}")
-                        .props("clickable")
+                        ui.item_section().props("avatar"),
+                        ui.icon(application_id_to_icon(application.application_id), color="primary"),
                     ):
-                        with (
-                            ui.item_section().props("avatar"),
-                            ui.icon(application_id_to_icon(application.application_id), color="primary"),
-                        ):
-                            ui.tooltip(application.application_id)
-                        with ui.item_section():
-                            ui.label(f"{application.name}").classes(
-                                "font-bold"
-                                if context.client.page.path == "/application/{application_id}"
-                                and args
-                                and args.get("application_id") == application.application_id
-                                else "font-normal"
-                            )
-        except Exception as e:
-            ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
-            logger.exception("Failed to load applications")
+                        ui.tooltip(application.application_id)
+                    with ui.item_section():
+                        ui.label(f"{application.name}").classes(
+                            "font-bold"
+                            if context.client.page.path == "/application/{application_id}"
+                            and args
+                            and args.get("application_id") == application.application_id
+                            else "font-normal"
+                        )
 
         async def application_runs_load_and_render(
             runs_column: ui.column, completed_only: bool = False, note_query: str | None = None
@@ -134,14 +137,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                 ui.icon("info")
                             with ui.item_section():
                                 ui.label("You did not yet create a run.")
-                except Exception:
+                except Exception as e:
                     runs_column.clear()
                     with ui.item():
                         with ui.item_section().props("avatar"):
-                            ui.icon("error")
+                            ui.icon("error", color="red")
                         with ui.item_section():
-                            ui.label("Failed to load application runs.")
-                    logger.exception("Failed to load application runs")
+                            ui.label(f"Could not load runs: {e!s}")
+                    logger.exception("Could not load runs")
 
         @ui.refreshable
         async def _runs_list() -> None:
