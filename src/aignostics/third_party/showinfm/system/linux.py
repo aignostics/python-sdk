@@ -181,7 +181,7 @@ def caja_version() -> Optional[packaging.version.Version]:
         raise Exception("Failed to get version number from caja")
 
     # FIXED(Helmut): Caused SyntaxWarning: invalid escape sequence '\d' on modern python
-    result = re.search("\d", version_string)
+    result = re.search(r"\d", version_string)
     if result is None:
         return None
 
