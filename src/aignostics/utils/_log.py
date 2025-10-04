@@ -140,7 +140,7 @@ class CustomFilter(LogggingFilter):
         Returns:
             bool: True if the record should be logged, False otherwise.
         """
-        excluded_dependencies = {"showinfm"}
+        excluded_dependencies: set[str] | dict[str, str] = {"bla"}
         if record.name in excluded_dependencies:
             return False
         return not (record.name == "dotenv.main" and record.getMessage().endswith("key doesn't exist."))

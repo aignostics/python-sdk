@@ -10,9 +10,9 @@ import humanize
 from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
-from showinfm.showinfm import show_in_file_manager
 
 from aignostics.platform import ApplicationRunStatus, ItemStatus
+from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
 from .._service import DownloadProgressState, Service  # noqa: TID252

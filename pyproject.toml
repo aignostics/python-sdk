@@ -123,7 +123,6 @@ dependencies = [
     "s5cmd>=0.3.3",
     "semver>=3.0.4",
     "shapely>=2.1.2",
-    "show-in-file-manager>=1.1.5",
     "tqdm>=4.67.1",
     "truststore>=0.10.4",
     "urllib3>=2.5.0",
@@ -299,7 +298,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["_notebook.py", "bottle.py", "idc_index.py", "_pydicom_handler.py"]
+exclude = ["src/aignostics/third_party", "_notebook.py", "_pydicom_handler.py"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
