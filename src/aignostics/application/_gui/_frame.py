@@ -47,6 +47,34 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
             ui.separator()
             try:
                 applications = await nicegui_run.io_bound(Service.applications_static)
+                if applications is None:
+                    message = (  # type: ignore[unreachable]
+                        "nicegui_run.io_bound(Service.applications_static) returned None, "
+                        "likely canceled by appliction shutdown."
+                    )
+                    logger.error(message)
+                    raise RuntimeError(message)  # noqa: TRY301
+                for application in applications:
+                    with (
+                        ui.item(
+                            on_click=lambda app_id=application.application_id: ui.navigate.to(f"/application/{app_id}")
+                        )
+                        .mark(f"SIDEBAR_APPLICATION:{application.application_id}")
+                        .props("clickable")
+                    ):
+                        with (
+                            ui.item_section().props("avatar"),
+                            ui.icon(application_id_to_icon(application.application_id), color="primary"),
+                        ):
+                            ui.tooltip(application.application_id)
+                        with ui.item_section():
+                            ui.label(f"{application.name}").classes(
+                                "font-bold"
+                                if context.client.page.path == "/application/{application_id}"
+                                and args
+                                and args.get("application_id") == application.application_id
+                                else "font-normal"
+                            )
             except Exception as e:
                 with ui.item():
                     with ui.item_section().props("avatar"):
@@ -54,33 +82,6 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     with ui.item_section():
                         ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
                         logger.exception("Could not load applications")
-                raise
-            if applications is None:
-                message = (  # type: ignore[unreachable]
-                    "nicegui_run.io_bound(Service.applications_static) returned None, "
-                    "likely canceled by appliction shutdown."
-                )
-                logger.error(message)
-                raise RuntimeError(message)
-            for application in applications:
-                with (
-                    ui.item(on_click=lambda app_id=application.application_id: ui.navigate.to(f"/application/{app_id}"))
-                    .mark(f"SIDEBAR_APPLICATION:{application.application_id}")
-                    .props("clickable")
-                ):
-                    with (
-                        ui.item_section().props("avatar"),
-                        ui.icon(application_id_to_icon(application.application_id), color="primary"),
-                    ):
-                        ui.tooltip(application.application_id)
-                    with ui.item_section():
-                        ui.label(f"{application.name}").classes(
-                            "font-bold"
-                            if context.client.page.path == "/application/{application_id}"
-                            and args
-                            and args.get("application_id") == application.application_id
-                            else "font-normal"
-                        )
 
         async def application_runs_load_and_render(
             runs_column: ui.column, completed_only: bool = False, note_query: str | None = None

@@ -318,9 +318,10 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
+main_file = "tests/main.py"
 testpaths = ["tests"]
 python_files = ["*_test.py", "test_*.py"]
-addopts = "-v --strict-markers --log-disable=aignostics --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
+addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostics --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
