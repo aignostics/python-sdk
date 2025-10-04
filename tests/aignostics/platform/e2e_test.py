@@ -17,7 +17,7 @@ from aignx.codegen.models import (
 )
 
 from aignostics import platform
-from aignostics.platform.resources.runs import ApplicationRun
+from aignostics.platform.resources.runs import ApplicationRun, ApplicationRunStatus, ItemStatus
 from tests.contants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_TIMEOUT_SECONDS,
