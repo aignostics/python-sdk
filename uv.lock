@@ -159,7 +159,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiopath", specifier = ">=0.6.11" },
-    { name = "boto3", specifier = ">=1.40.42" },
+    { name = "boto3", specifier = ">=1.40.45" },
     { name = "certifi", specifier = ">=2025.8.3" },
     { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.22.0" },
     { name = "dicom-validator", specifier = ">=0.7.2" },
@@ -172,13 +172,13 @@ requires-dist = [
     { name = "highdicom", specifier = ">=0.26.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "humanize", specifier = ">=4.13.0" },
-    { name = "idc-index-data", specifier = "==22.0.1" },
+    { name = "idc-index-data", specifier = "==22.0.2" },
     { name = "ijson", specifier = ">=3.4.0" },
     { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.6.0" },
     { name = "jsf", specifier = ">=0.11.2" },
     { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.25.1" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1" },
-    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.10.0" },
+    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.11.0" },
     { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.16.4" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.6" },
     { name = "nicegui", extras = ["native"], specifier = ">=2.24.2" },
@@ -216,7 +216,6 @@ requires-dist = [
     { name = "typer", specifier = ">=0.19.2" },
     { name = "uptime", specifier = ">=3.0.1" },
     { name = "urllib3", specifier = ">=2.5.0" },
-    { name = "wsidicom", specifier = ">=0.27.1" },
     { name = "wsidicom", specifier = ">=0.28.1" },
 ]
 provides-extras = ["pyinstaller", "jupyter", "marimo", "qupath"]
@@ -727,30 +726,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.40.42"
+version = "1.40.45"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/97/41/291ea7af352ca7a89619e09e6927d9b7eac415857abd838be88d7f82cd8f/boto3-1.40.42.tar.gz", hash = "sha256:dbd8afc41f0cc759d0115c673e50bd1395b992a5c14627b56163cf35b86673c6", size = 111601, upload-time = "2025-09-30T19:28:15.254Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/22/97605e64b8661a13f1dd9412c7989b3d78673bc79d91ca61d8237e90b503/boto3-1.40.45.tar.gz", hash = "sha256:e8d794dc1f01729d93dc188c90cf63cd0d32df8818a82ac46e641f6ffcea615e", size = 111561, upload-time = "2025-10-03T19:32:12.859Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/b6/c873130aa586ed2df48d0d4a44e897a24c5f2ff800f108e8d973d7a9f19c/boto3-1.40.42-py3-none-any.whl", hash = "sha256:71ea8ca488e8b0d0a16b1b32816f8bab9aa66757c4122caf137ae2dbc95d7001", size = 139344, upload-time = "2025-09-30T19:28:13.376Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/db/7d3c27f530c2b354d546ad7fb94505be8b78a5ecabe34c6a1f9a9d6be03e/boto3-1.40.45-py3-none-any.whl", hash = "sha256:5b145752d20f29908e3cb8c823bee31c77e6bcf18787e570f36bbc545cc779ed", size = 139345, upload-time = "2025-10-03T19:32:11.145Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.40.42"
+version = "1.40.45"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d0/64/746b90bebf904e8d94fc740d8e0dabad1bf644c675fdb2e85ffd852665de/botocore-1.40.42.tar.gz", hash = "sha256:41bea751685fb2a51b4fc6be329a0cd0a285dbeb0686a21099e87ef146664bc0", size = 14384122, upload-time = "2025-09-30T19:28:05.458Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/19/6c85d5523dd05e060d182cd0e7ce82df60ab738d18b1c8ee2202e4ca02b9/botocore-1.40.45.tar.gz", hash = "sha256:cf8b743527a2a7e108702d24d2f617e93c6dc7ae5eb09aadbe866f15481059df", size = 14395172, upload-time = "2025-10-03T19:32:03.052Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/74/c0b454c9ab1b75c70d78068cdb220cb835b6b7eda51243541e125f816c59/botocore-1.40.42-py3-none-any.whl", hash = "sha256:2682a4120be21234036003a806206b6b3963ba53a495d0a57d40d67fce4497a9", size = 14054256, upload-time = "2025-09-30T19:28:02.361Z" },
+    { url = "https://files.pythonhosted.org/packages/af/06/df47e2ecb74bd184c9d056666afd3db011a649eaca663337835a6dd5aee6/botocore-1.40.45-py3-none-any.whl", hash = "sha256:9abf473d8372ade8442c0d4634a9decb89c854d7862ffd5500574eb63ab8f240", size = 14063670, upload-time = "2025-10-03T19:31:58.999Z" },
 ]
 
 [[package]]
@@ -2151,11 +2150,11 @@ wheels = [
 
 [[package]]
 name = "idc-index-data"
-version = "22.0.1"
+version = "22.0.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1f/dd/76d710ab6a8dc85534d8b6dbc08278a7252d78e1f9b947600d2ee004483c/idc_index_data-22.0.1.tar.gz", hash = "sha256:8338e7dc5e5294e295b16f68e5316f9074517f0164d457487cc52ca73bce7920", size = 19942, upload-time = "2025-09-22T20:09:13.243Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/08/2a/37e029f4a01e03d2bf4c100c8c247c5f0b71f54a283aaed3219c1f780a97/idc_index_data-22.0.2.tar.gz", hash = "sha256:7892f583390d24bd136a5dd9641f1d852bb813eb17735a9f9a7b4ac40c5679e5", size = 19951, upload-time = "2025-10-03T19:38:12.272Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/a3/abffe46391ebcc52f038eb92ed4383b4c5d4323f1c03a71e36e6f6424564/idc_index_data-22.0.1-py3-none-any.whl", hash = "sha256:83c9729adec8fe8a94234bdaabcb96b9829606993e96dce706eedac0a930cd22", size = 82925862, upload-time = "2025-09-22T20:09:10.462Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/e2/fb7bd6119374970f8543d463d6399f9878c066d573a1f8f0f9778e25d7de/idc_index_data-22.0.2-py3-none-any.whl", hash = "sha256:c70723ed816d6e38a05ffb6b94eb7f88f165aefd0e4f3010a144f4dd574c6fcc", size = 82713931, upload-time = "2025-10-03T19:38:09.104Z" },
 ]
 
 [[package]]
@@ -2776,7 +2775,7 @@ wheels = [
 
 [[package]]
 name = "logfire"
-version = "4.10.0"
+version = "4.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "executing" },
@@ -2787,9 +2786,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/25/67/53bc8c72ae2deac94fe9dc51b9bade27c3f378469cf02336ae22558f2f41/logfire-4.10.0.tar.gz", hash = "sha256:5c1021dac8258d78d5fd08a336a22027df432c42ba70e96eef6cac7d8476a67c", size = 540375, upload-time = "2025-09-24T17:57:17.078Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7b/7d/7168f050e23c83731a458613d672cc54946848506be90784f95886dfb6e4/logfire-4.11.0.tar.gz", hash = "sha256:56a44e11f4670ba95c2da85e25d8ab6d3c3ab815bedb5845117fbc9a162d5126", size = 544803, upload-time = "2025-10-03T15:47:50.794Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/41/bbf361fd3a0576adbadd173492a22fcb1a194128df7609e728038a4a4f2d/logfire-4.10.0-py3-none-any.whl", hash = "sha256:54514b6253eea4c4e28f587b55508cdacbc75a423670bb5147fc2af70c16f5d3", size = 223648, upload-time = "2025-09-24T17:57:13.905Z" },
+    { url = "https://files.pythonhosted.org/packages/03/96/baaaf10240391bf36c699a2c20b9785a8ede228d75f6a31cb0e6d8da2032/logfire-4.11.0-py3-none-any.whl", hash = "sha256:b3dab5d4565a8682d42fed451fe349550ab67e69c7fc4f4eb9cbfdee1dfcc7e1", size = 226877, upload-time = "2025-10-03T15:47:47.014Z" },
 ]
 
 [package.optional-dependencies]
