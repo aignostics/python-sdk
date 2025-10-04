@@ -180,7 +180,7 @@ def caja_version() -> Optional[packaging.version.Version]:
     except subprocess.CalledProcessError:
         raise Exception("Failed to get version number from caja")
 
-    # FIXED(Helmut): Caused SyntaxWarning: invalid escape sequence '\d' on modern python
+    # FIXED(Helmut): Missing \r caused SyntaxWarning on modern Python versions
     result = re.search(r"\d", version_string)
     if result is None:
         return None
