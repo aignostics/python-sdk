@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.179](https://github.com/aignostics/python-sdk/compare/v0.2.178..0.2.179) - 2025-10-03
+# [0.2.180](https://github.com/aignostics/python-sdk/compare/v0.2.179..0.2.180) - 2025-10-04
+
+### 🛡️ Security
+
+- *(audit)* No secrets for audit - ([8677d8c](https://github.com/aignostics/python-sdk/commit/8677d8ca446aee99f33bdbc421fa94885d1c0c05))
+- *(dep)* CVE-2025-53354 ignored given we run as desktop app; still started to migrate to nicegui 3 - ([2557c51](https://github.com/aignostics/python-sdk/commit/2557c514e06387ebe2bfb4fc1b6c8440af5700db))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.179](https://github.com/aignostics/python-sdk/compare/v0.2.178..v0.2.179) - 2025-10-03
 
 ### 🛡️ Security
 
