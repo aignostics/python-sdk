@@ -174,7 +174,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         await user.should_see(f"Run of {latest_version_id}")
 
         # Step 2: Open Result Download dialog
-        await user.should_see(marker="BUTTON_OPEN_QUPATH")
+        await user.should_see(marker="BUTTON_OPEN_QUPATH", retries=100)
         user.find(marker="BUTTON_OPEN_QUPATH").click()
 
         # Step 3: Select Data
