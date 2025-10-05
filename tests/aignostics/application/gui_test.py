@@ -59,6 +59,7 @@ async def test_gui_home_to_application(
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.sequential
 async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner, silent_logging) -> None:
     """Test that the user can submit a run via the CLI up to deleting the run results."""
     with tempfile.TemporaryDirectory() as tmpdir:
