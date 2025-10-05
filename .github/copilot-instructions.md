@@ -185,12 +185,8 @@ client = platform.Client()
 
 # 2. Submit run
 run = client.runs.create(
-<<<<<<< HEAD
     application_id="heta",
     application_version="1.0.0",  # version number without 'v' prefix, omit for latest
-=======
-    application_version="heta:v1.0.0",
->>>>>>> c016053 (chore: statistics)
     items=[platform.InputItem(...)]
 )
 
