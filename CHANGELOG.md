@@ -1,14 +1,19 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.181](https://github.com/aignostics/python-sdk/compare/v0.2.180..0.2.181) - 2025-10-05
+# [0.2.182](https://github.com/aignostics/python-sdk/compare/v0.2.181..0.2.182) - 2025-10-05
+
+### ⚙️ Miscellaneous Tasks
+
+- *(audit)* Pass betterstack url - ([6c6b924](https://github.com/aignostics/python-sdk/commit/6c6b924dd37891f9995cb3d0d1d24afd17c10c15))
+- *(audit,scheduled)* Warn if betterstack url not configured or not passed through unintentionally - ([6c6b924](https://github.com/aignostics/python-sdk/commit/6c6b924dd37891f9995cb3d0d1d24afd17c10c15))
+
+
+# [v0.2.181](https://github.com/aignostics/python-sdk/compare/v0.2.180..v0.2.181) - 2025-10-05
 
 ### ⚙️ Miscellaneous Tasks
 
 - *(deps)* Bump - ([801c4e5](https://github.com/aignostics/python-sdk/commit/801c4e5b02dc730dfb35575e2978a5e9c5717219))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 # [v0.2.180](https://github.com/aignostics/python-sdk/compare/v0.2.179..v0.2.180) - 2025-10-04
 
