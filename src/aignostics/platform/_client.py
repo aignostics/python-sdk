@@ -92,6 +92,7 @@ class Client:
             self._api = Client.get_api_client(cache_token=cache_token)
             self.applications: Applications = Applications(self._api)
             self.runs: Runs = Runs(self._api)
+            self.versions: Versions = Versions(self._api)
             logger.debug("Client initialized successfully.")
         except Exception:
             logger.exception("Failed to initialize client.")

@@ -85,7 +85,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     )
 
     submit_form.application_id = application.application_id
-    latest_application_version = application.versions[0] or None
+    latest_application_version = application.versions[0] if application.versions else None
     submit_form.application_version = latest_application_version.number if latest_application_version else None
 
     with ui.dialog() as release_notes_dialog, ui.card().style(WIDTH_1200px):
