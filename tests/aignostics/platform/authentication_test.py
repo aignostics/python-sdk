@@ -79,6 +79,12 @@ def valid_token_with_expiry() -> str:
     return f"valid.jwt.token:{future_time}"
 
 
+@pytest.fixture
+def cached_token_missing_expiry() -> str:
+    """Return a cached token missing expiry."""
+    return "valid.jwt.token"
+
+
 # Always force _can_open_browser to return False in tests to prevent browser opening
 @pytest.fixture(autouse=True)
 def mock_can_open_browser() -> None:
@@ -107,7 +113,7 @@ class TestGetToken:
     """Test cases for the get_token function."""
 
     @staticmethod
-    def test_get_token_from_cache_valid(mock_settings, valid_token_with_expiry) -> None:
+    def test_get_token_from_cache_valid(mock_settings: MagicMock, valid_token_with_expiry: str) -> None:
         """Test retrieving a valid token from cache."""
         # Create a mock for Path that can be properly asserted on
         mock_write_text = MagicMock()
@@ -121,6 +127,27 @@ class TestGetToken:
             assert token == "valid.jwt.token"  # noqa: S105 - Test credential
             # Ensure we didn't need to authenticate
             mock_write_text.assert_not_called()
+
+    @staticmethod
+    def test_get_token_from_cache_missing_expiry(mock_settings: MagicMock, cached_token_missing_expiry: str) -> None:
+        """Test retrieving a valid token from cache."""
+        # Create a mock for Path that can be properly asserted on
+        mock_write_text = MagicMock()
+
+        with (
+            patch.object(Path, "exists", return_value=True),
+            patch.object(Path, "read_text", return_value=cached_token_missing_expiry),
+            patch("aignostics.platform._authentication._authenticate", return_value="new.token"),
+            patch(
+                "aignostics.platform._authentication.verify_and_decode_token",
+                return_value={"exp": int(time.time()) + 3600},
+            ),
+            patch.object(Path, "write_text", mock_write_text),
+        ):
+            token = get_token(use_cache=True)
+            assert token == "new.token"  # noqa: S105 - Test credential
+            # Ensure we wrote the new token
+            mock_write_text.assert_called_once()
 
     @staticmethod
     def test_get_token_from_cache_expired(mock_settings, expired_token) -> None:
