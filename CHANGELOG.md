@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.185](https://github.com/aignostics/python-sdk/compare/v0.2.184..0.2.185) - 2025-10-05
+# [0.2.186](https://github.com/aignostics/python-sdk/compare/v0.2.185..0.2.186) - 2025-10-05
+
+### 🐛 Bug Fixes
+
+- *(application)* Properly render error if run details cannot be loaded - ([9a18478](https://github.com/aignostics/python-sdk/commit/9a184788c5cfeb6a2059b83f68968a0d78f52cc7))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* More grace in test - ([9a18478](https://github.com/aignostics/python-sdk/commit/9a184788c5cfeb6a2059b83f68968a0d78f52cc7))
+
+
+# [v0.2.185](https://github.com/aignostics/python-sdk/compare/v0.2.184..v0.2.185) - 2025-10-05
 
 ### ⛰️  Features
 
