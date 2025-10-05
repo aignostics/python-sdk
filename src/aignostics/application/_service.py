@@ -327,7 +327,8 @@ class Service(BaseService):
             RuntimeError: If the versions cannot be retrieved unexpectedly.
         """
         # TODO(Andreas): Have to make calls for all application versions to construct
-        # Changelog dialog on run describe page. Can be optimized to one call when API supports it.
+        # Changelog dialog on run describe page. Can be optimized to one call if API would support it.
+        # Let's discuss if we should re-add the endpoint that existed.
         try:
             client = self._get_platform_client()
             return [
@@ -846,9 +847,6 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         try:
-            # TODO (Andreas): This is broken in the openapi.json - runs.create certainly
-            # needs the application_id and the application_version, not just the version
-            # Below must be changed post fix in openapi.json
             return self._get_platform_client().runs.create(
                 application_id=application_id,
                 items=items,

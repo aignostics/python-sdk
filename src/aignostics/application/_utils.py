@@ -102,7 +102,9 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         console.print(f"  [bold]Status:[/bold] {item.status.value}")
         console.print(f"  [bold]Message:[/bold] {item.message}")
 
-        # TODO(Andreas): error_code is missing, see model,should be printed here as well
+        # TODO(Andreas): error_code is missing on item model; should be printed here as well.
+        # Please add in the openapi.json and regenerate the SDK, and add line here.
+        # Can be set to generic code initially so we have a stable API at last.
         if item.error_message:
             console.print(f"  [error]Error:[/error] {item.error_message}")
 

@@ -84,7 +84,7 @@ class Versions:
             version=application_version,
         )
 
-    # TODO(Andreas): Remove when supported in backend
+    # TODO(Helmut): Refactor given new API capabilities
     def list_sorted(self, application: Application | str) -> builtins.list[VersionTuple]:
         """Get application versions sorted by semver, descending.
 

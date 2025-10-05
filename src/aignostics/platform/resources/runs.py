@@ -74,18 +74,6 @@ class ApplicationRun:
 
         return cls(Client.get_api_client(cache_token=False), run_id)
 
-    # TODO(Andreas): Deprecated, please remove when you updated your integration code
-    def status(self) -> ApplicationRunData:
-        """Retrieves the current status of the application run.
-
-        Returns:
-            ApplicationRunData: The run data.
-
-        Raises:
-            Exception: If the API request fails.
-        """
-        return self.details()
-
     def details(self) -> ApplicationRunData:
         """Retrieves the current status of the application run.
 
@@ -108,7 +96,8 @@ class ApplicationRun:
         """
         return {item.external_id: item.status for item in self.results()}
 
-    # TODO(Andreas): Fails with Internal Server Error if run canceled; don't throw generic exceptions
+    # TODO(Andreas): Low Prio / existed prior to API migraiton: Please check if this still fails with
+    #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.
     def cancel(self) -> None:
         """Cancels the application run.
 
@@ -331,7 +320,6 @@ class Runs:
         )
         return (ApplicationRun(self._api, response.run_id) for response in res)
 
-    # TODO(Andreas): Think about merging by having list(...) above return active records that as well hold data
     def list_data(
         self,
         application_id: str | None = None,

@@ -31,7 +31,8 @@ class ApplicationReadResponse(BaseModel):
     name: StrictStr = Field(description="Application display name")
     regulatory_classes: List[StrictStr] = Field(description="Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.")
     description: StrictStr = Field(description="Describing what the application can do ")
-    # TODO(Andreas): Patched to allow None given API on dev does not provide a list as defined in openapi
+    # TODO(Andreas): Patched to allow None given API on dev does not serve an (empty) list as defined in openapi 
+    # but None. Please check TODO on from_dict as well!
     versions: List[ApplicationVersion] = Field(default=[],description="All version numbers available to the user")
     __properties: ClassVar[List[str]] = ["application_id", "name", "regulatory_classes", "description", "versions"]
 
