@@ -1,6 +1,25 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.184](https://github.com/aignostics/python-sdk/compare/v0.2.183..0.2.184) - 2025-10-05
+# [0.2.185](https://github.com/aignostics/python-sdk/compare/v0.2.184..0.2.185) - 2025-10-05
+
+### ⛰️  Features
+
+- *(gui)* Migrate to nicegui 3 - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+### 🐛 Bug Fixes
+
+- *(dep)* Incompatibility in 3rd party dependency showinfm lead to syntax error in modern Python - now vendored and fixed. - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+### 🎨 Styling
+
+- *(application)* Better rendering of loading errors - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Made test run sequentially so regular tests now pass without flakiness if platform reliable   - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+
+# [v0.2.184](https://github.com/aignostics/python-sdk/compare/v0.2.183..v0.2.184) - 2025-10-05
 
 ### 🐛 Bug Fixes
 
