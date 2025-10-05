@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.188](https://github.com/aignostics/python-sdk/compare/v0.2.187..0.2.188) - 2025-10-05
+# [0.2.189](https://github.com/aignostics/python-sdk/compare/v0.2.188..0.2.189) - 2025-10-05
+
+### ⚙️ Miscellaneous Tasks
+
+- *(qupath)* Give more time in test - ([4d21ada](https://github.com/aignostics/python-sdk/commit/4d21adacb262e7c8eaf99621a6045ff9d5135848))
+
+
+# [v0.2.188](https://github.com/aignostics/python-sdk/compare/v0.2.187..v0.2.188) - 2025-10-05
 
 ### 🛡️ Security
 
