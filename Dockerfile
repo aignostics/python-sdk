@@ -5,7 +5,7 @@ FROM python:3.13-slim-bookworm AS base
 FROM base AS builder
 
 # Copy in UV
-COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.8.23 /uv /bin/uv
 
 # We use the system interpreter managed by uv
 ENV UV_PYTHON_DOWNLOADS=0

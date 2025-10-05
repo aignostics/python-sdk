@@ -98,7 +98,7 @@ dependencies = [
     # Custom
     "aiopath>=0.6.11",
     "boto3>=1.40.45",
-    "certifi>=2025.8.3",
+    "certifi>=2025.10.5",
     "dicom-validator>=0.7.2",
     "dicomweb-client[gcp]>=0.59.3",
     "duckdb>=0.10.0,<=1.4.0",
@@ -136,7 +136,7 @@ jupyter = ["jupyter>=1.1.1"]
 marimo = [
     "cloudpathlib>=0.22.0",
     "ipython>=9.6.0",
-    "marimo>=0.16.4",
+    "marimo>=0.16.5",
     "matplotlib>=3.10.6",
     "shapely>=2.1.0",
 ]
@@ -144,7 +144,7 @@ qupath = []
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0",
-    "bump-my-version>=1.2.3",
+    "bump-my-version>=1.2.4",
     "cyclonedx-py>=1.0.1",
     "detect-secrets>=1.5.0",
     "enum-tools>=0.13.0",
@@ -155,7 +155,7 @@ dev = [
     "pip-audit>=2.9.0",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.3.0",
-    "pyright>=1.1.405",
+    "pyright>=1.1.406",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
     "pytest-cov>=7.0.0",
@@ -169,7 +169,7 @@ dev = [
     "pytest-timeout>=2.4.0",
     "pytest-watcher>=0.4.3",
     "pytest-xdist[psutil]>=3.8.0",
-    "ruff>=0.13.2",
+    "ruff>=0.13.3",
     "scalene>=1.5.55",
     "sphinx>=8.2.3",
     "sphinx-autobuild>=2025.8.25",
