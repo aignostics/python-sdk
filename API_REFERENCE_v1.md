@@ -1,5 +1,5 @@
 # API v1 Reference
-## Aignostics Platform API v1.0.0-beta6
+## Aignostics Platform API v1.0.0-beta.3
 
 > Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
 
@@ -26,8 +26,8 @@ Base URLs:
 - oAuth2 authentication. 
 
     - Flow: authorizationCode
-    - Authorization URL = [https://aignostics-platform.eu.auth0.com/authorize](https://aignostics-platform.eu.auth0.com/authorize)
-    - Token URL = [https://aignostics-platform.eu.auth0.com/oauth/token](https://aignostics-platform.eu.auth0.com/oauth/token)
+    - Authorization URL = [https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize](https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize)
+    - Token URL = [https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token](https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token)
 
 |Scope|Scope Description|
 |---|---|
@@ -88,7 +88,7 @@ The response is paginated and sorted according to the provided parameters.
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |page|query|integer|false|none|
-|page_size|query|integer|false|none|
+|page-size|query|integer|false|none|
 |sort|query|any|false|Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.|
 
 ##### Detailed descriptions
@@ -115,6 +115,10 @@ The response is paginated and sorted according to the provided parameters.
   {
     "application_id": "he-tme",
     "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
+    "latest_version": {
+      "number": "1.0.0",
+      "released_at": "2025-09-01T19:01:05.401Z"
+    },
     "name": "Atlas H&E-TME",
     "regulatory_classes": [
       "RUO"
@@ -123,6 +127,10 @@ The response is paginated and sorted according to the provided parameters.
   {
     "application_id": "test-app",
     "description": "This is the test application with two algorithms: TissueQc and Tissue Segmentation",
+    "latest_version": {
+      "number": "2.0.0",
+      "released_at": "2025-09-02T19:01:05.401Z"
+    },
     "name": "Test Application",
     "regulatory_classes": [
       "RUO"
@@ -163,10 +171,30 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|Response List Applications V1 Applications Get|[[ApplicationReadResponse](#schemaapplicationreadresponse)]|false|none|[Response schema for `List available applications` and `Read Application by Id` endpoints]|
-|» ApplicationReadResponse|[ApplicationReadResponse](#schemaapplicationreadresponse)|false|none|Response schema for `List available applications` and `Read Application by Id` endpoints|
+|Response List Applications V1 Applications Get|[[ApplicationReadShortResponse](#schemaapplicationreadshortresponse)]|false|none|[Response schema for `List available applications` and `Read Application by Id` endpoints]|
+|» ApplicationReadShortResponse|[ApplicationReadShortResponse](#schemaapplicationreadshortresponse)|false|none|Response schema for `List available applications` and `Read Application by Id` endpoints|
 |»» application_id|string|true|none|Application ID|
 |»» description|string|true|none|Describing what the application can do|
+|»» latest_version|any|false|none|The version with highest version number available to the user|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|[ApplicationVersion](#schemaapplicationversion)|false|none|none|
+|»»»» number|string|true|none|The number of the latest version|
+|»»»» released_at|string(date-time)|true|none|The timestamp for when the application version was made available in the Platform|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |»» name|string|true|none|Application display name|
 |»» regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
 
@@ -238,253 +266,14 @@ Retrieve details of a specific application by its ID.
   "name": "Atlas H&E-TME",
   "regulatory_classes": [
     "RUO"
+  ],
+  "versions": [
+    {
+      "number": "1.0.0",
+      "released_at": "2025-09-15T10:30:45.123Z"
+    }
   ]
 }
-```
-
-#### Responses
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ApplicationReadResponse](#schemaapplicationreadresponse)|
-|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this application|None|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Application with the given ID does not exist|None|
-|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-
-To perform this operation, you must be authenticated by means of one of the following methods:
-OAuth2AuthorizationCodeBearer
-
-
-### list_versions_by_application_id_v1_applications__application_id__versions_get
-
-
-
-> Code samples
-
-```python
-import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
-
-r = requests.get('/api/v1/applications/{application_id}/versions', headers = headers)
-
-print(r.json())
-
-```
-
-```javascript
-
-const headers = {
-  'Accept':'application/json',
-  'Authorization':'Bearer {access-token}'
-};
-
-fetch('/api/v1/applications/{application_id}/versions',
-{
-  method: 'GET',
-
-  headers: headers
-})
-.then(function(res) {
-    return res.json();
-}).then(function(body) {
-    console.log(body);
-});
-
-```
-
-`GET /v1/applications/{application_id}/versions`
-
-*List Available Application Versions*
-
-Returns a list of available application versions for a specific application.
-
-A version is considered available when it has been assigned to your organization. Within a major version,
-all minor and patch updates are automatically accessible unless a specific version has been deprecated.
-Major version upgrades, however, require explicit assignment and may be subject to contract modifications
-before becoming available to your organization.
-
-#### Parameters
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|application_id|path|string|true|none|
-|page|query|integer|false|none|
-|page_size|query|integer|false|none|
-|version|query|any|false|Semantic version of the application, example: `1.0.13`|
-|sort|query|any|false|Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.|
-
-##### Detailed descriptions
-
-**sort**: Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.
-
-**Available fields:**
-- `application_version_id`
-- `version`
-- `application_id`
-- `changelog`
-- `created_at`
-
-**Examples:**
-- `?sort=application_id` - Sort by application_id ascending
-- `?sort=-version` - Sort by version descending
-- `?sort=+application_id&sort=-created_at` - Sort by application_id ascending, then created_at descending
-
-> Example responses
-
-> 200 Response
-
-```json
-[
-  {
-    "application_id": "he-tme",
-    "application_version_id": "he-tme:v0.5.0",
-    "changelog": "Redeployed after metadata name changes. ",
-    "created_at": "2025-06-03T11:45:55.646211Z",
-    "input_artifacts": [
-      {
-        "metadata_schema": {
-          "$defs": {
-            "LungCancerSpecimen": {
-              "additionalProperties": false,
-              "properties": {
-                "disease": {
-                  "const": "LUNG_CANCER",
-                  "enum": [
-                    "LUNG_CANCER"
-                  ],
-                  "title": "Disease",
-                  "type": "string"
-                },
-                "tissue": {
-                  "enum": [
-                    "LUNG",
-                    "LYMPH_NODE",
-                    "LIVER",
-                    "ADRENAL_GLAND",
-                    "BONE",
-                    "BRAIN"
-                  ],
-                  "title": "Tissue",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "disease",
-                "tissue"
-              ],
-              "title": "LungCancerSpecimen",
-              "type": "object"
-            }
-          },
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "additionalProperties": false,
-          "description": "Schema of a slide.",
-          "properties": {
-            "checksum_base64_crc32c": {
-              "title": "Base64 encoded big-endian CRC32C checksum",
-              "type": "string"
-            },
-            "height_px": {
-              "minimum": 1,
-              "title": "Height (px)",
-              "type": "integer"
-            },
-            "media_type": {
-              "enum": [
-                "application/dicom",
-                "image/tiff",
-                "application/octet-stream",
-                "application/zip"
-              ],
-              "title": "Media Type",
-              "type": "string"
-            },
-            "resolution_mpp": {
-              "maximum": 0.5,
-              "minimum": 0.125,
-              "title": "Resolution (mpp)",
-              "type": "number"
-            },
-            "specimen": {
-              "anyOf": [
-                false
-              ],
-              "title": "Specimen"
-            },
-            "staining_method": {
-              "const": "H&E",
-              "enum": [
-                "H&E"
-              ],
-              "title": "Staining Method",
-              "type": "string"
-            },
-            "width_px": {
-              "minimum": 1,
-              "title": "Width (px)",
-              "type": "integer"
-            }
-          },
-          "required": [
-            "media_type",
-            "checksum_base64_crc32c",
-            "specimen",
-            "resolution_mpp",
-            "width_px",
-            "height_px",
-            "staining_method"
-          ],
-          "title": "Slide Schema",
-          "type": "object"
-        },
-        "mime_type": "image/tiff",
-        "name": "user_slide"
-      }
-    ],
-    "output_artifacts": [
-      {
-        "metadata_schema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "additionalProperties": false,
-          "description": "Metadata corresponding to GeoJSON polygons.",
-          "properties": {
-            "checksum_base64_crc32c": {
-              "title": "Base64 encoded big-endian CRC32C checksum",
-              "type": "string"
-            },
-            "media_type": {
-              "const": "application/geo+json",
-              "default": "application/geo+json",
-              "enum": [
-                "application/geo+json"
-              ],
-              "title": "Media Type",
-              "type": "string"
-            },
-            "polygon_mpp": {
-              "title": "Polygon Mpp",
-              "type": "number"
-            }
-          },
-          "required": [
-            "checksum_base64_crc32c",
-            "polygon_mpp"
-          ],
-          "title": "GeoJsonPolygonsMetadata",
-          "type": "object"
-        },
-        "mime_type": "image/tiff",
-        "name": "tissue_qc:geojson_polygons",
-        "scope": "ITEM"
-      }
-    ],
-    "version": "0.5.0"
-  }
-]
 ```
 
 > 422 Response
@@ -507,61 +296,365 @@ before becoming available to your organization.
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|A list of application versions for a given application ID available to the caller|Inline|
-|401|[Unauthorized](https://tools.ietf.org/html/rfc7235#section-3.1)|Unauthorized - Invalid or missing authentication|None|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ApplicationReadResponse](#schemaapplicationreadresponse)|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this application|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Application with the given ID does not exist|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
 
-#### Response Schema
 
-Status Code **200**
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
 
-*Response List Versions By Application Id V1 Applications  Application Id  Versions Get*
 
-|Name|Type|Required|Restrictions|Description|
+### application_version_details_v1_applications__application_id__versions__version__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/applications/{application_id}/versions/{version}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/applications/{application_id}/versions/{version}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/applications/{application_id}/versions/{version}`
+
+*Application Version Details*
+
+Get the application version details
+
+Allows caller to  retrieve information about application version based on provided application version ID.
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|Response List Versions By Application Id V1 Applications  Application Id  Versions Get|[[ApplicationVersionReadResponse](#schemaapplicationversionreadresponse)]|false|none|[Response schema for `List Available Application Versions` endpoint]|
-|» ApplicationVersionReadResponse|[ApplicationVersionReadResponse](#schemaapplicationversionreadresponse)|false|none|Response schema for `List Available Application Versions` endpoint|
-|»» application_id|string|true|none|Application ID|
-|»» application_version_id|string|true|none|Application version ID|
-|»» changelog|string|true|none|Description of the changes relative to the previous version|
-|»» created_at|string(date-time)|true|none|The timestamp when the application version was registered|
-|»» flow_id|any|false|none|Flow ID, used internally by the platform|
+|application_id|path|string|true|none|
+|version|path|string|true|none|
 
-*anyOf*
+> Example responses
 
-|Name|Type|Required|Restrictions|Description|
+> 200 Response
+
+```json
+{
+  "changelog": "New deployment",
+  "input_artifacts": [
+    {
+      "metadata_schema": {
+        "$defs": {
+          "LungCancerMetadata": {
+            "additionalProperties": false,
+            "properties": {
+              "tissue": {
+                "enum": [
+                  "lung",
+                  "lymph node",
+                  "liver",
+                  "adrenal gland",
+                  "bone",
+                  "brain"
+                ],
+                "title": "Tissue",
+                "type": "string"
+              },
+              "type": {
+                "const": "lung",
+                "enum": [
+                  "lung"
+                ],
+                "title": "Type",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "tissue"
+            ],
+            "title": "LungCancerMetadata",
+            "type": "object"
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "description": "Metadata corresponding to an external image.",
+        "properties": {
+          "base_mpp": {
+            "maximum": 0.5,
+            "minimum": 0.125,
+            "title": "Base Mpp",
+            "type": "number"
+          },
+          "cancer": {
+            "anyOf": [
+              false
+            ],
+            "title": "Cancer"
+          },
+          "checksum_crc32c": {
+            "title": "Checksum Crc32C",
+            "type": "string"
+          },
+          "height": {
+            "maximum": 150000,
+            "minimum": 1,
+            "title": "Height",
+            "type": "integer"
+          },
+          "mime_type": {
+            "default": "image/tiff",
+            "enum": [
+              "application/dicom",
+              "image/tiff"
+            ],
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "stain": {
+            "const": "H&E",
+            "default": "H&E",
+            "enum": [
+              "H&E"
+            ],
+            "title": "Stain",
+            "type": "string"
+          },
+          "width": {
+            "maximum": 150000,
+            "minimum": 1,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "checksum_crc32c",
+          "base_mpp",
+          "width",
+          "height",
+          "cancer"
+        ],
+        "title": "ExternalImageMetadata",
+        "type": "object"
+      },
+      "mime_type": "image/tiff",
+      "name": "whole_slide_image"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "metadata_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "description": "Metadata corresponding to a segmentation heatmap file.",
+        "properties": {
+          "base_mpp": {
+            "maximum": 0.5,
+            "minimum": 0.125,
+            "title": "Base Mpp",
+            "type": "number"
+          },
+          "checksum_crc32c": {
+            "title": "Checksum Crc32C",
+            "type": "string"
+          },
+          "class_colors": {
+            "additionalProperties": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "maximum": 255,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "maximum": 255,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "maximum": 255,
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Class Colors",
+            "type": "object"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "mime_type": {
+            "const": "image/tiff",
+            "default": "image/tiff",
+            "enum": [
+              "image/tiff"
+            ],
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "checksum_crc32c",
+          "width",
+          "height",
+          "class_colors"
+        ],
+        "title": "HeatmapMetadata",
+        "type": "object"
+      },
+      "mime_type": "image/tiff",
+      "name": "tissue_qc:tiff_heatmap",
+      "scope": "ITEM",
+      "visibility": "EXTERNAL"
+    }
+  ],
+  "released_at": "2025-04-16T08:45:20.655972Z",
+  "version_number": "0.4.4"
+}
+```
+
+> 422 Response
+
+```json
+{
+  "detail": [
+    {
+      "loc": [
+        "string"
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[VersionReadResponse](#schemaversionreadresponse)|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this version|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Application version with given ID is not available to you or does not exist|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_item_v1_items__item_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/items/{item_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/items/{item_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/items/{item_id}`
+
+*Get Item*
+
+Retrieve details of a specific item (slide) by its ID.
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|»»» *anonymous*|string(uuid)|false|none|none|
+|item_id|path|string(uuid)|true|none|
 
-*or*
+> Example responses
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
+> 200 Response
 
-*continued*
+```json
+{
+  "external_id": "sample-123",
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "message": "Processing started",
+  "run_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "status": "PENDING",
+  "terminated_at": "2024-01-15T10:30:45.123Z"
+}
+```
 
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» input_artifacts|[[InputArtifactReadResponse](#schemainputartifactreadresponse)]|true|none|Lists required input fields, that should be provided by the caller|
-|»»» InputArtifactReadResponse|[InputArtifactReadResponse](#schemainputartifactreadresponse)|false|none|none|
-|»»»» metadata_schema|object|true|none|none|
-|»»»» mime_type|string|true|none|none|
-|»»»» name|string|true|none|none|
-|»» output_artifacts|[[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)]|true|none|Lists the structure of the output artifacts generated by the application|
-|»»» OutputArtifactReadResponse|[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)|false|none|none|
-|»»»» metadata_schema|object|true|none|none|
-|»»»» mime_type|string|true|none|none|
-|»»»» name|string|true|none|none|
-|»»»» scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
-|»» version|string|true|none|Semantic version of the application|
+#### Responses
 
-##### Enumerated Values
-
-|Property|Value|
-|---|---|
-|scope|ITEM|
-|scope|GLOBAL|
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ItemReadResponse](#schemaitemreadresponse)|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this item|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Item with given ID does not exist|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -705,8 +798,8 @@ and organization context, as well as confirming that the expected environment va
 ```json
 {
   "organization": {
-    "aignostics_bucket_hmac_access_key_id": "AKIAIOSFODNN7EXAMPLE",
-    "aignostics_bucket_hmac_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "aignostics_bucket_hmac_access_key_id": "YOUR_HMAC_ACCESS_KEY_ID",
+    "aignostics_bucket_hmac_secret_access_key": "YOUR/HMAC/SECRET_ACCESS_KEY",
     "aignostics_bucket_name": "aignostics-platform-bucket",
     "aignostics_bucket_protocol": "gs",
     "aignostics_logfire_token": "your-logfire-token",
@@ -740,7 +833,7 @@ To perform this operation, you must be authenticated by means of one of the foll
 OAuth2AuthorizationCodeBearer
 
 
-### list_application_runs_v1_runs_get
+### list_runs_v1_runs_get
 
 
 
@@ -782,26 +875,27 @@ fetch('/api/v1/runs',
 
 `GET /v1/runs`
 
-*List Application Runs*
+*List Runs*
 
-List application runs with filtering, sorting, and pagination capabilities.
+List runs with filtering, sorting, and pagination capabilities.
 
-Returns paginated application runs that were triggered by the user.
+Returns paginated runs that were submitted by the user.
 
 #### Parameters
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |application_id|query|any|false|Optional application ID filter|
-|application_version|query|any|false|Optional application version filter|
-|metadata|query|any|false|Use PostgreSQL JSONPath expressions to filter runs by their metadata.|
+|application_version|query|any|false|Optional Version Name|
+|external_id|query|any|false|Optionally filter runs by items with this external ID|
+|custom_metadata|query|any|false|Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.|
 |page|query|integer|false|none|
 |page_size|query|integer|false|none|
 |sort|query|any|false|Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.|
 
 ##### Detailed descriptions
 
-**metadata**: Use PostgreSQL JSONPath expressions to filter runs by their metadata.
+**custom_metadata**: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.
 ##### URL Encoding Required
 **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.
 
@@ -830,17 +924,17 @@ Returns paginated application runs that were triggered by the user.
 **sort**: Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.
 
 **Available fields:**
-- `application_run_id`
+- `run_id`
 - `application_version_id`
 - `organization_id`
 - `status`
-- `triggered_at`
-- `triggered_by`
+- `submitted_at`
+- `submitted_by`
 
 **Examples:**
-- `?sort=triggered_at` - Sort by creation time (ascending)
-- `?sort=-triggered_at` - Sort by creation time (descending)
-- `?sort=status&sort=-triggered_at` - Sort by status, then by time (descending)
+- `?sort=submitted_at` - Sort by creation time (ascending)
+- `?sort=-submitted_at` - Sort by creation time (descending)
+- `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending)
 
 > Example responses
 
@@ -849,87 +943,31 @@ Returns paginated application runs that were triggered by the user.
 ```json
 [
   {
-    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-    "application_version_id": "he-tme:v0.4.4",
-    "message": "The run was cancelled because the threshold of 3 items finishing in error state was reached. Query /runs/{run_id}/results to get the error message per item.",
-    "metadata": {
+    "application_id": "he-tme",
+    "custom_metadata": {
       "department": "D1",
       "study": "abc-1"
     },
-    "organization_id": "org-123",
-    "status": "CANCELED_SYSTEM",
+    "custom_metadata_checksum": "f54fe109",
+    "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
+    "error_message": "Run canceled given errors on more than 10 items.",
+    "output": "NONE",
+    "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
+    "state": "PENDING",
+    "statistics": {
+      "item_count": 0,
+      "item_pending_count": 0,
+      "item_processing_count": 0,
+      "item_skipped_count": 0,
+      "item_succeeded_count": 0,
+      "item_system_error_count": 0,
+      "item_user_error_count": 0
+    },
+    "submitted_at": "2019-08-24T14:15:22Z",
+    "submitted_by": "auth0|123456",
     "terminated_at": "2024-01-15T10:30:45.123Z",
-    "triggered_at": "2019-08-24T14:15:22Z",
-    "triggered_by": "auth0|123456",
-    "user_payload": {
-      "application_id": "string",
-      "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-      "global_output_artifacts": {
-        "property1": {
-          "data": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "metadata": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-        },
-        "property2": {
-          "data": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "metadata": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-        }
-      },
-      "items": [
-        {
-          "input_artifacts": {
-            "property1": {
-              "download_url": "http://example.com",
-              "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-              "metadata": {}
-            },
-            "property2": {
-              "download_url": "http://example.com",
-              "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-              "metadata": {}
-            }
-          },
-          "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-          "output_artifacts": {
-            "property1": {
-              "data": {
-                "download_url": "http://example.com",
-                "upload_url": "http://example.com"
-              },
-              "metadata": {
-                "download_url": "http://example.com",
-                "upload_url": "http://example.com"
-              },
-              "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-            },
-            "property2": {
-              "data": {
-                "download_url": "http://example.com",
-                "upload_url": "http://example.com"
-              },
-              "metadata": {
-                "download_url": "http://example.com",
-                "upload_url": "http://example.com"
-              },
-              "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-            }
-          }
-        }
-      ]
-    }
+    "termination_reason": "ALL_ITEMS_PROCESSED",
+    "version_number": "0.4.4"
   }
 ]
 ```
@@ -939,40 +977,21 @@ Returns paginated application runs that were triggered by the user.
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
 
 #### Response Schema
 
 Status Code **200**
 
-*Response List Application Runs V1 Runs Get*
+*Response List Runs V1 Runs Get*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|Response List Application Runs V1 Runs Get|[[RunReadResponse](#schemarunreadresponse)]|false|none|[Response schema for `Get run details` endpoint]|
+|Response List Runs V1 Runs Get|[[RunReadResponse](#schemarunreadresponse)]|false|none|[Response schema for `Get run details` endpoint]|
 |» RunReadResponse|[RunReadResponse](#schemarunreadresponse)|false|none|Response schema for `Get run details` endpoint|
-|»» application_run_id|string(uuid)|true|none|UUID of the application|
-|»» application_version_id|string|true|none|ID of the application version|
-|»» message|any|true|none|The description of the run error|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» metadata|any|false|none|Optional JSON metadata that was stored in alongside the application run by the user|
+|»» application_id|string|true|none|Application id|
+|»» custom_metadata|any|false|none|Optional JSON metadata that was stored in alongside the run by the user|
 
 *anyOf*
 
@@ -990,9 +1009,74 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|»» organization_id|string|true|none|Organization of the owner of the application run|
-|»» status|[ApplicationRunStatus](#schemaapplicationrunstatus)|true|none|none|
-|»» terminated_at|any|false|none|Timestamp showing when the application run reached a terminal state.|
+|»» custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field. Can be used ine the `PUT /runs/{run-id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» error_code|any|true|none|When the termination_reason is set to CANCELED_BY_SYSTEM, the error_code is set to define the        structured description of the error.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» error_message|any|true|none|When the termination_reason is set to CANCELED_BY_SYSTEM, the error_message is set to provide        more insights to the error cause.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» output|[RunOutput](#schemarunoutput)|true|none|none|
+|»» run_id|string(uuid)|true|none|UUID of the application|
+|»» state|[RunState](#schemarunstate)|true|none|none|
+|»» statistics|[RunItemStatistics](#schemarunitemstatistics)|true|none|none|
+|»»» item_count|integer|true|none|Total number of the items in the run|
+|»»» item_pending_count|integer|true|none|The number of items in `PENDING` state|
+|»»» item_processing_count|integer|true|none|The number of items in `PROCESSING` state|
+|»»» item_skipped_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SKIPPED`|
+|»»» item_succeeded_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SUCCEEDED`|
+|»»» item_system_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SYSTEM_ERROR`|
+|»»» item_user_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `USER_ERROR`|
+|»» submitted_at|string(date-time)|true|none|Timestamp showing when the run was triggered|
+|»» submitted_by|string|true|none|Id of the user who triggered the run|
+|»» terminated_at|any|false|none|Timestamp showing when the run reached a terminal state.|
 
 *anyOf*
 
@@ -1010,51 +1094,13 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|»» triggered_at|string(date-time)|true|none|Timestamp showing when the application run was triggered|
-|»» triggered_by|string|true|none|Id of the user who triggered the application run|
-|»» user_payload|any|false|none|Field used internally by the Platform|
+|»» termination_reason|any|true|none|The termination reason of the run. When the run is not in `TERMINATED` state, the        termination_reason is `null`. If all items of of the run are processed (successfully or with an error), then        termination_reason is set to `ALL_ITEMS_PROCESSED`. If the run is cancelled by the user, the value is set to        `CANCELED_BY_USER`. If the run reaches the threshold of number of failed items, the Platform cancels the run        and sets the termination_reason to `CANCELED_BY_SYSTEM`.|
 
 *anyOf*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|»»» *anonymous*|[UserPayload](#schemauserpayload)|false|none|none|
-|»»»» application_id|string|true|none|none|
-|»»»» application_run_id|string(uuid)|true|none|none|
-|»»»» global_output_artifacts|any|true|none|none|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|object|false|none|none|
-|»»»»»» PayloadOutputArtifact|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
-|»»»»»»» data|[TransferUrls](#schematransferurls)|true|none|none|
-|»»»»»»»» download_url|string(uri)|true|none|none|
-|»»»»»»»» upload_url|string(uri)|true|none|none|
-|»»»»»»» metadata|[TransferUrls](#schematransferurls)|true|none|none|
-|»»»»»»» output_artifact_id|string(uuid)|true|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»» items|[[PayloadItem](#schemapayloaditem)]|true|none|none|
-|»»»»» PayloadItem|[PayloadItem](#schemapayloaditem)|false|none|none|
-|»»»»»» input_artifacts|object|true|none|none|
-|»»»»»»» PayloadInputArtifact|[PayloadInputArtifact](#schemapayloadinputartifact)|false|none|none|
-|»»»»»»»» download_url|string(uri)|true|none|none|
-|»»»»»»»» input_artifact_id|string(uuid)|false|none|none|
-|»»»»»»»» metadata|object|true|none|none|
-|»»»»»» item_id|string(uuid)|true|none|none|
-|»»»»»» output_artifacts|object|true|none|none|
-|»»»»»»» PayloadOutputArtifact|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
+|»»» *anonymous*|[RunTerminationReason](#schemarunterminationreason)|false|none|none|
 
 *or*
 
@@ -1062,25 +1108,32 @@ Status Code **200**
 |---|---|---|---|---|
 |»»» *anonymous*|null|false|none|none|
 
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» version_number|string|true|none|Application version number|
+
 ##### Enumerated Values
 
 |Property|Value|
 |---|---|
-|status|CANCELED_SYSTEM|
-|status|CANCELED_USER|
-|status|COMPLETED|
-|status|COMPLETED_WITH_ERROR|
-|status|RECEIVED|
-|status|REJECTED|
-|status|RUNNING|
-|status|SCHEDULED|
+|output|NONE|
+|output|PARTIAL|
+|output|FULL|
+|state|PENDING|
+|state|PROCESSING|
+|state|TERMINATED|
+|*anonymous*|ALL_ITEMS_PROCESSED|
+|*anonymous*|CANCELED_BY_SYSTEM|
+|*anonymous*|CANCELED_BY_USER|
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
 OAuth2AuthorizationCodeBearer
 
 
-### create_application_run_v1_runs_post
+### create_run_v1_runs_post
 
 
 
@@ -1102,9 +1155,14 @@ print(r.json())
 
 ```javascript
 const inputBody = '{
-  "application_version_id": "he-tme:v1.0.0-beta",
+  "application_id": "he-tme",
+  "custom_metadata": {
+    "department": "D1",
+    "study": "abc-1"
+  },
   "items": [
     {
+      "external_id": "slide_1",
       "input_artifacts": [
         {
           "download_url": "https://example-bucket.s3.amazonaws.com/slide1.tiff?signature=...",
@@ -1122,14 +1180,10 @@ const inputBody = '{
           },
           "name": "input_slide"
         }
-      ],
-      "reference": "slide_1"
+      ]
     }
   ],
-  "metadata": {
-    "department": "D1",
-    "study": "abc-1"
-  }
+  "version_number": "1.0.0-beta1"
 }';
 const headers = {
   'Content-Type':'application/json',
@@ -1153,9 +1207,9 @@ fetch('/api/v1/runs',
 
 `POST /v1/runs`
 
-*Initiate Application Run*
+*Initiate Run*
 
-This endpoint initiates a processing run for a selected application version and returns an `application_run_id` for tracking purposes.
+This endpoint initiates a processing run for a selected application and version, and returns a `run_id` for tracking purposes.
 
 Slide processing occurs asynchronously, allowing you to retrieve results for individual slides as soon as they
 complete processing. The system typically processes slides in batches of four, though this number may be reduced
@@ -1164,24 +1218,26 @@ Below is an example of the required payload for initiating an Atlas H&E TME proc
 
 #### Payload
 
-The payload includes `application_version_id` and `items` base fields.
+The payload includes `application_id`, optional `version_number`, and `items` base fields.
 
-`application_version_id` is the id used for `/v1/versions/{application_id}` endpoint.
+`application_id` is the unique identifier for the application.
+`version_number` is the semantic version to use. If not provided, the latest available version will be used.
 
 `items` includes the list of the items to process (slides, in case of HETA application).
-Every item has a set of standard fields defined by the API, plus the metadata, specific to the
+Every item has a set of standard fields defined by the API, plus the custom_metadata, specific to the
 chosen application.
 
 Example payload structure with the comments:
 ```
 {
-    application_version_id: "he-tme:v1.0.0-beta",
+    application_id: "he-tme",
+    version_number: "1.0.0-beta",
     items: [{
-        "reference": "slide_1",
+        "external_id": "slide_1",
         "input_artifacts": [{
             "name": "user_slide",
             "download_url": "https://...",
-            "metadata": {
+            "custom_metadata": {
                 "specimen": {
                   "disease": "LUNG_CANCER",
                   "tissue": "LUNG"
@@ -1200,9 +1256,10 @@ Example payload structure with the comments:
 
 | Parameter  | Description |
 | :---- | :---- |
-| `application_version_id` required | Unique ID for the application (must include version) |
+| `application_id` required | Unique ID for the application |
+| `version_number` optional | Semantic version of the application. If not provided, the latest available version will be used |
 | `items` required | List of submitted items (WSIs) with parameters described below. |
-| `reference` required | Unique WSI name or ID for easy reference to results, provided by the caller. The reference should be unique across all items of the application run.  |
+| `external_id` required | Unique WSI name or ID for easy reference to items, provided by the caller. The external_id should be unique across all items of the run.  |
 | `input_artifacts` required | List of provided artifacts for a WSI; at the moment Atlas H&E-TME receives only 1 artifact per slide (the slide itself), but for some other applications this can be a slide and an segmentation map  |
 | `name` required | Type of artifact; Atlas H&E-TME supports only `"input_slide"` |
 | `download_url` required | Signed URL to the input file in the S3 or GCS; Should be valid for at least 6 days |
@@ -1217,10 +1274,10 @@ Example payload structure with the comments:
 
 #### Response
 
-The endpoint returns the application run UUID. After that the job is scheduled for the
+The endpoint returns the run UUID. After that the job is scheduled for the
 execution in the background.
 
-To check the status of the run call `v1/runs/{application_run_id}`.
+To check the status of the run call `v1/runs/{run_id}`.
 
 #### Rejection
 
@@ -1232,9 +1289,14 @@ documentation
 
 ```json
 {
-  "application_version_id": "he-tme:v1.0.0-beta",
+  "application_id": "he-tme",
+  "custom_metadata": {
+    "department": "D1",
+    "study": "abc-1"
+  },
   "items": [
     {
+      "external_id": "slide_1",
       "input_artifacts": [
         {
           "download_url": "https://example-bucket.s3.amazonaws.com/slide1.tiff?signature=...",
@@ -1252,14 +1314,10 @@ documentation
           },
           "name": "input_slide"
         }
-      ],
-      "reference": "slide_1"
+      ]
     }
   ],
-  "metadata": {
-    "department": "D1",
-    "study": "abc-1"
-  }
+  "version_number": "1.0.0-beta1"
 }
 ```
 
@@ -1275,7 +1333,7 @@ documentation
 
 ```json
 {
-  "application_run_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  "run_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 }
 ```
 
@@ -1294,7 +1352,7 @@ To perform this operation, you must be authenticated by means of one of the foll
 OAuth2AuthorizationCodeBearer
 
 
-### get_run_v1_runs__application_run_id__get
+### get_run_v1_runs__run_id__get
 
 
 
@@ -1307,7 +1365,7 @@ headers = {
   'Authorization': 'Bearer {access-token}'
 }
 
-r = requests.get('/api/v1/runs/{application_run_id}', headers = headers)
+r = requests.get('/api/v1/runs/{run_id}', headers = headers)
 
 print(r.json())
 
@@ -1320,7 +1378,7 @@ const headers = {
   'Authorization':'Bearer {access-token}'
 };
 
-fetch('/api/v1/runs/{application_run_id}',
+fetch('/api/v1/runs/{run_id}',
 {
   method: 'GET',
 
@@ -1334,21 +1392,21 @@ fetch('/api/v1/runs/{application_run_id}',
 
 ```
 
-`GET /v1/runs/{application_run_id}`
+`GET /v1/runs/{run_id}`
 
 *Get run details*
 
-This endpoint allows the caller to retrieve the current status of an application run along with other relevant run details.
+This endpoint allows the caller to retrieve the current status of a run along with other relevant run details.
  A run becomes available immediately after it is created through the POST `/runs/` endpoint.
 
- To download the output results, use GET `/runs/{application_run_id}/` results to get outputs for all slides.
+ To download the output results, use GET `/runs/{run_id}/` items to get outputs for all slides.
 Access to a run is restricted to the user who created it.
 
 #### Parameters
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|application_run_id|path|string(uuid)|true|Application run id, returned by `POST /runs/` endpoint|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
 
 > Example responses
 
@@ -1356,87 +1414,31 @@ Access to a run is restricted to the user who created it.
 
 ```json
 {
-  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-  "application_version_id": "he-tme:v0.4.4",
-  "message": "The run was cancelled because the threshold of 3 items finishing in error state was reached. Query /runs/{run_id}/results to get the error message per item.",
-  "metadata": {
+  "application_id": "he-tme",
+  "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
   },
-  "organization_id": "org-123",
-  "status": "CANCELED_SYSTEM",
+  "custom_metadata_checksum": "f54fe109",
+  "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
+  "error_message": "Run canceled given errors on more than 10 items.",
+  "output": "NONE",
+  "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
+  "state": "PENDING",
+  "statistics": {
+    "item_count": 0,
+    "item_pending_count": 0,
+    "item_processing_count": 0,
+    "item_skipped_count": 0,
+    "item_succeeded_count": 0,
+    "item_system_error_count": 0,
+    "item_user_error_count": 0
+  },
+  "submitted_at": "2019-08-24T14:15:22Z",
+  "submitted_by": "auth0|123456",
   "terminated_at": "2024-01-15T10:30:45.123Z",
-  "triggered_at": "2019-08-24T14:15:22Z",
-  "triggered_by": "auth0|123456",
-  "user_payload": {
-    "application_id": "string",
-    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-    "global_output_artifacts": {
-      "property1": {
-        "data": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "metadata": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-      },
-      "property2": {
-        "data": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "metadata": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-      }
-    },
-    "items": [
-      {
-        "input_artifacts": {
-          "property1": {
-            "download_url": "http://example.com",
-            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-            "metadata": {}
-          },
-          "property2": {
-            "download_url": "http://example.com",
-            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-            "metadata": {}
-          }
-        },
-        "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-        "output_artifacts": {
-          "property1": {
-            "data": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "metadata": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-          },
-          "property2": {
-            "data": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "metadata": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-          }
-        }
-      }
-    ]
-  }
+  "termination_reason": "ALL_ITEMS_PROCESSED",
+  "version_number": "0.4.4"
 }
 ```
 
@@ -1446,7 +1448,7 @@ Access to a run is restricted to the user who created it.
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[RunReadResponse](#schemarunreadresponse)|
 |403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this run|None|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found because it was deleted.|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found because it was deleted.|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
 
 
@@ -1454,7 +1456,7 @@ To perform this operation, you must be authenticated by means of one of the foll
 OAuth2AuthorizationCodeBearer
 
 
-### cancel_application_run_v1_runs__application_run_id__cancel_post
+### delete_run_items_v1_runs__run_id__artifacts_delete
 
 
 
@@ -1467,7 +1469,7 @@ headers = {
   'Authorization': 'Bearer {access-token}'
 }
 
-r = requests.post('/api/v1/runs/{application_run_id}/cancel', headers = headers)
+r = requests.delete('/api/v1/runs/{run_id}/artifacts', headers = headers)
 
 print(r.json())
 
@@ -1480,96 +1482,7 @@ const headers = {
   'Authorization':'Bearer {access-token}'
 };
 
-fetch('/api/v1/runs/{application_run_id}/cancel',
-{
-  method: 'POST',
-
-  headers: headers
-})
-.then(function(res) {
-    return res.json();
-}).then(function(body) {
-    console.log(body);
-});
-
-```
-
-`POST /v1/runs/{application_run_id}/cancel`
-
-*Cancel Application Run*
-
-The application run can be canceled by the user who created the application run.
-
-The execution can be canceled any time while the application is not in a final state. The
-pending items will not be processed and will not add to the cost.
-
-When the application is canceled, the already completed items stay available for download.
-
-#### Parameters
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|application_run_id|path|string(uuid)|true|Application run id, returned by `POST /runs/` endpoint|
-
-> Example responses
-
-> 422 Response
-
-```json
-{
-  "detail": [
-    {
-      "loc": [
-        "string"
-      ],
-      "msg": "string",
-      "type": "string"
-    }
-  ]
-}
-```
-
-#### Responses
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|202|[Accepted](https://tools.ietf.org/html/rfc7231#section-6.3.3)|Run cancelled successfully|None|
-|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to cancel this run|None|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
-|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-
-To perform this operation, you must be authenticated by means of one of the following methods:
-OAuth2AuthorizationCodeBearer
-
-
-### delete_application_run_results_v1_runs__application_run_id__results_delete
-
-
-
-> Code samples
-
-```python
-import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
-
-r = requests.delete('/api/v1/runs/{application_run_id}/results', headers = headers)
-
-print(r.json())
-
-```
-
-```javascript
-
-const headers = {
-  'Accept':'application/json',
-  'Authorization':'Bearer {access-token}'
-};
-
-fetch('/api/v1/runs/{application_run_id}/results',
+fetch('/api/v1/runs/{run_id}/artifacts',
 {
   method: 'DELETE',
 
@@ -1583,21 +1496,101 @@ fetch('/api/v1/runs/{application_run_id}/results',
 
 ```
 
-`DELETE /v1/runs/{application_run_id}/results`
+`DELETE /v1/runs/{run_id}/artifacts`
 
-*Delete Application Run Results*
+*Delete Run Items*
 
-This endpoint allows the caller to explicitly delete outputs generated by an application.
-It can only be invoked when the application run has reached a final state
-(COMPLETED, COMPLETED_WITH_ERROR, CANCELED_USER, or CANCELED_SYSTEM).
-Note that by default, all outputs are automatically deleted 30 days after the application run finishes,
+This endpoint allows the caller to explicitly delete artifacts generated by a run.
+It can only be invoked when the run has reached a final state
+(PROCESSED, CANCELED_SYSTEM, CANCELED_USER).
+Note that by default, all artifacts are automatically deleted 30 days after the run finishes,
  regardless of whether the caller explicitly requests deletion.
 
 #### Parameters
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|application_run_id|path|string(uuid)|true|Application run id, returned by `POST /runs/` endpoint|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Run artifacts deleted|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### cancel_run_v1_runs__run_id__cancel_post
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.post('/api/v1/runs/{run_id}/cancel', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/runs/{run_id}/cancel',
+{
+  method: 'POST',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`POST /v1/runs/{run_id}/cancel`
+
+*Cancel Run*
+
+The run can be canceled by the user who created the run.
+
+The execution can be canceled any time while the application is not in a final state. The
+pending items will not be processed and will not add to the cost.
+
+When the application is canceled, the already completed items stay available for download.
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
 
 > Example responses
 
@@ -1621,8 +1614,10 @@ Note that by default, all outputs are automatically deleted 30 days after the ap
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|204|[No Content](https://tools.ietf.org/html/rfc7231#section-6.3.5)|All application outputs successfully deleted|None|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|202|[Accepted](https://tools.ietf.org/html/rfc7231#section-6.3.3)|Successful Response|Inline|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to cancel this run|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
+|409|[Conflict](https://tools.ietf.org/html/rfc7231#section-6.5.8)|Conflict - The Run is already cancelled|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
 
 
@@ -1630,7 +1625,7 @@ To perform this operation, you must be authenticated by means of one of the foll
 OAuth2AuthorizationCodeBearer
 
 
-### list_run_results_v1_runs__application_run_id__results_get
+### list_run_items_v1_runs__run_id__items_get
 
 
 
@@ -1643,7 +1638,7 @@ headers = {
   'Authorization': 'Bearer {access-token}'
 }
 
-r = requests.get('/api/v1/runs/{application_run_id}/results', headers = headers)
+r = requests.get('/api/v1/runs/{run_id}/items', headers = headers)
 
 print(r.json())
 
@@ -1656,7 +1651,7 @@ const headers = {
   'Authorization':'Bearer {access-token}'
 };
 
-fetch('/api/v1/runs/{application_run_id}/results',
+fetch('/api/v1/runs/{run_id}/items',
 {
   method: 'GET',
 
@@ -1670,17 +1665,17 @@ fetch('/api/v1/runs/{application_run_id}/results',
 
 ```
 
-`GET /v1/runs/{application_run_id}/results`
+`GET /v1/runs/{run_id}/items`
 
-*List Run Results*
+*List Run Items*
 
-List results for items in an application run with filtering, sorting, and pagination capabilities.
+List items in a run with filtering, sorting, and pagination capabilities.
 
-Returns paginated results for items within a specific application run. Results can be filtered
-by item IDs, references, status, and custom metadata using JSONPath expressions.
+Returns paginated items within a specific run. Results can be filtered
+by item IDs, external_ids, status, and custom_metadata using JSONPath expressions.
 
 ### JSONPath Metadata Filtering
-Use PostgreSQL JSONPath expressions to filter results by their metadata.
+Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
 
 #### Examples:
 - **Field existence**: `$.case_id` - Results that have a case_id field defined
@@ -1699,29 +1694,29 @@ Use PostgreSQL JSONPath expressions to filter results by their metadata.
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|application_run_id|path|string(uuid)|true|Application run id, returned by `POST /runs/` endpoint|
-|item_id__in|query|any|false|Filter for items ids|
-|reference__in|query|any|false|Filter for items by their reference from the input payload|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
+|item_id__in|query|any|false|Filter for item ids|
+|external_id__in|query|any|false|Filter for items by their external_id from the input payload|
 |status__in|query|any|false|Filter for items in certain statuses|
-|metadata|query|any|false|JSONPath expression to filter results by their metadata|
+|custom_metadata|query|any|false|JSONPath expression to filter items by their custom_metadata|
 |page|query|integer|false|none|
 |page_size|query|integer|false|none|
-|sort|query|any|false|Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.|
+|sort|query|any|false|Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.|
 
 ##### Detailed descriptions
 
-**sort**: Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.
+**sort**: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.
                 **Available fields:**
 - `item_id`
-- `application_run_id`
-- `reference`
+- `run_id`
+- `external_id`
 - `status`
-- `metadata`
+- `custom_metadata`
 
 **Examples:**
 - `?sort=item_id` - Sort by id of the item (ascending)
-- `?sort=-application_run_id` - Sort by id of the run (descending)
-- `?sort=status&sort=-item_idt` - Sort by status, then by id of the item (descending)
+- `?sort=-external_id` - Sort by external ID (descending)
+- `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)
 
 > Example responses
 
@@ -1730,11 +1725,11 @@ Use PostgreSQL JSONPath expressions to filter results by their metadata.
 ```json
 [
   {
-    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-    "error": "string",
+    "custom_metadata": {},
+    "error_message": "string",
+    "external_id": "slide_1",
     "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
     "message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
-    "metadata": {},
     "output_artifacts": [
       {
         "download_url": "http://example.com",
@@ -1743,7 +1738,7 @@ Use PostgreSQL JSONPath expressions to filter results by their metadata.
         "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
       }
     ],
-    "reference": "slide_1",
+    "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
     "status": "PENDING",
     "terminated_at": "2024-01-15T10:30:45.123Z"
   }
@@ -1755,21 +1750,38 @@ Use PostgreSQL JSONPath expressions to filter results by their metadata.
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Application run not found|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
 
 #### Response Schema
 
 Status Code **200**
 
-*Response List Run Results V1 Runs  Application Run Id  Results Get*
+*Response List Run Items V1 Runs  Run Id  Items Get*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|Response List Run Results V1 Runs  Application Run Id  Results Get|[[ItemResultReadResponse](#schemaitemresultreadresponse)]|false|none|[Response schema for items in `List Run Results` endpoint]|
-|» ItemResultReadResponse|[ItemResultReadResponse](#schemaitemresultreadresponse)|false|none|Response schema for items in `List Run Results` endpoint|
-|»» application_run_id|string(uuid)|true|none|Application run UUID to which the item belongs|
-|»» error|any|false|none|The error message in case the item is in `error_system` or `error_user` state|
+|Response List Run Items V1 Runs  Run Id  Items Get|[[ItemResultReadResponse](#schemaitemresultreadresponse)]|false|none|[Response schema for items in `List Run Items` endpoint]|
+|» ItemResultReadResponse|[ItemResultReadResponse](#schemaitemresultreadresponse)|false|none|Response schema for items in `List Run Items` endpoint|
+|»» custom_metadata|any|true|none|The custom_metadata of the item that has been provided by the user on run creation.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» error_message|any|false|none|The error message in case the item is in `error_system` or `error_user` state|
 
 *anyOf*
 
@@ -1787,6 +1799,7 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|»» external_id|string|true|none|The external_id of the item from the user payload|
 |»» item_id|string(uuid)|true|none|Item UUID generated by the Platform|
 |»» message|any|true|none|The error message in case the item is in `error_system` or `error_user` state|
 
@@ -1795,24 +1808,6 @@ Status Code **200**
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» metadata|any|true|none|The metadata of the item that has been provided by the user on application run creation.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|object|false|none|none|
 
 *or*
 
@@ -1847,7 +1842,7 @@ Status Code **200**
 |»»»» metadata|object|true|none|The metadata of the output artifact, provided by the application|
 |»»»» name|string|true|none|Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.|
 |»»»» output_artifact_id|string(uuid)|true|none|The Id of the artifact. Used internally|
-|»» reference|string|true|none|The reference of the item from the user payload|
+|»» run_id|string(uuid)|true|none|Run UUID to which the item belongs|
 |»» status|[ItemStatus](#schemaitemstatus)|true|none|none|
 |»» terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
 
@@ -1870,8 +1865,8 @@ Status Code **200**
 |status|PENDING|
 |status|CANCELED_USER|
 |status|CANCELED_SYSTEM|
-|status|ERROR_USER|
-|status|ERROR_SYSTEM|
+|status|USER_ERROR|
+|status|SYSTEM_ERROR|
 |status|SUCCEEDED|
 
 
@@ -2170,6 +2165,12 @@ OAuth2AuthorizationCodeBearer
   "name": "Atlas H&E-TME",
   "regulatory_classes": [
     "RUO"
+  ],
+  "versions": [
+    {
+      "number": "1.0.0",
+      "released_at": "2025-09-15T10:30:45.123Z"
+    }
   ]
 }
 
@@ -2185,41 +2186,9 @@ ApplicationReadResponse
 |description|string|true|none|Describing what the application can do|
 |name|string|true|none|Application display name|
 |regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
+|versions|[[ApplicationVersion](#schemaapplicationversion)]|true|none|All version numbers available to the user|
 
-### ApplicationRunStatus
-
-
-
-
-
-
-```json
-"CANCELED_SYSTEM"
-
-```
-
-ApplicationRunStatus
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|ApplicationRunStatus|string|false|none|none|
-
-##### Enumerated Values
-
-|Property|Value|
-|---|---|
-|ApplicationRunStatus|CANCELED_SYSTEM|
-|ApplicationRunStatus|CANCELED_USER|
-|ApplicationRunStatus|COMPLETED|
-|ApplicationRunStatus|COMPLETED_WITH_ERROR|
-|ApplicationRunStatus|RECEIVED|
-|ApplicationRunStatus|REJECTED|
-|ApplicationRunStatus|RUNNING|
-|ApplicationRunStatus|SCHEDULED|
-
-### ApplicationVersionReadResponse
+### ApplicationReadShortResponse
 
 
 
@@ -2228,48 +2197,35 @@ ApplicationRunStatus
 
 ```json
 {
-  "application_id": "string",
-  "application_version_id": "he-tme:v0.0.1",
-  "changelog": "string",
-  "created_at": "2019-08-24T14:15:22Z",
-  "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
-  "input_artifacts": [
-    {
-      "metadata_schema": {},
-      "mime_type": "image/tiff",
-      "name": "string"
-    }
-  ],
-  "output_artifacts": [
-    {
-      "metadata_schema": {},
-      "mime_type": "application/vnd.apache.parquet",
-      "name": "string",
-      "scope": "ITEM"
-    }
-  ],
-  "version": "0.0.1"
+  "application_id": "he-tme",
+  "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
+  "latest_version": {
+    "number": "1.0.0",
+    "released_at": "2025-09-15T10:30:45.123Z"
+  },
+  "name": "Atlas H&E-TME",
+  "regulatory_classes": [
+    "RUO"
+  ]
 }
 
 ```
 
-ApplicationVersionReadResponse
+ApplicationReadShortResponse
 
 #### Properties
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |application_id|string|true|none|Application ID|
-|application_version_id|string|true|none|Application version ID|
-|changelog|string|true|none|Description of the changes relative to the previous version|
-|created_at|string(date-time)|true|none|The timestamp when the application version was registered|
-|flow_id|any|false|none|Flow ID, used internally by the platform|
+|description|string|true|none|Describing what the application can do|
+|latest_version|any|false|none|The version with highest version number available to the user|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» *anonymous*|string(uuid)|false|none|none|
+|» *anonymous*|[ApplicationVersion](#schemaapplicationversion)|false|none|none|
 
 or
 
@@ -2281,9 +2237,32 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|input_artifacts|[[InputArtifactReadResponse](#schemainputartifactreadresponse)]|true|none|Lists required input fields, that should be provided by the caller|
-|output_artifacts|[[OutputArtifactReadResponse](#schemaoutputartifactreadresponse)]|true|none|Lists the structure of the output artifacts generated by the application|
-|version|string|true|none|Semantic version of the application|
+|name|string|true|none|Application display name|
+|regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
+
+### ApplicationVersion
+
+
+
+
+
+
+```json
+{
+  "number": "1.0.0",
+  "released_at": "2025-09-15T10:30:45.123Z"
+}
+
+```
+
+ApplicationVersion
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|number|string|true|none|The number of the latest version|
+|released_at|string(date-time)|true|none|The timestamp for when the application version was made available in the Platform|
 
 ### HTTPValidationError
 
@@ -2373,32 +2352,6 @@ InputArtifactCreationRequest
 |metadata|object|true|none|The metadata of the artifact, required by the application version. The JSON schema of the metadata can be requested by `/v1/versions/{application_version_id}`. The schema is located in `input_artifacts.[].metadata_schema`|
 |name|string|true|none|Type of artifact. For Atlas H&E-TME, use "input_slide"|
 
-### InputArtifactReadResponse
-
-
-
-
-
-
-```json
-{
-  "metadata_schema": {},
-  "mime_type": "image/tiff",
-  "name": "string"
-}
-
-```
-
-InputArtifactReadResponse
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|metadata_schema|object|true|none|none|
-|mime_type|string|true|none|none|
-|name|string|true|none|none|
-
 ### ItemCreationRequest
 
 
@@ -2408,6 +2361,10 @@ InputArtifactReadResponse
 
 ```json
 {
+  "custom_metadata": {
+    "case": "abc"
+  },
+  "external_id": "slide_1",
   "input_artifacts": [
     {
       "download_url": "https://example-bucket.s3.amazonaws.com/slide1.tiff",
@@ -2425,11 +2382,7 @@ InputArtifactReadResponse
       },
       "name": "input_slide"
     }
-  ],
-  "metadata": {
-    "case": "abc"
-  },
-  "reference": "slide_1"
+  ]
 }
 
 ```
@@ -2440,8 +2393,7 @@ ItemCreationRequest
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|input_artifacts|[[InputArtifactCreationRequest](#schemainputartifactcreationrequest)]|true|none|List of input artifacts for this item. For Atlas H&E-TME, typically contains one artifact (the slide image)|
-|metadata|any|false|none|Optional JSON metadata to store additional information alongside an item.|
+|custom_metadata|any|false|none|Optional JSON custom_metadata to store additional information alongside an item.|
 
 anyOf
 
@@ -2459,7 +2411,8 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|reference|string|true|none|Unique identifier for this item within the run. Used for referencing results. Must be unique across all items in the same application run|
+|external_id|string|true|none|Unique identifier for this item within the run. Used for referencing items. Must be unique across all items in the same run|
+|input_artifacts|[[InputArtifactCreationRequest](#schemainputartifactcreationrequest)]|true|none|List of input artifacts for this item. For Atlas H&E-TME, typically contains one artifact (the slide image)|
 
 ### ItemReadResponse
 
@@ -2470,10 +2423,10 @@ continued
 
 ```json
 {
-  "application_run_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "external_id": "sample-123",
   "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
   "message": "Processing started",
-  "reference": "sample-123",
+  "run_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "status": "PENDING",
   "terminated_at": "2024-01-15T10:30:45.123Z"
 }
@@ -2486,24 +2439,7 @@ ItemReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|application_run_id|any|false|none|none|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string(uuid)|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
+|external_id|string|true|none|none|
 |item_id|string(uuid)|true|none|none|
 |message|any|false|none|none|
 
@@ -2523,7 +2459,24 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|reference|string|true|none|none|
+|run_id|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uuid)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |status|[ItemStatus](#schemaitemstatus)|true|none|none|
 |terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
 
@@ -2548,11 +2501,11 @@ or
 
 ```json
 {
-  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-  "error": "string",
+  "custom_metadata": {},
+  "error_message": "string",
+  "external_id": "slide_1",
   "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
   "message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
-  "metadata": {},
   "output_artifacts": [
     {
       "download_url": "http://example.com",
@@ -2561,7 +2514,7 @@ or
       "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
     }
   ],
-  "reference": "slide_1",
+  "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
   "status": "PENDING",
   "terminated_at": "2024-01-15T10:30:45.123Z"
 }
@@ -2574,8 +2527,25 @@ ItemResultReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|application_run_id|string(uuid)|true|none|Application run UUID to which the item belongs|
-|error|any|false|none|The error message in case the item is in `error_system` or `error_user` state|
+|custom_metadata|any|true|none|The custom_metadata of the item that has been provided by the user on run creation.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|object|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error_message|any|false|none|The error message in case the item is in `error_system` or `error_user` state|
 
 anyOf
 
@@ -2593,6 +2563,7 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|external_id|string|true|none|The external_id of the item from the user payload|
 |item_id|string(uuid)|true|none|Item UUID generated by the Platform|
 |message|any|true|none|The error message in case the item is in `error_system` or `error_user` state|
 
@@ -2612,27 +2583,9 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|metadata|any|true|none|The metadata of the item that has been provided by the user on application run creation.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|object|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
 |output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|The list of the results generated by the application algorithm. The number of files and theirtypes depend on the particular application version, call `/v1/versions/{version_id}` to getthe details.|
-|reference|string|true|none|The reference of the item from the user payload|
-|status|[ItemStatus](#schemaitemstatus)|true|none|When the item is not processed yet, the status is set to `pending`.When the item is successfully finished, status is set to `succeeded`, and the processing resultsbecome available for download in `output_artifacts` field.When the item processing is failed because the provided item is invalid, the status is set to`error_user`. When the item processing failed because of the error in the model or platform,the status is set to `error_system`. When the application_run is canceled, the status of allpending items is set to either `cancelled_user` or `cancelled_system`.|
+|run_id|string(uuid)|true|none|Run UUID to which the item belongs|
+|status|[ItemStatus](#schemaitemstatus)|true|none|When the item is not processed yet, the status is set to `pending`.When the item is successfully finished, status is set to `succeeded`, and the processing resultsbecome available for download in `output_artifacts` field.When the item processing is failed because the provided item is invalid, the status is set to`error_user`. When the item processing failed because of the error in the model or platform,the status is set to `error_system`. When the run is canceled, the status of allpending items is set to either `cancelled_user` or `cancelled_system`.|
 |terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
 
 anyOf
@@ -2674,8 +2627,8 @@ ItemStatus
 |ItemStatus|PENDING|
 |ItemStatus|CANCELED_USER|
 |ItemStatus|CANCELED_SYSTEM|
-|ItemStatus|ERROR_USER|
-|ItemStatus|ERROR_SYSTEM|
+|ItemStatus|USER_ERROR|
+|ItemStatus|SYSTEM_ERROR|
 |ItemStatus|SUCCEEDED|
 
 ### MeReadResponse
@@ -2688,8 +2641,8 @@ ItemStatus
 ```json
 {
   "organization": {
-    "aignostics_bucket_hmac_access_key_id": "AKIAIOSFODNN7EXAMPLE",
-    "aignostics_bucket_hmac_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+    "aignostics_bucket_hmac_access_key_id": "YOUR_HMAC_ACCESS_KEY_ID",
+    "aignostics_bucket_hmac_secret_access_key": "YOUR/HMAC/SECRET_ACCESS_KEY",
     "aignostics_bucket_name": "aignostics-platform-bucket",
     "aignostics_bucket_protocol": "gs",
     "aignostics_logfire_token": "your-logfire-token",
@@ -2731,8 +2684,8 @@ MeReadResponse
 
 ```json
 {
-  "aignostics_bucket_hmac_access_key_id": "AKIAIOSFODNN7EXAMPLE",
-  "aignostics_bucket_hmac_secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+  "aignostics_bucket_hmac_access_key_id": "YOUR_HMAC_ACCESS_KEY_ID",
+  "aignostics_bucket_hmac_secret_access_key": "YOUR/HMAC/SECRET_ACCESS_KEY",
   "aignostics_bucket_name": "aignostics-platform-bucket",
   "aignostics_bucket_protocol": "gs",
   "aignostics_logfire_token": "your-logfire-token",
@@ -2818,34 +2771,6 @@ OutputArtifact
 |name|string|true|none|none|
 |scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
 |visibility|[OutputArtifactVisibility](#schemaoutputartifactvisibility)|true|none|none|
-
-### OutputArtifactReadResponse
-
-
-
-
-
-
-```json
-{
-  "metadata_schema": {},
-  "mime_type": "application/vnd.apache.parquet",
-  "name": "string",
-  "scope": "ITEM"
-}
-
-```
-
-OutputArtifactReadResponse
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|metadata_schema|object|true|none|none|
-|mime_type|string|true|none|none|
-|name|string|true|none|none|
-|scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
 
 ### OutputArtifactResultReadResponse
 
@@ -2946,126 +2871,6 @@ OutputArtifactVisibility
 |OutputArtifactVisibility|INTERNAL|
 |OutputArtifactVisibility|EXTERNAL|
 
-### PayloadInputArtifact
-
-
-
-
-
-
-```json
-{
-  "download_url": "http://example.com",
-  "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-  "metadata": {}
-}
-
-```
-
-PayloadInputArtifact
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|download_url|string(uri)|true|none|none|
-|input_artifact_id|string(uuid)|false|none|none|
-|metadata|object|true|none|none|
-
-### PayloadItem
-
-
-
-
-
-
-```json
-{
-  "input_artifacts": {
-    "property1": {
-      "download_url": "http://example.com",
-      "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-      "metadata": {}
-    },
-    "property2": {
-      "download_url": "http://example.com",
-      "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-      "metadata": {}
-    }
-  },
-  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-  "output_artifacts": {
-    "property1": {
-      "data": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "metadata": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-    },
-    "property2": {
-      "data": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "metadata": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-    }
-  }
-}
-
-```
-
-PayloadItem
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|input_artifacts|object|true|none|none|
-|» **additionalProperties**|[PayloadInputArtifact](#schemapayloadinputartifact)|false|none|none|
-|item_id|string(uuid)|true|none|none|
-|output_artifacts|object|true|none|none|
-|» **additionalProperties**|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
-
-### PayloadOutputArtifact
-
-
-
-
-
-
-```json
-{
-  "data": {
-    "download_url": "http://example.com",
-    "upload_url": "http://example.com"
-  },
-  "metadata": {
-    "download_url": "http://example.com",
-    "upload_url": "http://example.com"
-  },
-  "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-}
-
-```
-
-PayloadOutputArtifact
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|data|[TransferUrls](#schematransferurls)|true|none|none|
-|metadata|[TransferUrls](#schematransferurls)|true|none|none|
-|output_artifact_id|string(uuid)|true|none|none|
-
 ### RunCreationRequest
 
 
@@ -3075,9 +2880,14 @@ PayloadOutputArtifact
 
 ```json
 {
-  "application_version_id": "he-tme:v1.0.0-beta",
+  "application_id": "he-tme",
+  "custom_metadata": {
+    "department": "D1",
+    "study": "abc-1"
+  },
   "items": [
     {
+      "external_id": "slide_1",
       "input_artifacts": [
         {
           "download_url": "https://example-bucket.s3.amazonaws.com/slide1.tiff?signature=...",
@@ -3095,14 +2905,10 @@ PayloadOutputArtifact
           },
           "name": "input_slide"
         }
-      ],
-      "reference": "slide_1"
+      ]
     }
   ],
-  "metadata": {
-    "department": "D1",
-    "study": "abc-1"
-  }
+  "version_number": "1.0.0-beta1"
 }
 
 ```
@@ -3113,15 +2919,33 @@ RunCreationRequest
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|application_version_id|string|true|none|Unique ID for the application version to use for processing. Must include version suffix (e.g., 'he-tme:v1.0.0-beta')|
-|items|[[ItemCreationRequest](#schemaitemcreationrequest)]|true|none|List of items (slides) to process. Each item represents a whole slide image (WSI) with its associated metadata and artifacts|
-|metadata|any|false|none|Optional JSON metadata to store additional information alongside the application run|
+|application_id|string|true|none|Unique ID for the application to use for processing|
+|custom_metadata|any|false|none|Optional JSON metadata to store additional information alongside the run|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |» *anonymous*|object|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|items|[[ItemCreationRequest](#schemaitemcreationrequest)]|true|none|List of items (slides) to process. Each item represents a whole slide image (WSI) with its associated metadata and artifacts|
+|version_number|any|false|none|Semantic version of the application to use for processing. If not provided, the latest available version will be used|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
 
 or
 
@@ -3138,7 +2962,7 @@ or
 
 ```json
 {
-  "application_run_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  "run_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 }
 
 ```
@@ -3149,7 +2973,69 @@ RunCreationResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|application_run_id|string(uuid)|false|none|none|
+|run_id|string(uuid)|false|none|none|
+
+### RunItemStatistics
+
+
+
+
+
+
+```json
+{
+  "item_count": 0,
+  "item_pending_count": 0,
+  "item_processing_count": 0,
+  "item_skipped_count": 0,
+  "item_succeeded_count": 0,
+  "item_system_error_count": 0,
+  "item_user_error_count": 0
+}
+
+```
+
+RunItemStatistics
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|item_count|integer|true|none|Total number of the items in the run|
+|item_pending_count|integer|true|none|The number of items in `PENDING` state|
+|item_processing_count|integer|true|none|The number of items in `PROCESSING` state|
+|item_skipped_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SKIPPED`|
+|item_succeeded_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SUCCEEDED`|
+|item_system_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SYSTEM_ERROR`|
+|item_user_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `USER_ERROR`|
+
+### RunOutput
+
+
+
+
+
+
+```json
+"NONE"
+
+```
+
+RunOutput
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|RunOutput|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|RunOutput|NONE|
+|RunOutput|PARTIAL|
+|RunOutput|FULL|
 
 ### RunReadResponse
 
@@ -3160,87 +3046,31 @@ RunCreationResponse
 
 ```json
 {
-  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-  "application_version_id": "he-tme:v0.4.4",
-  "message": "The run was cancelled because the threshold of 3 items finishing in error state was reached. Query /runs/{run_id}/results to get the error message per item.",
-  "metadata": {
+  "application_id": "he-tme",
+  "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
   },
-  "organization_id": "org-123",
-  "status": "CANCELED_SYSTEM",
+  "custom_metadata_checksum": "f54fe109",
+  "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
+  "error_message": "Run canceled given errors on more than 10 items.",
+  "output": "NONE",
+  "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
+  "state": "PENDING",
+  "statistics": {
+    "item_count": 0,
+    "item_pending_count": 0,
+    "item_processing_count": 0,
+    "item_skipped_count": 0,
+    "item_succeeded_count": 0,
+    "item_system_error_count": 0,
+    "item_user_error_count": 0
+  },
+  "submitted_at": "2019-08-24T14:15:22Z",
+  "submitted_by": "auth0|123456",
   "terminated_at": "2024-01-15T10:30:45.123Z",
-  "triggered_at": "2019-08-24T14:15:22Z",
-  "triggered_by": "auth0|123456",
-  "user_payload": {
-    "application_id": "string",
-    "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-    "global_output_artifacts": {
-      "property1": {
-        "data": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "metadata": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-      },
-      "property2": {
-        "data": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "metadata": {
-          "download_url": "http://example.com",
-          "upload_url": "http://example.com"
-        },
-        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-      }
-    },
-    "items": [
-      {
-        "input_artifacts": {
-          "property1": {
-            "download_url": "http://example.com",
-            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-            "metadata": {}
-          },
-          "property2": {
-            "download_url": "http://example.com",
-            "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-            "metadata": {}
-          }
-        },
-        "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-        "output_artifacts": {
-          "property1": {
-            "data": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "metadata": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-          },
-          "property2": {
-            "data": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "metadata": {
-              "download_url": "http://example.com",
-              "upload_url": "http://example.com"
-            },
-            "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-          }
-        }
-      }
-    ]
-  }
+  "termination_reason": "ALL_ITEMS_PROCESSED",
+  "version_number": "0.4.4"
 }
 
 ```
@@ -3251,9 +3081,26 @@ RunReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|application_run_id|string(uuid)|true|none|UUID of the application|
-|application_version_id|string|true|none|ID of the application version|
-|message|any|true|none|The description of the run error|
+|application_id|string|true|none|Application id|
+|custom_metadata|any|false|none|Optional JSON metadata that was stored in alongside the run by the user|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|object|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field. Can be used ine the `PUT /runs/{run-id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
 
 anyOf
 
@@ -3271,13 +3118,13 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|metadata|any|false|none|Optional JSON metadata that was stored in alongside the application run by the user|
+|error_code|any|true|none|When the termination_reason is set to CANCELED_BY_SYSTEM, the error_code is set to define the        structured description of the error.|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» *anonymous*|object|false|none|none|
+|» *anonymous*|string|false|none|none|
 
 or
 
@@ -3289,9 +3136,31 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|organization_id|string|true|none|Organization of the owner of the application run|
-|status|[ApplicationRunStatus](#schemaapplicationrunstatus)|true|none|When the application run request is received by the Platform, the `status` of it is set to`running`. When the application run is scheduled, the input items will be processed and the result willbe generated incrementally. The results can be downloaded via `/v1/runs/{run_id}/results` endpoint.When all items are processed and all results are generated, the application status is set to`completed`. If the processing is done, but some items fail, the status is set to`completed_with_error`.When the application run reaches the threshold of number of failed items, the wholeapplication run is set to `canceled_system` and the remaining pending items are not processed.When the application run fails, the finished item results are available for download.If the application run is canceled by calling `POST /v1/runs/{run_id}/cancel` endpoint, theprocessing of the items is stopped, and the application status is set to `cancelled_user`|
-|terminated_at|any|false|none|Timestamp showing when the application run reached a terminal state.|
+|error_message|any|true|none|When the termination_reason is set to CANCELED_BY_SYSTEM, the error_message is set to provide        more insights to the error cause.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|output|[RunOutput](#schemarunoutput)|true|none|The status of the output of the run. When 0 items are successfully processed the output is`NONE`, after one item is successfully processed, the value is set to `PARTIAL`. When all items of the run aresuccessfully processed, the output is set to `FULL`.|
+|run_id|string(uuid)|true|none|UUID of the application|
+|state|[RunState](#schemarunstate)|true|none|When the run request is received by the Platform, the `state` of it is set to`PENDING`. The state changes to `PROCESSING` when at least one item is being processed. After `PROCESSING`, thestate of the run can switch back to `PENDING` if there are no processing items, or to `TERMINATED` when the runfinished processing.|
+|statistics|[RunItemStatistics](#schemarunitemstatistics)|true|none|Aggregated statistics of the run execution|
+|submitted_at|string(date-time)|true|none|Timestamp showing when the run was triggered|
+|submitted_by|string|true|none|Id of the user who triggered the run|
+|terminated_at|any|false|none|Timestamp showing when the run reached a terminal state.|
 
 anyOf
 
@@ -3309,142 +3178,13 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|triggered_at|string(date-time)|true|none|Timestamp showing when the application run was triggered|
-|triggered_by|string|true|none|Id of the user who triggered the application run|
-|user_payload|any|false|none|Field used internally by the Platform|
+|termination_reason|any|true|none|The termination reason of the run. When the run is not in `TERMINATED` state, the        termination_reason is `null`. If all items of of the run are processed (successfully or with an error), then        termination_reason is set to `ALL_ITEMS_PROCESSED`. If the run is cancelled by the user, the value is set to        `CANCELED_BY_USER`. If the run reaches the threshold of number of failed items, the Platform cancels the run        and sets the termination_reason to `CANCELED_BY_SYSTEM`.|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» *anonymous*|[UserPayload](#schemauserpayload)|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-### TransferUrls
-
-
-
-
-
-
-```json
-{
-  "download_url": "http://example.com",
-  "upload_url": "http://example.com"
-}
-
-```
-
-TransferUrls
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|download_url|string(uri)|true|none|none|
-|upload_url|string(uri)|true|none|none|
-
-### UserPayload
-
-
-
-
-
-
-```json
-{
-  "application_id": "string",
-  "application_run_id": "53c0c6ed-e767-49c4-ad7c-b1a749bf7dfe",
-  "global_output_artifacts": {
-    "property1": {
-      "data": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "metadata": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-    },
-    "property2": {
-      "data": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "metadata": {
-        "download_url": "http://example.com",
-        "upload_url": "http://example.com"
-      },
-      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-    }
-  },
-  "items": [
-    {
-      "input_artifacts": {
-        "property1": {
-          "download_url": "http://example.com",
-          "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-          "metadata": {}
-        },
-        "property2": {
-          "download_url": "http://example.com",
-          "input_artifact_id": "a4134709-460b-44b6-99b2-2d637f889159",
-          "metadata": {}
-        }
-      },
-      "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-      "output_artifacts": {
-        "property1": {
-          "data": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "metadata": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-        },
-        "property2": {
-          "data": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "metadata": {
-            "download_url": "http://example.com",
-            "upload_url": "http://example.com"
-          },
-          "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b"
-        }
-      }
-    }
-  ]
-}
-
-```
-
-UserPayload
-
-#### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|application_id|string|true|none|none|
-|application_run_id|string(uuid)|true|none|none|
-|global_output_artifacts|any|true|none|none|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|object|false|none|none|
-|»» **additionalProperties**|[PayloadOutputArtifact](#schemapayloadoutputartifact)|false|none|none|
+|» *anonymous*|[RunTerminationReason](#schemarunterminationreason)|false|none|none|
 
 or
 
@@ -3456,7 +3196,63 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|items|[[PayloadItem](#schemapayloaditem)]|true|none|none|
+|version_number|string|true|none|Application version number|
+
+### RunState
+
+
+
+
+
+
+```json
+"PENDING"
+
+```
+
+RunState
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|RunState|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|RunState|PENDING|
+|RunState|PROCESSING|
+|RunState|TERMINATED|
+
+### RunTerminationReason
+
+
+
+
+
+
+```json
+"ALL_ITEMS_PROCESSED"
+
+```
+
+RunTerminationReason
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|RunTerminationReason|string|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|RunTerminationReason|ALL_ITEMS_PROCESSED|
+|RunTerminationReason|CANCELED_BY_SYSTEM|
+|RunTerminationReason|CANCELED_BY_USER|
 
 ### UserReadResponse
 
@@ -3684,7 +3480,6 @@ continued
   "application_id": "string",
   "application_version_id": "string",
   "changelog": "string",
-  "created_at": "2019-08-24T14:15:22Z",
   "flow_id": "0746f03b-16cc-49fb-9833-df3713d407d2",
   "input_artifacts": [
     {
@@ -3702,7 +3497,8 @@ continued
       "visibility": "INTERNAL"
     }
   ],
-  "version": "string"
+  "released_at": "2019-08-24T14:15:22Z",
+  "version_number": "string"
 }
 
 ```
@@ -3716,7 +3512,6 @@ VersionReadResponse
 |application_id|string|true|none|Application ID|
 |application_version_id|string|true|none|Application version ID|
 |changelog|string|true|none|Description of the changes relative to the previous version|
-|created_at|string(date-time)|true|none|The timestamp when the application version was registered|
 |flow_id|any|false|none|Flow ID, used internally by the platform|
 
 anyOf
@@ -3737,4 +3532,5 @@ continued
 |---|---|---|---|---|
 |input_artifacts|[[InputArtifact](#schemainputartifact)]|true|none|List of the input fields, provided by the User|
 |output_artifacts|[[OutputArtifact](#schemaoutputartifact)]|true|none|List of the output fields, generated by the application|
-|version|string|true|none|Semantic version of the application|
+|released_at|string(date-time)|true|none|The timestamp when the application version was registered|
+|version_number|string|true|none|Semantic version of the application|

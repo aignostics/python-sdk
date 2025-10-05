@@ -279,7 +279,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     ui.select(
                         {version.number: version.number for version in application.versions},
                         value=latest_application_version.number if latest_application_version else None,
-                    ).bind_value(submit_form, "application_version_id")
+                    ).bind_value(submit_form, "application_version")
                 ui.space()
                 with ui.column(), ui.button(icon="info", on_click=info_dialog.open):
                     ui.tooltip("Show changes and input/ouput schema of this application version.")

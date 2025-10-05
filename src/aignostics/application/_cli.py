@@ -155,7 +155,10 @@ def application_dump_schemata(  # noqa: C901
     for input_artifact in app_version.input_artifacts:
         if input_artifact.metadata_schema:
             file_path: Path = sanitize_path(
-                Path(destination / f"{app_version.application_version_id}_input_{input_artifact.name}.json")
+                Path(
+                    destination
+                    / f"{app_version.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
+                )
             )  # type: ignore
             file_path.write_text(data=json.dumps(input_artifact.metadata_schema, indent=2), encoding="utf-8")
             created_files.append(file_path)
@@ -163,12 +166,17 @@ def application_dump_schemata(  # noqa: C901
     for output_artifact in app_version.output_artifacts:
         if output_artifact.metadata_schema:
             file_path = sanitize_path(
-                Path(destination / f"{app_version.application_version_id}_output_{output_artifact.name}.json")
+                Path(
+                    destination
+                    / f"{app_version.application_id}_{app_version.version_number}_output_{output_artifact.name}.json"
+                )
             )  # type: ignore
             file_path.write_text(data=json.dumps(output_artifact.metadata_schema, indent=2), encoding="utf-8")
             created_files.append(file_path)
 
-    md_file_path: Path = sanitize_path(Path(destination / f"{application_version.application_version_id}_schemata.md"))  # type: ignore
+    md_file_path: Path = sanitize_path(
+        Path(destination / f"{application_version.application_id}_{application_version.version_number}_schemata.md")
+    )  # type: ignore
     with md_file_path.open("w", encoding="utf-8") as md_file:
         md_file.write(f"# Schemata for Aignostics Application {app.name}\n")
         md_file.write(f"* ID: {app.application_id}\n")
@@ -176,17 +184,19 @@ def application_dump_schemata(  # noqa: C901
         md_file.write("\n## Input Artifacts\n")
         for input_artifact in app_version.input_artifacts:
             md_file.write(
-                f"- {input_artifact.name}: {app_version.application_version_id}_input_{input_artifact.name}.json\n"
+                f"- {input_artifact.name}: {app_version.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n"
             )
         md_file.write("\n## Output Artifacts\n")
         for output_artifact in app_version.output_artifacts:
             md_file.write(
-                f"- {output_artifact.name}: {app_version.application_version_id}_output_{output_artifact.name}.json\n"
+                f"- {output_artifact.name}: {app_version.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n"
             )
     created_files.append(md_file_path)
 
     if zip:
-        zip_filename = sanitize_path(Path(destination / f"{app_version.application_version_id}_schemata.zip"))
+        zip_filename = sanitize_path(
+            Path(destination / f"{app_version.application_id}_{app_version.version_number}_schemata.zip")
+        )
         with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file_path in created_files:
                 zipf.write(file_path, arcname=file_path.name)

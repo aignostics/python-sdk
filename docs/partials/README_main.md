@@ -3,7 +3,7 @@
 The **Aignostics Python SDK** includes multiple pathways to interact with the
 **Aignostics Platform**:
 
-1. Use the **Aignostics Launchpad** to analyze whole slide images with advanced computational pathology applications like 
+1. Use the **Aignostics Launchpad** to analyze whole slide images with advanced computational pathology applications like
    [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) directly from your desktop.
    View your results by launching popular tools such as [QuPath](https://qupath.github.io/) and Python Notebooks with one click.
    The app runs on Mac OS X, Windows, and Linux.
@@ -38,27 +38,28 @@ more about how we achieve
 ## Quick Start
 
 > [!Note]
-> See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible. 
-> If you first want to learn bout the basic concepts and components of the Aignostics Platform skip to that section below. 
-> The further reading section points you to reference documentation listing all available CLI commands, methods and classes provided by the client library, operations of the API, how we achieve operational excellence, security, and more. 
+> See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible.
+> If you first want to learn bout the basic concepts and components of the Aignostics Platform skip to that section below.
+> The further reading section points you to reference documentation listing all available CLI commands, methods and classes provided by the client library, operations of the API, how we achieve operational excellence, security, and more.
 > If you are not familiar with terminology please check the glossary at the end of this document.
 
 ### Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
 
 The **Aignostics Launchpad** is a graphical desktop application that allows you to run
-applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists. 
+applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists.
 
 The Launchpad is available for Mac OS X, Windows, and Linux, and can be installed easily:
 
-1. Visit the [Quick Start](https://platform.aignostics.com/getting-started/quick-start) 
+1. Visit the [Quick Start](https://platform.aignostics.com/getting-started/quick-start)
    page in the Aignostics Console.
 2. Copy the installation script and paste it into your terminal - compatible with MacOS, Windows, and Linux.
 3. Launch the application by running `uvx aignostics launchpad`.
-4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images 
+4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images
    with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other computational pathology applications.
 
 > [!Note]
 > The Launchpad features a growing ecosystem of extensions that seamlessly integrate with standard digital pathology tools. To use the Launchpad with all available extensions, run `uvx --with aignostics[qupath,marimo] aignostics launchpad`. Currently available extensions are:
+>
 > 1. **QuPath extension**: View your application results in [QuPath](https://qupath.github.io/) with a single click. The Launchpad creates QuPath projects on-the-fly.
 > 2. **Marimo extension**: Analyze your application results using [Marimo](https://marimo.io/) notebooks embedded in the Launchpad. You don't have to leave the Launchpad to do real data science.
 
@@ -122,10 +123,10 @@ to learn about all commands and options available.
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
 > and follow the steps outlined in the `Use in Python Notebooks` section.
 
-The Python SDK includes Jupyter and Marimo notebooks to help you get started interacting 
+The Python SDK includes Jupyter and Marimo notebooks to help you get started interacting
 with the Aignostics Platform in your notebook environment.
 
-The notebooks showcase the interaction with the Aignostics Platform using our "Test Application". To run one them, 
+The notebooks showcase the interaction with the Aignostics Platform using our "Test Application". To run one them,
 please follow the steps outlined in the snippet below to clone this repository and start either the
 [Jupyter](https://docs.jupyter.org/en/latest/index.html)
 ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb))
@@ -159,12 +160,12 @@ uv run marimo edit examples/notebook.py
 Next to using the Launchpad, CLI and example notebooks, the Python SDK includes the
 *Aignostics Client Library* for integration with your Python Codebase.
 
-The following sections outline how to install the Python SDK for this purpose and 
+The following sections outline how to install the Python SDK for this purpose and
 interact with the Client.
 
 ### Installation
 
-The Aignostics Python SDK is published on the [Python Package Index (PyPI)](https://pypi.org/project/aignostics/), 
+The Aignostics Python SDK is published on the [Python Package Index (PyPI)](https://pypi.org/project/aignostics/),
 is compatible with Python 3.11 and above, and can be installed via via `uv` or `pip`:
 
 **Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv
@@ -194,10 +195,11 @@ from aignostics import platform
 client = platform.Client()
 # trigger an application run
 application_run = client.runs.create(
-   application_version="two-task-dummy:v0.35.0",
+   application_id="two-task-dummy",
+   application_version="0.35.0",  # version number without 'v' prefix, omit for latest version
    items=[
       platform.InputItem(
-         reference="slide-1",
+         external_id="slide-1",
          input_artifacts=[
             platform.InputArtifact(
                name="user_slide",
@@ -224,13 +226,14 @@ to learn about all classes and methods.
 
 ##### Defining the input for an application run
 
-Next to the `application_version` of the application you want to run, you have
-to define the input items you want to process in the run. The input items are
-defined as follows:
+When creating an application run, you need to specify the `application_id` and optionally the
+`application_version` (version number) of the application you want to run. If you omit the version,
+the latest version will be used automatically. Additionally, you need to define the input items you
+want to process in the run. The input items are defined as follows:
 
 ```python
 platform.InputItem(
-    reference="1",
+    external_id="1",
     input_artifacts=[
         platform.InputArtifact(
             name="user_slide", # defined by the application version input_artifact schema

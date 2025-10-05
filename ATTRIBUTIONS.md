@@ -506,7 +506,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.190) - MIT License
+## aignostics (0.2.179) - MIT License
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -3659,7 +3659,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.40.47) - Apache Software License
+## boto3 (1.40.42) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3857,7 +3857,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.40.47) - Apache Software License
+## botocore (1.40.42) - Apache Software License
 
 Low-level, data-driven core of boto 3.
 
@@ -4460,7 +4460,7 @@ Asynchronous file IO for Linux MacOS or Windows.
 
 ```
 
-## certifi (2025.10.5) - Mozilla Public License 2.0 (MPL 2.0)
+## certifi (2025.8.3) - Mozilla Public License 2.0 (MPL 2.0)
 
 Python package for providing Mozilla's CA Bundle.
 
@@ -7585,7 +7585,7 @@ SOFTWARE.
 
 ```
 
-## fastapi (0.118.2) - MIT License
+## fastapi (0.118.0) - MIT License
 
 FastAPI framework, high performance, easy to learn, fast to code, ready for production
 
@@ -10434,7 +10434,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## idc-index-data (22.0.2) - MIT License
+## idc-index-data (22.0.1) - MIT License
 
 ImagingDataCommons index to query and download data.
 
@@ -12635,7 +12635,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (4.12.0) - UNKNOWN
+## logfire (4.10.0) - MIT License
 
 The best Python observability tool! 🪵🔥
 
@@ -12823,7 +12823,7 @@ Copyright 2010-2020 - Ronald Oussoren
 
 ```
 
-## marimo (0.16.5) - Apache Software License
+## marimo (0.16.4) - Apache Software License
 
 A library for making reactive notebooks and apps
 
@@ -13884,7 +13884,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (3.0.3) - MIT License
+## nicegui (2.24.2) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -28453,7 +28453,7 @@ C version of reader, parser and emitter for ruamel.yaml derived from libyaml
 
 ```
 
-## ruff (0.14.0) - MIT License
+## ruff (0.13.2) - MIT License
 
 An extremely fast Python linter and code formatter, written in Rust.
 
@@ -29366,7 +29366,7 @@ Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Pytho
 
 ```
 
-## selenium (4.36.0) - Apache-2.0
+## selenium (4.32.0) - Apache Software License
 
 Official Python bindings for Selenium WebDriver
 
@@ -29629,7 +29629,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## sentry-sdk (2.40.0) - BSD License
+## sentry-sdk (2.39.0) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -33258,7 +33258,7 @@ SOFTWARE.
 
 ```
 
-## uv (0.8.23) - Apache Software License; MIT License
+## uv (0.8.22) - Apache Software License; MIT License
 
 An extremely fast Python package and project manager, written in Rust.
 

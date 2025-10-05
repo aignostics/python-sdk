@@ -102,41 +102,33 @@ DownloadProgress:
 **Actual Semantic Version Validation:**
 
 ```python
-def application_version(self, application_version_id: str,
-                       use_latest_if_no_version_given: bool = True):
-    """Validate and retrieve application version."""
-
-    # Pattern: application_id:vX.Y.Z
-    match = re.match(r"^([^:]+):v(.+)$", application_version_id)
-
-    # Uses semver library for validation
-    if not match or not semver.Version.is_valid(match.group(2)):
-        if use_latest_if_no_version_given:
-            # Try to find latest version
-            application_id = match.group(1) if match else application_version_id
-            latest_version = self.application_version_latest(self.application(application_id))
-            if latest_version:
-                return latest_version
-            raise ValueError(f"No valid version found, no latest version available")
-
-        raise ValueError(f"Invalid application version id format: {application_version_id}. "
-                        "Expected format: application_id:vX.Y.Z")
-
-    # Lookup version in application
-    application_id = match.group(1)
-    application = self.application(application_id)
-    for version in self.application_versions(application):
-        if version.application_version_id == application_version_id:
-            return version
-    raise NotFoundException(f"Version {application_version_id} not found")
+def application_version(self, application_id: str,
+                       version_number: str | None = None) -> ApplicationVersion:
+    """Validate and retrieve application version.
+    
+    Args:
+        application_id: The ID of the application (e.g., 'heta')
+        version_number: The semantic version number (e.g., '1.0.0')
+                       If None, returns the latest version
+    
+    Returns:
+        ApplicationVersion with application_id and version_number attributes
+    """
+    # Delegates to platform client which validates semver format
+    # Platform client uses Versions resource internally
+    return self.platform_client.application_version(
+        application_id=application_id,
+        version_number=version_number
+    )
 ```
 
 **Key Points:**
 
-- Uses `semver.Version.is_valid()` for validation (NOT custom regex)
-- Version MUST have 'v' prefix: `app-id:v1.2.3`
-- Falls back to latest version if configured
-- Iterates through versions to find match
+- Application ID and version number are now **separate parameters**
+- Version format: semantic version string without 'v' prefix (e.g., `"1.0.0"`, not `"v1.0.0"`)
+- Uses `semver.Version.is_valid()` for validation in the platform layer
+- Falls back to latest version if `version_number` is `None`
+- Returns `ApplicationVersion` object with `application_id` and `version_number` attributes
 
 ### File Processing Constants (Actual Values)
 
@@ -244,21 +236,31 @@ apps = service.list_applications()
 
 # Get specific version (actual pattern)
 try:
-    # Requires 'v' prefix
+    # Application ID and version are separate parameters
     app_version = service.application_version(
-        "heta:v2.1.0",  # Must be app-id:vX.Y.Z format
-        use_latest_if_no_version_given=True
+        application_id="heta",
+        version_number="2.1.0"  # Semantic version without 'v' prefix
+    )
+    # Access attributes
+    print(f"Application: {app_version.application_id}")
+    print(f"Version: {app_version.version_number}")
+    
+    # Get latest version
+    latest = service.application_version(
+        application_id="heta",
+        version_number=None  # Returns latest version
     )
 except ValueError as e:
-    # Handle invalid format or missing version
+    # Handle invalid version format
     logger.error(f"Version error: {e}")
 except NotFoundException as e:
-    # Handle missing application
+    # Handle missing application or version
     logger.error(f"Application not found: {e}")
 
 # Run application (simplified - actual has more parameters)
 run = service.run_application(
     application_id="heta",
+    application_version="2.1.0",  # Optional, uses latest if omitted
     files=["slide1.svs", "slide2.tiff"]
 )
 ```
@@ -321,39 +323,47 @@ def download_artifact(self, url: str, output_path: Path, progress_callback):
 ```python
 def test_application_version_valid_semver_formats():
     """Test valid semver formats."""
-    valid_formats = [
-        "test-app:v1.0.0",
-        "test-app:v1.2.3",
-        "test-app:v10.20.30",
-        "test-app:v1.1.2-prerelease+meta",
-        "test-app:v1.0.0-alpha",
-        "test-app:v1.0.0-beta",
-        "test-app:v1.0.0-alpha.beta",
-        "test-app:v1.0.0-rc.1+meta",
+    valid_versions = [
+        "1.0.0",
+        "1.2.3",
+        "10.20.30",
+        "1.1.2-prerelease+meta",
+        "1.0.0-alpha",
+        "1.0.0-beta",
+        "1.0.0-alpha.beta",
+        "1.0.0-rc.1+meta",
     ]
 
-    for version_id in valid_formats:
+    for version in valid_versions:
         try:
-            service.application_version(version_id)
+            result = service.application_version(
+                application_id="test-app",
+                version_number=version
+            )
+            assert result.application_id == "test-app"
+            assert result.version_number == version
         except ValueError as e:
-            pytest.fail(f"Valid format '{version_id}' rejected: {e}")
+            pytest.fail(f"Valid format '{version}' rejected: {e}")
         except NotFoundException:
             # Application doesn't exist, but format is valid
-            pytest.skip(f"Application not found for {version_id}")
+            pytest.skip(f"Application not found for test-app")
 
 def test_application_version_invalid_semver_formats():
     """Test invalid formats are rejected."""
-    invalid_formats = [
-        "test-app:1.0.0",     # Missing 'v' prefix
-        "test-app:v1.0",      # Incomplete version
-        "test-app:v1.0.0-",   # Trailing dash
-        ":v1.0.0",            # Missing application ID
-        "no-colon-v1.0.0",    # Missing colon separator
+    invalid_versions = [
+        "v1.0.0",      # 'v' prefix not allowed
+        "1.0",         # Incomplete version
+        "1.0.0-",      # Trailing dash
+        "",            # Empty string
+        "not-semver",  # Not a valid semver
     ]
 
-    for version_id in invalid_formats:
-        with pytest.raises(ValueError, match="Invalid application version id format"):
-            service.application_version(version_id)
+    for version in invalid_versions:
+        with pytest.raises(ValueError, match="Invalid version format"):
+            service.application_version(
+                application_id="test-app",
+                version_number=version
+            )
 ```
 
 ### Use Latest Fallback Test
@@ -364,17 +374,20 @@ def test_application_version_use_latest_fallback():
     service = ApplicationService()
 
     try:
-        # Try with just application ID (no version)
+        # Get latest version by passing None
         result = service.application_version(
-            HETA_APPLICATION_ID,
-            use_latest_if_no_version_given=True
+            application_id=HETA_APPLICATION_ID,
+            version_number=None  # Falls back to latest
         )
         assert result is not None
-        assert result.application_version_id.startswith(f"{HETA_APPLICATION_ID}:v")
-    except ValueError as e:
-        if "no latest version available" in str(e):
+        assert result.application_id == HETA_APPLICATION_ID
+        assert result.version_number is not None
+        # version_number should be valid semver
+        assert semver.Version.is_valid(result.version_number)
+    except NotFoundException as e:
+        if "No versions found" in str(e):
             # Expected if no versions exist
-            pass
+            pytest.skip(f"No versions available for {HETA_APPLICATION_ID}")
         else:
             pytest.fail(f"Unexpected error: {e}")
 ```
@@ -420,14 +433,22 @@ logger.error("Application version validation failed", extra={
 
 ### Semver Format Issues
 
-**Problem:** Missing 'v' prefix in version
+**Problem:** Using incorrect version format or combining application ID with version
 
 **Solution:**
 
 ```python
-# Always include 'v' prefix
-version_id = "app-id:v1.2.3"  # Correct
-# NOT: "app-id:1.2.3"  # Wrong
+# Correct: Separate application_id and version_number
+app_version = service.application_version(
+    application_id="heta",
+    version_number="1.2.3"  # No 'v' prefix
+)
+
+# Wrong: Old combined format
+# app_version = service.application_version("heta:v1.2.3")  # No longer supported
+
+# Wrong: Version with 'v' prefix
+# version_number="v1.2.3"  # Will fail validation
 ```
 
 ### QuPath Availability

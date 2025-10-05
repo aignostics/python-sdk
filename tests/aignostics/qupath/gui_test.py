@@ -151,8 +151,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
-        gui_register_pages()
-
         application = Service().application(HETA_APPLICATION_ID)
         latest_version_number = application.versions[0].version if application.versions else None
         runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)

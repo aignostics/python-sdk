@@ -91,6 +91,23 @@ class Client:
             if app.application_id == application_id:
                 return app
         raise NotFoundException
+    
+    def application_version(self, application_id: str, 
+                          version_number: str | None = None) -> ApplicationVersion:
+        """Get application version details.
+        
+        Args:
+            application_id: The ID of the application (e.g., 'heta')
+            version_number: The semantic version number (e.g., '1.0.0')
+                          If None, returns the latest version
+        
+        Returns:
+            ApplicationVersion with application_id and version_number attributes
+        """
+        return Versions(self._api).details(
+            application_id=application_id, 
+            application_version=version_number
+        )
 ```
 
 ### Authentication Flow (`_authentication.py`)
@@ -165,15 +182,26 @@ def paginate(func, *args, page_size=PAGE_SIZE, **kwargs):
 class Runs:
     def list(
         self,
-        application_version_id: str | None = None,
+        application_id: str | None = None,
+        application_version: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
     ):
-        """List runs with pagination."""
+        """List runs with pagination.
+        
+        Args:
+            application_id: Optional filter by application ID
+            application_version: Optional filter by version number (not version_id)
+            page_size: Number of results per page (max 100)
+        
+        Returns:
+            Generator of ApplicationRun instances
+        """
         if page_size > LIST_APPLICATION_RUNS_MAX_PAGE_SIZE:
             raise ValueError(f"page_size must be <= {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}")
 
         # Uses paginate helper internally
         # Returns generator of ApplicationRun instances
+        # Each run has application_id and version_number attributes
 ```
 
 ## Usage Patterns & Best Practices
@@ -194,8 +222,25 @@ print(f"User: {me.email}, Organization: {me.organization.name}")
 for app in client.applications.list():
     print(f"App: {app.application_id}")
 
+# Get application version
+app_version = client.application_version(
+    application_id="heta",
+    version_number="1.0.0"  # Omit for latest version
+)
+print(f"Application: {app_version.application_id}")
+print(f"Version: {app_version.version_number}")
+
+# Get latest version
+latest = client.application_version(
+    application_id="heta",
+    version_number=None
+)
+
 # Get specific run
 run = client.run("run-id-123")
+# Access application info from run
+print(f"Run application: {run.payload.application_id}")
+print(f"Run version: {run.payload.version_number}")
 
 # List runs with custom page size
 runs = client.runs.list(page_size=50)  # Max 100
@@ -363,6 +408,14 @@ all_apps = list(client.applications.list())
 app_dict = {app.application_id: app for app in all_apps}
 # Now lookups are O(1)
 app = app_dict.get("app-id")
+
+# For version lookups, use direct API call
+version = client.application_version(
+    application_id="heta",
+    version_number="1.0.0"  # or None for latest
+)
+# Access version attributes
+print(f"App: {version.application_id}, Version: {version.version_number}")
 ```
 
 ## Module Dependencies

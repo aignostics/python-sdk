@@ -77,24 +77,24 @@ def test_token_refresh_timing():
 def test_application_version_formats():
     """Test all valid and invalid semver formats."""
     valid = [
-        "app:v1.0.0",
-        "app:v1.0.0-alpha",
-        "app:v1.0.0+meta",
-        "app:v1.0.0-rc.1+meta"
+        "1.0.0",
+        "1.0.0-alpha",
+        "1.0.0+meta",
+        "1.0.0-rc.1+meta"
     ]
 
     invalid = [
-        "app:1.0.0",  # Missing v
-        "app:v1.0",   # Incomplete
-        ":v1.0.0",    # Missing app
+        "v1.0.0",   # 'v' prefix not allowed
+        "1.0",      # Incomplete
+        "",         # Empty string
     ]
 
     for v in valid:
-        assert service.application_version(v)
+        assert service.application_version("test-app", v)
 
     for v in invalid:
         with pytest.raises(ValueError):
-            service.application_version(v)
+            service.application_version("test-app", v)
 ```
 
 ### Process Management Testing (`dataset/service_test.py`)
