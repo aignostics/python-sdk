@@ -1,6 +1,20 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.182](https://github.com/aignostics/python-sdk/compare/v0.2.181..0.2.182) - 2025-10-05
+# [0.2.183](https://github.com/aignostics/python-sdk/compare/v0.2.182..0.2.183) - 2025-10-05
+
+### 🐛 Bug Fixes
+
+- *(platform)* Invalid log formatting - ([99ab796](https://github.com/aignostics/python-sdk/commit/99ab79628253d1460e5da93f9293064d0ca8a4f3))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(scheduled)* Print info post sending heartbeat - ([58b2916](https://github.com/aignostics/python-sdk/commit/58b291663fd2cf8db9a2954fbcc12cdda64d4716))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.182](https://github.com/aignostics/python-sdk/compare/v0.2.181..v0.2.182) - 2025-10-05
 
 ### ⚙️ Miscellaneous Tasks
 
