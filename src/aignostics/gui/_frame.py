@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from importlib.util import find_spec
 from typing import Any
 
+from html_sanitizer import Sanitizer
 from humanize import naturaldelta
 
 from aignostics.utils import __version__, open_user_data_directory
@@ -315,6 +316,6 @@ def frame(  # noqa: C901, PLR0915
                 f"Aignostics Python SDK v{__version__}{flavor}</a>"
                 ' - built with love in <a style="color: black; text-decoration: underline" target="_blank"'
                 ' href="https://www.aignostics.com/company/about">Berlin</A> 🐻',
-                sanitize=False,
+                sanitize=Sanitizer().sanitize,
             ).style("color: black")
             ui.tooltip("Visit GitHub repository of Aignostics Python SDK")
