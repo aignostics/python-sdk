@@ -115,7 +115,6 @@ jobs:
                 timestamp: $timestamp,
               }'
             )
-
             curl \
               --fail-with-body \
               --silent \
@@ -123,8 +122,9 @@ jobs:
               --header "Content-Type: application/json" \
               --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
               "${BETTERSTACK_HEARTBEAT_URL}/${EXIT_CODE}"
+            echo "INFO: Sent heartbeat to betterstack with exit code '${EXIT_CODE}'"
           else
-            echo "WARNING: No BetterStack heartbeat URL configured, skipping heartbeat notification"
+            echo "WARNING: No BetterStack heartbeat URL configured, skipped heartbeat notification."
           fi
           exit $EXIT_CODE
 
