@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.187](https://github.com/aignostics/python-sdk/compare/v0.2.186..0.2.187) - 2025-10-05
+# [0.2.188](https://github.com/aignostics/python-sdk/compare/v0.2.187..0.2.188) - 2025-10-05
+
+### 🛡️ Security
+
+- *(gha)* Set permission for generate-matrix, see https://github.com/aignostics/python-sdk/security/code-scanning/15 - ([bd74dec](https://github.com/aignostics/python-sdk/commit/bd74dec470d9e181012c0f84e4fb6e97ec9d8130))
+
+
+# [v0.2.187](https://github.com/aignostics/python-sdk/compare/v0.2.186..v0.2.187) - 2025-10-05
 
 ### 🛡️ Security
 
