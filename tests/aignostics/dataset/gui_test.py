@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pytest
 from nicegui.testing import User
 
-from aignostics.utils import gui_register_pages
 from tests.conftest import assert_notified, print_directory_structure
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
@@ -15,7 +14,6 @@ IDC_DOWNLOAD_MAX_DURATION = 60
 
 async def test_gui_idc_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
-    gui_register_pages()
     await user.open("/dataset/idc")
     await user.should_see("Explore Portal")
 
@@ -25,7 +23,6 @@ async def test_gui_idc_downloads(user: User, tmp_path: Path, silent_logging: boo
     """Test that the user can download a dataset to a temporary directory."""
     # Mock get_user_data_directory to return the tmpdir for this test
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=tmp_path):
-        gui_register_pages()
         await user.open("/dataset/idc")
 
         await user.should_see(marker="BUTTON_EXAMPLE_DATASET")
@@ -93,7 +90,6 @@ async def test_gui_idc_download_fails_with_invalid_inputs(
 ) -> None:
     """Test that the download fails with appropriate notification when invalid IDs are provided."""
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=Path(tmpdir)):
-        gui_register_pages()
         await user.open("/dataset/idc")
         await user.should_see(marker="SOURCE_INPUT")
         user.find(marker="SOURCE_INPUT").clear()

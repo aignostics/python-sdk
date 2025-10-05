@@ -11,7 +11,6 @@ from nicegui import app
 from nicegui.testing import User
 
 from aignostics.notebook._service import MARIMO_SERVER_STARTUP_TIMEOUT, Service, _get_runner, _Runner
-from aignostics.utils import gui_register_pages
 
 
 @pytest.mark.sequential
@@ -107,7 +106,6 @@ def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
     # Set up logging to capture DEBUG level and above
     caplog.set_level(logging.DEBUG)
 
-    gui_register_pages()
     client = TestClient(app)
 
     try:

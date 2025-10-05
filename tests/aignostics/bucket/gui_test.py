@@ -11,18 +11,16 @@ from nicegui.testing import User
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
-from aignostics.utils import gui_register_pages
 from tests.conftest import assert_notified
 
 
 async def test_gui_bucket_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
-    gui_register_pages()
     await user.open("/bucket")
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
 
-async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:  # noqa: PLR0915
+async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:
     """E2E flow testing all bucket CLI commands.
 
     1. Creates 1 file in a subdir of size 100kb
@@ -52,7 +50,6 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     assert f"{test_prefix}/dir1/file.txt" in result.output.replace("\\\\", "\\")
 
     # Step 4: Check the GUI
-    gui_register_pages()
     await user.open("/bucket")
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 

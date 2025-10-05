@@ -10,9 +10,9 @@ import humanize
 from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
-from showinfm.showinfm import show_in_file_manager
 
 from aignostics.platform import ApplicationRunStatus, ItemStatus
+from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
 from .._service import DownloadProgressState, Service  # noqa: TID252
@@ -535,7 +535,8 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     ui.html(
                         '<dotlottie-player src="/application_assets/empty.lottie" '
                         'background="transparent" speed="1" style="width: 700px; height: 700px" '
-                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                        sanitize=False,
                     )
                     ui.space()
                 return
@@ -659,6 +660,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                                 ui.html(
                                     f'<dotlottie-player src="/application_assets/{animation_file}" '
                                     'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                                    sanitize=False,
                                 )
                                 ui.space()

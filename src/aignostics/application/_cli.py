@@ -45,8 +45,8 @@ def application_list(
     try:
         applications = Service().applications()
     except Exception as e:
-        logger.exception("Failed to list applications")
-        console.print(f"[error]Error:[/error] Failed to list applications: {e}")
+        logger.exception("Could not load applications")
+        console.print(f"[error]Error:[/error] Could not load applications: {e}")
         sys.exit(1)
 
     app_count = 0

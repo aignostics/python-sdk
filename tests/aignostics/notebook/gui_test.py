@@ -3,13 +3,9 @@
 from nicegui.testing import User
 from typer.testing import CliRunner
 
-from aignostics.utils import gui_register_pages
-
 
 async def test_gui_marimo_extension(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch Marimo via the GUI."""
-    gui_register_pages()
-
     # Step 1: Check we are on the Notebook page
     await user.open("/notebook")
     await user.should_see("Manage your Marimo Extension")

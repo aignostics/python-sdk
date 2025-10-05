@@ -29,7 +29,8 @@ class PageBuilder(BasePageBuilder):
                     ui.html(
                         '<dotlottie-player src="/assets/cat.lottie" '
                         'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                        sanitize=False,
                     )
 
         @ui.page("/force-error")

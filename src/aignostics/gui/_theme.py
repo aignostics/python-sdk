@@ -2,14 +2,14 @@
 
 from pathlib import Path
 
+from nicegui import app
+
 from aignostics.utils import BasePageBuilder
 
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
-        from nicegui import app  # noqa: PLC0415
-
         app.add_static_files("/assets", Path(__file__).parent / "assets")
 
 
@@ -45,6 +45,10 @@ def theme() -> None:
                 font-weight: normal;
                 font-style: normal;
             }
+            body
+            {
+                font-family: "Cabin";
+            }
             ::-webkit-scrollbar {
                 display: none;
             }
@@ -63,10 +67,6 @@ def theme() -> None:
             .q-drawer.q-dark {
                 background-color: #000000 !important;
             }
-            html *
-            {
-                font-family: "Cabin";
-            }
             header {
                 color: white
             }
@@ -77,6 +77,12 @@ def theme() -> None:
                 ol {
                     padding-left: 20px;
                 }
+            }
+            :global(.jse-modal-window.jse-modal-window-jsoneditor)
+            {
+                width: 100%;
+                height: 100%;
+                min-height: 900px;
             }
         </style>
     """)

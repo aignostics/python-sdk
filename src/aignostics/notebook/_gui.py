@@ -75,7 +75,8 @@ class PageBuilder(BasePageBuilder):
                         f'playMode="normal" '
                         f"loop "
                         f"autoplay>"
-                        f"</dotlottie-player>"
+                        f"</dotlottie-player>",
+                        sanitize=False,
                     )
                     ui.space()
 
@@ -98,7 +99,8 @@ class PageBuilder(BasePageBuilder):
                 ui.html(
                     f'<iframe src="{server_url}?application_run_id={application_run_id}'
                     f'&results_folder={quote(results_folder)}" '
-                    'width="100%" height="100%" id="marimo_iframe"></iframe>'
+                    'width="100%" height="100%" id="marimo_iframe"></iframe>',
+                    sanitize=False,
                 ).classes("w-full h-[calc(100vh-5rem)]")
             except Exception:
                 message = "Failed to start Marimo server."
