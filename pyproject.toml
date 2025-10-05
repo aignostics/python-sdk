@@ -106,6 +106,7 @@ dependencies = [
     "google-cloud-storage>=3.4.0",
     "google-crc32c>=1.7.1",
     "highdicom>=0.26.1",
+    "html-sanitizer>=2.6.0",
     "httpx>=0.28.1",
     "idc-index-data==22.0.2",
     "ijson>=3.4.0",
