@@ -42,10 +42,10 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
         navigation_icon_tooltip=navigation_icon_tooltip,
         left_sidebar=left_sidebar,
     ):
-        try:
-            with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
-                ui.item_label("Applications").props("header")
-                ui.separator()
+        with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):
+            ui.item_label("Applications").props("header")
+            ui.separator()
+            try:
                 applications = await nicegui_run.io_bound(Service.applications_static)
                 if applications is None:
                     message = (  # type: ignore[unreachable]
@@ -68,16 +68,20 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ):
                             ui.tooltip(application.application_id)
                         with ui.item_section():
-                            ui.label(f"{application.name}").tailwind.font_weight(
-                                "bold"
+                            ui.label(f"{application.name}").classes(
+                                "font-bold"
                                 if context.client.page.path == "/application/{application_id}"
                                 and args
                                 and args.get("application_id") == application.application_id
-                                else "normal"
+                                else "font-normal"
                             )
-        except Exception as e:
-            ui.label(f"Failed to list applications: {e!s}").mark("LABEL_ERROR")
-            logger.exception("Failed to load applications")
+            except Exception as e:
+                with ui.item():
+                    with ui.item_section().props("avatar"):
+                        ui.icon("error", color="red")
+                    with ui.item_section():
+                        ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
+                        logger.exception("Could not load applications")
 
         async def application_runs_load_and_render(
             runs_column: ui.column, completed_only: bool = False, note_query: str | None = None
@@ -118,12 +122,12 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                         f"status {run_data['status'].value.upper()}"
                                     )
                             with ui.item_section():
-                                ui.label(f"{run_data['application_version_id']}").tailwind.font_weight(
-                                    "bold"
+                                ui.label(f"{run_data['application_version_id']}").classes(
+                                    "font-bold"
                                     if context.client.page.path == "/application/run/{application_run_id}"
                                     and args
                                     and args.get("application_run_id") == run_data["application_run_id"]
-                                    else "normal"
+                                    else "font-normal"
                                 )
                                 ui.label(
                                     f"triggered on {run_data['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
@@ -134,14 +138,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                 ui.icon("info")
                             with ui.item_section():
                                 ui.label("You did not yet create a run.")
-                except Exception:
+                except Exception as e:
                     runs_column.clear()
                     with ui.item():
                         with ui.item_section().props("avatar"):
-                            ui.icon("error")
+                            ui.icon("error", color="red")
                         with ui.item_section():
-                            ui.label("Failed to load application runs.")
-                    logger.exception("Failed to load application runs")
+                            ui.label(f"Could not load runs: {e!s}")
+                    logger.exception("Could not load runs")
 
         @ui.refreshable
         async def _runs_list() -> None:
@@ -159,6 +163,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 )
 
         class RunFilterButton(ui.icon):
+            _state: bool = False
+
             def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
                 super().__init__(*args, **kwargs)
                 self._state = app.storage.tab.get(STORAGE_TAB_RUNS_COMPLETED_ONLY, False)

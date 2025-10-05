@@ -18,7 +18,7 @@ from aignostics.cli import cli
 from aignostics.gui import HEALTH_UPDATE_INTERVAL
 from aignostics.platform import ApplicationRunStatus
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
-from aignostics.utils import __project_name__, gui_register_pages
+from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.contants_test import HETA_APPLICATION_ID
 
@@ -32,8 +32,6 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 @pytest.mark.sequential
 async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
-    gui_register_pages()
-
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code
@@ -85,8 +83,6 @@ async def test_gui_qupath_install_and_launch(
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code
-
-    gui_register_pages()
 
     # Step 1: Check we are on the QuPath page
     await user.open("/qupath")
@@ -156,8 +152,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
-        gui_register_pages()
-
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
         latest_version_id = latest_version.application_version_id
         runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)

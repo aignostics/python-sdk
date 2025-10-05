@@ -211,15 +211,15 @@ def frame(  # noqa: C901, PLR0915
                 with ui.item_section().props("avatar"):
                     ui.icon("biotech", color="primary")
                 with ui.item_section():
-                    ui.label("Run Applications").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/" else "normal"
+                    ui.label("Run Applications").classes(
+                        "font-bold" if context.client.page.path == "/" else "font-normal"
                     )
             with ui.item(on_click=lambda _: ui.navigate.to("/dataset/idc")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("image", color="primary")
                 with ui.item_section():
-                    ui.label("Download Datasets").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/dataset/idc" else "normal"
+                    ui.label("Download Datasets").classes(
+                        "font-bold" if context.client.page.path == "/dataset/idc" else "font-normal"
                     )
         ui.space()
         with ui.list():
@@ -229,30 +229,30 @@ def frame(  # noqa: C901, PLR0915
                         with ui.item_section().props("avatar"):
                             ui.icon("visibility", color="primary")
                         with ui.item_section():
-                            ui.label("QuPath Extension").tailwind.font_weight(
-                                "bold" if context.client.page.path == "/qupath" else "normal"
+                            ui.label("QuPath Extension").classes(
+                                "font-bold" if context.client.page.path == "/qupath" else "font-normal"
                             )
             if find_spec("marimo"):
                 with ui.item(on_click=lambda _: ui.navigate.to("/notebook")).props("clickable"):
                     with ui.item_section().props("avatar"):
                         ui.icon("difference", color="primary")
                     with ui.item_section():
-                        ui.label("Marimo Extension").tailwind.font_weight(
-                            "bold" if context.client.page.path == "/notebook" else "normal"
+                        ui.label("Marimo Extension").classes(
+                            "font-bold" if context.client.page.path == "/notebook" else "font-normal"
                         )
             with ui.item(on_click=lambda _: ui.navigate.to("/bucket")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("cloud", color="primary")
                 with ui.item_section():
-                    ui.label("Manage Cloud Bucket").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/bucket" else "normal"
+                    ui.label("Manage Cloud Bucket").classes(
+                        "font-bold" if context.client.page.path == "/bucket" else "font-normal"
                     )
             with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     health_icon()
                 with ui.item_section():
-                    ui.label("Info and Settings").tailwind.font_weight(
-                        "bold" if context.client.page.path == "/system" else "normal"
+                    ui.label("Info and Settings").classes(
+                        "font-bold" if context.client.page.path == "/system" else "font-normal"
                     )
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
@@ -303,7 +303,8 @@ def frame(  # noqa: C901, PLR0915
             ui.html(
                 '<iframe id="betterstack" src="https://status.aignostics.com/badge?theme=dark" '
                 'width="250" height="30" frameborder="0" scrolling="no" '
-                'style="color-scheme: dark"></iframe>'
+                'style="color-scheme: dark"></iframe>',
+                sanitize=False,
             ).style("margin-left: 0px;")
             ui.tooltip("Check Platform Status")
         ui.space()
@@ -313,6 +314,7 @@ def frame(  # noqa: C901, PLR0915
                 '🔬<a style="color: black; text-decoration: underline" target="_blank" href="https://github.com/aignostics/python-sdk/">'
                 f"Aignostics Python SDK v{__version__}{flavor}</a>"
                 ' - built with love in <a style="color: black; text-decoration: underline" target="_blank"'
-                ' href="https://www.aignostics.com/company/about">Berlin</A> 🐻'
+                ' href="https://www.aignostics.com/company/about">Berlin</A> 🐻',
+                sanitize=False,
             ).style("color: black")
             ui.tooltip("Visit GitHub repository of Aignostics Python SDK")

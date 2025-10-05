@@ -117,7 +117,7 @@ def _print_run_status_summary(run: ApplicationRun) -> None:
         return
 
     status_counts: dict[
-        Literal["pending", "canceled_user", "canceled_system", "error_user", "error_system", "succeeded"], int
+        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "ERROR_USER", "ERROR_SYSTEM", "SUCCEEDED"], int
     ] = {}
     for status in item_statuses.values():
         status_counts[status.value] = status_counts.get(status.value, 0) + 1
@@ -146,7 +146,7 @@ def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
         return False
 
     status_counts: dict[
-        Literal["pending", "canceled_user", "canceled_system", "error_user", "error_system", "succeeded"], int
+        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "ERROR_USER", "ERROR_SYSTEM", "SUCCEEDED"], int
     ] = {}
     for status in item_statuses.values():
         status_counts[status.value] = status_counts.get(status.value, 0) + 1

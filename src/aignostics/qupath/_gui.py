@@ -213,6 +213,7 @@ class PageBuilder(BasePageBuilder):
                         f'playMode="normal" '
                         f"loop "
                         f"autoplay>"
-                        f"</dotlottie-player>"
+                        f"</dotlottie-player>",
+                        sanitize=False,
                     )
                     ui.space()

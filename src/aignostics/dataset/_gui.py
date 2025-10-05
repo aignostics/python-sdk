@@ -4,9 +4,9 @@ from multiprocessing import Manager
 from pathlib import Path
 
 from aiopath import AsyncPath
-from showinfm.showinfm import show_in_file_manager
 
 from aignostics.gui import frame
+from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import get_user_data_directory
 
 from ..utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
