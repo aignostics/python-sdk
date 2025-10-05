@@ -84,13 +84,17 @@ def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
     if use_cache and settings().token_file.exists():
         stored_token = Path(settings().token_file).read_text(encoding="utf-8")
         # Parse stored string "token:expiry_timestamp"
-        parts = stored_token.split(":")
-        cached_token, expiry_str = parts
-        expiry = datetime.fromtimestamp(int(expiry_str), tz=UTC)
+        try:
+            parts = stored_token.split(":")
+            cached_token, expiry_str = parts
+            expiry = datetime.fromtimestamp(int(expiry_str), tz=UTC)
 
-        # Check if token is still valid (with some buffer time)
-        if datetime.now(tz=UTC) + timedelta(minutes=5) < expiry:
-            token = cached_token
+            # Check if token is still valid (with some buffer time)
+            if datetime.now(tz=UTC) + timedelta(minutes=5) < expiry:
+                token = cached_token
+        except (ValueError, IndexError):
+            # If parsing fails, treat as no valid cached token
+            token = None
 
     # If no valid cached token, authenticate to get a new one
     if token is None:
