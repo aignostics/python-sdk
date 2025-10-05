@@ -239,7 +239,7 @@ class Service(BaseService):
         if relogin:
             Service.logout()
         try:
-            _ = get_token(use_cache=True)
+            _ = get_token()
             return True
         except RuntimeError as e:
             message = f"Error during login: {e!s}"
