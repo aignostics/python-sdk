@@ -45,7 +45,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     run = await nicegui_run.io_bound(service.application_run, application_run_id)
     spinner.set_visibility(False)
-    run_data = run.details()
+    run_data = run.details() if run else None
 
     if run and run_data:
         icon, color = run_status_to_icon_and_color(run_data.status.value)

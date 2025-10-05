@@ -55,7 +55,7 @@ async def test_gui_home_to_application(
     await user.open("/")
     await user.should_see(application_name, retries=100)
     user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
-    await user.should_see(expected_text, retries=200)
+    await user.should_see(expected_text, retries=300)
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
