@@ -2,7 +2,9 @@ name: "Scheduled Audit"
 
 on:
   workflow_call:
-    # No secrets needed
+    secrets:
+      BETTERSTACK_AUDIT_HEARTBEAT_URL:
+        required: false
 
 jobs:
   audit-scheduled:
@@ -79,6 +81,8 @@ jobs:
               --header "Content-Type: application/json" \
               --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
               "${BETTERSTACK_AUDIT_HEARTBEAT_URL}/${EXIT_CODE}"
+          else
+            echo "WARNING: No BetterStack heartbeat URL configured, skipping heartbeat notification"
           fi
           exit $EXIT_CODE
 

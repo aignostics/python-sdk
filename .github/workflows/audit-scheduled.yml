@@ -10,3 +10,5 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    secrets:
+      BETTERSTACK_AUDIT_HEARTBEAT_URL: ${{ secrets.BETTERSTACK_AUDIT_HEARTBEAT_URL }}
