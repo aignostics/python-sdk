@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.186](https://github.com/aignostics/python-sdk/compare/v0.2.185..0.2.186) - 2025-10-05
+# [0.2.187](https://github.com/aignostics/python-sdk/compare/v0.2.186..0.2.187) - 2025-10-05
+
+### 🛡️ Security
+
+- *(gui)* Introduce html-sanitizer, sanitizer footer. Rest is fine. - ([6cc4b04](https://github.com/aignostics/python-sdk/commit/6cc4b0423f47ea95e63a7c77679ebe0d0f713836))
+
+
+# [v0.2.186](https://github.com/aignostics/python-sdk/compare/v0.2.185..v0.2.186) - 2025-10-05
 
 ### 🐛 Bug Fixes
 
