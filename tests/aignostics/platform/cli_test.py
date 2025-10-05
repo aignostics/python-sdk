@@ -193,7 +193,14 @@ class TestPlatformCLI:
             assert "Successfully logged out." in normalize_output(result.output)
             result = runner.invoke(cli, ["user", "whoami"])
             assert result.exit_code == 0
-            assert "https://aignostics-platform.eu.auth0.com/" in normalize_output(result.output)
+            assert any(
+                url in normalize_output(result.output)
+                for url in [
+                    "https://aignostics-platform.eu.auth0.com/",
+                    "https://aignostics-platform-staging.eu.auth0.com/",
+                    "dev-8ouohmmrbuh2h4vu.eu.auth0.com",
+                ]
+            )
 
     @pytest.mark.integration
     @staticmethod
