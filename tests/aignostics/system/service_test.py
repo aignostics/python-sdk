@@ -1,11 +1,13 @@
 """Tests of the system service."""
 
 import os
+import time
 from unittest import mock
 
 import pytest
 
 from aignostics.system._service import Service
+from aignostics.utils import Health
 
 
 @pytest.mark.timeout(15)
@@ -339,3 +341,107 @@ def test_is_secret_key_real_world_examples() -> None:
 
     for key in non_secret_examples:
         assert not Service._is_secret_key(key), f"Expected '{key}' to NOT be identified as a secret key"
+
+
+def test_is_online_returns_true_when_network_is_healthy() -> None:
+    """Test that is_online returns True when network health check passes."""
+    service = Service()
+    
+    with mock.patch.object(Service, "_determine_network_health") as mock_health:
+        mock_health.return_value = Health(status=Health.Code.UP)
+        
+        assert service.is_online() is True
+        mock_health.assert_called_once()
+
+
+def test_is_online_returns_false_when_network_is_unhealthy() -> None:
+    """Test that is_online returns False when network health check fails."""
+    service = Service()
+    
+    with mock.patch.object(Service, "_determine_network_health") as mock_health:
+        mock_health.return_value = Health(status=Health.Code.DOWN, reason="Network unreachable")
+        
+        assert service.is_online() is False
+        mock_health.assert_called_once()
+
+
+def test_is_online_uses_cache_within_ttl() -> None:
+    """Test that is_online uses cached result within TTL."""
+    service = Service()
+    
+    with mock.patch.object(Service, "_determine_network_health") as mock_health:
+        mock_health.return_value = Health(status=Health.Code.UP)
+        
+        # First call should check network
+        result1 = service.is_online()
+        assert result1 is True
+        assert mock_health.call_count == 1
+        
+        # Second call within TTL should use cache
+        result2 = service.is_online()
+        assert result2 is True
+        assert mock_health.call_count == 1  # Should not be called again
+
+
+def test_is_online_cache_expires_after_ttl() -> None:
+    """Test that is_online cache expires after TTL."""
+    # Create service with short TTL
+    with mock.patch.dict(os.environ, {"AIGNOSTICS_SYSTEM_ONLINE_CACHE_TTL_SECONDS": "1"}):
+        service = Service()
+        
+        with mock.patch.object(Service, "_determine_network_health") as mock_health:
+            mock_health.return_value = Health(status=Health.Code.UP)
+            
+            # First call
+            result1 = service.is_online()
+            assert result1 is True
+            assert mock_health.call_count == 1
+            
+            # Wait for cache to expire
+            time.sleep(1.1)
+            
+            # Second call after TTL should check network again
+            result2 = service.is_online()
+            assert result2 is True
+            assert mock_health.call_count == 2
+
+
+def test_is_online_cache_respects_ttl_setting() -> None:
+    """Test that is_online respects the configured TTL setting."""
+    # Set TTL to 2 seconds
+    with mock.patch.dict(os.environ, {"AIGNOSTICS_SYSTEM_ONLINE_CACHE_TTL_SECONDS": "2"}):
+        service = Service()
+        
+        with mock.patch.object(Service, "_determine_network_health") as mock_health:
+            mock_health.return_value = Health(status=Health.Code.UP)
+            
+            # First call
+            service.is_online()
+            assert mock_health.call_count == 1
+            
+            # Call after 1 second - should still use cache
+            time.sleep(1.0)
+            service.is_online()
+            assert mock_health.call_count == 1
+            
+            # Call after 2+ seconds - should refresh
+            time.sleep(1.1)
+            service.is_online()
+            assert mock_health.call_count == 2
+
+
+def test_is_online_cache_updates_on_status_change() -> None:
+    """Test that cache updates correctly when status changes."""
+    service = Service()
+    
+    with mock.patch.object(Service, "_determine_network_health") as mock_health:
+        # First call - online
+        mock_health.return_value = Health(status=Health.Code.UP)
+        assert service.is_online() is True
+        
+        # Wait for cache to expire
+        with mock.patch.dict(os.environ, {"AIGNOSTICS_SYSTEM_ONLINE_CACHE_TTL_SECONDS": "0"}):
+            service = Service()
+            # Second call - offline
+            mock_health.return_value = Health(status=Health.Code.DOWN, reason="Network down")
+            assert service.is_online() is False

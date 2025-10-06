@@ -6,6 +6,7 @@ import platform
 import re
 import ssl
 import sys
+import time
 import typing as t
 from http import HTTPStatus
 from pathlib import Path
@@ -72,6 +73,7 @@ class Service(BaseService):
     """System service."""
 
     _settings: Settings
+    _online_cache: tuple[bool, float] | None = None  # (is_online, timestamp)
 
     def __init__(self) -> None:
         """Initialize service."""
@@ -160,6 +162,35 @@ class Service(BaseService):
             logger.warning("Token is not set in settings.")
             return False
         return token == self._settings.token.get_secret_value()
+
+    def is_online(self) -> bool:
+        """Check if the system is online.
+
+        Uses cached result if available and not expired. Otherwise, performs a network health check
+        and caches the result for the configured TTL.
+
+        Returns:
+            bool: True if the system is online, False otherwise.
+        """
+        current_time = time.time()
+
+        # Check if cache is valid
+        if self._online_cache is not None:
+            cached_status, cached_time = self._online_cache
+            if current_time - cached_time < self._settings.online_cache_ttl_seconds:
+                logger.debug("Returning cached online status: %s", cached_status)
+                return cached_status
+
+        # Perform network health check
+        logger.debug("Performing network health check to determine online status")
+        health = self._determine_network_health()
+        is_online = health.status == Health.Code.UP
+
+        # Update cache
+        self._online_cache = (is_online, current_time)
+        logger.debug("Online status: %s (cached for %d seconds)", is_online, self._settings.online_cache_ttl_seconds)
+
+        return is_online
 
     @staticmethod
     def _get_public_ipv4(timeout: int = NETWORK_TIMEOUT) -> str | None:

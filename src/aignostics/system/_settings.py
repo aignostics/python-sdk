@@ -29,3 +29,12 @@ class Settings(OpaqueSettings):
             default=None,
         ),
     ]
+
+    online_cache_ttl_seconds: Annotated[
+        int,
+        Field(
+            description="Time-to-live in seconds for online status cache",
+            default=60,
+            ge=0,
+        ),
+    ] = 60
