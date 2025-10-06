@@ -6,6 +6,7 @@ import platform
 import re
 import ssl
 import sys
+import time
 import typing as t
 from http import HTTPStatus
 from pathlib import Path
@@ -72,6 +73,7 @@ class Service(BaseService):
     """System service."""
 
     _settings: Settings
+    _online_cache: tuple[bool, float] | None = None  # (is_online, timestamp)
 
     def __init__(self) -> None:
         """Initialize service."""
@@ -148,6 +150,42 @@ class Service(BaseService):
         status = Health.Code.UP if self._is_healthy() else Health.Code.DOWN
         reason = None if self._is_healthy() else "System marked as unhealthy"
         return Health(status=status, components=components, reason=reason)
+
+    def is_online(self) -> bool:
+        """Check if the system is online using cached results.
+
+        This method checks connectivity to a well-known endpoint (api.ipify.org)
+        and caches the result for the duration specified in settings.online_cache_ttl.
+
+        Returns:
+            bool: True if the system is online (can reach the internet), False otherwise.
+        """
+        current_time = time.time()
+
+        # Check if we have a valid cached result
+        if self._online_cache is not None:
+            cached_status, cached_time = self._online_cache
+            cache_age = current_time - cached_time
+
+            if cache_age < self._settings.online_cache_ttl:
+                logger.debug(
+                    "Using cached online status: %s (age: %.2fs, TTL: %ds)",
+                    cached_status,
+                    cache_age,
+                    self._settings.online_cache_ttl,
+                )
+                return cached_status
+
+        # Cache is invalid or expired, perform actual check
+        logger.debug("Performing online status check (cache expired or not present)")
+        network_health = self._determine_network_health()
+        is_online = network_health.status == Health.Code.UP
+
+        # Update cache
+        self._online_cache = (is_online, current_time)
+        logger.debug("Updated online status cache: %s", is_online)
+
+        return is_online
 
     def is_token_valid(self, token: str) -> bool:
         """Check if the presented token is valid.

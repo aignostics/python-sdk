@@ -63,6 +63,24 @@ def health(
 
 
 @cli.command()
+def online() -> None:
+    """Check if the system is online and print status with exit code.
+
+    Exit codes:
+        0: System is online
+        1: System is offline
+    """
+    is_online = _service.is_online()
+
+    if is_online:
+        console.print("[green]Online[/green]")
+        sys.exit(0)
+    else:
+        console.print("[red]Offline[/red]")
+        sys.exit(1)
+
+
+@cli.command()
 def info(
     include_environ: Annotated[bool, typer.Option(help="Include environment variables")] = False,
     mask_secrets: Annotated[bool, typer.Option(help="Mask secrets")] = True,

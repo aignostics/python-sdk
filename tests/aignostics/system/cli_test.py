@@ -358,3 +358,25 @@ def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> No
         result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
         assert result.exit_code == 0
         assert "None" in result.output
+
+
+@pytest.mark.scheduled
+def test_cli_online_when_connected(runner: CliRunner) -> None:
+    """Test that 'aignostics system online' returns exit code 0 and prints 'Online' when connected."""
+    from aignostics.system._service import Service
+
+    with patch.object(Service, "is_online", return_value=True):
+        result = runner.invoke(cli, ["system", "online"])
+        assert result.exit_code == 0
+        assert "Online" in result.output
+
+
+@pytest.mark.scheduled
+def test_cli_online_when_disconnected(runner: CliRunner) -> None:
+    """Test that 'aignostics system online' returns exit code 1 and prints 'Offline' when disconnected."""
+    from aignostics.system._service import Service
+
+    with patch.object(Service, "is_online", return_value=False):
+        result = runner.invoke(cli, ["system", "online"])
+        assert result.exit_code == 1
+        assert "Offline" in result.output
