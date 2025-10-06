@@ -72,11 +72,11 @@ class Service(BaseService):
     """System service."""
 
     _settings: Settings
-    _online_cache: tuple[bool, float] | None = None
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)
+        self._online_cache: tuple[bool, float] | None = None
 
     @staticmethod
     def _is_healthy() -> bool:
