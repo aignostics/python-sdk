@@ -2,6 +2,8 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with the Aignostics Python SDK repository.
 
+> **Note**: For concise, task-oriented guidance suitable for all AI agents (GitHub Copilot, Cursor, etc.), see [AGENTS.md](AGENTS.md). This CLAUDE.md file provides more detailed architectural and implementation guidance specifically for Claude Code.
+
 ## Module Documentation Index
 
 Every module has detailed CLAUDE.md documentation. For module-specific guidance, see:

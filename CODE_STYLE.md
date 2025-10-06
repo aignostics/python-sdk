@@ -276,10 +276,20 @@ Our commit messages follow [conventional commits](https://www.conventionalcommit
 
 When generating code with AI assistance:
 
-1. AI-generated code must follow all style guidelines in this document.
-2. Always review AI-generated code for correctness, security implications, and
-  adherence to project patterns.
-3. Use AI to generate tests alongside implementation code.
-4. Request explanations for complex algorithms or patterns in the generated code.
-5. Remember that AI should augment, not replace, human judgment about code
-  quality and design decisions.
+1. **Follow Standards**: AI-generated code must follow all style guidelines in
+  this document. Non-compliance is not acceptable.
+2. **Review Thoroughly**: Always review AI-generated code for correctness,
+  security implications, and adherence to project patterns before committing.
+3. **Generate Tests**: Use AI to generate tests alongside implementation code.
+  Aim for comprehensive test coverage (minimum 85%, target 100%).
+4. **Seek Explanations**: Request explanations for complex algorithms or
+  patterns in the generated code. Document them in code comments.
+5. **Augment, Don't Replace**: Remember that AI should augment, not replace,
+  human judgment about code quality and design decisions.
+6. **Check Documentation**: Before asking AI to implement features, direct it to
+  read [AGENTS.md](AGENTS.md) for comprehensive guidance on repository
+  structure, architecture, and development workflows.
+7. **Use Existing Patterns**: AI should follow existing module patterns found in
+  `src/aignostics/` rather than inventing new structures.
+8. **Verify Commands**: Always verify that AI-suggested commands use the correct
+  tools (`uv` not `pip`, `nox` for tasks, etc.).
