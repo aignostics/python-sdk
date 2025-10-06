@@ -402,6 +402,10 @@ Every WSI processed by the Platform generates a cost. Usage of the "Test Applica
 
 ## Further Reading
 
+1. **For AI Coding Agents**: Check out [AGENTS.md](AGENTS.md) for comprehensive
+   guidance on working with this codebase, including architecture patterns,
+   common tasks, and troubleshooting. Also see [CLAUDE.md](CLAUDE.md) for
+   detailed technical documentation.
 1. Inspect our
    [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
    with detailed documentation of checks, tools and principles.
