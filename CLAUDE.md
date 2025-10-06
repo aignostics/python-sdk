@@ -2,6 +2,8 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with the Aignostics Python SDK repository.
 
+> **🤖 New to this repository?** Start with [AGENTS.md](AGENTS.md) for a quick-start guide, common workflows, and task-oriented guidance specifically designed for AI agents. This file (CLAUDE.md) provides architecture details and reference information.
+
 ## Module Documentation Index
 
 Every module has detailed CLAUDE.md documentation. For module-specific guidance, see:
@@ -18,6 +20,21 @@ Every module has detailed CLAUDE.md documentation. For module-specific guidance,
 - [src/aignostics/qupath/CLAUDE.md](src/aignostics/qupath/CLAUDE.md) - QuPath bioimage analysis
 - [src/aignostics/system/CLAUDE.md](src/aignostics/system/CLAUDE.md) - System diagnostics
 - [tests/CLAUDE.md](tests/CLAUDE.md) - Test suite documentation
+
+## Quick Start for AI Agents
+
+**First-time working on this repository? Follow this checklist:**
+
+1. ✅ **Read [AGENTS.md](AGENTS.md)** - Your comprehensive guide for AI agent workflows
+2. ✅ **Skim this file (CLAUDE.md)** - Focus on architecture and module patterns below
+3. ✅ **Review [CODE_STYLE.md](CODE_STYLE.md)** - Critical requirements for all code
+4. ✅ **Check the relevant module's CLAUDE.md** - Deep dive into specific module implementation
+
+**Common tasks:**
+- **Adding a feature?** → Read [AGENTS.md#common-agent-tasks](AGENTS.md#-common-agent-tasks)
+- **Fixing a bug?** → Read [AGENTS.md#workflow-2-fixing-a-bug](AGENTS.md#workflow-2-fixing-a-bug)
+- **Writing tests?** → Read [tests/CLAUDE.md](tests/CLAUDE.md)
+- **Need help?** → Check [AGENTS.md#troubleshooting-guide](AGENTS.md#-troubleshooting-guide)
 
 ## Development Commands
 

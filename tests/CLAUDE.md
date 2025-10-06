@@ -2,6 +2,8 @@
 
 This file provides comprehensive guidance for working with the test suite of the Aignostics Python SDK.
 
+> **🧪 Quick Start for AI Agents:** For test-driven development workflows and common testing tasks, see [AGENTS.md](../AGENTS.md#-testing-strategies-for-agents). This file provides detailed test patterns and strategies.
+
 ## Test Architecture Overview
 
 The test suite follows production-grade testing practices with comprehensive coverage across unit, integration, and end-to-end scenarios.

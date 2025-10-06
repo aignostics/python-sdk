@@ -2,6 +2,8 @@
 
 This file provides a comprehensive overview of all modules in the Aignostics SDK, their core features, user interfaces, and interactions.
 
+> **💡 Tip for AI Agents:** This file provides the module architecture overview. For quick-start workflows and common tasks, see [AGENTS.md](../../AGENTS.md) in the repository root.
+
 ## Module Index
 
 | Module | Core Purpose | CLI | GUI | Service |
