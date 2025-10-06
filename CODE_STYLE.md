@@ -282,3 +282,25 @@ When generating code with AI assistance:
 4. Request explanations for complex algorithms or patterns in the generated code.
 5. Remember that AI should augment, not replace, human judgment about code
   quality and design decisions.
+
+### AI Agent Integration
+
+This project provides comprehensive guidance for AI coding agents:
+
+1. **[AGENTS.md](AGENTS.md)** - Primary reference for all AI agents (GitHub
+  Copilot, Claude Code, ChatGPT, etc.) with architecture overview, common
+  tasks, and troubleshooting.
+2. **[CLAUDE.md](CLAUDE.md)** - Comprehensive SDK architecture for Claude Code
+  with detailed module documentation and interaction patterns.
+3. **[.github/copilot-instructions.md](.github/copilot-instructions.md)** -
+  Specific instructions for GitHub Copilot.
+
+AI agents should:
+
+- Read [AGENTS.md](AGENTS.md) first for repository structure and workflows
+- Reference this document for mandatory code style requirements
+- Check module-specific CLAUDE.md files for implementation patterns
+- Generate tests with minimum 85% coverage (95% for critical modules)
+- Use type hints and Google-style docstrings for all public APIs
+- Follow conventional commit format: `feat(module): description`
+- Verify changes with `make lint` and `make test` before committing

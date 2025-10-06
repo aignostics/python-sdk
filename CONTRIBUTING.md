@@ -2,6 +2,12 @@
 
 Thank you for considering contributing to Aignostics Python SDK!
 
+> [!NOTE]
+> **For AI Coding Agents**: If you are an AI assistant (GitHub Copilot, Claude Code, ChatGPT, etc.),
+> please read [AGENTS.md](AGENTS.md) first for comprehensive guidance on repository architecture,
+> development workflows, and common tasks. This will help you generate better code that follows
+> project patterns and passes CI/CD checks.
+
 ## Setup
 
 [Create a fork](https://github.com/aignostics/python-sdk/fork) and clone your fork using ```git clone URL_OF_YOUR_CLONE```. Then change into the directory of your local Aignostics Python SDK repository with ```cd python-sdk```.
