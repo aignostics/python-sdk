@@ -29,3 +29,12 @@ class Settings(OpaqueSettings):
             default=None,
         ),
     ]
+
+    online_cache_seconds: Annotated[
+        int,
+        Field(
+            description="Cache duration in seconds for online status checks",
+            default=60,
+            ge=0,
+        ),
+    ] = 60

@@ -72,6 +72,7 @@ class Service(BaseService):
     """System service."""
 
     _settings: Settings
+    _online_cache: tuple[bool, float] | None = None
 
     def __init__(self) -> None:
         """Initialize service."""
@@ -160,6 +161,34 @@ class Service(BaseService):
             logger.warning("Token is not set in settings.")
             return False
         return token == self._settings.token.get_secret_value()
+
+    def is_online(self) -> bool:
+        """Check if the system is online.
+
+        Uses a cached result if available and not expired. The cache duration
+        is configured via the online_cache_seconds setting.
+
+        Returns:
+            bool: True if the system is online, False otherwise.
+        """
+        import time  # noqa: PLC0415
+
+        # Check if we have a cached result that's still valid
+        if self._online_cache is not None:
+            cached_result, cached_time = self._online_cache
+            if time.time() - cached_time < self._settings.online_cache_seconds:
+                logger.debug("Using cached online status: %s", cached_result)
+                return cached_result
+
+        # Perform actual network health check
+        health = self._determine_network_health()
+        is_online = health.status == Health.Code.UP
+
+        # Update cache
+        self._online_cache = (is_online, time.time())
+        logger.info("Online status determined: %s", is_online)
+
+        return is_online
 
     @staticmethod
     def _get_public_ipv4(timeout: int = NETWORK_TIMEOUT) -> str | None:

@@ -339,3 +339,115 @@ def test_is_secret_key_real_world_examples() -> None:
 
     for key in non_secret_examples:
         assert not Service._is_secret_key(key), f"Expected '{key}' to NOT be identified as a secret key"
+
+
+def test_is_online_when_online() -> None:
+    """Test is_online returns True when network is available."""
+    service = Service()
+
+    # Mock _determine_network_health to return UP status
+    with mock.patch.object(Service, "_determine_network_health") as mock_health:
+        from aignostics.utils import Health
+
+        mock_health.return_value = Health(status=Health.Code.UP)
+
+        # First call should check network
+        assert service.is_online() is True
+        mock_health.assert_called_once()
+
+
+def test_is_online_when_offline() -> None:
+    """Test is_online returns False when network is unavailable."""
+    service = Service()
+
+    # Mock _determine_network_health to return DOWN status
+    with mock.patch.object(Service, "_determine_network_health") as mock_health:
+        from aignostics.utils import Health
+
+        mock_health.return_value = Health(status=Health.Code.DOWN, reason="Network unavailable")
+
+        # First call should check network
+        assert service.is_online() is False
+        mock_health.assert_called_once()
+
+
+def test_is_online_caching() -> None:
+    """Test that is_online caches results for the configured duration."""
+    import time
+
+    # Set cache duration to 2 seconds for testing
+    with mock.patch.dict(os.environ, {"AIGNOSTICS_SYSTEM_ONLINE_CACHE_SECONDS": "2"}):
+        service = Service()
+
+        # Mock _determine_network_health to return UP status
+        with mock.patch.object(Service, "_determine_network_health") as mock_health:
+            from aignostics.utils import Health
+
+            mock_health.return_value = Health(status=Health.Code.UP)
+
+            # First call should check network
+            assert service.is_online() is True
+            assert mock_health.call_count == 1
+
+            # Second call within cache duration should use cached result
+            assert service.is_online() is True
+            assert mock_health.call_count == 1  # Should not have been called again
+
+            # Wait for cache to expire
+            time.sleep(2.1)
+
+            # Third call after cache expiration should check network again
+            assert service.is_online() is True
+            assert mock_health.call_count == 2
+
+
+def test_is_online_cache_expiration() -> None:
+    """Test that is_online cache expires after configured duration."""
+    import time
+
+    # Set very short cache duration for testing
+    with mock.patch.dict(os.environ, {"AIGNOSTICS_SYSTEM_ONLINE_CACHE_SECONDS": "1"}):
+        service = Service()
+
+        with mock.patch.object(Service, "_determine_network_health") as mock_health:
+            from aignostics.utils import Health
+
+            mock_health.return_value = Health(status=Health.Code.UP)
+
+            # First call
+            assert service.is_online() is True
+            assert mock_health.call_count == 1
+
+            # Wait for cache to expire
+            time.sleep(1.1)
+
+            # Should make a new network check
+            assert service.is_online() is True
+            assert mock_health.call_count == 2
+
+
+def test_is_online_status_change() -> None:
+    """Test that is_online correctly handles status changes."""
+    service = Service()
+
+    with mock.patch.object(Service, "_determine_network_health") as mock_health:
+        from aignostics.utils import Health
+
+        # First check: online
+        mock_health.return_value = Health(status=Health.Code.UP)
+        assert service.is_online() is True
+
+        # Clear cache to force re-check
+        service._online_cache = None
+
+        # Second check: offline
+        mock_health.return_value = Health(status=Health.Code.DOWN, reason="Connection lost")
+        assert service.is_online() is False
+
+
+def test_is_online_default_cache_duration() -> None:
+    """Test that is_online uses default cache duration of 60 seconds."""
+    service = Service()
+
+    # Verify default cache duration is 60 seconds
+    assert service._settings.online_cache_seconds == 60

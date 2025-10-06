@@ -85,6 +85,23 @@ def info(
             console.print(yaml.dump(info, width=80, default_flow_style=False), end="")
 
 
+@cli.command()
+def online() -> None:
+    """Check if the system is online.
+
+    Exits with status code 0 if online, 1 if offline.
+    Prints connection status in green if online, red if offline.
+    """
+    is_online = _service.is_online()
+
+    if is_online:
+        console.print("System is online", style="success")
+        sys.exit(0)
+    else:
+        console.print("System is offline", style="error")
+        sys.exit(1)
+
+
 if find_spec("nicegui"):
     from ..utils import gui_run  # noqa: TID252
 
