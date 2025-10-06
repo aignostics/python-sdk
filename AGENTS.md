@@ -186,7 +186,7 @@ module/
 All services inherit from `BaseService` and are discovered at runtime:
 
 ```python
-from aignostics.utils import BaseService, locate_implementations
+from aignostics.utils import BaseService, Health, locate_subclasses
 
 class MyService(BaseService):
     """Module service implementation."""
@@ -200,7 +200,7 @@ class MyService(BaseService):
         return {"version": "1.0.0"}
 
 # Automatic discovery
-services = locate_implementations(BaseService)
+services = locate_subclasses(BaseService)
 ```
 
 ### Key Architectural Principles
