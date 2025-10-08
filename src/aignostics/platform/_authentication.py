@@ -10,11 +10,11 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
-from urllib.error import HTTPError
 
 import jwt
 import requests
 from pydantic import BaseModel, SecretStr
+from requests.exceptions import HTTPError, JSONDecodeError, RequestException
 from requests_oauthlib import OAuth2Session
 from tenacity import (
     Retrying,
@@ -464,7 +464,7 @@ def _perform_device_flow() -> str:
                 raise RuntimeError(AUTHENTICATION_FAILED)
 
             return t.cast("str", json_response["access_token"])
-        except requests.exceptions.JSONDecodeError as e:
+        except JSONDecodeError as e:
             # Handle case where response is not JSON
             raise RuntimeError(AUTHENTICATION_FAILED) from e
         except HTTPError as e:
@@ -488,7 +488,7 @@ def _is_not_client_or_key_error(e: BaseException) -> bool:
         isinstance(e, KeyError)
         or (
             isinstance(e, RuntimeError)
-            and isinstance(e.__cause__, requests.exceptions.HTTPError)
+            and isinstance(e.__cause__, HTTPError)
             and e.__cause__.response is not None
             and e.__cause__.response.status_code
             and HTTPStatus.BAD_REQUEST <= e.__cause__.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
@@ -547,10 +547,10 @@ def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         )
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])
-    except (requests.exceptions.RequestException, KeyError) as e:
+    except (RequestException, KeyError) as e:
         # Sanitize error message to prevent leaking sensitive information (e.g., refresh tokens)
         error_msg = str(e)
-        if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
+        if isinstance(e, HTTPError) and e.response is not None:
             error_msg = f"HTTP {e.response.status_code}: {e.response.reason} (URL: {settings().token_url})"
         message = f"{AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN}{error_msg}"
         logger.exception(message)
