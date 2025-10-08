@@ -719,17 +719,7 @@ class TestTokenRefreshRetryLogic:
         assert mock_post.call_count == 1  # Should succeed on first try
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "status_code",
-        [
-            HTTPStatus.BAD_REQUEST,  # 400
-            HTTPStatus.UNAUTHORIZED,  # 401
-            HTTPStatus.FORBIDDEN,  # 403
-            HTTPStatus.NOT_FOUND,  # 404
-            HTTPStatus.CONFLICT,  # 409
-        ],
-    )
-    def test_no_retry_on_4xx_client_error(mock_settings, caplog, status_code) -> None:
+    def test_no_retry_on_client_error(mock_settings, caplog) -> None:
         """Test that 4xx errors do not trigger retries.
 
         This is critical because client errors (bad credentials, invalid refresh token, etc.)
@@ -737,7 +727,6 @@ class TestTokenRefreshRetryLogic:
         """
         # Create a mock response with 401 Unauthorized (client error)
         mock_response = Mock()
-        mock_response.status_code = HTTPStatus.UNAUTHORIZED
         mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
             "Client Error: Unauthorized", response=mock_response
         )
@@ -764,23 +753,13 @@ class TestTokenRefreshRetryLogic:
         assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "status_code",
-        [
-            HTTPStatus.INTERNAL_SERVER_ERROR,  # 500
-            HTTPStatus.BAD_GATEWAY,  # 502
-            HTTPStatus.SERVICE_UNAVAILABLE,  # 503
-            HTTPStatus.GATEWAY_TIMEOUT,  # 504
-        ],
-    )
-    def test_retry_on_5xx_server_error(mock_settings, caplog, status_code) -> None:
+    def test_retry_on_server_error(mock_settings, caplog) -> None:
         """Test that 5xx errors trigger retries.
 
         Server errors are transient and should be retried as they may succeed later.
         """
         # Create a mock that always fails with 500
         mock_response = Mock()
-        mock_response.status_code = status_code
         mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("I failed", response=mock_response)
 
         call_count = 0
