@@ -201,7 +201,7 @@ def _authenticate(use_device_flow: bool) -> str:
     return token
 
 
-def verify_and_decode_token(token: str) -> dict[str, t.Any]:
+def verify_and_decode_token(token: str) -> dict[str, str]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
@@ -211,7 +211,7 @@ def verify_and_decode_token(token: str) -> dict[str, t.Any]:
         token (str): The JWT token to verify and decode.
 
     Returns:
-        dict[str,t.Any]: The decoded token claims.
+        dict[str, str]: The decoded token claims.
 
     Raises:
         RuntimeError: If token verification or decoding fails.
@@ -228,7 +228,7 @@ def verify_and_decode_token(token: str) -> dict[str, t.Any]:
     return retryer(_do_verify_and_decode_token, token)
 
 
-def _do_verify_and_decode_token(token: str) -> dict[str, t.Any]:
+def _do_verify_and_decode_token(token: str) -> dict[str, str]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
@@ -236,7 +236,7 @@ def _do_verify_and_decode_token(token: str) -> dict[str, t.Any]:
         token (str): The JWT token to verify and decode.
 
     Returns:
-        dict[str,t.Any]: The decoded token claims.
+        dict[str, str]: The decoded token claims.
 
     Raises:
         RuntimeError: If token verification or decoding fails.
@@ -351,7 +351,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
             # we want to catch all exceptions here, so we can display them in the browser
             except Exception as e:  # noqa: BLE001
                 # Display error message in browser
-                self.send_response(500)
+                self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(f"Error: {e!s}".encode())
@@ -467,7 +467,7 @@ def _is_not_client_or_key_error(e: BaseException) -> bool:
 
     Client errors (4xx) indicate issues with the request itself that won't be
     resolved by retrying (e.g., invalid refresh token, bad request).
-    KeyErrors are retried neither as they indicate issues with the response content.
+    KeyErrors are not retried either as they indicate issues with the response content.
 
     Args:
         e: The exception to check.
