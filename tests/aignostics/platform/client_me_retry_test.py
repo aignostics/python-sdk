@@ -2,6 +2,7 @@
 
 import logging
 import time
+import typing as t
 from http import HTTPStatus
 from unittest.mock import MagicMock, Mock, patch
 
@@ -51,22 +52,29 @@ def clear_cache() -> None:
 
 
 @pytest.fixture
-def client_with_mock_api(mock_api_client: MagicMock) -> Client:
+def client_with_mock_api(mock_api_client: MagicMock) -> t.Generator[Client, None, None]:
     """Provide a Client instance with a mocked API client.
 
     Args:
         mock_api_client: The mocked API client.
 
-    Returns:
+    Yields:
         Client: A client instance with mocked API.
     """
+    mock_token_claims = {
+        "sub": "test-user",
+        "org_id": "test-org",
+        "exp": 9999999999,
+        "iss": "test-issuer",
+    }
     with (
         patch("aignostics.platform._client.get_token", return_value="test-token"),
+        patch("aignostics.platform._authentication.verify_and_decode_token", return_value=mock_token_claims),
         patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
     ):
         client = Client(cache_token=False)
         client._api = mock_api_client
-        return client
+        yield client
 
 
 class TestMeSuccess:
