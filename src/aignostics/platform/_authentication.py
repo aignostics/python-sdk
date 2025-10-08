@@ -36,7 +36,7 @@ from aignostics.utils import get_logger
 logger = get_logger(__name__)
 
 CALLBACK_PORT_RETRY_COUNT = 10
-JWK_CLIENT_CACHE_SIZE = 16
+JWK_CLIENT_CACHE_SIZE = 4  # Multiple entries exist in the rare case of settings changing at runtime only
 
 try:
     import sentry_sdk
@@ -231,7 +231,7 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
-    )(_do_verify_and_decode_token, token)
+    )(_do_verify_and_decode_token, token)  # Retryer will pass down arguments
 
 
 def _do_verify_and_decode_token(token: str) -> dict[str, str]:
@@ -518,7 +518,7 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
-    )(_do_access_token_from_refresh_token, refresh_token)
+    )(_do_access_token_from_refresh_token, refresh_token)  # Retryer will pass down arguments
 
 
 def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:

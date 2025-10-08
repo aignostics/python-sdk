@@ -388,18 +388,25 @@ class Settings(OpaqueSettings):
 
     @model_validator(mode="after")
     def validate_retry_wait_times(self) -> "Settings":
-        """Validate that auth_retry_wait_min is less than auth_retry_wait_max.
+        """Validate that retry wait min is less than retry wait max for both auth and me requests.
 
         Returns:
             Settings: The validated settings instance.
 
         Raises:
-            ValueError: If auth_retry_wait_min is greater than or equal to auth_retry_wait_max.
+            ValueError: If auth_retry_wait_min is greater than or equal to auth_retry_wait_max,
+                       or if me_retry_wait_min is greater than or equal to me_retry_wait_max.
         """
         if self.auth_retry_wait_min >= self.auth_retry_wait_max:
             msg = (
                 f"auth_retry_wait_min ({self.auth_retry_wait_min}) must be less than "
                 f"auth_retry_wait_max ({self.auth_retry_wait_max})"
+            )
+            raise ValueError(msg)
+        if self.me_retry_wait_min >= self.me_retry_wait_max:
+            msg = (
+                f"me_retry_wait_min ({self.me_retry_wait_min}) must be less than "
+                f"me_retry_wait_max ({self.me_retry_wait_max})"
             )
             raise ValueError(msg)
         return self

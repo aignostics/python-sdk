@@ -117,7 +117,9 @@ class Client:
             wait=wait_exponential_jitter(initial=settings().me_retry_wait_min, max=settings().me_retry_wait_max),
             before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
-        )(lambda: self._api.get_me_v1_me_get(_request_timeout=settings().me_request_timeout_seconds))
+        )(
+            lambda: self._api.get_me_v1_me_get(_request_timeout=settings().me_request_timeout_seconds)
+        )  # Retryer will pass down arguments
 
     def run(self, application_run_id: str) -> ApplicationRun:
         """Finds a specific run by id.
