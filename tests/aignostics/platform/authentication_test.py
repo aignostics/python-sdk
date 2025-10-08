@@ -271,8 +271,7 @@ class TestVerifyAndDecodeToken:
         mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
 
         with (
-            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
-            patch("jwt.get_unverified_header", return_value={"alg": "RS256"}),
+            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
         ):
             result = verify_and_decode_token("valid.token")
@@ -282,9 +281,13 @@ class TestVerifyAndDecodeToken:
     @staticmethod
     def test_verify_and_decode_invalid_token() -> None:
         """Test that an invalid token raises an appropriate error."""
+        mock_jwt_client = MagicMock()
+        mock_signing_key = MagicMock()
+        mock_signing_key.key = "test-key"
+        mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
+
         with (
-            patch("jwt.PyJWKClient"),
-            patch("jwt.get_unverified_header"),
+            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             patch("jwt.decode", side_effect=jwt.exceptions.PyJWTError("Invalid token")),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
         ):
