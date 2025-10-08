@@ -175,7 +175,16 @@ class TestPlatformCLI:
     @staticmethod
     def test_login_out_info_e2e(runner: CliRunner) -> None:
         """Test successful logout command."""
-        with patch("aignostics.platform._service.Service.logout", return_value=True):
+        mock_token_claims = {
+            "sub": "test-user",
+            "org_id": "test-org",
+            "exp": 9999999999,
+            "iss": "test-issuer",
+        }
+        with (
+            patch("aignostics.platform._service.Service.logout", return_value=True),
+            patch("aignostics.platform._authentication.verify_and_decode_token", return_value=mock_token_claims),
+        ):
             result = runner.invoke(cli, ["user", "login", "--relogin"])
             assert result.exit_code == 0
             assert "Successfully logged in." in normalize_output(result.output)
