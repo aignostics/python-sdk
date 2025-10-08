@@ -54,7 +54,8 @@ def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
 
     We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
     settings change at runtime, we get a new client with the updated settings. This is useful for handling
-    different JWK sets for different environments or configurations, and not a cache invalidation gap.
+    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
+    considered safe if different threads briefly use different jwt clients while settings change.
 
     Args:
         url: The JWS JSON URL to fetch the JWK set from.
@@ -444,7 +445,8 @@ def _perform_device_flow() -> str:
     except HTTPError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
 
-    # Polling for access token with received device code
+    # Infinite polling for access token with received device code. It's
+    # a feature and safe to poll infinitely, not a bug.
     while True:
         try:
             json_response = requests.post(
@@ -462,7 +464,6 @@ def _perform_device_flow() -> str:
                     time.sleep(interval)
                     continue
                 raise RuntimeError(AUTHENTICATION_FAILED)
-
             return t.cast("str", json_response["access_token"])
         except JSONDecodeError as e:
             # Handle case where response is not JSON
