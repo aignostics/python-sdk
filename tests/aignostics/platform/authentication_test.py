@@ -784,7 +784,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._access_token_from_refresh_token" in record.message
+            if "Retrying aignostics.platform._authentication._do_access_token_from_refresh_token" in record.message
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for 5xx errors"
 
@@ -917,7 +917,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication.verify_and_decode_token" in record.message
+            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.message
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for JWK connection errors"
 
@@ -961,7 +961,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication.verify_and_decode_token" in record.message
+            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.message
         ]
         assert len(retry_logs) == 1, "Should log exactly one retry attempt"
 

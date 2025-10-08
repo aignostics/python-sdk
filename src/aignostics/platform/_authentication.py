@@ -15,8 +15,8 @@ import requests
 from pydantic import BaseModel, SecretStr
 from requests_oauthlib import OAuth2Session
 from tenacity import (
+    Retrying,
     before_sleep_log,
-    retry,
     retry_if_exception,
     retry_if_exception_message,
     stop_after_attempt,
@@ -200,16 +200,34 @@ def _authenticate(use_device_flow: bool) -> str:
     return token
 
 
-@retry(
-    retry=retry_if_exception(  # Have to unpack wrapped exception
-        lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
-    ),
-    stop=stop_after_attempt(settings().auth_retry_attempts_max),
-    wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
-    reraise=True,
-)
 def verify_and_decode_token(token: str) -> dict[str, str]:
+    """
+    Verifies and decodes the JWT token using the public key from JWS JSON URL.
+
+    Retries on connection errors when fetching the JWK set.
+
+    Args:
+        token (str): The JWT token to verify and decode.
+
+    Returns:
+        dict[str,str]: The decoded token claims.
+
+    Raises:
+        RuntimeError: If token verification or decoding fails.
+    """
+    retryer = Retrying(  # We are not using annotations as settings can change at runtime
+        retry=retry_if_exception(  # Have to unpack wrapped exception
+            lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
+        ),
+        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )
+    return retryer(_do_verify_and_decode_token, token)
+
+
+def _do_verify_and_decode_token(token: str) -> dict[str, str]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
@@ -371,14 +389,14 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     return authentication_result.token
 
 
-def _perform_device_flow() -> str | None:
+def _perform_device_flow() -> str:
     """Performs the OAuth 2.0 Device Authorization flow.
 
     Used when a browser cannot be opened. Provides a URL for the user to visit
     on another device and polls for authorization completion.
 
     Returns:
-        str | None: The JWT access token.
+        str: The JWT access token.
 
     Raises:
         ValueError: If no client id is configured for device flow.
@@ -440,14 +458,7 @@ def _perform_device_flow() -> str | None:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
-@retry(
-    retry=retry_if_exception_message(match=r"^(?!.*Client Error:).*$"),
-    stop=stop_after_attempt(settings().auth_retry_attempts_max),
-    wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
-    reraise=True,
-)
-def _access_token_from_refresh_token(refresh_token: SecretStr) -> str | None:
+def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     """Obtains a new access token using a refresh token.
 
     Retries only on server errors (5xx) and network errors, not on client errors (4xx).
@@ -458,7 +469,29 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str | None:
         refresh_token (SecretStr): The refresh token to use for obtaining a new access token.
 
     Returns:
-        str | None: The new JWT access token.
+        str: The new JWT access token.
+
+    Raises:
+        RuntimeError: If token exchange fails. Message indicates if "Client Error".
+    """
+    retryer = Retrying(  # We are not using annotations as settings can change at runtime
+        retry=retry_if_exception_message(match=r"^(?!.*Client Error:).*$"),
+        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )
+    return retryer(_do_access_token_from_refresh_token, refresh_token)
+
+
+def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
+    """Obtains a new access token using a refresh token.
+
+    Args:
+        refresh_token (SecretStr): The refresh token to use for obtaining a new access token.
+
+    Returns:
+        str: The new JWT access token.
 
     Raises:
         RuntimeError: If token exchange fails. Message indicates if "Client Error".
