@@ -104,6 +104,7 @@ class Settings(OpaqueSettings):
         auth_request_timeout_seconds (int): Authentication request timeout in seconds, defaults to 30.
         auth_retry_attempts_max (int): Maximum number of retry attempts for authentication requests, defaults to 3.
         auth_retry_wait_max (int): Maximum wait time between authentication request retries in seconds, defaults to 5.
+        auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds, defaults to 3600.
         scope (str): OAuth scopes required by the SDK.
         scope_elements (list[str]): OAuth scopes split into individual elements.
         token_file (Path): Path to the token storage file.
@@ -262,6 +263,14 @@ class Settings(OpaqueSettings):
             le=60,
         ),
     ] = 5
+    auth_jwk_set_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for JWK set cache (in seconds)",
+            ge=0,
+            le=86400,
+        ),
+    ] = 3600
 
     @model_validator(mode="before")
     def pre_init(cls, values: dict) -> dict:  # type: ignore[type-arg] # noqa: N805

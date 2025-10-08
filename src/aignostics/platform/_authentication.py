@@ -1,4 +1,5 @@
 import errno
+import functools
 import logging
 import socket
 import time
@@ -40,30 +41,28 @@ try:
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
 
-# Module-level cache for PyJWKClient instances keyed by JWS JSON URL
-_jwk_client_cache: dict[str, jwt.PyJWKClient] = {}
 
-
-def _get_jwk_client() -> jwt.PyJWKClient:
+@functools.lru_cache(maxsize=128)
+def _get_jwk_client(url: str) -> jwt.PyJWKClient:
     """Returns a cached PyJWKClient instance for JWT verification.
 
-    Creates a client lazily on first access for each unique JWS JSON URL and reuses it
-    for subsequent calls with the same URL, enabling the built-in JWK set cache to work
-    effectively. Multiple clients can coexist for different URLs.
+    Creates a client lazily on first access for each unique combination of URL, timeout,
+    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
+    is thread-safe and ensures that only one client is created per unique parameter set.
+
+    Args:
+        url: The JWS JSON URL to fetch the JWK set from.
 
     Returns:
-        jwt.PyJWKClient: The cached PyJWKClient instance for the current JWS JSON URL.
+        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
 
     Raises:
         PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
         PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
     """
-    url = settings().jws_json_url
-
-    if url not in _jwk_client_cache:
-        _jwk_client_cache[url] = jwt.PyJWKClient(url, timeout=settings().auth_request_timeout_seconds, lifespan=60)
-
-    return _jwk_client_cache[url]
+    return jwt.PyJWKClient(
+        url, timeout=settings().auth_request_timeout_seconds, lifespan=settings().auth_jwk_set_cache_ttl
+    )
 
 
 class AuthenticationResult(BaseModel):
@@ -240,7 +239,7 @@ def _do_verify_and_decode_token(token: str) -> dict[str, str]:
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
-    jwk_client = _get_jwk_client()
+    jwk_client = _get_jwk_client(url=settings().jws_json_url)
     try:
         # Get the public key from the JWK client
         key = jwk_client.get_signing_key_from_jwt(token).key
@@ -458,6 +457,27 @@ def _perform_device_flow() -> str:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
+def _is_not_client_error(e: BaseException) -> bool:
+    """Determines if an exception is not a client error (4xx).
+
+    Client errors (4xx) indicate issues with the request itself that won't be
+    resolved by retrying (e.g., invalid refresh token, bad request).
+
+    Args:
+        e: The exception to check.
+
+    Returns:
+        bool: True if the exception is not a client error, False otherwise.
+    """
+    return not (
+        isinstance(e, RuntimeError)
+        and isinstance(e.__cause__, requests.exceptions.HTTPError)
+        and e.__cause__.response is not None
+        and e.__cause__.response.status_code
+        and HTTPStatus.BAD_REQUEST <= e.__cause__.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
+    )
+
+
 def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     """Obtains a new access token using a refresh token.
 
@@ -475,15 +495,7 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         RuntimeError: If token exchange fails. Message indicates if "Client Error".
     """
     retryer = Retrying(  # We are not using annotations as settings can change at runtime
-        retry=retry_if_exception(
-            lambda e: not (  # Don't retry on client errors (4xx)
-                isinstance(e, RuntimeError)
-                and isinstance(e.__cause__, requests.exceptions.HTTPError)
-                and e.__cause__.response is not None
-                and e.__cause__.response.status_code
-                and HTTPStatus.BAD_REQUEST <= e.__cause__.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
-            )
-        ),
+        retry=retry_if_exception(_is_not_client_error),
         stop=stop_after_attempt(settings().auth_retry_attempts_max),
         wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
