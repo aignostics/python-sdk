@@ -4,6 +4,8 @@ Feature: Application Run CLI Commands
   including submission, status inquiry, cancellation, and result download
   with proper functionality across different run states.
 
+
+  @tests:SPEC-APPLICATION-SERVICE
   @tests:SWR-APPLICATION-2-5
   @tests:SWR-APPLICATION-2-6
   @tests:SWR-APPLICATION-2-7

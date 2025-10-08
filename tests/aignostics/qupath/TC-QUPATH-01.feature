@@ -3,9 +3,11 @@ Feature: QuPath Software Management
   The system provides QuPath software installation, launch capabilities, 
   and project creation functionality for image visualization and analysis.
 
+  @tests:SPEC-QUPATH-SERVICE
   @tests:SWR-VISUALIZATION-1-1
   @tests:SWR-VISUALIZATION-1-2
   @tests:SWR-VISUALIZATION-1-3
+  @tests:SWR-VISUALIZATION-1-4
   @id:TC-QUPATH-01
   Scenario: System manages QuPath software functionality
     When the user initiates QuPath installation

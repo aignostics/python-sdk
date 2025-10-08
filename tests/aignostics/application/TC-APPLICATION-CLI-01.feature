@@ -3,10 +3,13 @@ Feature: Application Run Input Validation
   The system validates slide image resolution parameters during application 
   run submission to reject inputs that exceed application limits.
 
+  @tests:SPEC-APPLICATION-SERVICE
   @tests:SWR-APPLICATION-2-1
   @tests:SWR-APPLICATION-2-2
   @tests:SWR-APPLICATION-2-3
   @tests:SWR-APPLICATION-2-4
+  @tests:SWR-APPLICATION-2-13
+  @tests:SWR-APPLICATION-2-14
   @id:TC-APPLICATION-CLI-01
   Scenario: System rejects application run submission when slide resolution exceeds limits
     Given the user provides slide metadata with resolution exceeding application limits

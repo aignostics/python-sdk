@@ -3,7 +3,8 @@ Feature: Dataset Download GUI Operations
   The system provides graphical interface for dataset download operations
   including dataset selection, destination configuration, and download
   execution with progress feedback and completion validation.
-
+  
+  @tests:SPEC-DATASET-SERVICE
   @tests:SWR-DATASET-1-1
   @tests:SWR-DATASET-1-2
   @tests:SWR-DATASET-1-3

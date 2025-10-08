@@ -3,7 +3,8 @@ Feature: Notebook Extension Management via GUI
   The system provides graphical interface for managing Marimo notebook
   extension including launch capabilities, iframe integration, and
   navigation controls for interactive data analysis workflows.
-
+  
+  @tests:SPEC-NOTEBOOK-SERVICE
   @tests:SWR-NOTEBOOK-1-1
   @id:TC-NOTEBOOK-GUI-01
   Scenario: System manages notebook extension through GUI interface

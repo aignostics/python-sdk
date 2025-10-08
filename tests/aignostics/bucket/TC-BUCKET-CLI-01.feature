@@ -4,6 +4,7 @@ Feature: Bucket Complete Data Lifecycle Management
   upload, discovery, download, and deletion with content validation and
   cleanup verification.
 
+  @tests:SPEC-BUCKET-SERVICE
   @tests:SWR-BUCKET-1-1
   @tests:SWR-BUCKET-1-2
   @tests:SWR-BUCKET-1-3
