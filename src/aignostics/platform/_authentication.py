@@ -260,7 +260,7 @@ def _do_verify_and_decode_token(token: str) -> dict[str, str]:
             raise RuntimeError(message)
         return decoded
     except jwt.exceptions.PyJWTError as e:
-        message = f"{AUTHENTICATION_FAILED_TOKEN_VERIFICATION}{e!s}"
+        message = f"{AUTHENTICATION_FAILED_TOKEN_VERIFICATION}{type(e).__name__}"  # Sanitized
         logger.exception(message)
         sentry_sdk and sentry_sdk.capture_exception(e)  # pyright: ignore[reportUnusedExpression]
         raise RuntimeError(message) from e
@@ -530,7 +530,11 @@ def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])
     except (requests.exceptions.RequestException, KeyError) as e:
-        message = f"{AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN}{e!s}"
+        # Sanitize error message to prevent leaking sensitive information (e.g., refresh tokens)
+        error_msg = str(e)
+        if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
+            error_msg = f"HTTP {e.response.status_code}: {e.response.reason} (URL: {settings().token_url})"
+        message = f"{AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN}{error_msg}"
         logger.exception(message)
         sentry_sdk and sentry_sdk.capture_exception(e)  # pyright: ignore[reportUnusedExpression]
         raise RuntimeError(message) from e
