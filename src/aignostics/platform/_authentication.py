@@ -52,8 +52,9 @@ def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
     and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
     is thread-safe and ensures that only one client is created per unique parameter set.
 
-    We have one cache entry per combination of url, timeout and lifespan, so that if any of these
-    settings change at runtime, we get a new client with the updated settings.
+    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
+    settings change at runtime, we get a new client with the updated settings. This is useful for handling
+    different JWK sets for different environments or configurations, and not a cache invalidation gap.
 
     Args:
         url: The JWS JSON URL to fetch the JWK set from.
@@ -208,7 +209,9 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
-    Retries on connection errors when fetching the JWK set.
+    Notes:
+    - Values of token claims dict internally casted to str.
+    - Retries on connection errors when fetching the JWK set.
 
     Args:
         token (str): The JWT token to verify and decode.
@@ -234,6 +237,9 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
 def _do_verify_and_decode_token(token: str) -> dict[str, str]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
+
+    Notes:
+    - Values of token claims dict internally casted to str.
 
     Args:
         token (str): The JWT token to verify and decode.
