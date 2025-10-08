@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 import platformdirs
 from pydantic import (
+    BeforeValidator,
     Field,
     FieldSerializationInfo,
     PlainSerializer,
@@ -51,6 +52,35 @@ from ._messages import UNKNOWN_ENDPOINT_URL
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseSettings)
+
+
+def _validate_url(value: str) -> str:
+    """Validate that a string is a valid URL.
+
+    Args:
+        value: The string to validate.
+
+    Returns:
+        The validated URL string.
+
+    Raises:
+        TypeError: If the value is not a string.
+        ValueError: If the string is not a valid URL.
+    """
+    if not isinstance(value, str):
+        msg = f"URL must be a string, got {type(value).__name__}"
+        raise TypeError(msg)
+
+    parsed = urlparse(value)
+    if not parsed.scheme or not parsed.netloc:
+        msg = f"Invalid URL format: {value}"
+        raise ValueError(msg)
+
+    if parsed.scheme not in {"http", "https"}:
+        msg = f"URL must use http or https scheme, got {parsed.scheme}"
+        raise ValueError(msg)
+
+    return value
 
 
 class Settings(OpaqueSettings):
@@ -100,10 +130,11 @@ class Settings(OpaqueSettings):
 
     api_root: Annotated[
         str,
+        BeforeValidator(_validate_url),
         Field(description="URL of the API root", default=API_ROOT_PRODUCTION),
     ]
 
-    scope: str = "offline_access"
+    scope: Annotated[str, Field(description="OAuth scopes", min_length=3)] = "offline_access"
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -119,8 +150,10 @@ class Settings(OpaqueSettings):
             return []
         return [element.strip() for element in self.scope.split(",")]
 
-    audience: str
-    authorization_base_url: str
+    audience: Annotated[str, Field(description="OAuth audience claim", min_length=10, max_length=100)]
+    authorization_base_url: Annotated[
+        str, BeforeValidator(_validate_url), Field(description="OAuth authorization endpoint URL")
+    ]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -151,11 +184,17 @@ class Settings(OpaqueSettings):
             )
             return self.authorization_base_url.rsplit("/", 1)[0] + "/"
 
-    token_url: str
-    redirect_uri: str
-    device_url: str
-    jws_json_url: str
-    client_id_interactive: str
+    token_url: Annotated[str, BeforeValidator(_validate_url), Field(description="OAuth token endpoint URL")]
+    redirect_uri: Annotated[
+        str, BeforeValidator(_validate_url), Field(description="OAuth redirect URI for authorization code flow")
+    ]
+    device_url: Annotated[
+        str, BeforeValidator(_validate_url), Field(description="OAuth device authorization endpoint URL")
+    ]
+    jws_json_url: Annotated[
+        str, BeforeValidator(_validate_url), Field(description="JWS key set URL for token verification")
+    ]
+    client_id_interactive: Annotated[str, Field(description="OAuth client ID for interactive flows")]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -199,9 +238,30 @@ class Settings(OpaqueSettings):
     def serialize_token_file(self, token_file: Path, _info: FieldSerializationInfo) -> str:  # noqa: PLR6301
         return str(token_file.resolve())
 
-    auth_request_timeout_seconds: int = 30
-    auth_retry_attempts_max: int = 3
-    auth_retry_wait_max: int = 5
+    auth_request_timeout_seconds: Annotated[
+        int,
+        Field(
+            description="Timeout for authentication requests",
+            ge=1,
+            le=300,
+        ),
+    ] = 30
+    auth_retry_attempts_max: Annotated[
+        int,
+        Field(
+            description="Maximum number of retry attempts for authentication requests",
+            ge=0,
+            le=10,
+        ),
+    ] = 3
+    auth_retry_wait_max: Annotated[
+        int,
+        Field(
+            description="Maximum wait time between retry attempts (in seconds)",
+            ge=1,
+            le=60,
+        ),
+    ] = 5
 
     @model_validator(mode="before")
     def pre_init(cls, values: dict) -> dict:  # type: ignore[type-arg] # noqa: N805

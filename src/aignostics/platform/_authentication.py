@@ -329,7 +329,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 # Store the token
                 authentication_result.token = token["access_token"]
                 # Send success response
-                self.send_response(200)
+                self.send_response(HTTPStatus.OK)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(b"""
@@ -456,18 +456,6 @@ def _perform_device_flow() -> str:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
         except HTTPError as e:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
-
-
-def _is_not_client_error(exception: RuntimeError) -> bool:
-    """Checks if the exception is not a client error (4xx).
-
-    Args:
-        exception (RuntimeError): The exception to check.
-
-    Returns:
-        bool: True if the exception is not a client error, False otherwise.
-    """
-    return not (isinstance(exception, RuntimeError) and "Client Error" in str(exception))
 
 
 def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:

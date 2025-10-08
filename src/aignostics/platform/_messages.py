@@ -6,5 +6,5 @@ AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN = (
 )
 AUTHENTICATION_FAILED_TOKEN_VERIFICATION = "Authentication failed on token verification: "  # noqa: S105
 NOT_YET_IMPLEMENTED = "Not yet implemented."
-UNKNOWN_ENDPOINT_URL = "Unknown endpoint URL. Please check the API documentation."
+UNKNOWN_ENDPOINT_URL = "AIGNOSTICS_API_ROOT set to unknown endpoint URL. Please check your environment settings."
 INVALID_REDIRECT_URI = "Invalid redirect URI. Please check the redirect URI in your application settings."
