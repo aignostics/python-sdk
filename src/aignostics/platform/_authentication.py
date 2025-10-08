@@ -223,7 +223,7 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
-    retryer = Retrying(  # We are not using Tenacity annotations as settings can change at runtime
+    return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(  # Have to unpack wrapped exception
             lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
         ),
@@ -231,8 +231,7 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
-    )
-    return retryer(_do_verify_and_decode_token, token)
+    )(_do_verify_and_decode_token, token)
 
 
 def _do_verify_and_decode_token(token: str) -> dict[str, str]:
@@ -513,14 +512,13 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     Raises:
         RuntimeError: If token exchange fails. Message indicates if "Client Error".
     """
-    retryer = Retrying(  # We are not using Tenacity annotations as settings can change at runtime
+    return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(_is_not_client_or_key_error),
         stop=stop_after_attempt(settings().auth_retry_attempts_max),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
-    )
-    return retryer(_do_access_token_from_refresh_token, refresh_token)
+    )(_do_access_token_from_refresh_token, refresh_token)
 
 
 def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:

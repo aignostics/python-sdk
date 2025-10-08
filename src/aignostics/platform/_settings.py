@@ -102,6 +102,10 @@ class Settings(OpaqueSettings):
         auth_retry_wait_min (int): Minimum wait time between authentication request retries in seconds, defaults to 1.
         auth_retry_wait_max (int): Maximum wait time between authentication request retries in seconds, defaults to 5.
         auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds, defaults to 3600.
+        me_request_timeout_seconds (int): Timeout for "me" requests in seconds, defaults to 30.
+        me_retry_attempts_max (int): Maximum number of retry attempts for "me" requests, defaults to 3.
+        me_retry_wait_min (int): Minimum wait time between "me" request retries in seconds, defaults to 1.
+        me_retry_wait_max (int): Maximum wait time between "me" request retries in seconds, defaults to 5.
         scope (str): OAuth scopes required by the SDK.
         scope_elements (list[str]): OAuth scopes split into individual elements.
         token_file (Path): Path to the token storage file.
@@ -144,8 +148,6 @@ class Settings(OpaqueSettings):
         Returns:
             list[str]: List of individual scope elements.
         """
-        if not self.scope:
-            return []
         return [element.strip() for element in self.scope.split(",")]
 
     audience: Annotated[str, Field(description="OAuth audience claim", min_length=10, max_length=100)]
@@ -274,6 +276,39 @@ class Settings(OpaqueSettings):
             le=86400,
         ),
     ] = 3600
+
+    me_request_timeout_seconds: Annotated[
+        int,
+        Field(
+            description="Timeout for me requests",
+            ge=1,
+            le=300,
+        ),
+    ] = 30
+    me_retry_attempts_max: Annotated[
+        int,
+        Field(
+            description="Maximum number of retry attempts for me requests",
+            ge=0,
+            le=10,
+        ),
+    ] = 3
+    me_retry_wait_min: Annotated[
+        int,
+        Field(
+            description="Minimum wait time between retry attempts (in seconds)",
+            ge=1,
+            le=60,
+        ),
+    ] = 1
+    me_retry_wait_max: Annotated[
+        int,
+        Field(
+            description="Maximum wait time between retry attempts (in seconds)",
+            ge=1,
+            le=60,
+        ),
+    ] = 5
 
     @model_validator(mode="before")
     def pre_init(cls, values: dict) -> dict:  # type: ignore[type-arg] # noqa: N805

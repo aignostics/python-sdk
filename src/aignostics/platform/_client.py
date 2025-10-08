@@ -1,3 +1,4 @@
+import logging
 import os
 from collections.abc import Callable
 from urllib.request import getproxies
@@ -5,9 +6,18 @@ from urllib.request import getproxies
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import AuthSettings, Configuration
-from aignx.codegen.exceptions import NotFoundException
+from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import MeReadResponse as Me
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
+from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
+from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
 from aignostics.platform._authentication import get_token
 from aignostics.platform.resources.applications import Applications, Versions
@@ -17,6 +27,15 @@ from aignostics.utils import get_logger, user_agent
 from ._settings import settings
 
 logger = get_logger(__name__)
+
+RETRYABLE_EXCEPTIONS = (
+    ServiceException,
+    Urllib3TimeoutError,
+    PoolError,
+    IncompleteRead,
+    ProtocolError,
+    ProxyError,
+)
 
 
 class _OAuth2TokenProviderConfiguration(Configuration):
@@ -80,13 +99,25 @@ class Client:
     def me(self) -> Me:
         """Retrieves info about the current user and their organisation.
 
+        Retries on network and server errors.
+
+        Note:
+        - We are not using urllib3s retry class as it does not support fine grained definition when to retry,
+            exponential backoff with jitter, logging before retry, and is difficult to configure.
+
         Returns:
             Me: User and organization information.
 
         Raises:
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
-        return self._api.get_me_v1_me_get()
+        return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().me_retry_attempts_max),
+            wait=wait_exponential_jitter(initial=settings().me_retry_wait_min, max=settings().me_retry_wait_max),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )(lambda: self._api.get_me_v1_me_get(_request_timeout=settings().me_request_timeout_seconds))
 
     def run(self, application_run_id: str) -> ApplicationRun:
         """Finds a specific run by id.
