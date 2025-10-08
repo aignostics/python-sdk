@@ -89,8 +89,9 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.scope_elements == ["offline_access"]
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
-    assert settings.request_timeout_seconds == 30
-    assert settings.authorization_backoff_seconds == 3
+    assert settings.auth_request_timeout_seconds == 30
+    assert settings.auth_retry_wait_max == 5
+    assert settings.auth_retry_attempts_max == 3
 
 
 def test_authentication_settings_staging(mock_env_vars) -> None:
@@ -109,6 +110,15 @@ def test_authentication_settings_staging(mock_env_vars) -> None:
     assert settings.device_url == DEVICE_URL_STAGING
     assert settings.jws_json_url == JWS_JSON_URL_STAGING
 
+    # Test other properties
+    assert settings.scope == "offline_access"
+    assert settings.scope_elements == ["offline_access"]
+    assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
+    assert settings.token_file == Path(settings.cache_dir) / ".token"
+    assert settings.auth_request_timeout_seconds == 30
+    assert settings.auth_retry_wait_max == 5
+    assert settings.auth_retry_attempts_max == 3
+
 
 def test_authentication_settings_dev(mock_env_vars) -> None:
     """Test authentication settings with dev API root."""
@@ -125,6 +135,15 @@ def test_authentication_settings_dev(mock_env_vars) -> None:
     assert settings.redirect_uri == REDIRECT_URI_DEV
     assert settings.device_url == DEVICE_URL_DEV
     assert settings.jws_json_url == JWS_JSON_URL_DEV
+
+    # Test other properties
+    assert settings.scope == "offline_access"
+    assert settings.scope_elements == ["offline_access"]
+    assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
+    assert settings.token_file == Path(settings.cache_dir) / ".token"
+    assert settings.auth_request_timeout_seconds == 30
+    assert settings.auth_retry_wait_max == 5
+    assert settings.auth_retry_attempts_max == 3
 
 
 def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:

@@ -63,7 +63,6 @@ class Settings(OpaqueSettings):
     Attributes:
         api_root (str): Base URL of the Aignostics API.
         audience (str): OAuth audience claim.
-        authorization_backoff_seconds (int): Backoff time for authorization retries in seconds.
         authorization_base_url (str): Authorization endpoint for OAuth flows.
         cache_dir (str): Directory for caching tokens and other data.
         client_id_interactive (str): Client ID for interactive authorization flow.
@@ -72,7 +71,9 @@ class Settings(OpaqueSettings):
         jws_json_url (str): URL for JWS key set.
         redirect_uri (str): Redirect URI for OAuth authorization code flow.
         refresh_token (SecretStr | None): OAuth refresh token if available.
-        request_timeout_seconds (int): Timeout for API requests in seconds.
+        auth_request_timeout_seconds (int): Authentication request timeout in seconds, defaults to 30.
+        auth_retry_attempts_max (int): Maximum number of retry attempts for authentication requests, defaults to 3.
+        auth_retry_wait_max (int): Maximum wait time between authentication request retries in seconds, defaults to 5.
         scope (str): OAuth scopes required by the SDK.
         scope_elements (list[str]): OAuth scopes split into individual elements.
         token_file (Path): Path to the token storage file.
@@ -198,8 +199,9 @@ class Settings(OpaqueSettings):
     def serialize_token_file(self, token_file: Path, _info: FieldSerializationInfo) -> str:  # noqa: PLR6301
         return str(token_file.resolve())
 
-    request_timeout_seconds: int = 30
-    authorization_backoff_seconds: int = 3
+    auth_request_timeout_seconds: int = 30
+    auth_retry_attempts_max: int = 3
+    auth_retry_wait_max: int = 5
 
     @model_validator(mode="before")
     def pre_init(cls, values: dict) -> dict:  # type: ignore[type-arg] # noqa: N805

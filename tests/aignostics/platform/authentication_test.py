@@ -1,18 +1,22 @@
 """Tests for the authentication module of the Aignostics Python SDK."""
 
+import logging
 import socket
 import time
 import webbrowser
 from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import jwt
 import pytest
+import requests
 from pydantic import SecretStr
 from requests_oauthlib import OAuth2Session
 
 from aignostics.platform._authentication import (
+    _access_token_from_refresh_token,
     _authenticate,
     _can_open_browser,
     _ensure_local_port_is_available,
@@ -22,7 +26,12 @@ from aignostics.platform._authentication import (
     remove_cached_token,
     verify_and_decode_token,
 )
-from aignostics.platform._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
+from aignostics.platform._messages import (
+    AUTHENTICATION_FAILED,
+    AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
+    AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
+    INVALID_REDIRECT_URI,
+)
 
 
 @pytest.fixture
@@ -45,7 +54,9 @@ def mock_settings() -> MagicMock:
         settings.device_url = "https://test.auth/device"
         settings.audience = "test-audience"
         settings.jws_json_url = "https://test.auth/.well-known/jwks.json"
-        settings.request_timeout_seconds = 10
+        settings.auth_request_timeout_seconds = 10
+        settings.auth_retry_wait_max = 5
+        settings.auth_retry_attempts_max = 3
         settings.refresh_token = None
         mock_settings.return_value = settings
         yield mock_settings
@@ -196,7 +207,7 @@ class TestGetToken:
         mock_settings.return_value.refresh_token = SecretStr("test-refresh-token")
 
         with patch(
-            "aignostics.platform._authentication._token_from_refresh_token", return_value="refreshed.token"
+            "aignostics.platform._authentication._access_token_from_refresh_token", return_value="refreshed.token"
         ) as mock_refresh:
             token = _authenticate(use_device_flow=False)
             assert token == "refreshed.token"  # noqa: S105 - Test credential
@@ -273,7 +284,7 @@ class TestVerifyAndDecodeToken:
             patch("jwt.PyJWKClient"),
             patch("jwt.get_unverified_header"),
             patch("jwt.decode", side_effect=jwt.exceptions.PyJWTError("Invalid token")),
-            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED),
+            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
         ):
             verify_and_decode_token("invalid.token")
 
@@ -685,3 +696,331 @@ class TestSentryIntegration:
 
             # Verify sentry_sdk.set_user was not called because authentication failed
             mock_sentry_sdk.set_user.assert_not_called()
+
+
+class TestTokenRefreshRetryLogic:
+    """Test cases for the retry logic in _access_token_from_refresh_token."""
+
+    @staticmethod
+    def test_successful_token_refresh_no_retry(mock_settings) -> None:
+        """Test that successful token refresh completes without retries.
+
+        This is a sanity check that the happy path works correctly.
+        """
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.OK
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {"access_token": "fresh.token"}
+
+        with patch("requests.post", return_value=mock_response) as mock_post:
+            result = _access_token_from_refresh_token(SecretStr("test-refresh-token"))
+
+        assert result == "fresh.token"
+        assert mock_post.call_count == 1  # Should succeed on first try
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "status_code",
+        [
+            HTTPStatus.BAD_REQUEST,  # 400
+            HTTPStatus.UNAUTHORIZED,  # 401
+            HTTPStatus.FORBIDDEN,  # 403
+            HTTPStatus.NOT_FOUND,  # 404
+            HTTPStatus.CONFLICT,  # 409
+        ],
+    )
+    def test_no_retry_on_4xx_client_error(mock_settings, caplog, status_code) -> None:
+        """Test that 4xx errors do not trigger retries.
+
+        This is critical because client errors (bad credentials, invalid refresh token, etc.)
+        won't be fixed by retrying - they require user intervention.
+        """
+        # Create a mock response with 401 Unauthorized (client error)
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.UNAUTHORIZED
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "Client Error: Unauthorized", response=mock_response
+        )
+
+        start_time = time.time()
+
+        with (
+            patch("requests.post", return_value=mock_response),
+            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN),
+            caplog.at_level(logging.DEBUG),
+        ):
+            _access_token_from_refresh_token(SecretStr("test-refresh-token"))
+
+        elapsed_time = time.time() - start_time
+
+        # Should fail immediately without retries - elapsed time should be < 2 seconds
+        assert elapsed_time < 2.0, f"Expected fast failure but took {elapsed_time:.2f}s"
+
+        # Verify requests.post was called only once (no retries)
+        assert mock_response.raise_for_status.call_count == 1
+
+        # Verify no retry log messages
+        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "status_code",
+        [
+            HTTPStatus.INTERNAL_SERVER_ERROR,  # 500
+            HTTPStatus.BAD_GATEWAY,  # 502
+            HTTPStatus.SERVICE_UNAVAILABLE,  # 503
+            HTTPStatus.GATEWAY_TIMEOUT,  # 504
+        ],
+    )
+    def test_retry_on_5xx_server_error(mock_settings, caplog, status_code) -> None:
+        """Test that 5xx errors trigger retries.
+
+        Server errors are transient and should be retried as they may succeed later.
+        """
+        # Create a mock that always fails with 500
+        mock_response = Mock()
+        mock_response.status_code = status_code
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("I failed", response=mock_response)
+
+        call_count = 0
+
+        def side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            time.sleep(1)
+            return mock_response
+
+        with (
+            patch("requests.post", side_effect=side_effect),
+            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN),
+            caplog.at_level(logging.DEBUG),
+        ):
+            _access_token_from_refresh_token(SecretStr("test-refresh-token"))
+
+        # Should have retried multiple times - at least 3 attempts
+        assert call_count >= 3, f"Expected at least 3 attempts but got {call_count}"
+
+        # Verify retry log messages exist
+        retry_logs = [
+            record
+            for record in caplog.records
+            if "Retrying aignostics.platform._authentication._access_token_from_refresh_token" in record.message
+        ]
+        assert len(retry_logs) > 0, "Should log retry attempts for 5xx errors"
+
+    @staticmethod
+    def test_retry_on_connection_error(mock_settings, caplog) -> None:
+        """Test that network connection errors trigger retries.
+
+        Connection errors are transient and should be retried.
+        """
+        call_count = 0
+
+        def side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            time.sleep(1)
+            msg = "Network unreachable"
+            raise requests.exceptions.ConnectionError(msg)
+
+        with (
+            patch("requests.post", side_effect=side_effect),
+            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN),
+            caplog.at_level(logging.DEBUG),
+        ):
+            _access_token_from_refresh_token(SecretStr("test-refresh-token"))
+
+        # Should have retried multiple times
+        assert call_count >= 2, f"Expected at least 2 attempts but got {call_count}"
+
+        # Verify retry logs exist
+        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        assert len(retry_logs) > 0, "Should log retry attempts for connection errors"
+
+
+class TestTokenVerificationRetryLogic:
+    """Test cases for the retry logic in verify_and_decode_token."""
+
+    @staticmethod
+    def test_successful_token_verification_no_retry(mock_settings) -> None:
+        """Test that successful token verification completes without retries.
+
+        This is a sanity check that the happy path works correctly.
+        """
+        mock_jwt_client = MagicMock()
+        mock_signing_key = MagicMock()
+        mock_signing_key.key = "test-key"
+        mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
+
+        with (
+            patch("jwt.PyJWKClient", return_value=mock_jwt_client) as mock_client_class,
+            patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
+        ):
+            result = verify_and_decode_token("valid.token")
+
+        assert "sub" in result
+        assert "exp" in result
+        # PyJWKClient is created only once (no retries)
+        assert mock_client_class.call_count == 1
+
+    @staticmethod
+    def test_no_retry_on_jwt_decode_error(mock_settings, caplog) -> None:
+        """Test that JWT decode errors (non-connection errors) do not trigger retries.
+
+        JWT decode errors like invalid signature, expired token, etc. are client errors
+        that won't be fixed by retrying - they require a new token.
+        """
+        mock_jwt_client = MagicMock()
+        mock_signing_key = MagicMock()
+        mock_signing_key.key = "test-key"
+        mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
+
+        call_count = 0
+
+        def decode_side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            msg = "Token signature verification failed"
+            raise jwt.exceptions.InvalidTokenError(msg)
+
+        start_time = time.time()
+
+        with (
+            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            patch("jwt.decode", side_effect=decode_side_effect),
+            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
+            caplog.at_level(logging.DEBUG),
+        ):
+            verify_and_decode_token("invalid.token")
+
+        elapsed_time = time.time() - start_time
+
+        # Should fail immediately without retries - elapsed time should be < 2 seconds
+        assert elapsed_time < 2.0, f"Expected fast failure but took {elapsed_time:.2f}s"
+
+        # Verify jwt.decode was called only once (no retries)
+        assert call_count == 1
+
+        # Verify no retry log messages
+        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        assert len(retry_logs) == 0, "Should not log retry attempts for JWT decode errors"
+
+    @staticmethod
+    def test_retry_on_jwk_connection_error(mock_settings, caplog) -> None:
+        """Test that JWK client connection errors trigger retries.
+
+        Connection errors when fetching the JWK set are transient and should be retried.
+        """
+        call_count = 0
+
+        def get_signing_key_side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            time.sleep(1)
+            msg = "Failed to connect to JWK endpoint"
+            raise jwt.PyJWKClientConnectionError(msg)
+
+        mock_jwt_client = MagicMock()
+        mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
+
+        with (
+            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
+            caplog.at_level(logging.DEBUG),
+        ):
+            verify_and_decode_token("valid.token")
+
+        # Should have retried multiple times - at least 3 attempts
+        assert call_count >= 3, f"Expected at least 3 attempts but got {call_count}"
+
+        # Verify retry log messages exist
+        retry_logs = [
+            record
+            for record in caplog.records
+            if "Retrying aignostics.platform._authentication.verify_and_decode_token" in record.message
+        ]
+        assert len(retry_logs) > 0, "Should log retry attempts for JWK connection errors"
+
+    @staticmethod
+    def test_successful_verification_after_connection_retry(mock_settings, caplog) -> None:
+        """Test that token verification succeeds after initial JWK connection failures.
+
+        This tests the happy path of retry logic - connection fails initially but succeeds
+        on a subsequent retry.
+        """
+        call_count = 0
+        mock_signing_key = MagicMock()
+        mock_signing_key.key = "test-key"
+
+        def get_signing_key_side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count < 2:  # Fail once, then succeed
+                time.sleep(0.5)
+                msg = "Temporary connection failure"
+                raise jwt.PyJWKClientConnectionError(msg)
+            return mock_signing_key
+
+        mock_jwt_client = MagicMock()
+        mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
+
+        with (
+            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
+            caplog.at_level(logging.DEBUG),
+        ):
+            result = verify_and_decode_token("valid.token")
+
+        assert "sub" in result
+        assert result["sub"] == "user-id"
+
+        # Should have called get_signing_key_from_jwt twice (initial + 1 retry)
+        assert call_count == 2, f"Expected 2 attempts but got {call_count}"
+
+        # Verify retry log messages exist
+        retry_logs = [
+            record
+            for record in caplog.records
+            if "Retrying aignostics.platform._authentication.verify_and_decode_token" in record.message
+        ]
+        assert len(retry_logs) == 1, "Should log exactly one retry attempt"
+
+    @staticmethod
+    def test_no_retry_on_other_jwk_errors(mock_settings, caplog) -> None:
+        """Test that non-connection JWK errors do not trigger retries.
+
+        Errors like invalid key format, missing key, etc. are not transient and
+        should fail immediately without retries.
+        """
+        call_count = 0
+
+        def get_signing_key_side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            msg = "Invalid key format in JWK set"
+            raise jwt.PyJWKClientError(msg)
+
+        mock_jwt_client = MagicMock()
+        mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
+
+        start_time = time.time()
+
+        with (
+            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
+            caplog.at_level(logging.DEBUG),
+        ):
+            verify_and_decode_token("valid.token")
+
+        elapsed_time = time.time() - start_time
+
+        # Should fail immediately without retries - elapsed time should be < 2 seconds
+        assert elapsed_time < 2.0, f"Expected fast failure but took {elapsed_time:.2f}s"
+
+        # Verify get_signing_key_from_jwt was called only once (no retries)
+        assert call_count == 1
+
+        # Verify no retry log messages
+        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        assert len(retry_logs) == 0, "Should not log retry attempts for non-connection JWK errors"
