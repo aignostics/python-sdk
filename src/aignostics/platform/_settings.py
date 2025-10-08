@@ -102,6 +102,7 @@ class Settings(OpaqueSettings):
         auth_retry_wait_min (int): Minimum wait time between authentication request retries in seconds, defaults to 1.
         auth_retry_wait_max (int): Maximum wait time between authentication request retries in seconds, defaults to 5.
         auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds, defaults to 3600.
+        health_timeout_seconds (int): Timeout for health checks in seconds, defaults to 30.
         me_request_timeout_seconds (int): Timeout for "me" requests in seconds, defaults to 30.
         me_retry_attempts_max (int): Maximum number of retry attempts for "me" requests, defaults to 3.
         me_retry_wait_min (int): Minimum wait time between "me" request retries in seconds, defaults to 1.
@@ -276,6 +277,15 @@ class Settings(OpaqueSettings):
             le=86400,
         ),
     ] = 3600
+
+    health_timeout_seconds: Annotated[
+        int,
+        Field(
+            description="Timeout for health checks",
+            ge=1,
+            le=300,
+        ),
+    ] = 30
 
     me_request_timeout_seconds: Annotated[
         int,
