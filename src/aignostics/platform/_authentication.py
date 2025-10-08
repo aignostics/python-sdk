@@ -42,8 +42,8 @@ except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
 
 
-@functools.lru_cache(maxsize=128)
-def _get_jwk_client(url: str) -> jwt.PyJWKClient:
+@functools.lru_cache(maxsize=16)
+def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
     """Returns a cached PyJWKClient instance for JWT verification.
 
     Creates a client lazily on first access for each unique combination of URL, timeout,
@@ -52,6 +52,8 @@ def _get_jwk_client(url: str) -> jwt.PyJWKClient:
 
     Args:
         url: The JWS JSON URL to fetch the JWK set from.
+        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
+        lifespan: The lifespan in seconds for caching the JWK set.
 
     Returns:
         jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
@@ -60,9 +62,7 @@ def _get_jwk_client(url: str) -> jwt.PyJWKClient:
         PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
         PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
     """
-    return jwt.PyJWKClient(
-        url, timeout=settings().auth_request_timeout_seconds, lifespan=settings().auth_jwk_set_cache_ttl
-    )
+    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
 
 
 class AuthenticationResult(BaseModel):
@@ -239,7 +239,11 @@ def _do_verify_and_decode_token(token: str) -> dict[str, str]:
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
-    jwk_client = _get_jwk_client(url=settings().jws_json_url)
+    jwk_client = _get_jwk_client(
+        url=settings().jws_json_url,
+        timeout=settings().auth_request_timeout_seconds,
+        lifespan=settings().auth_jwk_set_cache_ttl,
+    )
     try:
         # Get the public key from the JWK client
         key = jwk_client.get_signing_key_from_jwt(token).key

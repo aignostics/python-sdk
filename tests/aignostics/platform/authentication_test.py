@@ -835,13 +835,15 @@ class TestJWKClientCache:
         _get_jwk_client.cache_clear()
 
         url = "https://test.auth/.well-known/jwks.json"
+        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
             # First call should create a new client
-            client1 = _get_jwk_client(url)
+            client1 = _get_jwk_client(url, timeout, lifespan)
 
             # Second call with same URL should return the cached instance
-            client2 = _get_jwk_client(url)
+            client2 = _get_jwk_client(url, timeout, lifespan)
 
             # Both should be the same instance
             assert client1 is client2
@@ -866,14 +868,16 @@ class TestJWKClientCache:
 
         url1 = "https://test1.auth/.well-known/jwks.json"
         url2 = "https://test2.auth/.well-known/jwks.json"
+        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
             # Configure mock to return different instances for each call
             mock_pyjwk_client.side_effect = [MagicMock(), MagicMock()]
 
             # Calls with different URLs should create different clients
-            client1 = _get_jwk_client(url1)
-            client2 = _get_jwk_client(url2)
+            client1 = _get_jwk_client(url1, timeout, lifespan)
+            client2 = _get_jwk_client(url2, timeout, lifespan)
 
             # Both should be different instances
             assert client1 is not client2
@@ -899,22 +903,24 @@ class TestJWKClientCache:
         assert info.misses == 0
 
         url = "https://test.auth/.well-known/jwks.json"
+        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient"):
             # First call should be a cache miss
-            _get_jwk_client(url)
+            _get_jwk_client(url, timeout, lifespan)
             info = _get_jwk_client.cache_info()
             assert info.misses == 1
             assert info.hits == 0
 
             # Second call with same URL should be a cache hit
-            _get_jwk_client(url)
+            _get_jwk_client(url, timeout, lifespan)
             info = _get_jwk_client.cache_info()
             assert info.misses == 1
             assert info.hits == 1
 
             # Third call with same URL should be another cache hit
-            _get_jwk_client(url)
+            _get_jwk_client(url, timeout, lifespan)
             info = _get_jwk_client.cache_info()
             assert info.misses == 1
             assert info.hits == 2
@@ -934,15 +940,17 @@ class TestJWKClientCache:
         _get_jwk_client.cache_clear()
 
         url = "https://test.auth/.well-known/jwks.json"
+        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
-            _get_jwk_client(url)
+            _get_jwk_client(url, timeout, lifespan)
 
             # Verify PyJWKClient was called with correct parameters
             mock_pyjwk_client.assert_called_once_with(
                 url,
-                timeout=mock_settings.return_value.auth_request_timeout_seconds,
-                lifespan=mock_settings.return_value.auth_jwk_set_cache_ttl,
+                timeout=timeout,
+                lifespan=lifespan,
             )
 
         # Clear cache after test
@@ -990,9 +998,9 @@ class TestJWKClientCache:
 
     @staticmethod
     def test_jwk_client_cache_size_limit(mock_settings) -> None:
-        """Test that the LRU cache respects the maxsize=128 limit.
+        """Test that the LRU cache respects the maxsize=16 limit.
 
-        When more than 128 unique URLs are cached, the least recently used ones
+        When more than 16 unique parameter combinations are cached, the least recently used ones
         should be evicted.
         """
         from aignostics.platform._authentication import _get_jwk_client
@@ -1000,29 +1008,32 @@ class TestJWKClientCache:
         # Clear the cache before testing
         _get_jwk_client.cache_clear()
 
+        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
+
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
-            # Create 130 different URLs (exceeding the cache size of 128)
-            urls = [f"https://test{i}.auth/.well-known/jwks.json" for i in range(130)]
+            # Create 18 different URLs (exceeding the cache size of 16)
+            urls = [f"https://test{i}.auth/.well-known/jwks.json" for i in range(18)]
 
             # Call _get_jwk_client for each URL
             for url in urls:
-                _get_jwk_client(url)
+                _get_jwk_client(url, timeout, lifespan)
 
-            # PyJWKClient should be instantiated 130 times (once for each unique URL)
-            assert mock_pyjwk_client.call_count == 130
+            # PyJWKClient should be instantiated 18 times (once for each unique URL)
+            assert mock_pyjwk_client.call_count == 18
 
             # Now access the first URL again
-            _get_jwk_client(urls[0])
+            _get_jwk_client(urls[0], timeout, lifespan)
 
             # Since we exceeded cache size, the first URL should have been evicted
             # and needs to be recreated, so call count increases
-            assert mock_pyjwk_client.call_count == 131
+            assert mock_pyjwk_client.call_count == 19
 
             # But accessing a more recent URL should hit the cache
-            _get_jwk_client(urls[129])
+            _get_jwk_client(urls[17], timeout, lifespan)
 
             # Call count should remain the same (cache hit)
-            assert mock_pyjwk_client.call_count == 131
+            assert mock_pyjwk_client.call_count == 19
 
         # Clear cache after test
         _get_jwk_client.cache_clear()
