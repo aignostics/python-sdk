@@ -341,6 +341,24 @@ class Settings(OpaqueSettings):
 
         return values
 
+    @model_validator(mode="after")
+    def validate_retry_wait_times(self) -> "Settings":
+        """Validate that auth_retry_wait_min is less than auth_retry_wait_max.
+
+        Returns:
+            Settings: The validated settings instance.
+
+        Raises:
+            ValueError: If auth_retry_wait_min is greater than or equal to auth_retry_wait_max.
+        """
+        if self.auth_retry_wait_min >= self.auth_retry_wait_max:
+            msg = (
+                f"auth_retry_wait_min ({self.auth_retry_wait_min}) must be less than "
+                f"auth_retry_wait_max ({self.auth_retry_wait_max})"
+            )
+            raise ValueError(msg)
+        return self
+
 
 __cached_settings: Settings | None = None
 

@@ -379,3 +379,46 @@ def test_issuer_computed_field_url_with_query_params(mock_env_vars) -> None:
     )
     expected_issuer = "https://example.com/"
     assert settings.issuer == expected_issuer
+
+
+def test_validate_retry_wait_times_valid(mock_env_vars) -> None:
+    """Test that valid retry wait times pass validation."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root=API_ROOT_PRODUCTION,
+        auth_retry_wait_min=1,
+        auth_retry_wait_max=5,
+    )
+    assert settings.auth_retry_wait_min == 1
+    assert settings.auth_retry_wait_max == 5
+
+
+def test_validate_retry_wait_times_min_equals_max(mock_env_vars) -> None:
+    """Test that retry wait min equal to max fails validation."""
+    with pytest.raises(
+        PydanticValidationError,
+        match=r"auth_retry_wait_min \(3\) must be less than auth_retry_wait_max \(3\)",
+    ):
+        Settings(
+            client_id_device=SecretStr("test-client-id-device"),
+            client_id_interactive=SecretStr("test-client-id-interactive"),
+            api_root=API_ROOT_PRODUCTION,
+            auth_retry_wait_min=3,
+            auth_retry_wait_max=3,
+        )
+
+
+def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
+    """Test that retry wait min greater than max fails validation."""
+    with pytest.raises(
+        PydanticValidationError,
+        match=r"auth_retry_wait_min \(10\) must be less than auth_retry_wait_max \(5\)",
+    ):
+        Settings(
+            client_id_device=SecretStr("test-client-id-device"),
+            client_id_interactive=SecretStr("test-client-id-interactive"),
+            api_root=API_ROOT_PRODUCTION,
+            auth_retry_wait_min=10,
+            auth_retry_wait_max=5,
+        )

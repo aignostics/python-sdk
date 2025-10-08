@@ -36,13 +36,15 @@ from aignostics.utils import get_logger
 logger = get_logger(__name__)
 
 CALLBACK_PORT_RETRY_COUNT = 10
+JWK_CLIENT_CACHE_SIZE = 16
+
 try:
     import sentry_sdk
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
 
 
-@functools.lru_cache(maxsize=16)
+@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
 def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
     """Returns a cached PyJWKClient instance for JWT verification.
 
@@ -226,7 +228,7 @@ def verify_and_decode_token(token: str) -> dict[str, t.Any]:
     return retryer(_do_verify_and_decode_token, token)
 
 
-def _do_verify_and_decode_token(token: str) -> dict[str, str]:
+def _do_verify_and_decode_token(token: str) -> dict[str, t.Any]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
@@ -234,7 +236,7 @@ def _do_verify_and_decode_token(token: str) -> dict[str, str]:
         token (str): The JWT token to verify and decode.
 
     Returns:
-        dict[str,str]: The decoded token claims.
+        dict[str,t.Any]: The decoded token claims.
 
     Raises:
         RuntimeError: If token verification or decoding fails.
@@ -266,7 +268,6 @@ def _do_verify_and_decode_token(token: str) -> dict[str, str]:
     except jwt.exceptions.PyJWTError as e:
         message = f"{AUTHENTICATION_FAILED_TOKEN_VERIFICATION}{type(e).__name__}"  # Sanitized
         logger.exception(message)
-        sentry_sdk and sentry_sdk.capture_exception(e)  # pyright: ignore[reportUnusedExpression]
         raise RuntimeError(message) from e
 
 
@@ -461,11 +462,12 @@ def _perform_device_flow() -> str:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
-def _is_not_client_error(e: BaseException) -> bool:
+def _is_not_client_or_key_error(e: BaseException) -> bool:
     """Determines if an exception is not a client error (4xx).
 
     Client errors (4xx) indicate issues with the request itself that won't be
     resolved by retrying (e.g., invalid refresh token, bad request).
+    KeyErrors are retried neither as they indicate issues with the response content.
 
     Args:
         e: The exception to check.
@@ -474,11 +476,14 @@ def _is_not_client_error(e: BaseException) -> bool:
         bool: True if the exception is not a client error, False otherwise.
     """
     return not (
-        isinstance(e, RuntimeError)
-        and isinstance(e.__cause__, requests.exceptions.HTTPError)
-        and e.__cause__.response is not None
-        and e.__cause__.response.status_code
-        and HTTPStatus.BAD_REQUEST <= e.__cause__.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
+        isinstance(e, KeyError)
+        or (
+            isinstance(e, RuntimeError)
+            and isinstance(e.__cause__, requests.exceptions.HTTPError)
+            and e.__cause__.response is not None
+            and e.__cause__.response.status_code
+            and HTTPStatus.BAD_REQUEST <= e.__cause__.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
+        )
     )
 
 
@@ -499,7 +504,7 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         RuntimeError: If token exchange fails. Message indicates if "Client Error".
     """
     retryer = Retrying(  # We are not using Tenacity annotations as settings can change at runtime
-        retry=retry_if_exception(_is_not_client_error),
+        retry=retry_if_exception(_is_not_client_or_key_error),
         stop=stop_after_attempt(settings().auth_retry_attempts_max),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
@@ -540,7 +545,6 @@ def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
             error_msg = f"HTTP {e.response.status_code}: {e.response.reason} (URL: {settings().token_url})"
         message = f"{AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN}{error_msg}"
         logger.exception(message)
-        sentry_sdk and sentry_sdk.capture_exception(e)  # pyright: ignore[reportUnusedExpression]
         raise RuntimeError(message) from e
 
 
