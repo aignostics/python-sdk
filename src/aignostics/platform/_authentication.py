@@ -52,6 +52,9 @@ def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
     and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
     is thread-safe and ensures that only one client is created per unique parameter set.
 
+    We have one cache entry per combination of url, timeout and lifespan, so that if any of these
+    settings change at runtime, we get a new client with the updated settings.
+
     Args:
         url: The JWS JSON URL to fetch the JWK set from.
         timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
