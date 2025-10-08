@@ -55,6 +55,7 @@ def mock_settings() -> MagicMock:
         settings.audience = "test-audience"
         settings.jws_json_url = "https://test.auth/.well-known/jwks.json"
         settings.auth_request_timeout_seconds = 10
+        settings.auth_retry_wait_min = 1
         settings.auth_retry_wait_max = 5
         settings.auth_retry_attempts_max = 3
         settings.auth_jwk_set_cache_ttl = 300

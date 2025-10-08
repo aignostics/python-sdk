@@ -99,6 +99,7 @@ class Settings(OpaqueSettings):
         refresh_token (SecretStr | None): OAuth refresh token if available.
         auth_request_timeout_seconds (int): Authentication request timeout in seconds, defaults to 30.
         auth_retry_attempts_max (int): Maximum number of retry attempts for authentication requests, defaults to 3.
+        auth_retry_wait_min (int): Minimum wait time between authentication request retries in seconds, defaults to 1.
         auth_retry_wait_max (int): Maximum wait time between authentication request retries in seconds, defaults to 5.
         auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds, defaults to 3600.
         scope (str): OAuth scopes required by the SDK.
@@ -249,6 +250,14 @@ class Settings(OpaqueSettings):
             le=10,
         ),
     ] = 3
+    auth_retry_wait_min: Annotated[
+        int,
+        Field(
+            description="Minimum wait time between retry attempts (in seconds)",
+            ge=1,
+            le=60,
+        ),
+    ] = 1
     auth_retry_wait_max: Annotated[
         int,
         Field(

@@ -91,6 +91,7 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.auth_request_timeout_seconds == 30
+    assert settings.auth_retry_wait_min == 1
     assert settings.auth_retry_wait_max == 5
     assert settings.auth_retry_attempts_max == 3
 
@@ -117,6 +118,7 @@ def test_authentication_settings_staging(mock_env_vars) -> None:
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.auth_request_timeout_seconds == 30
+    assert settings.auth_retry_wait_min == 1
     assert settings.auth_retry_wait_max == 5
     assert settings.auth_retry_attempts_max == 3
 
@@ -143,6 +145,7 @@ def test_authentication_settings_dev(mock_env_vars) -> None:
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.auth_request_timeout_seconds == 30
+    assert settings.auth_retry_wait_min == 1
     assert settings.auth_retry_wait_max == 5
     assert settings.auth_retry_attempts_max == 3
 

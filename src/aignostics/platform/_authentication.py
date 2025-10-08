@@ -199,7 +199,7 @@ def _authenticate(use_device_flow: bool) -> str:
     return token
 
 
-def verify_and_decode_token(token: str) -> dict[str, str]:
+def verify_and_decode_token(token: str) -> dict[str, t.Any]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
@@ -209,17 +209,17 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         token (str): The JWT token to verify and decode.
 
     Returns:
-        dict[str,str]: The decoded token claims.
+        dict[str,t.Any]: The decoded token claims.
 
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
-    retryer = Retrying(  # We are not using annotations as settings can change at runtime
+    retryer = Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(  # Have to unpack wrapped exception
             lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
         ),
         stop=stop_after_attempt(settings().auth_retry_attempts_max),
-        wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
+        wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
@@ -498,10 +498,10 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     Raises:
         RuntimeError: If token exchange fails. Message indicates if "Client Error".
     """
-    retryer = Retrying(  # We are not using annotations as settings can change at runtime
+    retryer = Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(_is_not_client_error),
         stop=stop_after_attempt(settings().auth_retry_attempts_max),
-        wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
+        wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
