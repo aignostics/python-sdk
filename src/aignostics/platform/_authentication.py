@@ -5,6 +5,7 @@ import time
 import typing as t
 import webbrowser
 from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
@@ -18,7 +19,6 @@ from tenacity import (
     Retrying,
     before_sleep_log,
     retry_if_exception,
-    retry_if_exception_message,
     stop_after_attempt,
     wait_exponential_jitter,
 )
@@ -315,7 +315,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
             query = parse.parse_qs(parsed.query)
 
             if "code" not in query:
-                self.send_response(400)
+                self.send_response(HTTPStatus.BAD_REQUEST)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(b"Error: No authorization code received")
@@ -458,6 +458,18 @@ def _perform_device_flow() -> str:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
+def _is_not_client_error(exception: RuntimeError) -> bool:
+    """Checks if the exception is not a client error (4xx).
+
+    Args:
+        exception (RuntimeError): The exception to check.
+
+    Returns:
+        bool: True if the exception is not a client error, False otherwise.
+    """
+    return not (isinstance(exception, RuntimeError) and "Client Error" in str(exception))
+
+
 def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     """Obtains a new access token using a refresh token.
 
@@ -475,7 +487,15 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         RuntimeError: If token exchange fails. Message indicates if "Client Error".
     """
     retryer = Retrying(  # We are not using annotations as settings can change at runtime
-        retry=retry_if_exception_message(match=r"^(?!.*Client Error:).*$"),
+        retry=retry_if_exception(
+            lambda e: not (  # Don't retry on client errors (4xx)
+                isinstance(e, RuntimeError)
+                and isinstance(e.__cause__, requests.exceptions.HTTPError)
+                and e.__cause__.response is not None
+                and e.__cause__.response.status_code
+                and HTTPStatus.BAD_REQUEST <= e.__cause__.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+        ),
         stop=stop_after_attempt(settings().auth_retry_attempts_max),
         wait=wait_exponential_jitter(initial=1, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),

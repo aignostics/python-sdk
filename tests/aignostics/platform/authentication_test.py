@@ -727,9 +727,8 @@ class TestTokenRefreshRetryLogic:
         """
         # Create a mock response with 401 Unauthorized (client error)
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "Client Error: Unauthorized", response=mock_response
-        )
+        mock_response.status_code = HTTPStatus.UNAUTHORIZED
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(response=mock_response)
 
         start_time = time.time()
 
@@ -760,7 +759,8 @@ class TestTokenRefreshRetryLogic:
         """
         # Create a mock that always fails with 500
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("I failed", response=mock_response)
+        mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(response=mock_response)
 
         call_count = 0
 
