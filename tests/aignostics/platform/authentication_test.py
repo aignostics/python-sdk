@@ -265,13 +265,19 @@ class TestVerifyAndDecodeToken:
     @staticmethod
     def test_verify_and_decode_valid_token() -> None:
         """Test that a valid token is properly verified and decoded."""
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache to ensure our mock is used
+        _get_jwk_client.cache_clear()
+
         mock_jwt_client = MagicMock()
         mock_signing_key = MagicMock()
         mock_signing_key.key = "test-key"
         mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
 
         with (
-            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
+            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            patch("jwt.get_unverified_header", return_value={"alg": "RS256"}),
             patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
         ):
             result = verify_and_decode_token("valid.token")
@@ -281,13 +287,14 @@ class TestVerifyAndDecodeToken:
     @staticmethod
     def test_verify_and_decode_invalid_token() -> None:
         """Test that an invalid token raises an appropriate error."""
-        mock_jwt_client = MagicMock()
-        mock_signing_key = MagicMock()
-        mock_signing_key.key = "test-key"
-        mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache to ensure our mock is used
+        _get_jwk_client.cache_clear()
 
         with (
-            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
+            patch("jwt.PyJWKClient"),
+            patch("jwt.get_unverified_header"),
             patch("jwt.decode", side_effect=jwt.exceptions.PyJWTError("Invalid token")),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
         ):
@@ -1002,9 +1009,9 @@ class TestJWKClientCache:
 
     @staticmethod
     def test_jwk_client_cache_size_limit(mock_settings) -> None:
-        """Test that the LRU cache respects the maxsize=16 limit.
+        """Test that the LRU cache respects the maxsize=4 limit.
 
-        When more than 16 unique parameter combinations are cached, the least recently used ones
+        When more than 4 unique parameter combinations are cached, the least recently used ones
         should be evicted.
         """
         from aignostics.platform._authentication import _get_jwk_client
@@ -1016,28 +1023,28 @@ class TestJWKClientCache:
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
-            # Create 18 different URLs (exceeding the cache size of 16)
-            urls = [f"https://test{i}.auth/.well-known/jwks.json" for i in range(18)]
+            # Create 6 different URLs (exceeding the cache size of 4)
+            urls = [f"https://test{i}.auth/.well-known/jwks.json" for i in range(6)]
 
             # Call _get_jwk_client for each URL
             for url in urls:
                 _get_jwk_client(url, timeout, lifespan)
 
-            # PyJWKClient should be instantiated 18 times (once for each unique URL)
-            assert mock_pyjwk_client.call_count == 18
+            # PyJWKClient should be instantiated 6 times (once for each unique URL)
+            assert mock_pyjwk_client.call_count == 6
 
             # Now access the first URL again
             _get_jwk_client(urls[0], timeout, lifespan)
 
             # Since we exceeded cache size, the first URL should have been evicted
             # and needs to be recreated, so call count increases
-            assert mock_pyjwk_client.call_count == 19
+            assert mock_pyjwk_client.call_count == 7
 
             # But accessing a more recent URL should hit the cache
-            _get_jwk_client(urls[17], timeout, lifespan)
+            _get_jwk_client(urls[5], timeout, lifespan)
 
             # Call count should remain the same (cache hit)
-            assert mock_pyjwk_client.call_count == 19
+            assert mock_pyjwk_client.call_count == 7
 
         # Clear cache after test
         _get_jwk_client.cache_clear()

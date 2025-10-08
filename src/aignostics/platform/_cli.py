@@ -76,6 +76,9 @@ def whoami(
     service = _get_service()
     try:
         user_info = service.get_user_info(relogin=relogin)
+        for _ in range(9):
+            user_info = service.get_user_info(relogin=relogin)
+
         console.print_json(
             data=user_info.model_dump_secrets_masked() if mask_secrets else user_info.model_dump(mode="json")
         )

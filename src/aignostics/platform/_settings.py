@@ -64,7 +64,6 @@ def _validate_url(value: str) -> str:
         The validated URL string.
 
     Raises:
-        TypeError: If the value is not a string.
         ValueError: If the string is not a valid URL.
     """
     parsed = urlparse(value)
@@ -107,6 +106,7 @@ class Settings(OpaqueSettings):
         me_retry_attempts_max (int): Maximum number of retry attempts for "me" requests, defaults to 3.
         me_retry_wait_min (int): Minimum wait time between "me" request retries in seconds, defaults to 1.
         me_retry_wait_max (int): Maximum wait time between "me" request retries in seconds, defaults to 5.
+        me_cache_ttl (int): Time-to-live for "me" cache in seconds, defaults to 60.
         scope (str): OAuth scopes required by the SDK.
         scope_elements (list[str]): OAuth scopes split into individual elements.
         token_file (Path): Path to the token storage file.
@@ -319,6 +319,14 @@ class Settings(OpaqueSettings):
             le=60,
         ),
     ] = 5
+    me_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for me cache (in seconds)",
+            ge=0,
+            le=3600,
+        ),
+    ] = 60
 
     @model_validator(mode="before")
     def pre_init(cls, values: dict) -> dict:  # type: ignore[type-arg] # noqa: N805

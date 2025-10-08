@@ -1,6 +1,10 @@
+import hashlib
 import logging
 import os
+import time
 from collections.abc import Callable
+from functools import wraps
+from typing import Any, ClassVar
 from urllib.request import getproxies
 
 from aignx.codegen.api.public_api import PublicApi
@@ -69,9 +73,13 @@ class _OAuth2TokenProviderConfiguration(Configuration):
 class Client:
     """Main client for interacting with the Aignostics Platform API.
 
-    Provides access to platform resources like applications, versions, and runs.
-    Handles authentication and API client configuration.
+    - Provides access to platform resources like applications, versions, and runs.
+    - Handles authentication and API client configuration.
+    - Retries on network and server errors for specific operations.
+    - Caches operation results for specific operations.
     """
+
+    _operation_cache: ClassVar[dict[str, tuple[Any, float]]] = {}
 
     applications: Applications
     runs: Runs
@@ -96,6 +104,55 @@ class Client:
             logger.exception("Failed to initialize client.")
             raise
 
+    @staticmethod
+    def _cache_key(token: str, method_name: str, *args: object, **kwargs: object) -> str:
+        """Generates a cache key based on the token, method name, and parameters.
+
+        Args:
+            token (str): The authentication token.
+            method_name (str): The name of the method being cached.
+            *args: Positional arguments to the method.
+            **kwargs: Keyword arguments to the method.
+
+        Returns:
+            str: A unique cache key.
+        """
+        token_hash = hashlib.sha256((token or "").encode()).hexdigest()[:16]
+        params = f"{args}:{sorted(kwargs.items())}"
+        return f"{token_hash}:{method_name}:{params}"
+
+    @staticmethod
+    def cached_operation(ttl: int) -> Callable[[Callable[..., object]], Callable[..., object]]:
+        """Caches the result of a method call for a specified time-to-live (TTL).
+
+        Args:
+            ttl (int): Time-to-live for the cache in seconds.
+
+        Returns:
+            Callable: A decorator that caches the method result.
+        """
+
+        def decorator(func: Callable[..., object]) -> Callable[..., object]:
+            @wraps(func)
+            def wrapper(self: "Client", *args: object, **kwargs: object) -> object:
+                token = get_token(True)
+                cache_key = Client._cache_key(token, func.__name__, *args, **kwargs)
+
+                if cache_key in Client._operation_cache:
+                    value, expiry = Client._operation_cache[cache_key]
+                    if time.time() < expiry:
+                        return value
+                    del Client._operation_cache[cache_key]
+
+                result = func(self, *args, **kwargs)
+                Client._operation_cache[cache_key] = (result, time.time() + ttl)
+                return result
+
+            return wrapper
+
+        return decorator
+
+    @cached_operation(ttl=60)
     def me(self) -> Me:
         """Retrieves info about the current user and their organisation.
 

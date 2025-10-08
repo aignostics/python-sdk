@@ -41,6 +41,15 @@ def mock_api_client() -> MagicMock:
     return MagicMock()
 
 
+@pytest.fixture(autouse=True)
+def clear_cache() -> None:
+    """Clear the operation cache before each test.
+
+    This ensures tests don't interfere with each other through shared cache state.
+    """
+    Client._operation_cache.clear()
+
+
 @pytest.fixture
 def client_with_mock_api(mock_api_client: MagicMock) -> Client:
     """Provide a Client instance with a mocked API client.
