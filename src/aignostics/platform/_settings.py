@@ -67,10 +67,6 @@ def _validate_url(value: str) -> str:
         TypeError: If the value is not a string.
         ValueError: If the string is not a valid URL.
     """
-    if not isinstance(value, str):
-        msg = f"URL must be a string, got {type(value).__name__}"
-        raise TypeError(msg)
-
     parsed = urlparse(value)
     if not parsed.scheme or not parsed.netloc:
         msg = f"Invalid URL format: {value}"
@@ -152,9 +148,7 @@ class Settings(OpaqueSettings):
         return [element.strip() for element in self.scope.split(",")]
 
     audience: Annotated[str, Field(description="OAuth audience claim", min_length=10, max_length=100)]
-    authorization_base_url: Annotated[
-        str, BeforeValidator(_validate_url), Field(description="OAuth authorization endpoint URL")
-    ]
+    authorization_base_url: Annotated[str, Field(description="OAuth authorization endpoint URL", min_length=1)]
 
     @computed_field  # type: ignore[prop-decorator]
     @property

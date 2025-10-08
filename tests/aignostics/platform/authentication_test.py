@@ -57,6 +57,7 @@ def mock_settings() -> MagicMock:
         settings.auth_request_timeout_seconds = 10
         settings.auth_retry_wait_max = 5
         settings.auth_retry_attempts_max = 3
+        settings.auth_jwk_set_cache_ttl = 300
         settings.refresh_token = None
         mock_settings.return_value = settings
         yield mock_settings
@@ -748,7 +749,7 @@ class TestTokenRefreshRetryLogic:
         assert mock_response.raise_for_status.call_count == 1
 
         # Verify no retry log messages
-        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
 
     @staticmethod
@@ -784,7 +785,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_access_token_from_refresh_token" in record.message
+            if "Retrying aignostics.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for 5xx errors"
 
@@ -814,8 +815,217 @@ class TestTokenRefreshRetryLogic:
         assert call_count >= 2, f"Expected at least 2 attempts but got {call_count}"
 
         # Verify retry logs exist
-        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) > 0, "Should log retry attempts for connection errors"
+
+
+class TestJWKClientCache:
+    """Test cases for the LRU cache on _get_jwk_client."""
+
+    @staticmethod
+    def test_jwk_client_cache_returns_same_instance(mock_settings) -> None:
+        """Test that _get_jwk_client returns the same cached instance for the same URL.
+
+        The LRU cache should ensure that multiple calls with the same URL return
+        the same PyJWKClient instance, avoiding redundant client creation.
+        """
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache before testing
+        _get_jwk_client.cache_clear()
+
+        url = "https://test.auth/.well-known/jwks.json"
+
+        with patch("jwt.PyJWKClient") as mock_pyjwk_client:
+            # First call should create a new client
+            client1 = _get_jwk_client(url)
+
+            # Second call with same URL should return the cached instance
+            client2 = _get_jwk_client(url)
+
+            # Both should be the same instance
+            assert client1 is client2
+
+            # PyJWKClient should only be instantiated once
+            assert mock_pyjwk_client.call_count == 1
+
+        # Clear cache after test
+        _get_jwk_client.cache_clear()
+
+    @staticmethod
+    def test_jwk_client_cache_different_urls(mock_settings) -> None:
+        """Test that _get_jwk_client creates different instances for different URLs.
+
+        The cache should distinguish between different URLs and create separate
+        PyJWKClient instances for each unique URL.
+        """
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache before testing
+        _get_jwk_client.cache_clear()
+
+        url1 = "https://test1.auth/.well-known/jwks.json"
+        url2 = "https://test2.auth/.well-known/jwks.json"
+
+        with patch("jwt.PyJWKClient") as mock_pyjwk_client:
+            # Configure mock to return different instances for each call
+            mock_pyjwk_client.side_effect = [MagicMock(), MagicMock()]
+
+            # Calls with different URLs should create different clients
+            client1 = _get_jwk_client(url1)
+            client2 = _get_jwk_client(url2)
+
+            # Both should be different instances
+            assert client1 is not client2
+
+            # PyJWKClient should be instantiated twice (once for each URL)
+            assert mock_pyjwk_client.call_count == 2
+
+        # Clear cache after test
+        _get_jwk_client.cache_clear()
+
+    @staticmethod
+    def test_jwk_client_cache_info(mock_settings) -> None:
+        """Test that cache_info provides correct statistics about cache usage.
+
+        This verifies that the LRU cache is tracking hits and misses correctly.
+        """
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache and get initial state
+        _get_jwk_client.cache_clear()
+        info = _get_jwk_client.cache_info()
+        assert info.hits == 0
+        assert info.misses == 0
+
+        url = "https://test.auth/.well-known/jwks.json"
+
+        with patch("jwt.PyJWKClient"):
+            # First call should be a cache miss
+            _get_jwk_client(url)
+            info = _get_jwk_client.cache_info()
+            assert info.misses == 1
+            assert info.hits == 0
+
+            # Second call with same URL should be a cache hit
+            _get_jwk_client(url)
+            info = _get_jwk_client.cache_info()
+            assert info.misses == 1
+            assert info.hits == 1
+
+            # Third call with same URL should be another cache hit
+            _get_jwk_client(url)
+            info = _get_jwk_client.cache_info()
+            assert info.misses == 1
+            assert info.hits == 2
+
+        # Clear cache after test
+        _get_jwk_client.cache_clear()
+
+    @staticmethod
+    def test_jwk_client_cache_respects_settings(mock_settings) -> None:
+        """Test that _get_jwk_client passes correct settings to PyJWKClient.
+
+        The cache should use settings values when creating PyJWKClient instances.
+        """
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache before testing
+        _get_jwk_client.cache_clear()
+
+        url = "https://test.auth/.well-known/jwks.json"
+
+        with patch("jwt.PyJWKClient") as mock_pyjwk_client:
+            _get_jwk_client(url)
+
+            # Verify PyJWKClient was called with correct parameters
+            mock_pyjwk_client.assert_called_once_with(
+                url,
+                timeout=mock_settings.return_value.auth_request_timeout_seconds,
+                lifespan=mock_settings.return_value.auth_jwk_set_cache_ttl,
+            )
+
+        # Clear cache after test
+        _get_jwk_client.cache_clear()
+
+    @staticmethod
+    def test_jwk_client_cache_used_in_verification(mock_settings) -> None:
+        """Test that verify_and_decode_token benefits from the _get_jwk_client cache.
+
+        Multiple token verifications should reuse the cached PyJWKClient instance,
+        reducing the overhead of client creation.
+        """
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache before testing
+        _get_jwk_client.cache_clear()
+
+        mock_jwt_client = MagicMock()
+        mock_signing_key = MagicMock()
+        mock_signing_key.key = "test-key"
+        mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
+
+        with (
+            patch("jwt.PyJWKClient", return_value=mock_jwt_client) as mock_pyjwk_client,
+            patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
+        ):
+            # Verify multiple tokens
+            verify_and_decode_token("token1")
+            verify_and_decode_token("token2")
+            verify_and_decode_token("token3")
+
+            # PyJWKClient should only be instantiated once due to caching
+            assert mock_pyjwk_client.call_count == 1
+
+            # But get_signing_key_from_jwt should be called for each token
+            assert mock_jwt_client.get_signing_key_from_jwt.call_count == 3
+
+        # Verify cache was effective
+        info = _get_jwk_client.cache_info()
+        assert info.hits >= 2  # At least 2 cache hits from 3 calls
+        assert info.misses == 1  # Only 1 cache miss (first call)
+
+        # Clear cache after test
+        _get_jwk_client.cache_clear()
+
+    @staticmethod
+    def test_jwk_client_cache_size_limit(mock_settings) -> None:
+        """Test that the LRU cache respects the maxsize=128 limit.
+
+        When more than 128 unique URLs are cached, the least recently used ones
+        should be evicted.
+        """
+        from aignostics.platform._authentication import _get_jwk_client
+
+        # Clear the cache before testing
+        _get_jwk_client.cache_clear()
+
+        with patch("jwt.PyJWKClient") as mock_pyjwk_client:
+            # Create 130 different URLs (exceeding the cache size of 128)
+            urls = [f"https://test{i}.auth/.well-known/jwks.json" for i in range(130)]
+
+            # Call _get_jwk_client for each URL
+            for url in urls:
+                _get_jwk_client(url)
+
+            # PyJWKClient should be instantiated 130 times (once for each unique URL)
+            assert mock_pyjwk_client.call_count == 130
+
+            # Now access the first URL again
+            _get_jwk_client(urls[0])
+
+            # Since we exceeded cache size, the first URL should have been evicted
+            # and needs to be recreated, so call count increases
+            assert mock_pyjwk_client.call_count == 131
+
+            # But accessing a more recent URL should hit the cache
+            _get_jwk_client(urls[129])
+
+            # Call count should remain the same (cache hit)
+            assert mock_pyjwk_client.call_count == 131
+
+        # Clear cache after test
+        _get_jwk_client.cache_clear()
 
 
 class TestTokenVerificationRetryLogic:
@@ -833,15 +1043,15 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
 
         with (
-            patch("jwt.PyJWKClient", return_value=mock_jwt_client) as mock_client_class,
+            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client) as mock_get_jwk,
             patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
         ):
             result = verify_and_decode_token("valid.token")
 
         assert "sub" in result
         assert "exp" in result
-        # PyJWKClient is created only once (no retries)
-        assert mock_client_class.call_count == 1
+        # _get_jwk_client is called only once (no retries)
+        assert mock_get_jwk.call_count == 1
 
     @staticmethod
     def test_no_retry_on_jwt_decode_error(mock_settings, caplog) -> None:
@@ -866,7 +1076,7 @@ class TestTokenVerificationRetryLogic:
         start_time = time.time()
 
         with (
-            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             patch("jwt.decode", side_effect=decode_side_effect),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
             caplog.at_level(logging.DEBUG),
@@ -882,7 +1092,7 @@ class TestTokenVerificationRetryLogic:
         assert call_count == 1
 
         # Verify no retry log messages
-        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) == 0, "Should not log retry attempts for JWT decode errors"
 
     @staticmethod
@@ -904,7 +1114,7 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
 
         with (
-            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
             caplog.at_level(logging.DEBUG),
         ):
@@ -917,7 +1127,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.message
+            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for JWK connection errors"
 
@@ -945,7 +1155,7 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
 
         with (
-            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
             caplog.at_level(logging.DEBUG),
         ):
@@ -961,7 +1171,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.message
+            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
         ]
         assert len(retry_logs) == 1, "Should log exactly one retry attempt"
 
@@ -986,7 +1196,7 @@ class TestTokenVerificationRetryLogic:
         start_time = time.time()
 
         with (
-            patch("jwt.PyJWKClient", return_value=mock_jwt_client),
+            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
             caplog.at_level(logging.DEBUG),
         ):
@@ -1001,5 +1211,5 @@ class TestTokenVerificationRetryLogic:
         assert call_count == 1
 
         # Verify no retry log messages
-        retry_logs = [record for record in caplog.records if "retry" in record.message.lower()]
+        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) == 0, "Should not log retry attempts for non-connection JWK errors"

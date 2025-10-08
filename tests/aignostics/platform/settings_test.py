@@ -7,6 +7,7 @@ from unittest import mock
 import platformdirs
 import pytest
 from pydantic import SecretStr
+from pydantic import ValidationError as PydanticValidationError
 
 from aignostics.platform import (
     API_ROOT_DEV,
@@ -156,15 +157,15 @@ def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
         )
 
 
-def test_scope_elements_empty() -> None:
-    """Test scope_elements property with empty scope."""
-    settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
-        scope="",
-        api_root=API_ROOT_PRODUCTION,
-    )
-    assert settings.scope_elements == []
+def test_scope_elements_empty_fails_validation() -> None:
+    """Test scope_elements property with empty scope fails validation."""
+    with pytest.raises(PydanticValidationError, match="String should have at least 3 characters"):
+        Settings(
+            client_id_device=SecretStr("test-client-id-device"),
+            client_id_interactive=SecretStr("test-client-id-interactive"),
+            scope="",
+            api_root=API_ROOT_PRODUCTION,
+        )
 
 
 def test_scope_elements_multiple() -> None:
