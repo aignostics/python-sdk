@@ -91,9 +91,14 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.auth_timeout == 30.0
-    assert settings.auth_retry_wait_min == 0.1
-    assert settings.auth_retry_wait_max == 5.0
-    assert settings.auth_retry_attempts_max == 3
+    assert settings.auth_retry_attempts_max == 5
+    assert settings.auth_retry_wait_min == 1.0
+    assert settings.auth_retry_wait_max == 60.0
+    assert settings.me_timeout == 30.0
+    assert settings.me_retry_attempts_max == 5
+    assert settings.me_retry_wait_min == 1.0
+    assert settings.me_retry_wait_max == 60.0
+    assert settings.me_cache_ttl == 60
 
 
 def test_authentication_settings_staging(mock_env_vars) -> None:
@@ -118,9 +123,14 @@ def test_authentication_settings_staging(mock_env_vars) -> None:
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.auth_timeout == 30.0
-    assert settings.auth_retry_wait_min == 0.1
-    assert settings.auth_retry_wait_max == 5.0
-    assert settings.auth_retry_attempts_max == 3
+    assert settings.auth_retry_attempts_max == 5
+    assert settings.auth_retry_wait_min == 1.0
+    assert settings.auth_retry_wait_max == 60.0
+    assert settings.me_timeout == 30.0
+    assert settings.me_retry_attempts_max == 5
+    assert settings.me_retry_wait_min == 1.0
+    assert settings.me_retry_wait_max == 60.0
+    assert settings.me_cache_ttl == 60
 
 
 def test_authentication_settings_dev(mock_env_vars) -> None:
@@ -145,9 +155,14 @@ def test_authentication_settings_dev(mock_env_vars) -> None:
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
     assert settings.auth_timeout == 30.0
-    assert settings.auth_retry_wait_min == 0.1
-    assert settings.auth_retry_wait_max == 5.0
-    assert settings.auth_retry_attempts_max == 3
+    assert settings.auth_retry_attempts_max == 5
+    assert settings.auth_retry_wait_min == 1.0
+    assert settings.auth_retry_wait_max == 60.0
+    assert settings.me_timeout == 30.0
+    assert settings.me_retry_attempts_max == 5
+    assert settings.me_retry_wait_min == 1.0
+    assert settings.me_retry_wait_max == 60.0
+    assert settings.me_cache_ttl == 60
 
 
 def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
@@ -411,7 +426,7 @@ def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
     """Test that retry wait min greater than max fails validation."""
     with pytest.raises(
         PydanticValidationError,
-        match=r"auth_retry_wait_min \(10\.0\) must be less or equal than auth_retry_wait_max \(5\)",
+        match=r"auth_retry_wait_min \(10\.0\) must be less or equal than auth_retry_wait_max \(5.0\)",
     ):
         Settings(
             client_id_device=SecretStr("test-client-id-device"),

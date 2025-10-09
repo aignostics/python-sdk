@@ -17,6 +17,10 @@ on:
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
   PYTHONIOENCODING: "utf8"
+  # https://pytest-xdist.readthedocs.io/en/stable/distribution.html
+  # https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+  # Run 16 tests in parallel despite having 4 cores only, given we wait a lot
+  PYTEST_XDIST_AUTO_NUM_WORKERS: 16 
 
 jobs:
 

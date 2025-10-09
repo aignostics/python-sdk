@@ -274,7 +274,7 @@ class Service(BaseService):
         if relogin:
             Service.logout()
         try:
-            return UserInfo.from_claims_and_me(verify_and_decode_token(get_token()), Client().me())
+            return UserInfo.from_claims_and_me(verify_and_decode_token(get_token()), Client().me())  # pyright: ignore[reportArgumentType]
         except RuntimeError as e:
             message = f"Error during login: {e!s}"
             logger.exception(message)

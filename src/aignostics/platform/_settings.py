@@ -96,19 +96,17 @@ class Settings(OpaqueSettings):
         jws_json_url (str): URL for JWS key set.
         redirect_uri (str): Redirect URI for OAuth authorization code flow.
         refresh_token (SecretStr | None): OAuth refresh token if available.
-        auth_timeout (float): Authentication request timeout in seconds, defaults to 30.0.
-        auth_retry_attempts_max (int): Maximum number of retry attempts for authentication requests, defaults to 3.
-        auth_retry_wait_min (float): Minimum wait time between authentication request retries in seconds,
-            defaults to 0.1.
-        auth_retry_wait_max (float): Maximum wait time between authentication request retries in seconds,
-            defaults to 5.0.
-        auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds, defaults to 3600.
-        health_timeout (float): Timeout for health checks in seconds, defaults to 30.
-        me_timeout (float): Timeout for "me" requests in seconds, defaults to 30.0.
-        me_retry_attempts_max (int): Maximum number of retry attempts for "me" requests, defaults to 3.
-        me_retry_wait_min (float): Minimum wait time between "me" request retries in seconds, defaults to 0.1.
-        me_retry_wait_max (float): Maximum wait time between "me" request retries in seconds, defaults to 5.0.
-        me_cache_ttl (int): Time-to-live for "me" cache in seconds, defaults to 60.
+        health_timeout (float): Timeout for health checks in seconds.
+        auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds.
+        auth_timeout (float): Authentication request timeout in seconds.
+        auth_retry_attempts_max (int): Maximum number of retry attempts for authentication requests.
+        auth_retry_wait_min (float): Minimum wait time between authentication request retries in seconds.
+        auth_retry_wait_max (float): Maximum wait time between authentication request retries in seconds.
+        me_timeout (float): Timeout for "me" requests in seconds.
+        me_retry_attempts_max (int): Maximum number of retry attempts for "me" requests.
+        me_retry_wait_min (float): Minimum wait time between "me" request retries in seconds.
+        me_retry_wait_max (float): Maximum wait time between "me" request retries in seconds.
+        me_cache_ttl (int): Time-to-live for "me" cache in seconds.
         scope (str): OAuth scopes required by the SDK.
         scope_elements (list[str]): OAuth scopes split into individual elements.
         token_file (Path): Path to the token storage file.
@@ -239,6 +237,24 @@ class Settings(OpaqueSettings):
     def serialize_token_file(self, token_file: Path, _info: FieldSerializationInfo) -> str:  # noqa: PLR6301
         return str(token_file.resolve())
 
+    health_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for health checks",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 30.0
+
+    auth_jwk_set_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for JWK set cache (in seconds)",
+            ge=0,
+            le=604800,
+        ),
+    ] = 60 * 60 * 24
+
     auth_timeout: Annotated[
         float,
         Field(
@@ -254,40 +270,23 @@ class Settings(OpaqueSettings):
             ge=0,
             le=10,
         ),
-    ] = 3
+    ] = 5
     auth_retry_wait_min: Annotated[
         float,
         Field(
             description="Minimum wait time between retry attempts (in seconds)",
             ge=0.0,
-            le=60.0,
+            le=600.0,
         ),
-    ] = 0.1
+    ] = 1.0
     auth_retry_wait_max: Annotated[
-        int,
+        float,
         Field(
             description="Maximum wait time between retry attempts (in seconds)",
             ge=0.0,
-            le=60.0,
+            le=600.0,
         ),
-    ] = 5
-    auth_jwk_set_cache_ttl: Annotated[
-        int,
-        Field(
-            description="Time-to-live for JWK set cache (in seconds)",
-            ge=0,
-            le=86400,
-        ),
-    ] = 3600
-
-    health_timeout: Annotated[
-        float,
-        Field(
-            description="Timeout for health checks",
-            ge=0.1,
-            le=300.0,
-        ),
-    ] = 30.0
+    ] = 60.0
 
     me_timeout: Annotated[
         float,
@@ -304,23 +303,23 @@ class Settings(OpaqueSettings):
             ge=0,
             le=10,
         ),
-    ] = 3
+    ] = 5
     me_retry_wait_min: Annotated[
         float,
         Field(
             description="Minimum wait time between retry attempts (in seconds)",
             ge=0.0,
-            le=60.0,
+            le=600.0,
         ),
-    ] = 0.1
+    ] = 1
     me_retry_wait_max: Annotated[
         float,
         Field(
             description="Maximum wait time between retry attempts (in seconds)",
             ge=0.0,
-            le=60.0,
+            le=600.0,
         ),
-    ] = 5.0
+    ] = 60.0
     me_cache_ttl: Annotated[
         int,
         Field(
