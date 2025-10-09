@@ -175,7 +175,7 @@ class Client:
             before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )(
-            lambda: self._api.get_me_v1_me_get(_request_timeout=settings().me_request_timeout_seconds)
+            lambda: self._api.get_me_v1_me_get(_request_timeout=settings().me_timeout)
         )  # Retryer will pass down arguments
 
     def run(self, application_run_id: str) -> ApplicationRun:

@@ -171,7 +171,7 @@ class Service(BaseService):
             Health: The healthiness of the Aignostics Platform API via basic unauthenticated request.
         """
         try:
-            http = urllib3.PoolManager(timeout=urllib3.Timeout(total=self._settings.health_timeout_seconds))
+            http = urllib3.PoolManager(timeout=urllib3.Timeout(total=self._settings.health_timeout))
             response = http.request(
                 method="GET",
                 url=f"{self._settings.api_root}/api/v1/health",
@@ -203,7 +203,7 @@ class Service(BaseService):
             response = api_client.call_api(
                 url=self._settings.api_root + "/api/v1/health",
                 method="GET",
-                _request_timeout=self._settings.health_timeout_seconds,
+                _request_timeout=self._settings.health_timeout,
             )
             if response.status != HTTPStatus.OK:
                 logger.error("Aignostics Platform API (authenticated) returned '%s'", response.status)

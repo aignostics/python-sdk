@@ -90,9 +90,9 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.scope_elements == ["offline_access"]
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
-    assert settings.auth_request_timeout_seconds == 30
-    assert settings.auth_retry_wait_min == 1
-    assert settings.auth_retry_wait_max == 5
+    assert settings.auth_timeout == 30.0
+    assert settings.auth_retry_wait_min == 0.1
+    assert settings.auth_retry_wait_max == 5.0
     assert settings.auth_retry_attempts_max == 3
 
 
@@ -117,9 +117,9 @@ def test_authentication_settings_staging(mock_env_vars) -> None:
     assert settings.scope_elements == ["offline_access"]
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
-    assert settings.auth_request_timeout_seconds == 30
-    assert settings.auth_retry_wait_min == 1
-    assert settings.auth_retry_wait_max == 5
+    assert settings.auth_timeout == 30.0
+    assert settings.auth_retry_wait_min == 0.1
+    assert settings.auth_retry_wait_max == 5.0
     assert settings.auth_retry_attempts_max == 3
 
 
@@ -144,9 +144,9 @@ def test_authentication_settings_dev(mock_env_vars) -> None:
     assert settings.scope_elements == ["offline_access"]
     assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
     assert settings.token_file == Path(settings.cache_dir) / ".token"
-    assert settings.auth_request_timeout_seconds == 30
-    assert settings.auth_retry_wait_min == 1
-    assert settings.auth_retry_wait_max == 5
+    assert settings.auth_timeout == 30.0
+    assert settings.auth_retry_wait_min == 0.1
+    assert settings.auth_retry_wait_max == 5.0
     assert settings.auth_retry_attempts_max == 3
 
 
@@ -387,38 +387,36 @@ def test_validate_retry_wait_times_valid(mock_env_vars) -> None:
         client_id_device=SecretStr("test-client-id-device"),
         client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_PRODUCTION,
-        auth_retry_wait_min=1,
-        auth_retry_wait_max=5,
+        auth_retry_wait_min=0.1,
+        auth_retry_wait_max=5.0,
     )
-    assert settings.auth_retry_wait_min == 1
-    assert settings.auth_retry_wait_max == 5
+    assert settings.auth_retry_wait_min == 0.1
+    assert settings.auth_retry_wait_max == 5.0
 
 
 def test_validate_retry_wait_times_min_equals_max(mock_env_vars) -> None:
-    """Test that retry wait min equal to max fails validation."""
-    with pytest.raises(
-        PydanticValidationError,
-        match=r"auth_retry_wait_min \(3\) must be less than auth_retry_wait_max \(3\)",
-    ):
-        Settings(
-            client_id_device=SecretStr("test-client-id-device"),
-            client_id_interactive=SecretStr("test-client-id-interactive"),
-            api_root=API_ROOT_PRODUCTION,
-            auth_retry_wait_min=3,
-            auth_retry_wait_max=3,
-        )
+    """Test that retry wait min equal to max passes validation."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root=API_ROOT_PRODUCTION,
+        auth_retry_wait_min=3.0,
+        auth_retry_wait_max=3.0,
+    )
+    assert settings.auth_retry_wait_min == 3.0
+    assert settings.auth_retry_wait_max == 3.0
 
 
 def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
     """Test that retry wait min greater than max fails validation."""
     with pytest.raises(
         PydanticValidationError,
-        match=r"auth_retry_wait_min \(10\) must be less than auth_retry_wait_max \(5\)",
+        match=r"auth_retry_wait_min \(10\.0\) must be less or equal than auth_retry_wait_max \(5\)",
     ):
         Settings(
             client_id_device=SecretStr("test-client-id-device"),
             client_id_interactive=SecretStr("test-client-id-interactive"),
             api_root=API_ROOT_PRODUCTION,
-            auth_retry_wait_min=10,
-            auth_retry_wait_max=5,
+            auth_retry_wait_min=10.0,
+            auth_retry_wait_max=5.0,
         )

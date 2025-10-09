@@ -54,9 +54,9 @@ def mock_settings() -> MagicMock:
         settings.device_url = "https://test.auth/device"
         settings.audience = "test-audience"
         settings.jws_json_url = "https://test.auth/.well-known/jwks.json"
-        settings.auth_request_timeout_seconds = 10
-        settings.auth_retry_wait_min = 1
-        settings.auth_retry_wait_max = 5
+        settings.auth_timeout = 10.0
+        settings.auth_retry_wait_min = 0.1
+        settings.auth_retry_wait_max = 5.0
         settings.auth_retry_attempts_max = 3
         settings.auth_jwk_set_cache_ttl = 300
         settings.refresh_token = None
@@ -846,7 +846,7 @@ class TestJWKClientCache:
         _get_jwk_client.cache_clear()
 
         url = "https://test.auth/.well-known/jwks.json"
-        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        timeout = mock_settings.return_value.auth_timeout
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
@@ -879,7 +879,7 @@ class TestJWKClientCache:
 
         url1 = "https://test1.auth/.well-known/jwks.json"
         url2 = "https://test2.auth/.well-known/jwks.json"
-        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        timeout = mock_settings.return_value.auth_timeout
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
@@ -914,7 +914,7 @@ class TestJWKClientCache:
         assert info.misses == 0
 
         url = "https://test.auth/.well-known/jwks.json"
-        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        timeout = mock_settings.return_value.auth_timeout
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient"):
@@ -951,7 +951,7 @@ class TestJWKClientCache:
         _get_jwk_client.cache_clear()
 
         url = "https://test.auth/.well-known/jwks.json"
-        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        timeout = mock_settings.return_value.auth_timeout
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:
@@ -1019,7 +1019,7 @@ class TestJWKClientCache:
         # Clear the cache before testing
         _get_jwk_client.cache_clear()
 
-        timeout = mock_settings.return_value.auth_request_timeout_seconds
+        timeout = mock_settings.return_value.auth_timeout
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
 
         with patch("jwt.PyJWKClient") as mock_pyjwk_client:

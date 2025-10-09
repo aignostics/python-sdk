@@ -252,7 +252,7 @@ def _do_verify_and_decode_token(token: str) -> dict[str, str]:
     """
     jwk_client = _get_jwk_client(
         url=settings().jws_json_url,
-        timeout=settings().auth_request_timeout_seconds,
+        timeout=settings().auth_timeout,
         lifespan=settings().auth_jwk_set_cache_ttl,
     )
     try:
@@ -428,7 +428,7 @@ def _perform_device_flow() -> str:
             "scope": settings().scope_elements,
             "audience": settings().audience,
         },
-        timeout=settings().auth_request_timeout_seconds,
+        timeout=settings().auth_timeout,
     )
     try:
         response.raise_for_status()
@@ -456,7 +456,7 @@ def _perform_device_flow() -> str:
                     "device_code": device_code,
                     "client_id": client_id_device.get_secret_value(),
                 },
-                timeout=settings().auth_request_timeout_seconds,
+                timeout=settings().auth_timeout,
             ).json()
             if "error" in json_response:
                 if json_response["error"] in {"authorization_pending", "slow_down"}:
@@ -542,7 +542,7 @@ def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
                 "client_id": settings().client_id_interactive,
                 "refresh_token": refresh_token.get_secret_value(),
             },
-            timeout=settings().auth_request_timeout_seconds,
+            timeout=settings().auth_timeout,
         )
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])
