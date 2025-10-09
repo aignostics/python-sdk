@@ -69,3 +69,20 @@ def client_with_mock_api(mock_api_client: MagicMock) -> t.Generator[Client, None
         client = Client(cache_token=False)
         client._api = mock_api_client
         yield client
+
+
+@pytest.fixture
+def clear_jwk_cache() -> t.Generator[None, None, None]:
+    """Clear the JWK client cache before and after each test.
+
+    This fixture ensures the cache is always cleaned up, even if assertions fail.
+    Use this fixture by adding it as a parameter to tests that interact with JWT verification.
+
+    Yields:
+        None: This fixture doesn't yield a value.
+    """
+    from aignostics.platform._authentication import _get_jwk_client
+
+    _get_jwk_client.cache_clear()
+    yield
+    _get_jwk_client.cache_clear()

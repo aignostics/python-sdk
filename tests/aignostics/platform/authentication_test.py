@@ -263,13 +263,8 @@ class TestVerifyAndDecodeToken:
     """Test cases for the verify_and_decode_token function."""
 
     @staticmethod
-    def test_verify_and_decode_valid_token() -> None:
+    def test_verify_and_decode_valid_token(clear_jwk_cache) -> None:
         """Test that a valid token is properly verified and decoded."""
-        from aignostics.platform._authentication import _get_jwk_client
-
-        # Clear the cache to ensure our mock is used
-        _get_jwk_client.cache_clear()
-
         mock_jwt_client = MagicMock()
         mock_signing_key = MagicMock()
         mock_signing_key.key = "test-key"
@@ -285,13 +280,8 @@ class TestVerifyAndDecodeToken:
             assert "exp" in result
 
     @staticmethod
-    def test_verify_and_decode_invalid_token() -> None:
+    def test_verify_and_decode_invalid_token(clear_jwk_cache) -> None:
         """Test that an invalid token raises an appropriate error."""
-        from aignostics.platform._authentication import _get_jwk_client
-
-        # Clear the cache to ensure our mock is used
-        _get_jwk_client.cache_clear()
-
         with (
             patch("jwt.PyJWKClient"),
             patch("jwt.get_unverified_header"),
@@ -834,16 +824,13 @@ class TestJWKClientCache:
     """Test cases for the LRU cache on _get_jwk_client."""
 
     @staticmethod
-    def test_jwk_client_cache_returns_same_instance(mock_settings) -> None:
+    def test_jwk_client_cache_returns_same_instance(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client returns the same cached instance for the same URL.
 
         The LRU cache should ensure that multiple calls with the same URL return
         the same PyJWKClient instance, avoiding redundant client creation.
         """
         from aignostics.platform._authentication import _get_jwk_client
-
-        # Clear the cache before testing
-        _get_jwk_client.cache_clear()
 
         url = "https://test.auth/.well-known/jwks.json"
         timeout = mock_settings.return_value.auth_timeout
@@ -862,20 +849,14 @@ class TestJWKClientCache:
             # PyJWKClient should only be instantiated once
             assert mock_pyjwk_client.call_count == 1
 
-        # Clear cache after test
-        _get_jwk_client.cache_clear()
-
     @staticmethod
-    def test_jwk_client_cache_different_urls(mock_settings) -> None:
+    def test_jwk_client_cache_different_urls(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client creates different instances for different URLs.
 
         The cache should distinguish between different URLs and create separate
         PyJWKClient instances for each unique URL.
         """
         from aignostics.platform._authentication import _get_jwk_client
-
-        # Clear the cache before testing
-        _get_jwk_client.cache_clear()
 
         url1 = "https://test1.auth/.well-known/jwks.json"
         url2 = "https://test2.auth/.well-known/jwks.json"
@@ -896,19 +877,14 @@ class TestJWKClientCache:
             # PyJWKClient should be instantiated twice (once for each URL)
             assert mock_pyjwk_client.call_count == 2
 
-        # Clear cache after test
-        _get_jwk_client.cache_clear()
-
     @staticmethod
-    def test_jwk_client_cache_info(mock_settings) -> None:
+    def test_jwk_client_cache_info(clear_jwk_cache, mock_settings) -> None:
         """Test that cache_info provides correct statistics about cache usage.
 
         This verifies that the LRU cache is tracking hits and misses correctly.
         """
         from aignostics.platform._authentication import _get_jwk_client
 
-        # Clear the cache and get initial state
-        _get_jwk_client.cache_clear()
         info = _get_jwk_client.cache_info()
         assert info.hits == 0
         assert info.misses == 0
@@ -936,19 +912,13 @@ class TestJWKClientCache:
             assert info.misses == 1
             assert info.hits == 2
 
-        # Clear cache after test
-        _get_jwk_client.cache_clear()
-
     @staticmethod
-    def test_jwk_client_cache_respects_settings(mock_settings) -> None:
+    def test_jwk_client_cache_respects_settings(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client passes correct settings to PyJWKClient.
 
         The cache should use settings values when creating PyJWKClient instances.
         """
         from aignostics.platform._authentication import _get_jwk_client
-
-        # Clear the cache before testing
-        _get_jwk_client.cache_clear()
 
         url = "https://test.auth/.well-known/jwks.json"
         timeout = mock_settings.return_value.auth_timeout
@@ -964,20 +934,14 @@ class TestJWKClientCache:
                 lifespan=lifespan,
             )
 
-        # Clear cache after test
-        _get_jwk_client.cache_clear()
-
     @staticmethod
-    def test_jwk_client_cache_used_in_verification(mock_settings) -> None:
+    def test_jwk_client_cache_used_in_verification(clear_jwk_cache, mock_settings) -> None:
         """Test that verify_and_decode_token benefits from the _get_jwk_client cache.
 
         Multiple token verifications should reuse the cached PyJWKClient instance,
         reducing the overhead of client creation.
         """
         from aignostics.platform._authentication import _get_jwk_client
-
-        # Clear the cache before testing
-        _get_jwk_client.cache_clear()
 
         mock_jwt_client = MagicMock()
         mock_signing_key = MagicMock()
@@ -1004,20 +968,14 @@ class TestJWKClientCache:
         assert info.hits >= 2  # At least 2 cache hits from 3 calls
         assert info.misses == 1  # Only 1 cache miss (first call)
 
-        # Clear cache after test
-        _get_jwk_client.cache_clear()
-
     @staticmethod
-    def test_jwk_client_cache_size_limit(mock_settings) -> None:
+    def test_jwk_client_cache_size_limit(clear_jwk_cache, mock_settings) -> None:
         """Test that the LRU cache respects the maxsize=4 limit.
 
         When more than 4 unique parameter combinations are cached, the least recently used ones
         should be evicted.
         """
         from aignostics.platform._authentication import _get_jwk_client
-
-        # Clear the cache before testing
-        _get_jwk_client.cache_clear()
 
         timeout = mock_settings.return_value.auth_timeout
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl
@@ -1045,9 +1003,6 @@ class TestJWKClientCache:
 
             # Call count should remain the same (cache hit)
             assert mock_pyjwk_client.call_count == 7
-
-        # Clear cache after test
-        _get_jwk_client.cache_clear()
 
 
 class TestTokenVerificationRetryLogic:
