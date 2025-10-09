@@ -177,7 +177,9 @@ class Client:
             before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )(
-            lambda: self._api.get_me_v1_me_get(_request_timeout=settings().me_timeout)
+            lambda: self._api.get_me_v1_me_get(
+                _request_timeout=settings().me_timeout, _headers={"User-Agent": user_agent()}
+            )
         )  # Retryer will pass down arguments
 
     def run(self, application_run_id: str) -> ApplicationRun:
@@ -245,6 +247,7 @@ class Client:
         client = ApiClient(
             config,
         )
+        # TODO(Helmut): move to request calling
         client.user_agent = user_agent()
         api_client = PublicApi(client)
 

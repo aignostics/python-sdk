@@ -216,11 +216,11 @@ class Service(BaseService):
             Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated API client.
         """
         try:
-            client = Client()
-            api_client = client.get_api_client(cache_token=True).api_client
+            api_client = Client.get_api_client(cache_token=True).api_client
             response = api_client.call_api(
                 url=self._settings.api_root + "/api/v1/health",
                 method="GET",
+                header_params={"User-Agent": user_agent()},
                 _request_timeout=self._settings.health_timeout,
             )
             if response.status != HTTPStatus.OK:

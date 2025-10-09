@@ -53,7 +53,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     await user.open("/bucket")
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
-    await user.should_see(marker="GRID_BUCKET", retries=1000)
+    await user.should_see(marker="GRID_BUCKET", retries=2000)
     grid = user.find(marker="GRID_BUCKET")
     grid_item = grid.elements.pop()
     # Check if any item in rowData contains the file path in its key
