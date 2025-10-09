@@ -3,7 +3,7 @@
 import logging
 import time
 from http import HTTPStatus
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import ANY, MagicMock, Mock, patch
 
 import pytest
 from aignx.codegen.exceptions import ServiceException
@@ -43,7 +43,7 @@ class TestMeSuccess:
         client_with_mock_api.me()
 
         # Verify the timeout was passed correctly
-        client_with_mock_api._api.get_me_v1_me_get.assert_called_once_with(_request_timeout=15)
+        client_with_mock_api._api.get_me_v1_me_get.assert_called_once_with(_request_timeout=15, _headers=ANY)
 
 
 class TestMeRetryOnTransientErrors:
