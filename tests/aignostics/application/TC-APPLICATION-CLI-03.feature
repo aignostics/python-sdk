@@ -4,6 +4,7 @@ Feature: Complete Application Execution Workflow
   application selection, run execution, and result retrieval with automated 
   processing and output validation.
 
+  @tests:SPEC-APPLICATION-SERVICE
   @tests:SWR-APPLICATION-2-8
   @tests:SWR-APPLICATION-2-9
   @tests:SWR-APPLICATION-3-2

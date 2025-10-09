@@ -2,7 +2,8 @@ Feature: Dataset Download Management
 
   The system provides dataset download capabilities with file validation, 
   integrity verification, and completion confirmation.
-
+  
+  @tests:SPEC-DATASET-SERVICE
   @tests:SWR-DATASET-1-1
   @tests:SWR-DATASET-1-2
   @tests:SWR-DATASET-1-3

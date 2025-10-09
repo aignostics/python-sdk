@@ -4,6 +4,7 @@ Feature: Bucket GUI File Management Operations
   file upload verification, grid display, download functionality, and deletion
   with real-time UI updates and confirmation.
 
+  @tests:SPEC-BUCKET-SERVICE
   @tests:SWR-BUCKET-1-5
   @tests:SWR-BUCKET-1-6
   @tests:SWR-BUCKET-1-7
