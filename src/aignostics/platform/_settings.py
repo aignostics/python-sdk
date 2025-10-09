@@ -270,7 +270,7 @@ class Settings(OpaqueSettings):
             ge=0,
             le=10,
         ),
-    ] = 5
+    ] = 4
     auth_retry_wait_min: Annotated[
         float,
         Field(
@@ -278,7 +278,7 @@ class Settings(OpaqueSettings):
             ge=0.0,
             le=600.0,
         ),
-    ] = 1.0
+    ] = 0.1
     auth_retry_wait_max: Annotated[
         float,
         Field(
@@ -303,7 +303,7 @@ class Settings(OpaqueSettings):
             ge=0,
             le=10,
         ),
-    ] = 5
+    ] = 4
     me_retry_wait_min: Annotated[
         float,
         Field(
@@ -311,7 +311,7 @@ class Settings(OpaqueSettings):
             ge=0.0,
             le=600.0,
         ),
-    ] = 1
+    ] = 0.1
     me_retry_wait_max: Annotated[
         float,
         Field(
@@ -397,7 +397,7 @@ class Settings(OpaqueSettings):
 
     @model_validator(mode="after")
     def validate_retry_wait_times(self) -> "Settings":
-        """Validate that retry wait min is less than retry wait max for both auth and me requests.
+        """Validate that retry wait min is less or equal than retry wait max for both auth and me requests.
 
         Returns:
             Settings: The validated settings instance.

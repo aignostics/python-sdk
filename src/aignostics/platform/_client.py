@@ -80,6 +80,8 @@ class Client:
     """
 
     _operation_cache: ClassVar[dict[str, tuple[Any, float]]] = {}
+    _api_client_cached: ClassVar[PublicApi | None] = None
+    _api_client_uncached: ClassVar[PublicApi | None] = None
 
     applications: Applications
     runs: Runs
@@ -213,6 +215,9 @@ class Client:
     def get_api_client(cache_token: bool = True) -> PublicApi:
         """Create and configure an authenticated API client.
 
+        API client instances are shared across all Client instances for efficient connection reuse.
+        Two separate instances are maintained: one for cached tokens and one for uncached tokens.
+
         Args:
             cache_token (bool): If True, caches the authentication token.
                 Defaults to True.
@@ -223,6 +228,11 @@ class Client:
         Raises:
             RuntimeError: If authentication fails.
         """
+        # Return cached instance if available
+        if cache_token and Client._api_client_cached is not None:
+            return Client._api_client_cached
+        if not cache_token and Client._api_client_uncached is not None:
+            return Client._api_client_uncached
 
         def token_provider() -> str:
             return get_token(use_cache=cache_token)
@@ -236,4 +246,12 @@ class Client:
             config,
         )
         client.user_agent = user_agent()
-        return PublicApi(client)
+        api_client = PublicApi(client)
+
+        # Cache the instance
+        if cache_token:
+            Client._api_client_cached = api_client
+        else:
+            Client._api_client_uncached = api_client
+
+        return api_client

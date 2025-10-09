@@ -139,10 +139,27 @@ class Service(BaseService):
     """Service of the application module."""
 
     _settings: Settings
+    _http_pool: urllib3.PoolManager | None = None
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
+
+    @classmethod
+    def _get_http_pool(cls) -> urllib3.PoolManager:
+        """Get or create the shared HTTP pool manager.
+
+        All service instances share the same urllib3.PoolManager for efficient connection reuse.
+
+        Returns:
+            urllib3.PoolManager: Shared connection pool manager.
+        """
+        if cls._http_pool is None:
+            cls._http_pool = urllib3.PoolManager(
+                maxsize=10,  # Max connections per host
+                block=False,  # Don't block if pool is full
+            )
+        return cls._http_pool
 
     def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
@@ -171,11 +188,12 @@ class Service(BaseService):
             Health: The healthiness of the Aignostics Platform API via basic unauthenticated request.
         """
         try:
-            http = urllib3.PoolManager(timeout=urllib3.Timeout(total=self._settings.health_timeout))
+            http = self._get_http_pool()
             response = http.request(
                 method="GET",
                 url=f"{self._settings.api_root}/api/v1/health",
                 headers={"User-Agent": user_agent()},
+                timeout=urllib3.Timeout(total=self._settings.health_timeout),
             )
 
             if response.status != HTTPStatus.OK:
