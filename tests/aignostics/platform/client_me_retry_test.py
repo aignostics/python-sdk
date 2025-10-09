@@ -494,7 +494,7 @@ class TestMeIntegrationWithSettings:
             mock_settings.assert_called()
 
             # Verify the timeout from settings was used
-            client_with_mock_api._api.get_me_v1_me_get.assert_called_once_with(_request_timeout=20)
+            client_with_mock_api._api.get_me_v1_me_get.assert_called_once_with(_request_timeout=20, _headers=ANY)
 
     @staticmethod
     def test_me_allows_runtime_settings_changes(client_with_mock_api: Client) -> None:
