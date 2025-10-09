@@ -161,6 +161,7 @@ dev = [
     "pytest-asyncio>=1.2.0,<2",
     "pytest-cov>=7.0.0,<8",
     "pytest-docker>=3.2.3,<4",
+    "pytest-durations>=1.6.1,<2",
     "pytest-env>=1.1.5,<2",
     "pytest-md-report>=0.7.0,<1",
     "pytest-regressions>=2.8.3,<3",
