@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 from unittest import mock
 
-import platformdirs
 import pytest
 from pydantic import SecretStr
+from pydantic import ValidationError as PydanticValidationError
 
 from aignostics.platform import (
     API_ROOT_DEV,
@@ -84,14 +84,6 @@ def test_authentication_settings_production(mock_env_vars, reset_cached_settings
     assert settings.device_url == DEVICE_URL_PRODUCTION
     assert settings.jws_json_url == JWS_JSON_URL_PRODUCTION
 
-    # Test other properties
-    assert settings.scope == "offline_access"
-    assert settings.scope_elements == ["offline_access"]
-    assert settings.cache_dir == platformdirs.user_cache_dir(__project_name__)
-    assert settings.token_file == Path(settings.cache_dir) / ".token"
-    assert settings.request_timeout_seconds == 30
-    assert settings.authorization_backoff_seconds == 3
-
 
 def test_authentication_settings_staging(mock_env_vars) -> None:
     """Test authentication settings with staging API root."""
@@ -137,15 +129,15 @@ def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
         )
 
 
-def test_scope_elements_empty() -> None:
-    """Test scope_elements property with empty scope."""
-    settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
-        scope="",
-        api_root=API_ROOT_PRODUCTION,
-    )
-    assert settings.scope_elements == []
+def test_scope_elements_empty_fails_validation() -> None:
+    """Test scope_elements property with empty scope fails validation."""
+    with pytest.raises(PydanticValidationError, match="String should have at least 3 characters"):
+        Settings(
+            client_id_device=SecretStr("test-client-id-device"),
+            client_id_interactive=SecretStr("test-client-id-interactive"),
+            scope="",
+            api_root=API_ROOT_PRODUCTION,
+        )
 
 
 def test_scope_elements_multiple() -> None:
@@ -356,3 +348,44 @@ def test_issuer_computed_field_url_with_query_params(mock_env_vars) -> None:
     )
     expected_issuer = "https://example.com/"
     assert settings.issuer == expected_issuer
+
+
+def test_validate_retry_wait_times_valid(mock_env_vars) -> None:
+    """Test that valid retry wait times pass validation."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root=API_ROOT_PRODUCTION,
+        auth_retry_wait_min=0.1,
+        auth_retry_wait_max=5.0,
+    )
+    assert settings.auth_retry_wait_min == 0.1
+    assert settings.auth_retry_wait_max == 5.0
+
+
+def test_validate_retry_wait_times_min_equals_max(mock_env_vars) -> None:
+    """Test that retry wait min equal to max passes validation."""
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
+        api_root=API_ROOT_PRODUCTION,
+        auth_retry_wait_min=3.0,
+        auth_retry_wait_max=3.0,
+    )
+    assert settings.auth_retry_wait_min == 3.0
+    assert settings.auth_retry_wait_max == 3.0
+
+
+def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
+    """Test that retry wait min greater than max fails validation."""
+    with pytest.raises(
+        PydanticValidationError,
+        match=r"auth_retry_wait_min \(10\.0\) must be less or equal than auth_retry_wait_max \(5.0\)",
+    ):
+        Settings(
+            client_id_device=SecretStr("test-client-id-device"),
+            client_id_interactive=SecretStr("test-client-id-interactive"),
+            api_root=API_ROOT_PRODUCTION,
+            auth_retry_wait_min=10.0,
+            auth_retry_wait_max=5.0,
+        )

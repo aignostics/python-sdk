@@ -13,6 +13,7 @@ The platform module serves as the foundational API client interface for the Aign
 - **Resource Abstraction**: Type-safe wrappers for applications, versions, runs with pagination
 - **Environment Management**: Multi-environment support (dev/staging/production) with automatic detection
 - **Error Recovery**: Comprehensive error handling with user guidance and automatic recovery strategies
+- **Retry Handling**: Retry handling on auth requests
 
 ### User Interfaces
 
@@ -25,6 +26,7 @@ The platform module serves as the foundational API client interface for the Aign
 **Service Layer (`_service.py`):**
 
 The service provides authentication management used by both CLI and other modules:
+
 - Token caching and refresh
 - User information retrieval
 - Login/logout operations
@@ -322,6 +324,7 @@ logger.warning("Application with ID '%s' not found.", application_id)
 **Problem:** Token expires during long operations
 
 **Solution:**
+
 ```python
 # Check remaining time before long operation
 token = get_token()
@@ -340,6 +343,7 @@ if time_remaining < timedelta(minutes=10):
 **Problem:** Trying to use page_size > 100
 
 **Solution:**
+
 ```python
 # Maximum page size is 100 for runs
 MAX_PAGE_SIZE = 100
@@ -352,6 +356,7 @@ runs = client.runs.list(page_size=page_size)
 **Problem:** `client.application(id)` iterates all applications
 
 **Solution:**
+
 ```python
 # Cache applications list if doing multiple lookups
 all_apps = list(client.applications.list())

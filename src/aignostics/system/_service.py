@@ -10,13 +10,13 @@ import typing as t
 from http import HTTPStatus
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
-from typing import Any, NotRequired, TypedDict
+from typing import Any, ClassVar, NotRequired, TypedDict
 from urllib.request import getproxies
 
+import urllib3
 from dotenv import set_key as dotenv_set_key
 from dotenv import unset_key as dotenv_unset_key
 from pydantic_settings import BaseSettings
-from requests import get
 
 from ..utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
@@ -72,10 +72,27 @@ class Service(BaseService):
     """System service."""
 
     _settings: Settings
+    _http_pool: ClassVar[urllib3.PoolManager | None] = None
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)
+
+    @classmethod
+    def _get_http_pool(cls) -> urllib3.PoolManager:
+        """Get or create the shared HTTP pool manager.
+
+        All service instances share the same urllib3.PoolManager for efficient connection reuse.
+
+        Returns:
+            urllib3.PoolManager: Shared connection pool manager.
+        """
+        if cls._http_pool is None:
+            cls._http_pool = urllib3.PoolManager(
+                maxsize=10,  # Max connections per host
+                block=False,  # Don't block if pool is full
+            )
+        return cls._http_pool
 
     @staticmethod
     def _is_healthy() -> bool:
@@ -91,23 +108,25 @@ class Service(BaseService):
         """Determine we can reach a well known and secure endpoint.
 
         - Checks if health endpoint is reachable and returns 200 OK
-        - Uses requests library for a direct connection check without authentication
+        - Uses urllib3 for a direct connection check without authentication
 
         Returns:
             Health: The healthiness of the network connection via basic unauthenticated request.
         """
         try:
-            response = get(
+            http = Service._get_http_pool()
+            response = http.request(
+                method="GET",
                 url=IPIFY_URL,
                 headers={"User-Agent": user_agent()},
-                timeout=NETWORK_TIMEOUT,
+                timeout=urllib3.Timeout(total=NETWORK_TIMEOUT),
             )
 
-            if response.status_code != HTTPStatus.OK:
-                logger.error("'%s' returned '%s'", IPIFY_URL, response.status_code)
+            if response.status != HTTPStatus.OK:
+                logger.error("'%s' returned '%s'", IPIFY_URL, response.status)
                 return Health(
                     status=Health.Code.DOWN,
-                    reason=f"'{IPIFY_URL}' returned status '{response.status_code}'",
+                    reason=f"'{IPIFY_URL}' returned status '{response.status}'",
                 )
         except Exception as e:
             message = f"Issue reaching {IPIFY_URL}: {e}"
@@ -169,12 +188,19 @@ class Service(BaseService):
             timeout (int): Timeout for the request in seconds.
 
         Returns:
-            str: The public IPv4 address.
+            str | None: The public IPv4 address, or None if failed.
         """
         try:
-            response = get(url=IPIFY_URL, timeout=timeout)
-            response.raise_for_status()
-            return response.text
+            http = Service._get_http_pool()
+            response = http.request(
+                method="GET",
+                url=IPIFY_URL,
+                timeout=urllib3.Timeout(total=timeout),
+            )
+            if response.status != HTTPStatus.OK:
+                logger.error("Failed to get public IP: HTTP %s", response.status)
+                return None
+            return response.data.decode("utf-8")
         except Exception as e:
             message = f"Failed to get public IP: {e}"
             logger.exception(message)
