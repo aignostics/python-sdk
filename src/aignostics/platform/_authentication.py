@@ -1,27 +1,75 @@
 import errno
+import functools
+import logging
 import socket
 import time
 import typing as t
 import webbrowser
 from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib import parse
-from urllib.error import HTTPError
 
 import jwt
 import requests
 from pydantic import BaseModel, SecretStr
+from requests.exceptions import HTTPError, JSONDecodeError, RequestException
 from requests_oauthlib import OAuth2Session
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 
-from aignostics.platform._messages import AUTHENTICATION_FAILED, INVALID_REDIRECT_URI
+from aignostics.platform._messages import (
+    AUTHENTICATION_FAILED,
+    AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
+    AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
+    INVALID_REDIRECT_URI,
+)
 from aignostics.platform._settings import settings
+from aignostics.utils import get_logger
+
+logger = get_logger(__name__)
 
 CALLBACK_PORT_RETRY_COUNT = 10
+JWK_CLIENT_CACHE_SIZE = 4  # Multiple entries exist in the rare case of settings changing at runtime only
+
 try:
     import sentry_sdk
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
+
+
+@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
+def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
+    """Returns a cached PyJWKClient instance for JWT verification.
+
+    Creates a client lazily on first access for each unique combination of URL, timeout,
+    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
+    is thread-safe and ensures that only one client is created per unique parameter set.
+
+    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
+    settings change at runtime, we get a new client with the updated settings. This is useful for handling
+    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
+    considered safe if different threads briefly use different jwt clients while settings change.
+
+    Args:
+        url: The JWS JSON URL to fetch the JWK set from.
+        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
+        lifespan: The lifespan in seconds for caching the JWK set.
+
+    Returns:
+        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
+
+    Raises:
+        PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
+        PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
+    """
+    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
 
 
 class AuthenticationResult(BaseModel):
@@ -148,7 +196,7 @@ def _authenticate(use_device_flow: bool) -> str:
         AssertionError: If the returned token doesn't have the expected format.
     """
     if refresh_token := settings().refresh_token:
-        token = _token_from_refresh_token(refresh_token)
+        token = _access_token_from_refresh_token(refresh_token)
     elif _can_open_browser() and not use_device_flow:
         token = _perform_authorization_code_with_pkce_flow()
     else:
@@ -162,16 +210,51 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     """
     Verifies and decodes the JWT token using the public key from JWS JSON URL.
 
+    Notes:
+    - Values of token claims dict internally casted to str.
+    - Retries on connection errors when fetching the JWK set.
+
     Args:
         token (str): The JWT token to verify and decode.
 
     Returns:
-        dict[str,str]: The decoded token claims.
+        dict[str, str]: The decoded token claims.
 
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
-    jwk_client = jwt.PyJWKClient(settings().jws_json_url)
+    return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
+        retry=retry_if_exception(  # Have to unpack wrapped exception
+            lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
+        ),
+        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )(_do_verify_and_decode_token, token)  # Retryer will pass down arguments
+
+
+def _do_verify_and_decode_token(token: str) -> dict[str, str]:
+    """
+    Verifies and decodes the JWT token using the public key from JWS JSON URL.
+
+    Notes:
+    - Values of token claims dict internally casted to str.
+
+    Args:
+        token (str): The JWT token to verify and decode.
+
+    Returns:
+        dict[str, str]: The decoded token claims.
+
+    Raises:
+        RuntimeError: If token verification or decoding fails.
+    """
+    jwk_client = _get_jwk_client(
+        url=settings().jws_json_url,
+        timeout=settings().auth_timeout,
+        lifespan=settings().auth_jwk_set_cache_ttl,
+    )
     try:
         # Get the public key from the JWK client
         key = jwk_client.get_signing_key_from_jwt(token).key
@@ -192,7 +275,9 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
             raise RuntimeError(message)
         return decoded
     except jwt.exceptions.PyJWTError as e:
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
+        message = f"{AUTHENTICATION_FAILED_TOKEN_VERIFICATION}{type(e).__name__}"  # Sanitized
+        logger.exception(message)
+        raise RuntimeError(message) from e
 
 
 def _can_open_browser() -> bool:
@@ -243,7 +328,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
             query = parse.parse_qs(parsed.query)
 
             if "code" not in query:
-                self.send_response(400)
+                self.send_response(HTTPStatus.BAD_REQUEST)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(b"Error: No authorization code received")
@@ -257,7 +342,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 # Store the token
                 authentication_result.token = token["access_token"]
                 # Send success response
-                self.send_response(200)
+                self.send_response(HTTPStatus.OK)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(b"""
@@ -275,7 +360,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
             # we want to catch all exceptions here, so we can display them in the browser
             except Exception as e:  # noqa: BLE001
                 # Display error message in browser
-                self.send_response(500)
+                self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
                 self.wfile.write(f"Error: {e!s}".encode())
@@ -317,14 +402,14 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     return authentication_result.token
 
 
-def _perform_device_flow() -> str | None:
+def _perform_device_flow() -> str:
     """Performs the OAuth 2.0 Device Authorization flow.
 
     Used when a browser cannot be opened. Provides a URL for the user to visit
     on another device and polls for authorization completion.
 
     Returns:
-        str | None: The JWT access token.
+        str: The JWT access token.
 
     Raises:
         ValueError: If no client id is configured for device flow.
@@ -343,7 +428,7 @@ def _perform_device_flow() -> str | None:
             "scope": settings().scope_elements,
             "audience": settings().audience,
         },
-        timeout=settings().request_timeout_seconds,
+        timeout=settings().auth_timeout,
     )
     try:
         response.raise_for_status()
@@ -359,7 +444,8 @@ def _perform_device_flow() -> str | None:
     except HTTPError as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
 
-    # Polling for access token with received device code
+    # Infinite polling for access token with received device code. It's
+    # a feature and safe to poll infinitely, not a bug.
     while True:
         try:
             json_response = requests.post(
@@ -370,33 +456,82 @@ def _perform_device_flow() -> str | None:
                     "device_code": device_code,
                     "client_id": client_id_device.get_secret_value(),
                 },
-                timeout=settings().request_timeout_seconds,
+                timeout=settings().auth_timeout,
             ).json()
             if "error" in json_response:
                 if json_response["error"] in {"authorization_pending", "slow_down"}:
                     time.sleep(interval)
                     continue
                 raise RuntimeError(AUTHENTICATION_FAILED)
-
             return t.cast("str", json_response["access_token"])
-        except requests.exceptions.JSONDecodeError as e:
+        except JSONDecodeError as e:
             # Handle case where response is not JSON
             raise RuntimeError(AUTHENTICATION_FAILED) from e
         except HTTPError as e:
             raise RuntimeError(AUTHENTICATION_FAILED) from e
 
 
-def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
+def _is_not_client_or_key_error(e: BaseException) -> bool:
+    """Determines if an exception is not a client error (4xx).
+
+    Client errors (4xx) indicate issues with the request itself that won't be
+    resolved by retrying (e.g., invalid refresh token, bad request).
+    KeyErrors are not retried either as they indicate issues with the response content.
+
+    Args:
+        e: The exception to check.
+
+    Returns:
+        bool: True if the exception is not a client error, False otherwise.
+    """
+    return not (
+        isinstance(e, KeyError)
+        or (
+            isinstance(e, RuntimeError)
+            and isinstance(e.__cause__, HTTPError)
+            and e.__cause__.response is not None
+            and e.__cause__.response.status_code
+            and HTTPStatus.BAD_REQUEST <= e.__cause__.response.status_code < HTTPStatus.INTERNAL_SERVER_ERROR
+        )
+    )
+
+
+def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
+    """Obtains a new access token using a refresh token.
+
+    Retries only on server errors (5xx) and network errors, not on client errors (4xx).
+    Client errors indicate issues with the request itself (e.g., invalid refresh token)
+    that won't be resolved by retrying.
+
+    Args:
+        refresh_token (SecretStr): The refresh token to use for obtaining a new access token.
+
+    Returns:
+        str: The new JWT access token.
+
+    Raises:
+        RuntimeError: If token exchange fails. Message indicates if "Client Error".
+    """
+    return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
+        retry=retry_if_exception(_is_not_client_or_key_error),
+        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+        reraise=True,
+    )(_do_access_token_from_refresh_token, refresh_token)  # Retryer will pass down arguments
+
+
+def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     """Obtains a new access token using a refresh token.
 
     Args:
         refresh_token (SecretStr): The refresh token to use for obtaining a new access token.
 
     Returns:
-        str | None: The new JWT access token.
+        str: The new JWT access token.
 
     Raises:
-        RuntimeError: If token refresh fails.
+        RuntimeError: If token exchange fails. Message indicates if "Client Error".
     """
     try:
         response = requests.post(
@@ -407,12 +542,18 @@ def _token_from_refresh_token(refresh_token: SecretStr) -> str | None:
                 "client_id": settings().client_id_interactive,
                 "refresh_token": refresh_token.get_secret_value(),
             },
-            timeout=settings().request_timeout_seconds,
+            timeout=settings().auth_timeout,
         )
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])
-    except (HTTPError, requests.exceptions.RequestException) as e:
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
+    except (RequestException, KeyError) as e:
+        # Sanitize error message to prevent leaking sensitive information (e.g., refresh tokens)
+        error_msg = str(e)
+        if isinstance(e, HTTPError) and e.response is not None:
+            error_msg = f"HTTP {e.response.status_code}: {e.response.reason} (URL: {settings().token_url})"
+        message = f"{AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN}{error_msg}"
+        logger.exception(message)
+        raise RuntimeError(message) from e
 
 
 def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_RETRY_COUNT) -> bool:

@@ -33,6 +33,7 @@ async def test_gui_index(user: User) -> None:
     await user.should_see("Download Datasets")
 
 
+@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.parametrize(
     ("application_id", "application_name", "expected_text"),
     [

@@ -157,7 +157,7 @@ def logging_initialize(log_to_logfire: bool = False) -> None:
     if settings.file_enabled:
         file_handler = python_logging.FileHandler(settings.file_name)
         file_formatter = python_logging.Formatter(
-            fmt="%(asctime)s %(process)d %(levelname)s %(name)s %(message)s",
+            fmt="%(asctime)s %(levelname)s [%(name)s] [%(process)d] %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_formatter)
@@ -193,7 +193,7 @@ def logging_initialize(log_to_logfire: bool = False) -> None:
         handlers = [python_logging.NullHandler()]
     python_logging.basicConfig(
         level=settings.level,
-        format="%(name)s %(message)s",
+        format=r"\[%(name)s] [%(process)d] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         handlers=handlers,
     )
