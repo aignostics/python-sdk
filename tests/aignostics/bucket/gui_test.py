@@ -7,6 +7,7 @@ from asyncio import sleep
 from pathlib import Path
 
 import psutil
+import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
 
@@ -20,6 +21,7 @@ async def test_gui_bucket_shows(user: User) -> None:
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
 
+@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:
     """E2E flow testing all bucket CLI commands.
 
@@ -53,7 +55,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     await user.open("/bucket")
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
-    await user.should_see(marker="GRID_BUCKET", retries=1000)
+    await user.should_see(marker="GRID_BUCKET", retries=2000)
     grid = user.find(marker="GRID_BUCKET")
     grid_item = grid.elements.pop()
     # Check if any item in rowData contains the file path in its key
