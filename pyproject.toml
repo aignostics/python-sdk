@@ -90,7 +90,7 @@ dependencies = [
     "platformdirs>=4.4.0,<5",
     "psutil>=7.1.0,<8",
     "pydantic-settings>=2.11.0,<3",
-    "pywin32>=310,<311 ; sys_platform == 'win32'",
+    "pywin32>=311,<312; sys_platform == 'win32'",
     "pyyaml>=6.0.3,<7",
     "sentry-sdk>=2.40.0,<3",
     "typer>=0.19.2,<1",
