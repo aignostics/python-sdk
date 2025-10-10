@@ -2,7 +2,16 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
+
 from aignostics.platform._client import Client, _OAuth2TokenProviderConfiguration
+
+
+@pytest.fixture(autouse=True)
+def _clear_api_client_cache() -> None:
+    """Clear the API client cache before each test to ensure test isolation."""
+    Client._api_client_cached = None
+    Client._api_client_uncached = None
 
 
 def test_oauth2_token_provider_configuration_uses_token_provider() -> None:
