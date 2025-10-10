@@ -22,11 +22,8 @@ async def test_gui_bucket_shows(user: User) -> None:
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
 
-@pytest.mark.e2e
-@pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-@pytest.mark.timeout(timeout=60 * 15)
-async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:
     """E2E flow testing all bucket CLI commands.
 
     1. Creates 1 file in a subdir of size 100kb

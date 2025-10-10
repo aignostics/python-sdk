@@ -136,11 +136,12 @@ def test_authentication_settings_unknown_api_root(mock_env_vars) -> None:
         )
 
 
-@pytest.mark.unit
 def test_scope_elements_empty_fails_validation() -> None:
     """Test scope_elements property with empty scope fails validation."""
     with pytest.raises(PydanticValidationError, match="String should have at least 3 characters"):
         Settings(
+            client_id_device=SecretStr("test-client-id-device"),
+            client_id_interactive=SecretStr("test-client-id-interactive"),
             scope="",
             api_root=API_ROOT_PRODUCTION,
         )
@@ -411,10 +412,11 @@ def test_issuer_computed_field_url_with_query_params(mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
-@pytest.mark.unit
 def test_validate_retry_wait_times_valid(mock_env_vars) -> None:
     """Test that valid retry wait times pass validation."""
     settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_PRODUCTION,
         auth_retry_wait_min=0.1,
         auth_retry_wait_max=5.0,
@@ -423,10 +425,11 @@ def test_validate_retry_wait_times_valid(mock_env_vars) -> None:
     assert settings.auth_retry_wait_max == 5.0
 
 
-@pytest.mark.unit
 def test_validate_retry_wait_times_min_equals_max(mock_env_vars) -> None:
     """Test that retry wait min equal to max passes validation."""
     settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_PRODUCTION,
         auth_retry_wait_min=3.0,
         auth_retry_wait_max=3.0,
@@ -435,7 +438,6 @@ def test_validate_retry_wait_times_min_equals_max(mock_env_vars) -> None:
     assert settings.auth_retry_wait_max == 3.0
 
 
-@pytest.mark.unit
 def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
     """Test that retry wait min greater than max fails validation."""
     with pytest.raises(
@@ -443,6 +445,8 @@ def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
         match=r"auth_retry_wait_min \(10\.0\) must be less or equal than auth_retry_wait_max \(5.0\)",
     ):
         Settings(
+            client_id_device=SecretStr("test-client-id-device"),
+            client_id_interactive=SecretStr("test-client-id-interactive"),
             api_root=API_ROOT_PRODUCTION,
             auth_retry_wait_min=10.0,
             auth_retry_wait_max=5.0,

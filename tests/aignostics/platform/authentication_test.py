@@ -1,6 +1,7 @@
 """Tests for the authentication module of the Aignostics Python SDK."""
 
 import errno
+import logging
 import socket
 import time
 import webbrowser
@@ -734,7 +735,6 @@ class TestSentryIntegration:
 class TestTokenRefreshRetryLogic:
     """Test cases for the retry logic in _access_token_from_refresh_token."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_successful_token_refresh_no_retry(mock_settings) -> None:
         """Test that successful token refresh completes without retries.
@@ -752,7 +752,6 @@ class TestTokenRefreshRetryLogic:
         assert result == "fresh.token"
         assert mock_post.call_count == 1  # Should succeed on first try
 
-    @pytest.mark.unit
     @staticmethod
     def test_no_retry_on_client_error(mock_settings, caplog) -> None:
         """Test that 4xx errors do not trigger retries.
@@ -786,7 +785,6 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
 
-    @pytest.mark.unit
     @staticmethod
     def test_retry_on_server_error(mock_settings, caplog) -> None:
         """Test that 5xx errors trigger retries.
@@ -824,7 +822,6 @@ class TestTokenRefreshRetryLogic:
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for 5xx errors"
 
-    @pytest.mark.unit
     @staticmethod
     def test_retry_on_connection_error(mock_settings, caplog) -> None:
         """Test that network connection errors trigger retries.
@@ -858,7 +855,6 @@ class TestTokenRefreshRetryLogic:
 class TestJWKClientCache:
     """Test cases for the LRU cache on _get_jwk_client."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_returns_same_instance(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client returns the same cached instance for the same URL.
@@ -885,7 +881,6 @@ class TestJWKClientCache:
             # PyJWKClient should only be instantiated once
             assert mock_pyjwk_client.call_count == 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_different_urls(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client creates different instances for different URLs.
@@ -914,7 +909,6 @@ class TestJWKClientCache:
             # PyJWKClient should be instantiated twice (once for each URL)
             assert mock_pyjwk_client.call_count == 2
 
-    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_info(clear_jwk_cache, mock_settings) -> None:
         """Test that cache_info provides correct statistics about cache usage.
@@ -950,7 +944,6 @@ class TestJWKClientCache:
             assert info.misses == 1
             assert info.hits == 2
 
-    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_respects_settings(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client passes correct settings to PyJWKClient.
@@ -973,7 +966,6 @@ class TestJWKClientCache:
                 lifespan=lifespan,
             )
 
-    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_used_in_verification(clear_jwk_cache, mock_settings) -> None:
         """Test that verify_and_decode_token benefits from the _get_jwk_client cache.
@@ -1008,7 +1000,6 @@ class TestJWKClientCache:
         assert info.hits >= 2  # At least 2 cache hits from 3 calls
         assert info.misses == 1  # Only 1 cache miss (first call)
 
-    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_size_limit(clear_jwk_cache, mock_settings) -> None:
         """Test that the LRU cache respects the maxsize=4 limit.
@@ -1049,7 +1040,6 @@ class TestJWKClientCache:
 class TestTokenVerificationRetryLogic:
     """Test cases for the retry logic in verify_and_decode_token."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_successful_token_verification_no_retry(mock_settings) -> None:
         """Test that successful token verification completes without retries.
@@ -1072,7 +1062,6 @@ class TestTokenVerificationRetryLogic:
         # _get_jwk_client is called only once (no retries)
         assert mock_get_jwk.call_count == 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_no_retry_on_jwt_decode_error(mock_settings, caplog) -> None:
         """Test that JWT decode errors (non-connection errors) do not trigger retries.
@@ -1115,7 +1104,6 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) == 0, "Should not log retry attempts for JWT decode errors"
 
-    @pytest.mark.unit
     @staticmethod
     def test_retry_on_jwk_connection_error(mock_settings, caplog) -> None:
         """Test that JWK client connection errors trigger retries.
@@ -1152,7 +1140,6 @@ class TestTokenVerificationRetryLogic:
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for JWK connection errors"
 
-    @pytest.mark.unit
     @staticmethod
     def test_successful_verification_after_connection_retry(mock_settings, caplog) -> None:
         """Test that token verification succeeds after initial JWK connection failures.
@@ -1197,7 +1184,6 @@ class TestTokenVerificationRetryLogic:
         ]
         assert len(retry_logs) == 1, "Should log exactly one retry attempt"
 
-    @pytest.mark.unit
     @staticmethod
     def test_no_retry_on_other_jwk_errors(mock_settings, caplog) -> None:
         """Test that non-connection JWK errors do not trigger retries.

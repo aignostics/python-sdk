@@ -16,7 +16,6 @@ from aignostics.platform._client import Client
 class TestMeSuccess:
     """Test cases for successful Client.me() calls."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_success_no_retry(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that successful me() call completes without retries.
@@ -32,7 +31,6 @@ class TestMeSuccess:
         # Should succeed on first try
         assert client_with_mock_api._api.get_me_v1_me_get.call_count == 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_passes_timeout_to_api(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() passes the correct timeout value to the API call."""
@@ -51,7 +49,6 @@ class TestMeSuccess:
 class TestMeRetryOnTransientErrors:
     """Test cases for retry behavior on transient errors."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_retries_on_service_exception(mock_settings: MagicMock, client_with_mock_api: Client, caplog) -> None:
         """Test that me() retries on ServiceException (5xx server errors).
@@ -83,7 +80,6 @@ class TestMeRetryOnTransientErrors:
         retry_logs = [record for record in caplog.records if "Retrying" in record.getMessage()]
         assert len(retry_logs) > 0, "Should log retry attempts for ServiceException"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_retries_on_timeout_error(mock_settings: MagicMock, client_with_mock_api: Client, caplog) -> None:
         """Test that me() retries on Urllib3TimeoutError.
@@ -114,7 +110,6 @@ class TestMeRetryOnTransientErrors:
         retry_logs = [record for record in caplog.records if "Retrying" in record.getMessage()]
         assert len(retry_logs) > 0, "Should log retry attempts for timeout errors"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_retries_on_pool_error(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() retries on PoolError.
@@ -138,7 +133,6 @@ class TestMeRetryOnTransientErrors:
         # Should have retried multiple times
         assert call_count >= 3, f"Expected at least 3 attempts but got {call_count}"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_retries_on_incomplete_read(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() retries on IncompleteRead.
@@ -161,7 +155,6 @@ class TestMeRetryOnTransientErrors:
         # Should have retried multiple times
         assert call_count >= 3, f"Expected at least 3 attempts but got {call_count}"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_retries_on_protocol_error(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() retries on ProtocolError.
@@ -185,7 +178,6 @@ class TestMeRetryOnTransientErrors:
         # Should have retried multiple times
         assert call_count >= 3, f"Expected at least 3 attempts but got {call_count}"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_retries_on_proxy_error(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() retries on ProxyError.
@@ -213,7 +205,6 @@ class TestMeRetryOnTransientErrors:
 class TestMeRetrySuccess:
     """Test cases for successful retry scenarios."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_succeeds_after_transient_failure(
         mock_settings: MagicMock, client_with_mock_api: Client, caplog
@@ -248,7 +239,6 @@ class TestMeRetrySuccess:
         retry_logs = [record for record in caplog.records if "Retrying" in record.getMessage()]
         assert len(retry_logs) == 1, "Should log exactly one retry attempt"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_succeeds_on_second_retry(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() succeeds after multiple transient failures.
@@ -281,7 +271,6 @@ class TestMeRetrySuccess:
 class TestMeNoRetryOnNonRetryableErrors:
     """Test cases for errors that should NOT trigger retries."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_no_retry_on_non_retryable_exception(
         mock_settings: MagicMock, client_with_mock_api: Client, caplog
@@ -324,7 +313,6 @@ class TestMeNoRetryOnNonRetryableErrors:
 class TestMeRetryConfiguration:
     """Test cases for retry configuration settings."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_respects_max_attempts_setting(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() respects the me_retry_attempts_max setting.
@@ -352,7 +340,6 @@ class TestMeRetryConfiguration:
         # Should have attempted exactly 5 times (respecting the configured max)
         assert call_count == 5, f"Expected exactly 5 attempts but got {call_count}"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_respects_zero_max_attempts(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() with me_retry_attempts_max=0 does not retry.
@@ -379,7 +366,6 @@ class TestMeRetryConfiguration:
         # Should have attempted exactly once (no retries)
         assert call_count == 1, f"Expected exactly 1 attempt but got {call_count}"
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_wait_times_increase_with_retries(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that wait times between retries increase exponentially.
@@ -422,7 +408,6 @@ class TestMeRetryConfiguration:
 class TestMeEdgeCases:
     """Test cases for edge cases and unusual scenarios."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_with_none_response(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() handles None response from API.
@@ -436,7 +421,6 @@ class TestMeEdgeCases:
         assert result is None
         assert client_with_mock_api._api.get_me_v1_me_get.call_count == 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_with_empty_response(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
         """Test that me() handles empty dict response from API."""
@@ -447,7 +431,6 @@ class TestMeEdgeCases:
         assert result == {}
         assert client_with_mock_api._api.get_me_v1_me_get.call_count == 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_logs_retry_attempts(mock_settings: MagicMock, client_with_mock_api: Client, caplog) -> None:
         """Test that me() logs retry attempts at WARNING level.
@@ -485,13 +468,12 @@ class TestMeEdgeCases:
             assert "attempt" in log.getMessage().lower() or "retrying" in log.getMessage().lower()
 
 
-class TestMeWithSettings:
-    """Test cases for with settings."""
+class TestMeIntegrationWithSettings:
+    """Test cases for integration with settings module."""
 
-    @pytest.mark.unit
     @staticmethod
-    def test_me_uses_settings_from_settings(client_with_mock_api: Client) -> None:
-        """Test that me() retrieves settings on each call.
+    def test_me_uses_settings_from_settings_module(client_with_mock_api: Client) -> None:
+        """Test that me() retrieves settings from the settings module on each call.
 
         Settings should be fetched dynamically to allow for runtime configuration changes.
         """
@@ -514,7 +496,6 @@ class TestMeWithSettings:
             # Verify the timeout from settings was used
             client_with_mock_api._api.get_me_v1_me_get.assert_called_once_with(_request_timeout=20, _headers=ANY)
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_allows_runtime_settings_changes(client_with_mock_api: Client) -> None:
         """Test that me() respects settings changes between calls.

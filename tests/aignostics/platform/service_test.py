@@ -1,11 +1,8 @@
 """Tests for the platform service module."""
 
-import pytest
-
 from aignostics.platform._service import Service
 
 
-@pytest.mark.unit
 def test_http_pool_is_shared() -> None:
     """Test that Service._get_http_pool returns the same instance across multiple calls.
 
@@ -22,7 +19,6 @@ def test_http_pool_is_shared() -> None:
     assert pool1 is pool2, "Service._get_http_pool should return the same PoolManager instance"
 
 
-@pytest.mark.unit
 def test_http_pool_singleton() -> None:
     """Test that Service._http_pool maintains a singleton pattern.
 

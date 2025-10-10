@@ -14,7 +14,6 @@ def _clear_api_client_cache() -> None:
     Client._api_client_uncached = None
 
 
-@pytest.mark.unit
 def test_oauth2_token_provider_configuration_uses_token_provider() -> None:
     """Test that token_provider is used when provided."""
     token_provider = Mock(return_value="dynamic-token")

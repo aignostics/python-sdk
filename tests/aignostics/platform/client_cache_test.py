@@ -18,7 +18,6 @@ from aignostics.platform._client import Client
 class TestCacheKeyGeneration:
     """Test cases for cache key generation."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_includes_token_hash() -> None:
         """Test that cache key includes a hash of the token.
@@ -32,7 +31,6 @@ class TestCacheKeyGeneration:
         assert ":" in key1
         assert ":" in key2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_includes_method_name() -> None:
         """Test that cache key includes the method name.
@@ -46,7 +44,6 @@ class TestCacheKeyGeneration:
         assert "method_a" in key1
         assert "method_b" in key2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_includes_args() -> None:
         """Test that cache key includes positional arguments.
@@ -58,7 +55,6 @@ class TestCacheKeyGeneration:
 
         assert key1 != key2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_includes_kwargs() -> None:
         """Test that cache key includes keyword arguments.
@@ -70,7 +66,6 @@ class TestCacheKeyGeneration:
 
         assert key1 != key2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_consistent_for_same_inputs() -> None:
         """Test that cache key is consistent for identical inputs.
@@ -82,7 +77,6 @@ class TestCacheKeyGeneration:
 
         assert key1 == key2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_handles_empty_token() -> None:
         """Test that cache key handles empty or None token gracefully."""
@@ -93,7 +87,6 @@ class TestCacheKeyGeneration:
         assert isinstance(key1, str)
         assert len(key1) > 0
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_kwargs_order_independent() -> None:
         """Test that cache key is independent of kwargs order.
@@ -109,7 +102,6 @@ class TestCacheKeyGeneration:
 class TestCacheBasicFunctionality:
     """Test cases for basic cache functionality."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_me_caches_result_on_first_call(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -134,7 +126,6 @@ class TestCacheBasicFunctionality:
         # Results should be identical
         assert result1 == result2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_stores_value_in_operation_cache(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -163,7 +154,6 @@ class TestCacheBasicFunctionality:
         assert isinstance(cache_entry[1], float)
         assert cache_entry[1] > time.time()  # Expiry should be in the future
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_returns_none_when_api_returns_none(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -188,7 +178,6 @@ class TestCacheBasicFunctionality:
 class TestCacheTTL:
     """Test cases for cache TTL (time-to-live) functionality."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_expires_after_ttl(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -222,7 +211,6 @@ class TestCacheTTL:
         assert result3 == mock_me_response_2
         assert mock_api_client.get_me_v1_me_get.call_count == 2
 
-    @pytest.mark.unit
     @staticmethod
     def test_expired_cache_entry_removed(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -251,7 +239,6 @@ class TestCacheTTL:
         cache_entry = Client._operation_cache[cache_key]
         assert cache_entry[1] > time.time()
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_ttl_is_60_seconds_for_me(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -278,7 +265,6 @@ class TestCacheTTL:
 class TestCacheWithDifferentTokens:
     """Test cases for cache behavior with different authentication tokens."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_different_tokens_use_different_cache_entries(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test that different tokens create separate cache entries.
@@ -317,7 +303,6 @@ class TestCacheWithDifferentTokens:
         # Cache should have two entries
         assert len(Client._operation_cache) == 2
 
-    @pytest.mark.unit
     @staticmethod
     def test_token_change_invalidates_cache(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test that changing token invalidates the cache.
@@ -348,7 +333,6 @@ class TestCacheWithDifferentTokens:
             assert result2 == mock_me_response_2
             assert mock_api_client.get_me_v1_me_get.call_count == 2  # New API call, cache not used
 
-    @pytest.mark.unit
     @staticmethod
     def test_same_token_reuses_cache(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test that using the same token reuses cached values.
@@ -389,7 +373,6 @@ class TestCacheWithDifferentTokens:
 class TestCacheWithRetries:
     """Test cases for cache interaction with retry mechanism."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_not_populated_on_failure(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -414,7 +397,6 @@ class TestCacheWithRetries:
         # Cache should be empty after failed call
         assert len(Client._operation_cache) == 0
 
-    @pytest.mark.unit
     @staticmethod
     def test_exceptions_not_cached_subsequent_call_retries(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -460,7 +442,6 @@ class TestCacheWithRetries:
         assert result2 == mock_me_response
         assert call_count == 4  # Still 4, used cache
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_populated_after_successful_retry(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -495,7 +476,6 @@ class TestCacheWithRetries:
         assert result2 == mock_me_response
         assert call_count == 2  # Still 2, used cache
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_used_before_retry_logic(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -529,7 +509,6 @@ class TestCacheWithRetries:
 class TestCacheConcurrency:
     """Test cases for cache behavior in concurrent scenarios."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_is_class_level(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test that cache is shared across all Client instances.
@@ -559,7 +538,6 @@ class TestCacheConcurrency:
             assert result == mock_me_response
             assert mock_api_client.get_me_v1_me_get.call_count == 1  # Still 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_cleared_affects_all_clients(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test that clearing cache affects all Client instances.
@@ -595,7 +573,6 @@ class TestCacheConcurrency:
 class TestCacheEdgeCases:
     """Test cases for edge cases and unusual scenarios."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_handles_complex_response_objects(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -621,7 +598,6 @@ class TestCacheEdgeCases:
         assert result2 == mock_me_response
         assert result1 == result2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_handles_empty_dict(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -636,7 +612,6 @@ class TestCacheEdgeCases:
         assert result2 == {}
         assert mock_api_client.get_me_v1_me_get.call_count == 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_with_rapid_successive_calls(
         mock_settings: MagicMock, client_with_mock_api: Client, mock_api_client: MagicMock
@@ -657,7 +632,6 @@ class TestCacheEdgeCases:
         # API should only be called once
         assert mock_api_client.get_me_v1_me_get.call_count == 1
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_key_with_unicode_args(mock_settings: MagicMock) -> None:
         """Test that cache key generation handles unicode characters correctly."""
@@ -668,7 +642,6 @@ class TestCacheEdgeCases:
         assert key1 == key2
         assert isinstance(key1, str)
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_with_very_long_token(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test that cache handles very long authentication tokens.
@@ -695,7 +668,6 @@ class TestCacheEdgeCases:
 class TestCacheIntegrationWithAuthentication:
     """Test cases for cache integration with authentication system."""
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_uses_current_token_from_get_token(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test that cache always uses the current token from get_token().
@@ -728,7 +700,6 @@ class TestCacheIntegrationWithAuthentication:
             assert result == mock_me_response_2
             assert mock_api_client.get_me_v1_me_get.call_count == 2
 
-    @pytest.mark.unit
     @staticmethod
     def test_cache_with_token_refresh_scenario(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
         """Test cache behavior in a token refresh scenario.

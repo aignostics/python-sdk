@@ -14,7 +14,7 @@ from urllib import parse
 import jwt
 import requests
 from pydantic import BaseModel, SecretStr
-from requests.exceptions import HTTPError, JSONDecodeError, RequestException
+from requests.exceptions import HTTPError, JSONDecodeError
 from requests_oauthlib import OAuth2Session
 from tenacity import (
     Retrying,
@@ -26,7 +26,6 @@ from tenacity import (
 
 from aignostics.platform._messages import (
     AUTHENTICATION_FAILED,
-    AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
     AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
     INVALID_REDIRECT_URI,
 )
@@ -35,13 +34,15 @@ from aignostics.utils import get_logger
 
 logger = get_logger(__name__)
 
+CALLBACK_PORT_RETRY_COUNT = 10
+CALLBACK_PORT_BACKOFF_DELAY = 1
+JWK_CLIENT_CACHE_SIZE = 4  # Multiple entries exist in the rare case of settings changing at runtime only
+
+
 try:
     import sentry_sdk
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
-
-CALLBACK_PORT_RETRY_COUNT = 20
-CALLBACK_PORT_BACKOFF_DELAY = 1
 
 
 @functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
@@ -232,6 +233,34 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )(_do_verify_and_decode_token, token)  # Retryer will pass down arguments
+
+
+@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
+def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
+    """Returns a cached PyJWKClient instance for JWT verification.
+
+    Creates a client lazily on first access for each unique combination of URL, timeout,
+    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
+    is thread-safe and ensures that only one client is created per unique parameter set.
+
+    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
+    settings change at runtime, we get a new client with the updated settings. This is useful for handling
+    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
+    considered safe if different threads briefly use different jwt clients while settings change.
+
+    Args:
+        url: The JWS JSON URL to fetch the JWK set from.
+        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
+        lifespan: The lifespan in seconds for caching the JWK set.
+
+    Returns:
+        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
+
+    Raises:
+        PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
+        PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
+    """
+    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
 
 
 def _do_verify_and_decode_token(token: str) -> dict[str, str]:
@@ -558,3 +587,31 @@ def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         return t.cast("str", response.json()["access_token"])
     except (HTTPError, requests.exceptions.RequestException) as e:
         raise RuntimeError(AUTHENTICATION_FAILED) from e
+
+
+def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_RETRY_COUNT) -> bool:
+    """Check if a port is already in use.
+
+    Args:
+        port (int): The port number to check.
+        max_retries (int): The maximum number of retries to check the port.
+
+    Returns:
+        bool: True if the port is not in use, False otherwise.
+    """
+
+    def is_port_available() -> bool:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                # Enable socket reuse to match the behavior of the actual HTTPServer
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind(("localhost", port))
+                return True
+            except OSError:
+                return False
+
+    retry_count = 0
+    while not is_port_available() and retry_count < max_retries:
+        time.sleep(1)
+        retry_count += 1
+    return retry_count < max_retries
