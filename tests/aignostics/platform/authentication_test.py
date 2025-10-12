@@ -20,7 +20,6 @@ from aignostics.platform._authentication import (
     _access_token_from_refresh_token,
     _authenticate,
     _can_open_browser,
-    _ensure_local_port_is_available,
     _perform_authorization_code_with_pkce_flow,
     _perform_device_flow,
     get_token,

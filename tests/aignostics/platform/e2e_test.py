@@ -18,6 +18,12 @@ from aignx.codegen.models import (
 
 from aignostics import platform
 from aignostics.platform.resources.runs import ApplicationRun, ApplicationRunStatus, ItemStatus
+from aignx.codegen.models import ArtifactOutput
+from aignx.codegen.models import ArtifactState
+from aignx.codegen.models import ItemOutput
+from aignx.codegen.models import ItemState
+from aignx.codegen.models import RunOutput
+from aignx.codegen.models import RunState
 from tests.contants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_TIMEOUT_SECONDS,
@@ -208,8 +214,8 @@ def _validate_output(
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
     run_details = application_run.details()
-    assert run_details.status == ApplicationRunStatus.COMPLETED, (
-        f"Application run {application_run.run_id}: Did not finish in status COMPLETED but '{run_details.status}'."
+    assert run_details.status == RunState.TERMINATED and run_details.output == RunOutput.FULL, (
+        f"Run {application_run.run_id}: Did not finish in state `FULL` for its output, but '{run_details.output}'."
     )
 
     run_result_folder = output_base_folder / application_run.run_id
@@ -218,10 +224,10 @@ def _validate_output(
     run_results = application_run.results()
 
     for item in run_results:
-        # validate status
-        assert item.status == ItemStatus.SUCCEEDED, (
+        # validate state
+        assert item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL, (
             f"Application run {application_run.run_id}: "
-            f"item {item.external_id} status is {item.status}, expected SUCCEEDED"
+            f"output for item {item.external_id} is {item.output}, expected `FULL`"
         )
         # validate results
         item_dir = run_result_folder / item.external_id

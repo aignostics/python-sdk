@@ -93,3 +93,5 @@ class MeReadResponse(BaseModel):
             "organization": Auth0Organization.from_dict(obj["organization"]) if obj.get("organization") is not None else None
         })
         return _obj
+
+

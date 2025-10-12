@@ -44,6 +44,37 @@ try:
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
 
+CALLBACK_PORT_RETRY_COUNT = 20
+CALLBACK_PORT_BACKOFF_DELAY = 1
+
+
+@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
+def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
+    """Returns a cached PyJWKClient instance for JWT verification.
+
+    Creates a client lazily on first access for each unique combination of URL, timeout,
+    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
+    is thread-safe and ensures that only one client is created per unique parameter set.
+
+    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
+    settings change at runtime, we get a new client with the updated settings. This is useful for handling
+    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
+    considered safe if different threads briefly use different jwt clients while settings change.
+
+    Args:
+        url: The JWS JSON URL to fetch the JWK set from.
+        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
+        lifespan: The lifespan in seconds for caching the JWK set.
+
+    Returns:
+        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
+
+    Raises:
+        PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
+        PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
+    """
+    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
+
 
 @functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
 def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
@@ -370,9 +401,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 token = session.fetch_token(settings().token_url, code=auth_code, include_client_id=True)
                 # Store the token
                 authentication_result.token = token["access_token"]
-                # TODO(Andreas): Commented this out, as it breaks tests and you don't want this
-                # Please remove completely
-                # print(token["access_token"])
+                print(token["refresh_token"])
                 # Send success response
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-type", "text/html")

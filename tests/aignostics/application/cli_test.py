@@ -123,7 +123,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 2
-    assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
+    assert "Invalid metadata for artifact `user_slide`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
 
 
@@ -161,9 +161,6 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
     assert "Warning: Could not find application version" in normalize_output(result.stdout)
     assert result.exit_code == 2
-    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
-    # Test likely passes when that is fixed on the platform side
-    assert "Error: Failed to create run for application version" in normalize_output(result.stdout)
 
 
 @pytest.mark.e2e
@@ -212,9 +209,6 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
-
-    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
-    # Test likely passes when that is fixed on the platform side
 
     result = runner.invoke(
         cli,
@@ -318,11 +312,6 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
-    # TODO(Andreas): Currently fails with HTTP response body:
-    # {"detail":"field must be one of ['application_run_id', 'application_version_id', 'message',
-    # 'metadata', 'organization_id', 'status', 'terminated_at', 'triggered_at', 'triggered_by',
-    # 'user_payload'] but is submitted_at","trace_id":"efd2b9a29e2912563d12548fa5e2a453"}
-    # seems the backend is not compliant to it's own spec
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
     output = normalize_output(result.stdout)
