@@ -522,30 +522,35 @@
                   "type": "null"
                 }
               ],
-              "description": "Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.\n#### URL Encoding Required\n**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.\n\n#### Examples (Clear Format):\n- **Field existence**: `$.project` - Runs that have a project field defined\n- **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value\n- **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours\n- **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\"\n- **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements\n\n#### Examples (URL-Encoded Format):\n- **Field existence**: `%24.project`\n- **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)`\n- **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)`\n- **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)`\n- **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?` operator\n- The `$.` prefix is automatically added to root-level field references if missing\n- String values in conditions must be enclosed in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n- Regular expressions use `like_regex` with standard regex syntax\n- **Remember to URL-encode the entire JSONPath expression when making HTTP requests**\n\n            ",
+              "description": "Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.\n#### URL Encoding Required\n**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.\n\n#### Examples (Clear Format):\n- **Field existence**: `$.study` - Runs that have a study field defined\n- **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value\n- **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75\n- **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\"\n- **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements\n\n#### Examples (URL-Encoded Format):\n- **Field existence**: `%24.study`\n- **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)`\n- **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)`\n- **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)`\n- **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?` operator\n- The `$.` prefix is automatically added to root-level field references if missing\n- String values in conditions must be enclosed in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n- Regular expressions use `like_regex` with standard regex syntax\n- **Remember to URL-encode the entire JSONPath expression when making HTTP requests**\n\n            ",
               "title": "Custom Metadata"
             },
-            "description": "Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.\n#### URL Encoding Required\n**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.\n\n#### Examples (Clear Format):\n- **Field existence**: `$.project` - Runs that have a project field defined\n- **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value\n- **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours\n- **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\"\n- **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements\n\n#### Examples (URL-Encoded Format):\n- **Field existence**: `%24.project`\n- **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)`\n- **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)`\n- **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)`\n- **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?` operator\n- The `$.` prefix is automatically added to root-level field references if missing\n- String values in conditions must be enclosed in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n- Regular expressions use `like_regex` with standard regex syntax\n- **Remember to URL-encode the entire JSONPath expression when making HTTP requests**\n\n            ",
+            "description": "Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.\n#### URL Encoding Required\n**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.\n\n#### Examples (Clear Format):\n- **Field existence**: `$.study` - Runs that have a study field defined\n- **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value\n- **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75\n- **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\"\n- **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements\n\n#### Examples (URL-Encoded Format):\n- **Field existence**: `%24.study`\n- **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)`\n- **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)`\n- **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)`\n- **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?` operator\n- The `$.` prefix is automatically added to root-level field references if missing\n- String values in conditions must be enclosed in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n- Regular expressions use `like_regex` with standard regex syntax\n- **Remember to URL-encode the entire JSONPath expression when making HTTP requests**\n\n            ",
             "examples": {
+              "no_filter": {
+                "summary": "No filter (returns all)",
+                "description": "Returns all items without filtering by custom metadata",
+                "value": "$"
+              },
               "field_exists": {
                 "summary": "Check if field exists",
                 "description": "Find applications that have a project field defined",
-                "value": "$.project"
+                "value": "$.study"
               },
               "field_has_value": {
                 "summary": "Check if field has a certain value",
                 "description": "Compare a field value against a certain value",
-                "value": "$.project ? (@ == \"cancer-research\")"
+                "value": "$.study ? (@ == \"abc-1\")"
               },
               "numeric_comparisons": {
                 "summary": "Compare to a numeric value of a field",
                 "description": "Compare a field value against a numeric value of a field",
-                "value": "$.duration_hours ? (@ < 2)"
+                "value": "$.confidence_score ? (@ > 0.75)"
               },
               "array_operations": {
                 "summary": "Check if an array contains a certain value",
                 "description": "Check if an array contains a certain value",
-                "value": "$.tags[*] ? (@ == \"production\")"
+                "value": "$.tags[*] ? (@ == \"draft\")"
               },
               "complex_filters": {
                 "summary": "Combine multiple checks",
@@ -869,25 +874,40 @@
             "description": "Filter for items by their external_id from the input payload"
           },
           {
-            "name": "status__in",
+            "name": "state",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ItemStatus"
-                  }
+                  "$ref": "#/components/schemas/ItemState"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Filter for items in certain statuses",
-              "title": "Status  In"
+              "description": "Filter items by their state",
+              "title": "State"
             },
-            "description": "Filter for items in certain statuses"
+            "description": "Filter items by their state"
+          },
+          {
+            "name": "termination_reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ItemTerminationReason"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter items by their termination reason. Only applies to TERMINATED items.",
+              "title": "Termination Reason"
+            },
+            "description": "Filter items by their termination reason. Only applies to TERMINATED items."
           },
           {
             "name": "custom_metadata",
@@ -908,6 +928,11 @@
             },
             "description": "JSONPath expression to filter items by their custom_metadata",
             "examples": {
+              "no_filter": {
+                "summary": "No filter (returns all)",
+                "description": "Returns all items without filtering by custom metadata",
+                "value": "$"
+              },
               "field_exists": {
                 "summary": "Check if field exists",
                 "description": "Find items that have a project field defined",
@@ -974,10 +999,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.\n                **Available fields:**\n- `item_id`\n- `run_id`\n- `external_id`\n- `status`\n- `custom_metadata`\n\n**Examples:**\n- `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-external_id` - Sort by external ID (descending)\n- `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)",
+              "description": "Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.\n                **Available fields:**\n- `item_id`\n- `run_id`\n- `external_id`\n- `custom_metadata`\n\n**Examples:**\n- `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-external_id` - Sort by external ID (descending)\n- `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)",
               "title": "Sort"
             },
-            "description": "Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.\n                **Available fields:**\n- `item_id`\n- `run_id`\n- `external_id`\n- `status`\n- `custom_metadata`\n\n**Examples:**\n- `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-external_id` - Sort by external ID (descending)\n- `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)"
+            "description": "Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.\n                **Available fields:**\n- `item_id`\n- `run_id`\n- `external_id`\n- `custom_metadata`\n\n**Examples:**\n- `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-external_id` - Sort by external ID (descending)\n- `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)"
           }
         ],
         "responses": {
@@ -997,6 +1022,74 @@
           },
           "404": {
             "description": "Run not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/items/{external_id}": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Get Item By Run",
+        "description": "Retrieve details of a specific item (slide) by its external ID and the run ID.",
+        "operationId": "get_item_by_run_v1_runs__run_id__items__external_id__get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The run id, returned by `POST /runs/` endpoint",
+              "title": "Run Id"
+            },
+            "description": "The run id, returned by `POST /runs/` endpoint"
+          },
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The `external_id` that was defined for the item by the customer that triggered the run.",
+              "title": "External Id"
+            },
+            "description": "The `external_id` that was defined for the item by the customer that triggered the run."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResultReadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Item with given ID does not exist"
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to see this item"
           },
           "422": {
             "description": "Validation Error",
@@ -1063,14 +1156,13 @@
         }
       }
     },
-    "/v1/items/{item_id}": {
-      "get": {
+    "/v1/runs/{run_id}/custom-metadata": {
+      "put": {
         "tags": [
           "Public"
         ],
-        "summary": "Get Item",
-        "description": "Retrieve details of a specific item (slide) by its ID.",
-        "operationId": "get_item_v1_items__item_id__get",
+        "summary": "Put Run Custom Metadata",
+        "operationId": "put_run_custom_metadata_v1_runs__run_id__custom_metadata_put",
         "security": [
           {
             "OAuth2AuthorizationCodeBearer": []
@@ -1078,32 +1170,108 @@
         ],
         "parameters": [
           {
-            "name": "item_id",
+            "name": "run_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Item Id"
-            }
+              "description": "Run id, returned by `POST /runs/` endpoint",
+              "title": "Run Id"
+            },
+            "description": "Run id, returned by `POST /runs/` endpoint"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomMetadataUpdateRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ItemReadResponse"
-                }
+                "schema": {}
               }
             }
           },
-          "403": {
-            "description": "Forbidden - You don't have permission to see this item"
-          },
           "404": {
-            "description": "Not Found - Item with given ID does not exist"
+            "description": "Run not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/items/{external_id}/custom-metadata": {
+      "put": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Put Item Custom Metadata By Run",
+        "operationId": "put_item_custom_metadata_by_run_v1_runs__run_id__items__external_id__custom_metadata_put",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The run id, returned by `POST /runs/` endpoint",
+              "title": "Run Id"
+            },
+            "description": "The run id, returned by `POST /runs/` endpoint"
+          },
+          {
+            "name": "external_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The `external_id` that was defined for the item by the customer that triggered the run.",
+              "title": "External Id"
+            },
+            "description": "The `external_id` that was defined for the item by the customer that triggered the run."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomMetadataUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1295,6 +1463,309 @@
         ],
         "title": "ApplicationVersion"
       },
+      "ArtifactOutput": {
+        "type": "string",
+        "enum": [
+          "NONE",
+          "AVAILABLE",
+          "DELETED_BY_USER",
+          "DELETED_BY_SYSTEM"
+        ],
+        "title": "ArtifactOutput"
+      },
+      "ArtifactState": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "PROCESSING",
+          "TERMINATED"
+        ],
+        "title": "ArtifactState"
+      },
+      "ArtifactTerminationReason": {
+        "type": "string",
+        "enum": [
+          "SUCCEEDED",
+          "USER_ERROR",
+          "SYSTEM_ERROR",
+          "SKIPPED"
+        ],
+        "title": "ArtifactTerminationReason"
+      },
+      "Auth0Organization": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique organization identifier",
+            "examples": [
+              "org_123456"
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Organization name (E.g. “aignx”)",
+            "examples": [
+              "aignx"
+            ]
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "Public organization name (E.g. “Aignostics GmbH”)",
+            "examples": [
+              "Aignostics GmbH"
+            ]
+          },
+          "aignostics_bucket_hmac_access_key_id": {
+            "type": "string",
+            "title": "Aignostics Bucket Hmac Access Key Id",
+            "description": "HMAC access key ID for the Aignostics-provided storage bucket. Used to authenticate requests for uploading files and generating signed URLs",
+            "examples": [
+              "YOUR_HMAC_ACCESS_KEY_ID"
+            ]
+          },
+          "aignostics_bucket_hmac_secret_access_key": {
+            "type": "string",
+            "title": "Aignostics Bucket Hmac Secret Access Key",
+            "description": "HMAC secret access key paired with the access key ID. Keep this credential secure.",
+            "examples": [
+              "YOUR/HMAC/SECRET_ACCESS_KEY"
+            ]
+          },
+          "aignostics_bucket_name": {
+            "type": "string",
+            "title": "Aignostics Bucket Name",
+            "description": "Name of the bucket provided by Aignostics for storing input artifacts (slide images)",
+            "examples": [
+              "aignostics-platform-bucket"
+            ]
+          },
+          "aignostics_bucket_protocol": {
+            "type": "string",
+            "title": "Aignostics Bucket Protocol",
+            "description": "Protocol to use for bucket access. Defines the URL scheme for connecting to the storage service",
+            "examples": [
+              "gs"
+            ]
+          },
+          "aignostics_logfire_token": {
+            "type": "string",
+            "title": "Aignostics Logfire Token",
+            "description": "Authentication token for Logfire observability service. Enables sending application logs and performance metrics to Aignostics for monitoring and support",
+            "examples": [
+              "your-logfire-token"
+            ]
+          },
+          "aignostics_sentry_dsn": {
+            "type": "string",
+            "title": "Aignostics Sentry Dsn",
+            "description": "Data Source Name (DSN) for Sentry error tracking service. Allows automatic reporting of errors and exceptions to Aignostics support team",
+            "examples": [
+              "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "aignostics_bucket_hmac_access_key_id",
+          "aignostics_bucket_hmac_secret_access_key",
+          "aignostics_bucket_name",
+          "aignostics_bucket_protocol",
+          "aignostics_logfire_token",
+          "aignostics_sentry_dsn"
+        ],
+        "title": "Auth0Organization",
+        "description": "Model for Auth0 Organization object returned from Auth0 API.\n\nFor details, see:\nhttps://auth0.com/docs/api/management/v2#!/Organizations/get_organizations_by_id\n\nAignostics-specific metadata fields are extracted from the `metadata` field."
+      },
+      "Auth0User": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique user identifier",
+            "examples": [
+              "auth0|123456"
+            ]
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "User email",
+            "examples": [
+              "user@domain.com"
+            ]
+          },
+          "email_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified",
+            "examples": [
+              true
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "First and last name of the user",
+            "examples": [
+              "Jane Doe"
+            ]
+          },
+          "given_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Given Name",
+            "examples": [
+              "Jane"
+            ]
+          },
+          "family_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family Name",
+            "examples": [
+              "Doe"
+            ]
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nickname",
+            "examples": [
+              "jdoe"
+            ]
+          },
+          "picture": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Picture",
+            "examples": [
+              "https://example.com/jdoe.jpg"
+            ]
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "examples": [
+              "2023-10-05T14:48:00.000Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "Auth0User",
+        "description": "Model for Auth0 User object returned from Auth0 API.\n\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/users/get-users-by-id"
+      },
+      "CustomMetadataUpdateRequest": {
+        "properties": {
+          "custom_metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Metadata",
+            "description": "JSON metadata that should be set for the run",
+            "examples": [
+              {
+                "department": "D1",
+                "study": "abc-1"
+              }
+            ]
+          },
+          "custom_metadata_checksum": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Metadata Checksum",
+            "description": "Optional field to verify that the latest custom metadata was known. If set to the checksum retrieved via the /runs endpoint, it must match the checksum of the current value in the database.",
+            "examples": [
+              "f54fe109"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "CustomMetadataUpdateRequest"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1447,77 +1918,13 @@
         "title": "ItemCreationRequest",
         "description": "Individual item (slide) to be processed in a run."
       },
-      "ItemReadResponse": {
-        "properties": {
-          "item_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Item Id"
-          },
-          "run_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Run Id",
-            "examples": [
-              "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-            ]
-          },
-          "external_id": {
-            "type": "string",
-            "title": "External Id",
-            "examples": [
-              "sample-123"
-            ]
-          },
-          "status": {
-            "$ref": "#/components/schemas/ItemStatus"
-          },
-          "message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message",
-            "examples": [
-              "Processing started"
-            ]
-          },
-          "terminated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Terminated At",
-            "description": "Timestamp showing when the item reached a terminal state.",
-            "examples": [
-              "2024-01-15T10:30:45.123Z"
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "item_id",
-          "external_id",
-          "status"
+      "ItemOutput": {
+        "type": "string",
+        "enum": [
+          "NONE",
+          "FULL"
         ],
-        "title": "ItemReadResponse",
-        "description": "Response schema for `Get Item` endpoint"
+        "title": "ItemOutput"
       },
       "ItemResultReadResponse": {
         "properties": {
@@ -1526,12 +1933,6 @@
             "format": "uuid",
             "title": "Item Id",
             "description": "Item UUID generated by the Platform"
-          },
-          "run_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Run Id",
-            "description": "Run UUID to which the item belongs"
           },
           "external_id": {
             "type": "string",
@@ -1553,9 +1954,39 @@
             "title": "Custom Metadata",
             "description": "The custom_metadata of the item that has been provided by the user on run creation."
           },
-          "status": {
-            "$ref": "#/components/schemas/ItemStatus",
-            "description": "\nWhen the item is not processed yet, the status is set to `pending`.\n\nWhen the item is successfully finished, status is set to `succeeded`, and the processing results\nbecome available for download in `output_artifacts` field.\n\nWhen the item processing is failed because the provided item is invalid, the status is set to\n`error_user`. When the item processing failed because of the error in the model or platform,\nthe status is set to `error_system`. When the run is canceled, the status of all\npending items is set to either `cancelled_user` or `cancelled_system`.\n    "
+          "custom_metadata_checksum": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Metadata Checksum",
+            "description": "The checksum of the `custom_metadata` field.\nCan be used in the `PUT /runs/{run-id}/items/{external_id}/custom_metadata`\nrequest to avoid unwanted override of the values in concurrent requests.",
+            "examples": [
+              "f54fe109"
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/ItemState",
+            "description": "\nThe item moves from `PENDING` to `PROCESSING` to `TERMINATED` state.\nWhen terminated, consult the `termination_reason` property to see whether it was successful.\n    "
+          },
+          "output": {
+            "$ref": "#/components/schemas/ItemOutput",
+            "description": "The output status of the item (NONE, FULL)"
+          },
+          "termination_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ItemTerminationReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\nWhen the `state` is `TERMINATED` this will explain why\n`SUCCEEDED` -> Successful processing.\n`USER_ERROR` -> Failed because the provided input was invalid.\n`SYSTEM_ERROR` -> There was an error in the model or platform.\n`SKIPPED` -> Was cancelled\n"
           },
           "error_message": {
             "anyOf": [
@@ -1567,20 +1998,7 @@
               }
             ],
             "title": "Error Message",
-            "description": "\n    The error message in case the item is in `error_system` or `error_user` state\n        ",
-            "deprecated": true
-          },
-          "message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message",
-            "description": "\nThe error message in case the item is in `error_system` or `error_user` state\n    ",
+            "description": "\n    The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`\n        ",
             "examples": [
               "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
               "The item was not processed because the run was cancelled by the user before the item was processed.User error raised by Application because the input data provided by the user cannot be processed:\nThe image width is 123000 px, but the maximum width is 100000 px",
@@ -1616,35 +2034,41 @@
         "type": "object",
         "required": [
           "item_id",
-          "run_id",
           "external_id",
           "custom_metadata",
-          "status",
-          "message",
+          "state",
+          "output",
           "output_artifacts"
         ],
         "title": "ItemResultReadResponse",
         "description": "Response schema for items in `List Run Items` endpoint"
       },
-      "ItemStatus": {
+      "ItemState": {
         "type": "string",
         "enum": [
           "PENDING",
-          "CANCELED_USER",
-          "CANCELED_SYSTEM",
+          "PROCESSING",
+          "TERMINATED"
+        ],
+        "title": "ItemState"
+      },
+      "ItemTerminationReason": {
+        "type": "string",
+        "enum": [
+          "SUCCEEDED",
           "USER_ERROR",
           "SYSTEM_ERROR",
-          "SUCCEEDED"
+          "SKIPPED"
         ],
-        "title": "ItemStatus"
+        "title": "ItemTerminationReason"
       },
       "MeReadResponse": {
         "properties": {
           "user": {
-            "$ref": "#/components/schemas/UserReadResponse"
+            "$ref": "#/components/schemas/Auth0User"
           },
           "organization": {
-            "$ref": "#/components/schemas/OrganizationReadResponse"
+            "$ref": "#/components/schemas/Auth0Organization"
           }
         },
         "type": "object",
@@ -1654,108 +2078,6 @@
         ],
         "title": "MeReadResponse",
         "description": "Response schema for `Get current user` endpoint"
-      },
-      "OrganizationReadResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id",
-            "description": "Unique organization identifier",
-            "examples": [
-              "org_123456"
-            ]
-          },
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name",
-            "description": "Organization name (E.g. “aignx”)",
-            "examples": [
-              "aignx"
-            ]
-          },
-          "display_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Display Name",
-            "description": "Public organization name (E.g. “Aignostics GmbH”)",
-            "examples": [
-              "Aignostics GmbH"
-            ]
-          },
-          "aignostics_bucket_hmac_access_key_id": {
-            "type": "string",
-            "title": "Aignostics Bucket Hmac Access Key Id",
-            "description": "HMAC access key ID for the Aignostics-provided storage bucket. Used to authenticate requests for uploading files and generating signed URLs",
-            "examples": [
-              "YOUR_HMAC_ACCESS_KEY_ID"
-            ]
-          },
-          "aignostics_bucket_hmac_secret_access_key": {
-            "type": "string",
-            "title": "Aignostics Bucket Hmac Secret Access Key",
-            "description": "HMAC secret access key paired with the access key ID. Keep this credential secure.",
-            "examples": [
-              "YOUR/HMAC/SECRET_ACCESS_KEY"
-            ]
-          },
-          "aignostics_bucket_name": {
-            "type": "string",
-            "title": "Aignostics Bucket Name",
-            "description": "Name of the bucket provided by Aignostics for storing input artifacts (slide images)",
-            "examples": [
-              "aignostics-platform-bucket"
-            ]
-          },
-          "aignostics_bucket_protocol": {
-            "type": "string",
-            "title": "Aignostics Bucket Protocol",
-            "description": "Protocol to use for bucket access. Defines the URL scheme for connecting to the storage service",
-            "examples": [
-              "gs"
-            ]
-          },
-          "aignostics_logfire_token": {
-            "type": "string",
-            "title": "Aignostics Logfire Token",
-            "description": "Authentication token for Logfire observability service. Enables sending application logs and performance metrics to Aignostics for monitoring and support",
-            "examples": [
-              "your-logfire-token"
-            ]
-          },
-          "aignostics_sentry_dsn": {
-            "type": "string",
-            "title": "Aignostics Sentry Dsn",
-            "description": "Data Source Name (DSN) for Sentry error tracking service. Allows automatic reporting of errors and exceptions to Aignostics support team",
-            "examples": [
-              "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432"
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "aignostics_bucket_hmac_access_key_id",
-          "aignostics_bucket_hmac_secret_access_key",
-          "aignostics_bucket_name",
-          "aignostics_bucket_protocol",
-          "aignostics_logfire_token",
-          "aignostics_sentry_dsn"
-        ],
-        "title": "OrganizationReadResponse",
-        "description": "Part of response schema for Organization object in `Get current user` endpoint.\nThis model corresponds to the response schema returned from\nAuth0 GET /v2/organizations/{id} endpoint, flattens out the metadata out\nand doesn't return branding or token_quota objects.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id\n\n#### Configuration for integrating with Aignostics Platform services.\n\nThe Aignostics Platform API requires signed URLs for input artifacts (slide images). To simplify this process,\nAignostics provides a dedicated storage bucket. The HMAC credentials below grant read and write\naccess to this bucket, allowing you to upload files and generate the signed URLs needed for API calls.\n\nAdditionally, logging and error reporting tokens enable Aignostics to provide better support and monitor\nsystem performance for your integration."
       },
       "OutputArtifact": {
         "properties": {
@@ -1813,6 +2135,37 @@
             "title": "Metadata",
             "description": "The metadata of the output artifact, provided by the application"
           },
+          "state": {
+            "$ref": "#/components/schemas/ArtifactState",
+            "description": "The current state of the artifact (PENDING, PROCESSING, TERMINATED)"
+          },
+          "termination_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtifactTerminationReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The reason for termination when state is TERMINATED"
+          },
+          "output": {
+            "$ref": "#/components/schemas/ArtifactOutput",
+            "description": "The output status of the artifact (NONE, FULL)"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message",
+            "description": "Error message when artifact is in error state"
+          },
           "download_url": {
             "anyOf": [
               {
@@ -1834,6 +2187,8 @@
           "output_artifact_id",
           "name",
           "metadata",
+          "state",
+          "output",
           "download_url"
         ],
         "title": "OutputArtifactResultReadResponse"
@@ -2119,7 +2474,7 @@
               }
             ],
             "title": "Custom Metadata Checksum",
-            "description": "The checksum of the `custom_metadata` field. Can be used ine the `PUT /runs/{run-id}/custom_metadata`\nrequest to avoid unwanted override of the values in concurrent requests.",
+            "description": "The checksum of the `custom_metadata` field. Can be used in the `PUT /runs/{run-id}/custom_metadata`\nrequest to avoid unwanted override of the values in concurrent requests.",
             "examples": [
               "f54fe109"
             ]
@@ -2190,139 +2545,6 @@
         ],
         "title": "RunTerminationReason"
       },
-      "UserReadResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id",
-            "description": "Unique user identifier",
-            "examples": [
-              "auth0|123456"
-            ]
-          },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email",
-            "description": "User email",
-            "examples": [
-              "user@domain.com"
-            ]
-          },
-          "email_verified": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email Verified",
-            "examples": [
-              true
-            ]
-          },
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name",
-            "description": "First and last name of the user",
-            "examples": [
-              "Jane Doe"
-            ]
-          },
-          "given_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Given Name",
-            "examples": [
-              "Jane"
-            ]
-          },
-          "family_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Family Name",
-            "examples": [
-              "Doe"
-            ]
-          },
-          "nickname": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Nickname",
-            "examples": [
-              "jdoe"
-            ]
-          },
-          "picture": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Picture",
-            "examples": [
-              "https://example.com/jdoe.jpg"
-            ]
-          },
-          "updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Updated At",
-            "examples": [
-              "2023-10-05T14:48:00.000Z"
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id"
-        ],
-        "title": "UserReadResponse",
-        "description": "Part of response schema for User object in `Get current user` endpoint.\nThis model corresponds to the response schema returned from\nAuth0 GET /v2/users/{id} endpoint.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/users/get-users-by-id"
-      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -2363,11 +2585,6 @@
             "title": "Version Number",
             "description": "Semantic version of the application"
           },
-          "application_id": {
-            "type": "string",
-            "title": "Application Id",
-            "description": "Application ID"
-          },
           "changelog": {
             "type": "string",
             "title": "Changelog",
@@ -2394,39 +2611,18 @@
             "format": "date-time",
             "title": "Released At",
             "description": "The timestamp when the application version was registered"
-          },
-          "application_version_id": {
-            "type": "string",
-            "title": "Application Version Id",
-            "description": "Application version ID"
-          },
-          "flow_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Flow Id",
-            "description": "Flow ID, used internally by the platform",
-            "deprecated": true
           }
         },
         "type": "object",
         "required": [
           "version_number",
-          "application_id",
           "changelog",
           "input_artifacts",
           "output_artifacts",
-          "released_at",
-          "application_version_id"
+          "released_at"
         ],
         "title": "VersionReadResponse",
-        "description": "Response schema for the `Application Version Details` endpoint"
+        "description": "Base Response schema for the `Application Version Details` endpoint"
       }
     },
     "securitySchemes": {
@@ -2435,8 +2631,8 @@
         "flows": {
           "authorizationCode": {
             "scopes": {},
-            "authorizationUrl": "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize",
-            "tokenUrl": "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"
+            "authorizationUrl": "https://aignostics-platform-staging.eu.auth0.com/authorize",
+            "tokenUrl": "https://aignostics-platform-staging.eu.auth0.com/oauth/token"
           }
         }
       }

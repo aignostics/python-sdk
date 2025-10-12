@@ -21,9 +21,10 @@ from typing import Any, List, Optional
 from typing_extensions import Annotated
 from aignx.codegen.models.application_read_response import ApplicationReadResponse
 from aignx.codegen.models.application_read_short_response import ApplicationReadShortResponse
-from aignx.codegen.models.item_read_response import ItemReadResponse
+from aignx.codegen.models.custom_metadata_update_request import CustomMetadataUpdateRequest
 from aignx.codegen.models.item_result_read_response import ItemResultReadResponse
-from aignx.codegen.models.item_status import ItemStatus
+from aignx.codegen.models.item_state import ItemState
+from aignx.codegen.models.item_termination_reason import ItemTerminationReason
 from aignx.codegen.models.me_read_response import MeReadResponse
 from aignx.codegen.models.run_creation_request import RunCreationRequest
 from aignx.codegen.models.run_creation_response import RunCreationResponse
@@ -1160,9 +1161,10 @@ class PublicApi:
 
 
     @validate_call
-    def get_item_v1_items_item_id_get(
+    def get_item_by_run_v1_runs_run_id_items_external_id_get(
         self,
-        item_id: StrictStr,
+        run_id: Annotated[StrictStr, Field(description="The run id, returned by `POST /runs/` endpoint")],
+        external_id: Annotated[StrictStr, Field(description="The `external_id` that was defined for the item by the customer that triggered the run.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1175,13 +1177,15 @@ class PublicApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ItemReadResponse:
-        """Get Item
+    ) -> ItemResultReadResponse:
+        """Get Item By Run
 
-        Retrieve details of a specific item (slide) by its ID.
+        Retrieve details of a specific item (slide) by its external ID and the run ID.
 
-        :param item_id: (required)
-        :type item_id: str
+        :param run_id: The run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param external_id: The `external_id` that was defined for the item by the customer that triggered the run. (required)
+        :type external_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1204,8 +1208,9 @@ class PublicApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_item_v1_items_item_id_get_serialize(
-            item_id=item_id,
+        _param = self._get_item_by_run_v1_runs_run_id_items_external_id_get_serialize(
+            run_id=run_id,
+            external_id=external_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1213,9 +1218,9 @@ class PublicApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ItemReadResponse",
-            '403': None,
+            '200': "ItemResultReadResponse",
             '404': None,
+            '403': None,
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -1230,9 +1235,10 @@ class PublicApi:
 
 
     @validate_call
-    def get_item_v1_items_item_id_get_with_http_info(
+    def get_item_by_run_v1_runs_run_id_items_external_id_get_with_http_info(
         self,
-        item_id: StrictStr,
+        run_id: Annotated[StrictStr, Field(description="The run id, returned by `POST /runs/` endpoint")],
+        external_id: Annotated[StrictStr, Field(description="The `external_id` that was defined for the item by the customer that triggered the run.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1245,13 +1251,15 @@ class PublicApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ItemReadResponse]:
-        """Get Item
+    ) -> ApiResponse[ItemResultReadResponse]:
+        """Get Item By Run
 
-        Retrieve details of a specific item (slide) by its ID.
+        Retrieve details of a specific item (slide) by its external ID and the run ID.
 
-        :param item_id: (required)
-        :type item_id: str
+        :param run_id: The run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param external_id: The `external_id` that was defined for the item by the customer that triggered the run. (required)
+        :type external_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1274,8 +1282,9 @@ class PublicApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_item_v1_items_item_id_get_serialize(
-            item_id=item_id,
+        _param = self._get_item_by_run_v1_runs_run_id_items_external_id_get_serialize(
+            run_id=run_id,
+            external_id=external_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1283,9 +1292,9 @@ class PublicApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ItemReadResponse",
-            '403': None,
+            '200': "ItemResultReadResponse",
             '404': None,
+            '403': None,
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -1300,9 +1309,10 @@ class PublicApi:
 
 
     @validate_call
-    def get_item_v1_items_item_id_get_without_preload_content(
+    def get_item_by_run_v1_runs_run_id_items_external_id_get_without_preload_content(
         self,
-        item_id: StrictStr,
+        run_id: Annotated[StrictStr, Field(description="The run id, returned by `POST /runs/` endpoint")],
+        external_id: Annotated[StrictStr, Field(description="The `external_id` that was defined for the item by the customer that triggered the run.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1316,12 +1326,14 @@ class PublicApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Get Item
+        """Get Item By Run
 
-        Retrieve details of a specific item (slide) by its ID.
+        Retrieve details of a specific item (slide) by its external ID and the run ID.
 
-        :param item_id: (required)
-        :type item_id: str
+        :param run_id: The run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param external_id: The `external_id` that was defined for the item by the customer that triggered the run. (required)
+        :type external_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1344,8 +1356,9 @@ class PublicApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_item_v1_items_item_id_get_serialize(
-            item_id=item_id,
+        _param = self._get_item_by_run_v1_runs_run_id_items_external_id_get_serialize(
+            run_id=run_id,
+            external_id=external_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1353,9 +1366,9 @@ class PublicApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ItemReadResponse",
-            '403': None,
+            '200': "ItemResultReadResponse",
             '404': None,
+            '403': None,
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -1365,9 +1378,10 @@ class PublicApi:
         return response_data.response
 
 
-    def _get_item_v1_items_item_id_get_serialize(
+    def _get_item_by_run_v1_runs_run_id_items_external_id_get_serialize(
         self,
-        item_id,
+        run_id,
+        external_id,
         _request_auth,
         _content_type,
         _headers,
@@ -1389,8 +1403,10 @@ class PublicApi:
         _body_params: Optional[bytes] = None
 
         # process the path parameters
-        if item_id is not None:
-            _path_params['item_id'] = item_id
+        if run_id is not None:
+            _path_params['run_id'] = run_id
+        if external_id is not None:
+            _path_params['external_id'] = external_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -1413,7 +1429,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/api/v1/items/{item_id}',
+            resource_path='/api/v1/runs/{run_id}/items/{external_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2255,11 +2271,12 @@ class PublicApi:
         run_id: Annotated[StrictStr, Field(description="Run id, returned by `POST /runs/` endpoint")],
         item_id__in: Annotated[Optional[List[StrictStr]], Field(description="Filter for item ids")] = None,
         external_id__in: Annotated[Optional[List[StrictStr]], Field(description="Filter for items by their external_id from the input payload")] = None,
-        status__in: Annotated[Optional[List[ItemStatus]], Field(description="Filter for items in certain statuses")] = None,
+        state: Annotated[Optional[ItemState], Field(description="Filter items by their state")] = None,
+        termination_reason: Annotated[Optional[ItemTerminationReason], Field(description="Filter items by their termination reason. Only applies to TERMINATED items.")] = None,
         custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="JSONPath expression to filter items by their custom_metadata")] = None,
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=5)]] = None,
-        sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `status` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)")] = None,
+        sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2283,15 +2300,17 @@ class PublicApi:
         :type item_id__in: List[str]
         :param external_id__in: Filter for items by their external_id from the input payload
         :type external_id__in: List[str]
-        :param status__in: Filter for items in certain statuses
-        :type status__in: List[ItemStatus]
+        :param state: Filter items by their state
+        :type state: ItemState
+        :param termination_reason: Filter items by their termination reason. Only applies to TERMINATED items.
+        :type termination_reason: ItemTerminationReason
         :param custom_metadata: JSONPath expression to filter items by their custom_metadata
         :type custom_metadata: str
         :param page:
         :type page: int
         :param page_size:
         :type page_size: int
-        :param sort: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `status` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)
+        :param sort: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)
         :type sort: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -2319,7 +2338,8 @@ class PublicApi:
             run_id=run_id,
             item_id__in=item_id__in,
             external_id__in=external_id__in,
-            status__in=status__in,
+            state=state,
+            termination_reason=termination_reason,
             custom_metadata=custom_metadata,
             page=page,
             page_size=page_size,
@@ -2352,11 +2372,12 @@ class PublicApi:
         run_id: Annotated[StrictStr, Field(description="Run id, returned by `POST /runs/` endpoint")],
         item_id__in: Annotated[Optional[List[StrictStr]], Field(description="Filter for item ids")] = None,
         external_id__in: Annotated[Optional[List[StrictStr]], Field(description="Filter for items by their external_id from the input payload")] = None,
-        status__in: Annotated[Optional[List[ItemStatus]], Field(description="Filter for items in certain statuses")] = None,
+        state: Annotated[Optional[ItemState], Field(description="Filter items by their state")] = None,
+        termination_reason: Annotated[Optional[ItemTerminationReason], Field(description="Filter items by their termination reason. Only applies to TERMINATED items.")] = None,
         custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="JSONPath expression to filter items by their custom_metadata")] = None,
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=5)]] = None,
-        sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `status` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)")] = None,
+        sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2380,15 +2401,17 @@ class PublicApi:
         :type item_id__in: List[str]
         :param external_id__in: Filter for items by their external_id from the input payload
         :type external_id__in: List[str]
-        :param status__in: Filter for items in certain statuses
-        :type status__in: List[ItemStatus]
+        :param state: Filter items by their state
+        :type state: ItemState
+        :param termination_reason: Filter items by their termination reason. Only applies to TERMINATED items.
+        :type termination_reason: ItemTerminationReason
         :param custom_metadata: JSONPath expression to filter items by their custom_metadata
         :type custom_metadata: str
         :param page:
         :type page: int
         :param page_size:
         :type page_size: int
-        :param sort: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `status` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)
+        :param sort: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)
         :type sort: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -2416,7 +2439,8 @@ class PublicApi:
             run_id=run_id,
             item_id__in=item_id__in,
             external_id__in=external_id__in,
-            status__in=status__in,
+            state=state,
+            termination_reason=termination_reason,
             custom_metadata=custom_metadata,
             page=page,
             page_size=page_size,
@@ -2449,11 +2473,12 @@ class PublicApi:
         run_id: Annotated[StrictStr, Field(description="Run id, returned by `POST /runs/` endpoint")],
         item_id__in: Annotated[Optional[List[StrictStr]], Field(description="Filter for item ids")] = None,
         external_id__in: Annotated[Optional[List[StrictStr]], Field(description="Filter for items by their external_id from the input payload")] = None,
-        status__in: Annotated[Optional[List[ItemStatus]], Field(description="Filter for items in certain statuses")] = None,
+        state: Annotated[Optional[ItemState], Field(description="Filter items by their state")] = None,
+        termination_reason: Annotated[Optional[ItemTerminationReason], Field(description="Filter items by their termination reason. Only applies to TERMINATED items.")] = None,
         custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="JSONPath expression to filter items by their custom_metadata")] = None,
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=5)]] = None,
-        sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `status` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)")] = None,
+        sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2477,15 +2502,17 @@ class PublicApi:
         :type item_id__in: List[str]
         :param external_id__in: Filter for items by their external_id from the input payload
         :type external_id__in: List[str]
-        :param status__in: Filter for items in certain statuses
-        :type status__in: List[ItemStatus]
+        :param state: Filter items by their state
+        :type state: ItemState
+        :param termination_reason: Filter items by their termination reason. Only applies to TERMINATED items.
+        :type termination_reason: ItemTerminationReason
         :param custom_metadata: JSONPath expression to filter items by their custom_metadata
         :type custom_metadata: str
         :param page:
         :type page: int
         :param page_size:
         :type page_size: int
-        :param sort: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `status` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending)
+        :param sort: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)
         :type sort: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -2513,7 +2540,8 @@ class PublicApi:
             run_id=run_id,
             item_id__in=item_id__in,
             external_id__in=external_id__in,
-            status__in=status__in,
+            state=state,
+            termination_reason=termination_reason,
             custom_metadata=custom_metadata,
             page=page,
             page_size=page_size,
@@ -2541,7 +2569,8 @@ class PublicApi:
         run_id,
         item_id__in,
         external_id__in,
-        status__in,
+        state,
+        termination_reason,
         custom_metadata,
         page,
         page_size,
@@ -2557,7 +2586,6 @@ class PublicApi:
         _collection_formats: Dict[str, str] = {
             'item_id__in': 'multi',
             'external_id__in': 'multi',
-            'status__in': 'multi',
             'sort': 'multi',
         }
 
@@ -2582,9 +2610,13 @@ class PublicApi:
             
             _query_params.append(('external_id__in', external_id__in))
             
-        if status__in is not None:
+        if state is not None:
             
-            _query_params.append(('status__in', status__in))
+            _query_params.append(('state', state.value))
+            
+        if termination_reason is not None:
+            
+            _query_params.append(('termination_reason', termination_reason.value))
             
         if custom_metadata is not None:
             
@@ -2645,7 +2677,7 @@ class PublicApi:
         application_id: Annotated[Optional[StrictStr], Field(description="Optional application ID filter")] = None,
         application_version: Annotated[Optional[StrictStr], Field(description="Optional Version Name")] = None,
         external_id: Annotated[Optional[StrictStr], Field(description="Optionally filter runs by items with this external ID")] = None,
-        custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.project` - Runs that have a project field defined - **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value - **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours - **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.project` - **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)` - **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              ")] = None,
+        custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              ")] = None,
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=5)]] = None,
         sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_version_id` - `organization_id` - `status` - `submitted_at` - `submitted_by`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending) ")] = None,
@@ -2672,7 +2704,7 @@ class PublicApi:
         :type application_version: str
         :param external_id: Optionally filter runs by items with this external ID
         :type external_id: str
-        :param custom_metadata: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.project` - Runs that have a project field defined - **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value - **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours - **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.project` - **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)` - **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              
+        :param custom_metadata: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              
         :type custom_metadata: str
         :param page:
         :type page: int
@@ -2738,7 +2770,7 @@ class PublicApi:
         application_id: Annotated[Optional[StrictStr], Field(description="Optional application ID filter")] = None,
         application_version: Annotated[Optional[StrictStr], Field(description="Optional Version Name")] = None,
         external_id: Annotated[Optional[StrictStr], Field(description="Optionally filter runs by items with this external ID")] = None,
-        custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.project` - Runs that have a project field defined - **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value - **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours - **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.project` - **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)` - **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              ")] = None,
+        custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              ")] = None,
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=5)]] = None,
         sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_version_id` - `organization_id` - `status` - `submitted_at` - `submitted_by`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending) ")] = None,
@@ -2765,7 +2797,7 @@ class PublicApi:
         :type application_version: str
         :param external_id: Optionally filter runs by items with this external ID
         :type external_id: str
-        :param custom_metadata: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.project` - Runs that have a project field defined - **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value - **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours - **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.project` - **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)` - **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              
+        :param custom_metadata: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              
         :type custom_metadata: str
         :param page:
         :type page: int
@@ -2831,7 +2863,7 @@ class PublicApi:
         application_id: Annotated[Optional[StrictStr], Field(description="Optional application ID filter")] = None,
         application_version: Annotated[Optional[StrictStr], Field(description="Optional Version Name")] = None,
         external_id: Annotated[Optional[StrictStr], Field(description="Optionally filter runs by items with this external ID")] = None,
-        custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.project` - Runs that have a project field defined - **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value - **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours - **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.project` - **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)` - **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              ")] = None,
+        custom_metadata: Annotated[Optional[Annotated[str, Field(strict=True, max_length=1000)]], Field(description="Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              ")] = None,
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=5)]] = None,
         sort: Annotated[Optional[List[StrictStr]], Field(description="Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_version_id` - `organization_id` - `status` - `submitted_at` - `submitted_by`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending) ")] = None,
@@ -2858,7 +2890,7 @@ class PublicApi:
         :type application_version: str
         :param external_id: Optionally filter runs by items with this external ID
         :type external_id: str
-        :param custom_metadata: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.project` - Runs that have a project field defined - **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value - **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours - **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.project` - **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)` - **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              
+        :param custom_metadata: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**              
         :type custom_metadata: str
         :param page:
         :type page: int
@@ -2996,6 +3028,602 @@ class PublicApi:
         return self.api_client.param_serialize(
             method='GET',
             resource_path='/api/v1/runs',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put(
+        self,
+        run_id: Annotated[StrictStr, Field(description="The run id, returned by `POST /runs/` endpoint")],
+        external_id: Annotated[StrictStr, Field(description="The `external_id` that was defined for the item by the customer that triggered the run.")],
+        custom_metadata_update_request: CustomMetadataUpdateRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> object:
+        """Put Item Custom Metadata By Run
+
+
+        :param run_id: The run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param external_id: The `external_id` that was defined for the item by the customer that triggered the run. (required)
+        :type external_id: str
+        :param custom_metadata_update_request: (required)
+        :type custom_metadata_update_request: CustomMetadataUpdateRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put_serialize(
+            run_id=run_id,
+            external_id=external_id,
+            custom_metadata_update_request=custom_metadata_update_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put_with_http_info(
+        self,
+        run_id: Annotated[StrictStr, Field(description="The run id, returned by `POST /runs/` endpoint")],
+        external_id: Annotated[StrictStr, Field(description="The `external_id` that was defined for the item by the customer that triggered the run.")],
+        custom_metadata_update_request: CustomMetadataUpdateRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[object]:
+        """Put Item Custom Metadata By Run
+
+
+        :param run_id: The run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param external_id: The `external_id` that was defined for the item by the customer that triggered the run. (required)
+        :type external_id: str
+        :param custom_metadata_update_request: (required)
+        :type custom_metadata_update_request: CustomMetadataUpdateRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put_serialize(
+            run_id=run_id,
+            external_id=external_id,
+            custom_metadata_update_request=custom_metadata_update_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put_without_preload_content(
+        self,
+        run_id: Annotated[StrictStr, Field(description="The run id, returned by `POST /runs/` endpoint")],
+        external_id: Annotated[StrictStr, Field(description="The `external_id` that was defined for the item by the customer that triggered the run.")],
+        custom_metadata_update_request: CustomMetadataUpdateRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Put Item Custom Metadata By Run
+
+
+        :param run_id: The run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param external_id: The `external_id` that was defined for the item by the customer that triggered the run. (required)
+        :type external_id: str
+        :param custom_metadata_update_request: (required)
+        :type custom_metadata_update_request: CustomMetadataUpdateRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put_serialize(
+            run_id=run_id,
+            external_id=external_id,
+            custom_metadata_update_request=custom_metadata_update_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put_serialize(
+        self,
+        run_id,
+        external_id,
+        custom_metadata_update_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if run_id is not None:
+            _path_params['run_id'] = run_id
+        if external_id is not None:
+            _path_params['external_id'] = external_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if custom_metadata_update_request is not None:
+            _body_params = custom_metadata_update_request
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2AuthorizationCodeBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='PUT',
+            resource_path='/api/v1/runs/{run_id}/items/{external_id}/custom-metadata',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(
+        self,
+        run_id: Annotated[StrictStr, Field(description="Run id, returned by `POST /runs/` endpoint")],
+        custom_metadata_update_request: CustomMetadataUpdateRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> object:
+        """Put Run Custom Metadata
+
+
+        :param run_id: Run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param custom_metadata_update_request: (required)
+        :type custom_metadata_update_request: CustomMetadataUpdateRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._put_run_custom_metadata_v1_runs_run_id_custom_metadata_put_serialize(
+            run_id=run_id,
+            custom_metadata_update_request=custom_metadata_update_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '404': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def put_run_custom_metadata_v1_runs_run_id_custom_metadata_put_with_http_info(
+        self,
+        run_id: Annotated[StrictStr, Field(description="Run id, returned by `POST /runs/` endpoint")],
+        custom_metadata_update_request: CustomMetadataUpdateRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[object]:
+        """Put Run Custom Metadata
+
+
+        :param run_id: Run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param custom_metadata_update_request: (required)
+        :type custom_metadata_update_request: CustomMetadataUpdateRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._put_run_custom_metadata_v1_runs_run_id_custom_metadata_put_serialize(
+            run_id=run_id,
+            custom_metadata_update_request=custom_metadata_update_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '404': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def put_run_custom_metadata_v1_runs_run_id_custom_metadata_put_without_preload_content(
+        self,
+        run_id: Annotated[StrictStr, Field(description="Run id, returned by `POST /runs/` endpoint")],
+        custom_metadata_update_request: CustomMetadataUpdateRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Put Run Custom Metadata
+
+
+        :param run_id: Run id, returned by `POST /runs/` endpoint (required)
+        :type run_id: str
+        :param custom_metadata_update_request: (required)
+        :type custom_metadata_update_request: CustomMetadataUpdateRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._put_run_custom_metadata_v1_runs_run_id_custom_metadata_put_serialize(
+            run_id=run_id,
+            custom_metadata_update_request=custom_metadata_update_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "object",
+            '404': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _put_run_custom_metadata_v1_runs_run_id_custom_metadata_put_serialize(
+        self,
+        run_id,
+        custom_metadata_update_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if run_id is not None:
+            _path_params['run_id'] = run_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if custom_metadata_update_request is not None:
+            _body_params = custom_metadata_update_request
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2AuthorizationCodeBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='PUT',
+            resource_path='/api/v1/runs/{run_id}/custom-metadata',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3277,3 +3905,5 @@ class PublicApi:
             _host=_host,
             _request_auth=_request_auth
         )
+
+

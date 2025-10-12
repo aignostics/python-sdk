@@ -35,13 +35,13 @@ from aignostics.utils import get_logger
 
 logger = get_logger(__name__)
 
-CALLBACK_PORT_RETRY_COUNT = 10
-JWK_CLIENT_CACHE_SIZE = 4  # Multiple entries exist in the rare case of settings changing at runtime only
-
 try:
     import sentry_sdk
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
+
+CALLBACK_PORT_RETRY_COUNT = 20
+CALLBACK_PORT_BACKOFF_DELAY = 1
 
 
 @functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
@@ -341,6 +341,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 token = session.fetch_token(settings().token_url, code=auth_code, include_client_id=True)
                 # Store the token
                 authentication_result.token = token["access_token"]
+                print(token["refresh_token"])
                 # Send success response
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-type", "text/html")
@@ -375,26 +376,33 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     host, port = parsed_redirect.hostname, parsed_redirect.port
     if not host or not port:
         raise RuntimeError(INVALID_REDIRECT_URI)
-    # check if port is callback port is available
-    port_unavailable_msg = f"Port {port} is already in use. Free the port, or use the device flow."
-    if not _ensure_local_port_is_available(port):
-        raise RuntimeError(port_unavailable_msg)
-    # start the server
-    try:
-        with HTTPServer((host, port), OAuthCallbackHandler) as server:
-            # Enable socket reuse to prevent "Address already in use" errors
-            # This allows the socket to be reused immediately after the server closes,
-            # even if the previous connection is in TIME_WAIT state
-            server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-            # Call Auth0 with challenge and redirect to localhost with code after successful authN
-            webbrowser.open_new(authorization_url)
-            # Extract authorization_code from redirected request, see: OAuthCallbackHandler
-            server.handle_request()
-    except OSError as e:
-        if e.errno == errno.EADDRINUSE:
-            raise RuntimeError(port_unavailable_msg) from e
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
+    for retry_count in range(CALLBACK_PORT_RETRY_COUNT):
+        try:
+            with HTTPServer((host, port), OAuthCallbackHandler) as server:
+                # Enable socket reuse to prevent "Address already in use" errors
+                # This allows the socket to be reused immediately after the server closes,
+                # even if the previous connection is in TIME_WAIT state
+                server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+                webbrowser.open_new(authorization_url)
+                server.handle_request()
+                # If we get here, authentication was successful
+                break
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                if retry_count < CALLBACK_PORT_RETRY_COUNT - 1:
+                    # Port is in use, wait with exponential backoff before retrying
+                    time.sleep(CALLBACK_PORT_BACKOFF_DELAY)
+                    continue
+                # Max retries reached
+                port_unavailable_msg = (
+                    f"Port {port} is already in use after {CALLBACK_PORT_RETRY_COUNT} retries. "
+                    "Please wait a moment and try again, or use device flow authentication."
+                )
+                raise RuntimeError(port_unavailable_msg) from e
+            # Different OS error, not related to port being in use
+            raise RuntimeError(AUTHENTICATION_FAILED) from e
 
     if authentication_result.error or not authentication_result.token:
         raise RuntimeError(AUTHENTICATION_FAILED)
@@ -546,39 +554,5 @@ def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         )
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])
-    except (RequestException, KeyError) as e:
-        # Sanitize error message to prevent leaking sensitive information (e.g., refresh tokens)
-        error_msg = str(e)
-        if isinstance(e, HTTPError) and e.response is not None:
-            error_msg = f"HTTP {e.response.status_code}: {e.response.reason} (URL: {settings().token_url})"
-        message = f"{AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN}{error_msg}"
-        logger.exception(message)
-        raise RuntimeError(message) from e
-
-
-def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_RETRY_COUNT) -> bool:
-    """Check if a port is already in use.
-
-    Args:
-        port (int): The port number to check.
-        max_retries (int): The maximum number of retries to check the port.
-
-    Returns:
-        bool: True if the port is not in use, False otherwise.
-    """
-
-    def is_port_available() -> bool:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                # Enable socket reuse to match the behavior of the actual HTTPServer
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                s.bind(("localhost", port))
-                return True
-            except OSError:
-                return False
-
-    retry_count = 0
-    while not is_port_available() and retry_count < max_retries:
-        time.sleep(1)
-        retry_count += 1
-    return retry_count < max_retries
+    except (HTTPError, requests.exceptions.RequestException) as e:
+        raise RuntimeError(AUTHENTICATION_FAILED) from e

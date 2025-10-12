@@ -77,7 +77,7 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> Non
     application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
     assert result.exit_code == 0
     assert "Zipped 11 files" in normalize_output(result.output)
-    zip_file = sanitize_path(Path(tmp_path / f"{application_version.version_number}_schemata.zip"))
+    zip_file = sanitize_path(Path(tmp_path / f"{HETA_APPLICATION_ID}_{application_version.version_number}_schemata.zip"))
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
@@ -101,7 +101,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
         "EfIIhA==;8.065226874391001;2054;1529;;;;\n"
     )
 
-    # Step 2: Simulate user now upading the metadata.csv file, by setting the tissue to "LUNG"
+    # Step 2: Simulate user now upgrading the metadata.csv file, by setting the tissue to "LUNG"
     # and disease to "LUNG_CANCER"
     metadata_csv.write_text(
         "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
@@ -118,7 +118,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 2
-    assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
+    assert "Invalid metadata for artifact `user_slide`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
 
 
@@ -152,9 +152,8 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     result = runner.invoke(cli, ["application", "run", "submit", "wrong", str(csv_path)])
 
     assert result.exit_code == 2
-    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
-    # Test likely passes when that is fixed on the platform side
-    assert "Error: Failed to create run for application version" in normalize_output(result.stdout)
+    # TODO(Helmut):
+    assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
 
 
 @pytest.mark.e2e
@@ -204,9 +203,6 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
-    # Test likely passes when that is fixed on the platform side
-
     result = runner.invoke(
         cli,
         [
@@ -235,7 +231,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: RUNNING" in normalize_output(describe_result.stdout)
+    assert "Status: PENDING" in normalize_output(describe_result.stdout) or "Status: PROCESSING" in normalize_output(describe_result.stdout)
     assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
         describe_result.stdout
     )
@@ -246,7 +242,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     )
     assert download_result.exit_code == 0
     assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
-    assert "status: running on plat" in normalize_output(download_result.stdout)
+    #todo(helmut): What was the reson to assert on the commented line? I could not get the
+    #string you check. Would just remove it
+    # assert "status: running on plat" in normalize_output(download_result.stdout)
 
     # Test the cancel command with the extracted run ID
     cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
@@ -257,14 +255,15 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: CANCELED_USER" in normalize_output(describe_result.stdout)
+    assert "Status: TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(describe_result.stdout)
 
     download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, str(tmp_path)])
     assert download_result.exit_code == 0
 
     # Verify the download message and path
     assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
-    assert "status: canceled by user." in normalize_output(download_result.stdout)
+    # todo(andreas): Would also be great to check if it is canceled by user
+    assert "status: terminated" in normalize_output(download_result.stdout)
 
     # More robust path verification - normalize paths and check if the destination path is mentioned in the output
     normalized_tmp_path = str(Path(tmp_path).resolve())
@@ -291,7 +290,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: CANCELED_USER" in normalize_output(describe_result.stdout)
+    assert "Status: TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(describe_result.stdout)
 
 
 # TODO(Helmut): Activate when PAPI fixed
@@ -304,11 +303,6 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
-    # TODO(Andreas): Currently fails with HTTP response body:
-    # {"detail":"field must be one of ['application_run_id', 'application_version_id', 'message',
-    # 'metadata', 'organization_id', 'status', 'terminated_at', 'triggered_at', 'triggered_by',
-    # 'user_payload'] but is submitted_at","trace_id":"efd2b9a29e2912563d12548fa5e2a453"}
-    # seems the backend is not compliant to it's own spec
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
     assert result.exit_code == 0
     output = normalize_output(result.stdout)

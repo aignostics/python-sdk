@@ -18,21 +18,20 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class RunTerminationReason(str, Enum):
+class ItemOutput(str, Enum):
     """
-    RunTerminationReason
+    ItemOutput
     """
 
     """
     allowed enum values
     """
-    ALL_ITEMS_PROCESSED = 'ALL_ITEMS_PROCESSED'
-    CANCELED_BY_SYSTEM = 'CANCELED_BY_SYSTEM'
-    CANCELED_BY_USER = 'CANCELED_BY_USER'
+    NONE = 'NONE'
+    FULL = 'FULL'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of RunTerminationReason from a JSON string"""
+        """Create an instance of ItemOutput from a JSON string"""
         return cls(json.loads(json_str))
 
 

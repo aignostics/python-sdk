@@ -20,6 +20,9 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
+from aignx.codegen.models.artifact_output import ArtifactOutput
+from aignx.codegen.models.artifact_state import ArtifactState
+from aignx.codegen.models.artifact_termination_reason import ArtifactTerminationReason
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -30,8 +33,12 @@ class OutputArtifactResultReadResponse(BaseModel):
     output_artifact_id: StrictStr = Field(description="The Id of the artifact. Used internally")
     name: StrictStr = Field(description=" Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.     ")
     metadata: Dict[str, Any] = Field(description="The metadata of the output artifact, provided by the application")
+    state: ArtifactState = Field(description="The current state of the artifact (PENDING, PROCESSING, TERMINATED)")
+    termination_reason: Optional[ArtifactTerminationReason] = None
+    output: ArtifactOutput = Field(description="The output status of the artifact (NONE, FULL)")
+    error_message: Optional[StrictStr] = None
     download_url: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=2083)]]
-    __properties: ClassVar[List[str]] = ["output_artifact_id", "name", "metadata", "download_url"]
+    __properties: ClassVar[List[str]] = ["output_artifact_id", "name", "metadata", "state", "termination_reason", "output", "error_message", "download_url"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -72,6 +79,16 @@ class OutputArtifactResultReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if termination_reason (nullable) is None
+        # and model_fields_set contains the field
+        if self.termination_reason is None and "termination_reason" in self.model_fields_set:
+            _dict['termination_reason'] = None
+
+        # set to None if error_message (nullable) is None
+        # and model_fields_set contains the field
+        if self.error_message is None and "error_message" in self.model_fields_set:
+            _dict['error_message'] = None
+
         # set to None if download_url (nullable) is None
         # and model_fields_set contains the field
         if self.download_url is None and "download_url" in self.model_fields_set:
@@ -92,6 +109,12 @@ class OutputArtifactResultReadResponse(BaseModel):
             "output_artifact_id": obj.get("output_artifact_id"),
             "name": obj.get("name"),
             "metadata": obj.get("metadata"),
+            "state": obj.get("state"),
+            "termination_reason": obj.get("termination_reason"),
+            "output": obj.get("output"),
+            "error_message": obj.get("error_message"),
             "download_url": obj.get("download_url")
         })
         return _obj
+
+

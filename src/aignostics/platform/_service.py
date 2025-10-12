@@ -7,8 +7,8 @@ from typing import Any
 
 import urllib3
 from aignx.codegen.models import MeReadResponse as Me
-from aignx.codegen.models import OrganizationReadResponse as Organization
-from aignx.codegen.models import UserReadResponse as User
+from aignx.codegen.models import Auth0Organization as Organization
+from aignx.codegen.models import Auth0User as User
 from pydantic import BaseModel, computed_field
 
 from aignostics.utils import BaseService, Health, get_logger, user_agent

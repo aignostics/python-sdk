@@ -8,12 +8,14 @@ Method | HTTP request | Description
 [**cancel_run_v1_runs_run_id_cancel_post**](PublicApi.md#cancel_run_v1_runs_run_id_cancel_post) | **POST** /v1/runs/{run_id}/cancel | Cancel Run
 [**create_run_v1_runs_post**](PublicApi.md#create_run_v1_runs_post) | **POST** /v1/runs | Initiate Run
 [**delete_run_items_v1_runs_run_id_artifacts_delete**](PublicApi.md#delete_run_items_v1_runs_run_id_artifacts_delete) | **DELETE** /v1/runs/{run_id}/artifacts | Delete Run Items
-[**get_item_v1_items_item_id_get**](PublicApi.md#get_item_v1_items_item_id_get) | **GET** /v1/items/{item_id} | Get Item
+[**get_item_by_run_v1_runs_run_id_items_external_id_get**](PublicApi.md#get_item_by_run_v1_runs_run_id_items_external_id_get) | **GET** /v1/runs/{run_id}/items/{external_id} | Get Item By Run
 [**get_me_v1_me_get**](PublicApi.md#get_me_v1_me_get) | **GET** /v1/me | Get current user
 [**get_run_v1_runs_run_id_get**](PublicApi.md#get_run_v1_runs_run_id_get) | **GET** /v1/runs/{run_id} | Get run details
 [**list_applications_v1_applications_get**](PublicApi.md#list_applications_v1_applications_get) | **GET** /v1/applications | List available applications
 [**list_run_items_v1_runs_run_id_items_get**](PublicApi.md#list_run_items_v1_runs_run_id_items_get) | **GET** /v1/runs/{run_id}/items | List Run Items
 [**list_runs_v1_runs_get**](PublicApi.md#list_runs_v1_runs_get) | **GET** /v1/runs | List Runs
+[**put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put**](PublicApi.md#put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put) | **PUT** /v1/runs/{run_id}/items/{external_id}/custom-metadata | Put Item Custom Metadata By Run
+[**put_run_custom_metadata_v1_runs_run_id_custom_metadata_put**](PublicApi.md#put_run_custom_metadata_v1_runs_run_id_custom_metadata_put) | **PUT** /v1/runs/{run_id}/custom-metadata | Put Run Custom Metadata
 [**read_application_by_id_v1_applications_application_id_get**](PublicApi.md#read_application_by_id_v1_applications_application_id_get) | **GET** /v1/applications/{application_id} | Read Application By Id
 
 
@@ -331,12 +333,12 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_item_v1_items_item_id_get**
-> ItemReadResponse get_item_v1_items_item_id_get(item_id)
+# **get_item_by_run_v1_runs_run_id_items_external_id_get**
+> ItemResultReadResponse get_item_by_run_v1_runs_run_id_items_external_id_get(run_id, external_id)
 
-Get Item
+Get Item By Run
 
-Retrieve details of a specific item (slide) by its ID.
+Retrieve details of a specific item (slide) by its external ID and the run ID.
 
 ### Example
 
@@ -344,7 +346,7 @@ Retrieve details of a specific item (slide) by its ID.
 
 ```python
 import aignx.codegen
-from aignx.codegen.models.item_read_response import ItemReadResponse
+from aignx.codegen.models.item_result_read_response import ItemResultReadResponse
 from aignx.codegen.rest import ApiException
 from pprint import pprint
 
@@ -365,15 +367,16 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.PublicApi(api_client)
-    item_id = 'item_id_example' # str | 
+    run_id = 'run_id_example' # str | The run id, returned by `POST /runs/` endpoint
+    external_id = 'external_id_example' # str | The `external_id` that was defined for the item by the customer that triggered the run.
 
     try:
-        # Get Item
-        api_response = api_instance.get_item_v1_items_item_id_get(item_id)
-        print("The response of PublicApi->get_item_v1_items_item_id_get:\n")
+        # Get Item By Run
+        api_response = api_instance.get_item_by_run_v1_runs_run_id_items_external_id_get(run_id, external_id)
+        print("The response of PublicApi->get_item_by_run_v1_runs_run_id_items_external_id_get:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling PublicApi->get_item_v1_items_item_id_get: %s\n" % e)
+        print("Exception when calling PublicApi->get_item_by_run_v1_runs_run_id_items_external_id_get: %s\n" % e)
 ```
 
 
@@ -383,11 +386,12 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **item_id** | **str**|  | 
+ **run_id** | **str**| The run id, returned by &#x60;POST /runs/&#x60; endpoint | 
+ **external_id** | **str**| The &#x60;external_id&#x60; that was defined for the item by the customer that triggered the run. | 
 
 ### Return type
 
-[**ItemReadResponse**](ItemReadResponse.md)
+[**ItemResultReadResponse**](ItemResultReadResponse.md)
 
 ### Authorization
 
@@ -403,8 +407,8 @@ Name | Type | Description  | Notes
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 **200** | Successful Response |  -  |
-**403** | Forbidden - You don&#39;t have permission to see this item |  -  |
 **404** | Not Found - Item with given ID does not exist |  -  |
+**403** | Forbidden - You don&#39;t have permission to see this item |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -640,7 +644,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **list_run_items_v1_runs_run_id_items_get**
-> List[ItemResultReadResponse] list_run_items_v1_runs_run_id_items_get(run_id, item_id__in=item_id__in, external_id__in=external_id__in, status__in=status__in, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
+> List[ItemResultReadResponse] list_run_items_v1_runs_run_id_items_get(run_id, item_id__in=item_id__in, external_id__in=external_id__in, state=state, termination_reason=termination_reason, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
 
 List Run Items
 
@@ -653,7 +657,8 @@ List items in a run with filtering, sorting, and pagination capabilities.  Retur
 ```python
 import aignx.codegen
 from aignx.codegen.models.item_result_read_response import ItemResultReadResponse
-from aignx.codegen.models.item_status import ItemStatus
+from aignx.codegen.models.item_state import ItemState
+from aignx.codegen.models.item_termination_reason import ItemTerminationReason
 from aignx.codegen.rest import ApiException
 from pprint import pprint
 
@@ -677,15 +682,16 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     run_id = 'run_id_example' # str | Run id, returned by `POST /runs/` endpoint
     item_id__in = ['item_id__in_example'] # List[str] | Filter for item ids (optional)
     external_id__in = ['external_id__in_example'] # List[str] | Filter for items by their external_id from the input payload (optional)
-    status__in = [aignx.codegen.ItemStatus()] # List[ItemStatus] | Filter for items in certain statuses (optional)
-    custom_metadata = '$.project' # str | JSONPath expression to filter items by their custom_metadata (optional)
+    state = aignx.codegen.ItemState() # ItemState | Filter items by their state (optional)
+    termination_reason = aignx.codegen.ItemTerminationReason() # ItemTerminationReason | Filter items by their termination reason. Only applies to TERMINATED items. (optional)
+    custom_metadata = '$' # str | JSONPath expression to filter items by their custom_metadata (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
-    sort = ['sort_example'] # List[str] | Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `status` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=status&sort=-external_id` - Sort by status, then by external ID (descending) (optional)
+    sort = ['sort_example'] # List[str] | Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending) (optional)
 
     try:
         # List Run Items
-        api_response = api_instance.list_run_items_v1_runs_run_id_items_get(run_id, item_id__in=item_id__in, external_id__in=external_id__in, status__in=status__in, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
+        api_response = api_instance.list_run_items_v1_runs_run_id_items_get(run_id, item_id__in=item_id__in, external_id__in=external_id__in, state=state, termination_reason=termination_reason, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
         print("The response of PublicApi->list_run_items_v1_runs_run_id_items_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -702,11 +708,12 @@ Name | Type | Description  | Notes
  **run_id** | **str**| Run id, returned by &#x60;POST /runs/&#x60; endpoint | 
  **item_id__in** | [**List[str]**](str.md)| Filter for item ids | [optional] 
  **external_id__in** | [**List[str]**](str.md)| Filter for items by their external_id from the input payload | [optional] 
- **status__in** | [**List[ItemStatus]**](ItemStatus.md)| Filter for items in certain statuses | [optional] 
+ **state** | [**ItemState**](.md)| Filter items by their state | [optional] 
+ **termination_reason** | [**ItemTerminationReason**](.md)| Filter items by their termination reason. Only applies to TERMINATED items. | [optional] 
  **custom_metadata** | **str**| JSONPath expression to filter items by their custom_metadata | [optional] 
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **sort** | [**List[str]**](str.md)| Sort the items by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.                 **Available fields:** - &#x60;item_id&#x60; - &#x60;run_id&#x60; - &#x60;external_id&#x60; - &#x60;status&#x60; - &#x60;custom_metadata&#x60;  **Examples:** - &#x60;?sort&#x3D;item_id&#x60; - Sort by id of the item (ascending) - &#x60;?sort&#x3D;-external_id&#x60; - Sort by external ID (descending) - &#x60;?sort&#x3D;status&amp;sort&#x3D;-external_id&#x60; - Sort by status, then by external ID (descending) | [optional] 
+ **sort** | [**List[str]**](str.md)| Sort the items by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.                 **Available fields:** - &#x60;item_id&#x60; - &#x60;run_id&#x60; - &#x60;external_id&#x60; - &#x60;custom_metadata&#x60;  **Examples:** - &#x60;?sort&#x3D;item_id&#x60; - Sort by id of the item (ascending) - &#x60;?sort&#x3D;-external_id&#x60; - Sort by external ID (descending) - &#x60;?sort&#x3D;custom_metadata&amp;sort&#x3D;-external_id&#x60; - Sort by metadata, then by external ID (descending) | [optional] 
 
 ### Return type
 
@@ -768,7 +775,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     application_id = 'application_id_example' # str | Optional application ID filter (optional)
     application_version = 'application_version_example' # str | Optional Version Name (optional)
     external_id = 'external_id_example' # str | Optionally filter runs by items with this external ID (optional)
-    custom_metadata = '$.project' # str | Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.project` - Runs that have a project field defined - **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value - **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours - **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.project` - **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)` - **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**               (optional)
+    custom_metadata = '$' # str | Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**               (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
     sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_version_id` - `organization_id` - `status` - `submitted_at` - `submitted_by`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending)  (optional)
@@ -792,7 +799,7 @@ Name | Type | Description  | Notes
  **application_id** | **str**| Optional application ID filter | [optional] 
  **application_version** | **str**| Optional Version Name | [optional] 
  **external_id** | **str**| Optionally filter runs by items with this external ID | [optional] 
- **custom_metadata** | **str**| Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: &#x60;$.project&#x60; - Runs that have a project field defined - **Exact value match**: &#x60;$.project ? (@ &#x3D;&#x3D; \&quot;cancer-research\&quot;)&#x60; - Runs with specific project value - **Numeric comparison**: &#x60;$.duration_hours ? (@ &lt; 2)&#x60; - Runs with duration less than 2 hours - **Array operations**: &#x60;$.tags[*] ? (@ &#x3D;&#x3D; \&quot;production\&quot;)&#x60; - Runs tagged with \&quot;production\&quot; - **Complex conditions**: &#x60;$.resources ? (@.gpu_count &gt; 2 &amp;&amp; @.memory_gb &gt;&#x3D; 16)&#x60; - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: &#x60;%24.project&#x60; - **Exact value match**: &#x60;%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)&#x60; - **Numeric comparison**: &#x60;%24.duration_hours%20%3F%20(%40%20%3C%202)&#x60; - **Array operations**: &#x60;%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)&#x60; - **Complex conditions**: &#x60;%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)&#x60;  #### Notes - JSONPath expressions are evaluated using PostgreSQL&#39;s &#x60;@?&#x60; operator - The &#x60;$.&#x60; prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use &#x60;&amp;&amp;&#x60; for AND operations and &#x60;||&#x60; for OR operations - Regular expressions use &#x60;like_regex&#x60; with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**               | [optional] 
+ **custom_metadata** | **str**| Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: &#x60;$.study&#x60; - Runs that have a study field defined - **Exact value match**: &#x60;$.study ? (@ &#x3D;&#x3D; \&quot;high\&quot;)&#x60; - Runs with specific study value - **Numeric comparison**: &#x60;$.confidence_score ? (@ &gt; 0.75)&#x60; - Runs with confidence score greater than 0.75 - **Array operations**: &#x60;$.tags[*] ? (@ &#x3D;&#x3D; \&quot;draft\&quot;)&#x60; - Runs with tags array containing \&quot;draft\&quot; - **Complex conditions**: &#x60;$.resources ? (@.gpu_count &gt; 2 &amp;&amp; @.memory_gb &gt;&#x3D; 16)&#x60; - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: &#x60;%24.study&#x60; - **Exact value match**: &#x60;%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)&#x60; - **Numeric comparison**: &#x60;%24.confidence_score%20%3F%20(%40%20%3E%200.75)&#x60; - **Array operations**: &#x60;%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)&#x60; - **Complex conditions**: &#x60;%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)&#x60;  #### Notes - JSONPath expressions are evaluated using PostgreSQL&#39;s &#x60;@?&#x60; operator - The &#x60;$.&#x60; prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use &#x60;&amp;&amp;&#x60; for AND operations and &#x60;||&#x60; for OR operations - Regular expressions use &#x60;like_regex&#x60; with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**               | [optional] 
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
  **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.  **Available fields:** - &#x60;run_id&#x60; - &#x60;application_version_id&#x60; - &#x60;organization_id&#x60; - &#x60;status&#x60; - &#x60;submitted_at&#x60; - &#x60;submitted_by&#x60;  **Examples:** - &#x60;?sort&#x3D;submitted_at&#x60; - Sort by creation time (ascending) - &#x60;?sort&#x3D;-submitted_at&#x60; - Sort by creation time (descending) - &#x60;?sort&#x3D;status&amp;sort&#x3D;-submitted_at&#x60; - Sort by status, then by time (descending)  | [optional] 
@@ -808,6 +815,161 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**404** | Run not found |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put**
+> object put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put(run_id, external_id, custom_metadata_update_request)
+
+Put Item Custom Metadata By Run
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.custom_metadata_update_request import CustomMetadataUpdateRequest
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    run_id = 'run_id_example' # str | The run id, returned by `POST /runs/` endpoint
+    external_id = 'external_id_example' # str | The `external_id` that was defined for the item by the customer that triggered the run.
+    custom_metadata_update_request = aignx.codegen.CustomMetadataUpdateRequest() # CustomMetadataUpdateRequest | 
+
+    try:
+        # Put Item Custom Metadata By Run
+        api_response = api_instance.put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put(run_id, external_id, custom_metadata_update_request)
+        print("The response of PublicApi->put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **run_id** | **str**| The run id, returned by &#x60;POST /runs/&#x60; endpoint | 
+ **external_id** | **str**| The &#x60;external_id&#x60; that was defined for the item by the customer that triggered the run. | 
+ **custom_metadata_update_request** | [**CustomMetadataUpdateRequest**](CustomMetadataUpdateRequest.md)|  | 
+
+### Return type
+
+**object**
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **put_run_custom_metadata_v1_runs_run_id_custom_metadata_put**
+> object put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(run_id, custom_metadata_update_request)
+
+Put Run Custom Metadata
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.custom_metadata_update_request import CustomMetadataUpdateRequest
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    run_id = 'run_id_example' # str | Run id, returned by `POST /runs/` endpoint
+    custom_metadata_update_request = aignx.codegen.CustomMetadataUpdateRequest() # CustomMetadataUpdateRequest | 
+
+    try:
+        # Put Run Custom Metadata
+        api_response = api_instance.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(run_id, custom_metadata_update_request)
+        print("The response of PublicApi->put_run_custom_metadata_v1_runs_run_id_custom_metadata_put:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->put_run_custom_metadata_v1_runs_run_id_custom_metadata_put: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **run_id** | **str**| Run id, returned by &#x60;POST /runs/&#x60; endpoint | 
+ **custom_metadata_update_request** | [**CustomMetadataUpdateRequest**](CustomMetadataUpdateRequest.md)|  | 
+
+### Return type
+
+**object**
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 ### HTTP response details
@@ -897,3 +1059,4 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+

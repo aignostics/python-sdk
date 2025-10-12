@@ -12,6 +12,7 @@ import typer
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException
 from aignostics.utils import console, get_logger, get_user_data_directory, sanitize_path
+from aignx.codegen.models import RunState
 
 from ._service import DownloadProgress, DownloadProgressState, Service
 from ._utils import (
@@ -157,7 +158,7 @@ def application_dump_schemata(  # noqa: C901
             file_path: Path = sanitize_path(
                 Path(
                     destination
-                    / f"{app_version.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
+                    / f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
                 )
             )  # type: ignore
             file_path.write_text(data=json.dumps(input_artifact.metadata_schema, indent=2), encoding="utf-8")
@@ -168,14 +169,14 @@ def application_dump_schemata(  # noqa: C901
             file_path = sanitize_path(
                 Path(
                     destination
-                    / f"{app_version.application_id}_{app_version.version_number}_output_{output_artifact.name}.json"
+                    / f"{app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json"
                 )
             )  # type: ignore
             file_path.write_text(data=json.dumps(output_artifact.metadata_schema, indent=2), encoding="utf-8")
             created_files.append(file_path)
 
     md_file_path: Path = sanitize_path(
-        Path(destination / f"{application_version.application_id}_{application_version.version_number}_schemata.md")
+        Path(destination / f"{app.application_id}_{app_version.version_number}_schemata.md")
     )  # type: ignore
     with md_file_path.open("w", encoding="utf-8") as md_file:
         md_file.write(f"# Schemata for Aignostics Application {app.name}\n")
@@ -184,18 +185,18 @@ def application_dump_schemata(  # noqa: C901
         md_file.write("\n## Input Artifacts\n")
         for input_artifact in app_version.input_artifacts:
             md_file.write(
-                f"- {input_artifact.name}: {app_version.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n"
+                f"- {input_artifact.name}: {app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n"
             )
         md_file.write("\n## Output Artifacts\n")
         for output_artifact in app_version.output_artifacts:
             md_file.write(
-                f"- {output_artifact.name}: {app_version.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n"
+                f"- {output_artifact.name}: {app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n"
             )
     created_files.append(md_file_path)
 
     if zip:
         zip_filename = sanitize_path(
-            Path(destination / f"{app_version.application_id}_{app_version.version_number}_schemata.zip")
+            Path(destination / f"{app.application_id}_{app_version.version_number}_schemata.zip")
         )
         with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file_path in created_files:
@@ -849,7 +850,10 @@ def result_download(  # noqa: PLR0913, PLR0917
                         panel.subtitle += f" with {progress.item_count} " + (
                             "item" if progress.item_count == 1 else "items"
                         )
-                    panel.subtitle += f", status: {application_run_status_to_str(progress.run.state)}."
+                    if progress.run.state is RunState.TERMINATED:
+                        panel.subtitle += f", status: {application_run_status_to_str(progress.run.state)} ({progress.run.termination_reason})."
+                    else:
+                        panel.subtitle += f", status: {application_run_status_to_str(progress.run.state)}."
                 main_download_progress_ui.update(
                     main_task,
                     description=(

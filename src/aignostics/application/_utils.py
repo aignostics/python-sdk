@@ -71,6 +71,8 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
         duration = run_data.terminated_at - run_data.submitted_at
         duration_str = humanize.precisedelta(duration)
         console.print(f"[bold]Duration:[/bold] {duration_str}")
+    else:
+        duration_str = "still processing"
     console.print(f"[bold]Submitted:[/bold] {run_data.submitted_at} ({run_data.submitted_by})")
     console.print(f"[bold]Terminated:[/bold] {run_data.terminated_at} ({duration_str})")
 
@@ -99,8 +101,8 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
     for item in results:
         console.print(f"  [bold]Item Reference:[/bold] {item.external_id}")
         console.print(f"  [bold]Item ID:[/bold] {item.item_id}")
-        console.print(f"  [bold]Status:[/bold] {item.status.value}")
-        console.print(f"  [bold]Message:[/bold] {item.message}")
+        console.print(f"  [bold]Status:[/bold] {item.state.value}")
+        console.print(f"  [bold]Message:[/bold] {item.error_message}")
 
         # TODO(Andreas): error_code is missing on item model; should be printed here as well.
         # Please add in the openapi.json and regenerate the SDK, and add line here.

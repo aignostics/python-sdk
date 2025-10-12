@@ -3,9 +3,10 @@
 This module provides classes for creating and managing application runs on the Aignostics platform.
 It includes functionality for starting runs, monitoring status, and downloading results.
 """
-
+import json
 import typing as t
 from collections.abc import Generator
+from enum import Enum
 from pathlib import Path
 from time import sleep
 from typing import Any
@@ -14,19 +15,19 @@ from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import (
     ItemCreationRequest,
     ItemResultReadResponse,
-    ItemStatus,
     RunCreationRequest,
     RunCreationResponse,
 )
+from aignx.codegen.models import ItemOutput
 from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
 )
+from aignx.codegen.models import ItemState
+from aignx.codegen.models import ItemTerminationReason
 from aignx.codegen.models import (
     RunReadResponse as ApplicationRunData,
 )
-from aignx.codegen.models import (
-    RunState as ApplicationRunStatus,
-)
+from aignx.codegen.models import RunState
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
@@ -39,9 +40,25 @@ from aignostics.platform._utils import (
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import user_agent
+from aignx.codegen.models import RunTerminationReason
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
+
+# todo(andreas): As soon as we switch to the new status types of the API,
+# this class is obsolete
+class ItemStatus(str, Enum):
+    PENDING = 'PENDING'
+    CANCELED_USER = 'CANCELED_USER'
+    CANCELED_SYSTEM = 'CANCELED_SYSTEM'
+    USER_ERROR = 'USER_ERROR'
+    SYSTEM_ERROR = 'SYSTEM_ERROR'
+    SUCCEEDED = 'SUCCEEDED'
+
+    @classmethod
+    def from_json(cls, json_str: str) -> t.Self:
+        """Create an instance of ItemStatus from a JSON string"""
+        return cls(json.loads(json_str))
 
 
 class ApplicationRun:
@@ -94,7 +111,32 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        return {item.external_id: item.status for item in self.results()}
+        #     PENDING = 'PENDING'
+        #     CANCELED_USER = 'CANCELED_USER'
+        #     CANCELED_SYSTEM = 'CANCELED_SYSTEM'
+        #     USER_ERROR = 'USER_ERROR'
+        #     SYSTEM_ERROR = 'SYSTEM_ERROR'
+        #     SUCCEEDED = 'SUCCEEDED'
+        item_status = {}
+        for item in self.results():
+            match item.state:
+                case ItemState.PENDING | ItemState.PROCESSING:
+                    item_status[item.external_id] = ItemStatus.PENDING
+                case ItemState.TERMINATED:
+                    match item.termination_reason:
+                        case ItemTerminationReason.SUCCEEDED:
+                            item_status[item.external_id] = ItemStatus.SUCCEEDED
+                        case ItemTerminationReason.SYSTEM_ERROR:
+                            item_status[item.external_id] = ItemStatus.SYSTEM_ERROR
+                        case ItemTerminationReason.USER_ERROR:
+                            item_status[item.external_id] = ItemStatus.USER_ERROR
+                        case ItemTerminationReason.SKIPPED:
+                            run_termination_reason = self.details().termination_reason
+                            if run_termination_reason == RunTerminationReason.CANCELED_BY_SYSTEM:
+                                item_status[item.external_id] = ItemStatus.CANCELED_SYSTEM
+                            if run_termination_reason == RunTerminationReason.CANCELED_BY_USER:
+                                item_status[item.external_id] = ItemStatus.CANCELED_USER
+        return item_status
 
     # TODO(Andreas): Low Prio / existed prior to API migraiton: Please check if this still fails with
     #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.
@@ -151,22 +193,22 @@ class ApplicationRun:
         application_run_dir = Path(download_base) / self.run_id
 
         # incrementally check for available results
-        application_run_status = self.details().state
-        while application_run_status == ApplicationRunStatus.PROCESSING:
+        application_run_state = self.details().state
+        while application_run_state in {RunState.PROCESSING, RunState.PENDING}:
             for item in self.results():
-                if item.status == ItemStatus.SUCCEEDED:
+                if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
             sleep(5)
-            application_run_status = self.details().state
+            application_run_state = self.details().state
             print(self)
 
         # check if last results have been downloaded yet and report on errors
         for item in self.results():
-            match item.status:
-                case ItemStatus.SUCCEEDED:
+            match item.output:
+                case ItemOutput.FULL:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
-                case ItemStatus.SYSTEM_ERROR | ItemStatus.USER_ERROR:
-                    print(f"{item.external_id} failed with {item.status.value}: {item.error_message}")
+                case ItemOutput.NONE:
+                    print(f"{item.external_id} failed with {item.state.value}: {item.error_message}")
 
     @staticmethod
     def ensure_artifacts_downloaded(
@@ -221,19 +263,14 @@ class ApplicationRun:
         Returns:
             str: String representation of the application run.
         """
-        app_status = self.details().state.value
-        item_status = self.item_status()
-        pending, succeeded, error = 0, 0, 0
-        for item in item_status.values():
-            match item:
-                case ItemStatus.PENDING:
-                    pending += 1
-                case ItemStatus.SUCCEEDED:
-                    succeeded += 1
-                case ItemStatus.USER_ERROR | ItemStatus.SYSTEM_ERROR:
-                    error += 1
-
-        items = f"{len(item_status)} items - ({pending}/{succeeded}/{error}) [pending/succeeded/error]"
+        details = self.details()
+        app_status = details.state.value
+        items = (
+            f"{details.statistics.item_count} items - "
+            f"({details.statistics.item_pending_count}/{details.statistics.item_succeeded_count}/"
+            f"{details.statistics.item_system_error_count + details.statistics.item_user_error_count}) "
+            f"[pending/succeeded/error]"
+        )
         return f"Application run `{self.run_id}`: {app_status}, {items}"
 
 

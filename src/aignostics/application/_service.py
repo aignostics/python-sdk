@@ -38,6 +38,8 @@ from aignostics.platform import (
 )
 from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
+from aignx.codegen.models import ItemOutput
+from aignx.codegen.models import ItemState
 
 from ._settings import Settings
 from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
@@ -796,7 +798,7 @@ class Service(BaseService):
 
         try:
             run = self.application_run_submit(
-                application_id=app_version.application_id,
+                application_id=application_id,
                 items=items,
                 application_version=app_version.version_number,
                 custom_metadata=custom_metadata,
@@ -810,14 +812,14 @@ class Service(BaseService):
             return run
         except ValueError as e:
             message = (
-                f"Failed to submit application run for application '{app_version.application_id}' "
+                f"Failed to submit application run for application '{application_id}' "
                 f"(version: {app_version.version_number}): {e}"
             )
             logger.warning(message)
             raise ValueError(message) from e
         except Exception as e:
             message = (
-                f"Failed to submit application run for application '{app_version.application_id}' "
+                f"Failed to submit application run for application '{application_id}' "
                 f"(version: {app_version.version_number}): {e}"
             )
             logger.exception(message)
@@ -988,7 +990,6 @@ class Service(BaseService):
         """Download application run results with progress tracking.
 
         Args:
-            progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
             run_id (str): The ID of the application run to download.
             destination_directory (Path): Directory to save downloaded files.
             create_subdirectory_for_run (bool): Whether to create a subdirectory for the run.
@@ -1215,7 +1216,7 @@ class Service(BaseService):
             if item.external_id in downloaded_items:
                 continue
 
-            if item.status == ItemStatus.SUCCEEDED:
+            if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
                 progress.status = DownloadProgressState.DOWNLOADING
                 progress.item_index = item_index
                 progress.item = item

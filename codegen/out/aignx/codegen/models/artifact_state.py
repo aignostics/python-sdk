@@ -18,21 +18,21 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class RunTerminationReason(str, Enum):
+class ArtifactState(str, Enum):
     """
-    RunTerminationReason
+    ArtifactState
     """
 
     """
     allowed enum values
     """
-    ALL_ITEMS_PROCESSED = 'ALL_ITEMS_PROCESSED'
-    CANCELED_BY_SYSTEM = 'CANCELED_BY_SYSTEM'
-    CANCELED_BY_USER = 'CANCELED_BY_USER'
+    PENDING = 'PENDING'
+    PROCESSING = 'PROCESSING'
+    TERMINATED = 'TERMINATED'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of RunTerminationReason from a JSON string"""
+        """Create an instance of ArtifactState from a JSON string"""
         return cls(json.loads(json_str))
 
 

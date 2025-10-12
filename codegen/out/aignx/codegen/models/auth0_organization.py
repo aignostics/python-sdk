@@ -19,20 +19,23 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from aignx.codegen.models.application_version import ApplicationVersion
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApplicationReadShortResponse(BaseModel):
+class Auth0Organization(BaseModel):
     """
-    Response schema for `List available applications` and `Read Application by Id` endpoints
+    Model for Auth0 Organization object returned from Auth0 API.  For details, see: https://auth0.com/docs/api/management/v2#!/Organizations/get_organizations_by_id  Aignostics-specific metadata fields are extracted from the `metadata` field.
     """ # noqa: E501
-    application_id: StrictStr = Field(description="Application ID")
-    name: StrictStr = Field(description="Application display name")
-    regulatory_classes: List[StrictStr] = Field(description="Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.")
-    description: StrictStr = Field(description="Describing what the application can do ")
-    latest_version: Optional[ApplicationVersion] = None
-    __properties: ClassVar[List[str]] = ["application_id", "name", "regulatory_classes", "description", "latest_version"]
+    id: StrictStr = Field(description="Unique organization identifier")
+    name: Optional[StrictStr] = None
+    display_name: Optional[StrictStr] = None
+    aignostics_bucket_hmac_access_key_id: StrictStr = Field(description="HMAC access key ID for the Aignostics-provided storage bucket. Used to authenticate requests for uploading files and generating signed URLs")
+    aignostics_bucket_hmac_secret_access_key: StrictStr = Field(description="HMAC secret access key paired with the access key ID. Keep this credential secure.")
+    aignostics_bucket_name: StrictStr = Field(description="Name of the bucket provided by Aignostics for storing input artifacts (slide images)")
+    aignostics_bucket_protocol: StrictStr = Field(description="Protocol to use for bucket access. Defines the URL scheme for connecting to the storage service")
+    aignostics_logfire_token: StrictStr = Field(description="Authentication token for Logfire observability service. Enables sending application logs and performance metrics to Aignostics for monitoring and support")
+    aignostics_sentry_dsn: StrictStr = Field(description="Data Source Name (DSN) for Sentry error tracking service. Allows automatic reporting of errors and exceptions to Aignostics support team")
+    __properties: ClassVar[List[str]] = ["id", "name", "display_name", "aignostics_bucket_hmac_access_key_id", "aignostics_bucket_hmac_secret_access_key", "aignostics_bucket_name", "aignostics_bucket_protocol", "aignostics_logfire_token", "aignostics_sentry_dsn"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +55,7 @@ class ApplicationReadShortResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApplicationReadShortResponse from a JSON string"""
+        """Create an instance of Auth0Organization from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,19 +76,21 @@ class ApplicationReadShortResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of latest_version
-        if self.latest_version:
-            _dict['latest_version'] = self.latest_version.to_dict()
-        # set to None if latest_version (nullable) is None
+        # set to None if name (nullable) is None
         # and model_fields_set contains the field
-        if self.latest_version is None and "latest_version" in self.model_fields_set:
-            _dict['latest_version'] = None
+        if self.name is None and "name" in self.model_fields_set:
+            _dict['name'] = None
+
+        # set to None if display_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.display_name is None and "display_name" in self.model_fields_set:
+            _dict['display_name'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApplicationReadShortResponse from a dict"""
+        """Create an instance of Auth0Organization from a dict"""
         if obj is None:
             return None
 
@@ -93,11 +98,15 @@ class ApplicationReadShortResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "application_id": obj.get("application_id"),
+            "id": obj.get("id"),
             "name": obj.get("name"),
-            "regulatory_classes": obj.get("regulatory_classes"),
-            "description": obj.get("description"),
-            "latest_version": ApplicationVersion.from_dict(obj["latest_version"]) if obj.get("latest_version") is not None else None
+            "display_name": obj.get("display_name"),
+            "aignostics_bucket_hmac_access_key_id": obj.get("aignostics_bucket_hmac_access_key_id"),
+            "aignostics_bucket_hmac_secret_access_key": obj.get("aignostics_bucket_hmac_secret_access_key"),
+            "aignostics_bucket_name": obj.get("aignostics_bucket_name"),
+            "aignostics_bucket_protocol": obj.get("aignostics_bucket_protocol"),
+            "aignostics_logfire_token": obj.get("aignostics_logfire_token"),
+            "aignostics_sentry_dsn": obj.get("aignostics_sentry_dsn")
         })
         return _obj
 

@@ -1,6 +1,6 @@
 """Tests for the authentication module of the Aignostics Python SDK."""
 
-import logging
+import errno
 import socket
 import time
 import webbrowser
@@ -19,7 +19,6 @@ from aignostics.platform._authentication import (
     _access_token_from_refresh_token,
     _authenticate,
     _can_open_browser,
-    _ensure_local_port_is_available,
     _perform_authorization_code_with_pkce_flow,
     _perform_device_flow,
     get_token,
@@ -494,50 +493,7 @@ class TestDeviceFlow:
 
 
 class TestPortAvailability:
-    """Test cases for checking port availability."""
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_port_available() -> None:
-        """Test that _ensure_local_port_is_available returns True when the port is available."""
-        with patch("socket.socket.bind", return_value=None) as mock_bind:
-            assert _ensure_local_port_is_available(8000) is True
-            mock_bind.assert_called_once()
-
-    @pytest.mark.unit
-    @pytest.mark.timeout(timeout=15)  # 10 retries, 1s sleep
-    @staticmethod
-    def test_port_unavailable() -> None:
-        """Test that _ensure_local_port_is_available returns False when the port is unavailable."""
-        with patch("socket.socket.bind", side_effect=socket.error) as mock_bind:
-            assert _ensure_local_port_is_available(8000) is False
-            mock_bind.assert_called()
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_port_retries() -> None:
-        """Test that _ensure_local_port_is_available retries the specified number of times."""
-        with patch("socket.socket.bind", side_effect=socket.error) as mock_bind, patch("time.sleep") as mock_sleep:
-            assert _ensure_local_port_is_available(8000, max_retries=3) is False
-            assert mock_bind.call_count == 4  # Initial attempt + 3 retries
-            assert mock_sleep.call_count == 3
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_port_availability_uses_socket_reuse() -> None:
-        """Test that _ensure_local_port_is_available uses SO_REUSEADDR socket option."""
-        mock_socket = MagicMock()
-        # Make the mock work as a context manager
-        mock_socket.__enter__ = MagicMock(return_value=mock_socket)
-        mock_socket.__exit__ = MagicMock(return_value=None)
-
-        with patch("socket.socket", return_value=mock_socket):
-            _ensure_local_port_is_available(8000)
-
-            # Verify that SO_REUSEADDR was set
-            mock_socket.setsockopt.assert_called_with(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            # Verify bind was attempted
-            mock_socket.bind.assert_called_with(("localhost", 8000))
+    """Test cases for port availability and socket reuse in authorization flow."""
 
     @pytest.mark.unit
     @staticmethod
@@ -550,7 +506,6 @@ class TestPortAvailability:
         # Mock the HTTPServer context manager
         with (
             patch("aignostics.platform._authentication.HTTPServer") as mock_http_server,
-            patch("aignostics.platform._authentication._ensure_local_port_is_available", return_value=True),
             patch("urllib.parse.urlparse") as mock_urlparse,
             patch("aignostics.platform._authentication.OAuth2Session") as mock_oauth,
             patch("aignostics.platform._authentication.webbrowser"),
@@ -567,6 +522,52 @@ class TestPortAvailability:
 
             # Verify SO_REUSEADDR was set
             mock_socket.setsockopt.assert_called_with(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    @staticmethod
+    def test_authorization_flow_retries_on_port_in_use(mock_settings) -> None:
+        """Test that authorization flow retries when port is in use."""
+        mock_server = MagicMock()
+        mock_socket = MagicMock()
+        mock_server.socket = mock_socket
+
+        # Mock OAuth session
+        mock_session = MagicMock(spec=OAuth2Session)
+        mock_session.authorization_url.return_value = ("https://test.auth/authorize", None)
+
+        # Create a side effect that fails once with EADDRINUSE, then succeeds
+        call_count = 0
+        def http_server_side_effect(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                # First call fails with port in use
+                error = OSError("Address already in use")
+                error.errno = errno.EADDRINUSE
+                raise error
+            # Second call succeeds
+            return MagicMock(__enter__=MagicMock(return_value=mock_server), __exit__=MagicMock(return_value=None))
+
+        # Mock auth result
+        mock_auth_result = MagicMock()
+        mock_auth_result.token = "retry.token"
+        mock_auth_result.error = None
+
+        with (
+            patch("aignostics.platform._authentication.OAuth2Session", return_value=mock_session),
+            patch("aignostics.platform._authentication.HTTPServer", side_effect=http_server_side_effect),
+            patch("urllib.parse.urlparse") as mock_urlparse,
+            patch("time.sleep") as mock_sleep,
+            patch("aignostics.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
+        ):
+            mock_urlparse.return_value.hostname = "localhost"
+            mock_urlparse.return_value.port = 8000
+
+            token = _perform_authorization_code_with_pkce_flow()
+
+            # Verify we got the token after retry
+            assert token == "retry.token"
+            # Verify we slept between retries
+            mock_sleep.assert_called_once()
 
 
 class TestRemoveCachedToken:
