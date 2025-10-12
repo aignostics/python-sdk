@@ -30,6 +30,11 @@ class PageBuilder(BasePageBuilder):
                 </style>
             """)
 
+        @ui.page("/alive")
+        def alive() -> None:
+            """Simple page to check the GUI is alive."""
+            ui.label("Yes")
+
         @ui.page("/system")
         async def page_system() -> None:  # noqa: PLR0915
             """System info and settings page."""

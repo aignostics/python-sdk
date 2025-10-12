@@ -13,6 +13,15 @@ if TYPE_CHECKING:
 from aignostics.utils import __project_name__
 
 
+@pytest.mark.integration
+async def test_gui_system_alive(user: User) -> None:
+    """Test that the user sees the info page with the mask secrets switch on by default."""
+    await user.open("/alive")
+    await user.should_see("Yes")
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=30)
 @pytest.mark.sequential
 async def test_gui_system_switch_right(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the info page with the mask secrets switch on by default."""

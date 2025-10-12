@@ -4,13 +4,14 @@ import json
 import sys
 from enum import StrEnum
 from importlib.util import find_spec
+from pathlib import Path
 from typing import Annotated
 
 import typer
 import yaml
 
 from ..constants import API_VERSIONS  # noqa: TID252
-from ..utils import console, get_logger  # noqa: TID252
+from ..utils import Health, console, get_logger  # noqa: TID252
 from ._service import Service
 
 logger = get_logger(__name__)
@@ -52,14 +53,17 @@ def health(
     Args:
         output_format (OutputFormat): Output format (JSON or YAML).
     """
+    health = _service.health()
     match output_format:
         case OutputFormat.JSON:
-            console.print_json(data=_service.health().model_dump())
+            console.print_json(data=health.model_dump())
         case OutputFormat.YAML:
             console.print(
-                yaml.dump(data=json.loads(_service.health().model_dump_json()), width=80, default_flow_style=False),
+                yaml.dump(data=json.loads(health.model_dump_json()), width=80, default_flow_style=False),
                 end="",
             )
+    if health.status is not Health.Code.UP:
+        sys.exit(1)
 
 
 @cli.command()
@@ -83,6 +87,30 @@ def info(
             console.print_json(data=info)
         case OutputFormat.YAML:
             console.print(yaml.dump(info, width=80, default_flow_style=False), end="")
+
+
+@cli.command()
+def dump_dot_env_file(
+    destination: Annotated[
+        Path,
+        typer.Option(
+            help="Path pointing to .env file to gnerate, defaults to .env.current in current working directory.",
+            exists=False,
+            file_okay=True,
+            dir_okay=False,
+            writable=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ] = Path(".env.current"),
+) -> None:
+    """Dump settings to .env file.
+
+    Args:
+        destination (Path): Path pointing to .env file to generate.
+    """
+    _service.dump_dot_env_file(destination=destination)
+    console.print(f"Settings dumped to {destination}", style="success")
 
 
 if find_spec("nicegui"):

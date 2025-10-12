@@ -2,6 +2,8 @@
 
 from importlib.util import find_spec
 
+from ._settings import Settings
+
 __all__ = []
 
 # advertise PageBuilder to enable auto-discovery
@@ -17,5 +19,6 @@ if find_spec("ijson") and find_spec("nicegui"):
         "AnnotateProgress",
         "PageBuilder",
         "Service",
+        "Settings",
         "cli",
     ]

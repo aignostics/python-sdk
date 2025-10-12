@@ -90,6 +90,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         show_welcome_message=native is False,
         show=show,
         window_size=WINDOW_SIZE if native else None,
+        reconnect_timeout=60 * 60 * 24 * 7,
     )
 
 

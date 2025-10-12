@@ -11,7 +11,7 @@ from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import UserReadResponse as User
 from pydantic import BaseModel, computed_field
 
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, user_agent
+from aignostics.utils import BaseService, Health, get_logger, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
 from ._client import Client
@@ -170,9 +170,13 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        user_info = self.get_user_info(relogin=mask_secrets)
+        user_info = None
+        try:
+            user_info = self.get_user_info()
+        except RuntimeError:
+            message = "Failed to retrieve user info for system info."
+            logger.warning(message)
         return {
-            "settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets}),
             "userinfo": (user_info.model_dump_secrets_masked() if mask_secrets else user_info.model_dump(mode="json"))
             if user_info
             else None,

@@ -16,6 +16,8 @@ from tests.contants_test import HETA_APPLICATION_ID, TEST_APPLICATION_ID
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_list_non_verbose(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list"])
@@ -24,6 +26,9 @@ def test_cli_application_list_non_verbose(runner: CliRunner) -> None:
     assert TEST_APPLICATION_ID in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.scheduled
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_list_verbose(runner: CliRunner) -> None:
     """Check application list command runs successfully."""
     result = runner.invoke(cli, ["application", "list", "--verbose"])
@@ -33,6 +38,8 @@ def test_cli_application_list_verbose(runner: CliRunner) -> None:
     assert TEST_APPLICATION_ID in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_describe(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID])
@@ -40,6 +47,8 @@ def test_cli_application_describe(runner: CliRunner) -> None:
     assert "tissue_qc:geojson_polygons" in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_describe_not_found(runner: CliRunner) -> None:
     """Check application describe command fails as expected on unknown upplication."""
     result = runner.invoke(cli, ["application", "describe", "unknown"])
@@ -47,6 +56,8 @@ def test_cli_application_describe_not_found(runner: CliRunner) -> None:
     assert "Application with ID 'unknown' not found." in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> None:
     """Check application dump schemata works as expected."""
     result = runner.invoke(
@@ -59,6 +70,8 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> Non
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner, tmp_path: Path) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     # Step 1: Prepare the file, by scanning for wsi and generating metadata
@@ -98,6 +111,8 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, tmp_path: Path) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     metadata_csv = tmp_path / "metadata.csv"
@@ -113,6 +128,8 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
     assert "Warning: Source file 'missing.file' (row 0) does not exist" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
@@ -123,10 +140,12 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
 
     result = runner.invoke(cli, ["application", "run", "submit", "wrong:v1.2.3", str(csv_path)])
 
-    assert result.exit_code == 1
-    assert "Error: Failed to create run for application version" in normalize_output(result.stdout)
+    assert "Warning: Could not find application version" in normalize_output(result.stdout)
+    assert result.exit_code == 2
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
@@ -141,6 +160,8 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
     assert "Invalid platform bucket URL: 'aws://bucket/test'" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command fails as expected."""
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
@@ -155,6 +176,9 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 10)
 def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command runs successfully."""
     csv_content = "reference;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
@@ -255,6 +279,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
 #    assert f"Run with id '{run_id}' not found." in normalize_output(describe_result.stdout) # noqa: ERA001
 
 
+@pytest.mark.e2e
+@pytest.mark.scheduled
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--limit", "10"])
@@ -268,6 +295,8 @@ def test_cli_run_list_limit_10(runner: CliRunner) -> None:
     assert displayed_count <= 10, f"Expected listed count to be <= 10, but got {displayed_count}"
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
@@ -281,6 +310,7 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     assert displayed_count == 1, f"Expected listed count to be == 1, but got {displayed_count}"
 
 
+@pytest.mark.integration
 def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
     """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "4711"])
@@ -288,6 +318,8 @@ def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
     assert "Error: Failed to retrieve run details for ID '4711'" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_describe_not_found(runner: CliRunner) -> None:
     """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "00000000000000000000000000000000"])
@@ -295,20 +327,24 @@ def test_cli_run_describe_not_found(runner: CliRunner) -> None:
     assert "Warning: Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
 def test_cli_run_cancel_invalid_run_id(runner: CliRunner) -> None:
     """Check run cancel command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "cancel", "4711"])
-    assert result.exit_code == 1
-    assert "Failed to cancel run with ID '4711'" in normalize_output(result.stdout)
+    assert "Run ID '4711' invalid" in normalize_output(result.stdout)
+    assert result.exit_code == 2
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_cancel_not_found(runner: CliRunner) -> None:
     """Check run cancel command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "cancel", "00000000000000000000000000000000"])
-    assert result.exit_code == 2
     assert "Warning: Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
+    assert result.exit_code == 2
 
 
+@pytest.mark.e2e
 def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path) -> None:
     """Check run result download command fails on invalid uui."""
     result = runner.invoke(cli, ["application", "run", "result", "download", "4711", str(tmp_path)])
@@ -316,6 +352,8 @@ def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path)
     assert "Run ID '4711' invalid" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Path) -> None:
     """Check run result download fails on ID not found."""
     result = runner.invoke(
@@ -325,6 +363,7 @@ def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Pat
     assert result.exit_code == 2
 
 
+@pytest.mark.integration
 def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
     """Check run result delete command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "result", "delete"])
@@ -332,7 +371,9 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
     assert result.exit_code == 2
 
 
+@pytest.mark.e2e
 @pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 60 * 5)
 def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
     """Check run execution runs e2e."""
     # Step 1: Download the sample file

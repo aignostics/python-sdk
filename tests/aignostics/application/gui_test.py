@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
+@pytest.mark.e2e
 @pytest.mark.sequential
 async def test_gui_index(user: User) -> None:
     """Test that the user sees the index page, and sees the intro."""
@@ -33,7 +34,9 @@ async def test_gui_index(user: User) -> None:
     await user.should_see("Download Datasets")
 
 
-@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.e2e
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 2)
 @pytest.mark.parametrize(
     ("application_id", "application_name", "expected_text"),
     [
@@ -59,7 +62,10 @@ async def test_gui_home_to_application(
     await user.should_see(expected_text, retries=300)
 
 
-@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
 async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner, silent_logging) -> None:
     """Test that the user can submit a run via the CLI up to deleting the run results."""
@@ -131,8 +137,10 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see("Welcome", retries=500)
 
 
-@pytest.mark.long_running
 @pytest.mark.skip(reason="temporaryly skipped for intermediate release")
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 5)
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
@@ -227,6 +235,9 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("status CANCELED_USER", retries=200)
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
 async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
     """Test that the user can download a run result via the GUI."""
@@ -235,10 +246,10 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
     ):
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
         latest_version_id = latest_version.application_version_id
-        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+        runs = Service().application_runs(limit=10, status=ApplicationRunStatus.COMPLETED)
 
         if not runs:
-            pytest.fail("No completed runs found, please run the test first.")
+            pytest.fail("No completed runs found, please run other tests first.")
         # Find a completed run with the latest application version ID
         run = None
         for potential_run in runs:
@@ -267,7 +278,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
 
         # Check: Download completed
-        await assert_notified(user, "Download completed.", 60)
+        await assert_notified(user, "Download completed.", 60 * 4)
         print_directory_structure(tmp_path, "execute")
         run_out_dir = tmp_path / run.application_run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"

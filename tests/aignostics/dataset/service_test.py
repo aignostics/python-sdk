@@ -3,9 +3,12 @@
 import subprocess
 from unittest import mock
 
+import pytest
+
 from aignostics.dataset._service import _active_processes, _cleanup_processes, _terminate_process
 
 
+@pytest.mark.unit
 @mock.patch("aignostics.dataset._service._terminate_process")
 def test_cleanup_processes_terminates_running_processes(mock_terminate_process: mock.MagicMock) -> None:
     """Test that _cleanup_processes terminates all running processes."""
@@ -28,6 +31,7 @@ def test_cleanup_processes_terminates_running_processes(mock_terminate_process: 
     assert mock_terminate_process.call_count == 1
 
 
+@pytest.mark.unit
 @mock.patch("time.sleep")
 def test_terminate_process(mock_sleep: mock.MagicMock) -> None:
     """Test that _terminate_process properly terminates a process."""
@@ -46,6 +50,7 @@ def test_terminate_process(mock_sleep: mock.MagicMock) -> None:
     assert mock_sleep.call_count == 5
 
 
+@pytest.mark.unit
 @mock.patch("time.sleep")
 def test_terminate_process_graceful_exit(mock_sleep: mock.MagicMock) -> None:
     """Test that _terminate_process handles graceful process termination."""
@@ -64,6 +69,7 @@ def test_terminate_process_graceful_exit(mock_sleep: mock.MagicMock) -> None:
     assert mock_sleep.call_count == 1  # Should have slept once before detecting termination
 
 
+@pytest.mark.unit
 @mock.patch("aignostics.dataset._service.logger")
 def test_terminate_process_exception_handling(mock_logger: mock.MagicMock) -> None:
     """Test that _terminate_process handles exceptions properly."""

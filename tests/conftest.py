@@ -21,6 +21,35 @@ if TYPE_CHECKING:
 
     from nicegui.testing import User
 
+
+def pytest_xdist_auto_num_workers(config) -> int:
+    """Set the number of workers for xdist to a factor of the (logical) CPU cores.
+
+    If the pytest option `--numprocesses` is set to "logical" or "auto", the number of workers is calculated
+    based on the logical CPU count multiplied by the factor. If the option is set otherwise, that value is
+    used directly.
+
+    The factor (float) can be adjusted via the environment variable `XDIST_WORKER_FACTOR`, defaulting to 1.
+
+    Args:
+        config: The pytest configuration object.
+
+    Returns:
+        int: The number of workers set for xdist.
+    """
+    if config.getoption("numprocesses") in {"logical", "auto"}:
+        logical_cpu_count = psutil.cpu_count(logical=config.getoption("numprocesses") == "logical") or 1
+        factor = float(os.getenv("XDIST_WORKER_FACTOR", "1"))
+        print(f"xdist_worker_factor: {factor}")
+        num_workers = max(1, int(logical_cpu_count * factor))
+        print(f"xdist_num_workers: {num_workers}")
+        logger.info(
+            "Set number of xdist workers to '%s' based on logical CPU count of %d.", num_workers, logical_cpu_count
+        )
+        return num_workers
+    return config.getoption("numprocesses")
+
+
 # See https://nicegui.io/documentation/section_testing#project_structure
 if find_spec("nicegui"):
     pytest_plugins = ("nicegui.testing.plugin",)
@@ -105,7 +134,7 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "long_running" in item.keywords:
                 item.add_marker(skip_me)
-    elif config.getoption("-m") == "not sequential":
+    elif config.getoption("-m") in {"not sequential", "(not sequential)"}:
         skip_me = pytest.mark.skip(reason="skipped as only not sequential marker given on execution using '-m'")
         for item in items:
             if "long_running" in item.keywords:

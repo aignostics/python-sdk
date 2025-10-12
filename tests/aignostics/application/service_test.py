@@ -8,6 +8,7 @@ from aignostics.platform import NotFoundException
 from tests.contants_test import HETA_APPLICATION_ID
 
 
+@pytest.mark.e2e
 def test_application_version_valid_semver_formats(runner: CliRunner) -> None:
     """Test that valid semver formats are accepted."""
     from aignostics.application import Service as ApplicationService
@@ -41,6 +42,7 @@ def test_application_version_valid_semver_formats(runner: CliRunner) -> None:
             pytest.skip(f"Application '{version_id.split(':')[0]}' not found, skipping test for this version format.")
 
 
+@pytest.mark.unit
 def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
     """Test that invalid semver formats are rejected with ValueError."""
     from aignostics.application import Service as ApplicationService
@@ -72,6 +74,7 @@ def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
             service.application_version(version_id)
 
 
+@pytest.mark.e2e
 def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
     """Test that use_latest_if_no_version_given works correctly."""
     service = ApplicationService()

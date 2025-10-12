@@ -8,6 +8,7 @@ from aignostics.platform import mime_type_to_file_ending
 class TestMimeTypeToFileEnding:
     """Tests for the mime_type_to_file_ending function."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_png_mime_type() -> None:
         """Test that image/png MIME type returns .png extension.
@@ -17,6 +18,7 @@ class TestMimeTypeToFileEnding:
         """
         assert mime_type_to_file_ending("image/png") == ".png"
 
+    @pytest.mark.unit
     @staticmethod
     def test_tiff_mime_type() -> None:
         """Test that image/tiff MIME type returns .tiff extension.
@@ -26,6 +28,7 @@ class TestMimeTypeToFileEnding:
         """
         assert mime_type_to_file_ending("image/tiff") == ".tiff"
 
+    @pytest.mark.unit
     @staticmethod
     def test_parquet_mime_type() -> None:
         """Test that application/vnd.apache.parquet MIME type returns .parquet extension.
@@ -35,6 +38,7 @@ class TestMimeTypeToFileEnding:
         """
         assert mime_type_to_file_ending("application/vnd.apache.parquet") == ".parquet"
 
+    @pytest.mark.unit
     @staticmethod
     def test_json_mime_type() -> None:
         """Test that application/json MIME type returns .json extension.
@@ -44,6 +48,7 @@ class TestMimeTypeToFileEnding:
         """
         assert mime_type_to_file_ending("application/json") == ".json"
 
+    @pytest.mark.unit
     @staticmethod
     def test_geojson_mime_type() -> None:
         """Test that application/geo+json MIME type returns .json extension.
@@ -53,6 +58,7 @@ class TestMimeTypeToFileEnding:
         """
         assert mime_type_to_file_ending("application/geo+json") == ".json"
 
+    @pytest.mark.unit
     @staticmethod
     def test_csv_mime_type() -> None:
         """Test that text/csv MIME type returns .csv extension.
@@ -62,6 +68,7 @@ class TestMimeTypeToFileEnding:
         """
         assert mime_type_to_file_ending("text/csv") == ".csv"
 
+    @pytest.mark.unit
     @staticmethod
     def test_unknown_mime_type_raises_error() -> None:
         """Test that an unknown MIME type raises a ValueError.

@@ -1,7 +1,10 @@
 """Tests to verify the CLI functionality of the wsi module."""
 
+import platform
+import sys
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
@@ -10,6 +13,8 @@ SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 3)
 def test_inspect_openslide_dicom(runner: CliRunner) -> None:
     """Check expected column returned."""
     file_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
@@ -27,7 +32,13 @@ def test_inspect_openslide_dicom(runner: CliRunner) -> None:
     )
 
 
-def test_inspect_pydicom_directory(runner: CliRunner) -> None:
+@pytest.mark.skipif(
+    sys.platform == "win32" and platform.machine().lower() == "arm64" and sys.version_info[:2] == (3, 12),
+    reason="Skipping on Windows ARM with Python 3.12.x",
+)
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 3)
+def test_inspect_pydicom_directory_non_verbose(runner: CliRunner) -> None:
     """Check expected column returned."""
     file_path = Path(__file__).parent.parent.parent / "resources"
     result = runner.invoke(cli, ["wsi", "dicom", "inspect", str(file_path)])
@@ -41,6 +52,12 @@ def test_inspect_pydicom_directory(runner: CliRunner) -> None:
     )
 
 
+@pytest.mark.skipif(
+    platform.system() == "Windows" and platform.machine().lower() == "arm64" and sys.version_info[:2] == (3, 12),
+    reason="Skipping on Windows ARM with Python 3.12.x given instability of pydicom on this platform",
+)
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 3)
 def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
     """Check expected column returned."""
     file_path = Path(__file__).parent.parent.parent / "resources"
@@ -59,6 +76,12 @@ def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
     )
 
 
+@pytest.mark.skipif(
+    platform.system() == "Windows" and platform.machine().lower() == "arm64" and sys.version_info[:2] == (3, 12),
+    reason="Skipping on Windows ARM with Python 3.12.x given instability of pydicom on this platform",
+)
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 3)
 def test_inspect_pydicom_geojson_import(runner: CliRunner) -> None:
     """Check expected column returned."""
     dicom_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"

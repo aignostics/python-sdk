@@ -14,18 +14,17 @@
 [![Uptime](https://uptime.betterstack.com/status-badges/v2/monitor/1wbqa.svg)](https://aignostics.betteruptime.com)
 
 > [!NOTE]
-> The Aignostics Python SDK is in alpha, with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and the [Aignostics Platform](https://platform.aignostics.com) in [early access](https://www.linkedin.com/posts/aignostics_introducing-atlas-he-tme-aignostics-is-activity-7325865745827979265-Sya9?utm_source=share&utm_medium=member_desktop&rcm=ACoAABRmV7cBCGv8eM_ot_kRTrBsb12olQvoLS4). 
+> The Aignostics Python SDK is in alpha, with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and the [Aignostics Platform](https://platform.aignostics.com) in [early access](https://www.linkedin.com/posts/aignostics_introducing-atlas-he-tme-aignostics-is-activity-7325865745827979265-Sya9?utm_source=share&utm_medium=member_desktop&rcm=ACoAABRmV7cBCGv8eM_ot_kRTrBsb12olQvoLS4).
 > Watch or star this repository to receive updates on new features and improvements of the SDK.
 
 ---
-
 
 ## Introduction
 
 The **Aignostics Python SDK** includes multiple pathways to interact with the
 **Aignostics Platform**:
 
-1. Use the **Aignostics Launchpad** to analyze whole slide images with advanced computational pathology applications like 
+1. Use the **Aignostics Launchpad** to analyze whole slide images with advanced computational pathology applications like
    [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) directly from your desktop.
    View your results by launching popular tools such as [QuPath](https://qupath.github.io/) and Python Notebooks with one click.
    The app runs on Mac OS X, Windows, and Linux.
@@ -60,27 +59,28 @@ more about how we achieve
 ## Quick Start
 
 > [!Note]
-> See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible. 
-> If you first want to learn bout the basic concepts and components of the Aignostics Platform skip to that section below. 
-> The further reading section points you to reference documentation listing all available CLI commands, methods and classes provided by the client library, operations of the API, how we achieve operational excellence, security, and more. 
+> See as follows for a quick start guide to get you up and running with the Aignostics Python SDK as quickly as possible.
+> If you first want to learn bout the basic concepts and components of the Aignostics Platform skip to that section below.
+> The further reading section points you to reference documentation listing all available CLI commands, methods and classes provided by the client library, operations of the API, how we achieve operational excellence, security, and more.
 > If you are not familiar with terminology please check the glossary at the end of this document.
 
 ### Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
 
 The **Aignostics Launchpad** is a graphical desktop application that allows you to run
-applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists. 
+applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists.
 
 The Launchpad is available for Mac OS X, Windows, and Linux, and can be installed easily:
 
-1. Visit the [Quick Start](https://platform.aignostics.com/getting-started/quick-start) 
+1. Visit the [Quick Start](https://platform.aignostics.com/getting-started/quick-start)
    page in the Aignostics Console.
 2. Copy the installation script and paste it into your terminal - compatible with MacOS, Windows, and Linux.
 3. Launch the application by running `uvx aignostics launchpad`.
-4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images 
+4. Follow the intuitive graphical interface to analyze public datasets or your own whole slide images
    with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other computational pathology applications.
 
 > [!Note]
 > The Launchpad features a growing ecosystem of extensions that seamlessly integrate with standard digital pathology tools. To use the Launchpad with all available extensions, run `uvx --with aignostics[qupath,marimo] aignostics launchpad`. Currently available extensions are:
+>
 > 1. **QuPath extension**: View your application results in [QuPath](https://qupath.github.io/) with a single click. The Launchpad creates QuPath projects on-the-fly.
 > 2. **Marimo extension**: Analyze your application results using [Marimo](https://marimo.io/) notebooks embedded in the Launchpad. You don't have to leave the Launchpad to do real data science.
 
@@ -144,10 +144,10 @@ to learn about all commands and options available.
 > [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
 > and follow the steps outlined in the `Use in Python Notebooks` section.
 
-The Python SDK includes Jupyter and Marimo notebooks to help you get started interacting 
+The Python SDK includes Jupyter and Marimo notebooks to help you get started interacting
 with the Aignostics Platform in your notebook environment.
 
-The notebooks showcase the interaction with the Aignostics Platform using our "Test Application". To run one them, 
+The notebooks showcase the interaction with the Aignostics Platform using our "Test Application". To run one them,
 please follow the steps outlined in the snippet below to clone this repository and start either the
 [Jupyter](https://docs.jupyter.org/en/latest/index.html)
 ([examples/notebook.ipynb](https://github.com/aignostics/python-sdk/blob/main/examples/notebook.ipynb))
@@ -181,12 +181,12 @@ uv run marimo edit examples/notebook.py
 Next to using the Launchpad, CLI and example notebooks, the Python SDK includes the
 *Aignostics Client Library* for integration with your Python Codebase.
 
-The following sections outline how to install the Python SDK for this purpose and 
+The following sections outline how to install the Python SDK for this purpose and
 interact with the Client.
 
 ### Installation
 
-The Aignostics Python SDK is published on the [Python Package Index (PyPI)](https://pypi.org/project/aignostics/), 
+The Aignostics Python SDK is published on the [Python Package Index (PyPI)](https://pypi.org/project/aignostics/),
 is compatible with Python 3.11 and above, and can be installed via via `uv` or `pip`:
 
 **Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv
@@ -292,7 +292,6 @@ Self-signed URLs for files in google storage buckets can be generated using the
 [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
 for the Google Storage Bucket**
 
-
 ## Platform
 
 ### Overview
@@ -302,6 +301,7 @@ The **Aignostics Platform** is a comprehensive cloud-based service that allows o
 ![Overview](https://raw.githubusercontent.com/aignostics/python-sdk/main/platform.png)
 
 ### Key Features
+
 Aignostics Platform offers key features designed to maximize value for its users:
 
 1. **Run Aignostics applications:** Run Aignostics advanced computational pathology applications like [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on your whole slide images (WSIs) and receive results in a easy to inspect formats.
@@ -315,9 +315,10 @@ Aignostics Platform offers key features designed to maximize value for its users
 To start using the Aignostics Platform and its advanced applications, your organization must be registered by our business support team:
 
 1. Access to the Aignostics Platform requires a formal business agreement. Once an agreement is in place between your organization and Aignostics, we proceed with your organization's registration. If your organization does not yet have an account, please contact your account manager or email us at [support@aignostics.com](mailto:support@aignostics.com) to express your interest.
-2. To register your organization, we require the name and email address of at least one employee, who will be assigned the Administrator role for your organisation. Your organisation's Administrator can invite and manage additional users. 
+2. To register your organization, we require the name and email address of at least one employee, who will be assigned the Administrator role for your organisation. Your organisation's Administrator can invite and manage additional users.
 
 > [!Important]
+>
 > 1. All user accounts must be associated with your organization's official domain. We do not support the registration of private or personal email addresses.
 > 2. For security, Two-Factor Authentication (2FA) is mandatory for all user accounts.
 > 3. We can integrate with your IDP system (e.g. SAML, OIDC) for user authentication. Please contact us to discuss the integration.
@@ -325,7 +326,7 @@ To start using the Aignostics Platform and its advanced applications, your organ
 
 ### Console
 
-The web-based [*Aignostics Console*](https://platform.aignostics.com) is a user-friendly interface that allows you to 
+The web-based [*Aignostics Console*](https://platform.aignostics.com) is a user-friendly interface that allows you to
 manage your organization, applications, quotas, and users registered with the Aignostics Platform.
 
 1. The Console is available to users registered for your organisation to manage their profile and monitor usage of their quota.
@@ -333,6 +334,7 @@ manage your organization, applications, quotas, and users registered with the Ai
 3. Both roles can trigger application runs.
 
 ### Applications
+
 An application is a fully automated advanced machine learning based workflow composed of one or more specific tasks (e.g. Tissue Quality Control, Tissue Segmentation, Cell Detection, Cell Classification and predictive analysis). Each application is designed for a particular analysis purpose (e.g. Tumor Micro Environment analysis or biomarker scoring). For each application we define input requirements, processing tasks and output formats.
 
 As contracted in your business agreement with Aignostics your organisation subscribes to one or more applications. The applications are available for your organization in the Aignostics Platform. You can find the list of available applications in the Console of the Aignostics Platform.
@@ -340,7 +342,6 @@ As contracted in your business agreement with Aignostics your organisation subsc
 Each application can have multiple versions. Please make sure you read dedicated application documentation to understand its specific constraints regarding acceptable formats, staining method, tissue types and diseases.
 
 Once registered to the Platform, your organization will automatically gain access to the "Test Application". This application can be used to configure the workflow and to make sure that the integration works correctly.
-
 
 ### Application run
 
@@ -360,11 +361,13 @@ When the application run is created, it can be in one of the following states:
 The status and operations of an application run are private to the user who triggered the run.
 
 ### Results
+
 When the processing of whole slide image is successfully completed, the resulting outputs become available for download. To assess specifics of application outputs please consult our application specific documentation, which you can find in the **Console**. Please note that you access to documentation is restricted to those applications your organisation subscribed to.
 
 Application run outputs are automatically deleted 30 days after the application run has completed. However, the owner of the application run (the user who initiated it) can use the API to manually delete outputs earlier, once the run has reached a final state - completed, cancelled by the system or cancelled by the user. The Launchpad and CLI provide enable to delete results with one click resp. command.
 
 ### Quotas
+
 Every organization has a limit on how many WSIs it can process in a calendar month. The following quotas exist:
 
 1. **Per organization**: as defined in your business agreement with Aignostics
@@ -391,14 +394,13 @@ The **Aignostics Platform API** is a RESTful web service that allows you to inte
 
 You can interact with the API using the Python client, which is a wrapper around the RESTful API. The Python client simplifies the process of making requests to the API and handling responses. It also provides convenient methods for uploading WSIs, checking application run status, and downloading results.
 
-For integration with programming languages other than Python, you can use the RESTful API directly. The API is designed to be language-agnostic, meaning you can use any programming language that supports HTTP requests to interact with it. This includes languages like Java, Kotlin, C#, Ruby, and Typescript. 
+For integration with programming languages other than Python, you can use the RESTful API directly. The API is designed to be language-agnostic, meaning you can use any programming language that supports HTTP requests to interact with it. This includes languages like Java, Kotlin, C#, Ruby, and Typescript.
 
 ### Cost
 
 Every WSI processed by the Platform generates a cost. Usage of the "Test Application" is free of charge for any registered user. The cost for other applications is defined in your business agreement with Aignostics. The cost is calculated based on the number of slides processed. When an application run is cancelled, either by the system or by the user, only processed images incur a cost.
 
 **[Read the API reference documentation](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)** or use our **[Interactive API Explorer](https://platform.aignostics.com/explore-api)** to dive into details of all operations and parameters.
-
 
 ## Further Reading
 
@@ -424,7 +426,6 @@ Every WSI processed by the Platform generates a cost. Usage of the "Test Applica
 6. We gratefully acknowledge the numerous
    [open source projects](https://aignostics.readthedocs.io/en/latest/attributions.html)
    that this project builds upon. Thank you to all these wonderful contributors!
-
 
 ## Glossary
 
@@ -626,4 +627,4 @@ Tool for running Python applications directly without explicit installation, use
 High-resolution digital image of an entire histopathology slide, the primary input format for computational pathology applications.
 
 **Workflow**  
-Sequence of automated processing steps within an application that transform input images into analytical results.
+Sequence of automated processing steps within an application that transform input images into analytical results..

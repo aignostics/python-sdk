@@ -10,6 +10,9 @@ log() {
 
 log "Starting installation of development tools..."
 
+# Disable man-db updates to speed up package installation
+sudo rm /var/lib/man-db/auto-update
+
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
 echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
 sudo apt-get update

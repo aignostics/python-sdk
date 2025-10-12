@@ -27,12 +27,13 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Set matrix based on commit message
+      - name: Set matrix based on commit message and PR labels
         id: set-matrix
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
-          if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]]; then
+          if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]] || [[ "$PR_LABELS" == *"skip:test:matrix-runner"* ]]; then
             echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
           else
             echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true},{"runner":"windows-11-arm","experimental":true}]}' >> $GITHUB_OUTPUT
@@ -95,7 +96,6 @@ jobs:
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
 
-
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
@@ -111,7 +111,7 @@ jobs:
           echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
-      - name: Validate installation
+      - name: Validate installation (single Python version)
         shell: bash
         run: |
             OUTPUT=$(uv run --no-dev aignostics --help)
@@ -120,7 +120,7 @@ jobs:
             exit 1
             fi
 
-      - name: Smoke tests
+      - name: Test / Smoke (single Python version)
         shell: bash
         run: |
           uv run --no-dev aignostics --help
@@ -130,67 +130,39 @@ jobs:
           uv run --all-extras aignostics application list
           uv run --all-extras aignostics application run list --verbose --limit 1
 
-      - name: Test / regular
-        if: (!contains(github.event.head_commit.message, 'skip:test:regular')) && (!contains(github.event.head_commit.message, 'skip:test:all'))
-        shell: bash
-        run: |
-          set +e
-          make test
-          EXIT_CODE=$?
-          # Show test execution in GitHub Job summary
-          found_files=0
-          for file in reports/pytest_*.md; do
-          if [ -f "$file" ]; then
-            cat "$file" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            found_files=1
-          fi
-          done
-          if [ $found_files -eq 0 ]; then
-            echo "# All regular tests passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Show test coverage in GitHub Job summary
-          if [ -f "reports/coverage.md" ]; then
-            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          exit $EXIT_CODE
+      - name: Test / Unit (multiple Python versions)
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: unit
+          make-target: test_unit_matrix
+          skip-marker: skip:test:unit
+          summary-title: All unit tests passed
 
-      - name: Test / long running
-        if: (!contains(github.event.head_commit.message, 'skip:test:long-running')) && (!contains(github.event.head_commit.message, 'skip:test:all'))
-        shell: bash
-        run: |
-          set +e
-          make test_long_running
-          EXIT_CODE=$?
-          # Show test execution in GitHub Job summary
-          found_files=0
-          for file in reports/pytest_*.md; do
-          if [ -f "$file" ]; then
-            cat "$file" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            found_files=1
-          fi
-          done
-          if [ $found_files -eq 0 ]; then
-            echo "# All long running tests passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Show test coverage in GitHub Job summary
-          if [ -f "reports/coverage.md" ]; then
-            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          exit $EXIT_CODE
+      - name: Test / Integration (multiple Python versions)
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: integration
+          make-target: test_integration_matrix
+          skip-marker: skip:test:integration
+          summary-title: All integration tests passed
 
-      - name: Upload test results
+      - name: Test / E2E / regular (multiple Python versions)
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: e2e
+          make-target: test_e2e_matrix
+          skip-marker: skip:test:e2e
+          summary-title: All regular e2e tests passed
+
+      - name: Test / E2E / long running (single Python version)
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: long-running
+          make-target: test_long_running
+          skip-marker: skip:test:long-running
+          summary-title: All long running e2e tests passed
+
+      - name: Upload test artifacts for inspection
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:

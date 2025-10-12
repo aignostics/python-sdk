@@ -8,6 +8,9 @@ import pytest
 BUILT_WITH_LOVE = "built with love in Berlin"
 
 
+@pytest.mark.e2e  # Calls container registry (ghcr.io)
+@pytest.mark.long_running
+@pytest.mark.docker
 @pytest.mark.skipif(
     platform.system() == "Windows", reason="Docker CLI tests are not supported on Windows due to path issues."
 )
@@ -17,9 +20,7 @@ BUILT_WITH_LOVE = "built with love in Berlin"
 )
 @pytest.mark.skip_with_act
 @pytest.mark.xdist_group(name="docker")
-@pytest.mark.docker
-@pytest.mark.long_running
-@pytest.mark.scheduled
+@pytest.mark.timeout(timeout=60 * 5)
 def test_core_docker_cli_help_with_love(docker_services) -> None:
     """Test the CLI help command with docker services returns expected output."""
     out = docker_services._docker_compose.execute("run aignostics --help")

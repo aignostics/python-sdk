@@ -1,7 +1,28 @@
 # Makefile for running common development tasks
 
+# Read and validate Python version from .python-version file
+PYTHON_VERSION := $(shell \
+	if [ ! -f .python-version ]; then \
+		echo "Error: .python-version file not found" >&2; \
+		echo "INVALID"; \
+	else \
+		version=$$(cat .python-version); \
+		if ! echo "$$version" | grep -qE '^[0-9]+\.[0-9]+(\.[0-9]+)?$$'; then \
+			echo "Error: .python-version must contain a valid 2 or 3 segment version number (e.g., 3.11 or 3.11.5), got: $$version" >&2; \
+			echo "INVALID"; \
+		else \
+			echo "$$version"; \
+		fi; \
+	fi)
+
+# Check if Python version is valid and fail if not
+ifeq ($(PYTHON_VERSION),INVALID)
+$(error Python version validation failed. See error message above.)
+endif
+
 # Define all PHONY targets
-.PHONY: all act audit bump clean codegen dist dist_native docs docker_build install lint pre_commit_run_all profile setup setup test test_coverage_reset test_long_running test_scheduled test_sequential update_from_template gui_watch
+.PHONY: act all audit bump clean codegen dist dist_native docs docker_build gui_watch install lint pre_commit_run_all profile setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_sequential test_unit test_unit_matrix update_from_template
+
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
@@ -14,6 +35,7 @@ nox-cmd = @if [ "$@" = "test" ]; then \
 	if [ -n "$(filter 3.%,$(MAKECMDGOALS))" ]; then \
 		uv run --all-extras nox -s test -p $(filter 3.%,$(MAKECMDGOALS)); \
 	elif [ -n "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo $(filter-out $@,$(MAKECMDGOALS)); \
 		uv run --all-extras nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
 	else \
 		uv run --all-extras nox -s $@; \
@@ -35,17 +57,42 @@ install:
 	sh install.sh
 	uv run pre-commit install
 
+## Run default tests, i.e. unit, then integration, then e2e tests, no long_running tests, single Python version
+test_default:
+	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test_default
+
+## Run unit tests (non-sociable tests)
+test_unit:
+	XDIST_WORKER_FACTOR=0.0 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "unit and not long_running" --cov-append
+
+test_unit_matrix:
+	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "unit and not long_running" --cov-append
+
+## Run integration tests (test real layer/module interactions with mocked external services)
+test_integration:
+	XDIST_WORKER_FACTOR=0.2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "integration and not long_running" --cov-append
+
+test_integration_matrix:
+	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "integration and not long_running" --cov-append
+
+## Run e2e tests (test complete workflows with real external services)
+test_e2e:
+	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "e2e and not long_running" --cov-append
+
+test_e2e_matrix:
+	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -- -m "e2e and not long_running" --cov-append
+
 ## Run tests marked as long_running
 test_long_running:
-	uv run --all-extras nox -s test -p 3.13 -- -m long_running --cov-append
+	XDIST_WORKER_FACTOR=2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m long_running --cov-append
 
-## Run tests marked as scheduled
+## Run tests marked as scheduled or scheduled_only
 test_scheduled:
-	uv run --all-extras nox -s test -p 3.13 -- -m scheduled
+	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "(scheduled or scheduled_only)"
 
 ## Run tests marked as sequential
 test_sequential:
-	uv run --all-extras nox -s test -p 3.13 -- -m sequential
+	uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m sequential
 
 ## Reset test coverage data
 test_coverage_reset:
@@ -83,7 +130,7 @@ profile:
 # Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
 dist_native:
 	# Build
-	uv run --python 3.13.6 --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
+	uv run --python $(PYTHON_VERSION) --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
 	# Create 7z archive preserving symlinks
 	@if command -v 7z >/dev/null 2>&1; then \
 		cd dist_native; \
@@ -151,10 +198,16 @@ help:
 	@echo "  pre_commit_run_all    - Run pre-commit hooks on all files"
 	@echo "  profile               - Profile with Scalene"
 	@echo "  setup                 - Setup development environment"
-	@echo "  test [3.11|3.12|3.13] - Run tests (for specific Python version)"
-	@echo "  test_sequential       - Run tests marked as sequential with Python 3.13"
-	@echo "  test_scheduled        - Run tests marked as scheduled with Python 3.13"
-	@echo "  test_long_running     - Run tests marked as long running with Python 3.13"
+	@echo "  test_default          - Run unit, then integration, then e2e tests, no long-running ones (python version defined in .python-version)"
+	@echo "  test_unit             - Run unit tests (python version defined in .python-version)"
+	@echo "  test_unit_matrix      - Run unit tests (matrix testing Python versions)"
+	@echo "  test_integration      - Run integration tests (python version defined in .python-version)"
+	@echo "  test_integration_matrix - Run integration tests (matrix testing Python versions)"
+	@echo "  test_e2e              - Run regular end-to-end tests (python version defined in .python-version)"
+	@echo "  test_e2e_matrix       - Run regular end-to-end tests (matrix testing Python versions)"
+	@echo "  test_long_running     - Run long-running end-to-end tests (python version defined in .python-version)"s
+	@echo "  test_sequential       - Run tests marked as sequential (python version defined in .python-version)"
+	@echo "  test_scheduled        - Run tests marked as scheduled (python version defined in .python-version)"
 	@echo "  test_coverage_reset   - Reset test coverage data"
 	@echo "  update_from_template  - Update from template using copier"
 	@echo ""

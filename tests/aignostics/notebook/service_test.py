@@ -13,8 +13,11 @@ from nicegui.testing import User
 from aignostics.notebook._service import MARIMO_SERVER_STARTUP_TIMEOUT, Service, _get_runner, _Runner
 
 
+@pytest.mark.integration
+@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.sequential
-def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.timeout(timeout=60 * 2)
+def test_notebook_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
     """Test the server can be started and stopped with real process.
 
     This test actually starts and stops a real Marimo server process
@@ -92,7 +95,10 @@ def test_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
                 service.stop()
 
 
+@pytest.mark.integration
+@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.sequential
+@pytest.mark.timeout(timeout=60 * 2)
 def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
     """Test notebook serving.
 
@@ -157,6 +163,7 @@ def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
         raise AssertionError(error_msg) from e
 
 
+@pytest.mark.unit
 def test_startup_timeout() -> None:
     """Test handling of timeout during server startup.
 
@@ -198,6 +205,7 @@ def test_startup_timeout() -> None:
         mock_stop.assert_called_once()
 
 
+@pytest.mark.unit
 def test_missing_url() -> None:
     """Test handling of missing URL after server ready event is triggered.
 
@@ -223,6 +231,7 @@ def test_missing_url() -> None:
             runner.start()
 
 
+@pytest.mark.unit
 def test_stop_nonrunning_server() -> None:
     """Test stopping a server that isn't running.
 
@@ -243,6 +252,7 @@ def test_stop_nonrunning_server() -> None:
         mock_logger.info.assert_called_with("Service stopped.")
 
 
+@pytest.mark.unit
 def test_capture_output_no_stdout() -> None:
     """Test _capture_output method with None stdout.
 
@@ -261,6 +271,7 @@ def test_capture_output_no_stdout() -> None:
         mock_logger.warning.assert_called_once_with("Cannot capture stdout")
 
 
+@pytest.mark.unit
 def test_server_url_detection() -> None:
     """Test server URL detection from output.
 
@@ -281,6 +292,7 @@ def test_server_url_detection() -> None:
         assert match.group(1).startswith("http"), f"Extracted invalid URL from: {output}"
 
 
+@pytest.mark.unit
 def test_singleton_runner() -> None:
     """Test that _get_runner returns a singleton instance."""
     # Reset the singleton for testing

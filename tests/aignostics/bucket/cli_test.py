@@ -1,10 +1,10 @@
 """Tests to verify the CLI functionality of the bucket module."""
 
-import json
 import os
 import uuid
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
@@ -13,6 +13,9 @@ from tests.conftest import normalize_output
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 60 * 2)
 def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0912, PLR0915
     """E2E flow testing all bucket CLI commands.
 
@@ -145,22 +148,9 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
     assert f"No objects found matching pattern ['{non_existent_file}']" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
 def test_cli_bucket_purge(runner: CliRunner) -> None:
     """Check bucket purge command runs successfully."""
     result = runner.invoke(cli, ["bucket", "purge", "--dry-run"])
     assert result.exit_code == 0
-
-
-def test_cli_bucket_info_settings(runner: CliRunner) -> None:
-    """Check settings in system info with proper defaults."""
-    result = runner.invoke(cli, ["system", "info"])
-    assert result.exit_code == 0
-
-    # Parse the JSON output
-    output_data = json.loads(result.output)
-
-    # Verify the bucket settings defaults
-    assert output_data["bucket"]["settings"]["protocol"] == "gs"
-    assert output_data["bucket"]["settings"]["region_name"] == "EUROPE-WEST3"
-    assert output_data["bucket"]["settings"]["upload_signed_url_expiration_seconds"] == 7200
-    assert output_data["bucket"]["settings"]["download_signed_url_expiration_seconds"] == 604800

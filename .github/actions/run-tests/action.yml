@@ -1,0 +1,54 @@
+name: 'Run Tests with Reporting'
+description: 'Run tests and generate GitHub summary reports'
+
+inputs:
+  test-type:
+    description: 'Type of test (unit, integration, e2e, long-running)'
+    required: true
+  make-target:
+    description: 'Make target to execute'
+    required: true
+  skip-marker:
+    description: 'Commit message or PR label marker to skip this test'
+    required: true
+  summary-title:
+    description: 'Title for the GitHub step summary'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run tests
+      if: |
+        (!contains(github.event.head_commit.message, inputs.skip-marker)) && 
+        (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+        (!contains(github.event.pull_request.labels.*.name, inputs.skip-marker)) &&
+        (!contains(github.event.pull_request.labels.*.name, 'skip:test:all')) &&
+        (inputs.test-type != 'long-running' || !github.event.pull_request.draft)
+      shell: bash
+      run: |
+        set +e
+        make ${{ inputs.make-target }}
+        EXIT_CODE=$?
+        # Show test execution in GitHub Job summary
+        found_files=0
+        for file in reports/pytest_*.md; do
+        if [ -f "$file" ]; then
+          cat "$file" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          found_files=1
+        fi
+        done
+        if [ $found_files -eq 0 ]; then
+          echo "# ${{ inputs.summary-title }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        # Show test coverage in GitHub Job summary
+        if [ -f "reports/coverage.md" ]; then
+          cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        exit $EXIT_CODE

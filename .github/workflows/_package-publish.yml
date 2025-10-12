@@ -15,9 +15,7 @@ env:
   PYTHONIOENCODING: "utf8"
 
 jobs:
-
   build_native:
-
     runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -143,7 +141,6 @@ jobs:
           cd ..
           ls -la dist_native_zipped/
 
-
       - name: Final smoke test
         shell: bash
         run: |
@@ -180,7 +177,9 @@ jobs:
           uv publish
 
       - name: Download test results for ubuntu-latest generated in _test.yml
-        if: (!contains(github.event.head_commit.message, 'skip:test:all'))
+        if: |
+          (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+          (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: test-results-ubuntu-latest
@@ -193,7 +192,9 @@ jobs:
           path: audit-results
 
       - name: Create GitHub release
-        if: (!contains(github.event.head_commit.message, 'skip:test:all'))
+        if: |
+          (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+          (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -203,7 +204,9 @@ jobs:
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
       - name: Create GitHub release (no test results)
-        if: (contains(github.event.head_commit.message, 'skip:test:all'))
+        if: |
+          (contains(github.event.head_commit.message, 'skip:test:all')) ||
+          (contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash

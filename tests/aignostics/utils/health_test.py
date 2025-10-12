@@ -10,6 +10,7 @@ DB_FAILURE = "DB failure"
 log = get_logger(__name__)
 
 
+@pytest.mark.unit
 def test_health_default_status() -> None:
     """Test that health can be initialized with default UP status."""
     health = Health(status=Health.Code.UP)
@@ -18,6 +19,7 @@ def test_health_default_status() -> None:
     assert health.components == {}
 
 
+@pytest.mark.unit
 def test_health_down_requires_reason() -> None:
     """Test that a DOWN status requires a reason."""
     # Valid case - DOWN with reason
@@ -30,12 +32,14 @@ def test_health_down_requires_reason() -> None:
         Health(status=Health.Code.DOWN)
 
 
+@pytest.mark.unit
 def test_health_up_with_reason_invalid() -> None:
     """Test that an UP status cannot have a reason."""
     with pytest.raises(ValueError, match="Health UP must not have reason"):
         Health(status=Health.Code.UP, reason="This should not be allowed")
 
 
+@pytest.mark.unit
 def test_compute_health_from_components_no_components() -> None:
     """Test that health status is unchanged when there are no components."""
     health = Health(status=Health.Code.UP)
@@ -46,6 +50,7 @@ def test_compute_health_from_components_no_components() -> None:
     assert result is health  # Should return self
 
 
+@pytest.mark.unit
 def test_compute_health_from_components_already_down() -> None:
     """Test that health status remains DOWN with original reason when already DOWN."""
     health = Health(status=Health.Code.DOWN, reason="Original failure")
@@ -61,6 +66,7 @@ def test_compute_health_from_components_already_down() -> None:
     assert result is health  # Should return self
 
 
+@pytest.mark.unit
 def test_compute_health_from_components_single_down() -> None:
     """Test that health status is DOWN when a single component is DOWN."""
     health = Health(status=Health.Code.UP)
@@ -76,6 +82,7 @@ def test_compute_health_from_components_single_down() -> None:
     assert result is health  # Should return self
 
 
+@pytest.mark.unit
 def test_compute_health_from_components_multiple_down() -> None:
     """Test that health status is DOWN with correct reason when multiple components are DOWN."""
     health = Health(status=Health.Code.UP)
@@ -97,6 +104,7 @@ def test_compute_health_from_components_multiple_down() -> None:
     assert result is health  # Should return self
 
 
+@pytest.mark.unit
 def test_compute_health_recursive() -> None:
     """Test that health status is recursively computed through the component tree."""
     # Create a nested health structure
@@ -121,18 +129,21 @@ def test_compute_health_recursive() -> None:
     assert health.components["other"].status == Health.Code.UP
 
 
+@pytest.mark.unit
 def test_str_representation_up() -> None:
     """Test string representation of UP health status."""
     health = Health(status=Health.Code.UP)
     assert str(health) == "UP"
 
 
+@pytest.mark.unit
 def test_str_representation_down() -> None:
     """Test string representation of DOWN health status."""
     health = Health(status=Health.Code.DOWN, reason="Service unavailable")
     assert str(health) == "DOWN: Service unavailable"
 
 
+@pytest.mark.unit
 def test_validate_health_state_integration() -> None:
     """Test the complete validation process with complex health tree."""
     # Create a complex health tree
@@ -166,6 +177,7 @@ def test_validate_health_state_integration() -> None:
     assert health.components["monitoring"].status == Health.Code.UP
 
 
+@pytest.mark.unit
 def test_health_manually_set_components_validated() -> None:
     """Test that manually setting components triggers validation."""
     health = Health(status=Health.Code.UP)

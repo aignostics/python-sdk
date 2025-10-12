@@ -40,6 +40,7 @@ def applications(mock_api) -> Applications:
     return Applications(mock_api)
 
 
+@pytest.mark.unit
 def test_applications_list_with_pagination(applications, mock_api) -> None:
     """Test that Applications.list() correctly handles pagination.
 
@@ -68,6 +69,7 @@ def test_applications_list_with_pagination(applications, mock_api) -> None:
     ])
 
 
+@pytest.mark.unit
 def test_versions_list_with_pagination(mock_api) -> None:
     """Test that Versions.list() correctly handles pagination.
 
@@ -100,6 +102,7 @@ def test_versions_list_with_pagination(mock_api) -> None:
     ])
 
 
+@pytest.mark.unit
 def test_applications_list_returns_empty_list_when_no_applications(applications, mock_api) -> None:
     """Test that Applications.list() returns an empty list when no applications are available.
 
@@ -120,6 +123,7 @@ def test_applications_list_returns_empty_list_when_no_applications(applications,
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
+@pytest.mark.unit
 def test_applications_list_returns_applications_when_available(applications, mock_api) -> None:
     """Test that Applications.list() returns a list of applications when available.
 
@@ -145,6 +149,7 @@ def test_applications_list_returns_applications_when_available(applications, moc
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
+@pytest.mark.unit
 def test_applications_list_passes_through_api_exception(applications, mock_api) -> None:
     """Test that Applications.list() passes through exceptions from the API.
 
@@ -164,6 +169,7 @@ def test_applications_list_passes_through_api_exception(applications, mock_api) 
     mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
+@pytest.mark.unit
 def test_versions_property_returns_versions_instance(applications) -> None:
     """Test that the versions property returns a Versions instance.
 
@@ -181,6 +187,7 @@ def test_versions_property_returns_versions_instance(applications) -> None:
     assert versions._api == applications._api
 
 
+@pytest.mark.unit
 def test_versions_list_returns_versions_for_application(mock_api) -> None:
     """Test that Versions.list() returns versions for a specified application.
 
@@ -208,6 +215,7 @@ def test_versions_list_returns_versions_for_application(mock_api) -> None:
     )
 
 
+@pytest.mark.unit
 def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
     """Test that Versions.list() returns an empty list when no versions are available.
 
@@ -233,6 +241,7 @@ def test_versions_list_returns_empty_list_when_no_versions(mock_api) -> None:
     )
 
 
+@pytest.mark.unit
 def test_versions_list_passes_through_api_exception(mock_api) -> None:
     """Test that Versions.list() passes through exceptions from the API.
 
