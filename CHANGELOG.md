@@ -1,6 +1,51 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.189](https://github.com/aignostics/python-sdk/compare/v0.2.188..0.2.189) - 2025-10-05
+# [0.2.190](https://github.com/aignostics/python-sdk/compare/v0.2.189..0.2.190) - 2025-10-12
+
+### ⛰️  Features
+
+- *(platform)* Auto-retry when retrieving JWKS set from auth0 - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Cache JWKS set, TTL 24h, minimizing calls to auth0 on validating access tokens - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Auto-retry when calling auth0 to exchange refresh token for access token - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Configurable timeout for requesting platform health - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Introduce authentication aware operation cache - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Use authentication aware operation cache to cache /me result - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency pywin32 to v311 ([#170](https://github.com/orhun/git-cliff/issues/170)) - ([39428a2](https://github.com/aignostics/python-sdk/commit/39428a24181c7923438d9512efdcc7d0909698f8))
+- *(platform)* Remove unused setting authorization_backoff_seconds - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Fix wrong exception handler in _perform_device_flow - was catching exception from urllib, not requests lib - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Use dynamic user agent for requesting /me - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(utils)* Surface setting validation error on misconfigured api root - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([39428a2](https://github.com/aignostics/python-sdk/commit/39428a24181c7923438d9512efdcc7d0909698f8))
+
+### 🚜 Refactor
+
+- *(platform)* Use proper error messages and logging on failure (of attempts) to exchange refresh token and validate access token - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Consistently use HTTPStatus consts instead of 200, 500 etc. - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Use proper constraints on settings - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform,system)* Optimize connection pooling - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+
+### 🎨 Styling
+
+- *(utils)* Consistent log formatting for file and console, both including process id - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(AI)* Improve Claude actions [skip:ci] - ([27a66c3](https://github.com/aignostics/python-sdk/commit/27a66c36dfaf942b027048cfb824e6a4ec6591df))
+- *(ai)* Have Claude Agent use Sonnet 4.5, and allow to create PRs - ([dcd6e60](https://github.com/aignostics/python-sdk/commit/dcd6e6011cc9f4e2ca92fb96f09d4066d79b248d))
+- *(deps)* Update ghcr.io/astral-sh/uv docker tag to v0.9.1 ([#60](https://github.com/orhun/git-cliff/issues/60)) - ([27d0e8f](https://github.com/aignostics/python-sdk/commit/27d0e8fdf29fd59b43318139eeeb0291d58456b3))
+- *(deps)* Update dependency sphinx-toolbox to v4 ([#169](https://github.com/orhun/git-cliff/issues/169)) - ([5050fe5](https://github.com/aignostics/python-sdk/commit/5050fe5def17aee4a3941b403d7726325b3a40d0))
+- *(gha)* Don't double-build on updates to PR by no longer building on push to branch other than main - ([5c6be6b](https://github.com/aignostics/python-sdk/commit/5c6be6bfca70906939d378cab4e3a06ffc55ef3b))
+- *(gha)* Cancel running build on update to pull request - ([2915534](https://github.com/aignostics/python-sdk/commit/2915534d8c78eab8d7b334be204e2247fa7f1106))
+- *(gha)* Don't run ci/cd twice on releases: skip:ci on push of commit for release, given already running on (annotated) tag pushed - ([399dae8](https://github.com/aignostics/python-sdk/commit/399dae87f3560e3b40f5c0feabff325db6ea3aa2))
+- *(pytst)* Add pytest-durations plugin to show durations of fixtures and tests - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([27d0e8f](https://github.com/aignostics/python-sdk/commit/27d0e8fdf29fd59b43318139eeeb0291d58456b3))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([27d0e8f](https://github.com/aignostics/python-sdk/commit/27d0e8fdf29fd59b43318139eeeb0291d58456b3))
+
+
+# [v0.2.189](https://github.com/aignostics/python-sdk/compare/v0.2.188..v0.2.189) - 2025-10-05
 
 ### ⚙️ Miscellaneous Tasks
 
