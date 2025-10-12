@@ -205,7 +205,7 @@ help:
 	@echo "  test_integration_matrix - Run integration tests (matrix testing Python versions)"
 	@echo "  test_e2e              - Run regular end-to-end tests (python version defined in .python-version)"
 	@echo "  test_e2e_matrix       - Run regular end-to-end tests (matrix testing Python versions)"
-	@echo "  test_long_running     - Run long-running end-to-end tests (python version defined in .python-version)"s
+	@echo "  test_long_running     - Run long-running end-to-end tests (python version defined in .python-version)"
 	@echo "  test_sequential       - Run tests marked as sequential (python version defined in .python-version)"
 	@echo "  test_scheduled        - Run tests marked as scheduled (python version defined in .python-version)"
 	@echo "  test_coverage_reset   - Reset test coverage data"
