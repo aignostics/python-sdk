@@ -45,6 +45,8 @@ def test_cli_application_list_verbose(runner: CliRunner) -> None:
     assert TEST_APPLICATION_VERSION in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_describe_success(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID])
@@ -77,7 +79,9 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path) -> Non
     application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
     assert result.exit_code == 0
     assert "Zipped 11 files" in normalize_output(result.output)
-    zip_file = sanitize_path(Path(tmp_path / f"{HETA_APPLICATION_ID}_{application_version.version_number}_schemata.zip"))
+    zip_file = sanitize_path(
+        Path(tmp_path / f"{HETA_APPLICATION_ID}_{application_version.version_number}_schemata.zip")
+    )
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
@@ -154,6 +158,8 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     assert result.exit_code == 2
     # TODO(Helmut):
     assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
+    assert "Warning: Could not find application version" in normalize_output(result.stdout)
+    assert result.exit_code == 2
 
 
 @pytest.mark.e2e
@@ -231,7 +237,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: PENDING" in normalize_output(describe_result.stdout) or "Status: PROCESSING" in normalize_output(describe_result.stdout)
+    assert "Status: PENDING" in normalize_output(describe_result.stdout) or "Status: PROCESSING" in normalize_output(
+        describe_result.stdout
+    )
     assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
         describe_result.stdout
     )

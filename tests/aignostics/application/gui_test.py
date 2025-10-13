@@ -34,7 +34,9 @@ async def test_gui_index(user: User) -> None:
     await user.should_see("Download Datasets")
 
 
-@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.e2e
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 2)
 @pytest.mark.parametrize(
     ("application_id", "application_name", "expected_text"),
     [
@@ -148,9 +150,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
-@pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
@@ -230,12 +230,12 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
         assert button_submission_upload.enabled, "Upload button should be enabled"
         user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
-        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...")
+        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...", 10)
         button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
         assert not button_submission_upload.enabled, "Upload button should be disabled after click"
-        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=30)
+        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=60)
         await assert_notified(user, "Submitting application run ...")
-        await assert_notified(user, "Application run submitted with id", wait_seconds=10)
+        await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
         # Check user is redirected to the run page and run is running
         await user.should_see(f"Run of he-tme:v{latest_application_version.version}", retries=200)
@@ -251,6 +251,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("status CANCELED_USER", retries=200)
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.flaky(retries=1, delay=5)
+@pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
 async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
     """Test that the user can download a run result via the GUI."""

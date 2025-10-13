@@ -9,7 +9,7 @@ updates:
       - "bot"
       - "dependabot"
       - "dependencies"
-      - "skip:test:long_running"
+      - "skip:test:long-running"
     schedule:
       interval: "cron"
       cronjob: "0 1 * * 1-5"
@@ -19,7 +19,7 @@ updates:
       - "bot"
       - "dependabot"
       - "dependencies"
-      - "skip:test:long_running"
+      - "skip:test:long-running"
     schedule:
       interval: "cron"
       cronjob: "0 1 * * 1-5"

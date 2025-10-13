@@ -9,8 +9,12 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from _pytest.fixtures import FixtureRequest
-from aignx.codegen.models import ArtifactOutput, ArtifactState, ItemOutput, ItemState, RunOutput, RunState
+from aignx.codegen.models import (
+    ApplicationRunStatus,
+    ArtifactOutput,
+    ArtifactState,
+    ItemStatus,
+)
 
 from aignostics import platform
 from aignostics.platform.resources.runs import ApplicationRun
@@ -114,126 +118,10 @@ def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
     ]
 
 
-# Test parameters without calling the payload functions at module level
-TEST_PARAMETERS = [
-    (
-        TEST_APPLICATION_TIMEOUT_SECONDS,
-        TEST_APPLICATION_ID,
-        TEST_APPLICATION_VERSION,
-        "three_spots_test",
-        "checksum_crc32c",
-    ),
-    (
-        HETA_APPLICATION_TIMEOUT_SECONDS,
-        HETA_APPLICATION_ID,
-        HETA_APPLICATION_VERSION,
-        "single_spot_heta",
-        "checksum_base64_crc32c",
-    ),
-]
-
-
-def single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
-    """Generates a payload using a single spot."""
-    return [
-        platform.InputItem(
-            external_id="1",
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="whole_slide_image",
-                    download_url=platform.generate_signed_url(
-                        "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
-                        HETA_APPLICATION_TIMEOUT_SECONDS,
-                    ),
-                    metadata={
-                        "checksum_base64_crc32c": "5onqtA==",
-                        "resolution_mpp": 0.26268186053789266,
-                        "width_px": 7447,
-                        "height_px": 7196,
-                        "media_type": "image/tiff",
-                        "staining_method": "H&E",
-                        "specimen": {
-                            "tissue": "LUNG",
-                            "disease": "LUNG_CANCER",
-                        },
-                    },
-                )
-            ],
-        ),
-    ]
-
-
-def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
-    """Generates a payload using three spots."""
-    return [
-        platform.InputItem(
-            external_id="1",
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="user_slide",
-                    download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
-                    ),
-                    metadata={
-                        "checksum_crc32c": "9l3NNQ==",
-                        "base_mpp": 0.46499982,
-                        "width": 3728,
-                        "height": 3640,
-                    },
-                )
-            ],
-        ),
-        platform.InputItem(
-            external_id="2",
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="user_slide",
-                    download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
-                    ),
-                    metadata={
-                        "checksum_crc32c": "w+ud3g==",
-                        "base_mpp": 0.46499982,
-                        "width": 3616,
-                        "height": 3400,
-                    },
-                )
-            ],
-        ),
-        platform.InputItem(
-            external_id="3",
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="user_slide",
-                    download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
-                    ),
-                    metadata={
-                        "checksum_crc32c": "Zmx0wA==",
-                        "base_mpp": 0.46499982,
-                        "width": 4016,
-                        "height": 3952,
-                    },
-                )
-            ],
-        ),
-    ]
-
-
-@pytest.mark.scheduled
-@pytest.mark.long_running
-@pytest.mark.parametrize(
-    ("timeout", "application_id", "application_version", "payload_type", "checksum_attribute_key"),
-    TEST_PARAMETERS,
-)
-def test_application_runs(  # noqa: D417, PLR0913, PLR0917
-    timeout: int,
+def _run_application_test(
     application_id: str,
-    application_version: str,
-    payload_type: str,
+    appkication_version: str,
+    payload: list[platform.InputItem],
     checksum_attribute_key: str,
 ) -> None:
     """Helper function to run an application test.
@@ -275,7 +163,8 @@ def test_application_runs_test_version() -> None:
         AssertionError: If any of the validation checks fail.
     """
     _run_application_test(
-        application_version_id=TEST_APPLICATION_VERSION_ID,
+        application_id=TEST_APPLICATION_ID,
+        application_version=TEST_APPLICATION_VERSION,
         payload=_get_three_spots_payload_for_test_v0_0_1(),
         checksum_attribute_key="checksum_crc32c",
     )
@@ -296,7 +185,8 @@ def test_application_runs_heta_version() -> None:
         AssertionError: If any of the validation checks fail.
     """
     _run_application_test(
-        application_version_id=HETA_APPLICATION_VERSION_ID,
+        application_id=HETA_APPLICATION_ID,
+        appliication_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta_v1_0_0(),
         checksum_attribute_key="checksum_base64_crc32c",
     )
@@ -317,8 +207,10 @@ def _validate_output(
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
     run_details = application_run.details()
-    assert run_details.state == RunState.TERMINATED and run_details.output == RunOutput.FULL, (
-        f"Run {application_run.run_id}: Did not finish in state `FULL` for its output, but '{run_details.output}'."
+    assert run_details.status == ApplicationRunStatus.COMPLETED, (
+        f"Application run {application_run.application_run_id}: "
+        f"Did not finish in status COMPLETED but '{run_details.status}",
+        f"run error message: '{run_details.message}'",
     )
 
     run_result_folder = output_base_folder / application_run.run_id
@@ -327,10 +219,11 @@ def _validate_output(
     run_results = application_run.results()
 
     for item in run_results:
-        # validate state
-        assert item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL, (
-            f"Application run {application_run.run_id}: "
-            f"output for item {item.external_id} is {item.output}, expected `FULL`"
+        # validate status
+        assert item.status == ItemStatus.SUCCEEDED, (
+            f"Application run {application_run.application_run_id}: "
+            f"item {item.reference} status is {item.status}, expected SUCCEEDED, "
+            f"item error message: '{item.message}'"
         )
         # validate results
         item_dir = run_result_folder / item.external_id

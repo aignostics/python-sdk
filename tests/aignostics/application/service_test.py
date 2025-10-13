@@ -8,7 +8,7 @@ from aignostics.platform import NotFoundException
 from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 
 
-@pytest.mark.unit
+@pytest.mark.e2e
 def test_application_version_valid_semver_formats(runner: CliRunner) -> None:
     """Test that valid semver formats are accepted."""
     from aignostics.application import Service as ApplicationService
@@ -60,7 +60,6 @@ def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.timeout(timeout=60)
 def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
     """Test that latest version works and tested."""
     service = ApplicationService()

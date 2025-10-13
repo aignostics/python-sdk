@@ -9,7 +9,7 @@
     "bot",
     "renovate",
     "dependencies",
-    "skip:test:long_running"
+    "skip:test:long-running"
   ],
   "ignorePaths": [
     "plugins/manifest/package.json"

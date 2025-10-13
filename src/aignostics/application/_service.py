@@ -323,7 +323,6 @@ class Service(BaseService):
             list[ApplicationVersion]: A list of all versions for the application.
 
         Raises:
-            NotFoundException: If the application with the given ID is not found.
             RuntimeError: If the versions cannot be retrieved unexpectedly.
         """
         # TODO(Andreas): Have to make calls for all application versions to construct
@@ -1086,15 +1085,23 @@ class Service(BaseService):
 
             # TODO(Helmut): More info
             if run_details.state == ApplicationRunStatus.TERMINATED:
-                logger.debug("Run '%s' reached final status '%s'.", run_id, run_details.state)
+                logger.debug(
+                    "Run '%s' reached final status '%s' with message '%s' (%s).",
+                    run_id,
+                    run_details.state,
+                    run_details.error_message,
+                    run_details.error_code,
+                )
                 break
 
             if not wait_for_completion:
                 logger.debug(
-                    "Run '%s' is in progress with status '%s' and message '%s', "
+                    "Run '%s' is in progress with status '%s' and message '%s' (%s), "
                     "but not requested to wait for completion.",
                     run_id,
                     run_details.state,
+                    run_details.error_message,
+                    run_details.error_code,
                 )
                 break
 
