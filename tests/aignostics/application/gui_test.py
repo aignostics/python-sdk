@@ -25,8 +25,9 @@ logger = get_logger(__name__)
 
 
 @pytest.mark.sequential
-async def test_gui_index(user: User) -> None:
+async def test_gui_index(user: User, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     # hello world
     gui_register_pages()
     await user.open("/")
@@ -50,9 +51,10 @@ async def test_gui_index(user: User) -> None:
     ],
 )
 async def test_gui_home_to_application(
-    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None
+    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None, record_property
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     gui_register_pages()
     await user.open("/")
     await user.should_see(application_name, retries=100)
@@ -61,8 +63,9 @@ async def test_gui_home_to_application(
 
 
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_logging) -> None:
+async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     with tempfile.TemporaryDirectory() as tmpdir:
         gui_register_pages()
 
@@ -208,8 +211,11 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
 
 @pytest.mark.sequential
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+async def test_gui_run_download(
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
+) -> None:
     """Test that the user can download a run result via the GUI."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
