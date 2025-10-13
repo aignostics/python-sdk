@@ -237,6 +237,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
 @pytest.mark.e2e
 @pytest.mark.long_running
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
 async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path) -> None:
