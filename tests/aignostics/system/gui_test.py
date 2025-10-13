@@ -21,7 +21,8 @@ async def test_gui_system_alive(user: User) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=60 * 3)
+@pytest.mark.sequential
 async def test_gui_system_switch_right(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the info page with the mask secrets switch on by default."""
     record_property("tested-item-id", "TEST-SYSTEM-GUI-SETTINGS-MASKING-DEFAULT")

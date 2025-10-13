@@ -214,6 +214,7 @@ if find_spec("marimo") and find_spec("fastapi"):
         assert result.exit_code == 0
 
     @pytest.mark.integration
+    @pytest.mark.timeout(timeout=60)
     def test_cli_notebook_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
         """Check uvicorn.run is called with FastAPI app from the notebook service."""
         # Create a mock for uvicorn.run to capture the app instance
