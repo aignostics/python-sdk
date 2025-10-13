@@ -137,7 +137,6 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see("Welcome", retries=500)
 
 
-@pytest.mark.skip(reason="temporaryly skipped for intermediate release")
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 5)
