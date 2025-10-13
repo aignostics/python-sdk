@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eb1897b8dc4b5d5bfe39a428a8f2304605e0983c # v7.0.0
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -155,12 +155,24 @@ jobs:
           summary-title: All regular e2e tests passed
 
       - name: Test / E2E / long running (single Python version)
+        if: |
+          !github.event.pull_request.draft
         uses: ./.github/actions/run-tests
         with:
           test-type: long-running
           make-target: test_long_running
-          skip-marker: skip:test:long-running
+          skip-marker: skip:test:long_running
           summary-title: All long running e2e tests passed
+
+      - name: Test / E2E / very long running (single Python version)
+        if: |
+          contains(github.event.head_commit.message, 'enable:test:very_long_running') || 
+          contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: very-long-running
+          make-target: test_very_long_running
+          summary-title: All very long running e2e tests passed
 
       - name: Upload test artifacts for inspection
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1

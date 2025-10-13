@@ -123,7 +123,7 @@ async def assert_notified(user: User, expected_notification: str, wait_seconds: 
 
 
 def pytest_collection_modifyitems(config, items) -> None:
-    """Modify collected test items by skipping tests marked as 'long_running' unless matching marker given.
+    """Modify collected test items by skipping tests marked as '[very_]long_running' unless matching marker given.
 
     Args:
         config: The pytest configuration object.
@@ -134,10 +134,14 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "long_running" in item.keywords:
                 item.add_marker(skip_me)
+            if "very_long_running" in item.keywords:
+                item.add_marker(skip_me)
     elif config.getoption("-m") in {"not sequential", "(not sequential)"}:
         skip_me = pytest.mark.skip(reason="skipped as only not sequential marker given on execution using '-m'")
         for item in items:
             if "long_running" in item.keywords:
+                item.add_marker(skip_me)
+            if "very_long_running" in item.keywords:
                 item.add_marker(skip_me)
 
 

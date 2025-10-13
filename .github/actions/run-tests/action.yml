@@ -10,7 +10,7 @@ inputs:
     required: true
   skip-marker:
     description: 'Commit message or PR label marker to skip this test'
-    required: true
+    required: false
   summary-title:
     description: 'Title for the GitHub step summary'
     required: true
@@ -20,11 +20,12 @@ runs:
   steps:
     - name: Run tests
       if: |
-        (!contains(github.event.head_commit.message, inputs.skip-marker)) && 
+        (inputs.skip-marker == '' || (
+          !contains(github.event.head_commit.message, inputs.skip-marker) && 
+          !contains(github.event.pull_request.labels.*.name, inputs.skip-marker)
+        )) && 
         (!contains(github.event.head_commit.message, 'skip:test:all')) &&
-        (!contains(github.event.pull_request.labels.*.name, inputs.skip-marker)) &&
-        (!contains(github.event.pull_request.labels.*.name, 'skip:test:all')) &&
-        (inputs.test-type != 'long-running' || !github.event.pull_request.draft)
+        (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
       shell: bash
       run: |
         set +e

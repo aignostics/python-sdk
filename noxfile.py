@@ -828,9 +828,9 @@ def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = F
 def test_default(session: nox.Session) -> None:
     """Run tests as part of 'make' (no further args)."""
     # Manually call test logic for each test type
-    _run_test_suite(session, "unit and not long_running", cov_append=False)
-    _run_test_suite(session, "integration and not long_running", cov_append=True)
-    _run_test_suite(session, "e2e and not long_running", cov_append=True)
+    _run_test_suite(session, "unit and not long_running and not very_long_running", cov_append=False)
+    _run_test_suite(session, "integration and not long_running and not very_long_running", cov_append=True)
+    _run_test_suite(session, "e2e and not long_running and not very_long_running", cov_append=True)
 
 
 @nox.session(python=TEST_PYTHON_VERSIONS, default=False)

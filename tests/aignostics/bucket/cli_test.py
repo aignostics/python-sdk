@@ -15,7 +15,7 @@ MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=60 * 60 * 2)
+@pytest.mark.timeout(timeout=60 * 15)
 def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0912, PLR0915
     """E2E flow testing all bucket CLI commands.
 

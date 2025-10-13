@@ -25,7 +25,7 @@ async def test_gui_bucket_shows(user: User) -> None:
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-@pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
     """E2E flow testing all bucket CLI commands.

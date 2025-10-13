@@ -372,7 +372,7 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.long_running
+@pytest.mark.very_long_running
 @pytest.mark.timeout(timeout=60 * 60 * 5)
 def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
     """Check run execution runs e2e."""

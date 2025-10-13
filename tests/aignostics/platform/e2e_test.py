@@ -159,7 +159,7 @@ def test_application_runs_test_version() -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.long_running
+@pytest.mark.very_long_running
 @pytest.mark.scheduled_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_TIMEOUT_SECONDS)
 def test_application_runs_heta_version() -> None:

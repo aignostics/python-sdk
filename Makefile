@@ -21,7 +21,7 @@ $(error Python version validation failed. See error message above.)
 endif
 
 # Define all PHONY targets
-.PHONY: act all audit bump clean codegen dist dist_native docs docker_build gui_watch install lint pre_commit_run_all profile setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_sequential test_unit test_unit_matrix update_from_template
+.PHONY: act all audit bump clean codegen dist dist_native docs docker_build gui_watch install lint pre_commit_run_all profile setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
 
 
 # Main target i.e. default sessions defined in noxfile.py
@@ -57,34 +57,38 @@ install:
 	sh install.sh
 	uv run pre-commit install
 
-## Run default tests, i.e. unit, then integration, then e2e tests, no long_running tests, single Python version
+## Run default tests, i.e. unit, then integration, then e2e tests, no (very_)long_running tests, single Python version
 test_default:
 	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test_default
 
 ## Run unit tests (non-sociable tests)
 test_unit:
-	XDIST_WORKER_FACTOR=0.0 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "unit and not long_running" --cov-append
+	XDIST_WORKER_FACTOR=0.0 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "unit and not long_running and not very_long_running" --cov-append
 
 test_unit_matrix:
-	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "unit and not long_running" --cov-append
+	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "unit and not long_running and not very_long_running" --cov-append
 
 ## Run integration tests (test real layer/module interactions with mocked external services)
 test_integration:
-	XDIST_WORKER_FACTOR=0.2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "integration and not long_running" --cov-append
+	XDIST_WORKER_FACTOR=0.2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "integration and not long_running and not very_long_running" --cov-append
 
 test_integration_matrix:
-	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "integration and not long_running" --cov-append
+	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "integration and not long_running and not very_long_running" --cov-append
 
 ## Run e2e tests (test complete workflows with real external services)
 test_e2e:
-	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "e2e and not long_running" --cov-append
+	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "e2e and not long_running and not very_long_running" --cov-append
 
 test_e2e_matrix:
-	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -- -m "e2e and not long_running" --cov-append
+	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -- -m "e2e and not long_running and not very_long_running" --cov-append
 
 ## Run tests marked as long_running
 test_long_running:
 	XDIST_WORKER_FACTOR=2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m long_running --cov-append
+
+## Run tests marked as very_long_running
+test_very_long_running:
+	XDIST_WORKER_FACTOR=2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m very_long_running --cov-append
 
 ## Run tests marked as scheduled or scheduled_only
 test_scheduled:
@@ -206,6 +210,7 @@ help:
 	@echo "  test_e2e              - Run regular end-to-end tests (python version defined in .python-version)"
 	@echo "  test_e2e_matrix       - Run regular end-to-end tests (matrix testing Python versions)"
 	@echo "  test_long_running     - Run long-running end-to-end tests (python version defined in .python-version)"
+	@echo "  test_very_long_running - Run very long-running end-to-end tests (python version defined in .python-version)"
 	@echo "  test_sequential       - Run tests marked as sequential (python version defined in .python-version)"
 	@echo "  test_scheduled        - Run tests marked as scheduled (python version defined in .python-version)"
 	@echo "  test_coverage_reset   - Reset test coverage data"
