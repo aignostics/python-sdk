@@ -151,6 +151,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
@@ -255,7 +256,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 5)
-@pytest.mark.sequential
+@pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
 async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
     """Test that the user can download a run result via the GUI."""
     with patch(
