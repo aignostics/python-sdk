@@ -323,15 +323,10 @@ class Service(BaseService):
             list[ApplicationVersion]: A list of all application versions sorted by semantic versioning (latest first).
 
         Raises:
-            NotFoundException: If the application with the given ID is not found.
             RuntimeError: If version list cannot be retrieved unexpectedly.
         """
         try:
             return self._get_platform_client().applications.versions.list_sorted(application=application)
-        except NotFoundException as e:
-            message = f"Application with ID '{application.application_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
         except Exception as e:
             message = f"Failed to retrieve application versions for application '{application.application_id}': {e}"
             logger.exception(message)
@@ -689,7 +684,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run(self, run_id: str) -> ApplicationRun:
-        """Find a run by its ID.
+        """Select a run by its ID.
 
         Args:
             run_id: The ID of the run to find
@@ -698,15 +693,10 @@ class Service(BaseService):
             ApplicationRun: The run that can be fetched using the .details() call.
 
         Raises:
-            NotFoundException: If no such application run found.
             RuntimeError: If initializing the client fails or the run cannot be retrieved.
         """
         try:
             return self._get_platform_client().run(run_id)
-        except NotFoundException as e:
-            message = f"Application run with ID '{run_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
         except Exception as e:
             message = f"Failed to retrieve application run with ID '{run_id}': {e}"
             logger.exception(message)

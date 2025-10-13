@@ -4,6 +4,7 @@ import logging
 import re
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -145,3 +146,111 @@ def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path) -> No
     expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
     assert expected_file.exists(), f"Expected file {expected_file} not found"
     assert expected_file.stat().st_size == 14681750
+
+
+@pytest.mark.integration
+def test_idc_indices_error_handling(runner: CliRunner) -> None:
+    """Test that idc indices command properly displays error messages."""
+    error_message = "Mock error: Failed to connect to IDC"
+
+    with patch("aignostics.third_party.idc_index.IDCClient.client") as mock_client:
+        mock_client.side_effect = RuntimeError(error_message)
+        result = runner.invoke(cli, ["dataset", "idc", "indices"])
+
+        assert result.exit_code == 1
+        # Check that key parts of the error message appear in output
+        assert "Mock error" in result.output or "Mock\nerror" in result.output
+        assert "Failed to connect to IDC" in result.output
+
+
+@pytest.mark.integration
+def test_idc_columns_error_handling(runner: CliRunner) -> None:
+    """Test that idc columns command properly displays error messages."""
+    error_message = "Mock error: Invalid index name"
+
+    with patch("aignostics.third_party.idc_index.IDCClient.client") as mock_client:
+        mock_instance = MagicMock()
+        mock_instance.fetch_index.side_effect = ValueError(error_message)
+        mock_client.return_value = mock_instance
+
+        result = runner.invoke(cli, ["dataset", "idc", "columns", "--index", "invalid_index"])
+
+        assert result.exit_code == 1
+        # Check that key parts of the error message appear in output
+        assert "Mock error" in result.output or "Mock\nerror" in result.output
+        assert "Invalid index name" in result.output
+        assert "invalid_index" in result.output
+
+
+@pytest.mark.integration
+def test_idc_query_error_handling(runner: CliRunner) -> None:
+    """Test that idc query command properly displays error messages."""
+    error_message = "Mock error: SQL query failed"
+    test_query = "SELECT * FROM invalid_table"
+
+    with patch("aignostics.third_party.idc_index.IDCClient.client") as mock_client:
+        mock_instance = MagicMock()
+        mock_instance.sql_query.side_effect = RuntimeError(error_message)
+        mock_client.return_value = mock_instance
+
+        result = runner.invoke(cli, ["dataset", "idc", "query", test_query])
+
+        assert result.exit_code == 1
+        # Check that key parts of the error message appear in output
+        assert "Mock error" in result.output or "Mock\nerror" in result.output
+        # "SQL query failed" may be split across lines by rich console formatting
+        assert "SQL query failed" in result.output or ("query" in result.output and "failed" in result.output)
+
+
+@pytest.mark.integration
+def test_idc_download_error_handling(runner: CliRunner, tmp_path: Path) -> None:
+    """Test that idc download command properly displays error messages."""
+    error_message = "Mock error: Download failed"
+    test_id = "test-series-id"
+
+    with patch("aignostics.third_party.idc_index.IDCClient.client") as mock_client:
+        mock_client.side_effect = RuntimeError(error_message)
+
+        result = runner.invoke(
+            cli,
+            [
+                "dataset",
+                "idc",
+                "download",
+                test_id,
+                str(tmp_path),
+            ],
+        )
+
+        assert result.exit_code == 1
+        # Check that key parts of the error message appear in output
+        assert "Mock error" in result.output or "Mock\nerror" in result.output
+        assert "Download failed" in result.output
+        assert test_id in result.output
+
+
+@pytest.mark.integration
+def test_aignostics_download_error_handling(runner: CliRunner, tmp_path: Path) -> None:
+    """Test that aignostics download command properly displays error messages."""
+    error_message = "Mock error: Failed to download from bucket"
+    test_url = "gs://test-bucket/test-file.tiff"
+
+    with patch("aignostics.dataset._cli.platform_generate_signed_url") as mock_generate_url:
+        mock_generate_url.side_effect = RuntimeError(error_message)
+
+        result = runner.invoke(
+            cli,
+            [
+                "dataset",
+                "aignostics",
+                "download",
+                test_url,
+                str(tmp_path),
+            ],
+        )
+
+        assert result.exit_code == 1
+        # Check that key parts of the error message appear in output
+        assert "Mock error" in result.output or "Mock\nerror" in result.output
+        assert "Failed to download from bucket" in result.output
+        assert test_url in result.output

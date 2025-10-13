@@ -363,6 +363,15 @@ def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Pat
     assert result.exit_code == 2
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
+def test_cli_run_result_delete_not_found(runner: CliRunner) -> None:
+    """Check run result delete command runs successfully."""
+    result = runner.invoke(cli, ["application", "run", "result", "delete", "00000000000000000000000000000000"])
+    assert "Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
+    assert result.exit_code == 2
+
+
 @pytest.mark.integration
 def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
     """Check run result delete command runs successfully."""

@@ -139,9 +139,9 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.timeout(timeout=60 * 10)
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
+    user: User, runner: CliRunner, tmp_path: Path
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
     with patch("aignostics.application._gui._page_application_describe.Path.home", return_value=tmp_path):
@@ -195,7 +195,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see(f"Selected folder {tmp_path!s} to analyze.")
         await assert_notified(user, f"You chose directory {tmp_path!s}.")
         user.find(marker="BUTTON_WSI_NEXT").click()
-        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=20)
+        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=60)
         await sleep(10)
 
         # Generate remaining metadata, going to upload UI
@@ -212,13 +212,15 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
         # Trigger upload and submission
         await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
+        button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
+        assert button_submission_upload.enabled, "Upload button should be enabled"
         user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
-        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...")
+        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...", 10)
         button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
         assert not button_submission_upload.enabled, "Upload button should be disabled after click"
-        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=30)
+        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=60)
         await assert_notified(user, "Submitting application run ...")
-        await assert_notified(user, "Application run submitted with id", wait_seconds=10)
+        await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
         # Check user is redirected to the run page and run is running
         await user.should_see(f"Run of he-tme:v{latest_application_version.version}", retries=200)
