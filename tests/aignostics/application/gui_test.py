@@ -141,7 +141,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 10)
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
-    user: User, runner: CliRunner, tmp_path: Path
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
     with patch("aignostics.application._gui._page_application_describe.Path.home", return_value=tmp_path):

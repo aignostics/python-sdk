@@ -10,6 +10,7 @@ import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from tests.conftest import normalize_output
 
 SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
@@ -159,8 +160,8 @@ def test_idc_indices_error_handling(runner: CliRunner) -> None:
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
-        assert "Failed to connect to IDC" in result.output
+        assert "Mock error" in normalize_output(result.output)
+        assert "Failed to connect to IDC" in normalize_output(result.output)
 
 
 @pytest.mark.integration
@@ -177,9 +178,9 @@ def test_idc_columns_error_handling(runner: CliRunner) -> None:
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
-        assert "Invalid index name" in result.output
-        assert "invalid_index" in result.output
+        assert "Mock error" in normalize_output(result.output)
+        assert "Invalid index name" in normalize_output(result.output)
+        assert "invalid_index" in normalize_output(result.output)
 
 
 @pytest.mark.integration
@@ -197,9 +198,9 @@ def test_idc_query_error_handling(runner: CliRunner) -> None:
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
+        assert "Mock error" in normalize_output(result.output)
         # "SQL query failed" may be split across lines by rich console formatting
-        assert "SQL query failed" in result.output or ("query" in result.output and "failed" in result.output)
+        assert "SQL query failed" in normalize_output(result.output)
 
 
 @pytest.mark.integration
@@ -224,9 +225,9 @@ def test_idc_download_error_handling(runner: CliRunner, tmp_path: Path) -> None:
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
-        assert "Download failed" in result.output
-        assert test_id in result.output
+        assert "Mock error" in normalize_output(result.output)
+        assert "Download failed" in normalize_output(result.output)
+        assert test_id in normalize_output(result.output)
 
 
 @pytest.mark.integration
@@ -251,6 +252,6 @@ def test_aignostics_download_error_handling(runner: CliRunner, tmp_path: Path) -
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
-        assert "Failed to download from bucket" in result.output
-        assert test_url in result.output
+        assert "Mock error" in normalize_output(result.output)
+        assert "Failed to download from bucket" in normalize_output(result.output)
+        assert test_url in normalize_output(result.output)

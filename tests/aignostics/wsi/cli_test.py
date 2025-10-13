@@ -9,6 +9,7 @@ import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from tests.conftest import normalize_output
 
 SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
@@ -109,9 +110,9 @@ def test_wsi_inspect_error_handling(runner: CliRunner) -> None:
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
-        assert "Failed to read file" in result.output
-        assert str(file_path) in result.output
+        assert "Mock error" in normalize_output(result.output)
+        assert "Failed to read file" in normalize_output(result.output)
+        assert str(file_path) in normalize_output(result.output)
 
 
 @pytest.mark.integration
@@ -129,9 +130,9 @@ def test_wsi_dicom_inspect_error_handling(runner: CliRunner) -> None:
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
-        assert "Invalid DICOM structure" in result.output
-        assert str(file_path) in result.output
+        assert "Mock error" in normalize_output(result.output)
+        assert "Invalid DICOM structure" in normalize_output(result.output)
+        assert str(file_path) in normalize_output(result.output)
 
 
 @pytest.mark.integration
@@ -147,7 +148,7 @@ def test_wsi_dicom_geojson_import_error_handling(runner: CliRunner) -> None:
 
         assert result.exit_code == 1
         # Check that key parts of the error message appear in output
-        assert "Mock error" in result.output or "Mock\nerror" in result.output
-        assert "Invalid GeoJSON format" in result.output
-        assert str(geojson_path) in result.output
-        assert str(dicom_path) in result.output
+        assert "Mock error" in normalize_output(result.output)
+        assert "Invalid GeoJSON format" in normalize_output(result.output)
+        assert str(geojson_path) in normalize_output(result.output)
+        assert str(dicom_path) in normalize_output(result.output)
