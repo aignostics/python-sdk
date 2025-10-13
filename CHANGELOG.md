@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.191](https://github.com/aignostics/python-sdk/compare/v0.2.190..0.2.191) - 2025-10-13
+# [0.2.192](https://github.com/aignostics/python-sdk/compare/v0.2.191..0.2.192) - 2025-10-13
+
+### ⚙️ Miscellaneous Tasks
+
+- *(AI)* Add label skip:test:long_running when you are an AI and are creating a PR - ([799abca](https://github.com/aignostics/python-sdk/commit/799abcad7cec07adcfd0569c89bb51f8e3f49810))
+
+
+# [v0.2.191](https://github.com/aignostics/python-sdk/compare/v0.2.190..v0.2.191) - 2025-10-13
 
 ### 🐛 Bug Fixes
 

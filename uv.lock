@@ -36,7 +36,7 @@ wheels = [
 
 [[package]]
 name = "aignostics"
-version = "0.2.191"
+version = "0.2.192"
 source = { editable = "." }
 dependencies = [
     { name = "aiopath", version = "0.6.11", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
