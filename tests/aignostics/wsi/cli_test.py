@@ -35,7 +35,7 @@ def test_inspect_openslide_dicom(runner: CliRunner) -> None:
 
 
 @pytest.mark.skipif(
-    sys.platform == "win32" and platform.machine().lower() == "arm64" and sys.version_info[:2] == (3, 12),
+    sys.platform == "win32" and platform.machine().lower() in {"arm64", "aarch64"} and sys.version_info[:2] == (3, 12),
     reason="Skipping on Windows ARM with Python 3.12.x",
 )
 @pytest.mark.integration
@@ -55,7 +55,9 @@ def test_inspect_pydicom_directory_non_verbose(runner: CliRunner) -> None:
 
 
 @pytest.mark.skipif(
-    platform.system() == "Windows" and platform.machine().lower() == "arm64" and sys.version_info[:2] == (3, 12),
+    platform.system() == "Windows"
+    and platform.machine().lower() in {"arm64", "aarch64"}
+    and sys.version_info[:2] == (3, 12),
     reason="Skipping on Windows ARM with Python 3.12.x given instability of pydicom on this platform",
 )
 @pytest.mark.integration
@@ -79,7 +81,9 @@ def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
 
 
 @pytest.mark.skipif(
-    platform.system() == "Windows" and platform.machine().lower() == "arm64" and sys.version_info[:2] == (3, 12),
+    platform.system() == "Windows"
+    and platform.machine().lower() in {"arm64", "aarch64"}
+    and sys.version_info[:2] == (3, 12),
     reason="Skipping on Windows ARM with Python 3.12.x given instability of pydicom on this platform",
 )
 @pytest.mark.integration

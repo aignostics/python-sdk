@@ -67,7 +67,7 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.skipif(
-    platform.system() == "Linux" and platform.machine() == "arm64",
+    platform.system() == "Linux" and platform.machine() in {"arm64", "aarch64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.timeout(timeout=60 * 10)
@@ -133,7 +133,7 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.skipif(
-    platform.system() == "Linux" and platform.machine() == "arm64",
+    platform.system() == "Linux" and platform.machine() in {"arm64", "aarch64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.timeout(timeout=60 * 10)
