@@ -64,8 +64,8 @@ def _get_test_python_versions() -> list[str]:
         list[str]: List of Python version strings to test against
     """
     versions = ["3.11.9", "3.12.12", "3.13.7"]
-    if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
-        versions.remove("3.12.12")  # Remove 3.12.x on Windows ARM due to instability on this platform
+    if platform.system() == "Windows":
+        versions.remove("3.12.12")  # Remove 3.12.x on Windows due to instability on this platform
     return versions
 
 
