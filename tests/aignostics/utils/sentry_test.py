@@ -41,6 +41,7 @@ if find_spec("sentry_sdk"):
         ):
             yield
 
+    @pytest.mark.unit
     def test_validate_url_scheme() -> None:
         """Test URL scheme validation."""
         import urllib.parse
@@ -54,6 +55,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_MISSING_SCHEME)):
             _validate_url_scheme(invalid_url)
 
+    @pytest.mark.unit
     def test_validate_url_netloc() -> None:
         """Test network location validation."""
         import urllib.parse
@@ -67,6 +69,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_MISSING_NETLOC)):
             _validate_url_netloc(invalid_url)
 
+    @pytest.mark.unit
     def test_validate_https_scheme() -> None:
         """Test HTTPS scheme validation."""
         import urllib.parse
@@ -80,6 +83,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_NON_HTTPS)):
             _validate_https_scheme(invalid_url)
 
+    @pytest.mark.unit
     def test_validate_sentry_domain() -> None:
         """Test Sentry domain validation."""
         import urllib.parse
@@ -101,17 +105,20 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_INVALID_DOMAIN)):
             _validate_sentry_domain(invalid_netloc)
 
+    @pytest.mark.unit
     def test_validate_https_dsn_with_valid_dsn() -> None:
         """Test DSN validation with valid DSN."""
         valid_dsn = SecretStr(VALID_DSN)
         result = _validate_https_dsn(valid_dsn)
         assert result is valid_dsn  # Should return the same object
 
+    @pytest.mark.unit
     def test_validate_https_dsn_with_none() -> None:
         """Test DSN validation with None value."""
         result = _validate_https_dsn(None)
         assert result is None  # Should return None unchanged
 
+    @pytest.mark.unit
     def test_validate_https_dsn_invalid_cases() -> None:
         """Test DSN validation with various invalid cases."""
         # Missing scheme
@@ -130,6 +137,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_INVALID_DOMAIN)):
             _validate_https_dsn(SecretStr("https://user@example.com"))
 
+    @pytest.mark.unit
     def test_sentry_initialize_with_no_dsn(mock_environment: None) -> None:
         """Test sentry_initialize with no DSN."""
         with mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings:
@@ -140,6 +148,7 @@ if find_spec("sentry_sdk"):
             result = sentry_initialize()
             assert result is False  # Should return False when no DSN is provided
 
+    @pytest.mark.unit
     def test_sentry_initialize_with_valid_dsn(mock_environment: None) -> None:
         """Test sentry_initialize with a valid DSN."""
         with (

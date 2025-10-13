@@ -16,6 +16,7 @@ from aignostics.utils._fs import (
 log = get_logger(__name__)
 
 
+@pytest.mark.unit
 def test_string_input_returns_string() -> None:
     """Test that string input returns string output."""
     result = sanitize_path("test/path")
@@ -23,6 +24,7 @@ def test_string_input_returns_string() -> None:
     assert result == "test/path"
 
 
+@pytest.mark.unit
 def test_path_input_returns_path() -> None:
     """Test that Path input returns Path output."""
     input_path = Path("test/path")
@@ -31,6 +33,7 @@ def test_path_input_returns_path() -> None:
     assert str(result) == str(Path("test/path"))
 
 
+@pytest.mark.unit
 def test_colon_replacement_on_all_platforms() -> None:
     """Test that colons are replaced on all platforms."""
     with patch("platform.system", return_value="Linux"):
@@ -38,6 +41,7 @@ def test_colon_replacement_on_all_platforms() -> None:
         assert result == "test_path_with_colons"
 
 
+@pytest.mark.unit
 def test_windows_colon_replacement_enabled() -> None:
     """Test colon replacement on Windows when enabled."""
     with patch("platform.system", return_value="Windows"):
@@ -48,6 +52,7 @@ def test_windows_colon_replacement_enabled() -> None:
         assert result == "test_path_with_colons"
 
 
+@pytest.mark.unit
 def test_windows_drive_letter_preserved() -> None:
     """Test that Windows drive letters are preserved when replacing colons."""
     with patch("platform.system", return_value="Windows"):
@@ -55,6 +60,7 @@ def test_windows_drive_letter_preserved() -> None:
         assert result == "C:/test_path"
 
 
+@pytest.mark.unit
 def test_windows_drive_letter_with_multiple_colons() -> None:
     """Test drive letter preservation with multiple colons."""
     with patch("platform.system", return_value="Windows"):
@@ -62,6 +68,7 @@ def test_windows_drive_letter_with_multiple_colons() -> None:
         assert result == "D:/folder_name_with_colons"
 
 
+@pytest.mark.unit
 def test_windows_no_drive_letter_all_colons_replaced() -> None:
     """Test that all colons are replaced when no drive letter is present."""
     with patch("platform.system", return_value="Windows"):
@@ -69,6 +76,7 @@ def test_windows_no_drive_letter_all_colons_replaced() -> None:
         assert result == "folder_name_with_colons"
 
 
+@pytest.mark.unit
 def test_windows_single_char_with_colon_is_drive() -> None:
     """Test that single character with colon IS treated as drive letter."""
     with patch("platform.system", return_value="Windows"):
@@ -78,6 +86,7 @@ def test_windows_single_char_with_colon_is_drive() -> None:
         assert result == "a:test"  # Drive letter preserved, no additional colons to replace
 
 
+@pytest.mark.unit
 def test_windows_numeric_with_colon_not_drive() -> None:
     """Test that numeric character with colon is not treated as drive letter."""
     with patch("platform.system", return_value="Windows"):
@@ -87,6 +96,7 @@ def test_windows_numeric_with_colon_not_drive() -> None:
         assert result == "1_/test"
 
 
+@pytest.mark.unit
 def test_windows_reserved_path_raises_error() -> None:
     """Test that reserved Windows paths raise ValueError."""
     with (
@@ -97,6 +107,7 @@ def test_windows_reserved_path_raises_error() -> None:
         sanitize_path("CON")
 
 
+@pytest.mark.unit
 def test_windows_non_reserved_path_succeeds() -> None:
     """Test that non-reserved Windows paths succeed."""
     with (
@@ -107,6 +118,7 @@ def test_windows_non_reserved_path_succeeds() -> None:
         assert result == "valid_path"
 
 
+@pytest.mark.unit
 def test_windows_reserved_path_with_path_object() -> None:
     """Test that reserved Windows paths raise ValueError with Path input."""
     with (
@@ -117,6 +129,7 @@ def test_windows_reserved_path_with_path_object() -> None:
         sanitize_path(Path("PRN"))
 
 
+@pytest.mark.unit
 def test_windows_reserved_path_after_colon_replacement() -> None:
     """Test reserved path check happens after colon replacement."""
     with (
@@ -127,6 +140,7 @@ def test_windows_reserved_path_after_colon_replacement() -> None:
         sanitize_path("test:AUX")
 
 
+@pytest.mark.unit
 def test_non_windows_reserved_check_skipped() -> None:
     """Test that reserved path check is skipped on non-Windows systems."""
     with (
@@ -138,6 +152,7 @@ def test_non_windows_reserved_check_skipped() -> None:
         assert result == "CON"
 
 
+@pytest.mark.unit
 def test_windows_empty_string() -> None:
     """Test handling of empty string on Windows."""
     with patch("platform.system", return_value="Windows"):
@@ -145,6 +160,7 @@ def test_windows_empty_string() -> None:
         assert not result
 
 
+@pytest.mark.unit
 def test_windows_path_object_preserves_type() -> None:
     """Test that Path object input returns Path object with colon replacement."""
     with patch("platform.system", return_value="Windows"):
@@ -154,6 +170,7 @@ def test_windows_path_object_preserves_type() -> None:
         assert str(result) == "test_path"
 
 
+@pytest.mark.unit
 def test_windows_complex_path_with_drive() -> None:
     """Test complex Windows path with drive letter and multiple colons."""
     with patch("platform.system", return_value="Windows"):
@@ -162,6 +179,7 @@ def test_windows_complex_path_with_drive() -> None:
 
 
 # Tests for sanitize_path_component function
+@pytest.mark.unit
 def test_sanitize_path_component_all_platforms() -> None:
     """Test that sanitize_path_component replaces colons on all platforms."""
     with patch("platform.system", return_value="Linux"):
@@ -169,6 +187,7 @@ def test_sanitize_path_component_all_platforms() -> None:
         assert result == "test_component_with_colons"
 
 
+@pytest.mark.unit
 def test_sanitize_path_component_windows_replaces_all_colons() -> None:
     """Test that sanitize_path_component replaces all colons on Windows."""
     with patch("platform.system", return_value="Windows"):
@@ -176,6 +195,7 @@ def test_sanitize_path_component_windows_replaces_all_colons() -> None:
         assert result == "test_component_with_colons"
 
 
+@pytest.mark.unit
 def test_sanitize_path_component_windows_drive_like_pattern() -> None:
     """Test that sanitize_path_component replaces colons even for drive-like patterns."""
     with patch("platform.system", return_value="Windows"):
@@ -185,6 +205,7 @@ def test_sanitize_path_component_windows_drive_like_pattern() -> None:
         assert result == "C_filename"
 
 
+@pytest.mark.unit
 def test_sanitize_path_component_windows_empty_string() -> None:
     """Test that sanitize_path_component handles empty string."""
     with patch("platform.system", return_value="Windows"):
@@ -192,6 +213,7 @@ def test_sanitize_path_component_windows_empty_string() -> None:
         assert not result
 
 
+@pytest.mark.unit
 def test_sanitize_path_component_windows_no_colons() -> None:
     """Test that sanitize_path_component returns unchanged when no colons."""
     with patch("platform.system", return_value="Windows"):
@@ -199,6 +221,7 @@ def test_sanitize_path_component_windows_no_colons() -> None:
         assert result == "normal_filename.txt"
 
 
+@pytest.mark.unit
 def test_sanitize_path_component_multiple_consecutive_colons() -> None:
     """Test that sanitize_path_component handles multiple consecutive colons."""
     with patch("platform.system", return_value="Windows"):
@@ -207,6 +230,7 @@ def test_sanitize_path_component_multiple_consecutive_colons() -> None:
 
 
 # Tests for integration between sanitize_path and sanitize_path_component
+@pytest.mark.unit
 def test_sanitize_path_uses_sanitize_path_component_for_drive_path() -> None:
     """Test that sanitize_path uses sanitize_path_component for the non-drive part."""
     with patch("platform.system", return_value="Windows"):
@@ -215,6 +239,7 @@ def test_sanitize_path_uses_sanitize_path_component_for_drive_path() -> None:
         assert result == "C:/folder_name_with_colons"
 
 
+@pytest.mark.unit
 def test_sanitize_path_uses_sanitize_path_component_for_non_drive_path() -> None:
     """Test that sanitize_path uses sanitize_path_component for paths without drive letters."""
     with patch("platform.system", return_value="Windows"):
@@ -223,6 +248,7 @@ def test_sanitize_path_uses_sanitize_path_component_for_non_drive_path() -> None
 
 
 # Tests for get_user_data_directory function
+@pytest.mark.integration
 def test_get_user_data_directory_without_scope(tmp_path) -> None:
     """Test get_user_data_directory returns correct path without scope."""
     with (
@@ -241,6 +267,7 @@ def test_get_user_data_directory_without_scope(tmp_path) -> None:
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
+@pytest.mark.integration
 def test_get_user_data_directory_with_scope(tmp_path) -> None:
     """Test get_user_data_directory returns correct path with scope."""
     with (
@@ -259,6 +286,7 @@ def test_get_user_data_directory_with_scope(tmp_path) -> None:
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
+@pytest.mark.integration
 def test_get_user_data_directory_with_nested_scope(tmp_path) -> None:
     """Test get_user_data_directory returns correct path with nested scope."""
     with (
@@ -277,6 +305,7 @@ def test_get_user_data_directory_with_nested_scope(tmp_path) -> None:
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
+@pytest.mark.integration
 def test_get_user_data_directory_read_only_environment_no_mkdir(tmp_path) -> None:
     """Test get_user_data_directory doesn't create directory in read-only environment."""
     with (
@@ -295,6 +324,7 @@ def test_get_user_data_directory_read_only_environment_no_mkdir(tmp_path) -> Non
         mock_mkdir.assert_not_called()
 
 
+@pytest.mark.integration
 def test_get_user_data_directory_empty_scope(tmp_path) -> None:
     """Test get_user_data_directory handles empty scope string."""
     with (
@@ -313,6 +343,7 @@ def test_get_user_data_directory_empty_scope(tmp_path) -> None:
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
 
+@pytest.mark.integration
 def test_get_user_data_directory_none_scope(tmp_path) -> None:
     """Test get_user_data_directory handles None scope."""
     with (
@@ -332,6 +363,7 @@ def test_get_user_data_directory_none_scope(tmp_path) -> None:
 
 
 # Tests for open_user_data_directory function
+@pytest.mark.integration
 def test_open_user_data_directory_without_scope(tmp_path) -> None:
     """Test open_user_data_directory opens correct directory without scope."""
     with (
@@ -352,6 +384,7 @@ def test_open_user_data_directory_without_scope(tmp_path) -> None:
         mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project"))
 
 
+@pytest.mark.integration
 def test_open_user_data_directory_with_scope(tmp_path) -> None:
     """Test open_user_data_directory opens correct directory with scope."""
     with (
@@ -372,6 +405,7 @@ def test_open_user_data_directory_with_scope(tmp_path) -> None:
         mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project" / "logs"))
 
 
+@pytest.mark.integration
 def test_open_user_data_directory_with_nested_scope(tmp_path) -> None:
     """Test open_user_data_directory opens correct directory with nested scope."""
     with (
@@ -392,6 +426,7 @@ def test_open_user_data_directory_with_nested_scope(tmp_path) -> None:
         mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project" / "cache" / "models"))
 
 
+@pytest.mark.integration
 def test_open_user_data_directory_read_only_environment(tmp_path) -> None:
     """Test open_user_data_directory works in read-only environment."""
     with (
@@ -412,6 +447,7 @@ def test_open_user_data_directory_read_only_environment(tmp_path) -> None:
         mock_show_in_file_manager.assert_called_once_with(str(tmp_path / "test_project" / "data"))
 
 
+@pytest.mark.integration
 def test_open_user_data_directory_show_in_file_manager_exception(tmp_path) -> None:
     """Test open_user_data_directory handles show_in_file_manager exceptions gracefully."""
     with (

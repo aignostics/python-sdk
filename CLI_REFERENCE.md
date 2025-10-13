@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.164 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.190 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -196,7 +196,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_C
 
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1759171388499.419]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760341898253.002]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--help`: Show this message and exit.
 
@@ -252,7 +252,8 @@ $ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1759171388499.5488]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760341898253.1687]
+* `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -277,6 +278,7 @@ $ aignostics application run submit [OPTIONS] APPLICATION_VERSION_ID METADATA_CS
 
 **Options**:
 
+* `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`
@@ -959,6 +961,7 @@ $ aignostics system [OPTIONS] COMMAND [ARGS]...
 
 * `health`: Determine and print system health.
 * `info`: Determine and print system info.
+* `dump-dot-env-file`: Dump settings to .env file.
 * `serve`: Start the web server, hosting the...
 * `openapi`: Dump the OpenAPI specification.
 * `install`: Complete installation.
@@ -1002,6 +1005,24 @@ $ aignostics system info [OPTIONS]
 * `--include-environ / --no-include-environ`: Include environment variables  [default: no-include-environ]
 * `--mask-secrets / --no-mask-secrets`: Mask secrets  [default: mask-secrets]
 * `--output-format [yaml|json]`: Output format  [default: json]
+* `--help`: Show this message and exit.
+
+### `aignostics system dump-dot-env-file`
+
+Dump settings to .env file.
+
+Args:
+    destination (Path): Path pointing to .env file to generate.
+
+**Usage**:
+
+```console
+$ aignostics system dump-dot-env-file [OPTIONS]
+```
+
+**Options**:
+
+* `--destination FILE`: Path pointing to .env file to gnerate, defaults to .env.current in current working directory.  [default: .env.current]
 * `--help`: Show this message and exit.
 
 ### `aignostics system serve`

@@ -14,6 +14,7 @@ from aignostics.utils._gui import (
 )
 
 
+@pytest.mark.unit
 def test_base_page_builder_is_abstract() -> None:
     """Test that BasePageBuilder is an abstract class.
 
@@ -24,6 +25,7 @@ def test_base_page_builder_is_abstract() -> None:
         BasePageBuilder()  # type: ignore # Cannot instantiate abstract class
 
 
+@pytest.mark.unit
 def test_register_pages_is_abstract() -> None:
     """Test that register_pages is an abstract method.
 
@@ -38,6 +40,7 @@ def test_register_pages_is_abstract() -> None:
         IncompletePageBuilder()  # type: ignore # Abstract method not implemented
 
 
+@pytest.mark.unit
 @mock.patch("aignostics.utils._gui.locate_subclasses")
 def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMock) -> None:
     """Test that gui_register_pages calls register_pages on all builders.
@@ -58,10 +61,11 @@ def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMoc
     mock_builder2.register_pages.assert_called_once()
 
 
+@pytest.mark.unit
+@pytest.mark.skip(reason="Nicegui 3 complexity.")
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui")
-@pytest.mark.skip(reason="Nicegui 3 complexity.")
 def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock) -> None:
     """Test gui_run with default parameters.
 
@@ -83,6 +87,7 @@ def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mo
         assert call_kwargs["port"] == 8000
 
 
+@pytest.mark.unit
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui.run")
@@ -115,6 +120,7 @@ def test_gui_run_custom_params(mock_ui_run: mock.MagicMock, mock_register_pages:
     assert call_kwargs["show"] is True
 
 
+@pytest.mark.unit
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", True)
 @mock.patch("nicegui.ui.run")
 def test_gui_run_in_container_with_native(mock_ui_run: mock.MagicMock) -> None:

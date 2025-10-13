@@ -6,9 +6,12 @@ on pagination functionality that is used across resource modules.
 
 from unittest.mock import Mock
 
+import pytest
+
 from aignostics.platform.resources.utils import PAGE_SIZE, paginate
 
 
+@pytest.mark.unit
 def test_paginate_stops_when_results_less_than_page_size() -> None:
     """Test that paginate stops yielding when a page has fewer items than the page size.
 
@@ -35,6 +38,7 @@ def test_paginate_stops_when_results_less_than_page_size() -> None:
     mock_func.assert_any_call(page=2, page_size=PAGE_SIZE)
 
 
+@pytest.mark.unit
 def test_paginate_handles_empty_first_page() -> None:
     """Test that paginate handles an empty first page correctly.
 
@@ -52,6 +56,7 @@ def test_paginate_handles_empty_first_page() -> None:
     mock_func.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
+@pytest.mark.unit
 def test_paginate_passes_additional_arguments() -> None:
     """Test that paginate correctly passes additional arguments to the function.
 
@@ -71,6 +76,7 @@ def test_paginate_passes_additional_arguments() -> None:
     mock_func.assert_called_once_with(additional_arg, keyword=additional_kwarg, page=1, page_size=PAGE_SIZE)
 
 
+@pytest.mark.unit
 def test_paginate_custom_page_size() -> None:
     """Test that paginate correctly uses custom page size.
 
@@ -88,6 +94,7 @@ def test_paginate_custom_page_size() -> None:
     mock_func.assert_called_once_with(page=1, page_size=custom_page_size)
 
 
+@pytest.mark.unit
 def test_paginate_multiple_pages() -> None:
     """Test that paginate correctly iterates through multiple pages.
 

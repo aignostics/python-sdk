@@ -193,7 +193,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                 ui.notify("Please select a folder first", type="warning")
                 return
 
-            ui.notify("Downloading  ...", type="info")
+            ui.notify("Downloading ...", type="info")
             progress_queue = Manager().Queue()
 
             def update_download_progress() -> None:

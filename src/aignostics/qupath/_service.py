@@ -27,7 +27,6 @@ from pydantic import BaseModel, computed_field
 
 from aignostics.utils import (
     SUBPROCESS_CREATION_FLAGS,
-    UNHIDE_SENSITIVE_INFO,
     BaseService,
     Health,
     __project_name__,
@@ -211,7 +210,7 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -220,7 +219,6 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        settings = self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})
         executable = Service.find_qupath_executable()
         version = Service.get_version()
         return {
@@ -228,11 +226,10 @@ class Service(BaseService):
                 "path": str(executable) if executable else None,
                 "version": dict(version) if version else None,
                 "expected_version": Service.get_expected_version(),
-            },
-            "settings": settings,
+            }
         }
 
-    def health(self) -> Health:
+    def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
 
         Returns:
@@ -240,35 +237,7 @@ class Service(BaseService):
         """
         return Health(
             status=Health.Code.UP,
-            components={
-                "application": self._determine_application_health(),
-            },
         )
-
-    @staticmethod
-    def _determine_application_health() -> Health:
-        """Determine we can reach a well known and secure endpoint.
-
-        - Checks if health endpoint is reachable and returns 200 OK
-        - Uses requests library for a direct connection check without authentication
-
-        Returns:
-            Health: The healthiness of the network connection via basic unauthenticated request.
-        """
-        try:
-            version = Service.get_version()
-            if not version:
-                message = "QuPath not installed."
-                return Health(status=Health.Code.DOWN, reason=message)
-            if version.version != Service.get_expected_version():
-                message = f"QuPath version mismatch: expected {QUPATH_VERSION}, got {version.version}"
-                logger.warning(message)
-                return Health(status=Health.Code.DOWN, reason=message)
-        except Exception as e:
-            message = f"Exception while checking health of QuPath application {e!s}"
-            logger.exception(message)
-            return Health(status=Health.Code.DOWN, reason=message)
-        return Health(status=Health.Code.UP)
 
     @staticmethod
     def _get_app_dir_from_qupath_dir(qupath_dir: Path, platform_system: str | None) -> Path:

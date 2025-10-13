@@ -2,7 +2,9 @@
 
 import json
 import os
+import platform
 import re
+import sys
 from pathlib import Path
 
 import nox
@@ -21,8 +23,53 @@ JUNIT_XML_PREFIX = "--junitxml=reports/junit_"
 CLI_MODULE = "cli"
 API_VERSIONS = ["v1"]
 UTF8 = "utf-8"
-PYTHON_VERSION = "3.13"
-TEST_PYTHON_VERSIONS = ["3.11", "3.12", "3.13"]
+
+
+def _read_python_version() -> str:
+    """Read Python version from .python-version file.
+
+    Returns:
+        str: Python version string (e.g., "3.13" or "3.13.1")
+
+    Raises:
+        FileNotFoundError: If .python-version file does not exist
+        ValueError: If version format is invalid (not 2 or 3 segments)
+        OSError: If reading the file fails
+    """
+    version_file = Path(".python-version")
+    if not version_file.exists():
+        print("Error: .python-version file not found")
+        sys.exit(1)
+
+    try:
+        version = version_file.read_text(encoding="utf-8").strip()
+    except OSError:
+        print("Error: Failed to read .python-version file")
+        sys.exit(1)
+
+    if not re.match(r"^\d+\.\d+(?:\.\d+)?$", version):
+        print(f"Error: Invalid Python version format in .python-version: {version}. Expected X.Y or X.Y.Z")
+        sys.exit(2)
+
+    return version
+
+
+PYTHON_VERSION = _read_python_version()
+
+
+def _get_test_python_versions() -> list[str]:
+    """Get Python versions for testing based on platform.
+
+    Returns:
+        list[str]: List of Python version strings to test against
+    """
+    versions = ["3.11.9", "3.12.12", "3.13.7"]
+    if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
+        versions.remove("3.12.12")  # Remove 3.12.x on Windows ARM due to instability on this platform
+    return versions
+
+
+TEST_PYTHON_VERSIONS = _get_test_python_versions()
 
 
 def _setup_venv(session: nox.Session, all_extras: bool = True, no_dev: bool = False) -> None:
@@ -338,10 +385,10 @@ def _generate_readme(session: nox.Session) -> None:
     preamble = "\n[//]: # (README.md generated from docs/partials/README_*.md)\n\n"
     header = Path("docs/partials/README_header.md").read_text(encoding="utf-8")
     main = Path("docs/partials/README_main.md").read_text(encoding="utf-8")
-    platform = Path("docs/partials/README_platform.md").read_text(encoding="utf-8")
+    platform_section = Path("docs/partials/README_platform.md").read_text(encoding="utf-8")
     glossary = Path("docs/partials/README_glossary.md").read_text(encoding="utf-8")
     footer = Path("docs/partials/README_footer.md").read_text(encoding="utf-8")
-    readme_content = f"{preamble}{header}\n\n{main}\n\n{platform}\n\n{footer}\n\n{glossary}"
+    readme_content = f"{preamble}{header}\n\n{main}\n\n{platform_section}\n\n{footer}\n\n{glossary}"
     Path("README.md").write_text(readme_content, encoding="utf-8")
     session.log("Generated README.md file from partials")
 
@@ -557,13 +604,14 @@ def docs_pdf(session: nox.Session) -> None:
         session.error(f"Failed to parse latexmk version information: {e}")
 
 
-def _prepare_coverage(session: nox.Session) -> None:
+def _prepare_coverage(session: nox.Session, posargs: list[str]) -> None:
     """Clean coverage data unless keep-coverage flag is specified.
 
     Args:
         session: The nox session
+        posargs: Command line arguments
     """
-    if "--cov-append" not in session.posargs:
+    if "--cov-append" not in posargs:
         session.run("rm", "-rf", ".coverage", external=True)
 
 
@@ -679,16 +727,22 @@ def _run_pytest(
 
     # Distribute tests across available CPUs if not sequential
     if not is_sequential:
-        pytest_args.extend(["-n", "logical", "--dist", "loadgroup"])
+        pytest_args.extend(["-n", "logical", "--dist", "worksteal"])
 
     # Add act environment filter if needed
     if _is_act_environment():
         pytest_args.extend(["-k", NOT_SKIP_WITH_ACT])
 
     # Apply the appropriate marker
-    marker_value = f"{test_type}"
+    marker_value = f"({test_type})"
     if custom_marker:
         marker_value += f" and ({custom_marker})"
+
+    # Exclude scheduled_only tests unless explicitly requested
+    # scheduled_only tests should only run when called with -m containing "scheduled_only"
+    if not custom_marker or "scheduled_only" not in custom_marker:
+        marker_value += " and not scheduled_only"
+
     pytest_args.extend(["-m", marker_value])
 
     # Add additional arguments
@@ -742,17 +796,29 @@ def _cleanup_test_execution(session: nox.Session) -> None:
     )
 
 
-@nox.session(python=TEST_PYTHON_VERSIONS)
-def test(session: nox.Session) -> None:
-    """Run tests with pytest."""
+def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = False) -> None:
+    """Run test suite with specified marker.
+
+    Args:
+        session: The nox session
+        marker: Pytest marker expression
+        cov_append: Whether to append to existing coverage data
+    """
     _setup_venv(session)
+
+    posargs = session.posargs[:]
+    if "-m" not in posargs and marker:
+        posargs.extend(["-m", marker])
+
+    if cov_append:
+        posargs.append("--cov-append")
 
     # Conditionally clean coverage data
     # Will remove .coverage file if --cov-append is not specified
-    _prepare_coverage(session)
+    _prepare_coverage(session, posargs)
 
     # Extract custom markers from posargs if present
-    custom_marker, filtered_posargs = _extract_custom_marker(session.posargs)
+    custom_marker, filtered_posargs = _extract_custom_marker(posargs)
 
     # Determine report type from python version and custom marker
     report_type = _get_report_type(session, custom_marker)
@@ -765,14 +831,30 @@ def test(session: nox.Session) -> None:
         filtered_posargs.extend(["--cov-append"])
     _run_pytest(session, "sequential", custom_marker, filtered_posargs, report_type)
 
-    # Generate coverage report in markdown
+    # Generate coverage report in markdown (only after last test suite)
+    # Note: This will be called multiple times, which is fine as it updates the same report
     _generate_coverage_report(session)
 
     # Clean up post test execution
     _cleanup_test_execution(session)
 
 
-@nox.session(python=["3.13"], default=False)
+@nox.session(python=[PYTHON_VERSION])
+def test_default(session: nox.Session) -> None:
+    """Run tests as part of 'make' (no further args)."""
+    # Manually call test logic for each test type
+    _run_test_suite(session, "unit and not long_running and not very_long_running", cov_append=False)
+    _run_test_suite(session, "integration and not long_running and not very_long_running", cov_append=True)
+    _run_test_suite(session, "e2e and not long_running and not very_long_running", cov_append=True)
+
+
+@nox.session(python=TEST_PYTHON_VERSIONS, default=False)
+def test(session: nox.Session) -> None:
+    """Run tests with pytest."""
+    _run_test_suite(session)
+
+
+@nox.session(python=[PYTHON_VERSION], default=False)
 def setup(session: nox.Session) -> None:
     """Setup dev environment post project creation."""
     _setup_venv(session)

@@ -2,11 +2,9 @@
 
 from ._cli import cli
 from ._service import Service
+from ._settings import Settings
 
-__all__ = [
-    "Service",
-    "cli",
-]
+__all__ = ["Service", "Settings", "cli"]
 
 from importlib.util import find_spec
 

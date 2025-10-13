@@ -1,9 +1,12 @@
 """Tests to verify the GUI functionality of the Notebook module."""
 
+import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 async def test_gui_marimo_extension(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch Marimo via the GUI."""
     # Step 1: Check we are on the Notebook page

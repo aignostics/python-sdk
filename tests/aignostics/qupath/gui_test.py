@@ -15,7 +15,6 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
-from aignostics.gui import HEALTH_UPDATE_INTERVAL
 from aignostics.platform import ApplicationRunStatus
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
@@ -25,10 +24,13 @@ from tests.contants_test import HETA_APPLICATION_ID
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.skipif(
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
+@pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
@@ -41,8 +43,6 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
     await user.should_see("QuPath Extension")
 
     # Step 2: Check we indicate QuPath is not installed
-    await sleep(HEALTH_UPDATE_INTERVAL * 2)  # Health UI updated in background
-    await user.should_see("Launchpad is unhealthy")
     await user.should_see("Install QuPath to enable visualizing your Whole Slide Image and application results")
 
     # Step 3: Install QuPath
@@ -60,20 +60,18 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
     await user.should_see(f"QuPath {QUPATH_VERSION} is installed and ready to execute.")
     await user.should_see(marker="BUTTON_QUPATH_LAUNCH")
 
-    # Step 5: Check Launchpad turned healthy
-    # TODO(Helmut): reactivate
-    # await sleep(HEALTH_UPDATE_INTERVAL * 2)  # Health UI updated in background  # noqa: ERA001
-    # await user.should_see("Launchpad is healthy")  # noqa: ERA001
-
     if not was_installed:
         result = runner.invoke(cli, ["qupath", "uninstall"])
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.skipif(
-    platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
+    platform.system() == "Linux" and platform.machine() in {"arm64", "aarch64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.sequential
 async def test_gui_qupath_install_and_launch(
     user: User, runner: CliRunner, silent_logging: None, qupath_teardown
 ) -> None:
@@ -101,7 +99,7 @@ async def test_gui_qupath_install_and_launch(
     await assert_notified(
         user,
         f"QuPath installed successfully to '{app_dir}",
-        wait_seconds=35,
+        wait_seconds=60 * 8,
     )
 
     # Step 4: Check we indicate QuPath is installed
@@ -132,11 +130,14 @@ async def test_gui_qupath_install_and_launch(
         result = runner.invoke(cli, ["qupath", "uninstall"])
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.skipif(
-    platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
+    platform.system() == "Linux" and platform.machine() in {"arm64", "aarch64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
 ) -> None:

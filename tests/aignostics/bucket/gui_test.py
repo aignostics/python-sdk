@@ -15,14 +15,18 @@ from aignostics.cli import cli
 from tests.conftest import assert_notified
 
 
+@pytest.mark.integration
 async def test_gui_bucket_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
     await user.open("/bucket")
     await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging) -> None:
+@pytest.mark.timeout(timeout=60 * 15)
+async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
     """E2E flow testing all bucket CLI commands.
 
     1. Creates 1 file in a subdir of size 100kb
@@ -93,7 +97,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     await user.should_see(marker="BUTTON_DOWNLOAD_OBJECTS")
     user.find(marker="BUTTON_DOWNLOAD_OBJECTS").click()
 
-    await assert_notified(user, "Downloaded 1 objects.", wait_seconds=120)
+    await assert_notified(user, "Downloaded 1 objects.", wait_seconds=240)
 
     # Step 6: Delete the files using GUI
     assert grid_item.get_selected_rows is not None

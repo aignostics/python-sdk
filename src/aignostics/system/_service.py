@@ -272,6 +272,28 @@ class Service(BaseService):
         return any(term in key_lower for term in string_match_terms)
 
     @staticmethod
+    def _collect_all_settings(mask_secrets: bool = True) -> dict[str, Any]:
+        """Collect settings from all BaseSettings subclasses.
+
+        Args:
+            mask_secrets (bool): Whether to mask sensitive information in the output.
+
+        Returns:
+            dict[str, Any]: Flattened settings dictionary with env_prefix + key as the key.
+        """
+        settings: dict[str, Any] = {}
+        for settings_class in locate_subclasses(BaseSettings):
+            settings_instance = load_settings(settings_class)
+            env_prefix = settings_instance.model_config.get("env_prefix", "")
+            settings_dict = json.loads(
+                settings_instance.model_dump_json(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})
+            )
+            for key, value in settings_dict.items():
+                flat_key = f"{env_prefix}{key}".upper()
+                settings[flat_key] = value
+        return {k: settings[k] for k in sorted(settings)}
+
+    @staticmethod
     def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:  # type: ignore[override]
         """
         Get info about configuration of service.
@@ -390,17 +412,7 @@ class Service(BaseService):
             else:
                 runtime["environ"] = dict(sorted(os.environ.items()))
 
-        settings: dict[str, Any] = {}
-        for settings_class in locate_subclasses(BaseSettings):
-            settings_instance = load_settings(settings_class)
-            env_prefix = settings_instance.model_config.get("env_prefix", "")
-            settings_dict = json.loads(
-                settings_instance.model_dump_json(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})
-            )
-            for key, value in settings_dict.items():
-                flat_key = f"{env_prefix}{key}".upper()
-                settings[flat_key] = value
-        rtn["settings"] = {k: settings[k] for k in sorted(settings)}
+        rtn["settings"] = Service._collect_all_settings(mask_secrets=mask_secrets)
 
         # Convert the TypedDict to a regular dict before adding dynamic service keys
         result_dict: dict[str, Any] = dict(rtn)
@@ -412,6 +424,21 @@ class Service(BaseService):
 
         logger.info("Service info: %s", result_dict)
         return result_dict
+
+    @staticmethod
+    def dump_dot_env_file(destination: Path) -> None:
+        """Dump settings to .env file.
+
+        Args:
+            destination (Path): Path pointing to .env file to generate.
+
+        Raises:
+            ValueError: If the primary .env file does not exist.
+        """
+        dump = Service._collect_all_settings(mask_secrets=False)
+        with destination.open("w", encoding="utf-8") as f:
+            for key, value in dump.items():
+                f.write(f"{key}={value}\n")
 
     @staticmethod
     def openapi_schema() -> JsonType:

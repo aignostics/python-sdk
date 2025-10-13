@@ -36,7 +36,7 @@ from aignostics.platform import (
 from aignostics.platform import (
     Service as PlatformService,
 )
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, sanitize_path_component
+from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
@@ -159,7 +159,7 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -168,7 +168,7 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {"settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})}
+        return {}
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
@@ -323,15 +323,10 @@ class Service(BaseService):
             list[ApplicationVersion]: A list of all application versions sorted by semantic versioning (latest first).
 
         Raises:
-            NotFoundException: If the application with the given ID is not found.
             RuntimeError: If version list cannot be retrieved unexpectedly.
         """
         try:
             return self._get_platform_client().applications.versions.list_sorted(application=application)
-        except NotFoundException as e:
-            message = f"Application with ID '{application.application_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
         except Exception as e:
             message = f"Failed to retrieve application versions for application '{application.application_id}': {e}"
             logger.exception(message)
@@ -689,7 +684,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run(self, run_id: str) -> ApplicationRun:
-        """Find a run by its ID.
+        """Select a run by its ID.
 
         Args:
             run_id: The ID of the run to find
@@ -865,6 +860,14 @@ class Service(BaseService):
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
             raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to retrieve application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
         except Exception as e:
             message = f"Failed to cancel application run with ID '{run_id}': {e}"
             logger.exception(message)
@@ -999,7 +1002,7 @@ class Service(BaseService):
             logger.warning(message)
             raise NotFoundException(message) from e
         except ApiException as e:
-            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:  # Don't use UNPROCESSABLE_CONTENT
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
                 message = f"Run ID '{run_id}' invalid: {e!s}."
                 logger.warning(message)
                 raise ValueError(message) from e
@@ -1063,14 +1066,21 @@ class Service(BaseService):
                 ApplicationRunStatus.COMPLETED_WITH_ERROR,
                 ApplicationRunStatus.REJECTED,
             }:
-                logger.debug("Run '%s' reached final status '%s'.", run_id, run_details.status)
+                logger.debug(
+                    "Run '%s' reached final status '%s' with message '%s'.",
+                    run_id,
+                    run_details.status,
+                    run_details.message,
+                )
                 break
 
             if not wait_for_completion:
                 logger.debug(
-                    "Run '%s' is in progress with status '%s', but not requested to wait for completion.",
+                    "Run '%s' is in progress with status '%s' and message '%s', "
+                    "but not requested to wait for completion.",
                     run_id,
                     run_details.status,
+                    run_details.message,
                 )
                 break
 

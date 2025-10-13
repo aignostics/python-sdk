@@ -56,6 +56,7 @@ def app_run(mock_api) -> ApplicationRun:
     return ApplicationRun(mock_api, "test-run-id")
 
 
+@pytest.mark.unit
 def test_runs_list_with_pagination(runs, mock_api) -> None:
     """Test that Runs.list() correctly handles pagination.
 
@@ -84,6 +85,7 @@ def test_runs_list_with_pagination(runs, mock_api) -> None:
     ])
 
 
+@pytest.mark.unit
 def test_runs_list_with_application_version_filter(runs, mock_api) -> None:
     """Test that Runs.list() correctly filters by application version.
 
@@ -107,6 +109,7 @@ def test_runs_list_with_application_version_filter(runs, mock_api) -> None:
     )
 
 
+@pytest.mark.unit
 def test_application_run_results_with_pagination(app_run, mock_api) -> None:
     """Test that ApplicationRun.results() correctly handles pagination.
 
@@ -134,6 +137,7 @@ def test_application_run_results_with_pagination(app_run, mock_api) -> None:
     ])
 
 
+@pytest.mark.unit
 def test_runs_call_returns_application_run(runs) -> None:
     """Test that Runs.__call__() returns an ApplicationRun instance.
 
@@ -153,6 +157,7 @@ def test_runs_call_returns_application_run(runs) -> None:
     assert app_run._api == runs._api
 
 
+@pytest.mark.unit
 def test_runs_create_returns_application_run(runs, mock_api) -> None:
     """Test that Runs.create() returns an ApplicationRun instance.
 
@@ -191,6 +196,7 @@ def test_runs_create_returns_application_run(runs, mock_api) -> None:
     assert call_args.items == mock_items
 
 
+@pytest.mark.unit
 def test_paginate_with_not_found_exception_on_first_page(runs, mock_api) -> None:
     """Test that paginate handles NotFoundException on the first page gracefully.
 
@@ -215,6 +221,7 @@ def test_paginate_with_not_found_exception_on_first_page(runs, mock_api) -> None
     mock_api.list_application_runs_v1_runs_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
 
 
+@pytest.mark.unit
 def test_paginate_with_not_found_exception_after_full_page(runs, mock_api) -> None:
     """Test that paginate handles NotFoundException after a full page.
 
