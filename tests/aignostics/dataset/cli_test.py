@@ -19,7 +19,7 @@ THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
 
 
 @pytest.mark.integration
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=60 * 2)
 def test_cli_idc_indices(runner: CliRunner) -> None:
     """Check expected column returned."""
     result = runner.invoke(cli, ["dataset", "idc", "indices"])
@@ -32,7 +32,7 @@ def test_cli_idc_indices(runner: CliRunner) -> None:
 
 @pytest.mark.e2e
 @pytest.mark.flaky(retries=2, delay=5)
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=60 * 2)
 def test_cli_idc_columns_default_index(runner: CliRunner) -> None:
     """Check expected column returned."""
     result = runner.invoke(cli, ["dataset", "idc", "columns"])
@@ -41,7 +41,7 @@ def test_cli_idc_columns_default_index(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=60 * 2)
 def test_cli_columns_special_index(runner: CliRunner) -> None:
     """Check expected column returned."""
     result = runner.invoke(cli, ["dataset", "idc", "columns", "--index", "index"])
@@ -66,7 +66,7 @@ def test_cli_idc_query(runner: CliRunner) -> None:
 
 @pytest.mark.e2e
 @pytest.mark.flaky(retries=1, delay=5)
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=60 * 2)
 def test_cli_idc_download_series_dry(runner: CliRunner, caplog) -> None:
     """Check download functionality with dry-run option."""
     caplog.set_level(logging.INFO)
@@ -89,7 +89,7 @@ def test_cli_idc_download_series_dry(runner: CliRunner, caplog) -> None:
 
 @pytest.mark.e2e
 @pytest.mark.flaky(retries=1, delay=5)
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=60 * 2)
 def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog) -> None:
     """Check download functionality with dry-run option."""
     caplog.set_level(logging.INFO)
@@ -123,7 +123,7 @@ def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=60 * 2)
 def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path) -> None:
     """Check download functionality with dry-run option."""
     result = runner.invoke(
