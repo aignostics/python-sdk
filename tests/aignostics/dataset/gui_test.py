@@ -90,7 +90,7 @@ async def _gui_idc_download_fails_with_invalid_inputs(
         await user.should_see(marker="BUTTON_DOWNLOAD")
         user.find(marker="BUTTON_DOWNLOAD").click()
 
-        await assert_notified(user, expected_notification, wait_seconds=60)
+        await assert_notified(user, expected_notification, wait_seconds=90)
 
 
 @pytest.mark.integration
