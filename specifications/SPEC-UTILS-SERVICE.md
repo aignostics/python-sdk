@@ -2,11 +2,12 @@
 itemId: SPEC-UTILS-SERVICE
 itemTitle: Utils Module Specification
 itemType: Software Item Spec
-itemFulfills: TBD _(Core infrastructure services - enables other modules to fulfill user requirements)_
-Module: Utils _(Core Infrastructure Services)_
+itemFulfills:
+itemIsRelatedTo: SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE, SPEC-BUCKET-SERVICE, SPEC-DATASET-SERVICE, SPEC-NOTEBOOK-SERVICE, SPEC-PLATFORM-SERVICE, SPEC-QUPATH-SERVICE, SPEC-SYSTEM-SERVICE, SPEC-WSI-SERVICE
+Module: Utils
 Layer: Infrastructure Service
 Version: 1.0.0
-Date: 2025-09-11
+Date: 2025-10-13
 ---
 
 ## 1. Description

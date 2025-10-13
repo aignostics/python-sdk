@@ -3,6 +3,7 @@ itemId: SPEC-GUI-SERVICE
 itemTitle: GUI Module Specification
 itemType: Software Item Spec
 itemFulfills: SHR-APPLICATION-1
+itemIsRelatedTo: SPEC-APPLICATION-SERVICE,  SPEC-BUCKET-SERVICE, SPEC-DATASET-SERVICE, SPEC-NOTEBOOK-SERVICE, SPEC-QUPATH-SERVICE, SPEC-SYSTEM-SERVICE
 Module: GUI _(Graphical User Interface Framework)_
 Layer: Presentation Interface
 Version: 1.0.0
