@@ -84,8 +84,6 @@ class ApplicationReadResponse(BaseModel):
         return _dict
 
     @classmethod
-    # TODO (Andreas): Had to patch this to allow for None and convert to empty list
-    # Can be removed when API adheres to openapi spec which does not allow None here
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of ApplicationReadResponse from a dict"""
         if obj is None:
@@ -94,17 +92,13 @@ class ApplicationReadResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        validation_dict = {
+        _obj = cls.model_validate({
             "application_id": obj.get("application_id"),
             "name": obj.get("name"),
             "regulatory_classes": obj.get("regulatory_classes"),
             "description": obj.get("description"),
-        }
-        
-        # Only add versions if it's not None - let default kick in otherwise
-        versions_data = obj.get("versions")
-        if versions_data is not None:
-            validation_dict["versions"] = [ApplicationVersion.from_dict(_item) for _item in versions_data]
-
-        _obj = cls.model_validate(validation_dict)
+            "versions": [ApplicationVersion.from_dict(_item) for _item in obj["versions"]] if obj.get("versions") is not None else None
+        })
         return _obj
+
+

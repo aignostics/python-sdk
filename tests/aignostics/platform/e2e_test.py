@@ -10,20 +10,12 @@ from pathlib import Path
 
 import pytest
 from aignx.codegen.models import (
-    ApplicationRunStatus,
     ArtifactOutput,
     ArtifactState,
-    ItemStatus,
 )
 
 from aignostics import platform
-from aignostics.platform.resources.runs import ApplicationRun, ApplicationRunStatus, ItemStatus
-from aignx.codegen.models import ArtifactOutput
-from aignx.codegen.models import ArtifactState
-from aignx.codegen.models import ItemOutput
-from aignx.codegen.models import ItemState
-from aignx.codegen.models import RunOutput
-from aignx.codegen.models import RunState
+from aignostics.platform.resources.runs import ApplicationRun
 from tests.contants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_TIMEOUT_SECONDS,
@@ -214,7 +206,7 @@ def _validate_output(
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
     run_details = application_run.details()
-    assert run_details.status == RunState.TERMINATED and run_details.output == RunOutput.FULL, (
+    assert run_details.state == RunState.TERMINATED and run_details.output == RunOutput.FULL, (
         f"Run {application_run.run_id}: Did not finish in state `FULL` for its output, but '{run_details.output}'."
     )
 

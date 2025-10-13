@@ -401,7 +401,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 token = session.fetch_token(settings().token_url, code=auth_code, include_client_id=True)
                 # Store the token
                 authentication_result.token = token["access_token"]
-                print(token["refresh_token"])
+                print(token["access_token"])
                 # Send success response
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-type", "text/html")

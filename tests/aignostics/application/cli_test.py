@@ -123,7 +123,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 2
-    assert "Invalid metadata for artifact `user_slide`" in normalize_output(result.stdout)
+    assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
 
 

@@ -38,8 +38,6 @@ from aignostics.platform import (
 )
 from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
-from aignx.codegen.models import ItemOutput
-from aignx.codegen.models import ItemState
 
 from ._settings import Settings
 from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
