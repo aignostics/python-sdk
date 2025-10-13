@@ -118,7 +118,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 2
-    assert "Invalid metadata for artifact `user_slide`" in normalize_output(result.stdout)
+    assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
 
 
@@ -242,8 +242,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     )
     assert download_result.exit_code == 0
     assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
-    #todo(helmut): What was the reson to assert on the commented line? I could not get the
-    #string you check. Would just remove it
+    # TODO(helmut): What was the reson to assert on the commented line? I could not get the
+    # string you check. Would just remove it
     # assert "status: running on plat" in normalize_output(download_result.stdout)
 
     # Test the cancel command with the extracted run ID
@@ -262,7 +262,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
 
     # Verify the download message and path
     assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
-    # todo(andreas): Would also be great to check if it is canceled by user
+    # TODO(andreas): Would also be great to check if it is canceled by user
     assert "status: terminated" in normalize_output(download_result.stdout)
 
     # More robust path verification - normalize paths and check if the destination path is mentioned in the output

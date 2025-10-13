@@ -8,11 +8,11 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from aignx.codegen.models import RunState
 
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException
 from aignostics.utils import console, get_logger, get_user_data_directory, sanitize_path
-from aignx.codegen.models import RunState
 
 from ._service import DownloadProgress, DownloadProgressState, Service
 from ._utils import (

@@ -1,14 +1,10 @@
 import tempfile
 from pathlib import Path
 
+from aignx.codegen.models import ArtifactOutput, ArtifactState, ItemOutput, ItemState, RunOutput, RunState
+
 from aignostics import platform
 from aignostics.platform import ApplicationRun
-from aignx.codegen.models import ArtifactOutput
-from aignx.codegen.models import ArtifactState
-from aignx.codegen.models import ItemOutput
-from aignx.codegen.models import ItemState
-from aignx.codegen.models import RunOutput
-from aignx.codegen.models import RunState
 
 
 def _validate_output(
@@ -26,7 +22,7 @@ def _validate_output(
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
     run_details = application_run.details()
-    assert run_details.status == RunState.TERMINATED and run_details.output == RunOutput.FULL, (
+    assert run_details.state == RunState.TERMINATED and run_details.output == RunOutput.FULL, (
         f"Run {application_run.run_id}: Did not finish in state `FULL` for its output, but '{run_details.output}'."
     )
 
@@ -67,27 +63,26 @@ def _validate_output(
 
 
 client = platform.Client(cache_token=False)
-
 for version in client.versions.list(application="he-tme"):
     print(version)
 
-# apps = []
-# print("Applications:")
-# for i in client.applications.list():
-#     print(i)
-#     apps.append(i)
-#
-# print("Versions:")
-# versions = []
-# for app in apps:
-#     for version in client.versions.list(application=app.application_id):
-#         print(f"{app.application_id}: {version} {version.number}")
-#         versions.append((app.application_id, version.number))
-#
-# print("Version Details:")
-# for version in versions:
-#     version_details = client.versions.details(version[0], version[1])
-#     print(version_details)
+apps = []
+print("Applications:")
+for i in client.applications.list():
+    print(i)
+    apps.append(i)
+
+print("Versions:")
+versions = []
+for app in apps:
+    for version in client.versions.list(application=app.application_id):
+        print(f"{app.application_id}: {version} {version.number}")
+        versions.append((app.application_id, version.number))
+
+print("Version Details:")
+for version in versions:
+    version_details = client.versions.details(version[0], version[1])
+    print(version_details)
 
 
 # app_run_id = client.runs.create(
@@ -163,10 +158,9 @@ for version in client.versions.list(application="he-tme"):
 # for run in client.runs.list():
 #     print(run)
 
-# run = ApplicationRun.for_run_id(run_id="f2222c26-ba60-43f2-b3fa-20bbd875e476")
-#
-# with tempfile.TemporaryDirectory() as temp_dir:
-#     run.download_to_folder(temp_dir)
-#     validate the output
-    # _validate_output(run, Path(temp_dir))
-#
+run = ApplicationRun.for_run_id(run_id="433c01fc-dab1-454e-934d-f4f55c0ed4a7")
+
+with tempfile.TemporaryDirectory() as temp_dir:
+    run.download_to_folder(temp_dir)
+    # validate the output
+    _validate_output(run, Path(temp_dir))

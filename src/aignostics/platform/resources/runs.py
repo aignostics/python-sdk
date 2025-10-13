@@ -14,20 +14,21 @@ from typing import Any
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import (
     ItemCreationRequest,
+    ItemOutput,
     ItemResultReadResponse,
+    ItemState,
+    ItemTerminationReason,
     RunCreationRequest,
     RunCreationResponse,
+    RunState,
+    RunTerminationReason,
 )
-from aignx.codegen.models import ItemOutput
 from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
 )
-from aignx.codegen.models import ItemState
-from aignx.codegen.models import ItemTerminationReason
 from aignx.codegen.models import (
     RunReadResponse as ApplicationRunData,
 )
-from aignx.codegen.models import RunState
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
@@ -40,20 +41,20 @@ from aignostics.platform._utils import (
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import user_agent
-from aignx.codegen.models import RunTerminationReason
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 
-# todo(andreas): As soon as we switch to the new status types of the API,
+
+# TODO(andreas): As soon as we switch to the new status types of the API,
 # this class is obsolete
 class ItemStatus(str, Enum):
-    PENDING = 'PENDING'
-    CANCELED_USER = 'CANCELED_USER'
-    CANCELED_SYSTEM = 'CANCELED_SYSTEM'
-    USER_ERROR = 'USER_ERROR'
-    SYSTEM_ERROR = 'SYSTEM_ERROR'
-    SUCCEEDED = 'SUCCEEDED'
+    PENDING = "PENDING"
+    CANCELED_USER = "CANCELED_USER"
+    CANCELED_SYSTEM = "CANCELED_SYSTEM"
+    USER_ERROR = "USER_ERROR"
+    SYSTEM_ERROR = "SYSTEM_ERROR"
+    SUCCEEDED = "SUCCEEDED"
 
     @classmethod
     def from_json(cls, json_str: str) -> t.Self:

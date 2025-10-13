@@ -12,6 +12,7 @@ from typing import Any
 
 import google_crc32c
 import requests
+from aignx.codegen.models import ItemOutput, ItemState
 from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
@@ -29,7 +30,6 @@ from aignostics.platform import (
     InputArtifact,
     InputItem,
     ItemResult,
-    ItemStatus,
     NotFoundException,
     OutputArtifactElement,
 )
@@ -38,8 +38,6 @@ from aignostics.platform import (
 )
 from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
-from aignx.codegen.models import ItemOutput
-from aignx.codegen.models import ItemState
 
 from ._settings import Settings
 from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact

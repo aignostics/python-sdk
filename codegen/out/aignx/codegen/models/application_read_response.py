@@ -31,9 +31,7 @@ class ApplicationReadResponse(BaseModel):
     name: StrictStr = Field(description="Application display name")
     regulatory_classes: List[StrictStr] = Field(description="Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.")
     description: StrictStr = Field(description="Describing what the application can do ")
-    # TODO(Andreas): Patched to allow None given API on dev does not serve an (empty) list as defined in openapi 
-    # but None. Please check TODO on from_dict as well!
-    versions: List[ApplicationVersion] = Field(default=[],description="All version numbers available to the user")
+    versions: List[ApplicationVersion] = Field(description="All version numbers available to the user")
     __properties: ClassVar[List[str]] = ["application_id", "name", "regulatory_classes", "description", "versions"]
 
     model_config = ConfigDict(
@@ -85,8 +83,6 @@ class ApplicationReadResponse(BaseModel):
         return _dict
 
     @classmethod
-    # TODO (Andreas): Had to patch this to allow for None and convert to empty list
-    # Can be removed when API adheres to openapi spec which does not allow None here
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of ApplicationReadResponse from a dict"""
         if obj is None:
@@ -95,17 +91,13 @@ class ApplicationReadResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        validation_dict = {
+        _obj = cls.model_validate({
             "application_id": obj.get("application_id"),
             "name": obj.get("name"),
             "regulatory_classes": obj.get("regulatory_classes"),
             "description": obj.get("description"),
-        }
-        
-        # Only add versions if it's not None - let default kick in otherwise
-        versions_data = obj.get("versions")
-        if versions_data is not None:
-            validation_dict["versions"] = [ApplicationVersion.from_dict(_item) for _item in versions_data]
-
-        _obj = cls.model_validate(validation_dict)
+            "versions": [ApplicationVersion.from_dict(_item) for _item in obj["versions"]] if obj.get("versions") is not None else None
+        })
         return _obj
+
+

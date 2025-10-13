@@ -536,6 +536,7 @@ class TestPortAvailability:
 
         # Create a side effect that fails once with EADDRINUSE, then succeeds
         call_count = 0
+
         def http_server_side_effect(*args, **kwargs):
             nonlocal call_count
             call_count += 1
