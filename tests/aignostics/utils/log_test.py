@@ -14,11 +14,13 @@ from aignostics.utils._log import _validate_file_name, logging_initialize
 log = get_logger(__name__)
 
 
+@pytest.mark.unit
 def test_validate_file_name_none() -> None:
     """Test that None file name is returned unchanged."""
     assert _validate_file_name(None) is None
 
 
+@pytest.mark.integration
 def test_validate_file_name_nonexistent() -> None:
     """Test validation of a non-existent file that can be created."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -28,6 +30,7 @@ def test_validate_file_name_nonexistent() -> None:
         assert not test_file.exists()
 
 
+@pytest.mark.integration
 def test_validate_file_name_existing() -> None:
     """Test validation of an existing writable file."""
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as temp_file:
@@ -41,6 +44,7 @@ def test_validate_file_name_existing() -> None:
         temp_file_path.unlink(missing_ok=True)
 
 
+@pytest.mark.integration
 def test_validate_file_name_existing_readonly() -> None:
     """Test validation of an existing read-only file."""
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as temp_file:
@@ -59,12 +63,14 @@ def test_validate_file_name_existing_readonly() -> None:
         temp_file_path.unlink(missing_ok=True)
 
 
+@pytest.mark.integration
 def test_validate_file_name_directory() -> None:
     """Test validation of a path that points to a directory."""
     with tempfile.TemporaryDirectory() as temp_dir, pytest.raises(ValueError, match=r"exists but is a directory"):
         _validate_file_name(temp_dir)
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     platform.system() == "Windows",
     reason="This test is designed for Unix-like systems where permissions can be set to non-writable.",
@@ -83,6 +89,7 @@ def test_validate_file_name_cannot_create() -> None:
             temp_dir_path.chmod(0o755)
 
 
+@pytest.mark.unit
 def test_validate_file_name_invalid_path() -> None:
     """Test validation of a file with an invalid path."""
     # Testing with a path that should always be invalid
@@ -91,24 +98,28 @@ def test_validate_file_name_invalid_path() -> None:
         _validate_file_name(str(invalid_path))
 
 
+@pytest.mark.unit
 def test_get_logger_with_name() -> None:
     """Test get_logger with a specific name."""
     logger = get_logger("test_module")
     assert logger.name == "aignostics.test_module"
 
 
+@pytest.mark.unit
 def test_get_logger_none() -> None:
     """Test get_logger with None name."""
     logger = get_logger(None)
     assert logger.name == "aignostics"
 
 
+@pytest.mark.unit
 def test_get_logger_project_name() -> None:
     """Test get_logger with the project name."""
     logger = get_logger("aignostics")
     assert logger.name == "aignostics"
 
 
+@pytest.mark.unit
 def test_logging_initialize_with_defaults() -> None:
     """Test logging_initialize with default settings."""
     with (

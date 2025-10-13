@@ -19,6 +19,7 @@ BUILT_WITH_LOVE = "built with love in Berlin"
 THE_VALUE = "THE_VALUE"
 
 
+@pytest.mark.integration
 def test_cli_built_with_love(runner) -> None:
     """Check epilog shown."""
     result = runner.invoke(cli, ["--help"])
@@ -27,6 +28,8 @@ def test_cli_built_with_love(runner) -> None:
     assert __version__ in result.output
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_cli_fails_on_invalid_setting_with_env_arg() -> None:
     """Check system fails on boot with invalid setting using subprocess."""
     # Run the CLI as a subprocess with environment variable
@@ -62,6 +65,7 @@ def test_cli_fails_on_invalid_setting_with_env_arg() -> None:
     assert "Input should be 'CRITICAL'" in stdout_text or "Input should be 'CRITICAL'" in stderr_text
 
 
+@pytest.mark.integration
 @pytest.mark.sequential
 def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
     """Check system fails on boot with invalid setting using CliRunner and environment variables."""
@@ -77,7 +81,7 @@ def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
         # end custon
 
         # Run the CLI with the runner
-        result = runner.invoke(cli, ["system", "info"], env=env)
+        result = runner.invoke(cli, ["system", "dump-dot-env-file"], env=env)
 
         # Check the exit code (0 indicates all good)
         assert result.exit_code == 0
@@ -92,21 +96,23 @@ def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
         # end custon
 
         # Run the CLI with the runner
-        result = runner.invoke(cli, ["system", "info"], env=env)
+        result = runner.invoke(cli, ["system", "dump-dot-env-file"], env=env)
 
-        # Check the exit code (78 indicates validation failed)
-        assert result.exit_code == 78
         # Check that the error message is in the output
         assert "Input should be 'CRITICAL'" in result.output
+        # Check the exit code (78 indicates validation failed)
+        assert result.exit_code == 78
 
 
 if find_spec("nicegui"):
 
+    @pytest.mark.integration
     def test_cli_gui_help(runner: CliRunner) -> None:
         """Check gui help works."""
         result = runner.invoke(cli, ["launchpad", "--help"])
         assert result.exit_code == 0
 
+    @pytest.mark.integration
     def test_cli_gui_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
         """Check gui component behaviors when launchpad command is executed."""
         # Create mocks
@@ -127,6 +133,7 @@ if find_spec("nicegui"):
             show_welcome_message=False,
             show=False,
             window_size=None,
+            reconnect_timeout=0,
         ):
             nonlocal mock_ui_run_called, mock_ui_run_args
             mock_ui_run_called = True
@@ -142,6 +149,7 @@ if find_spec("nicegui"):
                 "show_welcome_message": show_welcome_message,
                 "show": show,
                 "window_size": window_size,
+                "reconnect_timeout": reconnect_timeout,
             }
 
         def mock_gui_register_pages():
@@ -199,11 +207,14 @@ if find_spec("nicegui"):
 if find_spec("marimo") and find_spec("fastapi"):
     from fastapi import FastAPI
 
+    @pytest.mark.integration
     def test_cli_notebook_help(runner: CliRunner) -> None:
         """Check notebook help works."""
         result = runner.invoke(cli, ["notebook", "--help"])
         assert result.exit_code == 0
 
+    @pytest.mark.integration
+    @pytest.mark.timeout(timeout=60)
     def test_cli_notebook_run(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
         """Check uvicorn.run is called with FastAPI app from the notebook service."""
         # Create a mock for uvicorn.run to capture the app instance

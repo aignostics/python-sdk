@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Aignostics Platform API reference",
-    "description": "\nPagination is done via `page` and `page_size`. Sorting via `sort` query parameter.\nThe `sort` query parameter can be provided multiple times. The sorting direction can be indicated via\n`+` (ascending) or `-` (descending) (e.g. `/v1/applications?sort=+name)`.",
-    "version": "1.0.0"
+    "title": "Aignostics Platform API",
+    "description": "\nThe Aignostics Platform is a cloud-based service that enables organizations to access advanced computational pathology applications through a secure API.  The platform provides standardized access to Aignostics' portfolio of computational pathology solutions, with Atlas H&E-TME serving as an example of the available API endpoints. \n\nTo begin using the platform, your organization must first be registered by our business support team. If you don't have an account yet, please contact your account manager or email support@aignostics.com to get started. \n\nMore information about our applications can be found on [https://platform.aignostics.com](https://platform.aignostics.com).\n\n**How to authorize and test API endpoints:**\n\n1. Click the \"Authorize\" button in the right corner below\n3. Click \"Authorize\" button in the dialog to log in with your Aignostics Platform credentials\n4. After successful login, you'll be redirected back and can use \"Try it out\" on any endpoint\n\n**Note**: You only need to authorize once per session. The lock icons next to endpoints will show green when authorized.\n\n",
+    "version": "1.0.0-beta6"
   },
   "servers": [
     {
@@ -16,8 +16,8 @@
         "tags": [
           "Public"
         ],
-        "summary": "List Applications",
-        "description": "Returns the list of the applications, available to the caller.\n\nThe application is available if any of the version of the application is assigned to the\nuser organization. To switch between organizations, the user should re-login and choose the\nneeded organization.",
+        "summary": "List available applications",
+        "description": "Returns the list of the applications, available to the caller.\n\nThe application is available if any of the versions of the application is assigned to the caller’s organization.\nThe response is paginated and sorted according to the provided parameters.",
         "operationId": "list_applications_v1_applications_get",
         "security": [
           {
@@ -64,7 +64,82 @@
                   "type": "null"
                 }
               ],
+              "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `application_id`\n- `name`\n- `description`\n- `regulatory_classes`\n\n**Examples:**\n- `?sort=application_id` - Sort by application_id ascending\n- `?sort=-name` - Sort by name descending\n- `?sort=+description&sort=name` - Sort by description ascending, then name descending",
               "title": "Sort"
+            },
+            "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `application_id`\n- `name`\n- `description`\n- `regulatory_classes`\n\n**Examples:**\n- `?sort=application_id` - Sort by application_id ascending\n- `?sort=-name` - Sort by name descending\n- `?sort=+description&sort=name` - Sort by description ascending, then name descending"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of applications available to the caller",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationReadResponse"
+                  },
+                  "title": "Response List Applications V1 Applications Get"
+                },
+                "example": [
+                  {
+                    "application_id": "he-tme",
+                    "name": "Atlas H&E-TME",
+                    "regulatory_classes": [
+                      "RUO"
+                    ],
+                    "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment."
+                  },
+                  {
+                    "application_id": "test-app",
+                    "name": "Test Application",
+                    "regulatory_classes": [
+                      "RUO"
+                    ],
+                    "description": "This is the test application with two algorithms: TissueQc and Tissue Segmentation"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/applications/{application_id}": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Read Application By Id",
+        "description": "Retrieve details of a specific application by its ID.",
+        "operationId": "read_application_by_id_v1_applications__application_id__get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
             }
           }
         ],
@@ -74,14 +149,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ApplicationReadResponse"
-                  },
-                  "title": "Response List Applications V1 Applications Get"
+                  "$ref": "#/components/schemas/ApplicationReadResponse"
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to see this application"
+          },
+          "404": {
+            "description": "Not Found - Application with the given ID does not exist"
           },
           "422": {
             "description": "Validation Error",
@@ -101,8 +178,8 @@
         "tags": [
           "Public"
         ],
-        "summary": "List Versions By Application Id",
-        "description": "Returns the list of the application versions for this application, available to the caller.\n\nThe application version is available if it is assigned to the user's organization.\n\nThe application versions are assigned to the organization by the Aignostics admin. To\nassign or unassign a version from your organization, please contact Aignostics support team.",
+        "summary": "List Available Application Versions",
+        "description": "Returns a list of available application versions for a specific application.\n\nA version is considered available when it has been assigned to your organization. Within a major version,\nall minor and patch updates are automatically accessible unless a specific version has been deprecated.\nMajor version upgrades, however, require explicit assignment and may be subject to contract modifications\nbefore becoming available to your organization.",
         "operationId": "list_versions_by_application_id_v1_applications__application_id__versions_get",
         "security": [
           {
@@ -155,31 +232,14 @@
                   "type": "null"
                 }
               ],
-              "title": "Version"
-            }
-          },
-          {
-            "name": "include",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "minItems": 1,
-                  "maxItems": 1
-                },
-                {
-                  "type": "null"
-                }
+              "description": "Semantic version of the application, example: `1.0.13`",
+              "examples": [
+                "1.0.0",
+                "1.0.13"
               ],
-              "title": "Include"
-            }
+              "title": "Version"
+            },
+            "description": "Semantic version of the application, example: `1.0.13`"
           },
           {
             "name": "sort",
@@ -197,7 +257,213 @@
                   "type": "null"
                 }
               ],
+              "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `application_version_id`\n- `version`\n- `application_id`\n- `changelog`\n- `created_at`\n\n**Examples:**\n- `?sort=application_id` - Sort by application_id ascending\n- `?sort=-version` - Sort by version descending\n- `?sort=+application_id&sort=-created_at` - Sort by application_id ascending, then created_at descending",
               "title": "Sort"
+            },
+            "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `application_version_id`\n- `version`\n- `application_id`\n- `changelog`\n- `created_at`\n\n**Examples:**\n- `?sort=application_id` - Sort by application_id ascending\n- `?sort=-version` - Sort by version descending\n- `?sort=+application_id&sort=-created_at` - Sort by application_id ascending, then created_at descending"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of application versions for a given application ID available to the caller",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApplicationVersionReadResponse"
+                  },
+                  "title": "Response List Versions By Application Id V1 Applications  Application Id  Versions Get"
+                },
+                "example": [
+                  {
+                    "application_version_id": "he-tme:v0.5.0",
+                    "version": "0.5.0",
+                    "application_id": "he-tme",
+                    "changelog": "Redeployed after metadata name changes. ",
+                    "input_artifacts": [
+                      {
+                        "name": "user_slide",
+                        "mime_type": "image/tiff",
+                        "metadata_schema": {
+                          "type": "object",
+                          "$defs": {
+                            "LungCancerSpecimen": {
+                              "type": "object",
+                              "title": "LungCancerSpecimen",
+                              "required": [
+                                "disease",
+                                "tissue"
+                              ],
+                              "properties": {
+                                "tissue": {
+                                  "enum": [
+                                    "LUNG",
+                                    "LYMPH_NODE",
+                                    "LIVER",
+                                    "ADRENAL_GLAND",
+                                    "BONE",
+                                    "BRAIN"
+                                  ],
+                                  "type": "string",
+                                  "title": "Tissue"
+                                },
+                                "disease": {
+                                  "enum": [
+                                    "LUNG_CANCER"
+                                  ],
+                                  "type": "string",
+                                  "const": "LUNG_CANCER",
+                                  "title": "Disease"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "title": "Slide Schema",
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "required": [
+                            "media_type",
+                            "checksum_base64_crc32c",
+                            "specimen",
+                            "resolution_mpp",
+                            "width_px",
+                            "height_px",
+                            "staining_method"
+                          ],
+                          "properties": {
+                            "specimen": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/$defs/LungCancerSpecimen"
+                                }
+                              ],
+                              "title": "Specimen"
+                            },
+                            "width_px": {
+                              "type": "integer",
+                              "title": "Width (px)",
+                              "minimum": 1
+                            },
+                            "height_px": {
+                              "type": "integer",
+                              "title": "Height (px)",
+                              "minimum": 1
+                            },
+                            "media_type": {
+                              "enum": [
+                                "application/dicom",
+                                "image/tiff",
+                                "application/octet-stream",
+                                "application/zip"
+                              ],
+                              "type": "string",
+                              "title": "Media Type"
+                            },
+                            "resolution_mpp": {
+                              "type": "number",
+                              "title": "Resolution (mpp)",
+                              "maximum": 0.5,
+                              "minimum": 0.125
+                            },
+                            "staining_method": {
+                              "enum": [
+                                "H&E"
+                              ],
+                              "type": "string",
+                              "const": "H&E",
+                              "title": "Staining Method"
+                            },
+                            "checksum_base64_crc32c": {
+                              "type": "string",
+                              "title": "Base64 encoded big-endian CRC32C checksum"
+                            }
+                          },
+                          "description": "Schema of a slide.",
+                          "additionalProperties": false
+                        }
+                      }
+                    ],
+                    "output_artifacts": [
+                      {
+                        "name": "tissue_qc:geojson_polygons",
+                        "mime_type": "image/tiff",
+                        "metadata_schema": {
+                          "type": "object",
+                          "title": "GeoJsonPolygonsMetadata",
+                          "$schema": "http://json-schema.org/draft-07/schema#",
+                          "required": [
+                            "checksum_base64_crc32c",
+                            "polygon_mpp"
+                          ],
+                          "properties": {
+                            "media_type": {
+                              "enum": [
+                                "application/geo+json"
+                              ],
+                              "type": "string",
+                              "const": "application/geo+json",
+                              "title": "Media Type",
+                              "default": "application/geo+json"
+                            },
+                            "polygon_mpp": {
+                              "type": "number",
+                              "title": "Polygon Mpp"
+                            },
+                            "checksum_base64_crc32c": {
+                              "type": "string",
+                              "title": "Base64 encoded big-endian CRC32C checksum"
+                            }
+                          },
+                          "description": "Metadata corresponding to GeoJSON polygons.",
+                          "additionalProperties": false
+                        },
+                        "scope": "ITEM"
+                      }
+                    ],
+                    "created_at": "2025-06-03T11:45:55.646211Z"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{application_version_id}": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Application Version Details",
+        "description": "Get the application version details\n\nAllows caller to  retrieve information about application version based on provided application version ID.",
+        "operationId": "application_version_details_v1_versions__application_version_id__get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "application_version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Version Id"
             }
           }
         ],
@@ -207,14 +473,202 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ApplicationVersionReadResponse"
-                  },
-                  "title": "Response List Versions By Application Id V1 Applications  Application Id  Versions Get"
+                  "$ref": "#/components/schemas/VersionReadResponse"
+                },
+                "example": {
+                  "application_version_id": "he-tme:v0.4.4",
+                  "version": "0.4.4",
+                  "application_id": "he-tme",
+                  "changelog": "New deployment",
+                  "input_artifacts": [
+                    {
+                      "name": "user_slide",
+                      "mime_type": "image/tiff",
+                      "metadata_schema": {
+                        "type": "object",
+                        "$defs": {
+                          "LungCancerMetadata": {
+                            "type": "object",
+                            "title": "LungCancerMetadata",
+                            "required": [
+                              "type",
+                              "tissue"
+                            ],
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "lung"
+                                ],
+                                "type": "string",
+                                "const": "lung",
+                                "title": "Type"
+                              },
+                              "tissue": {
+                                "enum": [
+                                  "lung",
+                                  "lymph node",
+                                  "liver",
+                                  "adrenal gland",
+                                  "bone",
+                                  "brain"
+                                ],
+                                "type": "string",
+                                "title": "Tissue"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "title": "ExternalImageMetadata",
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "required": [
+                          "checksum_crc32c",
+                          "base_mpp",
+                          "width",
+                          "height",
+                          "cancer"
+                        ],
+                        "properties": {
+                          "stain": {
+                            "enum": [
+                              "H&E"
+                            ],
+                            "type": "string",
+                            "const": "H&E",
+                            "title": "Stain",
+                            "default": "H&E"
+                          },
+                          "width": {
+                            "type": "integer",
+                            "title": "Width",
+                            "maximum": 150000,
+                            "minimum": 1
+                          },
+                          "cancer": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/LungCancerMetadata"
+                              }
+                            ],
+                            "title": "Cancer"
+                          },
+                          "height": {
+                            "type": "integer",
+                            "title": "Height",
+                            "maximum": 150000,
+                            "minimum": 1
+                          },
+                          "base_mpp": {
+                            "type": "number",
+                            "title": "Base Mpp",
+                            "maximum": 0.5,
+                            "minimum": 0.125
+                          },
+                          "mime_type": {
+                            "enum": [
+                              "application/dicom",
+                              "image/tiff"
+                            ],
+                            "type": "string",
+                            "title": "Mime Type",
+                            "default": "image/tiff"
+                          },
+                          "checksum_crc32c": {
+                            "type": "string",
+                            "title": "Checksum Crc32C"
+                          }
+                        },
+                        "description": "Metadata corresponding to an external image.",
+                        "additionalProperties": false
+                      }
+                    }
+                  ],
+                  "output_artifacts": [
+                    {
+                      "name": "tissue_qc:tiff_heatmap",
+                      "mime_type": "image/tiff",
+                      "metadata_schema": {
+                        "type": "object",
+                        "title": "HeatmapMetadata",
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "required": [
+                          "checksum_crc32c",
+                          "width",
+                          "height",
+                          "class_colors"
+                        ],
+                        "properties": {
+                          "width": {
+                            "type": "integer",
+                            "title": "Width"
+                          },
+                          "height": {
+                            "type": "integer",
+                            "title": "Height"
+                          },
+                          "base_mpp": {
+                            "type": "number",
+                            "title": "Base Mpp",
+                            "maximum": 0.5,
+                            "minimum": 0.125
+                          },
+                          "mime_type": {
+                            "enum": [
+                              "image/tiff"
+                            ],
+                            "type": "string",
+                            "const": "image/tiff",
+                            "title": "Mime Type",
+                            "default": "image/tiff"
+                          },
+                          "class_colors": {
+                            "type": "object",
+                            "title": "Class Colors",
+                            "additionalProperties": {
+                              "type": "array",
+                              "maxItems": 3,
+                              "minItems": 3,
+                              "prefixItems": [
+                                {
+                                  "type": "integer",
+                                  "maximum": 255,
+                                  "minimum": 0
+                                },
+                                {
+                                  "type": "integer",
+                                  "maximum": 255,
+                                  "minimum": 0
+                                },
+                                {
+                                  "type": "integer",
+                                  "maximum": 255,
+                                  "minimum": 0
+                                }
+                              ]
+                            }
+                          },
+                          "checksum_crc32c": {
+                            "type": "string",
+                            "title": "Checksum Crc32C"
+                          }
+                        },
+                        "description": "Metadata corresponding to a segmentation heatmap file.",
+                        "additionalProperties": false
+                      },
+                      "scope": "ITEM",
+                      "visibility": "EXTERNAL"
+                    }
+                  ],
+                  "created_at": "2025-04-16T08:45:20.655972Z"
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to see this version"
+          },
+          "404": {
+            "description": "Not Found - Application version with given ID does not exist"
           },
           "422": {
             "description": "Validation Error",
@@ -235,7 +689,7 @@
           "Public"
         ],
         "summary": "List Application Runs",
-        "description": "The endpoint returns the application runs triggered by the caller. After the application run\nis created by POST /v1/runs, it becomes available for the current endpoint",
+        "description": "List application runs with filtering, sorting, and pagination capabilities.\n\nReturns paginated application runs that were triggered by the user.",
         "operationId": "list_application_runs_v1_runs_get",
         "security": [
           {
@@ -280,29 +734,50 @@
             "description": "Optional application version filter"
           },
           {
-            "name": "include",
+            "name": "metadata",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "minItems": 1,
-                  "maxItems": 1
+                  "type": "string",
+                  "maxLength": 1000
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Request optional output values. Used internally by the platform",
-              "title": "Include"
+              "description": "Use PostgreSQL JSONPath expressions to filter runs by their metadata.\n#### URL Encoding Required\n**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.\n\n#### Examples (Clear Format):\n- **Field existence**: `$.project` - Runs that have a project field defined\n- **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value\n- **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours\n- **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\"\n- **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements\n\n#### Examples (URL-Encoded Format):\n- **Field existence**: `%24.project`\n- **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)`\n- **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)`\n- **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)`\n- **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?` operator\n- The `$.` prefix is automatically added to root-level field references if missing\n- String values in conditions must be enclosed in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n- Regular expressions use `like_regex` with standard regex syntax\n- **Remember to URL-encode the entire JSONPath expression when making HTTP requests**\n\n            ",
+              "title": "Metadata"
             },
-            "description": "Request optional output values. Used internally by the platform"
+            "description": "Use PostgreSQL JSONPath expressions to filter runs by their metadata.\n#### URL Encoding Required\n**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.\n\n#### Examples (Clear Format):\n- **Field existence**: `$.project` - Runs that have a project field defined\n- **Exact value match**: `$.project ? (@ == \"cancer-research\")` - Runs with specific project value\n- **Numeric comparison**: `$.duration_hours ? (@ < 2)` - Runs with duration less than 2 hours\n- **Array operations**: `$.tags[*] ? (@ == \"production\")` - Runs tagged with \"production\"\n- **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements\n\n#### Examples (URL-Encoded Format):\n- **Field existence**: `%24.project`\n- **Exact value match**: `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)`\n- **Numeric comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)`\n- **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)`\n- **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?` operator\n- The `$.` prefix is automatically added to root-level field references if missing\n- String values in conditions must be enclosed in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n- Regular expressions use `like_regex` with standard regex syntax\n- **Remember to URL-encode the entire JSONPath expression when making HTTP requests**\n\n            ",
+            "examples": {
+              "field_exists": {
+                "summary": "Check if field exists",
+                "description": "Find applications that have a project field defined",
+                "value": "$.project"
+              },
+              "field_has_value": {
+                "summary": "Check if field has a certain value",
+                "description": "Compare a field value against a certain value",
+                "value": "$.project ? (@ == \"cancer-research\")"
+              },
+              "numeric_comparisons": {
+                "summary": "Compare to a numeric value of a field",
+                "description": "Compare a field value against a numeric value of a field",
+                "value": "$.duration_hours ? (@ < 2)"
+              },
+              "array_operations": {
+                "summary": "Check if an array contains a certain value",
+                "description": "Check if an array contains a certain value",
+                "value": "$.tags[*] ? (@ == \"production\")"
+              },
+              "complex_filters": {
+                "summary": "Combine multiple checks",
+                "description": "Combine multiple checks",
+                "value": "$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)"
+              }
+            }
           },
           {
             "name": "page",
@@ -343,8 +818,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `application_run_id`\n- `application_version_id`\n- `organization_id`\n- `status`\n- `triggered_at`\n- `triggered_by`\n\n**Examples:**\n- `?sort=triggered_at` - Sort by creation time (ascending)\n- `?sort=-triggered_at` - Sort by creation time (descending)\n- `?sort=status&sort=-triggered_at` - Sort by status, then by time (descending)\n",
               "title": "Sort"
-            }
+            },
+            "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `application_run_id`\n- `application_version_id`\n- `organization_id`\n- `status`\n- `triggered_at`\n- `triggered_by`\n\n**Examples:**\n- `?sort=triggered_at` - Sort by creation time (ascending)\n- `?sort=-triggered_at` - Sort by creation time (descending)\n- `?sort=status&sort=-triggered_at` - Sort by status, then by time (descending)\n"
           }
         ],
         "responses": {
@@ -381,8 +858,8 @@
         "tags": [
           "Public"
         ],
-        "summary": "Create Application Run",
-        "description": "The endpoint is used to process the input items by the chosen application version. The endpoint\nreturns the `application_run_id`. The processing fo the items is done asynchronously.\n\nTo check the status or cancel the execution, use the /v1/runs/{application_run_id} endpoint.\n\n### Payload\n\nThe payload includes `application_version_id` and `items` base fields.\n\n`application_version_id` is the id used for `/v1/versions/{application_id}` endpoint.\n\n`items` includes the list of the items to process (slides, in case of HETA application).\nEvery item has a set of standard fields defined by the API, plus the metadata, specific to the\nchosen application.\n\nExample payload structure with the comments:\n```\n{\n    application_version_id: \"test-app:v0.0.2\",\n    items: [{\n        \"reference\": \"slide_1\",  <-- Input ID to connect the input and the output artifact\n        \"input_artifacts\": [{\n            \"name\": \"input_slide\",  <-- Name of the artifact defined by the application (For HETA it is\"input_slide\")\n            \"download_url\": \"https://...\", <-- signed URL to the input file in the S3 or GCS. Should be valid for more than 6 days\n            \"metadata\": { <-- The metadata fields defined by the application. (The example fields set for a slide files are provided)\n                \"checksum_base64_crc32c\": \"abc12==\",\n                \"mime_type\": \"image/tiff\",\n                \"height\": 100,\n                \"weight\": 500,\n                \"mpp\": 0.543\n            }\n        }]\n    }]\n}\n```\n\n### Response\n\nThe endpoint returns the application run UUID. After that the job is scheduled for the\nexecution in the background.\n\nTo check the status of the run call `v1/runs/{application_run_id}`.\n\n### Rejection\n\nApart from the authentication, authorization and malformed input error, the request can be\nrejected when the quota limit is exceeded. More details on quotas is described in the\ndocumentation",
+        "summary": "Initiate Application Run",
+        "description": "This endpoint initiates a processing run for a selected application version and returns an `application_run_id` for tracking purposes.\n\nSlide processing occurs asynchronously, allowing you to retrieve results for individual slides as soon as they\ncomplete processing. The system typically processes slides in batches of four, though this number may be reduced\nduring periods of high demand.\nBelow is an example of the required payload for initiating an Atlas H&E TME processing run.\n\n\n### Payload\n\nThe payload includes `application_version_id` and `items` base fields.\n\n`application_version_id` is the id used for `/v1/versions/{application_id}` endpoint.\n\n`items` includes the list of the items to process (slides, in case of HETA application).\nEvery item has a set of standard fields defined by the API, plus the metadata, specific to the\nchosen application.\n\nExample payload structure with the comments:\n```\n{\n    application_version_id: \"he-tme:v1.0.0-beta\",\n    items: [{\n        \"reference\": \"slide_1\",\n        \"input_artifacts\": [{\n            \"name\": \"user_slide\",\n            \"download_url\": \"https://...\",\n            \"metadata\": {\n                \"specimen\": {\n                  \"disease\": \"LUNG_CANCER\",\n                  \"tissue\": \"LUNG\"\n                },\n                \"staining_method\": \"H&E\",\n                \"width_px\": 136223,\n                \"height_px\": 87761,\n                \"resolution_mpp\": 0.2628238,\n                \"media-type\":\"image/tiff\",\n                \"checksum_base64_crc32c\": \"64RKKA==\"\n            }\n        }]\n    }]\n}\n```\n\n| Parameter  | Description |\n| :---- | :---- |\n| `application_version_id` required | Unique ID for the application (must include version) |\n| `items` required | List of submitted items (WSIs) with parameters described below. |\n| `reference` required | Unique WSI name or ID for easy reference to results, provided by the caller. The reference should be unique across all items of the application run.  |\n| `input_artifacts` required | List of provided artifacts for a WSI; at the moment Atlas H&E-TME receives only 1 artifact per slide (the slide itself), but for some other applications this can be a slide and an segmentation map  |\n| `name` required | Type of artifact; Atlas H&E-TME supports only `\"input_slide\"` |\n| `download_url` required | Signed URL to the input file in the S3 or GCS; Should be valid for at least 6 days |\n| `specimen: disease` required | Supported cancer types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) |\n| `specimen: tissue` required | Supported tissue types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) |\n| `staining_method` required | WSI stain /bio-marker; Atlas H&E-TME supports only `\"H&E\"` |\n| `width_px` required | Integer value. Number of pixels of the WSI in the X dimension. |\n| `height_px` required | Integer value. Number of pixels of the WSI in the Y dimension. |\n| `resolution_mpp` required | Resolution of WSI in micrometers per pixel; check allowed range in Atlas H&E-TME manual |\n| `media-type` required | Supported media formats; available values are: image/tiff  (for .tiff or .tif WSI) application/dicom (for DICOM ) application/zip (for zipped DICOM) application/octet-stream  (for .svs WSI) |\n| `checksum_base64_crc32c` required | Base64 encoded big-endian CRC32C checksum of the WSI image |\n\n\n\n### Response\n\nThe endpoint returns the application run UUID. After that the job is scheduled for the\nexecution in the background.\n\nTo check the status of the run call `v1/runs/{application_run_id}`.\n\n### Rejection\n\nApart from the authentication, authorization and malformed input error, the request can be\nrejected when the quota limit is exceeded. More details on quotas is described in the\ndocumentation",
         "operationId": "create_application_run_v1_runs_post",
         "security": [
           {
@@ -411,7 +888,13 @@
             }
           },
           "404": {
-            "description": "Application run not found"
+            "description": "Application version not found"
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to create this run"
+          },
+          "400": {
+            "description": "Bad Request - Input validation failed"
           },
           "422": {
             "description": "Validation Error",
@@ -431,8 +914,8 @@
         "tags": [
           "Public"
         ],
-        "summary": "Get Run",
-        "description": "Returns the details of the application run. The application run is available as soon as it is\ncreated via `POST /runs/` endpoint. To download the items results, call\n`/runs/{application_run_id}/results`.\n\nThe application is only available to the user who triggered it, regardless of the role.",
+        "summary": "Get run details",
+        "description": "This endpoint allows the caller to retrieve the current status of an application run along with other relevant run details.\n A run becomes available immediately after it is created through the POST `/runs/` endpoint.\n\n To download the output results, use GET `/runs/{application_run_id}/` results to get outputs for all slides.\nAccess to a run is restricted to the user who created it.",
         "operationId": "get_run_v1_runs__application_run_id__get",
         "security": [
           {
@@ -451,29 +934,6 @@
               "title": "Application Run Id"
             },
             "description": "Application run id, returned by `POST /runs/` endpoint"
-          },
-          {
-            "name": "include",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "minItems": 1,
-                  "maxItems": 1
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Include"
-            }
           }
         ],
         "responses": {
@@ -488,7 +948,10 @@
             }
           },
           "404": {
-            "description": "Application run not found"
+            "description": "Application run not found because it was deleted."
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to see this run"
           },
           "422": {
             "description": "Validation Error",
@@ -532,15 +995,13 @@
         ],
         "responses": {
           "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "description": "Run cancelled successfully"
           },
           "404": {
-            "description": "Application run not found"
+            "description": "Run not found"
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to cancel this run"
           },
           "422": {
             "description": "Validation Error",
@@ -561,7 +1022,7 @@
           "Public"
         ],
         "summary": "List Run Results",
-        "description": "Get the list of the results for the run items",
+        "description": "List results for items in an application run with filtering, sorting, and pagination capabilities.\n\nReturns paginated results for items within a specific application run. Results can be filtered\nby item IDs, references, status, and custom metadata using JSONPath expressions.\n\n## JSONPath Metadata Filtering\nUse PostgreSQL JSONPath expressions to filter results by their metadata.\n\n### Examples:\n- **Field existence**: `$.case_id` - Results that have a case_id field defined\n- **Exact value match**: `$.priority ? (@ == \"high\")` - Results with high priority\n- **Numeric comparison**: `$.confidence_score ? (@ > 0.95)` - Results with high confidence\n- **Array operations**: `$.flags[*] ? (@ == \"reviewed\")` - Results flagged as reviewed\n- **Complex conditions**: `$.metrics ? (@.accuracy > 0.9 && @.recall > 0.8)` - Results meeting performance thresholds\n\n## Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?` operator\n- The `$.` prefix is automatically added to root-level field references if missing\n- String values in conditions must be enclosed in double quotes\n- Use `&&` for AND operations and `||` for OR operations",
         "operationId": "list_run_results_v1_runs__application_run_id__results_get",
         "security": [
           {
@@ -646,6 +1107,52 @@
             "description": "Filter for items in certain statuses"
           },
           {
+            "name": "metadata",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "JSONPath expression to filter results by their metadata",
+              "title": "Metadata"
+            },
+            "description": "JSONPath expression to filter results by their metadata",
+            "examples": {
+              "field_exists": {
+                "summary": "Check if field exists",
+                "description": "Find results that have a project field defined",
+                "value": "$.project"
+              },
+              "field_has_value": {
+                "summary": "Check if field has a certain value",
+                "description": "Compare a field value against a certain value",
+                "value": "$.project ? (@ == \"cancer-research\")"
+              },
+              "numeric_comparisons": {
+                "summary": "Compare to a numeric value of a field",
+                "description": "Compare a field value against a numeric value of a field",
+                "value": "$.duration_hours ? (@ < 2)"
+              },
+              "array_operations": {
+                "summary": "Check if an array contains a certain value",
+                "description": "Check if an array contains a certain value",
+                "value": "$.tags[*] ? (@ == \"production\")"
+              },
+              "complex_filters": {
+                "summary": "Combine multiple checks",
+                "description": "Combine multiple checks",
+                "value": "$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)"
+              }
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -684,8 +1191,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n                **Available fields:**\n- `item_id`\n- `application_run_id`\n- `reference`\n- `status`\n- `metadata`\n\n**Examples:**\n- `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-application_run_id` - Sort by id of the run (descending)\n- `?sort=status&sort=-item_idt` - Sort by status, then by id of the item (descending)",
               "title": "Sort"
-            }
+            },
+            "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n                **Available fields:**\n- `item_id`\n- `application_run_id`\n- `reference`\n- `status`\n- `metadata`\n\n**Examples:**\n- `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-application_run_id` - Sort by id of the run (descending)\n- `?sort=status&sort=-item_idt` - Sort by status, then by id of the item (descending)"
           }
         ],
         "responses": {
@@ -723,7 +1232,7 @@
           "Public"
         ],
         "summary": "Delete Application Run Results",
-        "description": "Delete the application run results. It can only be called when the application is in a final\nstate (meaning it's not in `received` or `pending` states). To delete the results of the running\nartifacts, first call `POST /v1/runs/{application_run_id}/cancel` to cancel the application run.\n\nThe output results are deleted automatically 30 days after the application run is finished.",
+        "description": "This endpoint allows the caller to explicitly delete outputs generated by an application.\nIt can only be invoked when the application run has reached a final state\n(COMPLETED, COMPLETED_WITH_ERROR, CANCELED_USER, or CANCELED_SYSTEM).\nNote that by default, all outputs are automatically deleted 30 days after the application run finishes,\n regardless of whether the caller explicitly requests deletion.",
         "operationId": "delete_application_run_results_v1_runs__application_run_id__results_delete",
         "security": [
           {
@@ -746,10 +1255,65 @@
         ],
         "responses": {
           "204": {
-            "description": "Successful Response"
+            "description": "All application outputs successfully deleted"
           },
           "404": {
             "description": "Application run not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/items/{item_id}": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Get Item",
+        "description": "Retrieve details of a specific item (slide) by its ID.",
+        "operationId": "get_item_v1_items__item_id__get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemReadResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to see this item"
+          },
+          "404": {
+            "description": "Not Found - Item with given ID does not exist"
           },
           "422": {
             "description": "Validation Error",
@@ -769,7 +1333,8 @@
         "tags": [
           "Public"
         ],
-        "summary": "Get Me",
+        "summary": "Get current user",
+        "description": "Retrieves your identity details, including name, email, and organization.\nThis is useful for verifying that the request is being made under the correct user profile\nand organization context, as well as confirming that the expected environment variables are correctly set\n(in case you are using Python SDK)",
         "operationId": "get_me_v1_me_get",
         "responses": {
           "200": {
@@ -800,7 +1365,7 @@
             "title": "Application Id",
             "description": "Application ID",
             "examples": [
-              "h-e-tme"
+              "he-tme"
             ]
           },
           "name": {
@@ -808,7 +1373,7 @@
             "title": "Name",
             "description": "Application display name",
             "examples": [
-              "HETA"
+              "Atlas H&E-TME"
             ]
           },
           "regulatory_classes": {
@@ -817,17 +1382,20 @@
             },
             "type": "array",
             "title": "Regulatory Classes",
-            "description": "Regulatory class, to which the applications compliance",
+            "description": "Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.",
             "examples": [
               [
-                "RuO"
+                "RUO"
               ]
             ]
           },
           "description": {
             "type": "string",
             "title": "Description",
-            "description": "Application documentations"
+            "description": "Describing what the application can do ",
+            "examples": [
+              "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment."
+            ]
           }
         },
         "type": "object",
@@ -837,7 +1405,8 @@
           "regulatory_classes",
           "description"
         ],
-        "title": "ApplicationReadResponse"
+        "title": "ApplicationReadResponse",
+        "description": "Response schema for `List available applications` and `Read Application by Id` endpoints"
       },
       "ApplicationRunStatus": {
         "type": "string",
@@ -860,13 +1429,16 @@
             "title": "Application Version Id",
             "description": "Application version ID",
             "examples": [
-              "h-e-tme:v0.0.1"
+              "he-tme:v0.0.1"
             ]
           },
           "version": {
             "type": "string",
             "title": "Version",
-            "description": "Semantic version of the application"
+            "description": "Semantic version of the application",
+            "examples": [
+              "0.0.1"
+            ]
           },
           "application_id": {
             "type": "string",
@@ -897,7 +1469,7 @@
             },
             "type": "array",
             "title": "Input Artifacts",
-            "description": "List of the input fields, provided by the User"
+            "description": "Lists required input fields, that should be provided by the caller"
           },
           "output_artifacts": {
             "items": {
@@ -905,7 +1477,7 @@
             },
             "type": "array",
             "title": "Output Artifacts",
-            "description": "List of the output fields, generated by the application"
+            "description": "Lists the structure of the output artifacts generated by the application"
           },
           "created_at": {
             "type": "string",
@@ -924,7 +1496,8 @@
           "output_artifacts",
           "created_at"
         ],
-        "title": "ApplicationVersionReadResponse"
+        "title": "ApplicationVersionReadResponse",
+        "description": "Response schema for `List Available Application Versions` endpoint"
       },
       "HTTPValidationError": {
         "properties": {
@@ -939,14 +1512,41 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "InputArtifact": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "mime_type": {
+            "type": "string",
+            "pattern": "^\\w+\\/\\w+[-+.|\\w+]+\\w+$",
+            "title": "Mime Type",
+            "examples": [
+              "image/tiff"
+            ]
+          },
+          "metadata_schema": {
+            "type": "object",
+            "title": "Metadata Schema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "mime_type",
+          "metadata_schema"
+        ],
+        "title": "InputArtifact"
+      },
       "InputArtifactCreationRequest": {
         "properties": {
           "name": {
             "type": "string",
             "title": "Name",
-            "description": "The artifact name according to the application version. List of required artifacts is returned by `/v1/versions/{application_version_id}`. The artifact names are located in the `input_artifacts.[].name` value",
+            "description": "Type of artifact. For Atlas H&E-TME, use \"input_slide\"",
             "examples": [
-              "slide"
+              "input_slide"
             ]
           },
           "download_url": {
@@ -981,7 +1581,8 @@
           "download_url",
           "metadata"
         ],
-        "title": "InputArtifactCreationRequest"
+        "title": "InputArtifactCreationRequest",
+        "description": "Input artifact containing the slide image and associated metadata."
       },
       "InputArtifactReadResponse": {
         "properties": {
@@ -1015,9 +1616,28 @@
           "reference": {
             "type": "string",
             "title": "Reference",
-            "description": "The ID of the slide provided by the caller. The reference should be unique across all items of the application run",
+            "description": "Unique identifier for this item within the run. Used for referencing results. Must be unique across all items in the same application run",
             "examples": [
-              "case-no-1"
+              "slide_1",
+              "patient_001_slide_A",
+              "sample_12345"
+            ]
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional JSON metadata to store additional information alongside an item.",
+            "examples": [
+              {
+                "case": "abc"
+              }
             ]
           },
           "input_artifacts": {
@@ -1026,7 +1646,27 @@
             },
             "type": "array",
             "title": "Input Artifacts",
-            "description": "All the input files of the item, required by the application version"
+            "description": "List of input artifacts for this item. For Atlas H&E-TME, typically contains one artifact (the slide image)",
+            "examples": [
+              [
+                {
+                  "download_url": "https://example-bucket.s3.amazonaws.com/slide1.tiff",
+                  "metadata": {
+                    "checksum_base64_crc32c": "64RKKA==",
+                    "height_px": 87761,
+                    "media-type": "image/tiff",
+                    "resolution_mpp": 0.2628238,
+                    "specimen": {
+                      "disease": "LUNG_CANCER",
+                      "tissue": "LUNG"
+                    },
+                    "staining_method": "H&E",
+                    "width_px": 136223
+                  },
+                  "name": "input_slide"
+                }
+              ]
+            ]
           }
         },
         "type": "object",
@@ -1034,7 +1674,80 @@
           "reference",
           "input_artifacts"
         ],
-        "title": "ItemCreationRequest"
+        "title": "ItemCreationRequest",
+        "description": "Individual item (slide) to be processed in an application run."
+      },
+      "ItemReadResponse": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "application_run_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Run Id",
+            "examples": [
+              "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference",
+            "examples": [
+              "sample-123"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ItemStatus"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "examples": [
+              "Processing started"
+            ]
+          },
+          "terminated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminated At",
+            "description": "Timestamp showing when the item reached a terminal state.",
+            "examples": [
+              "2024-01-15T10:30:45.123Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "reference",
+          "status"
+        ],
+        "title": "ItemReadResponse",
+        "description": "Response schema for `Get Item` endpoint"
       },
       "ItemResultReadResponse": {
         "properties": {
@@ -1053,7 +1766,22 @@
           "reference": {
             "type": "string",
             "title": "Reference",
-            "description": "The reference of the item from the user payload"
+            "description": "The reference of the item from the user payload",
+            "examples": [
+              "slide_1"
+            ]
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "The metadata of the item that has been provided by the user on application run creation."
           },
           "status": {
             "$ref": "#/components/schemas/ItemStatus",
@@ -1069,7 +1797,42 @@
               }
             ],
             "title": "Error",
-            "description": "\nThe error message in case the item is in `error_system` or `error_user` state\n    "
+            "description": "\n    The error message in case the item is in `error_system` or `error_user` state\n        ",
+            "deprecated": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "\nThe error message in case the item is in `error_system` or `error_user` state\n    ",
+            "examples": [
+              "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
+              "The item was not processed because the run was cancelled by the user before the item was processed.User error raised by Application because the input data provided by the user cannot be processed:\nThe image width is 123000 px, but the maximum width is 100000 px",
+              "A system error occurred during the item execution:\n System went out of memory in cell classification",
+              "An unknown system error occurred during the item execution"
+            ]
+          },
+          "terminated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminated At",
+            "description": "Timestamp showing when the item reached a terminal state.",
+            "examples": [
+              "2024-01-15T10:30:45.123Z"
+            ]
           },
           "output_artifacts": {
             "items": {
@@ -1085,11 +1848,13 @@
           "item_id",
           "application_run_id",
           "reference",
+          "metadata",
           "status",
-          "error",
+          "message",
           "output_artifacts"
         ],
-        "title": "ItemResultReadResponse"
+        "title": "ItemResultReadResponse",
+        "description": "Response schema for items in `List Run Results` endpoint"
       },
       "ItemStatus": {
         "type": "string",
@@ -1117,13 +1882,18 @@
           "user",
           "organization"
         ],
-        "title": "MeReadResponse"
+        "title": "MeReadResponse",
+        "description": "Response schema for `Get current user` endpoint"
       },
       "OrganizationReadResponse": {
         "properties": {
           "id": {
             "type": "string",
-            "title": "Id"
+            "title": "Id",
+            "description": "Unique organization identifier",
+            "examples": [
+              "org_123456"
+            ]
           },
           "name": {
             "anyOf": [
@@ -1134,7 +1904,11 @@
                 "type": "null"
               }
             ],
-            "title": "Name"
+            "title": "Name",
+            "description": "Organization name (E.g. “aignx”)",
+            "examples": [
+              "aignx"
+            ]
           },
           "display_name": {
             "anyOf": [
@@ -1145,31 +1919,59 @@
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "description": "Public organization name (E.g. “Aignostics GmbH”)",
+            "examples": [
+              "Aignostics GmbH"
+            ]
           },
           "aignostics_bucket_hmac_access_key_id": {
             "type": "string",
-            "title": "Aignostics Bucket Hmac Access Key Id"
+            "title": "Aignostics Bucket Hmac Access Key Id",
+            "description": "HMAC access key ID for the Aignostics-provided storage bucket. Used to authenticate requests for uploading files and generating signed URLs",
+            "examples": [
+              "AKIAIOSFODNN7EXAMPLE"
+            ]
           },
           "aignostics_bucket_hmac_secret_access_key": {
             "type": "string",
-            "title": "Aignostics Bucket Hmac Secret Access Key"
+            "title": "Aignostics Bucket Hmac Secret Access Key",
+            "description": "HMAC secret access key paired with the access key ID. Keep this credential secure.",
+            "examples": [
+              "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            ]
           },
           "aignostics_bucket_name": {
             "type": "string",
-            "title": "Aignostics Bucket Name"
+            "title": "Aignostics Bucket Name",
+            "description": "Name of the bucket provided by Aignostics for storing input artifacts (slide images)",
+            "examples": [
+              "aignostics-platform-bucket"
+            ]
           },
           "aignostics_bucket_protocol": {
             "type": "string",
-            "title": "Aignostics Bucket Protocol"
+            "title": "Aignostics Bucket Protocol",
+            "description": "Protocol to use for bucket access. Defines the URL scheme for connecting to the storage service",
+            "examples": [
+              "gs"
+            ]
           },
           "aignostics_logfire_token": {
             "type": "string",
-            "title": "Aignostics Logfire Token"
+            "title": "Aignostics Logfire Token",
+            "description": "Authentication token for Logfire observability service. Enables sending application logs and performance metrics to Aignostics for monitoring and support",
+            "examples": [
+              "your-logfire-token"
+            ]
           },
           "aignostics_sentry_dsn": {
             "type": "string",
-            "title": "Aignostics Sentry Dsn"
+            "title": "Aignostics Sentry Dsn",
+            "description": "Data Source Name (DSN) for Sentry error tracking service. Allows automatic reporting of errors and exceptions to Aignostics support team",
+            "examples": [
+              "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432"
+            ]
           }
         },
         "type": "object",
@@ -1183,7 +1985,42 @@
           "aignostics_sentry_dsn"
         ],
         "title": "OrganizationReadResponse",
-        "description": "This model corresponds to the response schema returned from\nAuth0 GET /v2/organizations/{id} endpoint, flattens out the metadata out\nand doesn't return branding or token_quota objects.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id"
+        "description": "Part of response schema for Organization object in `Get current user` endpoint.\nThis model corresponds to the response schema returned from\nAuth0 GET /v2/organizations/{id} endpoint, flattens out the metadata out\nand doesn't return branding or token_quota objects.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id\n\n#### Configuration for integrating with Aignostics Platform services.\n\nThe Aignostics Platform API requires signed URLs for input artifacts (slide images). To simplify this process,\nAignostics provides a dedicated storage bucket. The HMAC credentials below grant read and write\naccess to this bucket, allowing you to upload files and generate the signed URLs needed for API calls.\n\nAdditionally, logging and error reporting tokens enable Aignostics to provide better support and monitor\nsystem performance for your integration."
+      },
+      "OutputArtifact": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "mime_type": {
+            "type": "string",
+            "pattern": "^\\w+\\/\\w+[-+.|\\w+]+\\w+$",
+            "title": "Mime Type",
+            "examples": [
+              "application/vnd.apache.parquet"
+            ]
+          },
+          "metadata_schema": {
+            "type": "object",
+            "title": "Metadata Schema"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/OutputArtifactScope"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/OutputArtifactVisibility"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "mime_type",
+          "metadata_schema",
+          "scope",
+          "visibility"
+        ],
+        "title": "OutputArtifact"
       },
       "OutputArtifactReadResponse": {
         "properties": {
@@ -1227,7 +2064,10 @@
           "name": {
             "type": "string",
             "title": "Name",
-            "description": "\nName of the output from the output schema from the `/v1/versions/{version_id}` endpoint.\n    "
+            "description": "\nName of the output from the output schema from the `/v1/versions/{version_id}` endpoint.\n    ",
+            "examples": [
+              "tissue_qc:tiff_heatmap"
+            ]
           },
           "metadata": {
             "type": "object",
@@ -1266,6 +2106,14 @@
           "GLOBAL"
         ],
         "title": "OutputArtifactScope"
+      },
+      "OutputArtifactVisibility": {
+        "type": "string",
+        "enum": [
+          "INTERNAL",
+          "EXTERNAL"
+        ],
+        "title": "OutputArtifactVisibility"
       },
       "PayloadInputArtifact": {
         "properties": {
@@ -1349,9 +2197,27 @@
           "application_version_id": {
             "type": "string",
             "title": "Application Version Id",
-            "description": "Application version ID",
+            "description": "Unique ID for the application version to use for processing. Must include version suffix (e.g., 'he-tme:v1.0.0-beta')",
             "examples": [
-              "h-e-tme:v1.2.3"
+              "he-tme:v1.0.0-beta"
+            ]
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional JSON metadata to store additional information alongside the application run",
+            "examples": [
+              {
+                "department": "D1",
+                "study": "abc-1"
+              }
             ]
           },
           "items": {
@@ -1359,8 +2225,34 @@
               "$ref": "#/components/schemas/ItemCreationRequest"
             },
             "type": "array",
+            "minItems": 1,
             "title": "Items",
-            "description": "List of the items to process by the application"
+            "description": "List of items (slides) to process. Each item represents a whole slide image (WSI) with its associated metadata and artifacts",
+            "examples": [
+              [
+                {
+                  "input_artifacts": [
+                    {
+                      "download_url": "https://example-bucket.s3.amazonaws.com/slide1.tiff?signature=...",
+                      "metadata": {
+                        "checksum_base64_crc32c": "64RKKA==",
+                        "height_px": 87761,
+                        "media-type": "image/tiff",
+                        "resolution_mpp": 0.2628238,
+                        "specimen": {
+                          "disease": "LUNG_CANCER",
+                          "tissue": "LUNG"
+                        },
+                        "staining_method": "H&E",
+                        "width_px": 136223
+                      },
+                      "name": "input_slide"
+                    }
+                  ],
+                  "reference": "slide_1"
+                }
+              ]
+            ]
           }
         },
         "type": "object",
@@ -1369,7 +2261,7 @@
           "items"
         ],
         "title": "RunCreationRequest",
-        "description": "Application run payload. It describes which application version is chosen, and which user data\nshould be processed."
+        "description": "Request schema for `Initiate Application Run` endpoint.\nIt describes which application version is chosen, and which user data should be processed."
       },
       "RunCreationResponse": {
         "properties": {
@@ -1377,7 +2269,10 @@
             "type": "string",
             "format": "uuid",
             "title": "Application Run Id",
-            "default": "Application run id"
+            "default": "Application run id",
+            "examples": [
+              "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            ]
           }
         },
         "type": "object",
@@ -1394,12 +2289,18 @@
           "application_version_id": {
             "type": "string",
             "title": "Application Version Id",
-            "description": "ID of the application version"
+            "description": "ID of the application version",
+            "examples": [
+              "he-tme:v0.4.4"
+            ]
           },
           "organization_id": {
             "type": "string",
             "title": "Organization Id",
-            "description": "Organization of the owner of the application run"
+            "description": "Organization of the owner of the application run",
+            "examples": [
+              "org-123"
+            ]
           },
           "user_payload": {
             "anyOf": [
@@ -1414,7 +2315,42 @@
           },
           "status": {
             "$ref": "#/components/schemas/ApplicationRunStatus",
-            "description": "\nWhen the application run request is received by the Platform, the `status` of it is set to\n`received`. Then it is transitioned to `scheduled`, when it is scheduled for the processing.\nWhen the application run is scheduled, it will process the input items and generate the result\nincrementally. As soon as the first result is generated, the state is changed to `running`.\nThe results can be downloaded via `/v1/runs/{run_id}/results` endpoint.\nWhen all items are processed and all results are generated, the application status is set to\n`completed`. If the processing is done, but some items fail, the status is set to\n`completed_with_error`.\n\nWhen the application run request is rejected by the Platform before scheduling, it is transferred\nto `rejected`. When the application run reaches the threshold of number of failed items, the whole\napplication run is set to `canceled_system` and the remaining pending items are not processed.\nWhen the application run fails, the finished item results are available for download.\n\nIf the application run is canceled by calling `POST /v1/runs/{run_id}/cancel` endpoint, the\nprocessing of the items is stopped, and the application status is set to `cancelled_user`\n    "
+            "description": "When the application run request is received by the Platform, the `status` of it is set to\n`running`. When the application run is scheduled, the input items will be processed and the result will\nbe generated incrementally. The results can be downloaded via `/v1/runs/{run_id}/results` endpoint.\nWhen all items are processed and all results are generated, the application status is set to\n`completed`. If the processing is done, but some items fail, the status is set to\n`completed_with_error`.\n\nWhen the application run reaches the threshold of number of failed items, the whole\napplication run is set to `canceled_system` and the remaining pending items are not processed.\nWhen the application run fails, the finished item results are available for download.\n\nIf the application run is canceled by calling `POST /v1/runs/{run_id}/cancel` endpoint, the\nprocessing of the items is stopped, and the application status is set to `cancelled_user`\n    "
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "The description of the run error",
+            "examples": [
+              "The run was cancelled because the threshold of 3 items finishing in error state was reached. Query /runs/{run_id}/results to get the error message per item.",
+              "The run was cancelled because one item finished in error state despite 2 retries. Query /runs/{run_id}/results to get the error message per item.",
+              "The run is cancelled by the user. Query /runs/{run_id}/results to get the items processed before the cancellation."
+            ]
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional JSON metadata that was stored in alongside the application run by the user",
+            "examples": [
+              {
+                "department": "D1",
+                "study": "abc-1"
+              }
+            ]
           },
           "triggered_at": {
             "type": "string",
@@ -1425,7 +2361,26 @@
           "triggered_by": {
             "type": "string",
             "title": "Triggered By",
-            "description": "Id of the user who triggered the application run"
+            "description": "Id of the user who triggered the application run",
+            "examples": [
+              "auth0|123456"
+            ]
+          },
+          "terminated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminated At",
+            "description": "Timestamp showing when the application run reached a terminal state.",
+            "examples": [
+              "2024-01-15T10:30:45.123Z"
+            ]
           }
         },
         "type": "object",
@@ -1434,10 +2389,12 @@
           "application_version_id",
           "organization_id",
           "status",
+          "message",
           "triggered_at",
           "triggered_by"
         ],
-        "title": "RunReadResponse"
+        "title": "RunReadResponse",
+        "description": "Response schema for `Get run details` endpoint"
       },
       "TransferUrls": {
         "properties": {
@@ -1507,7 +2464,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "title": "Id"
+            "title": "Id",
+            "description": "Unique user identifier",
+            "examples": [
+              "auth0|123456"
+            ]
           },
           "email": {
             "anyOf": [
@@ -1518,7 +2479,11 @@
                 "type": "null"
               }
             ],
-            "title": "Email"
+            "title": "Email",
+            "description": "User email",
+            "examples": [
+              "user@domain.com"
+            ]
           },
           "email_verified": {
             "anyOf": [
@@ -1529,7 +2494,10 @@
                 "type": "null"
               }
             ],
-            "title": "Email Verified"
+            "title": "Email Verified",
+            "examples": [
+              true
+            ]
           },
           "name": {
             "anyOf": [
@@ -1540,7 +2508,11 @@
                 "type": "null"
               }
             ],
-            "title": "Name"
+            "title": "Name",
+            "description": "First and last name of the user",
+            "examples": [
+              "Jane Doe"
+            ]
           },
           "given_name": {
             "anyOf": [
@@ -1551,7 +2523,10 @@
                 "type": "null"
               }
             ],
-            "title": "Given Name"
+            "title": "Given Name",
+            "examples": [
+              "Jane"
+            ]
           },
           "family_name": {
             "anyOf": [
@@ -1562,7 +2537,10 @@
                 "type": "null"
               }
             ],
-            "title": "Family Name"
+            "title": "Family Name",
+            "examples": [
+              "Doe"
+            ]
           },
           "nickname": {
             "anyOf": [
@@ -1573,7 +2551,10 @@
                 "type": "null"
               }
             ],
-            "title": "Nickname"
+            "title": "Nickname",
+            "examples": [
+              "jdoe"
+            ]
           },
           "picture": {
             "anyOf": [
@@ -1584,7 +2565,10 @@
                 "type": "null"
               }
             ],
-            "title": "Picture"
+            "title": "Picture",
+            "examples": [
+              "https://example.com/jdoe.jpg"
+            ]
           },
           "updated_at": {
             "anyOf": [
@@ -1596,7 +2580,10 @@
                 "type": "null"
               }
             ],
-            "title": "Updated At"
+            "title": "Updated At",
+            "examples": [
+              "2023-10-05T14:48:00.000Z"
+            ]
           }
         },
         "type": "object",
@@ -1604,7 +2591,7 @@
           "id"
         ],
         "title": "UserReadResponse",
-        "description": "This model corresponds to the response schema returned from\nAuth0 GET /v2/users/{id} endpoint.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/users/get-users-by-id"
+        "description": "Part of response schema for User object in `Get current user` endpoint.\nThis model corresponds to the response schema returned from\nAuth0 GET /v2/users/{id} endpoint.\nFor details, see:\nhttps://auth0.com/docs/api/management/v2/users/get-users-by-id"
       },
       "ValidationError": {
         "properties": {
@@ -1638,6 +2625,77 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VersionReadResponse": {
+        "properties": {
+          "application_version_id": {
+            "type": "string",
+            "title": "Application Version Id",
+            "description": "Application version ID"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Semantic version of the application"
+          },
+          "application_id": {
+            "type": "string",
+            "title": "Application Id",
+            "description": "Application ID"
+          },
+          "flow_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flow Id",
+            "description": "Flow ID, used internally by the platform"
+          },
+          "changelog": {
+            "type": "string",
+            "title": "Changelog",
+            "description": "Description of the changes relative to the previous version"
+          },
+          "input_artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/InputArtifact"
+            },
+            "type": "array",
+            "title": "Input Artifacts",
+            "description": "List of the input fields, provided by the User"
+          },
+          "output_artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/OutputArtifact"
+            },
+            "type": "array",
+            "title": "Output Artifacts",
+            "description": "List of the output fields, generated by the application"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "The timestamp when the application version was registered"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_version_id",
+          "version",
+          "application_id",
+          "changelog",
+          "input_artifacts",
+          "output_artifacts",
+          "created_at"
+        ],
+        "title": "VersionReadResponse",
+        "description": "Response schema for `Application Version Details` endpoint"
       }
     },
     "securitySchemes": {

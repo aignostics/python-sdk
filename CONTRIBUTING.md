@@ -6,9 +6,10 @@ Thank you for considering contributing to Aignostics Python SDK!
 
 [Create a fork](https://github.com/aignostics/python-sdk/fork) and clone your fork using ```git clone URL_OF_YOUR_CLONE```. Then change into the directory of your local Aignostics Python SDK repository with ```cd python-sdk```.
 
-If you are one of the committers of https://github.com/aignostics/python-sdk you can directly clone via ```git clone git@github.com:aignostics/python-sdk.git``` and ```cd python-sdk```.
+If you are one of the committers of <https://github.com/aignostics/python-sdk> you can directly clone via ```git clone git@github.com:aignostics/python-sdk.git``` and ```cd python-sdk```.
 
-Install or update development dependencies using 
+Install or update development dependencies using
+
 ```shell
 make install
 ```
@@ -74,6 +75,7 @@ make setup
 Don't forget to configure your `.env` file with the required environment variables.
 
 Notes:
+
 1. .env.example is provided as a template, use ```cp .env.example .env``` and edit ```.env``` to create your environment.
 2. .env is excluded from version control, so feel free to add secret values.
 
@@ -85,6 +87,7 @@ make help   # Shows help with additional build targets, e.g. to build PDF docume
 ```
 
 Notes:
+
 1. Primary build steps defined in `noxfile.py`.
 2. Distribution dumped into ```dist/```
 3. Documentation dumped into ```docs/build/html/``` and ```docs/build/latex/```
@@ -111,9 +114,13 @@ git push
 ```
 
 Notes:
+
 1. [pre-commit hooks](https://pre-commit.com/) will run automatically on commit to ensure code quality.
 2. We use the conventional commits format - see the [code style guide](CODE_STYLE.md) for the mandatory commit message format.
-3. If your commit message includes ```skip:ci``` workflows will not be triggered. Further supported skips are ```skip:test:long-running```, ```skip:test:regular```, ```skip:test:matrix-runner```.
+3. You can skip workflows using either commit messages or PR labels:
+   - **Commit message**: Include skip markers like ```skip:ci```, ```skip:test:long-running```, ```skip:test:unit```, ```skip:test:integration```, ```skip:test:e2e```, ```skip:test:matrix-runner```, or ```skip:test:all``` in your commit message
+   - **PR labels**: Add labels with the same names (e.g., `skip:ci`, `skip:test:long-running`) to your pull request
+   - Both methods work independently - you can use either or both
 
 ### Publish Release
 
@@ -125,9 +132,9 @@ make x.y.z  # Targeted release
 ```
 
 Notes:
+
 1. Changelog generated automatically
 2. Publishes to PyPi, Docker Registries, Read The Docs, Streamlit and Auditing services
-
 
 ## Advanced usage
 
@@ -146,6 +153,7 @@ make act
 ```
 
 Notes:
+
 1. Workflow defined in `.github/workflows/*.yml`
 2. ci-cd.yml calls all build steps defined in noxfile.py
 
@@ -194,15 +202,14 @@ docker compose down
 ```
 
 Notes:
-1. The API service is run based on the slim Docker image. Change in compose.yaml if you need the API service to run on the fat image.
 
+1. The API service is run based on the slim Docker image. Change in compose.yaml if you need the API service to run on the fat image.
 
 ### Pinning GitHub Actions
 
 ```shell
 pinact run  # See https://dev.to/suzukishunsuke/pin-github-actions-to-a-full-length-commit-sha-for-security-2n7p
 ```
-
 
 ## Update from Template
 
@@ -211,7 +218,6 @@ Update project to latest version of [oe-python-template](https://github.com/helm
 ```shell
 make update_from_template
 ```
-
 
 ## Pull Request Guidelines
 

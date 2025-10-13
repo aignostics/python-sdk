@@ -8,6 +8,7 @@ import pytest
 from aignostics.system._service import Service
 
 
+@pytest.mark.unit
 @pytest.mark.timeout(15)
 def test_is_token_valid() -> None:
     """Test that is_token_valid works correctly with environment variable."""
@@ -27,6 +28,7 @@ def test_is_token_valid() -> None:
         assert service.is_token_valid("") is False
 
 
+@pytest.mark.unit
 def test_is_token_valid_when_not_set() -> None:
     """Test that is_token_valid handles the case when no token is set."""
     # Ensure the environment variable is not set
@@ -39,6 +41,7 @@ def test_is_token_valid_when_not_set() -> None:
         assert service.is_token_valid("") is False
 
 
+@pytest.mark.unit
 def test_is_secret_key_word_boundary_matching_positive_cases() -> None:
     """Test that word boundary terms are correctly identified as secrets."""
     # Test cases where "id" appears as a whole word - should be detected
@@ -58,6 +61,7 @@ def test_is_secret_key_word_boundary_matching_positive_cases() -> None:
         assert Service._is_secret_key(key), f"Expected '{key}' to be identified as a secret key"
 
 
+@pytest.mark.unit
 def test_is_secret_key_word_boundary_matching_negative_cases() -> None:
     """Test that word boundary terms do not match partial words."""
     # Test cases where "id" appears as part of a larger word - should NOT be detected
@@ -76,6 +80,7 @@ def test_is_secret_key_word_boundary_matching_negative_cases() -> None:
         assert not Service._is_secret_key(key), f"Expected '{key}' to NOT be identified as a secret key"
 
 
+@pytest.mark.unit
 def test_is_secret_key_string_match_terms_positive_cases(record_property) -> None:
     """Test that string match terms are correctly identified as secrets."""
     record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
@@ -148,6 +153,7 @@ def test_is_secret_key_string_match_terms_positive_cases(record_property) -> Non
         assert Service._is_secret_key(key), f"Expected '{key}' to be identified as a secret key"
 
 
+@pytest.mark.unit
 def test_is_secret_key_string_match_terms_edge_cases() -> None:
     """Test edge cases for string matching."""
     # Test that partial matches work correctly
@@ -165,6 +171,7 @@ def test_is_secret_key_string_match_terms_edge_cases() -> None:
         assert Service._is_secret_key(key), f"Expected '{key}' to be identified as a secret key"
 
 
+@pytest.mark.unit
 def test_is_secret_key_non_secret_keys() -> None:
     """Test that non-secret keys are correctly identified as non-secrets."""
     non_secret_keys = [
@@ -217,6 +224,7 @@ def test_is_secret_key_non_secret_keys() -> None:
         assert not Service._is_secret_key(key), f"Expected '{key}' to NOT be identified as a secret key"
 
 
+@pytest.mark.unit
 def test_is_secret_key_case_insensitivity() -> None:
     """Test that the method is case insensitive."""
     test_cases = [
@@ -239,6 +247,7 @@ def test_is_secret_key_case_insensitivity() -> None:
         assert result == expected, f"Expected _is_secret_key('{key}') to return {expected}, got {result}"
 
 
+@pytest.mark.unit
 def test_is_secret_key_special_characters_and_boundaries() -> None:
     """Test handling of special characters and word boundaries."""
     test_cases = [
@@ -265,6 +274,7 @@ def test_is_secret_key_special_characters_and_boundaries() -> None:
         assert result == expected, f"Expected _is_secret_key('{key}') to return {expected}, got {result}"
 
 
+@pytest.mark.unit
 def test_is_secret_key_empty_and_none_like_inputs() -> None:
     """Test edge cases with empty or minimal inputs."""
     test_cases = [
@@ -279,6 +289,7 @@ def test_is_secret_key_empty_and_none_like_inputs() -> None:
         assert result == expected, f"Expected _is_secret_key('{key}') to return {expected}, got {result}"
 
 
+@pytest.mark.unit
 def test_is_secret_key_real_world_examples() -> None:
     """Test with real-world examples of environment variable names."""
     # Common secret environment variables (should return True)

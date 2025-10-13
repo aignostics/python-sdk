@@ -73,6 +73,7 @@ def mock_group(mock_typer: MockTyper) -> MockGroup:
     return MockGroup(mock_typer)
 
 
+@pytest.mark.unit
 def test_prepare_cli_adds_typers(mock_typer: MockTyper) -> None:
     """Test that prepare_cli correctly adds discovered typers."""
     with patch(LOCATE_IMPLEMENTATIONS_PATH) as mock_locate:
@@ -89,6 +90,7 @@ def test_prepare_cli_adds_typers(mock_typer: MockTyper) -> None:
         mock_typer.add_typer.assert_called_once_with(other_typer)
 
 
+@pytest.mark.unit
 def test_prepare_cli_sets_epilog(mock_typer: MockTyper) -> None:
     """Test that prepare_cli correctly sets the epilog."""
     with patch(LOCATE_IMPLEMENTATIONS_PATH, return_value=[]):
@@ -96,6 +98,7 @@ def test_prepare_cli_sets_epilog(mock_typer: MockTyper) -> None:
         assert mock_typer.info.epilog == TEST_EPILOG
 
 
+@pytest.mark.unit
 @pytest.mark.skip(reason="https://github.com/fastapi/typer/pull/1240")
 def test_prepare_cli_sets_no_args_is_help(mock_typer: MockTyper) -> None:
     """Test that prepare_cli correctly sets no_args_is_help."""
@@ -104,6 +107,7 @@ def test_prepare_cli_sets_no_args_is_help(mock_typer: MockTyper) -> None:
         assert mock_typer.info.no_args_is_help is True
 
 
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ("argv_parts", "expected_calls"),
     [
@@ -127,6 +131,7 @@ def test_prepare_cli_conditional_epilog_recursion(
         assert mock_add_epilog.call_count == expected_calls
 
 
+@pytest.mark.unit
 def test_add_epilog_recursively_with_cycle(mock_typer: MockTyper) -> None:
     """Test that _add_epilog_recursively handles cycles in the typer structure."""
     # Create a cycle by having the typer reference itself

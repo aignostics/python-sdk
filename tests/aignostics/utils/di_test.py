@@ -17,6 +17,7 @@ TEST_EPILOG = "Test epilog"
 SCRIPT_FILENAME = "script.py"
 
 
+@pytest.mark.unit
 @patch("aignostics.utils._cli.locate_implementations")
 def test_prepare_cli_registers_subcommands(mock_locate_implementations: Mock) -> None:
     """Test that prepare_cli registers all located implementations."""
@@ -33,6 +34,7 @@ def test_prepare_cli_registers_subcommands(mock_locate_implementations: Mock) ->
     assert mock_subcli in [group.typer_instance for group in cli.registered_groups]
 
 
+@pytest.mark.unit
 @patch("aignostics.utils._cli.locate_implementations")
 def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: Mock) -> None:
     """Test that prepare_cli sets epilog and no_args_is_help on the cli instance."""
@@ -49,6 +51,7 @@ def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: M
     # assert cli.info.no_args_is_help is True
 
 
+@pytest.mark.unit
 @patch("aignostics.utils._cli.Path")
 @patch("aignostics.utils._cli.locate_implementations")
 def test_prepare_cli_adds_epilog_to_commands_when_not_running_from_typer(
@@ -70,6 +73,7 @@ def test_prepare_cli_adds_epilog_to_commands_when_not_running_from_typer(
     assert mock_command.epilog == TEST_EPILOG
 
 
+@pytest.mark.unit
 @patch("aignostics.utils._cli._add_epilog_recursively")
 @patch("aignostics.utils._cli.Path")
 @patch("aignostics.utils._cli.locate_implementations")
@@ -90,6 +94,7 @@ def test_prepare_cli_calls_add_epilog_recursively_when_not_running_from_typer(
     mock_add_epilog_recursively.assert_called_once_with(cli, TEST_EPILOG)
 
 
+@pytest.mark.unit
 @patch("aignostics.utils._cli._no_args_is_help_recursively")
 @patch("aignostics.utils._cli.locate_implementations")
 def test_prepare_cli_calls_no_args_is_help_recursively(
@@ -107,6 +112,7 @@ def test_prepare_cli_calls_no_args_is_help_recursively(
     mock_no_args_is_help_recursively.assert_called_once_with(cli)
 
 
+@pytest.mark.unit
 def test_add_epilog_recursively_sets_epilog_on_cli() -> None:
     """Test that _add_epilog_recursively sets epilog on the cli instance."""
     # Setup
@@ -119,6 +125,7 @@ def test_add_epilog_recursively_sets_epilog_on_cli() -> None:
     assert cli.info.epilog == TEST_EPILOG
 
 
+@pytest.mark.unit
 def test_add_epilog_recursively_sets_epilog_on_nested_typers() -> None:
     """Test that _add_epilog_recursively sets epilog on nested typer instances."""
     # Setup
@@ -133,6 +140,7 @@ def test_add_epilog_recursively_sets_epilog_on_nested_typers() -> None:
     assert subcli.info.epilog == TEST_EPILOG
 
 
+@pytest.mark.unit
 def test_no_args_is_help_recursively_sets_no_args_is_help_on_groups() -> None:
     """Test that _no_args_is_help_recursively sets no_args_is_help on groups."""
     # Setup
@@ -153,6 +161,7 @@ def test_no_args_is_help_recursively_sets_no_args_is_help_on_groups() -> None:
     mock_group.no_args_is_help = True
 
 
+@pytest.mark.unit
 @pytest.mark.skip(reason="https://github.com/fastapi/typer/pull/1240")
 def test_no_args_is_help_recursively_calls_itself_on_nested_typers() -> None:
     """Test that _no_args_is_help_recursively calls itself on nested typer instances."""

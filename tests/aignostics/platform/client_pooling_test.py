@@ -1,8 +1,11 @@
 """Tests for API client connection pooling."""
 
+import pytest
+
 from aignostics.platform._client import Client
 
 
+@pytest.mark.unit
 def test_api_client_cached_is_shared() -> None:
     """Test that get_api_client with cache_token=True returns the same instance.
 
@@ -16,6 +19,7 @@ def test_api_client_cached_is_shared() -> None:
     assert api1 is api2, "get_api_client(cache_token=True) should return the same instance"
 
 
+@pytest.mark.unit
 def test_api_client_uncached_is_shared() -> None:
     """Test that get_api_client with cache_token=False returns the same instance.
 
@@ -29,6 +33,7 @@ def test_api_client_uncached_is_shared() -> None:
     assert api1 is api2, "get_api_client(cache_token=False) should return the same instance"
 
 
+@pytest.mark.unit
 def test_api_client_cached_vs_uncached_are_different() -> None:
     """Test that cached and uncached API clients are separate instances.
 
@@ -42,6 +47,7 @@ def test_api_client_cached_vs_uncached_are_different() -> None:
     assert cached_api is not uncached_api, "Cached and uncached API clients should be different instances"
 
 
+@pytest.mark.unit
 def test_client_instances_share_api_client() -> None:
     """Test that multiple Client instances share the same underlying API client.
 

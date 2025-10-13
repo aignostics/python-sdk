@@ -70,14 +70,14 @@ classifiers = [
     "Natural Language :: English",
 ]
 
-requires-python = ">=3.11, <4.0"
+requires-python = ">=3.11, <3.14"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.118.2,<1",
+    "fastapi[standard,all]>=0.119.0,<1",
     "humanize>=4.13.0,<5",
-    "logfire[system-metrics]>=4.12.0,<5",
-    "nicegui[native]>=3.0.3,<4",
+    "logfire[system-metrics]>=4.13.0,<5",
+    "nicegui[native]>=3.0.4,<4",
     "opentelemetry-instrumentation-fastapi>=0.53b0,<1",
     "opentelemetry-instrumentation-httpx>=0.53b0,<1",
     "opentelemetry-instrumentation-jinja2>=0.53b0,<1",
@@ -87,29 +87,29 @@ dependencies = [
     "opentelemetry-instrumentation-urllib>=0.53b0,<1",
     "opentelemetry-instrumentation-urllib3>=0.53b0,<1",
     "packaging>=25.0,<26",
-    "platformdirs>=4.4.0,<5",
+    "platformdirs>=4.5.0,<5",
     "psutil>=7.1.0,<8",
     "pydantic-settings>=2.11.0,<3",
     "pywin32>=311,<312; sys_platform == 'win32'",
     "pyyaml>=6.0.3,<7",
-    "sentry-sdk>=2.40.0,<3",
+    "sentry-sdk>=2.41.0,<3",
     "typer>=0.19.2,<1",
     "uptime>=3.0.1,<4",
     # Custom
     "aiopath>=0.6.11,<1",
-    "boto3>=1.40.47,<2",
+    "boto3>=1.40.50,<2",
     "certifi>=2025.10.5,<2026",
     "dicom-validator>=0.7.2,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
     "duckdb>=0.10.0,<=1.4.1",
     "fastparquet>=2024.11.0,<2025",
-    "google-cloud-storage>=3.4.0,<4",
+    "google-cloud-storage>=3.4.1,<4",
     "google-crc32c>=1.7.1,<2",
     "highdicom>=0.26.1,<1",
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
     "idc-index-data==22.0.2",
-    "ijson>=3.4.0,<4",
+    "ijson>=3.4.0.post0,<4",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
     "openslide-bin>=4.0.0.8,<5",
@@ -138,7 +138,7 @@ marimo = [
     "cloudpathlib>=0.23.0,<1",
     "ipython>=9.6.0,<10",
     "marimo>=0.16.5,<1",
-    "matplotlib>=3.10.6,<4",
+    "matplotlib>=3.10.7,<4",
     "shapely>=2.1.0,<3",
 ]
 qupath = []
@@ -162,7 +162,7 @@ dev = [
     "pytest-cov>=7.0.0,<8",
     "pytest-docker>=3.2.3,<4",
     "pytest-durations>=1.6.1,<2",
-    "pytest-env>=1.1.5,<2",
+    "pytest-env>=1.2.0,<2",
     "pytest-md-report>=0.7.0,<1",
     "pytest-regressions>=2.8.3,<3",
     "pytest-retry>=1.7.0,<2",
@@ -183,8 +183,8 @@ dev = [
     "sphinx_selective_exclude>=1.0.3,<2",
     "sphinx-toolbox>=4,<5",
     "sphinxext.opengraph>=0.9.1,<1",
-    "swagger-plugin-for-sphinx>=5.1.3,<6",
-    "tomli>=2.1.0,<3",
+    "swagger-plugin-for-sphinx>=5.2.0,<6",
+    "tomli>=2.3.0,<3",
     "types-pyyaml>=6.0.12.20250915,<7",
     "types-requests>=2.32.4.20250913,<3",
     "watchdog>=6.0.0,<7",
@@ -327,17 +327,23 @@ python_files = ["*_test.py", "test_*.py"]
 addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostics --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+timeout = 10 # We use a rather short default timeout. Override with @pytest.mark.timeout(timeout=N)
+# timeout_method="signal" 
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
 markers = [
     # From Template
     "no_extras: Tests that do require no extras installed.",
     "scheduled: Tests to run on a schedule. They will still be part on non-scheduled test executions.",
+    "scheduled_only: Tests to run on a schedule only.",
     "sequential: Exclude from parallel test execution.",
     "skip_with_act: Don't run with act.",
-    "docker: tests That require Docker.",
-    "long_running: Tests that take a long time to run. Tests marked as long runing excluded from execution by default. Enable by passing any -m your_marker that matches a marker of the test.",
-    # Custom
-    # Nothing yet
+    "docker: That require Docker.",
+    "long_running: Tests with a test timeout >=5 min and < 60 min. CI/CD will run long running tests with one Python version only. When calling `make` long running tests are excluded - use `make test_long_running` instead.",
+    # Test Categories (following Martin Fowler's Solitary vs Sociable unit test distinction)
+    "unit: Solitary unit tests - test a layer of a module in isolation with all dependencies mocked, except interaction with shared utils and the systems module. Unit tests must be able to pass offline, i.e. not calls to external services. The timeout should not be bigger than the default 10s, and must be <5 min.",
+    "integration: Sociable integration tests - test interactions across architectural layers (e.g. CLI/GUI→Service, Service→Utils) or between modules (e.g. Application→Platform), using real SDK collaborators, real file I/O, real subprocesses, and real Docker containers. Integration test must be able to pass offline, i.e. mock external services (Aignostics Platform API, Auth0, S3/GCS buckets, IDC). The timeout should not be bigger than the default 10s, and must be <5 min.",
+    "e2e: End-to-end tests - test complete workflows with real external network services (Aignostics Platform API, cloud storage, IDC, etc). If the test timeout is >= 5 min and < 60 min, additionally mark as `long_running`, if >= 60min mark as 'very_long_running'.",
+    "very_long_running: Tests with a test timeout >= 60 min. CI/CD will run very long running tests with one Python version only. When calling `make` very long runing tests are excluded - use `make test_very_long_running` instead.",
 ]
 md_report = true
 md_report_output = "reports/pytest.md"

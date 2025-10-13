@@ -574,10 +574,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             if submit_form.upload_and_submit_button is None:
                 logger.error("Submission submit button is not initialized.")
                 return
-            ui.notify("Uploading whole slide images to Aignostics Platform ...", type="info")
+            message = "Uploading whole slide images to Aignostics Platform ..."
+            logger.debug(message)
+            ui.notify(message, type="info")
             submit_form.upload_and_submit_button.disable()
-
-            await nicegui_run.cpu_bound(
+            await nicegui_run.io_bound(
                 Service.application_run_upload,
                 str(submit_form.application_version_id),
                 submit_form.metadata or [],
@@ -585,7 +586,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 str(time.time() * 1000),
                 upload_message_queue,
             )
-            ui.notify("Upload to Aignostics Platform completed.", type="positive")
+            message = "Upload to Aignostics Platform completed."
+            logger.debug(message)
+            ui.notify(message, type="positive")
             _submit()
 
         @ui.refreshable

@@ -580,6 +580,10 @@ def run_submit(
             f"'{application_version_id}': {e}"
         )
         sys.exit(2)
+    except NotFoundException as e:
+        logger.warning("Could not find application version '%s': %s", application_version_id, e)
+        console.print(f"[warning]Warning:[/warning] Could not find application version '{application_version_id}': {e}")
+        sys.exit(2)
     except Exception as e:
         logger.exception("Failed to create run for application version '%s'", application_version_id)
         console.print(
@@ -634,7 +638,6 @@ def run_cancel(
 ) -> None:
     """Cancel run."""
     logger.debug("Canceling run with ID '%s'", run_id)
-
     try:
         Service().application_run_cancel(run_id)
         logger.info("Canceled run with ID '%s'.", run_id)
@@ -642,6 +645,10 @@ def run_cancel(
     except NotFoundException:
         logger.warning("Run with ID '%s' not found.", run_id)
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except ValueError:
+        logger.warning("Run ID '%s' invalid", run_id)
+        console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid.")
         sys.exit(2)
     except Exception as e:
         logger.exception("Failed to cancel run with ID '%s'", run_id)

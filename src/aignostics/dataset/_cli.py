@@ -1,5 +1,6 @@
 """CLI of dataset module."""
 
+import sys
 import webbrowser
 from pathlib import Path
 from typing import Annotated
@@ -42,8 +43,14 @@ def indices() -> None:
     """List available columns in given of the IDC Portal."""
     from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
-    client = IDCClient.client()
-    console.print(list(client.indices_overview.keys()))
+    try:
+        client = IDCClient.client()
+        console.print(list(client.indices_overview.keys()))
+    except Exception as e:
+        message = f"Error fetching indices overview: {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)
 
 
 @idc_app.command()
@@ -59,9 +66,15 @@ def columns(
     """List available columns in given of the IDC Portal."""
     from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
-    client = IDCClient.client()
-    client.fetch_index(index)
-    console.print(list(getattr(client, index).columns))
+    try:
+        client = IDCClient.client()
+        client.fetch_index(index)
+        console.print(list(getattr(client, index).columns))
+    except Exception as e:
+        message = f"Error fetching columns for index '{index}': {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)
 
 
 @idc_app.command()
@@ -96,13 +109,19 @@ WHERE
 
     from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
-    client = IDCClient.client()
-    for idx in [idx.strip() for idx in indices.split(",") if idx.strip()]:
-        logger.info("Fetching index: '%s'", idx)
-        client.fetch_index(idx)
+    try:
+        client = IDCClient.client()
+        for idx in [idx.strip() for idx in indices.split(",") if idx.strip()]:
+            logger.info("Fetching index: '%s'", idx)
+            client.fetch_index(idx)
 
-    pd.set_option("display.max_colwidth", None)
-    console.print(client.sql_query(sql_query=query))  # type: ignore[no-untyped-call]
+        pd.set_option("display.max_colwidth", None)
+        console.print(client.sql_query(sql_query=query))  # type: ignore[no-untyped-call]
+    except Exception as e:
+        message = f"Error executing query '{query}': {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)
 
 
 @idc_app.command(name="download")
@@ -138,59 +157,65 @@ def idc_download(
     """
     from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
-    client = IDCClient.client()
-    logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
+    try:
+        client = IDCClient.client()
+        logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
 
-    target_directory = Path(target)
-    if not target_directory.is_dir():
-        logger.error("Target directory does not exist: %s", target_directory)
-        raise typer.Exit(code=1)
+        target_directory = Path(target)
+        if not target_directory.is_dir():
+            logger.error("Target directory does not exist: %s", target_directory)
+            sys.exit(1)
 
-    item_ids = [item for item in source.split(",") if item]
+        item_ids = [item for item in source.split(",") if item]
 
-    if not item_ids:
-        logger.error("No valid IDs provided.")
+        if not item_ids:
+            logger.error("No valid IDs provided.")
 
-    index_df = client.index
-    client.fetch_index("sm_instance_index")
-    logger.info("Downloaded instance index")
-    sm_instance_index_df = client.sm_instance_index
+        index_df = client.index
+        client.fetch_index("sm_instance_index")
+        logger.info("Downloaded instance index")
+        sm_instance_index_df = client.sm_instance_index
 
-    def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
-        if column_name != "SOPInstanceUID":
-            matches = index_df[column_name].isin(item_ids)
-            matched_ids = index_df[column_name][matches].unique().tolist()
-        else:
-            matches = sm_instance_index_df[column_name].isin(item_ids)  # type: ignore
-            matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()  # type: ignore
-        if not matched_ids:
-            return False
-        unmatched_ids = list(set(item_ids) - set(matched_ids))
-        if unmatched_ids:
-            logger.debug("Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids)
-        logger.info("Identified matching %s: %s", column_name, matched_ids)
-        client.download_from_selection(**{  # type: ignore[no-untyped-call]
-            kwarg_name: matched_ids,
-            "downloadDir": target_directory,
-            "dirTemplate": target_layout,
-            "quiet": False,
-            "show_progress_bar": True,
-            "use_s5cmd_sync": True,
-            "dry_run": dry_run,
-        })
-        return True
+        def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
+            if column_name != "SOPInstanceUID":
+                matches = index_df[column_name].isin(item_ids)
+                matched_ids = index_df[column_name][matches].unique().tolist()
+            else:
+                matches = sm_instance_index_df[column_name].isin(item_ids)  # type: ignore
+                matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()  # type: ignore
+            if not matched_ids:
+                return False
+            unmatched_ids = list(set(item_ids) - set(matched_ids))
+            if unmatched_ids:
+                logger.debug("Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids)
+            logger.info("Identified matching %s: %s", column_name, matched_ids)
+            client.download_from_selection(**{  # type: ignore[no-untyped-call]
+                kwarg_name: matched_ids,
+                "downloadDir": target_directory,
+                "dirTemplate": target_layout,
+                "quiet": False,
+                "show_progress_bar": True,
+                "use_s5cmd_sync": True,
+                "dry_run": dry_run,
+            })
+            return True
 
-    matches_found = 0
-    matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")
-    matches_found += check_and_download("PatientID", item_ids, target_directory, "patientId")
-    matches_found += check_and_download("StudyInstanceUID", item_ids, target_directory, "studyInstanceUID")
-    matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
-    matches_found += check_and_download("SOPInstanceUID", item_ids, target_directory, "sopInstanceUID")
-    if not matches_found:
-        logger.error(
-            "None of the values passed matched any of the identifiers: "
-            "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
-        )
+        matches_found = 0
+        matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")
+        matches_found += check_and_download("PatientID", item_ids, target_directory, "patientId")
+        matches_found += check_and_download("StudyInstanceUID", item_ids, target_directory, "studyInstanceUID")
+        matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
+        matches_found += check_and_download("SOPInstanceUID", item_ids, target_directory, "sopInstanceUID")
+        if not matches_found:
+            logger.error(
+                "None of the values passed matched any of the identifiers: "
+                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
+            )
+    except Exception as e:
+        message = f"Error downloading data for IDs '{source}': {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)
 
 
 @aignostics_app.command("download")
@@ -226,41 +251,47 @@ def aignostics_download(
         TransferSpeedColumn,
     )
 
-    # Get filename from URL
-    filename = source_url.split("/")[-1]
+    try:
+        # Get filename from URL
+        filename = source_url.split("/")[-1]
 
-    # Generate a signed URL
-    source_url_signed = platform_generate_signed_url(source_url)
+        # Generate a signed URL
+        source_url_signed = platform_generate_signed_url(source_url)
 
-    output_path = Path(destination_directory) / filename
+        output_path = Path(destination_directory) / filename
 
-    console.print(f"Downloading from {source_url} to {output_path}")
+        console.print(f"Downloading from {source_url} to {output_path}")
 
-    # Make sure the destination directory exists
-    Path(destination_directory).mkdir(parents=True, exist_ok=True)
+        # Make sure the destination directory exists
+        Path(destination_directory).mkdir(parents=True, exist_ok=True)
 
-    # Start the request to get content length
-    response = requests.get(source_url_signed, stream=True, timeout=60)
-    total_size = int(response.headers.get("content-length", 0))
+        # Start the request to get content length
+        response = requests.get(source_url_signed, stream=True, timeout=60)
+        total_size = int(response.headers.get("content-length", 0))
 
-    with Progress(
-        TextColumn("[progress.description]Downloading"),
-        BarColumn(),
-        TaskProgressColumn(),
-        TimeRemainingColumn(),
-        FileSizeColumn(),
-        TotalFileSizeColumn(),
-        TransferSpeedColumn(),
-        TextColumn("[progress.description]{task.description}"),
-    ) as progress:
-        # Create a task for overall progress
-        task = progress.add_task(f"Downloading {filename}", total=total_size)
+        with Progress(
+            TextColumn("[progress.description]Downloading"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeRemainingColumn(),
+            FileSizeColumn(),
+            TotalFileSizeColumn(),
+            TransferSpeedColumn(),
+            TextColumn("[progress.description]{task.description}"),
+        ) as progress:
+            # Create a task for overall progress
+            task = progress.add_task(f"Downloading {filename}", total=total_size)
 
-        # Write the file
-        with open(output_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-                    progress.update(task, advance=len(chunk))
+            # Write the file
+            with open(output_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+                        progress.update(task, advance=len(chunk))
 
-    console.print(f"[green]Successfully downloaded to {output_path}[/green]")
+        console.print(f"[green]Successfully downloaded to {output_path}[/green]")
+    except Exception as e:
+        message = f"Error downloading data from '{source_url}': {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)

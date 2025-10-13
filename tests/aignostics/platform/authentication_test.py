@@ -125,6 +125,7 @@ def mock_webbrowser() -> MagicMock:
 class TestGetToken:
     """Test cases for the get_token function."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_get_token_from_cache_valid(mock_settings: MagicMock, valid_token_with_expiry: str) -> None:
         """Test retrieving a valid token from cache."""
@@ -141,6 +142,7 @@ class TestGetToken:
             # Ensure we didn't need to authenticate
             mock_write_text.assert_not_called()
 
+    @pytest.mark.unit
     @staticmethod
     def test_get_token_from_cache_missing_expiry(mock_settings: MagicMock, cached_token_missing_expiry: str) -> None:
         """Test retrieving a valid token from cache."""
@@ -162,6 +164,7 @@ class TestGetToken:
             # Ensure we wrote the new token
             mock_write_text.assert_called_once()
 
+    @pytest.mark.unit
     @staticmethod
     def test_get_token_from_cache_expired(mock_settings, expired_token) -> None:
         """Test retrieving an expired token from cache, which should trigger re-authentication."""
@@ -183,6 +186,7 @@ class TestGetToken:
             # Ensure we wrote the new token
             assert mock_write_text.call_count == 1
 
+    @pytest.mark.unit
     @staticmethod
     def test_get_token_no_cache(mock_settings) -> None:
         """Test retrieving a token without using cache."""
@@ -202,6 +206,7 @@ class TestGetToken:
             # Ensure we didn't write to cache
             mock_write_text.assert_not_called()
 
+    @pytest.mark.unit
     @staticmethod
     def test_authenticate_uses_refresh_token_when_available(mock_settings) -> None:
         """Test that _authenticate uses refresh token flow when refresh token is available."""
@@ -215,6 +220,7 @@ class TestGetToken:
             assert token == "refreshed.token"  # noqa: S105 - Test credential
             mock_refresh.assert_called_once_with(mock_settings.return_value.refresh_token)
 
+    @pytest.mark.unit
     @staticmethod
     def test_authenticate_uses_browser_flow_when_available(mock_settings) -> None:
         """Test that _authenticate uses browser flow when browser is available."""
@@ -231,6 +237,7 @@ class TestGetToken:
             assert token == "browser.token"  # noqa: S105 - Test credential
             mock_browser.assert_called_once()
 
+    @pytest.mark.unit
     @staticmethod
     def test_authenticate_falls_back_to_device_flow(mock_settings) -> None:
         """Test that _authenticate falls back to device flow when browser and refresh token are unavailable."""
@@ -246,6 +253,7 @@ class TestGetToken:
             assert token == "device.token"  # noqa: S105 - Test credential
             mock_device.assert_called_once()
 
+    @pytest.mark.unit
     @staticmethod
     def test_authenticate_raises_error_on_failure(mock_settings) -> None:
         """Test that _authenticate raises an error when all authentication methods fail."""
@@ -262,6 +270,7 @@ class TestGetToken:
 class TestVerifyAndDecodeToken:
     """Test cases for the verify_and_decode_token function."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_verify_and_decode_valid_token(clear_jwk_cache) -> None:
         """Test that a valid token is properly verified and decoded."""
@@ -279,6 +288,7 @@ class TestVerifyAndDecodeToken:
             assert "sub" in result
             assert "exp" in result
 
+    @pytest.mark.unit
     @staticmethod
     def test_verify_and_decode_invalid_token(clear_jwk_cache) -> None:
         """Test that an invalid token raises an appropriate error."""
@@ -294,6 +304,7 @@ class TestVerifyAndDecodeToken:
 class TestBrowserCapabilityCheck:
     """Test cases for the browser capability check functionality."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_can_open_browser_true() -> None:
         """Test that _can_open_browser returns True when a browser is available."""
@@ -304,6 +315,7 @@ class TestBrowserCapabilityCheck:
         ):
             assert _can_open_browser() is True
 
+    @pytest.mark.unit
     @staticmethod
     def test_can_open_browser_false() -> None:
         """Test that _can_open_browser returns False when no browser is available."""
@@ -314,6 +326,7 @@ class TestBrowserCapabilityCheck:
 class TestAuthorizationCodeFlow:
     """Test cases for the authorization code flow with PKCE."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_perform_authorization_code_flow_success(mock_settings) -> None:
         """Test successful authorization code flow with PKCE."""
@@ -367,6 +380,7 @@ class TestAuthorizationCodeFlow:
             mock_server.handle_request.assert_called_once()
             mock_session.authorization_url.assert_called_once()
 
+    @pytest.mark.unit
     @staticmethod
     def test_perform_authorization_code_flow_invalid_redirect(mock_settings) -> None:
         """Test authorization code flow fails with invalid redirect URI."""
@@ -386,6 +400,7 @@ class TestAuthorizationCodeFlow:
             ):
                 _perform_authorization_code_with_pkce_flow()
 
+    @pytest.mark.unit
     @staticmethod
     def test_perform_authorization_code_flow_failure(mock_settings) -> None:
         """Test authorization code flow when authentication fails."""
@@ -439,6 +454,7 @@ class TestAuthorizationCodeFlow:
 class TestDeviceFlow:
     """Test cases for the device flow authentication."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_perform_device_flow_success(mock_settings) -> None:
         """Test successful device flow authentication."""
@@ -480,6 +496,7 @@ class TestDeviceFlow:
 class TestPortAvailability:
     """Test cases for checking port availability."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_port_available() -> None:
         """Test that _ensure_local_port_is_available returns True when the port is available."""
@@ -487,6 +504,8 @@ class TestPortAvailability:
             assert _ensure_local_port_is_available(8000) is True
             mock_bind.assert_called_once()
 
+    @pytest.mark.unit
+    @pytest.mark.timeout(timeout=15)  # 10 retries, 1s sleep
     @staticmethod
     def test_port_unavailable() -> None:
         """Test that _ensure_local_port_is_available returns False when the port is unavailable."""
@@ -494,6 +513,7 @@ class TestPortAvailability:
             assert _ensure_local_port_is_available(8000) is False
             mock_bind.assert_called()
 
+    @pytest.mark.unit
     @staticmethod
     def test_port_retries() -> None:
         """Test that _ensure_local_port_is_available retries the specified number of times."""
@@ -502,6 +522,7 @@ class TestPortAvailability:
             assert mock_bind.call_count == 4  # Initial attempt + 3 retries
             assert mock_sleep.call_count == 3
 
+    @pytest.mark.unit
     @staticmethod
     def test_port_availability_uses_socket_reuse() -> None:
         """Test that _ensure_local_port_is_available uses SO_REUSEADDR socket option."""
@@ -518,6 +539,7 @@ class TestPortAvailability:
             # Verify bind was attempted
             mock_socket.bind.assert_called_with(("localhost", 8000))
 
+    @pytest.mark.unit
     @staticmethod
     def test_authorization_flow_sets_socket_reuse(mock_settings) -> None:
         """Test that the HTTPServer in authorization flow uses SO_REUSEADDR."""
@@ -550,6 +572,7 @@ class TestPortAvailability:
 class TestRemoveCachedToken:
     """Test cases for the remove_cached_token function."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_remove_cached_token_exists(mock_settings) -> None:
         """Test removing a cached token when the token file exists."""
@@ -562,6 +585,7 @@ class TestRemoveCachedToken:
             assert result is True
             mock_unlink.assert_called_once_with(missing_ok=True)
 
+    @pytest.mark.unit
     @staticmethod
     def test_remove_cached_token_not_exists(mock_settings) -> None:
         """Test removing a cached token when the token file does not exist."""
@@ -570,6 +594,7 @@ class TestRemoveCachedToken:
 
             assert result is False
 
+    @pytest.mark.unit
     @staticmethod
     def test_remove_cached_token_unlink_error(mock_settings) -> None:
         """Test that remove_cached_token handles unlink errors gracefully."""
@@ -585,6 +610,7 @@ class TestRemoveCachedToken:
 class TestSentryIntegration:
     """Test cases for Sentry integration in the authentication module."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_get_token_calls_sentry_set_user(mock_settings) -> None:
         """Test that get_token calls sentry_sdk.set_user with correct user information extracted from token claims."""
@@ -618,6 +644,7 @@ class TestSentryIntegration:
             # Verify sentry_sdk.set_user was called with correct user information
             mock_sentry_sdk.set_user.assert_called_once_with({"id": "user123", "org_id": "org456"})
 
+    @pytest.mark.integration
     @staticmethod
     def test_get_token_sentry_unavailable(mock_settings) -> None:
         """Test that get_token works correctly when sentry_sdk is not available."""
@@ -645,6 +672,7 @@ class TestSentryIntegration:
             # Verify the token was returned successfully even without Sentry
             assert token == "test.token"  # noqa: S105 - Test credential
 
+    @pytest.mark.integration
     @staticmethod
     def test_get_token_sentry_missing_sub_claim(mock_settings) -> None:
         """Test that get_token handles missing 'sub' claim gracefully when informing Sentry."""
@@ -677,6 +705,7 @@ class TestSentryIntegration:
             # Verify sentry_sdk.set_user was not called due to missing 'sub' claim
             mock_sentry_sdk.set_user.assert_not_called()
 
+    @pytest.mark.integration
     @staticmethod
     def test_get_token_sentry_handles_token_verification_error(mock_settings) -> None:
         """Test that get_token fails when token verification fails, and Sentry is not informed."""
@@ -703,6 +732,7 @@ class TestSentryIntegration:
 class TestTokenRefreshRetryLogic:
     """Test cases for the retry logic in _access_token_from_refresh_token."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_successful_token_refresh_no_retry(mock_settings) -> None:
         """Test that successful token refresh completes without retries.
@@ -720,6 +750,7 @@ class TestTokenRefreshRetryLogic:
         assert result == "fresh.token"
         assert mock_post.call_count == 1  # Should succeed on first try
 
+    @pytest.mark.unit
     @staticmethod
     def test_no_retry_on_client_error(mock_settings, caplog) -> None:
         """Test that 4xx errors do not trigger retries.
@@ -753,6 +784,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
 
+    @pytest.mark.unit
     @staticmethod
     def test_retry_on_server_error(mock_settings, caplog) -> None:
         """Test that 5xx errors trigger retries.
@@ -790,6 +822,7 @@ class TestTokenRefreshRetryLogic:
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for 5xx errors"
 
+    @pytest.mark.unit
     @staticmethod
     def test_retry_on_connection_error(mock_settings, caplog) -> None:
         """Test that network connection errors trigger retries.
@@ -823,6 +856,7 @@ class TestTokenRefreshRetryLogic:
 class TestJWKClientCache:
     """Test cases for the LRU cache on _get_jwk_client."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_returns_same_instance(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client returns the same cached instance for the same URL.
@@ -849,6 +883,7 @@ class TestJWKClientCache:
             # PyJWKClient should only be instantiated once
             assert mock_pyjwk_client.call_count == 1
 
+    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_different_urls(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client creates different instances for different URLs.
@@ -877,6 +912,7 @@ class TestJWKClientCache:
             # PyJWKClient should be instantiated twice (once for each URL)
             assert mock_pyjwk_client.call_count == 2
 
+    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_info(clear_jwk_cache, mock_settings) -> None:
         """Test that cache_info provides correct statistics about cache usage.
@@ -912,6 +948,7 @@ class TestJWKClientCache:
             assert info.misses == 1
             assert info.hits == 2
 
+    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_respects_settings(clear_jwk_cache, mock_settings) -> None:
         """Test that _get_jwk_client passes correct settings to PyJWKClient.
@@ -934,6 +971,7 @@ class TestJWKClientCache:
                 lifespan=lifespan,
             )
 
+    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_used_in_verification(clear_jwk_cache, mock_settings) -> None:
         """Test that verify_and_decode_token benefits from the _get_jwk_client cache.
@@ -968,6 +1006,7 @@ class TestJWKClientCache:
         assert info.hits >= 2  # At least 2 cache hits from 3 calls
         assert info.misses == 1  # Only 1 cache miss (first call)
 
+    @pytest.mark.unit
     @staticmethod
     def test_jwk_client_cache_size_limit(clear_jwk_cache, mock_settings) -> None:
         """Test that the LRU cache respects the maxsize=4 limit.
@@ -1008,6 +1047,7 @@ class TestJWKClientCache:
 class TestTokenVerificationRetryLogic:
     """Test cases for the retry logic in verify_and_decode_token."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_successful_token_verification_no_retry(mock_settings) -> None:
         """Test that successful token verification completes without retries.
@@ -1030,6 +1070,7 @@ class TestTokenVerificationRetryLogic:
         # _get_jwk_client is called only once (no retries)
         assert mock_get_jwk.call_count == 1
 
+    @pytest.mark.unit
     @staticmethod
     def test_no_retry_on_jwt_decode_error(mock_settings, caplog) -> None:
         """Test that JWT decode errors (non-connection errors) do not trigger retries.
@@ -1072,6 +1113,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
         assert len(retry_logs) == 0, "Should not log retry attempts for JWT decode errors"
 
+    @pytest.mark.unit
     @staticmethod
     def test_retry_on_jwk_connection_error(mock_settings, caplog) -> None:
         """Test that JWK client connection errors trigger retries.
@@ -1108,6 +1150,7 @@ class TestTokenVerificationRetryLogic:
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for JWK connection errors"
 
+    @pytest.mark.unit
     @staticmethod
     def test_successful_verification_after_connection_retry(mock_settings, caplog) -> None:
         """Test that token verification succeeds after initial JWK connection failures.
@@ -1152,6 +1195,7 @@ class TestTokenVerificationRetryLogic:
         ]
         assert len(retry_logs) == 1, "Should log exactly one retry attempt"
 
+    @pytest.mark.unit
     @staticmethod
     def test_no_retry_on_other_jwk_errors(mock_settings, caplog) -> None:
         """Test that non-connection JWK errors do not trigger retries.

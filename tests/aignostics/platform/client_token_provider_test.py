@@ -14,6 +14,7 @@ def _clear_api_client_cache() -> None:
     Client._api_client_uncached = None
 
 
+@pytest.mark.unit
 def test_oauth2_token_provider_configuration_uses_token_provider() -> None:
     """Test that token_provider is used when provided."""
     token_provider = Mock(return_value="dynamic-token")
@@ -23,6 +24,7 @@ def test_oauth2_token_provider_configuration_uses_token_provider() -> None:
     token_provider.assert_called_once()
 
 
+@pytest.mark.unit
 def test_oauth2_token_provider_configuration_no_token() -> None:
     """Test that auth_settings returns empty dict if no token_provider is set."""
     config = _OAuth2TokenProviderConfiguration(host="https://dummy")
@@ -30,6 +32,7 @@ def test_oauth2_token_provider_configuration_no_token() -> None:
     assert auth == {}
 
 
+@pytest.mark.unit
 def test_client_passes_token_provider() -> None:
     """Test that the client passes the token provider to the configuration."""
     with (
@@ -44,6 +47,7 @@ def test_client_passes_token_provider() -> None:
         public_api_mock.assert_called()
 
 
+@pytest.mark.unit
 def test_client_me_calls_api() -> None:
     """Test that the client.me() method calls the API and returns the result."""
     with (
