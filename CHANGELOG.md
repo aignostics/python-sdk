@@ -1,6 +1,40 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.190](https://github.com/aignostics/python-sdk/compare/v0.2.189..0.2.190) - 2025-10-12
+# [0.2.191](https://github.com/aignostics/python-sdk/compare/v0.2.190..0.2.191) - 2025-10-13
+
+### 🐛 Bug Fixes
+
+- *(system)* Rendering of json editor content - had to find workaround given bug in NiceGUI3 for json_editor - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+### 🚜 Refactor
+
+- *(dataset,wsi)* Catch exceptions in CLI commands - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(qupath)* Don’t count system as unhealthy if QuPath application not installed - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Refactored tests to reduce flakiness where avoidable, i.e. not solely dependent on external services - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(dependabot,renovate)* Add labels to PRs created by those bots - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(deps)* Bump - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(gha)* All all types of tests to be individually skippable, via commit message or PR label - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(gha)* Speed up ubuntu provisioning as man-db no longer updated on adding packages - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(gha)* Don’t run long_running tests on draft PRs, i.e. stop after unit, integration and e2e / regular. - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(precommit)* Fixed issues with precommit. - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Differentiate tests as unit, integration or e2e, with only e2e tests allowed to call external services, i.e. the others must be able to pass offline. - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce very_long_running test type, which must be explicitely enabled to run enable:test:very_long_running in the commit message or as PR label - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce scheduled_only marker, for tests that should only run on a schedule - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Make now calls make test_default which does not call long_running or very_long_running tests - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce pytest-durations, showing the duration per test execution - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce pytest-timeout, with a low 10s default timeout, and all tests that need longer explicitly marked with specific timeouts - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(xdist)* Use worksteal to minimize duration on varying test durations - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- Don’t allow SDK to be used with Python 1.4.x (released days ago) as some dependencies don’t work with that version yet - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+### Choare
+
+- *(tests)* No longer test the combination of Python 3.12.x on Windows for ARM64, as a bit instable - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+
+# [v0.2.190](https://github.com/aignostics/python-sdk/compare/v0.2.189..v0.2.190) - 2025-10-12
 
 ### ⛰️  Features
 
@@ -1666,3 +1700,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
