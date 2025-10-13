@@ -38,7 +38,6 @@ def test_cli_health_yaml(runner: CliRunner, record_property) -> None:
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=30)
-@pytest.mark.sequential
 def test_cli_info(runner: CliRunner) -> None:
     """Check aignostics.log in outpu of system info."""
     result = runner.invoke(cli, ["system", "info"])
@@ -377,7 +376,6 @@ def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> No
 
 
 @pytest.mark.integration
-@pytest.mark.sequential
 def test_cli_dump_dot_env_file(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
     """Check dump-dot-env-file command creates a file with all settings."""
     with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):

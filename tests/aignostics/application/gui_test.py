@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 
 
 @pytest.mark.e2e
-@pytest.mark.sequential
+@pytest.mark.timeout(timeout=30)
 async def test_gui_index(user: User) -> None:
     """Test that the user sees the index page, and sees the intro."""
     # hello world

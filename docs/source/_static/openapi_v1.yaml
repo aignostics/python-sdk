@@ -1607,8 +1607,7 @@ paths:
             \ `%24.project%20%3F%20(%40%20%3D%3D%20%22cancer-research%22)`\n- **Numeric\
             \ comparison**: `%24.duration_hours%20%3F%20(%40%20%3C%202)`\n- **Array\
             \ operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22production%22)`\n\
-            - **Complex conditions**: 
-`%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\
+            - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\
             \n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's\
             \ `@?` operator\n- The `$.` prefix is automatically added to root-level\
             \ field references if missing\n- String values in conditions must be enclosed\

@@ -164,7 +164,7 @@ jobs:
           skip-marker: skip:test:long_running
           summary-title: All long running e2e tests passed
 
-      - name: Test / E2E / very long running (single Python version)
+      - name: Test / E2E / very long running (single Python version). // enable with `enable:test:very_long_running`)
         if: |
           contains(github.event.head_commit.message, 'enable:test:very_long_running') || 
           contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
