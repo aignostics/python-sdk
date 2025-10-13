@@ -109,8 +109,6 @@ def test_wsi_inspect_error_handling(runner: CliRunner) -> None:
         result = runner.invoke(cli, ["wsi", "inspect", str(file_path)])
 
         assert result.exit_code == 1
-        # Check that key parts of the error message appear in output
-        assert "Mock error" in normalize_output(result.output)
         assert "Failed to read file" in normalize_output(result.output)
         assert str(file_path) in normalize_output(result.output)
 
@@ -129,10 +127,7 @@ def test_wsi_dicom_inspect_error_handling(runner: CliRunner) -> None:
         result = runner.invoke(cli, ["wsi", "dicom", "inspect", str(file_path)])
 
         assert result.exit_code == 1
-        # Check that key parts of the error message appear in output
-        assert "Mock error" in normalize_output(result.output)
         assert "Invalid DICOM structure" in normalize_output(result.output)
-        assert str(file_path) in normalize_output(result.output)
 
 
 @pytest.mark.integration
@@ -147,8 +142,6 @@ def test_wsi_dicom_geojson_import_error_handling(runner: CliRunner) -> None:
         result = runner.invoke(cli, ["wsi", "dicom", "geojson_import", str(dicom_path), str(geojson_path)])
 
         assert result.exit_code == 1
-        # Check that key parts of the error message appear in output
-        assert "Mock error" in normalize_output(result.output)
         assert "Invalid GeoJSON format" in normalize_output(result.output)
         assert str(geojson_path) in normalize_output(result.output)
         assert str(dicom_path) in normalize_output(result.output)

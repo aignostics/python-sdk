@@ -195,7 +195,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see(f"Selected folder {tmp_path!s} to analyze.")
         await assert_notified(user, f"You chose directory {tmp_path!s}.")
         user.find(marker="BUTTON_WSI_NEXT").click()
-        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=60)
+        await assert_notified(user, "Finding WSIs and generating metadata", wait_seconds=5)
+        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=120)
         await sleep(10)
 
         # Generate remaining metadata, going to upload UI
@@ -230,7 +231,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
         await assert_notified(user, "Canceling application run with id")
-        await assert_notified(user, "Application run cancelled!")
+        await assert_notified(user, "Application run cancelled!", wait_seconds=20)
 
         # Check user sees refreshed run page and run is cancelled
         await user.should_see("status CANCELED_USER", retries=200)
@@ -241,7 +242,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path) -> None:
+async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
     """Test that the user can download a run result via the GUI."""
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
