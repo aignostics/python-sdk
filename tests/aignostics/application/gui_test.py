@@ -235,13 +235,11 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("status CANCELED_USER", retries=200)
 
 
-# TODO(Helmut): Inspect
-@pytest.mark.skip
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path) -> None:
     """Test that the user can download a run result via the GUI."""
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
@@ -272,12 +270,17 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         user.find(marker="BUTTON_DOWNLOAD_RUN").click()
 
         # Step 3: Select Data
+        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        assert not download_run_button.enabled, "Download button should be disabled before selecting target"
         await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
 
         # Step 3: Trigger Download
-        await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN", retries=100)
+        await sleep(2)  # Wait a bit for button state to update so we can click
+        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        assert download_run_button.enabled, "Download button should be enabled after selecting target"
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
+        await assert_notified(user, "Downloading ...")
 
         # Check: Download completed
         await assert_notified(user, "Download completed.", 60 * 4)

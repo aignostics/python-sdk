@@ -67,8 +67,9 @@ class PageBuilder(BasePageBuilder):
                                 properties["content"] = {"json": "Health check failed."}  # type: ignore[unreachable]
                             else:
                                 properties["content"] = {"json": health.model_dump()}
-                            editor.update()
-                            editor.run_editor_method(":expand", "path => true")
+                            # Note: editor.update(...) broken in NiceGUI 3.0.4
+                            editor.run_editor_method("update", properties["content"])
+                            editor.run_editor_method(":expand", "[]", "path => true")
                             spinner.set_visibility(False)
                             editor.set_visibility(True)
                         with ui.tab_panel(tab_info).classes("min-h-[calc(100vh-12rem)]"):
@@ -103,8 +104,9 @@ class PageBuilder(BasePageBuilder):
                                     properties["content"] = {"json": "Info retrieval failed."}  # type: ignore[unreachable]
                                 else:
                                     properties["content"] = {"json": info}
-                                editor.update()
-                                editor.run_editor_method(":expand", "path => true")
+                                # Note: editor.update(...) broken in NiceGUI 3.0.4
+                                editor.run_editor_method("update", properties["content"])
+                                editor.run_editor_method(":expand", "[]", "path => true")
                                 spinner.set_visibility(False)
                                 editor.set_visibility(True)
                                 mask_secrets_switch.set_visibility(True)
