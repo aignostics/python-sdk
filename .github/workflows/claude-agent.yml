@@ -38,6 +38,7 @@ jobs:
           claude_args: 
             --max-turns 20
             --model claude-sonnet-4-5-20250929
+            --allowed-tools Bash(gh pr:*),Bash(git status:*),Bash(git log:*),Bash(git diff:*),Bash(git checkout:*),Bash(git fetch:*),Bash(git pull:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin --set-upstream fix/*),Bash(git push origin --set-upstream feature/*),Bash(git branch:*),Bash(date:*),Read,Edit(**.md),Glob,Grep,WebFetch,WebSearch
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |

@@ -225,6 +225,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
         # Check user is redirected to the run page and run is running
+        await sleep(2)
         await user.should_see(f"Run of he-tme:v{latest_application_version.version}", retries=200)
         await user.should_see("status RUNNING")
 
