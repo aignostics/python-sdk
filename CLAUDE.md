@@ -2,6 +2,10 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with the Aignostics Python SDK repository.
 
+## Important notice for creating pull requests
+
+If you are Claude, and you are creating a pull request yourself, add a label skip:test_long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
+
 ## Module Documentation Index
 
 Every module has detailed CLAUDE.md documentation. For module-specific guidance, see:
@@ -52,19 +56,23 @@ make audit           # Security and license compliance checks
 This SDK follows a **Modulith Architecture** with these core principles:
 
 ### 1. Modulith Design
+
 - **Single deployable unit** with well-defined module boundaries
 - **High cohesion** within modules, **loose coupling** between modules
 - **Each module is self-contained** with its own service, configuration, and optional UI
 - **Clear dependency hierarchy** preventing circular dependencies
 
 ### 2. Dependency Injection & Service Discovery
+
 - **No decorators or annotations** - uses runtime service discovery
 - **Dynamic module loading** via `locate_implementations(BaseService)`
 - **All services inherit from `BaseService`** providing standard `health()` and `info()` interfaces
 - **Singleton pattern** for service instances within the DI container
 
 ### 3. Presentation Layer Pattern
+
 Each module can have **zero, one, or both** presentation layers:
+
 - **CLI (_cli.py)**: Text-based interface using Typer framework
 - **GUI (_gui.py)**: Graphical interface using NiceGUI framework
 - **Both layers depend on the Service layer**, never on each other
@@ -100,63 +108,78 @@ Module/
 ## Core Modules & Dependencies
 
 ### Foundation Layer
+
 **utils** - Infrastructure module providing:
+
 - Dependency injection container (`locate_implementations`, `locate_subclasses`)
 - Structured logging (`get_logger`)
 - Settings management (Pydantic-based)
 - Health check framework (`BaseService`, `Health`)
 
 ### API Layer
+
 **platform** - Authentication and API gateway:
+
 - OAuth 2.0 device flow authentication
 - Token lifecycle management
 - Resource clients (applications, runs)
 - *Dependencies*: `utils`
 
 ### Domain Modules
+
 **application** - ML application orchestration:
+
 - Run lifecycle management
 - Version control (semver)
 - File upload/download with progress
 - *Dependencies*: `platform`, `bucket`, `wsi`, `utils`, `qupath` (optional)
 
 **wsi** - Whole slide image processing:
+
 - Multi-format support (OpenSlide, PyDICOM)
 - Thumbnail generation
 - Tile extraction
 - *Dependencies*: `utils`
 
 **dataset** - Large-scale data operations:
+
 - IDC (Imaging Data Commons) integration
 - High-performance downloads (s5cmd)
 - *Dependencies*: `platform`, `utils`
 
 **bucket** - Cloud storage abstraction:
+
 - S3/GCS unified interface
 - Signed URL generation
 - Chunked transfers
 - *Dependencies*: `platform`, `utils`
 
 ### Integration Modules
+
 **qupath** - Bioimage analysis platform:
+
 - QuPath installation and lifecycle
 - Project management
 - Script execution
 - *Dependencies*: `utils`, requires `ijson`
 
 **notebook** - Interactive analysis:
+
 - Marimo notebook server
 - Process management
 - *Dependencies*: `utils`, requires `marimo`
 
 ### System Modules
+
 **system** - Diagnostics and monitoring:
+
 - **Health aggregation from ALL modules** via `BaseService.health()`
 - Comprehensive system information
 - Environment detection and diagnostics
 - *Dependencies*: All modules (queries health status from every service)
 
 **gui** - Desktop launchpad:
+
 - Aggregates all module GUIs
 - Unified desktop interface
 - *Dependencies*: All modules with GUI components
@@ -212,7 +235,6 @@ comprehensive view of the entire SDK's operational status.
 | **notebook** | ✅ | ❌ | ✅ | Marimo notebooks |
 | **qupath** | ✅ | ✅ | ✅ | QuPath integration |
 | **system** | ✅ | ✅ | ✅ | Diagnostics |
-
 
 ## SDK Usage Patterns
 
