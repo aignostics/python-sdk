@@ -47,7 +47,7 @@ async def test_gui_index(user: User) -> None:
         ),
         (
             "test-app",
-            "Test Application",
+            "test-app",  # TODO(Andreas): On production this is called Test Application. Can we harmonize?
             "This is the test application with two algorithms",
         ),
     ],

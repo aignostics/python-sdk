@@ -323,21 +323,10 @@ def test_cli_run_list_limit_10(runner: CliRunner) -> None:
 def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     """Check run list command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "list", "--verbose", "--limit", "1"])
-    # TODO(Andreas): Currently fails with FAILED
-    # tests/aignostics/application/cli_test.py::test_cli_run_list_verbose_limit_1 -
-    # assert 'Application Runs:' in 'Error: Failed to list runs: Failed to retrieve application runs:
-    # (400)Reason: Bad RequestHTTP response headers: HTTPHeaderDict({\'date\': \'Fri, 03 Oct 2025 18:50:55 GMT\',
-    # \'server\': \'envoy\', \'x-trace-id\': \'8c2ea8f561beebde96b71cde41bba745\', \'content-length\': \'265\',
-    # \'content-type\': \'application/json\', \'x-envoy-upstream-service-time\': \'3\',
-    # \'vary\': \'Accept-Encoding\'})HTTP response body: {"detail":"field must be one of
-    # [\'application_run_id\', \'application_version_id\', \'message\', \'metadata\', \'organization_id\',
-    # \'status\', \'terminated_at\', \'triggered_at\', \'triggered_by\', \'user_payload\'] but is submitted_at",
-    # "trace_id":"8c2ea8f561beebde96b71cde41bba745"}'
-    # seems the backend is not compliant to it's own spec
     assert result.exit_code == 0
     output = normalize_output(result.stdout)
     assert "Application Runs:" in output
-    assert "Item Status Counts:" in output
+    assert "Item Statistics:" in output
     match = re.search(r"Listed '(\d+)' run\(s\)\.", output)
     assert match, "Expected run count message not found"
     displayed_count = int(match.group(1))
