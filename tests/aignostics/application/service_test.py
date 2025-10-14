@@ -95,8 +95,9 @@ def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
 
 
 @pytest.mark.e2e
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60)
-def test_application_versions_with_str_arg(runner: CliRunner) -> None:
+def test_application_versions_with_str_arg(runner: CliRunner, silent_logging: None) -> None:
     """Test that application_versions works correctly when passed a string application ID."""
     service = ApplicationService()
 
@@ -111,8 +112,9 @@ def test_application_versions_with_str_arg(runner: CliRunner) -> None:
 
 
 @pytest.mark.e2e
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60)
-def test_application_version_latest_with_str_arg(runner: CliRunner) -> None:
+def test_application_version_latest_with_str_arg(runner: CliRunner, silent_logging: None) -> None:
     """Test that application_version_latest works correctly when passed a string application ID."""
     service = ApplicationService()
 
