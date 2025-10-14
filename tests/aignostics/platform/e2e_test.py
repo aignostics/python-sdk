@@ -60,23 +60,23 @@ def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
     ]
 
 
-def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
+def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
         platform.InputItem(
             external_id="1",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
-                        "checksum_crc32c": "9l3NNQ==",
-                        "base_mpp": 0.46499982,
-                        "width": 3728,
-                        "height": 3640,
+                        "checksum_base64_crc32c": "9l3NNQ==",
+                        "width_px": 3728,
+                        "height_px": 3640,
+                        "media_type": "image/tiff",
                     },
                 )
             ],
@@ -85,16 +85,16 @@ def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
             external_id="2",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
-                        "checksum_crc32c": "w+ud3g==",
-                        "base_mpp": 0.46499982,
-                        "width": 3616,
-                        "height": 3400,
+                        "checksum_base64_crc32c": "w+ud3g==",
+                        "width_px": 3616,
+                        "height_px": 3400,
+                        "media_type": "image/tiff",
                     },
                 )
             ],
@@ -103,16 +103,16 @@ def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
             external_id="3",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
-                        "checksum_crc32c": "Zmx0wA==",
-                        "base_mpp": 0.46499982,
-                        "width": 4016,
-                        "height": 3952,
+                        "checksum_base64_crc32c": "Zmx0wA==",
+                        "width_px": 4016,
+                        "height_px": 3952,
+                        "media_type": "image/tiff",
                     },
                 )
             ],
@@ -168,7 +168,7 @@ def test_application_runs_test_version() -> None:
     _run_application_test(
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
-        payload=_get_three_spots_payload_for_test_v0_0_1(),
+        payload=_get_three_spots_payload_for_test_v0_0_4(),
         checksum_attribute_key="checksum_crc32c",
     )
 
