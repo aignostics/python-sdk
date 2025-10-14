@@ -313,11 +313,11 @@ class Service(BaseService):
         message = f"Application version with ID {application_version_id} not found in application {application_id}"
         raise NotFoundException(message)
 
-    def application_versions(self, application: Application) -> list[ApplicationVersion]:
+    def application_versions(self, application: Application | str) -> list[ApplicationVersion]:
         """Get a list of all versions of the given application.
 
         Args:
-            application (Application): The application to check for versions.
+            application (Application | str): The application to check for versions.
 
         Returns:
             list[ApplicationVersion]: A list of all application versions sorted by semantic versioning (latest first).
@@ -328,18 +328,20 @@ class Service(BaseService):
         try:
             return self._get_platform_client().applications.versions.list_sorted(application=application)
         except Exception as e:
-            message = f"Failed to retrieve application versions for application '{application.application_id}': {e}"
+            app_id = application if isinstance(application, str) else application.application_id
+            message = f"Failed to retrieve application versions for application '{app_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_version_latest(self, application: Application) -> ApplicationVersion | None:
+    def application_version_latest(self, application: Application | str) -> ApplicationVersion | None:
         """Get a latest application version.
 
         Args:
-            application (Application): The application to check for versions.
+            application (Application | str): The application to check for versions.
 
         Returns:
-            ApplicationVersion | None: A list of all application versions.
+            ApplicationVersion | None: The latest version of the given application,
+                or None if no latest version found.
 
         Raises:
             NotFoundException: If the application with the given ID is not found.
