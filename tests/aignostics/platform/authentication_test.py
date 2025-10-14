@@ -20,6 +20,7 @@ from aignostics.platform._authentication import (
     _access_token_from_refresh_token,
     _authenticate,
     _can_open_browser,
+    _ensure_local_port_is_available,
     _perform_authorization_code_with_pkce_flow,
     _perform_device_flow,
     get_token,
@@ -505,7 +506,7 @@ class TestPortAvailability:
             mock_bind.assert_called_once()
 
     @pytest.mark.unit
-    @pytest.mark.timeout(timeout=15)  # 10 retries, 1s sleep
+    @pytest.mark.timeout(timeout=25)  # 20 retries, 1s sleep
     @staticmethod
     def test_port_unavailable() -> None:
         """Test that _ensure_local_port_is_available returns False when the port is unavailable."""

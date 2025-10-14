@@ -16,6 +16,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 🔬 Aignostics Python SDK v0.2.185 - built with love in Berlin 🐻
 =======
 🔬 Aignostics Python SDK v0.2.190 - built with love in Berlin 🐻
@@ -26,6 +27,9 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 🔬 Aignostics Python SDK v0.2.185 - built with love in Berlin 🐻
 >>>>>>> bad8a50 (chore: Rebase)
 >>>>>>> b112cc6 (chore: Rebase)
+=======
+🔬 Aignostics Python SDK v0.2.192 - built with love in Berlin 🐻
+>>>>>>> b165166 (chore: rebase)
 
 **Commands**:
 
@@ -212,6 +216,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 * `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1759698583309.5579]
 =======
 * `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760341898253.002]
@@ -222,6 +227,9 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1759698583309.5579]
 >>>>>>> bad8a50 (chore: Rebase)
 >>>>>>> b112cc6 (chore: Rebase)
+=======
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760448730131.852]
+>>>>>>> b165166 (chore: rebase)
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--help`: Show this message and exit.
@@ -281,6 +289,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1759698583309.6477]
 =======
@@ -293,6 +302,10 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1759698583309.6477]
 >>>>>>> bad8a50 (chore: Rebase)
 >>>>>>> b112cc6 (chore: Rebase)
+=======
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760448730131.9448]
+>>>>>>> b165166 (chore: rebase)
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -320,6 +333,7 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 * `--application-version TEXT`: Version of the application to generate the metadata for. If not provided, the latest version will be used.
 =======
 >>>>>>> 99401ec (Refactor tests)
@@ -328,6 +342,9 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--application-version TEXT`: Version of the application to generate the metadata for. If not provided, the latest version will be used.
 >>>>>>> bad8a50 (chore: Rebase)
 >>>>>>> b112cc6 (chore: Rebase)
+=======
+* `--application-version TEXT`: Version of the application to generate the metadata for. If not provided, the latest version will be used.
+>>>>>>> b165166 (chore: rebase)
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--help`: Show this message and exit.
 

@@ -181,6 +181,7 @@ def test_versions_property_returns_versions_instance(applications) -> None:
     assert versions._api == applications._api
 
 
+@pytest.mark.unit
 def test_versions_list_returns_versions_for_application(mock_api) -> None:
     """Test that Versions.list() returns versions for a specified application.
 
