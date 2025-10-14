@@ -9,7 +9,7 @@ import csv
 import mimetypes
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import humanize
 
@@ -83,7 +83,7 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     console.print("[bold]Items:[/bold]")
 
     _retrieve_and_print_run_items(run)
-    _print_run_status_summary(run)
+    _print_run_statistics(run)
 
 
 def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
@@ -99,10 +99,10 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         return
 
     for item in results:
-        console.print(f"  [bold]Item Reference:[/bold] {item.external_id}")
         console.print(f"  [bold]Item ID:[/bold] {item.item_id}")
-        console.print(f"  [bold]Status:[/bold] {item.state.value}")
-        console.print(f"  [bold]Message:[/bold] {item.error_message}")
+        console.print(f"  [bold]Item External ID:[/bold] {item.external_id}")
+        console.print(f"  [bold]Status (Termination Reason):[/bold] {item.state.value} ({item.termination_reason})")
+        console.print(f"  [bold]Error Message (Code):[/bold] {item.error_message} ({item.error_code})")
 
         # TODO(Andreas): error_code is missing on item model; should be printed here as well.
         # Please add in the openapi.json and regenerate the SDK, and add line here.
@@ -121,56 +121,14 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         console.print()
 
 
-def _print_run_status_summary(run: ApplicationRun) -> None:
-    """Print summary of item statuses in a run.
+def _print_run_statistics(run: ApplicationRun) -> None:
+    """Print statistics of items in a run.
 
     Args:
         run (ApplicationRun): The ApplicationRun object
     """
-    # Get and display item status counts
-    item_statuses = run.item_status()
-    if not item_statuses:
-        return
-
-    status_counts: dict[
-        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "USER_ERROR", "SYSTEM_ERROR", "SUCCEEDED"], int
-    ] = {}
-    for status in item_statuses.values():
-        status_counts[status.value] = status_counts.get(status.value, 0) + 1
-
-    console.print("[bold]Item Status Summary:[/bold]")
-    for status, count in status_counts.items():
-        console.print(f"  {status}: {count}")
-
-
-def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
-    """Retrieve and print item status counts for a run.
-
-    Args:
-        run (ApplicationRun): The run object
-
-    Returns:
-        bool: True if successful, False otherwise
-    """
-    try:
-        item_statuses = run.item_status()
-    except Exception as e:
-        logger.exception("Failed to get item status for run with ID '%s'", run.run_id)
-        console.print(f"[error]Error:[/error] Failed to get item statuses for run with ID '{run.run_id}': {e}")
-        return False
-
-    status_counts: dict[
-        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "USER_ERROR", "SYSTEM_ERROR", "SUCCEEDED"], int
-    ] = {}
-    for status in item_statuses.values():
-        status_counts[status.value] = status_counts.get(status.value, 0) + 1
-
-    if status_counts:
-        console.print("[bold]Item Status Counts:[/bold]")
-        for status, count in status_counts.items():
-            console.print(f"  {status}: {count}")
-
-    return True
+    console.print("[bold]Item Statistics:[/bold]")
+    console.print(run.details().statistics)
 
 
 def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
@@ -197,12 +155,10 @@ def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
         )
 
         try:
-            _retrieve_and_print_item_status_counts(Service().application_run(run.run_id))
+            _print_run_statistics(Service().application_run(run.run_id))
         except Exception as e:
-            logger.exception("Failed to retrieve item status counts for run with ID '%s'", run.run_id)
-            console.print(
-                f"[error]Error:[/error] Failed to retrieve item status counts for run with ID '{run.run_id}': {e}"
-            )
+            logger.exception("Failed to retrieve  statistics for run with ID '%s'", run.run_id)
+            console.print(f"[error]Error:[/error] Failed to retrieve statistics for run with ID '{run.run_id}': {e}")
             continue
         console.print("-" * 80)
 

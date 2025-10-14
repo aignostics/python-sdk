@@ -7,7 +7,7 @@ It includes functionality for starting runs, monitoring status, and downloading 
 import json
 import typing as t
 from collections.abc import Generator
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from time import sleep
 from typing import Any
@@ -18,11 +18,9 @@ from aignx.codegen.models import (
     ItemOutput,
     ItemResultReadResponse,
     ItemState,
-    ItemTerminationReason,
     RunCreationRequest,
     RunCreationResponse,
     RunState,
-    RunTerminationReason,
 )
 from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
@@ -41,7 +39,9 @@ from aignostics.platform._utils import (
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
-from aignostics.utils import user_agent
+from aignostics.utils import get_logger, user_agent
+
+logger = get_logger(__name__)
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
@@ -49,7 +49,9 @@ LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 
 # TODO(andreas): As soon as we switch to the new status types of the API,
 # this class is obsolete
-class ItemStatus(str, Enum):
+class ItemStatus(StrEnum):
+    """Interim Mapping."""
+
     PENDING = "PENDING"
     CANCELED_USER = "CANCELED_USER"
     CANCELED_SYSTEM = "CANCELED_SYSTEM"
@@ -59,7 +61,14 @@ class ItemStatus(str, Enum):
 
     @classmethod
     def from_json(cls, json_str: str) -> t.Self:
-        """Create an instance of ItemStatus from a JSON string"""
+        """Create an instance of ItemStatus from a JSON string.
+
+        Args:
+            json_str (str): The JSON string to parse.
+
+        Returns:
+            ItemStatus: The parsed ItemStatus instance.
+        """
         return cls(json.loads(json_str))
 
 
@@ -103,42 +112,6 @@ class ApplicationRun:
             Exception: If the API request fails.
         """
         return self._api.get_run_v1_runs_run_id_get(self.run_id)
-
-    def item_status(self) -> dict[str, ItemStatus]:
-        """Retrieves the status of all items in the run.
-
-        Returns:
-            dict[str, ItemStatus]: A dictionary mapping item external IDs to their status.
-
-        Raises:
-            Exception: If the API request fails.
-        """
-        #     PENDING = 'PENDING'
-        #     CANCELED_USER = 'CANCELED_USER'
-        #     CANCELED_SYSTEM = 'CANCELED_SYSTEM'
-        #     USER_ERROR = 'USER_ERROR'
-        #     SYSTEM_ERROR = 'SYSTEM_ERROR'
-        #     SUCCEEDED = 'SUCCEEDED'
-        item_status = {}
-        for item in self.results():
-            match item.state:
-                case ItemState.PENDING | ItemState.PROCESSING:
-                    item_status[item.external_id] = ItemStatus.PENDING
-                case ItemState.TERMINATED:
-                    match item.termination_reason:
-                        case ItemTerminationReason.SUCCEEDED:
-                            item_status[item.external_id] = ItemStatus.SUCCEEDED
-                        case ItemTerminationReason.SYSTEM_ERROR:
-                            item_status[item.external_id] = ItemStatus.SYSTEM_ERROR
-                        case ItemTerminationReason.USER_ERROR:
-                            item_status[item.external_id] = ItemStatus.USER_ERROR
-                        case ItemTerminationReason.SKIPPED:
-                            run_termination_reason = self.details().termination_reason
-                            if run_termination_reason == RunTerminationReason.CANCELED_BY_SYSTEM:
-                                item_status[item.external_id] = ItemStatus.CANCELED_SYSTEM
-                            if run_termination_reason == RunTerminationReason.CANCELED_BY_USER:
-                                item_status[item.external_id] = ItemStatus.CANCELED_USER
-        return item_status
 
     # TODO(Andreas): Low Prio / existed prior to API migraiton: Please check if this still fails with
     #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.
@@ -237,6 +210,11 @@ class ApplicationRun:
                 item_dir.mkdir(exist_ok=True, parents=True)
                 file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
                 file_path = item_dir / f"{artifact.name}{file_ending}"
+                # TODO(Andreas): Why is artifact metadata now optional?
+                if not artifact.metadata:
+                    message = f"Skipping artifact {artifact.name} for item {item.external_id}, no metadata present"
+                    logger.error(message)
+                    continue
                 checksum = artifact.metadata[checksum_attribute_key]
 
                 if file_path.exists():

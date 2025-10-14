@@ -157,7 +157,6 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     result = runner.invoke(cli, ["application", "run", "submit", "wrong", str(csv_path)])
 
     assert result.exit_code == 2
-    # TODO(Helmut):
     assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
     assert "Warning: Could not find application" in normalize_output(result.stdout)
     assert result.exit_code == 2
@@ -176,8 +175,6 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
 
     assert result.exit_code == 2
-    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
-    # Test likely passes when that is fixed on the platform side
     assert "Invalid platform bucket URL: 'aws://bucket/test'" in normalize_output(result.stdout)
 
 
@@ -194,8 +191,6 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
 
     assert result.exit_code == 2
-    # TODO(Andreas): Currently fails with not found given HETA version not deployed,
-    # Test likely passes when that is fixed on the platform side
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
 
 
@@ -253,7 +248,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
     # TODO(helmut): What was the reson to assert on the commented line? I could not get the
     # string you check. Would just remove it
-    # assert "status: running on plat" in normalize_output(download_result.stdout)
+    # assert "status: running on plat" in normalize_output(download_result.stdout)  # noqa: ERA001
 
     # Test the cancel command with the extracted run ID
     cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])

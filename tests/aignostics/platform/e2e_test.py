@@ -12,6 +12,10 @@ import pytest
 from aignx.codegen.models import (
     ArtifactOutput,
     ArtifactState,
+    ItemOutput,
+    ItemState,
+    RunOutput,
+    RunState,
 )
 
 from aignostics import platform
@@ -206,7 +210,10 @@ def _validate_output(
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
     run_details = application_run.details()
-    assert run_details.state == RunState.TERMINATED and run_details.output == RunOutput.FULL, (
+    assert run_details.state == RunState.TERMINATED, (
+        f"Run {application_run.run_id}: Did not finish in state `TERMINATED`, but '{run_details.state}'."
+    )
+    assert run_details.output == RunOutput.FULL, (
         f"Run {application_run.run_id}: Did not finish in state `FULL` for its output, but '{run_details.output}'."
     )
 
@@ -217,7 +224,11 @@ def _validate_output(
 
     for item in run_results:
         # validate state
-        assert item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL, (
+        assert item.state == ItemState.TERMINATED, (
+            f"Application run {application_run.run_id}: "
+            f"state for item {item.external_id} is {item.state}, expected `TERMINATED`"
+        )
+        assert item.output == ItemOutput.FULL, (
             f"Application run {application_run.run_id}: "
             f"output for item {item.external_id} is {item.output}, expected `FULL`"
         )
@@ -227,7 +238,10 @@ def _validate_output(
             f"Application run {application_run.run_id}: result folder for item {item.external_id} does not exist"
         )
         for artifact in item.output_artifacts:
-            assert artifact.state == ArtifactState.TERMINATED and artifact.output == ArtifactOutput.AVAILABLE, (
+            assert artifact.state == ArtifactState.TERMINATED, (
+                f"Application run {application_run.run_id}: artifact {artifact} should have state `TERMINATED`"
+            )
+            assert artifact.output == ArtifactOutput.AVAILABLE, (
                 f"Application run {application_run.run_id}: artifact {artifact} should have output state `AVAILABLE`"
             )
             assert artifact.download_url is not None, (

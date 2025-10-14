@@ -184,12 +184,14 @@ def application_dump_schemata(  # noqa: C901
         md_file.write("\n## Input Artifacts\n")
         for input_artifact in app_version.input_artifacts:
             md_file.write(
-                f"- {input_artifact.name}: {app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n"
+                f"- {input_artifact.name}: "
+                f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n"
             )
         md_file.write("\n## Output Artifacts\n")
         for output_artifact in app_version.output_artifacts:
             md_file.write(
-                f"- {output_artifact.name}: {app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n"
+                f"- {output_artifact.name}: "
+                f"{app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n"
             )
     created_files.append(md_file_path)
 
@@ -619,7 +621,8 @@ def run_submit(
             "Could not find application version '%s' (version: '%s'): %s", application_id, application_version, e
         )
         console.print(
-            f"[warning]Warning:[/warning] Could not find application '{application_id} (version: {application_version})': {e}"
+            f"[warning]Warning:[/warning] Could not find application '{application_id} "
+            f"(version: {application_version})': {e}"
         )
         sys.exit(2)
     except (Exception, RuntimeError) as e:
@@ -741,7 +744,7 @@ def run_cancel(
 
 
 @result_app.command("download")
-def result_download(  # noqa: PLR0913, PLR0917
+def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to download results for")],
     destination_directory: Annotated[
         Path,
@@ -856,7 +859,8 @@ def result_download(  # noqa: PLR0913, PLR0917
                             "item" if progress.item_count == 1 else "items"
                         )
                     if progress.run.state is RunState.TERMINATED:
-                        panel.subtitle += f", status: {application_run_status_to_str(progress.run.state)} ({progress.run.termination_reason})."
+                        status_text = application_run_status_to_str(progress.run.state)
+                        panel.subtitle += f", status: {status_text} ({progress.run.termination_reason})."
                     else:
                         panel.subtitle += f", status: {application_run_status_to_str(progress.run.state)}."
                 main_download_progress_ui.update(

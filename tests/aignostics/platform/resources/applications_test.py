@@ -68,34 +68,6 @@ def test_applications_list_with_pagination(applications, mock_api) -> None:
     ])
 
 
-def test_applications_list_with_pagination(applications, mock_api) -> None:
-    """Test that Applications.list() correctly handles pagination.
-
-    This test verifies that the list method properly aggregates results
-    from multiple paginated API responses.
-
-    Args:
-        applications: Applications instance with mock API.
-        mock_api: Mock ExternalsApi instance.
-    """
-    # Arrange
-    # Create two pages of results
-    page1 = [Mock(spec=ApplicationReadResponse) for _ in range(PAGE_SIZE)]
-    page2 = [Mock(spec=ApplicationReadResponse) for _ in range(5)]  # Partial page
-    mock_api.list_applications_v1_applications_get.side_effect = [page1, page2]
-
-    # Act
-    result = list(applications.list())
-
-    # Assert
-    assert len(result) == PAGE_SIZE + 5
-    assert mock_api.list_applications_v1_applications_get.call_count == 2
-    mock_api.list_applications_v1_applications_get.assert_has_calls([
-        call(page=1, page_size=PAGE_SIZE),
-        call(page=2, page_size=PAGE_SIZE),
-    ])
-
-
 @pytest.mark.unit
 def test_applications_list_returns_empty_list_when_no_applications(applications, mock_api) -> None:
     """Test that Applications.list() returns an empty list when no applications are available.

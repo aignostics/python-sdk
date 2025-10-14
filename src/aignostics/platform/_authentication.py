@@ -326,7 +326,8 @@ def _can_open_browser() -> bool:
     return launch_browser
 
 
-def _perform_authorization_code_with_pkce_flow() -> str:
+# TODO(Andreas): This function is complex. Can we unwrap parts of it into smaller functions?
+def _perform_authorization_code_with_pkce_flow() -> str:  # noqa: C901
     """Performs the OAuth 2.0 Authorization Code flow with PKCE.
 
     Opens a browser for user authentication and uses a local redirect
@@ -371,9 +372,6 @@ def _perform_authorization_code_with_pkce_flow() -> str:
                 token = session.fetch_token(settings().token_url, code=auth_code, include_client_id=True)
                 # Store the token
                 authentication_result.token = token["access_token"]
-                # TODO(Andreas): Commented this out, as it breaks tests and you don't want this
-                # Please remove completely
-                # print(token["access_token"])
                 # Send success response
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-type", "text/html")

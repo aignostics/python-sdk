@@ -327,7 +327,8 @@ class Service(BaseService):
             NotFoundException: If the application with the given ID is not found.
         """
         # TODO(Andreas): Have to make calls for all application versions to construct
-        # Changelog dialog on run describe page. Can be optimized to one call if API would support it.
+        # Changelog dialog on run describe page.
+        # Can be optimized to one call if API would support it.
         # Let's discuss if we should re-add the endpoint that existed.
         try:
             client = self._get_platform_client()

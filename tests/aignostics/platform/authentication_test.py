@@ -595,7 +595,7 @@ class TestPortAvailability:
 
         # Mock auth result
         mock_auth_result = MagicMock()
-        mock_auth_result.token = "retry.token"
+        mock_auth_result.token = "retry.token"  # noqa: S105
         mock_auth_result.error = None
 
         with (
@@ -611,7 +611,7 @@ class TestPortAvailability:
             token = _perform_authorization_code_with_pkce_flow()
 
             # Verify we got the token after retry
-            assert token == "retry.token"
+            assert token == "retry.token"  # noqa: S105
             # Verify we slept between retries
             mock_sleep.assert_called_once()
 

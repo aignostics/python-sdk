@@ -32,8 +32,6 @@ class SubmitForm:
 
     application_id: str | None = None
     application_version: str | None = None
-    application_id: str | None = None
-    application_version: str | None = None
     source: Path | None = None
     wsi_step_label: ui.label | None = None
     wsi_next_button: ui.button | None = None
