@@ -997,7 +997,7 @@ class Service(BaseService):
             create_subdirectory_for_run (bool): Whether to create a subdirectory for the run.
             create_subdirectory_per_item (bool): Whether to create a subdirectory for each item,
                 if not set, all items will be downloaded to the same directory but prefixed
-                with the item reference and underscore.
+                with the item external id and underscore.
             wait_for_completion (bool): Whether to wait for run completion. Defaults to True.
             qupath_project (bool): If True, create QuPath project referencing input slides and results.
                 This requires QuPath to be installed. The QuPath project will be created in a subfolder
@@ -1215,7 +1215,7 @@ class Service(BaseService):
             progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
             application_run (ApplicationRun): The application run object.
             destination_directory (Path): Directory to save files.
-            downloaded_items (set): Set of already downloaded item references.
+            downloaded_items (set): Set of already downloaded item external ids.
             create_subdirectory_per_item (bool): Whether to create a subdirectory for each item.
             download_progress_queue (Queue | None): Queue for GUI progress updates.
             download_progress_callable (Callable | None): Callback for CLI progress updates.
