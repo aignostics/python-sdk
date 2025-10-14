@@ -654,7 +654,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 ui.space()
                                 animation_file = {
                                     ItemStatus.PENDING: "pending.lottie",
-                                    ItemStatus.PROCESSING: "error.lottie",  # TODO(Helmut): Different icon
+                                    ItemStatus.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
                                 }[item.state]
                                 ui.html(
                                     f'<dotlottie-player src="/application_assets/{animation_file}" '
