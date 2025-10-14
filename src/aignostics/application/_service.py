@@ -340,7 +340,8 @@ class Service(BaseService):
             application (Application | str): The application to check for versions.
 
         Returns:
-            ApplicationVersion | None: A list of all application versions.
+            ApplicationVersion | None: The latest version of the given application,
+                or None if no latest version found.
 
         Raises:
             NotFoundException: If the application with the given ID is not found.

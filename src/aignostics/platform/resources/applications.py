@@ -45,7 +45,7 @@ class Versions:
         Raises:
             Exception: If the API request fails.
         """
-        application_id = application.application_id if isinstance(application, Application) else application  # pyright: ignore[reportAttributeAccessIssue]
+        application_id = application.application_id if isinstance(application, Application) else application
 
         return paginate(
             self._api.list_versions_by_application_id_v1_applications_application_id_versions_get,

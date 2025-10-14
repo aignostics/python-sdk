@@ -8,7 +8,7 @@ from aignostics.platform import NotFoundException
 from tests.contants_test import HETA_APPLICATION_ID
 
 
-@pytest.mark.e2e
+@pytest.mark.unit
 def test_application_version_valid_semver_formats(runner: CliRunner) -> None:
     """Test that valid semver formats are accepted."""
     from aignostics.application import Service as ApplicationService
@@ -75,6 +75,7 @@ def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
 
 
 @pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
     """Test that use_latest_if_no_version_given works correctly."""
     service = ApplicationService()
@@ -91,3 +92,75 @@ def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
 
     with pytest.raises(ValueError, match=r"Invalid application version id format"):
         service.application_version("invalid-format", use_latest_if_no_version_given=False)
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
+def test_application_versions_with_str_arg(runner: CliRunner) -> None:
+    """Test that application_versions works correctly when passed a string application ID."""
+    service = ApplicationService()
+
+    # Test with valid application ID as string
+    versions = service.application_versions(HETA_APPLICATION_ID)
+    assert isinstance(versions, list)
+    # If there are versions, verify they are ApplicationVersion objects
+    if versions:
+        from aignostics.platform import ApplicationVersion
+
+        assert all(isinstance(v, ApplicationVersion) for v in versions)
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
+def test_application_version_latest_with_str_arg(runner: CliRunner) -> None:
+    """Test that application_version_latest works correctly when passed a string application ID."""
+    service = ApplicationService()
+
+    # Test with valid application ID as string
+    latest = service.application_version_latest(HETA_APPLICATION_ID)
+    # May be None if no versions exist, but should not raise an error
+    if latest is not None:
+        from aignostics.platform import ApplicationVersion
+
+        assert isinstance(latest, ApplicationVersion)
+        assert latest.application_version_id.startswith(f"{HETA_APPLICATION_ID}:v")
+
+
+@pytest.mark.unit
+def test_application_versions_exception_handling_with_str_arg() -> None:
+    """Test that exception handling correctly uses string application ID in error message."""
+    from unittest.mock import MagicMock, patch
+
+    service = ApplicationService()
+
+    # Mock the platform client to raise an exception
+    with patch.object(service, "_get_platform_client") as mock_client:
+        mock_versions = MagicMock()
+        mock_versions.list_sorted.side_effect = Exception("Test error")
+        mock_client.return_value.applications.versions = mock_versions
+
+        # Test with string application ID
+        test_app_id = "test-application-id"
+        expected_error = rf"Failed to retrieve application versions for application '{test_app_id}'"
+        with pytest.raises(RuntimeError, match=expected_error):
+            service.application_versions(test_app_id)
+
+
+@pytest.mark.unit
+def test_application_version_latest_exception_handling_with_str_arg() -> None:
+    """Test exception handling in application_version_latest with string application ID."""
+    from unittest.mock import MagicMock, patch
+
+    service = ApplicationService()
+
+    # Mock the platform client to raise an exception
+    with patch.object(service, "_get_platform_client") as mock_client:
+        mock_versions = MagicMock()
+        mock_versions.list_sorted.side_effect = Exception("Test error")
+        mock_client.return_value.applications.versions = mock_versions
+
+        # Test with string application ID
+        test_app_id = "test-application-id"
+        expected_error = rf"Failed to retrieve application versions for application '{test_app_id}'"
+        with pytest.raises(RuntimeError, match=expected_error):
+            service.application_version_latest(test_app_id)
