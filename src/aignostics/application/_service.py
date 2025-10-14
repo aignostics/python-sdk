@@ -333,11 +333,11 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_version_latest(self, application: Application) -> ApplicationVersion | None:
+    def application_version_latest(self, application: Application | str) -> ApplicationVersion | None:
         """Get a latest application version.
 
         Args:
-            application (Application): The application to check for versions.
+            application (Application | str): The application to check for versions.
 
         Returns:
             ApplicationVersion | None: A list of all application versions.
