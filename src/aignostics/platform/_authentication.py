@@ -46,34 +46,6 @@ except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
 
 
-@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
-def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
-    """Returns a cached PyJWKClient instance for JWT verification.
-
-    Creates a client lazily on first access for each unique combination of URL, timeout,
-    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
-    is thread-safe and ensures that only one client is created per unique parameter set.
-
-    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
-    settings change at runtime, we get a new client with the updated settings. This is useful for handling
-    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
-    considered safe if different threads briefly use different jwt clients while settings change.
-
-    Args:
-        url: The JWS JSON URL to fetch the JWK set from.
-        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
-        lifespan: The lifespan in seconds for caching the JWK set.
-
-    Returns:
-        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
-
-    Raises:
-        PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
-        PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
-    """
-    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
-
-
 class AuthenticationResult(BaseModel):
     """Represents the result of an OAuth authentication flow."""
 
