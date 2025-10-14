@@ -140,6 +140,7 @@ def _run_application_test(
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    # TODO(Andreas): Why are we not caching the token? Spotted this only now ...
     client = platform.Client(cache_token=False)
     application_run = client.runs.create(
         application_id=application_id, application_version=application_version, items=payload
@@ -227,10 +228,14 @@ def _validate_output(
         assert item.state == ItemState.TERMINATED, (
             f"Application run {application_run.run_id}: "
             f"state for item {item.external_id} is {item.state}, expected `TERMINATED`"
+            f" - termination reason: {item.termination_reason}, "
+            f"error code: {item.error_code}, error message: {item.error_message}"
         )
         assert item.output == ItemOutput.FULL, (
             f"Application run {application_run.run_id}: "
             f"output for item {item.external_id} is {item.output}, expected `FULL`"
+            f" - termination reason: {item.termination_reason}, "
+            f"error code: {item.error_code}, error message: {item.error_message}"
         )
         # validate results
         item_dir = run_result_folder / item.external_id

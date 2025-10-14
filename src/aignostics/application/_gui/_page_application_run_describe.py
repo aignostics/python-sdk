@@ -11,7 +11,7 @@ from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
 
-from aignostics.platform import ApplicationRunStatus, ItemStatus
+from aignostics.platform import ApplicationRunStatus, ItemStatus, ItemTerminationReason
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
@@ -20,7 +20,7 @@ from .._utils import get_mime_type_for_artifact  # noqa: TID252
 from ._frame import _frame
 from ._utils import (
     mime_type_to_icon,
-    run_item_status_to_icon_and_color,
+    run_item_status_and_termination_reason_to_icon_and_color,
     run_status_to_icon_and_color,
 )
 
@@ -48,7 +48,12 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
     run_data = run.details() if run else None
 
     if run and run_data:
-        icon, color = run_status_to_icon_and_color(run_data.state.value, run_data.termination_reason)
+        icon, color = run_status_to_icon_and_color(
+            run_data.state.value,
+            run_data.termination_reason,
+            run_data.statistics.item_count,
+            run_data.statistics.item_succeeded_count,
+        )
         await _frame(
             navigation_title=(
                 f"Run of {run_data.application_id} ({run_data.version_number}) on "
@@ -559,10 +564,15 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             image_file = None
                             image_url = "/application_assets/image-not-found.png"
                         ui.image(image_url).classes("object-contain absolute-center max-h-full")
-                        icon, color = run_item_status_to_icon_and_color(item.state.value)
+                        icon, color = run_item_status_and_termination_reason_to_icon_and_color(
+                            item.state.value, item.termination_reason
+                        )
                         with ui.row().classes("justify-center w-full"):
                             with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                ui.tooltip(f"Item {item.item_id}, status {item.state.value.upper()}")
+                                tooltip = f"Item {item.item_id}, status {item.state.value.upper()}"
+                                if item.termination_reason:
+                                    tooltip += f" ({item.termination_reason})"
+                                ui.tooltip(tooltip)
                             ui.space()
                             with ui.button_group().props():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():
@@ -591,7 +601,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             ui.label(item.external_id).classes(
                                 "text-center break-all text-white font-semibold text-shadow-lg/30"
                             )
-                    if item.state is ItemStatus.TERMINATED:
+                    if (
+                        item.state is ItemStatus.TERMINATED
+                        and item.termination_reason == ItemTerminationReason.SUCCEEDED
+                    ):
                         with ui.item_section().classes("w-full"):
                             if item.state is ItemStatus.TERMINATED and item.output_artifacts:
                                 with ui.scroll_area().classes("h-full").style("padding: 0"):
@@ -639,10 +652,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                                             title=title,
                                                             metadata=metadata: metadata_dialog_open(title, metadata),
                                                         )
-                    elif item.state in {
-                        ItemStatus.PENDING,
-                        ItemStatus.PROCESSING,
-                    }:
+                    elif item.state is ItemStatus.TERMINATED:
                         if item.error_message:
                             with ui.row().classes("w-1/2 justify-start items-start content-start ml-4"):
                                 ui.code(
@@ -652,14 +662,24 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         else:
                             with ui.row().classes("w-1/2 justify-center content-center"):
                                 ui.space()
-                                animation_file = {
-                                    ItemStatus.PENDING: "pending.lottie",
-                                    ItemStatus.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
-                                }[item.state]
                                 ui.html(
-                                    f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                    '<dotlottie-player src="/application_assets/error.lottie" '
                                     'background="transparent" speed="1" style="width: 300px; height: 300px" '
                                     'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
                                     sanitize=False,
                                 )
                                 ui.space()
+                    else:
+                        with ui.row().classes("w-1/2 justify-center content-center"):
+                            ui.space()
+                            animation_file = {
+                                ItemStatus.PENDING: "pending.lottie",
+                                ItemStatus.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
+                            }[item.state]
+                            ui.html(
+                                f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                                'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                                sanitize=False,
+                            )
+                            ui.space()

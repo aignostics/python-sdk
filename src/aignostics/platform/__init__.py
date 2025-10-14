@@ -18,6 +18,7 @@ from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import ItemCreationRequest as InputItem
 from aignx.codegen.models import ItemResultReadResponse as ItemResult
 from aignx.codegen.models import ItemState as ItemStatus
+from aignx.codegen.models import ItemTerminationReason
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import OutputArtifact as OutputArtifactData
@@ -113,6 +114,7 @@ __all__ = [
     "InputItem",
     "ItemResult",
     "ItemStatus",
+    "ItemTerminationReason",
     "Me",
     "NotFoundException",
     "Organization",

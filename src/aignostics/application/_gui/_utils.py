@@ -1,6 +1,6 @@
 """Utility functions for the application GUI."""
 
-from aignostics.platform import ApplicationRunStatus, ItemStatus, RunTerminationReason
+from aignostics.platform import ApplicationRunStatus, ItemStatus, ItemTerminationReason, RunTerminationReason
 
 
 def application_id_to_icon(application_id: str) -> str:
@@ -20,12 +20,16 @@ def application_id_to_icon(application_id: str) -> str:
     return "bug_report"
 
 
-def run_status_to_icon_and_color(run_status: str, termination_reason: str | None) -> tuple[str, str]:
+def run_status_to_icon_and_color(
+    run_status: str, termination_reason: str | None, item_count: int, item_succeeded_count: int
+) -> tuple[str, str]:
     """Convert run status and termination reason to icon and color.
 
     Args:
         run_status (str): The run status.
         termination_reason (str): The termination reason.
+        item_count (int): The total number of items in the run.
+        item_succeeded_count (int): The number of items that succeeded in the run.
 
     Returns:
         tuple[str, str]: The icon name and color.
@@ -36,31 +40,50 @@ def run_status_to_icon_and_color(run_status: str, termination_reason: str | None
         case ApplicationRunStatus.PROCESSING:
             return "directions_run", "info"
         case ApplicationRunStatus.TERMINATED:
+            icon = "bug_report"
             if termination_reason == RunTerminationReason.CANCELED_BY_USER:
-                return "hand_gesture_off", "negative"
+                icon = "cancel"
             if termination_reason == RunTerminationReason.CANCELED_BY_SYSTEM:
-                return "sync_problem", "negative"
+                icon = "error"
             if termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
-                return "line_end_circle", "positive"
+                icon = "sports_score"
+            color = "negative"
+            if item_succeeded_count <= 0:
+                color = "negative"
+            elif item_succeeded_count < item_count:
+                color = "warning"
+            elif item_succeeded_count == item_count:
+                color = "positive"
+            return (icon, color)
     return "bug_report", "negative"
 
 
-def run_item_status_to_icon_and_color(item_status: str) -> tuple[str, str]:
-    """Convert item status to icon.
+def run_item_status_and_termination_reason_to_icon_and_color(
+    item_status: str, termination_reason: str | None
+) -> tuple[str, str]:
+    """Convert item status and termination reason to icon and color.
 
     Args:
         item_status (str): The item status.
+        termination_reason (str | None): The termination reason.
 
     Returns:
         tuple[str, str]: The icon name and color.
     """
     match item_status:
         case ItemStatus.PENDING:
-            return "pending", "info"
+            return "schedule", "info"
         case ItemStatus.PROCESSING:
             return "directions_run", "info"
         case ItemStatus.TERMINATED:
-            return "line_end_circle", "info"
+            if termination_reason == ItemTerminationReason.SKIPPED:
+                return "next_plan", "warning"
+            if termination_reason == ItemTerminationReason.SUCCEEDED:
+                return "check_circle", "positive"
+            if termination_reason == ItemTerminationReason.SYSTEM_ERROR:
+                return "error", "negative"
+            if termination_reason == ItemTerminationReason.USER_ERROR:
+                return "warning", "negative"
     return "bug_report", "negative"
 
 

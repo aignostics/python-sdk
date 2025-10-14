@@ -114,7 +114,10 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ):
                             with ui.item_section().props("avatar"):
                                 icon, color = run_status_to_icon_and_color(
-                                    run_data["state"], run_data["termination_reason"]
+                                    run_data["state"],
+                                    run_data["termination_reason"],
+                                    run_data["item_count"],
+                                    run_data["item_succeeded_count"],
                                 )
                                 with (
                                     ui.circular_progress(
