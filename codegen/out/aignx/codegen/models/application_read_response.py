@@ -99,5 +99,3 @@ class ApplicationReadResponse(BaseModel):
             "versions": [ApplicationVersion.from_dict(_item) for _item in obj["versions"]] if obj.get("versions") is not None else None
         })
         return _obj
-
-

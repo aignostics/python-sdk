@@ -147,5 +147,3 @@ class RunReadResponse(BaseModel):
             "terminated_at": obj.get("terminated_at")
         })
         return _obj
-
-

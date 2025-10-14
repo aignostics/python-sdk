@@ -95,5 +95,3 @@ class RunItemStatistics(BaseModel):
             "item_succeeded_count": obj.get("item_succeeded_count")
         })
         return _obj
-
-
