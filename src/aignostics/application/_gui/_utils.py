@@ -45,7 +45,7 @@ def run_status_to_icon_and_color(run_status: str, termination_reason: str | None
     return "bug_report", "negative"
 
 
-def run_item_status_to_icon_and_color(item_status: str) -> tuple[str, str]:  # noqa: PLR0911
+def run_item_status_to_icon_and_color(item_status: str) -> tuple[str, str]:
     """Convert item status to icon.
 
     Args:
@@ -57,16 +57,10 @@ def run_item_status_to_icon_and_color(item_status: str) -> tuple[str, str]:  # n
     match item_status:
         case ItemStatus.PENDING:
             return "pending", "info"
-        case ItemStatus.CANCELED_USER:
-            return "cancel", "warning"
-        case ItemStatus.CANCELED_SYSTEM:
-            return "sync_problem", "negative"
-        case ItemStatus.USER_ERROR:
-            return "hand_gesture_off", "negative"
-        case ItemStatus.SYSTEM_ERROR:
-            return "error", "negative"
-        case ItemStatus.SUCCEEDED:
-            return "check", "positive"
+        case ItemStatus.PROCESSING:
+            return "directions_run", "info"
+        case ItemStatus.TERMINATED:
+            return "line_end_circle", "info"
     return "bug_report", "negative"
 
 

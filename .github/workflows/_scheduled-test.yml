@@ -8,12 +8,6 @@ on:
         required: false
         default: 'staging'
         type: string
-    inputs:
-      platform_environment:
-        description: 'Environment to test against, that is staging or production'
-        required: false
-        default: 'staging'
-        type: string
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
         required: false
@@ -24,25 +18,14 @@ on:
       BETTERSTACK_HEARTBEAT_URL_STAGING:
         required: false
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
         required: false
-      AIGNOSTICS_REFRESH_TOKEN_STAGING:
-        required: false
-      GCP_CREDENTIALS_STAGING:
-        required: false
-      BETTERSTACK_HEARTBEAT_URL_STAGING:
-        required: false
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
-        required: false
-      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
         required: false
       GCP_CREDENTIALS_PRODUCTION:
-      GCP_CREDENTIALS_PRODUCTION:
         required: false
       BETTERSTACK_HEARTBEAT_URL_PRODUCTION:
-      BETTERSTACK_HEARTBEAT_URL_PRODUCTION:
         required: false
+
 jobs:
   test-scheduled:
     runs-on: ubuntu-latest
@@ -73,8 +56,6 @@ jobs:
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
-          # The following 3 lines are correct even if vscode complains
-          envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
           # The following 3 lines are correct even if vscode complains
           envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
           envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}

@@ -8,12 +8,6 @@ on:
         required: false
         default: 'staging'
         type: string
-    inputs:
-      platform_environment:
-        description: 'Environment to test against, that is staging or production'
-        required: false
-        default: 'staging'
-        type: string
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
         required: false
@@ -22,18 +16,9 @@ on:
       GCP_CREDENTIALS_STAGING:
         required: false
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
-        required: false
-      AIGNOSTICS_REFRESH_TOKEN_STAGING:
-        required: false
-      GCP_CREDENTIALS_STAGING:
-        required: false
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
         required: false
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
-      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
         required: false
-      GCP_CREDENTIALS_PRODUCTION:
       GCP_CREDENTIALS_PRODUCTION:
         required: false
       CODECOV_TOKEN:

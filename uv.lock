@@ -160,10 +160,10 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiopath", specifier = ">=0.6.11,<1" },
-    { name = "boto3", specifier = ">=1.40.50,<2" },
+    { name = "boto3", specifier = ">=1.40.51,<2" },
     { name = "certifi", specifier = ">=2025.10.5,<2026" },
     { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.23.0,<1" },
-    { name = "dicom-validator", specifier = ">=0.7.2,<1" },
+    { name = "dicom-validator", specifier = ">=0.7.3,<1" },
     { name = "dicomweb-client", extras = ["gcp"], specifier = ">=0.59.3,<1" },
     { name = "duckdb", specifier = ">=0.10.0,<=1.4.1" },
     { name = "fastapi", extras = ["standard", "all"], specifier = ">=0.119.0,<1" },
@@ -180,7 +180,7 @@ requires-dist = [
     { name = "jsf", specifier = ">=0.11.2,<1" },
     { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.25.1,<5" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1,<2" },
-    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.13.0,<5" },
+    { name = "logfire", extras = ["system-metrics"], specifier = ">=4.13.2,<5" },
     { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.16.5,<1" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
     { name = "nicegui", extras = ["native"], specifier = ">=3.0.4,<4" },
@@ -687,30 +687,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.40.50"
+version = "1.40.51"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/41/d4d73f55b367899ee377cd77c228748c18698ea3507c2a95b328f9152017/boto3-1.40.50.tar.gz", hash = "sha256:ae34363e8f34a49ab130d10c507a611926c1101d5d14d70be5598ca308e13266", size = 111605, upload-time = "2025-10-10T20:12:35.202Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/02/d3ee174681961dc2ebfe81f326e1b5e1ba338b7ff939e1e94eef76e7c65a/boto3-1.40.51.tar.gz", hash = "sha256:ed1b7750df07b2f2ece0141ff2ed0489db2ec2b5311a956d00a496b05fd4fadb", size = 111571, upload-time = "2025-10-13T19:20:44.594Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/0d/c2c0c244a89c329c5e388d56f475b076a1da314203862897a131dee4a8cc/boto3-1.40.50-py3-none-any.whl", hash = "sha256:62901bc616c64236700001f530fc66b659ecd1acb4f541ddac6fcae3a1d37ea6", size = 139345, upload-time = "2025-10-10T20:12:33.29Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/da/67c37721d8f8f3480c03a04e93ef1fae0f7620c9a2d305b3ed8a93600d79/boto3-1.40.51-py3-none-any.whl", hash = "sha256:6aa81b9acb4eff87b5505ae26c948883a2015cc3308ce5168a9df6e00ab815d2", size = 139343, upload-time = "2025-10-13T19:20:42.009Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.40.50"
+version = "1.40.51"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/66/21d9ac0d37e5c4e55171466351cfc77404d8d664ccc17d4add6dba1dee99/botocore-1.40.50.tar.gz", hash = "sha256:1d3d5b5759c9cb30202cd5ad231ec8afb1abe5be0c088a1707195c2cbae0e742", size = 14417510, upload-time = "2025-10-10T20:12:24.656Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/33/9e197d872adf1eadf8ecc259d0f451143326ff044d236b8971ff8bf980ee/botocore-1.40.51.tar.gz", hash = "sha256:a06de20408c3009e59e8f161a1146f1801d279d0923ab950349154900951bb20", size = 14421749, upload-time = "2025-10-13T19:20:32.491Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/af/4f817b49558785e969aa2852ae6c3bba8d372169ab5631a004288d2fac20/botocore-1.40.50-py3-none-any.whl", hash = "sha256:53126c153fae0670dc54f03d01c89b1af144acedb1020199b133dedb309e434d", size = 14087905, upload-time = "2025-10-10T20:12:21.872Z" },
+    { url = "https://files.pythonhosted.org/packages/46/f1/a6d9fdfec74c658cd8d639dc98de415fa42ce3c023602514c67f68e556d9/botocore-1.40.51-py3-none-any.whl", hash = "sha256:d5811a834bbdec6dac540565eab9f5ad954ed439b535686fbc3219e1cbfbfc49", size = 14090941, upload-time = "2025-10-13T19:20:28.165Z" },
 ]
 
 [[package]]
@@ -1365,16 +1365,16 @@ wheels = [
 
 [[package]]
 name = "dicom-validator"
-version = "0.7.2"
+version = "0.7.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
     { name = "pydicom" },
     { name = "pyparsing" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a4/d8/d32e0ae83bd66a563f31afdba863bbd2e2ac23cfc67d29ccc5521f4a81cc/dicom_validator-0.7.2.tar.gz", hash = "sha256:0be29c15cedf2ee8c55f90a166f1c09b7dbfee063a1d2c479e7924d650b2b1a4", size = 62766, upload-time = "2025-08-16T16:32:40.431Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/db/922c5d3c662aff47e1ab1a64fe9203b5ea813ea493b7b216c03b9bfb4676/dicom_validator-0.7.3.tar.gz", hash = "sha256:4ee8376688fb94ca33c48af34bc5a93dd3e3743abefdc1d16b70eba41c4aa542", size = 63526, upload-time = "2025-10-13T17:32:49.564Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/00/a8a1d94c06aabb2cfb1dd2c4fcf62b146ee8d779738572004ae394c4f964/dicom_validator-0.7.2-py3-none-any.whl", hash = "sha256:822fdc700fbe5ac246c24cb3723076aed1f44eed082e634f73de7f1b7aebec8e", size = 71501, upload-time = "2025-08-16T16:32:38.922Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/8d/b3401e93c7301e96315d4d816f5643815f5e6797a8c511e56e91e237b546/dicom_validator-0.7.3-py3-none-any.whl", hash = "sha256:2bffcdf2ae774ef18c521774561987098bfe8c157fdd1fa5bf04f552a195499f", size = 72200, upload-time = "2025-10-13T17:32:48.204Z" },
 ]
 
 [[package]]
@@ -2682,7 +2682,7 @@ wheels = [
 
 [[package]]
 name = "logfire"
-version = "4.13.0"
+version = "4.13.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "executing" },
@@ -2693,9 +2693,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/79/6137e240c7d798e25e2cfcf0c7f209aa5136e138c50d3809f75b1f032748/logfire-4.13.0.tar.gz", hash = "sha256:692a203e75343ac9b1a2fed1fbb4ed62d6285cfc63439c985087b8e8972024f1", size = 547685, upload-time = "2025-10-09T17:34:13.265Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/51/004bbe0276fcecfea8d4a4c76ad33426c9b34428e0723f22c6bb801dbc22/logfire-4.13.2.tar.gz", hash = "sha256:4e756e140c3b8fd25653d20437ebcb75734975f5382de6ae28be775c75575d95", size = 547796, upload-time = "2025-10-13T16:17:53.392Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/f9/9ce9a483d14e61be9eb01209b077c80a424f6ae9200aa1e3ce56cb6dff26/logfire-4.13.0-py3-none-any.whl", hash = "sha256:6da1ecf9f1d73dda2faea24ab10c9405ddc46dcd7e03c29c0ca3ead4ec59e56e", size = 228113, upload-time = "2025-10-09T17:34:09.859Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/5f/0803848cc5ce524ff830e5f2a2f1400fd6ee72be705d87d0432cec42b1e4/logfire-4.13.2-py3-none-any.whl", hash = "sha256:887e99897a1818864aa5bfc595b02c93264ce23d1860866369eff6b6e2dde1c6", size = 228152, upload-time = "2025-10-13T16:17:50.641Z" },
 ]
 
 [package.optional-dependencies]

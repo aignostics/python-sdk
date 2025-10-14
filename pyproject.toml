@@ -76,7 +76,7 @@ dependencies = [
     # From Template
     "fastapi[standard,all]>=0.119.0,<1",
     "humanize>=4.13.0,<5",
-    "logfire[system-metrics]>=4.13.0,<5",
+    "logfire[system-metrics]>=4.13.2,<5",
     "nicegui[native]>=3.0.4,<4",
     "opentelemetry-instrumentation-fastapi>=0.53b0,<1",
     "opentelemetry-instrumentation-httpx>=0.53b0,<1",
@@ -97,9 +97,9 @@ dependencies = [
     "uptime>=3.0.1,<4",
     # Custom
     "aiopath>=0.6.11,<1",
-    "boto3>=1.40.50,<2",
+    "boto3>=1.40.51,<2",
     "certifi>=2025.10.5,<2026",
-    "dicom-validator>=0.7.2,<1",
+    "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
     "duckdb>=0.10.0,<=1.4.1",
     "fastparquet>=2024.11.0,<2025",

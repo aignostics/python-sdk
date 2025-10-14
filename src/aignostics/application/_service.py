@@ -283,8 +283,6 @@ class Service(BaseService):
         Raises:
             ValueError: If the application version number is invalid.
             NotFoundException: If the application version with the given ID and number is not found.
-            ValueError: If the application version number is invalid.
-            NotFoundException: If the application version with the given ID and number is not found.
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
         try:
@@ -311,19 +309,9 @@ class Service(BaseService):
             list[ApplicationVersion]: A list of all versions for the application.
 
         Raises:
-            NotFoundException: If the application with the given ID is not found.
-            RuntimeError: If version list cannot be retrieved unexpectedly.
+            Exception: If the application versions cannot be retrieved.
         """
-        try:
-            return self._get_platform_client().applications.versions.list_sorted(application=application)
-        except NotFoundException as e:
-            message = f"Application with ID '{application.application_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
-        except Exception as e:
-            message = f"Failed to retrieve application versions for application '{application.application_id}': {e}"
-            logger.exception(message)
-            raise RuntimeError(message) from e
+        return Service().application_versions(application_id)
 
     def application_versions(self, application_id: str) -> list[ApplicationVersion]:
         """Get a list of all versions for a specific application.
@@ -336,100 +324,11 @@ class Service(BaseService):
 
         Raises:
             RuntimeError: If the versions cannot be retrieved unexpectedly.
+            NotFoundException: If the application with the given ID is not found.
         """
         # TODO(Andreas): Have to make calls for all application versions to construct
         # Changelog dialog on run describe page. Can be optimized to one call if API would support it.
         # Let's discuss if we should re-add the endpoint that existed.
-        try:
-            client = self._get_platform_client()
-            return [
-                client.application_version(application_id, version.number)
-                for version in client.versions.list(application_id)
-            ]
-        except NotFoundException as e:
-            message = f"Application with ID '{application_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
-        except Exception as e:
-            message = f"Failed to retrieve versions for application with ID '{application_id}': {e}"
-            logger.exception(message)
-            raise RuntimeError(message) from e
-
-    @staticmethod
-    def application_versions_static(application_id: str) -> list[ApplicationVersion]:
-        """Get a list of all versions for a specific application, static variant.
-
-        Args:
-            application_id (str): The ID of the application.
-
-        Returns:
-            list[ApplicationVersion]: A list of all versions for the application.
-
-        Raises:
-            Exception: If the application versions cannot be retrieved.
-        """
-        return Service().application_versions(application_id)
-
-    def application_versions(self, application_id: str) -> list[ApplicationVersion]:
-        """Get a list of all versions for a specific application.
-
-        Args:
-            application_id (str): The ID of the application.
-
-        Returns:
-            list[ApplicationVersion]: A list of all versions for the application.
-
-        Raises:
-            NotFoundException: If the application with the given ID is not found.
-            RuntimeError: If the versions cannot be retrieved unexpectedly.
-        """
-        # TODO(Andreas): Have to make calls for all application versions to construct
-        # Changelog dialog on run describe page. Can be optimized to one call when API supports it.
-        try:
-            client = self._get_platform_client()
-            return [
-                client.application_version(application_id, version.number)
-                for version in client.versions.list(application_id)
-            ]
-        except NotFoundException as e:
-            message = f"Application with ID '{application_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
-        except Exception as e:
-            message = f"Failed to retrieve versions for application with ID '{application_id}': {e}"
-            logger.exception(message)
-            raise RuntimeError(message) from e
-
-    @staticmethod
-    def application_versions_static(application_id: str) -> list[ApplicationVersion]:
-        """Get a list of all versions for a specific application, static variant.
-
-        Args:
-            application_id (str): The ID of the application.
-
-        Returns:
-            list[ApplicationVersion]: A list of all versions for the application.
-
-        Raises:
-            Exception: If the application versions cannot be retrieved.
-        """
-        return Service().application_versions(application_id)
-
-    def application_versions(self, application_id: str) -> list[ApplicationVersion]:
-        """Get a list of all versions for a specific application.
-
-        Args:
-            application_id (str): The ID of the application.
-
-        Returns:
-            list[ApplicationVersion]: A list of all versions for the application.
-
-        Raises:
-            NotFoundException: If the application with the given ID is not found.
-            RuntimeError: If the versions cannot be retrieved unexpectedly.
-        """
-        # TODO(Andreas): Have to make calls for all application versions to construct
-        # Changelog dialog on run describe page. Can be optimized to one call when API supports it.
         try:
             client = self._get_platform_client()
             return [

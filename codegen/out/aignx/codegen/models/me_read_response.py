@@ -19,8 +19,8 @@ import json
 
 from pydantic import BaseModel, ConfigDict
 from typing import Any, ClassVar, Dict, List
-from aignx.codegen.models.auth0_organization import Auth0Organization
-from aignx.codegen.models.auth0_user import Auth0User
+from aignx.codegen.models.organization_read_response import OrganizationReadResponse
+from aignx.codegen.models.user_read_response import UserReadResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -28,8 +28,8 @@ class MeReadResponse(BaseModel):
     """
     Response schema for `Get current user` endpoint
     """ # noqa: E501
-    user: Auth0User
-    organization: Auth0Organization
+    user: UserReadResponse
+    organization: OrganizationReadResponse
     __properties: ClassVar[List[str]] = ["user", "organization"]
 
     model_config = ConfigDict(
@@ -89,8 +89,8 @@ class MeReadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "user": Auth0User.from_dict(obj["user"]) if obj.get("user") is not None else None,
-            "organization": Auth0Organization.from_dict(obj["organization"]) if obj.get("organization") is not None else None
+            "user": UserReadResponse.from_dict(obj["user"]) if obj.get("user") is not None else None,
+            "organization": OrganizationReadResponse.from_dict(obj["organization"]) if obj.get("organization") is not None else None
         })
         return _obj
 

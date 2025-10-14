@@ -14,7 +14,7 @@ from urllib import parse
 import jwt
 import requests
 from pydantic import BaseModel, SecretStr
-from requests.exceptions import HTTPError, JSONDecodeError
+from requests.exceptions import HTTPError, JSONDecodeError, RequestException
 from requests_oauthlib import OAuth2Session
 from tenacity import (
     Retrying,
@@ -26,6 +26,7 @@ from tenacity import (
 
 from aignostics.platform._messages import (
     AUTHENTICATION_FAILED,
+    AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
     AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
     INVALID_REDIRECT_URI,
 )
@@ -34,7 +35,7 @@ from aignostics.utils import get_logger
 
 logger = get_logger(__name__)
 
-CALLBACK_PORT_RETRY_COUNT = 10
+CALLBACK_PORT_RETRY_COUNT = 20
 CALLBACK_PORT_BACKOFF_DELAY = 1
 JWK_CLIENT_CACHE_SIZE = 4  # Multiple entries exist in the rare case of settings changing at runtime only
 
@@ -43,37 +44,6 @@ try:
     import sentry_sdk
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
-
-CALLBACK_PORT_RETRY_COUNT = 20
-CALLBACK_PORT_BACKOFF_DELAY = 1
-
-
-@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
-def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
-    """Returns a cached PyJWKClient instance for JWT verification.
-
-    Creates a client lazily on first access for each unique combination of URL, timeout,
-    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
-    is thread-safe and ensures that only one client is created per unique parameter set.
-
-    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
-    settings change at runtime, we get a new client with the updated settings. This is useful for handling
-    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
-    considered safe if different threads briefly use different jwt clients while settings change.
-
-    Args:
-        url: The JWS JSON URL to fetch the JWK set from.
-        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
-        lifespan: The lifespan in seconds for caching the JWK set.
-
-    Returns:
-        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
-
-    Raises:
-        PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
-        PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
-    """
-    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
 
 
 @functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
@@ -616,8 +586,14 @@ def _do_access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         )
         response.raise_for_status()
         return t.cast("str", response.json()["access_token"])
-    except (HTTPError, requests.exceptions.RequestException) as e:
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
+    except (RequestException, KeyError) as e:
+        # Sanitize error message to prevent leaking sensitive information (e.g., refresh tokens)
+        error_msg = str(e)
+        if isinstance(e, HTTPError) and e.response is not None:
+            error_msg = f"HTTP {e.response.status_code}: {e.response.reason} (URL: {settings().token_url})"
+        message = f"{AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN}{error_msg}"
+        logger.exception(message)
+        raise RuntimeError(message) from e
 
 
 def _ensure_local_port_is_available(port: int, max_retries: int = CALLBACK_PORT_RETRY_COUNT) -> bool:

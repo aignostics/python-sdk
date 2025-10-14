@@ -506,11 +506,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## aignostics (0.2.179) - MIT License
-=======
 ## aignostics (0.2.190) - MIT License
->>>>>>> 99401ec (Refactor tests)
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -3663,11 +3659,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## boto3 (1.40.42) - Apache Software License
-=======
 ## boto3 (1.40.47) - Apache Software License
->>>>>>> 99401ec (Refactor tests)
 
 The AWS SDK for Python
 
@@ -3865,11 +3857,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-<<<<<<< HEAD
-## botocore (1.40.42) - Apache Software License
-=======
 ## botocore (1.40.47) - Apache Software License
->>>>>>> 99401ec (Refactor tests)
 
 Low-level, data-driven core of boto 3.
 
@@ -4472,11 +4460,7 @@ Asynchronous file IO for Linux MacOS or Windows.
 
 ```
 
-<<<<<<< HEAD
-## certifi (2025.8.3) - Mozilla Public License 2.0 (MPL 2.0)
-=======
 ## certifi (2025.10.5) - Mozilla Public License 2.0 (MPL 2.0)
->>>>>>> 99401ec (Refactor tests)
 
 Python package for providing Mozilla's CA Bundle.
 
@@ -7601,11 +7585,7 @@ SOFTWARE.
 
 ```
 
-<<<<<<< HEAD
-## fastapi (0.118.0) - MIT License
-=======
 ## fastapi (0.118.2) - MIT License
->>>>>>> 99401ec (Refactor tests)
 
 FastAPI framework, high performance, easy to learn, fast to code, ready for production
 
@@ -10454,11 +10434,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-<<<<<<< HEAD
-## idc-index-data (22.0.1) - MIT License
-=======
 ## idc-index-data (22.0.2) - MIT License
->>>>>>> 99401ec (Refactor tests)
 
 ImagingDataCommons index to query and download data.
 
@@ -12659,11 +12635,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-<<<<<<< HEAD
-## logfire (4.10.0) - MIT License
-=======
 ## logfire (4.12.0) - UNKNOWN
->>>>>>> 99401ec (Refactor tests)
 
 The best Python observability tool! 🪵🔥
 
@@ -12851,11 +12823,7 @@ Copyright 2010-2020 - Ronald Oussoren
 
 ```
 
-<<<<<<< HEAD
-## marimo (0.16.4) - Apache Software License
-=======
 ## marimo (0.16.5) - Apache Software License
->>>>>>> 99401ec (Refactor tests)
 
 A library for making reactive notebooks and apps
 
@@ -13916,11 +13884,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## nicegui (2.24.2) - MIT License
-=======
 ## nicegui (3.0.3) - MIT License
->>>>>>> 99401ec (Refactor tests)
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -28489,11 +28453,7 @@ C version of reader, parser and emitter for ruamel.yaml derived from libyaml
 
 ```
 
-<<<<<<< HEAD
-## ruff (0.13.2) - MIT License
-=======
 ## ruff (0.14.0) - MIT License
->>>>>>> 99401ec (Refactor tests)
 
 An extremely fast Python linter and code formatter, written in Rust.
 
@@ -29406,11 +29366,7 @@ Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Pytho
 
 ```
 
-<<<<<<< HEAD
-## selenium (4.32.0) - Apache Software License
-=======
 ## selenium (4.36.0) - Apache-2.0
->>>>>>> 99401ec (Refactor tests)
 
 Official Python bindings for Selenium WebDriver
 
@@ -29673,11 +29629,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-<<<<<<< HEAD
-## sentry-sdk (2.39.0) - BSD License
-=======
 ## sentry-sdk (2.40.0) - BSD License
->>>>>>> 99401ec (Refactor tests)
 
 Python client for Sentry (https://sentry.io)
 
@@ -33306,11 +33258,7 @@ SOFTWARE.
 
 ```
 
-<<<<<<< HEAD
-## uv (0.8.22) - Apache Software License; MIT License
-=======
 ## uv (0.8.23) - Apache Software License; MIT License
->>>>>>> 99401ec (Refactor tests)
 
 An extremely fast Python package and project manager, written in Rust.
 

@@ -17,29 +17,26 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from typing_extensions import Annotated
-from aignx.codegen.models.artifact_output import ArtifactOutput
-from aignx.codegen.models.artifact_state import ArtifactState
-from aignx.codegen.models.artifact_termination_reason import ArtifactTerminationReason
 from typing import Optional, Set
 from typing_extensions import Self
 
-class OutputArtifactResultReadResponse(BaseModel):
+class UserReadResponse(BaseModel):
     """
-    OutputArtifactResultReadResponse
+    Part of response schema for User object in `Get current user` endpoint. This model corresponds to the response schema returned from Auth0 GET /v2/users/{id} endpoint. For details, see: https://auth0.com/docs/api/management/v2/users/get-users-by-id
     """ # noqa: E501
-    output_artifact_id: StrictStr = Field(description="The Id of the artifact. Used internally")
-    name: StrictStr = Field(description=" Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.     ")
-    metadata: Optional[Dict[str, Any]] = None
-    state: ArtifactState = Field(description="The current state of the artifact (PENDING, PROCESSING, TERMINATED)")
-    termination_reason: Optional[ArtifactTerminationReason] = None
-    output: ArtifactOutput = Field(description="The output status of the artifact (NONE, FULL)")
-    error_message: Optional[StrictStr] = None
-    download_url: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=2083)]]
-    error_code: Optional[StrictStr]
-    __properties: ClassVar[List[str]] = ["output_artifact_id", "name", "metadata", "state", "termination_reason", "output", "error_message", "download_url", "error_code"]
+    id: StrictStr = Field(description="Unique user identifier")
+    email: Optional[StrictStr] = None
+    email_verified: Optional[StrictBool] = None
+    name: Optional[StrictStr] = None
+    given_name: Optional[StrictStr] = None
+    family_name: Optional[StrictStr] = None
+    nickname: Optional[StrictStr] = None
+    picture: Optional[StrictStr] = None
+    updated_at: Optional[datetime] = None
+    __properties: ClassVar[List[str]] = ["id", "email", "email_verified", "name", "given_name", "family_name", "nickname", "picture", "updated_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -59,7 +56,7 @@ class OutputArtifactResultReadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of OutputArtifactResultReadResponse from a JSON string"""
+        """Create an instance of UserReadResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -80,36 +77,51 @@ class OutputArtifactResultReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if metadata (nullable) is None
+        # set to None if email (nullable) is None
         # and model_fields_set contains the field
-        if self.metadata is None and "metadata" in self.model_fields_set:
-            _dict['metadata'] = None
+        if self.email is None and "email" in self.model_fields_set:
+            _dict['email'] = None
 
-        # set to None if termination_reason (nullable) is None
+        # set to None if email_verified (nullable) is None
         # and model_fields_set contains the field
-        if self.termination_reason is None and "termination_reason" in self.model_fields_set:
-            _dict['termination_reason'] = None
+        if self.email_verified is None and "email_verified" in self.model_fields_set:
+            _dict['email_verified'] = None
 
-        # set to None if error_message (nullable) is None
+        # set to None if name (nullable) is None
         # and model_fields_set contains the field
-        if self.error_message is None and "error_message" in self.model_fields_set:
-            _dict['error_message'] = None
+        if self.name is None and "name" in self.model_fields_set:
+            _dict['name'] = None
 
-        # set to None if download_url (nullable) is None
+        # set to None if given_name (nullable) is None
         # and model_fields_set contains the field
-        if self.download_url is None and "download_url" in self.model_fields_set:
-            _dict['download_url'] = None
+        if self.given_name is None and "given_name" in self.model_fields_set:
+            _dict['given_name'] = None
 
-        # set to None if error_code (nullable) is None
+        # set to None if family_name (nullable) is None
         # and model_fields_set contains the field
-        if self.error_code is None and "error_code" in self.model_fields_set:
-            _dict['error_code'] = None
+        if self.family_name is None and "family_name" in self.model_fields_set:
+            _dict['family_name'] = None
+
+        # set to None if nickname (nullable) is None
+        # and model_fields_set contains the field
+        if self.nickname is None and "nickname" in self.model_fields_set:
+            _dict['nickname'] = None
+
+        # set to None if picture (nullable) is None
+        # and model_fields_set contains the field
+        if self.picture is None and "picture" in self.model_fields_set:
+            _dict['picture'] = None
+
+        # set to None if updated_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.updated_at is None and "updated_at" in self.model_fields_set:
+            _dict['updated_at'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of OutputArtifactResultReadResponse from a dict"""
+        """Create an instance of UserReadResponse from a dict"""
         if obj is None:
             return None
 
@@ -117,15 +129,15 @@ class OutputArtifactResultReadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "output_artifact_id": obj.get("output_artifact_id"),
+            "id": obj.get("id"),
+            "email": obj.get("email"),
+            "email_verified": obj.get("email_verified"),
             "name": obj.get("name"),
-            "metadata": obj.get("metadata"),
-            "state": obj.get("state"),
-            "termination_reason": obj.get("termination_reason"),
-            "output": obj.get("output"),
-            "error_message": obj.get("error_message"),
-            "download_url": obj.get("download_url"),
-            "error_code": obj.get("error_code")
+            "given_name": obj.get("given_name"),
+            "family_name": obj.get("family_name"),
+            "nickname": obj.get("nickname"),
+            "picture": obj.get("picture"),
+            "updated_at": obj.get("updated_at")
         })
         return _obj
 

@@ -559,10 +559,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             image_file = None
                             image_url = "/application_assets/image-not-found.png"
                         ui.image(image_url).classes("object-contain absolute-center max-h-full")
-                        icon, color = run_item_status_to_icon_and_color(item.status.value)
+                        icon, color = run_item_status_to_icon_and_color(item.state.value)
                         with ui.row().classes("justify-center w-full"):
                             with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                ui.tooltip(f"Item {item.item_id}, status {item.status.value.upper()}")
+                                ui.tooltip(f"Item {item.item_id}, status {item.state.value.upper()}")
                             ui.space()
                             with ui.button_group().props():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():
@@ -591,9 +591,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             ui.label(item.external_id).classes(
                                 "text-center break-all text-white font-semibold text-shadow-lg/30"
                             )
-                    if item.status is ItemStatus.SUCCEEDED:
+                    if item.state is ItemStatus.TERMINATED:
                         with ui.item_section().classes("w-full"):
-                            if item.status is ItemStatus.SUCCEEDED and item.output_artifacts:
+                            if item.state is ItemStatus.TERMINATED and item.output_artifacts:
                                 with ui.scroll_area().classes("h-full").style("padding: 0"):
                                     for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
                                         mime_type = get_mime_type_for_artifact(artifact)
@@ -639,17 +639,14 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                                             title=title,
                                                             metadata=metadata: metadata_dialog_open(title, metadata),
                                                         )
-                    elif item.status in {
+                    elif item.state in {
                         ItemStatus.PENDING,
-                        ItemStatus.USER_ERROR,
-                        ItemStatus.SYSTEM_ERROR,
-                        ItemStatus.CANCELED_USER,
-                        ItemStatus.CANCELED_SYSTEM,
+                        ItemStatus.PROCESSING,
                     }:
-                        if item.message:
+                        if item.error_message:
                             with ui.row().classes("w-1/2 justify-start items-start content-start ml-4"):
                                 ui.code(
-                                    item.message,
+                                    item.error_message,
                                     language="markdown",
                                 ).classes("full-width break-all ml-8")
                         else:
@@ -657,11 +654,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 ui.space()
                                 animation_file = {
                                     ItemStatus.PENDING: "pending.lottie",
-                                    ItemStatus.USER_ERROR: "error.lottie",
-                                    ItemStatus.SYSTEM_ERROR: "error.lottie",
-                                    ItemStatus.CANCELED_USER: "canceled.lottie",
-                                    ItemStatus.CANCELED_SYSTEM: "canceled.lottie",
-                                }[item.status]
+                                    ItemStatus.PROCESSING: "error.lottie",  # TODO(Helmut): Different icon
+                                }[item.state]
                                 ui.html(
                                     f'<dotlottie-player src="/application_assets/{animation_file}" '
                                     'background="transparent" speed="1" style="width: 300px; height: 300px" '

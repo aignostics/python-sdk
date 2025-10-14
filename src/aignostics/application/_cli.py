@@ -64,28 +64,20 @@ def application_list(
 
             try:
                 details = Service().application(app.application_id)
-                details = Service().application(app.application_id)
             except Exception as e:
                 logger.exception("Failed to get application details for application '%s'", app.application_id)
                 console.print(
-                    f"[error]Error:[/error] Failed to get application details for application "
-                    f"'{app.application_id}': {e}"
                     f"[error]Error:[/error] Failed to get application details for application "
                     f"'{app.application_id}': {e}"
                 )
                 continue
             console.print("[bold]Available Versions:[/bold]")
             for version in details.versions:
-            for version in details.versions:
                 console.print(f"  - {version.number} ({version.released_at})")
 
                 app_version = Service().application_version(app.application_id, version.number)
                 console.print(f"    Changelog: {app_version.changelog}")
-                app_version = Service().application_version(app.application_id, version.number)
-                console.print(f"    Changelog: {app_version.changelog}")
 
-                num_inputs = len(app_version.input_artifacts)
-                num_outputs = len(app_version.output_artifacts)
                 num_inputs = len(app_version.input_artifacts)
                 num_outputs = len(app_version.output_artifacts)
                 console.print(f"    Artifacts: {num_inputs} input(s), {num_outputs} output(s)")
@@ -111,7 +103,6 @@ def application_list(
 @cli.command("dump-schemata")
 def application_dump_schemata(  # noqa: C901
     application_id: Annotated[
-    application_id: Annotated[
         str,
         typer.Argument(help="Id of the application or application_version to dump the output schema for."),
     ],
@@ -119,14 +110,7 @@ def application_dump_schemata(  # noqa: C901
         str | None,
         typer.Option(
             help="Version of the application. If not provided, the latest version will be used.",
-        typer.Argument(help="Id of the application or application_version to dump the output schema for."),
-    ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application. If not provided, the latest version will be used.",
         ),
-    ] = None,
     ] = None,
     destination: Annotated[
         Path,
@@ -151,8 +135,6 @@ def application_dump_schemata(  # noqa: C901
     try:
         app = Service().application(application_id)
         app_version = Service().application_version(application_id, application_version)
-        app = Service().application(application_id)
-        app_version = Service().application_version(application_id, application_version)
     except (NotFoundException, ValueError) as e:
         message = f"Failed to load application version with ID '{id}', check your input: : {e!s}."
         logger.warning(message)
@@ -172,18 +154,15 @@ def application_dump_schemata(  # noqa: C901
     created_files: list[Path] = []
 
     for input_artifact in app_version.input_artifacts:
-    for input_artifact in app_version.input_artifacts:
         if input_artifact.metadata_schema:
             file_path: Path = sanitize_path(
                 Path(
-                    destination
-                    / f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
+                    destination / f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
                 )
             )  # type: ignore
             file_path.write_text(data=json.dumps(input_artifact.metadata_schema, indent=2), encoding="utf-8")
             created_files.append(file_path)
 
-    for output_artifact in app_version.output_artifacts:
     for output_artifact in app_version.output_artifacts:
         if output_artifact.metadata_schema:
             file_path = sanitize_path(
@@ -202,17 +181,12 @@ def application_dump_schemata(  # noqa: C901
         md_file.write(f"# Schemata for Aignostics Application {app.name}\n")
         md_file.write(f"* ID: {app.application_id}\n")
         md_file.write(f"\n## Description: \n{app.description}\n\n")
-        md_file.write(f"# Schemata for Aignostics Application {app.name}\n")
-        md_file.write(f"* ID: {app.application_id}\n")
-        md_file.write(f"\n## Description: \n{app.description}\n\n")
         md_file.write("\n## Input Artifacts\n")
-        for input_artifact in app_version.input_artifacts:
         for input_artifact in app_version.input_artifacts:
             md_file.write(
                 f"- {input_artifact.name}: {app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n"
             )
         md_file.write("\n## Output Artifacts\n")
-        for output_artifact in app_version.output_artifacts:
         for output_artifact in app_version.output_artifacts:
             md_file.write(
                 f"- {output_artifact.name}: {app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n"
@@ -235,11 +209,9 @@ def application_dump_schemata(  # noqa: C901
 def application_describe(
     application_id: Annotated[str, typer.Argument(help="Id of the application to describe")],
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
-    verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
 ) -> None:
     """Describe application."""
     try:
-        app = Service().application(application_id)
         app = Service().application(application_id)
     except NotFoundException:
         logger.warning("Application with ID '%s' not found.", application_id)
@@ -251,19 +223,14 @@ def application_describe(
         sys.exit(1)
 
     console.print(f"[bold]Application Details for {app.application_id}[/bold]")
-    console.print(f"[bold]Application Details for {app.application_id}[/bold]")
     console.print("=" * 80)
-    console.print(f"[bold]Name:[/bold] {app.name}")
-    console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
     console.print(f"[bold]Name:[/bold] {app.name}")
     console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
 
     console.print("[bold]Description:[/bold]")
     for line in app.description.strip().split("\n"):
-    for line in app.description.strip().split("\n"):
         console.print(f"  {line}")
 
-    if app.versions:
     if app.versions:
         console.print()
         console.print("[bold]Available Versions:[/bold]")
@@ -282,30 +249,13 @@ def application_describe(
                 sys.exit(1)
 
             console.print(f"  [bold]Changelog:[/bold] {app_version.changelog}")
-        for version in app.versions:
-            console.print(f"  [bold]Version:[/bold] {version.number} ({version.released_at})")
-            if not verbose:
-                continue
-            try:
-                app_version = Service().application_version(app.application_id, version.number)
-            except Exception as e:
-                logger.exception("Failed to get application version for '%s', '%s'", application_id, version.number)
-                console.print(
-                    f"[error]Error:[/error] Failed to get application version for "
-                    f"'{application_id}', '{version.number}': {e}"
-                )
-                sys.exit(1)
-
-            console.print(f"  [bold]Changelog:[/bold] {app_version.changelog}")
             console.print("  [bold]Input Artifacts:[/bold]")
-            for artifact in app_version.input_artifacts:
             for artifact in app_version.input_artifacts:
                 console.print(f"    - Name: {artifact.name}")
                 console.print(f"      MIME Type: {get_mime_type_for_artifact(artifact)}")
                 console.print(f"      Schema: {artifact.metadata_schema}")
 
             console.print("  [bold]Output Artifacts:[/bold]")
-            for artifact in app_version.output_artifacts:
             for artifact in app_version.output_artifacts:
                 console.print(f"    - Name: {artifact.name}")
                 console.print(f"      MIME Type: {get_mime_type_for_artifact}")
@@ -318,15 +268,12 @@ def application_describe(
 @run_app.command(name="execute")
 def run_execute(  # noqa: PLR0913, PLR0917
     application_id: Annotated[
-    application_id: Annotated[
         str,
-        typer.Argument(help="Id of application version to execute."),
         typer.Argument(help="Id of application version to execute."),
     ],
     metadata_csv_file: Annotated[
         Path,
         typer.Argument(
-            help="Filename of the .csv file containing the metadata and external ids.",
             help="Filename of the .csv file containing the metadata and external ids.",
             exists=False,
             file_okay=True,
@@ -354,18 +301,11 @@ def run_execute(  # noqa: PLR0913, PLR0917
             help="Mapping to use for amending metadata CSV file. "
             "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'."
             "The regular expression is matched against the external_id attribute of the entry. "
-            "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
             "You can use the mapping option multiple times to set values for multiple files. "
             'Example: ".*:staining_method:H&E,tissue:LIVER,disease:LIVER_CANCER"',
         ),
     ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application. If not provided, the latest version will be used.",
-        ),
-    ] = None,
     application_version: Annotated[
         str | None,
         typer.Option(
@@ -400,10 +340,6 @@ def run_execute(  # noqa: PLR0913, PLR0917
         str | None,
         typer.Option(help="Optional note to include with the run submission via custom metadata."),
     ] = None,
-    note: Annotated[
-        str | None,
-        typer.Option(help="Optional note to include with the run submission via custom metadata."),
-    ] = None,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -422,33 +358,24 @@ def run_execute(  # noqa: PLR0913, PLR0917
     """
     run_prepare(
         application_id=application_id,
-        application_id=application_id,
         metadata_csv=metadata_csv_file,
         source_directory=source_directory,
-        application_version=application_version,
         application_version=application_version,
         mapping=mapping,
     )
     run_upload(
         application_id=application_id,
-        application_id=application_id,
         metadata_csv_file=metadata_csv_file,
-        application_version=application_version,
         application_version=application_version,
         upload_prefix=upload_prefix,
     )
     run_id = run_submit(
         application_id=application_id,
-    run_id = run_submit(
-        application_id=application_id,
         metadata_csv_file=metadata_csv_file,
-        application_version=application_version,
-        note=note,
         application_version=application_version,
         note=note,
     )
     result_download(
-        run_id=run_id,
         run_id=run_id,
         destination_directory=metadata_csv_file.parent,
         create_subdirectory_for_run=create_subdirectory_for_run,
@@ -460,9 +387,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
 @run_app.command(name="prepare")
 def run_prepare(
     application_id: Annotated[
-    application_id: Annotated[
         str,
-        typer.Argument(help="Id of the application to generate the metadata for. "),
         typer.Argument(help="Id of the application to generate the metadata for. "),
     ],
     metadata_csv: Annotated[
@@ -495,18 +420,11 @@ def run_prepare(
             help="Version of the application. If not provided, the latest version will be used.",
         ),
     ] = None,
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application. If not provided, the latest version will be used.",
-        ),
-    ] = None,
     mapping: Annotated[
         list[str] | None,
         typer.Option(
             help="Mapping to use for amending metadata CSV file. "
             "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'. "
-            "The regular expression is matched against the external_id attribute of the entry. "
             "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
             "You can use the mapping option multiple times to set values for multiple files. "
@@ -531,8 +449,6 @@ def run_prepare(
             source_directory=source_directory,
             application_id=application_id,
             application_version=application_version,
-            application_id=application_id,
-            application_version=application_version,
             mappings=mapping or [],
         ),
     )
@@ -543,15 +459,12 @@ def run_prepare(
 @run_app.command(name="upload")
 def run_upload(
     application_id: Annotated[
-    application_id: Annotated[
         str,
-        typer.Argument(help="Id of the application to upload data for. "),
         typer.Argument(help="Id of the application to upload data for. "),
     ],
     metadata_csv_file: Annotated[
         Path,
         typer.Argument(
-            help="Filename of the .csv file containing the metadata and external ids.",
             help="Filename of the .csv file containing the metadata and external ids.",
             exists=True,
             file_okay=True,
@@ -561,12 +474,6 @@ def run_upload(
             resolve_path=True,
         ),
     ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application. If not provided, the latest version will be used.",
-        ),
-    ] = None,
     application_version: Annotated[
         str | None,
         typer.Option(
@@ -610,7 +517,6 @@ def run_upload(
     total_bytes = 0
     for i, entry in enumerate(metadata_dict):
         source = entry["external_id"]
-        source = entry["external_id"]
         source_file_path = Path(source)
         if not source_file_path.is_file():
             logger.warning("Source file '%s' (row %d) does not exist", source_file_path, i)
@@ -638,7 +544,6 @@ def run_upload(
             progress.update(task, advance=bytes_uploaded, description=f"{source.name}")
             for entry in metadata_dict:
                 if entry["external_id"] == str(source):
-                if entry["external_id"] == str(source):
                     entry["platform_bucket_url"] = platform_bucket_url
                     break
             write_metadata_dict_to_csv(
@@ -647,8 +552,6 @@ def run_upload(
             )
 
         Service().application_run_upload(
-            application_id=application_id,
-            application_version=application_version,
             application_id=application_id,
             application_version=application_version,
             metadata=metadata_dict,
@@ -664,15 +567,12 @@ def run_upload(
 @run_app.command("submit")
 def run_submit(
     application_id: Annotated[
-    application_id: Annotated[
         str,
-        typer.Argument(help="Id of the application to submit run for."),
         typer.Argument(help="Id of the application to submit run for."),
     ],
     metadata_csv_file: Annotated[
         Path,
         typer.Argument(
-            help="Filename of the .csv file containing the metadata and external ids.",
             help="Filename of the .csv file containing the metadata and external ids.",
             exists=False,
             file_okay=True,
@@ -682,13 +582,6 @@ def run_submit(
             resolve_path=True,
         ),
     ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application to generate the metadata for. "
-            "If not provided, the latest version will be used.",
-        ),
-    ] = None,
     application_version: Annotated[
         str | None,
         typer.Option(
@@ -712,33 +605,22 @@ def run_submit(
         app_version = Service().application_version(
             application_id=application_id, application_version=application_version
         )
-    except (NotFoundException, ValueError) as e:
-        message = (
-            f"Failed to load application version '{application_version}' for application "
-            f"'{application_id}', check your input: {e!s}."
+    except ValueError as e:
+        logger.warning(
+            "Bad input to create run for application '%s' (version: '%s'): %s", application_id, application_version, e
         )
-        logger.warning(message)
-        console.print(f"[warning]Warning:[/warning] {message}")
+        console.print(
+            f"[warning]Warning:[/warning] Bad input to create run for application "
+            f"'{application_id} (version: {application_version})': {e}"
+        )
         sys.exit(2)
-    except (Exception, RuntimeError) as e:
-        message = (
-            f"Failed to load application version '{application_version}' for application '{application_id}': {e!s}."
+    except NotFoundException as e:
+        logger.warning(
+            "Could not find application version '%s' (version: '%s'): %s", application_id, application_version, e
         )
-        logger.exception(message)
-        console.print(f"[error]Error:[/error] {message}")
-        sys.exit(1)
-
-    try:
-        app_version = Service().application_version(
-            application_id=application_id, application_version=application_version
+        console.print(
+            f"[warning]Warning:[/warning] Could not find application '{application_id} (version: {application_version})': {e}"
         )
-    except (NotFoundException, ValueError) as e:
-        message = (
-            f"Failed to load application version '{application_version}' for application "
-            f"'{application_id}', check your input: {e!s}."
-        )
-        logger.warning(message)
-        console.print(f"[warning]Warning:[/warning] {message}")
         sys.exit(2)
     except (Exception, RuntimeError) as e:
         message = (
@@ -758,24 +640,13 @@ def run_submit(
             application_id,
             app_version.version_number,
             metadata_dict,
-            "Submitting run for application '%s' (version: '%s') with metadata: %s",
-            application_id,
-            app_version.version_number,
-            metadata_dict,
         )
         application_run = Service().application_run_submit_from_metadata(
             application_id=application_id,
-            application_id=application_id,
             metadata=metadata_dict,
-            application_version=application_version,
             application_version=application_version,
             custom_metadata={"sdk": {"note": note}} if note else None,
         )
-        console.print(
-            f"Submitted run with id '{application_run.run_id}' for "
-            f"'{application_id} (version: {app_version.version_number})'."
-        )
-        return application_run.run_id
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "
             f"'{application_id} (version: {app_version.version_number})'."
@@ -788,33 +659,16 @@ def run_submit(
             app_version.version_number,
             e,
         )
-        logger.warning(
-            "Bad input to create run for application '%s' (version: %s): %s",
-            application_id,
-            app_version.version_number,
-            e,
-        )
         console.print(
             f"[warning]Warning:[/warning] Bad input to create run for application "
             f"'{application_id} (version: {app_version.version_number})': {e}"
-            f"[warning]Warning:[/warning] Bad input to create run for application "
-            f"'{application_id} (version: {app_version.version_number})': {e}"
         )
-        sys.exit(2)
-    except NotFoundException as e:
-        logger.warning("Could not find application version '%s': %s", application_version_id, e)
-        console.print(f"[warning]Warning:[/warning] Could not find application version '{application_version_id}': {e}")
         sys.exit(2)
     except Exception as e:
         logger.exception(
             "Failed to create run for application '%s' (version: %s)", application_id, app_version.version_number
         )
-        logger.exception(
-            "Failed to create run for application '%s' (version: %s)", application_id, app_version.version_number
-        )
         console.print(
-            f"[error]Error:[/error] Failed to create run for application "
-            f"'{application_id} (version: {app_version.version_number})': {e}"
             f"[error]Error:[/error] Failed to create run for application "
             f"'{application_id} (version: {app_version.version_number})': {e}"
         )
@@ -867,6 +721,7 @@ def run_cancel(
 ) -> None:
     """Cancel run."""
     logger.debug("Canceling run with ID '%s'", run_id)
+
     try:
         Service().application_run_cancel(run_id)
         logger.info("Canceled run with ID '%s'.", run_id)
@@ -996,11 +851,6 @@ def result_download(  # noqa: PLR0913, PLR0917
                         f"(version: {progress.run.version_number})"
                     )
                     panel.subtitle = f"Triggered at {progress.run.submitted_at.strftime('%a, %x %X')}"
-                    panel.title = (
-                        f"Run {progress.run.run_id} of {progress.run.application_id} "
-                        f"(version: {progress.run.version_number})"
-                    )
-                    panel.subtitle = f"Triggered at {progress.run.submitted_at.strftime('%a, %x %X')}"
                     if progress.item_count:
                         panel.subtitle += f" with {progress.item_count} " + (
                             "item" if progress.item_count == 1 else "items"
@@ -1026,7 +876,6 @@ def result_download(  # noqa: PLR0913, PLR0917
                         download_tasks[task_key] = artifact_download_progress_ui.add_task(
                             f"{progress.artifact_path.name}".ljust(50),
                             total=progress.artifact_size,
-                            extra_description=f"Item {progress.item.external_id if progress.item else 'unknown'}",
                             extra_description=f"Item {progress.item.external_id if progress.item else 'unknown'}",
                         )
 

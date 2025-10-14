@@ -68,9 +68,9 @@ def test_runs_list_with_pagination(runs, mock_api) -> None:
         mock_api: Mock ExternalsApi instance.
     """
     # Arrange
-    page1 = [Mock(spec=RunReadResponse, application_run_id=f"run-{i}") for i in range(PAGE_SIZE)]
-    page2 = [Mock(spec=RunReadResponse, application_run_id=f"run-{i + PAGE_SIZE}") for i in range(5)]
-    mock_api.list_application_runs_v1_runs_get.side_effect = [page1, page2]
+    page1 = [Mock(spec=RunReadResponse, run_id=f"run-{i}") for i in range(PAGE_SIZE)]
+    page2 = [Mock(spec=RunReadResponse, run_id=f"run-{i + PAGE_SIZE}") for i in range(5)]
+    mock_api.list_runs_v1_runs_get.side_effect = [page1, page2]
 
     # Act
     result = list(runs.list())
@@ -124,17 +124,17 @@ def test_application_run_results_with_pagination(app_run, mock_api) -> None:
     # Arrange
     page1 = [Mock(spec=ItemResultReadResponse) for _ in range(PAGE_SIZE)]
     page2 = [Mock(spec=ItemResultReadResponse) for _ in range(5)]
-    mock_api.list_run_results_v1_runs_application_run_id_results_get.side_effect = [page1, page2]
+    mock_api.list_run_items_v1_runs_run_id_items_get.side_effect = [page1, page2]
 
     # Act
     result = list(app_run.results())
 
     # Assert
     assert len(result) == PAGE_SIZE + 5
-    assert mock_api.list_run_results_v1_runs_application_run_id_results_get.call_count == 2
-    mock_api.list_run_results_v1_runs_application_run_id_results_get.assert_has_calls([
-        call(application_run_id=app_run.application_run_id, page=1, page_size=PAGE_SIZE),
-        call(application_run_id=app_run.application_run_id, page=2, page_size=PAGE_SIZE),
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_count == 2
+    mock_api.list_run_items_v1_runs_run_id_items_get.assert_has_calls([
+        call(run_id=app_run.run_id, page=1, page_size=PAGE_SIZE),
+        call(run_id=app_run.run_id, page=2, page_size=PAGE_SIZE),
     ])
 
 
@@ -179,7 +179,7 @@ def test_runs_create_returns_application_run(runs, mock_api) -> None:
             ],
         )
     ]
-    mock_api.create_application_run_v1_runs_post.return_value = RunCreationResponse(application_run_id=run_id)
+    mock_api.create_run_v1_runs_post.return_value = RunCreationResponse(run_id=run_id)
 
     # Mock the validation method to prevent it from making actual API calls
     runs._validate_input_items = Mock()
@@ -189,8 +189,8 @@ def test_runs_create_returns_application_run(runs, mock_api) -> None:
 
     # Assert
     assert isinstance(app_run, ApplicationRun)
-    assert app_run.application_run_id == run_id
-    mock_api.create_application_run_v1_runs_post.assert_called_once()
+    assert app_run.run_id == run_id
+    mock_api.create_run_v1_runs_post.assert_called_once()
     # Check that a RunCreationRequest was passed to the API call
     call_args = mock_api.create_run_v1_runs_post.call_args[0][0]
     assert call_args.application_id == "test"
@@ -241,8 +241,8 @@ def test_paginate_with_not_found_exception_after_full_page(runs, mock_api) -> No
     from aignx.codegen.exceptions import NotFoundException
 
     # Return exactly PAGE_SIZE items for first page, then throw NotFoundException
-    full_page = [Mock(spec=RunReadResponse, application_run_id=f"run-{i}") for i in range(PAGE_SIZE)]
-    mock_api.list_application_runs_v1_runs_get.side_effect = [full_page, NotFoundException()]
+    full_page = [Mock(spec=RunReadResponse, run_id=f"run-{i}") for i in range(PAGE_SIZE)]
+    mock_api.list_runs_v1_runs_get.side_effect = [full_page, NotFoundException()]
 
     # Act
     result = list(runs.list())

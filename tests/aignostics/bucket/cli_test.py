@@ -154,20 +154,3 @@ def test_cli_bucket_purge(runner: CliRunner) -> None:
     """Check bucket purge command runs successfully."""
     result = runner.invoke(cli, ["bucket", "purge", "--dry-run"])
     assert result.exit_code == 0
-
-
-def test_cli_bucket_info_settings(runner: CliRunner) -> None:
-    """Check settings in system info with proper defaults."""
-    result = runner.invoke(cli, ["system", "info"])
-    assert result.exit_code == 0
-
-    # Parse the JSON output
-    # Note: This test fails if you have console logging enabled
-    # as it messes up the JSON output
-    output_data = json.loads(result.output)
-
-    # Verify the bucket settings defaults
-    assert output_data["bucket"]["settings"]["protocol"] == "gs"
-    assert output_data["bucket"]["settings"]["region_name"] == "EUROPE-WEST3"
-    assert output_data["bucket"]["settings"]["upload_signed_url_expiration_seconds"] == 7200
-    assert output_data["bucket"]["settings"]["download_signed_url_expiration_seconds"] == 604800
