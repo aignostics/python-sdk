@@ -77,7 +77,8 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         tmp_path = Path(tmpdir)
 
         application = Service().application(HETA_APPLICATION_ID)
-        latest_version_number = application.versions[0].version if application.versions else None
+        latest_version_number = application.versions[0].number if application.versions else None
+        assert latest_version_number is not None, f"No versions found for application {HETA_APPLICATION_ID}"
 
         # Submit run
         csv_content = (
@@ -189,9 +190,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("The Atlas H&E TME is an AI application")
 
         # Check the latest application version is shown and select it
-        application_versions = Service().application_versions("he-tme")
-        latest_application_version = application_versions[0]
-        await user.should_see(latest_application_version.version)
+        application = Service().application("he-tme")
+        latest_application_version = application.versions[0] if application.versions else None
+        assert latest_application_version is not None, "No application versions found for he-tme"
+        await user.should_see(latest_application_version.number)
         user.find(marker="BUTTON_APPLICATION_VERSION_NEXT").click()
 
         # Check the file picker opens and closes
@@ -239,7 +241,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
         # Check user is redirected to the run page and run is running
-        await user.should_see(f"Run of he-tme:v{latest_application_version.version}", retries=200)
+        await user.should_see(f"Run of he-tme:v{latest_application_version}", retries=200)
         await user.should_see("status RUNNING")
 
         # Check user can cancel run
@@ -264,8 +266,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         return_value=tmp_path,
     ):
         application = Service().application(HETA_APPLICATION_ID)
-        latest_version = Service().application_version_latest(HETA_APPLICATION_ID)
-        latest_version_number = latest_version.version_number if latest_version else None
+        latest_version_number = application.versions[0].number if application.versions else None
         assert latest_version_number is not None, f"No versions found for application {HETA_APPLICATION_ID}"
         # This assumes a successful HETA run is in the last 200 completed runs
         runs = Service().application_runs(limit=200, status=ApplicationRunStatus.COMPLETED)

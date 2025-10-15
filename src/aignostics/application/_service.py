@@ -148,7 +148,7 @@ class DownloadProgress(BaseModel):
         return 0.0
 
 
-class Service(BaseService):
+class Service(BaseService):  # noqa: PLR0904
     """Service of the application module."""
 
     _settings: Settings
@@ -266,6 +266,33 @@ class Service(BaseService):
             raise NotFoundException(message) from e
         except Exception as e:
             message = f"Failed to retrieve application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_version_latest(self, application_id: str) -> ApplicationVersion | None:
+        """Get the latest application version.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            ApplicationVersion | None: The latest application version or None if no versions exist.
+
+        Raises:
+            NotFoundException: If the application with the given ID is not found.
+            RuntimeError: If the application versions cannot be retrieved unexpectedly.
+        """
+        try:
+            application = self.application(application_id)
+            latest_version = application.versions[0] if application.versions else None
+            if latest_version:
+                return self._get_platform_client().application_version(application_id, latest_version.number)
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve latest version for application with ID '{application_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 

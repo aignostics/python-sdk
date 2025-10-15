@@ -152,7 +152,8 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
         application = Service().application(HETA_APPLICATION_ID)
-        latest_version_number = application.versions[0].version if application.versions else None
+        latest_version_number = application.versions[0].number if application.versions else None
+        assert latest_version_number, f"No versions found for application {HETA_APPLICATION_ID}"
         runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
 
         if not runs:
