@@ -15,7 +15,6 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
-from aignostics.platform import ApplicationRunStatus
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
@@ -154,7 +153,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         application = Service().application(HETA_APPLICATION_ID)
         latest_version_number = application.versions[0].number if application.versions else None
         assert latest_version_number, f"No versions found for application {HETA_APPLICATION_ID}"
-        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+        runs = Service().application_runs(limit=1, has_output=True)
 
         if not runs:
             pytest.fail("No completed runs found, please run the test first.")
@@ -168,7 +167,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
             pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
 
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.run_id}, status: {run.status}")
+        print(f"Found existing run: {run.run_id}, status: {run.state}")
         await user.open(f"/application/run/{run.run_id}")
         await user.should_see(f"Run {run.run_id}")
         await user.should_see(f"Run of {application.application_id} ({latest_version_number})")

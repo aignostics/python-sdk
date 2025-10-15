@@ -291,7 +291,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
             pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
 
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.run_id}, status: {run.status}")
+        print(f"Found existing run: {run.run_id}, status: {run.state}")
         await user.open(f"/application/run/{run.run_id}")
         await user.should_see(f"Run {run.run_id}", retries=100)
         await user.should_see(
