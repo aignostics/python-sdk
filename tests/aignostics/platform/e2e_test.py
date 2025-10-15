@@ -127,7 +127,7 @@ def _run_application_test(
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
-    checksum_attribute_key: str,
+    checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
     """Helper function to run an application test.
 
@@ -173,7 +173,6 @@ def test_application_runs_test_version() -> None:
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
         payload=_get_three_spots_payload_for_test_v0_0_4(),
-        checksum_attribute_key="checksum_base64_crc32c",
     )
 
 
@@ -195,7 +194,6 @@ def test_application_runs_heta_version() -> None:
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta_v1_0_0(),
-        checksum_attribute_key="checksum_base64_crc32c",
     )
 
 
