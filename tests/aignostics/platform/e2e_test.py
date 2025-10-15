@@ -210,56 +210,63 @@ def _validate_output(
         output_base_folder (Path): The base folder where the output is stored.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
+    # validate run state
     run_details = application_run.details()
     assert run_details.state == RunState.TERMINATED, (
-        f"Run {application_run.run_id}: Did not finish in state `TERMINATED`, but '{run_details.state}'."
+        f"Run `{application_run.run_id}`: "
+        f"Did not finish in state `TERMINATED`, but `{run_details.state}`.\n"
+        f"Termination reason: `{run_details.termination_reason}`, "
+        f"error code: `{run_details.error_code}`, error message: `{run_details.error_message}`."
     )
     assert run_details.output == RunOutput.FULL, (
-        f"Run {application_run.run_id}: Did not finish in state `FULL` for its output, but '{run_details.output}'."
+        f"Run `{application_run.run_id}`: "
+        f"Did not finish in state `FULL` for its output, but `{run_details.output}`.\n"
+        f"Termination reason: `{run_details.termination_reason}`, "
+        f"error code: `{run_details.error_code}`, error message: `{run_details.error_message}`."
     )
 
     run_result_folder = output_base_folder / application_run.run_id
     assert run_result_folder.exists(), f"Application run {application_run.run_id}: result folder does not exist"
 
+    # validate item state
     run_results = application_run.results()
-
     for item in run_results:
-        # validate state
         assert item.state == ItemState.TERMINATED, (
-            f"Application run {application_run.run_id}: "
-            f"state for item {item.external_id} is {item.state}, expected `TERMINATED`"
-            f" - termination reason: {item.termination_reason}, "
-            f"error code: {item.error_code}, error message: {item.error_message}"
+            f"Application run `{application_run.run_id}`: "
+            f"state for item `{item.external_id}` is `{item.state}`, expected `TERMINATED`.\n"
+            f"Termination reason: `{item.termination_reason}`, "
+            f"error code: `{item.error_code}`, error message: `{item.error_message}`."
         )
         assert item.output == ItemOutput.FULL, (
-            f"Application run {application_run.run_id}: "
-            f"output for item {item.external_id} is {item.output}, expected `FULL`"
-            f" - termination reason: {item.termination_reason}, "
-            f"error code: {item.error_code}, error message: {item.error_message}"
+            f"Application run `{application_run.run_id}`: "
+            f"output for item `{item.external_id}` is `{item.output}`, expected `FULL`.\n"
+            f"Termination reason: `{item.termination_reason}`, "
+            f"error code: `{item.error_code}`, error message: `{item.error_message}`."
         )
-        # validate results
+        # validate output artifact state
         item_dir = run_result_folder / item.external_id
         assert item_dir.exists(), (
-            f"Application run {application_run.run_id}: result folder for item {item.external_id} does not exist"
+            f"Application run `{application_run.run_id}`: result folder for item `{item.external_id}` does not exist"
         )
         for artifact in item.output_artifacts:
             assert artifact.state == ArtifactState.TERMINATED, (
-                f"Application run {application_run.run_id}: artifact {artifact} should have state `TERMINATED`"
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` should have state `TERMINATED`"
             )
             assert artifact.output == ArtifactOutput.AVAILABLE, (
-                f"Application run {application_run.run_id}: artifact {artifact} should have output state `AVAILABLE`"
+                f"Application run `{application_run.run_id}`: "
+                f"artifact `{artifact}` should have output state `AVAILABLE`."
             )
             assert artifact.download_url is not None, (
-                f"Application run {application_run.run_id}: artifact {artifact} should provide a download url"
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` should provide a download url."
             )
             file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), (
-                f"Application run {application_run.run_id}: artifact {artifact} was not downloaded"
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` was not downloaded/"
             )
             checksum = artifact.metadata[checksum_attribute_key]
             file_checksum = platform.calculate_file_crc32c(file_path)
             assert file_checksum == checksum, (
-                f"Application run {application_run.run_id}: "
-                f"metadata checksum != file checksum {checksum} <> {file_checksum}"
+                f"Application run `{application_run.run_id}`: "
+                f"metadata checksum != file checksum `{checksum}` <> `{file_checksum}` for artifact `{artifact}`."
             )
