@@ -160,7 +160,10 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         # Find a completed run with the latest application version ID
         run = None
         for potential_run in runs:
-            if potential_run.application_id == application.id and potential_run.version_number == latest_version_number:
+            if (
+                potential_run.application_id == application.application_id
+                and potential_run.version_number == latest_version_number
+            ):
                 run = potential_run
                 break
         if not run:

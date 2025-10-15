@@ -64,7 +64,9 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     ):
                         with (
                             ui.item_section().props("avatar"),
-                            ui.icon(application_id_to_icon(application.application_id), color="primary"),
+                            ui.icon(application_id_to_icon(application.application_id), color="primary").classes(
+                                "text-4xl"
+                            ),
                         ):
                             ui.tooltip(application.application_id)
                         with ui.item_section():
@@ -78,7 +80,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
             except Exception as e:
                 with ui.item():
                     with ui.item_section().props("avatar"):
-                        ui.icon("error", color="red")
+                        ui.icon("error", color="red").classes("text-4xl")
                     with ui.item_section():
                         ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
                         logger.exception("Could not load applications")
@@ -127,7 +129,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                         color=color,
                                         show_value=False,
                                     ),
-                                    ui.icon(icon, color=color),
+                                    ui.icon(icon, color=color).classes("text-4xl"),
                                 ):
                                     tooltip_text = (
                                         f"{run_data['item_succeeded_count']} of {run_data['item_count']} succeeded, "
