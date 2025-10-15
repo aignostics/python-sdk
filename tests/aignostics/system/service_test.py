@@ -10,8 +10,9 @@ from aignostics.system._service import Service
 
 @pytest.mark.unit
 @pytest.mark.timeout(15)
-def test_is_token_valid() -> None:
+def test_is_token_valid(record_property) -> None:
     """Test that is_token_valid works correctly with environment variable."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Set the environment variable for the test
     the_value = "the_value"
     with mock.patch.dict(os.environ, {"AIGNOSTICS_SYSTEM_TOKEN": the_value}):
@@ -29,8 +30,9 @@ def test_is_token_valid() -> None:
 
 
 @pytest.mark.unit
-def test_is_token_valid_when_not_set() -> None:
+def test_is_token_valid_when_not_set(record_property) -> None:
     """Test that is_token_valid handles the case when no token is set."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Ensure the environment variable is not set
     with mock.patch.dict(os.environ, {"AIGNOSTICS_SYSTEM_TOKEN": ""}, clear=True):
         # Create a new service instance with no token set
@@ -42,8 +44,9 @@ def test_is_token_valid_when_not_set() -> None:
 
 
 @pytest.mark.unit
-def test_is_secret_key_word_boundary_matching_positive_cases() -> None:
+def test_is_secret_key_word_boundary_matching_positive_cases(record_property) -> None:
     """Test that word boundary terms are correctly identified as secrets."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Test cases where "id" appears as a whole word - should be detected
     secret_keys = [
         "id",  # Exact match
@@ -62,8 +65,9 @@ def test_is_secret_key_word_boundary_matching_positive_cases() -> None:
 
 
 @pytest.mark.unit
-def test_is_secret_key_word_boundary_matching_negative_cases() -> None:
+def test_is_secret_key_word_boundary_matching_negative_cases(record_property) -> None:
     """Test that word boundary terms do not match partial words."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Test cases where "id" appears as part of a larger word - should NOT be detected
     non_secret_keys = [
         "valid",  # Contains "id" but not as whole word
@@ -154,8 +158,9 @@ def test_is_secret_key_string_match_terms_positive_cases(record_property) -> Non
 
 
 @pytest.mark.unit
-def test_is_secret_key_string_match_terms_edge_cases() -> None:
+def test_is_secret_key_string_match_terms_edge_cases(record_property) -> None:
     """Test edge cases for string matching."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Test that partial matches work correctly
     edge_cases = [
         "keychain",  # Contains "key"
@@ -172,8 +177,9 @@ def test_is_secret_key_string_match_terms_edge_cases() -> None:
 
 
 @pytest.mark.unit
-def test_is_secret_key_non_secret_keys() -> None:
+def test_is_secret_key_non_secret_keys(record_property) -> None:
     """Test that non-secret keys are correctly identified as non-secrets."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     non_secret_keys = [
         # Regular configuration keys
         "database_host",
@@ -225,8 +231,9 @@ def test_is_secret_key_non_secret_keys() -> None:
 
 
 @pytest.mark.unit
-def test_is_secret_key_case_insensitivity() -> None:
+def test_is_secret_key_case_insensitivity(record_property) -> None:
     """Test that the method is case insensitive."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     test_cases = [
         ("PASSWORD", True),
         ("password", True),
@@ -248,8 +255,9 @@ def test_is_secret_key_case_insensitivity() -> None:
 
 
 @pytest.mark.unit
-def test_is_secret_key_special_characters_and_boundaries() -> None:
+def test_is_secret_key_special_characters_and_boundaries(record_property) -> None:
     """Test handling of special characters and word boundaries."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     test_cases = [
         # Word boundary cases for "id"
         ("_id_", True),  # Surrounded by underscores
@@ -275,8 +283,9 @@ def test_is_secret_key_special_characters_and_boundaries() -> None:
 
 
 @pytest.mark.unit
-def test_is_secret_key_empty_and_none_like_inputs() -> None:
+def test_is_secret_key_empty_and_none_like_inputs(record_property) -> None:
     """Test edge cases with empty or minimal inputs."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     test_cases = [
         ("", False),  # Empty string
         ("   ", False),  # Whitespace only
@@ -290,8 +299,9 @@ def test_is_secret_key_empty_and_none_like_inputs() -> None:
 
 
 @pytest.mark.unit
-def test_is_secret_key_real_world_examples() -> None:
+def test_is_secret_key_real_world_examples(record_property) -> None:
     """Test with real-world examples of environment variable names."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Common secret environment variables (should return True)
     secret_examples = [
         "AWS_ACCESS_KEY_ID",
