@@ -112,9 +112,9 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
                     ),
                     metadata={
                         "checksum_base64_crc32c": "Zmx0wA==",
-                        "resolution_mpp": 0.46499982,
                         "width_px": 4016,
                         "height_px": 3952,
+                        "resolution_mpp": 0.46499982,
                         "media_type": "image/tiff",
                     },
                 )
@@ -143,7 +143,7 @@ def _run_application_test(
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    # TODO(Andreas): Why are we not caching the token? Spotted this only now ...
+    # TODO(Helmut): Try with caching ...
     client = platform.Client(cache_token=False)
     application_run = client.runs.create(
         application_id=application_id, application_version=application_version, items=payload

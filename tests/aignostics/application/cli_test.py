@@ -246,9 +246,6 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
     )
     assert download_result.exit_code == 0
     assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
-    # TODO(helmut): What was the reson to assert on the commented line? I could not get the
-    # string you check. Would just remove it
-    # assert "status: running on plat" in normalize_output(download_result.stdout)  # noqa: ERA001
 
     # Test the cancel command with the extracted run ID
     cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
