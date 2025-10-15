@@ -146,7 +146,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     and args
                                     and args.get("run_id") == run_data["run_id"]
                                     else "font-normal"
-                                )
+                                ).mark(f"LABEL_RUN_APPLICATION:{index}")
                                 ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
                     if not runs:
                         with ui.item():

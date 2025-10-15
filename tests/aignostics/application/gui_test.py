@@ -116,8 +116,8 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("Runs")
-        await user.should_see(HETA_APPLICATION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100)
-        await user.should_see(HETA_APPLICATION_VERSION, marker="SIDEBAR_RUN_ITEM:0")
+        await user.should_see(content=HETA_APPLICATION_ID, marker="LABEL_RUN_APPLICATION:0", retries=100)
+        await user.should_see(content=HETA_APPLICATION_VERSION, marker="LABEL_RUN_APPLICATION:0", retries=100)
 
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
