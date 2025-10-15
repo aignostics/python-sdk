@@ -13,7 +13,6 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
-from aignostics.platform import ApplicationRunStatus
 from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
@@ -269,7 +268,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         latest_version_number = application.versions[0].number if application.versions else None
         assert latest_version_number is not None, f"No versions found for application {HETA_APPLICATION_ID}"
         # This assumes a successful HETA run is in the last 200 completed runs
-        runs = Service().application_runs(limit=200, status=ApplicationRunStatus.TERMINATED)
+        runs = Service().application_runs(limit=200, has_output=True)
 
         if not runs:
             pytest.fail("No completed runs found, please run other tests first.")
