@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to test (leave empty for default branch)'
+        description: 'Branch to test (leave empty for main)'
         required: false
         type: string
         default: ''

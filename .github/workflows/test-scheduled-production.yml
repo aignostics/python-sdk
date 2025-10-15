@@ -3,6 +3,13 @@ name: "Scheduled Testing / Production"
 on:
   schedule:
     - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test (leave empty for main)'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   test-scheduled:
