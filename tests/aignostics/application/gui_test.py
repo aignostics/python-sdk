@@ -103,7 +103,10 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
         # Extract the run ID from the output
         output = normalize_output(result.output)
-        run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+        # Strip ANSI escape codes before matching
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+        output_clean = ansi_escape.sub("", output)
+        run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output_clean)
         assert run_id_match is not None, f"Could not extract run ID from output: {output}"
         run_id = run_id_match.group(1)
 
@@ -126,7 +129,10 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
             f"Application: {application.application_id} ({latest_version_number})",
             retries=100,
         )
-        await user.should_see("status RUNNING", retries=100)
+        try:
+            await user.should_see("PENDING", retries=100)
+        except AssertionError:
+            await user.should_see("PROCESSING", retries=100)
         await user.should_see("test_gui_cli_submit_to_run_result_delete", retries=100)
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
@@ -134,7 +140,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
         await assert_notified(user, "Application run cancelled!")
 
         # Check user sees refreshed run page and run is cancelled
-        await user.should_see("status CANCELED_USER", retries=100)
+        await user.should_see("CANCELED_BY_USER", retries=100)
 
         # ... and user can delete run
         await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE", retries=100)
