@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
-STORAGE_TAB_RUNS_TERMINATED_ONLY = "runs_terminated_only"
+STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
 service = Service()
 
@@ -84,14 +84,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         logger.exception("Could not load applications")
 
         async def application_runs_load_and_render(
-            runs_column: ui.column, terminated_only: bool = False, note_query: str | None = None
+            runs_column: ui.column, has_output: bool = False, note_query: str | None = None
         ) -> None:
             with runs_column:
                 try:
                     runs = await nicegui_run.io_bound(
                         Service.application_runs_static,
                         limit=RUNS_LIMIT,
-                        terminated_only=terminated_only,
+                        has_output=has_output,
                         note_regex=f".*{note_query}.*" if note_query else None,
                         note_query_case_insensitive=True,
                     )
@@ -170,32 +170,32 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 background_tasks.create_lazy(
                     coroutine=application_runs_load_and_render(
                         runs_column=runs_column,
-                        terminated_only=app.storage.tab.get(STORAGE_TAB_RUNS_TERMINATED_ONLY, False),
+                        has_output=app.storage.tab.get(STORAGE_TAB_RUNS_HAS_OUTPUT, False),
                         note_query=search_input.query,
                     ),
                     name="_runs_list",
                 )
 
         class RunFilterButton(ui.icon):
-            _state: bool = False
+            _has_output: bool = False
 
             def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
                 super().__init__(*args, **kwargs)
-                self._state = app.storage.tab.get(STORAGE_TAB_RUNS_TERMINATED_ONLY, False)
+                self._has_output = app.storage.tab.get(STORAGE_TAB_RUNS_HAS_OUTPUT, False)
                 self.on("click", self.toggle)
 
             def toggle(self) -> None:
-                self._state = not self._state
-                app.storage.tab[STORAGE_TAB_RUNS_TERMINATED_ONLY] = self._state
+                self._has_output = not self._has_output
+                app.storage.tab[STORAGE_TAB_RUNS_HAS_OUTPUT] = self._has_output
                 self.update()
                 _runs_list.refresh()
 
             def update(self) -> None:
-                self.props(f"color={'positive' if self._state else 'grey'}")
+                self.props(f"color={'positive' if self._has_output else 'grey'}")
                 super().update()
 
             def is_active(self) -> bool:
-                return bool(self._state)
+                return bool(self._has_output)
 
         try:
             with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):

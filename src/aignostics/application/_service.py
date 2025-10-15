@@ -32,6 +32,7 @@ from aignostics.platform import (
     ItemResult,
     NotFoundException,
     OutputArtifactElement,
+    RunOutput,
 )
 from aignostics.platform import (
     Service as PlatformService,
@@ -605,7 +606,7 @@ class Service(BaseService):
     @staticmethod
     def application_runs_static(
         limit: int | None = None,
-        terminated_only: bool = False,
+        has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
     ) -> list[dict[str, Any]]:
@@ -613,7 +614,7 @@ class Service(BaseService):
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
-            terminated_only (bool): If True, only terminated runs are retrieved.
+            has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
@@ -636,7 +637,7 @@ class Service(BaseService):
             }
             for run in Service().application_runs(
                 limit=limit,
-                status=ApplicationRunStatus.TERMINATED if terminated_only else None,
+                has_output=has_output,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
             )
@@ -645,7 +646,7 @@ class Service(BaseService):
     def application_runs(
         self,
         limit: int | None = None,
-        status: ApplicationRunStatus | None = None,
+        has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
     ) -> list[ApplicationRunData]:
@@ -653,7 +654,7 @@ class Service(BaseService):
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
-            status (ApplicationRunStatus | None): Filter runs by status. If None, all runs are retrieved.
+            has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
@@ -678,7 +679,7 @@ class Service(BaseService):
                 sort="-submitted_at", page_size=page_size, custom_metadata=custom_metadata
             )
             for run in run_iterator:
-                if status is not None and run.state != status:
+                if has_output and run.output == RunOutput.NONE:
                     continue
                 runs.append(run)
                 if limit is not None and len(runs) >= limit:

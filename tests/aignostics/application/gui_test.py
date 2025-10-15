@@ -269,7 +269,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         latest_version_number = application.versions[0].number if application.versions else None
         assert latest_version_number is not None, f"No versions found for application {HETA_APPLICATION_ID}"
         # This assumes a successful HETA run is in the last 200 completed runs
-        runs = Service().application_runs(limit=200, status=ApplicationRunStatus.COMPLETED)
+        runs = Service().application_runs(limit=200, status=ApplicationRunStatus.TERMINATED)
 
         if not runs:
             pytest.fail("No completed runs found, please run other tests first.")
