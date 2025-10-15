@@ -73,8 +73,9 @@ def mock_group(mock_typer: MockTyper) -> MockGroup:
     return MockGroup(mock_typer)
 
 
-def test_prepare_cli_adds_typers(mock_typer: MockTyper) -> None:
+def test_prepare_cli_adds_typers(mock_typer: MockTyper, record_property) -> None:
     """Test that prepare_cli correctly adds discovered typers."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(LOCATE_IMPLEMENTATIONS_PATH) as mock_locate:
         # Create a different typer instance to be discovered
         other_typer = MockTyper()
@@ -89,16 +90,18 @@ def test_prepare_cli_adds_typers(mock_typer: MockTyper) -> None:
         mock_typer.add_typer.assert_called_once_with(other_typer)
 
 
-def test_prepare_cli_sets_epilog(mock_typer: MockTyper) -> None:
+def test_prepare_cli_sets_epilog(mock_typer: MockTyper, record_property) -> None:
     """Test that prepare_cli correctly sets the epilog."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(LOCATE_IMPLEMENTATIONS_PATH, return_value=[]):
         prepare_cli(mock_typer, TEST_EPILOG)
         assert mock_typer.info.epilog == TEST_EPILOG
 
 
 @pytest.mark.skip(reason="https://github.com/fastapi/typer/pull/1240")
-def test_prepare_cli_sets_no_args_is_help(mock_typer: MockTyper) -> None:
+def test_prepare_cli_sets_no_args_is_help(mock_typer: MockTyper, record_property) -> None:
     """Test that prepare_cli correctly sets no_args_is_help."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(LOCATE_IMPLEMENTATIONS_PATH, return_value=[]):
         prepare_cli(mock_typer, TEST_EPILOG)
         assert mock_typer.info.no_args_is_help is True
@@ -115,8 +118,10 @@ def test_prepare_cli_conditional_epilog_recursion(
     argv_parts: list[str],
     expected_calls: int,
     mock_typer: MockTyper,
+    record_property,
 ) -> None:
     """Test that prepare_cli conditionally calls _add_epilog_recursively based on sys.argv."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with (
         patch(LOCATE_IMPLEMENTATIONS_PATH, return_value=[]),
         patch("aignostics.utils._cli.Path") as mock_path,
@@ -127,8 +132,9 @@ def test_prepare_cli_conditional_epilog_recursion(
         assert mock_add_epilog.call_count == expected_calls
 
 
-def test_add_epilog_recursively_with_cycle(mock_typer: MockTyper) -> None:
+def test_add_epilog_recursively_with_cycle(mock_typer: MockTyper, record_property) -> None:
     """Test that _add_epilog_recursively handles cycles in the typer structure."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Create a cycle by having the typer reference itself
     mock_typer.registered_groups = []
     group = Mock(spec=TyperInfo)
