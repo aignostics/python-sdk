@@ -215,14 +215,14 @@ def _validate_output(
     assert run_details.state == RunState.TERMINATED, (
         f"Run `{application_run.run_id}`: "
         f"Did not finish in state `TERMINATED`, but `{run_details.state}`.\n"
-        f"Termination reason: `{run_details.termination_reason}`, "
-        f"error code: `{run_details.error_code}`, error message: `{run_details.error_message}`."
+        f"Termination reason `{run_details.termination_reason}`, "
+        f"error code `{run_details.error_code}`, message `{run_details.error_message}`."
     )
     assert run_details.output == RunOutput.FULL, (
         f"Run `{application_run.run_id}`: "
         f"Did not finish in state `FULL` for its output, but `{run_details.output}`.\n"
-        f"Termination reason: `{run_details.termination_reason}`, "
-        f"error code: `{run_details.error_code}`, error message: `{run_details.error_message}`."
+        f"Termination reason `{run_details.termination_reason}`, "
+        f"error code `{run_details.error_code}`, message `{run_details.error_message}`."
     )
 
     run_result_folder = output_base_folder / application_run.run_id
@@ -234,14 +234,14 @@ def _validate_output(
         assert item.state == ItemState.TERMINATED, (
             f"Application run `{application_run.run_id}`: "
             f"state for item `{item.external_id}` is `{item.state}`, expected `TERMINATED`.\n"
-            f"Termination reason: `{item.termination_reason}`, "
-            f"error code: `{item.error_code}`, error message: `{item.error_message}`."
+            f"Termination reason `{item.termination_reason}`, "
+            f"error code `{item.error_code}`, message `{item.error_message}`."
         )
         assert item.output == ItemOutput.FULL, (
             f"Application run `{application_run.run_id}`: "
             f"output for item `{item.external_id}` is `{item.output}`, expected `FULL`.\n"
-            f"Termination reason: `{item.termination_reason}`, "
-            f"error code: `{item.error_code}`, error message: `{item.error_message}`."
+            f"Termination reason`{item.termination_reason}`, "
+            f"error code `{item.error_code}`, message `{item.error_message}`."
         )
         # validate output artifact state
         item_dir = run_result_folder / item.external_id

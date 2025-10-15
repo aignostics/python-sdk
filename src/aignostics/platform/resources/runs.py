@@ -183,7 +183,11 @@ class ApplicationRun:
                 case ItemOutput.FULL:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 case ItemOutput.NONE:
-                    print(f"{item.external_id} failed with {item.state.value}: {item.error_message}")
+                    print(
+                        f"{item.external_id} failed with `{item.state.value}`.\n"
+                        f"Termination reason `{item.termination_reason}`, "
+                        f"error_code:`{item.error_code}`, message `{item.error_message}`."
+                    )
 
     @staticmethod
     def ensure_artifacts_downloaded(

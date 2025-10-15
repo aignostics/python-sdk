@@ -58,7 +58,7 @@ def run_status_to_icon_and_color(
     return "bug_report", "negative"
 
 
-def run_item_status_and_termination_reason_to_icon_and_color(
+def run_item_status_and_termination_reason_to_icon_and_color(  # noqa: PLR0911
     item_status: str, termination_reason: str | None
 ) -> tuple[str, str]:
     """Convert item status and termination reason to icon and color.
