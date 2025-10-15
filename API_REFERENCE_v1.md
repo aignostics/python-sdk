@@ -276,22 +276,6 @@ Retrieve details of a specific application by its ID.
 }
 ```
 
-> 422 Response
-
-```json
-{
-  "detail": [
-    {
-      "loc": [
-        "string"
-      ],
-      "msg": "string",
-      "type": "string"
-    }
-  ]
-}
-```
-
 #### Responses
 
 |Status|Meaning|Description|Schema|
