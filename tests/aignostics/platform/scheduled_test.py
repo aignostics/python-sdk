@@ -333,6 +333,7 @@ def three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
     TEST_PARAMETERS,
 )
 def test_application_runs(
+    record_property,
     timeout: int,
     application_version_id: str,
     payload_type: str,
@@ -346,6 +347,7 @@ def test_application_runs(
     the application run completed successfully and the results are valid.
 
     Args:
+        record_property: Pytest fixture for adding properties to test reports.
         timeout (int): Timeout for the test in seconds.
         application_version_id (str): The application version ID to use for the test.
         payload_type (str): The type of payload to generate ('three_spots_test' or 'single_spot_heta').
@@ -355,6 +357,7 @@ def test_application_runs(
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     request.node.add_marker(pytest.mark.timeout(timeout))
 
     # Generate payload lazily during test execution
