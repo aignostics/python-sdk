@@ -173,7 +173,7 @@ def test_application_runs_test_version() -> None:
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
         payload=_get_three_spots_payload_for_test_v0_0_4(),
-        checksum_attribute_key="checksum_crc32c",
+        checksum_attribute_key="checksum_base64_crc32c",
     )
 
 
