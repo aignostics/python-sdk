@@ -6,8 +6,9 @@ from pathlib import Path
 from typing import Annotated, TypeVar
 from urllib.parse import urlparse
 
-import appdirs
+import platformdirs
 from pydantic import (
+    BeforeValidator,
     Field,
     FieldSerializationInfo,
     PlainSerializer,
@@ -21,7 +22,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from aignostics.utils import OpaqueSettings, __project_name__, load_settings
 
 from ._constants import (
+    API_ROOT_DEV,
     API_ROOT_PRODUCTION,
+    API_ROOT_STAGING,
     AUDIENCE_DEV,
     AUDIENCE_PRODUCTION,
     AUDIENCE_STAGING,
@@ -51,6 +54,30 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseSettings)
 
 
+def _validate_url(value: str) -> str:
+    """Validate that a string is a valid URL.
+
+    Args:
+        value: The string to validate.
+
+    Returns:
+        The validated URL string.
+
+    Raises:
+        ValueError: If the string is not a valid URL.
+    """
+    parsed = urlparse(value)
+    if not parsed.scheme or not parsed.netloc:
+        msg = f"Invalid URL format: {value}"
+        raise ValueError(msg)
+
+    if parsed.scheme not in {"http", "https"}:
+        msg = f"URL must use http or https scheme, got {parsed.scheme}"
+        raise ValueError(msg)
+
+    return value
+
+
 class Settings(OpaqueSettings):
     """Configuration settings for the Aignostics SDK.
 
@@ -61,7 +88,6 @@ class Settings(OpaqueSettings):
     Attributes:
         api_root (str): Base URL of the Aignostics API.
         audience (str): OAuth audience claim.
-        authorization_backoff_seconds (int): Backoff time for authorization retries in seconds.
         authorization_base_url (str): Authorization endpoint for OAuth flows.
         cache_dir (str): Directory for caching tokens and other data.
         client_id_interactive (str): Client ID for interactive authorization flow.
@@ -70,7 +96,17 @@ class Settings(OpaqueSettings):
         jws_json_url (str): URL for JWS key set.
         redirect_uri (str): Redirect URI for OAuth authorization code flow.
         refresh_token (SecretStr | None): OAuth refresh token if available.
-        request_timeout_seconds (int): Timeout for API requests in seconds.
+        health_timeout (float): Timeout for health checks in seconds.
+        auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds.
+        auth_timeout (float): Authentication request timeout in seconds.
+        auth_retry_attempts_max (int): Maximum number of retry attempts for authentication requests.
+        auth_retry_wait_min (float): Minimum wait time between authentication request retries in seconds.
+        auth_retry_wait_max (float): Maximum wait time between authentication request retries in seconds.
+        me_timeout (float): Timeout for "me" requests in seconds.
+        me_retry_attempts_max (int): Maximum number of retry attempts for "me" requests.
+        me_retry_wait_min (float): Minimum wait time between "me" request retries in seconds.
+        me_retry_wait_max (float): Maximum wait time between "me" request retries in seconds.
+        me_cache_ttl (int): Time-to-live for "me" cache in seconds.
         scope (str): OAuth scopes required by the SDK.
         scope_elements (list[str]): OAuth scopes split into individual elements.
         token_file (Path): Path to the token storage file.
@@ -97,10 +133,11 @@ class Settings(OpaqueSettings):
 
     api_root: Annotated[
         str,
+        BeforeValidator(_validate_url),
         Field(description="URL of the API root", default=API_ROOT_PRODUCTION),
     ]
 
-    scope: str = "offline_access"
+    scope: Annotated[str, Field(description="OAuth scopes", min_length=3)] = "offline_access"
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -112,12 +149,10 @@ class Settings(OpaqueSettings):
         Returns:
             list[str]: List of individual scope elements.
         """
-        if not self.scope:
-            return []
         return [element.strip() for element in self.scope.split(",")]
 
-    audience: str
-    authorization_base_url: str
+    audience: Annotated[str, Field(description="OAuth audience claim", min_length=10, max_length=100)]
+    authorization_base_url: Annotated[str, Field(description="OAuth authorization endpoint URL", min_length=1)]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -148,11 +183,17 @@ class Settings(OpaqueSettings):
             )
             return self.authorization_base_url.rsplit("/", 1)[0] + "/"
 
-    token_url: str
-    redirect_uri: str
-    device_url: str
-    jws_json_url: str
-    client_id_interactive: str
+    token_url: Annotated[str, BeforeValidator(_validate_url), Field(description="OAuth token endpoint URL")]
+    redirect_uri: Annotated[
+        str, BeforeValidator(_validate_url), Field(description="OAuth redirect URI for authorization code flow")
+    ]
+    device_url: Annotated[
+        str, BeforeValidator(_validate_url), Field(description="OAuth device authorization endpoint URL")
+    ]
+    jws_json_url: Annotated[
+        str, BeforeValidator(_validate_url), Field(description="JWS key set URL for token verification")
+    ]
+    client_id_interactive: Annotated[str, Field(description="OAuth client ID for interactive flows")]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -180,7 +221,7 @@ class Settings(OpaqueSettings):
         Field(description="Refresh token for OAuth authentication", min_length=10, max_length=1000, default=None),
     ] = None
 
-    cache_dir: str = appdirs.user_cache_dir(__project_name__)
+    cache_dir: str = platformdirs.user_cache_dir(__project_name__)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -196,8 +237,97 @@ class Settings(OpaqueSettings):
     def serialize_token_file(self, token_file: Path, _info: FieldSerializationInfo) -> str:  # noqa: PLR6301
         return str(token_file.resolve())
 
-    request_timeout_seconds: int = 30
-    authorization_backoff_seconds: int = 3
+    health_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for health checks",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 30.0
+
+    auth_jwk_set_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for JWK set cache (in seconds)",
+            ge=0,
+            le=604800,
+        ),
+    ] = 60 * 60 * 24
+
+    auth_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for authentication requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 30.0
+    auth_retry_attempts_max: Annotated[
+        int,
+        Field(
+            description="Maximum number of retry attempts for authentication requests",
+            ge=0,
+            le=10,
+        ),
+    ] = 4
+    auth_retry_wait_min: Annotated[
+        float,
+        Field(
+            description="Minimum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 0.1
+    auth_retry_wait_max: Annotated[
+        float,
+        Field(
+            description="Maximum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 60.0
+
+    me_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for me requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 30.0
+    me_retry_attempts_max: Annotated[
+        int,
+        Field(
+            description="Maximum number of retry attempts for me requests",
+            ge=0,
+            le=10,
+        ),
+    ] = 4
+    me_retry_wait_min: Annotated[
+        float,
+        Field(
+            description="Minimum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 0.1
+    me_retry_wait_max: Annotated[
+        float,
+        Field(
+            description="Maximum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 60.0
+    me_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for me cache (in seconds)",
+            ge=0,
+            le=3600,
+        ),
+    ] = 60
 
     @model_validator(mode="before")
     def pre_init(cls, values: dict) -> dict:  # type: ignore[type-arg] # noqa: N805
@@ -236,7 +366,7 @@ class Settings(OpaqueSettings):
             return values
 
         match api_root:
-            case "https://platform.aignostics.com":
+            case x if x == API_ROOT_PRODUCTION:
                 values["audience"] = AUDIENCE_PRODUCTION
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_PRODUCTION
                 values["token_url"] = TOKEN_URL_PRODUCTION
@@ -244,7 +374,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_PRODUCTION
                 values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_PRODUCTION
-            case "https://platform-staging.aignostics.com":
+            case x if x == API_ROOT_STAGING:
                 values["audience"] = AUDIENCE_STAGING
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
                 values["token_url"] = TOKEN_URL_STAGING
@@ -252,7 +382,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_STAGING
                 values["jws_json_url"] = JWS_JSON_URL_STAGING
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_STAGING
-            case "https://platform-dev.aignostics.com":
+            case x if x == API_ROOT_DEV:
                 values["audience"] = AUDIENCE_DEV
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_DEV
                 values["token_url"] = TOKEN_URL_DEV
@@ -264,6 +394,31 @@ class Settings(OpaqueSettings):
                 raise ValueError(UNKNOWN_ENDPOINT_URL)
 
         return values
+
+    @model_validator(mode="after")
+    def validate_retry_wait_times(self) -> "Settings":
+        """Validate that retry wait min is less or equal than retry wait max for both auth and me requests.
+
+        Returns:
+            Settings: The validated settings instance.
+
+        Raises:
+            ValueError: If auth_retry_wait_min is greater than or equal to auth_retry_wait_max,
+                       or if me_retry_wait_min is greater than or equal to me_retry_wait_max.
+        """
+        if self.auth_retry_wait_min > self.auth_retry_wait_max:
+            msg = (
+                f"auth_retry_wait_min ({self.auth_retry_wait_min}) must be less or equal than "
+                f"auth_retry_wait_max ({self.auth_retry_wait_max})"
+            )
+            raise ValueError(msg)
+        if self.me_retry_wait_min > self.me_retry_wait_max:
+            msg = (
+                f"me_retry_wait_min ({self.me_retry_wait_min}) must be less or equal than "
+                f"me_retry_wait_max ({self.me_retry_wait_max})"
+            )
+            raise ValueError(msg)
+        return self
 
 
 __cached_settings: Settings | None = None

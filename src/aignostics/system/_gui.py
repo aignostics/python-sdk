@@ -17,16 +17,23 @@ class PageBuilder(BasePageBuilder):
         locate_subclasses(BaseService)  # Ensure settings are loaded
         app.add_static_files("/system_assets", Path(__file__).parent / "assets")
 
-        ui.add_head_html("""
-            <style>
-                :global(.jse-modal-window.jse-modal-window-jsoneditor)
-                {
-                    width: 100%;
-                    height: 100%;
-                    min-height: 900px;
-                }
-            </style>
-        """)
+        # TODO(Helmut): Remove when working with nicegui 3
+        def deprecated() -> None:
+            ui.add_head_html("""
+                <style>
+                    :global(.jse-modal-window.jse-modal-window-jsoneditor)
+                    {
+                        width: 100%;
+                        height: 100%;
+                        min-height: 900px;
+                    }
+                </style>
+            """)
+
+        @ui.page("/alive")
+        def alive() -> None:
+            """Simple page to check the GUI is alive."""
+            ui.label("Yes")
 
         @ui.page("/system")
         async def page_system() -> None:  # noqa: PLR0915
@@ -60,8 +67,9 @@ class PageBuilder(BasePageBuilder):
                                 properties["content"] = {"json": "Health check failed."}  # type: ignore[unreachable]
                             else:
                                 properties["content"] = {"json": health.model_dump()}
-                            editor.update()
-                            editor.run_editor_method(":expand", "path => true")
+                            # Note: editor.update(...) broken in NiceGUI 3.0.4
+                            editor.run_editor_method("update", properties["content"])
+                            editor.run_editor_method(":expand", "[]", "path => true")
                             spinner.set_visibility(False)
                             editor.set_visibility(True)
                         with ui.tab_panel(tab_info).classes("min-h-[calc(100vh-12rem)]"):
@@ -96,8 +104,9 @@ class PageBuilder(BasePageBuilder):
                                     properties["content"] = {"json": "Info retrieval failed."}  # type: ignore[unreachable]
                                 else:
                                     properties["content"] = {"json": info}
-                                editor.update()
-                                editor.run_editor_method(":expand", "path => true")
+                                # Note: editor.update(...) broken in NiceGUI 3.0.4
+                                editor.run_editor_method("update", properties["content"])
+                                editor.run_editor_method(":expand", "[]", "path => true")
                                 spinner.set_visibility(False)
                                 editor.set_visibility(True)
                                 mask_secrets_switch.set_visibility(True)
@@ -125,5 +134,6 @@ class PageBuilder(BasePageBuilder):
                     ui.html(
                         '<dotlottie-player src="/system_assets/system.lottie" '
                         'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                        sanitize=False,
                     )

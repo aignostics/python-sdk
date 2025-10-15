@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from botocore.client import BaseClient
 
 from aignostics.platform import Service as PlatformService
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, get_user_data_directory
+from aignostics.utils import BaseService, Health, get_logger, get_user_data_directory
 
 from ._settings import Settings
 
@@ -93,7 +93,7 @@ class Service(BaseService):
         super().__init__(Settings)
         self._platform_service = PlatformService()
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -102,7 +102,7 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {"settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})}
+        return {}
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.

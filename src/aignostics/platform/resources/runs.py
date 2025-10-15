@@ -36,6 +36,7 @@ from aignostics.platform._utils import (
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
+from aignostics.utils import user_agent
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
@@ -92,7 +93,7 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id, include=None)
+        return self._api.get_run_v1_runs_application_run_id_get(self.application_run_id)
 
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run.
@@ -113,6 +114,14 @@ class ApplicationRun:
             Exception: If the API request fails.
         """
         self._api.cancel_application_run_v1_runs_application_run_id_cancel_post(self.application_run_id)
+
+    def delete(self) -> None:
+        """Delete the application run.
+
+        Raises:
+            Exception: If the API request fails.
+        """
+        self._api.delete_application_run_results_v1_runs_application_run_id_results_delete(self.application_run_id)
 
     def results(self) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
@@ -262,12 +271,15 @@ class Runs:
         """
         return ApplicationRun(self._api, application_run_id)
 
-    def create(self, application_version: str, items: list[ItemCreationRequest]) -> ApplicationRun:
+    def create(
+        self, application_version: str, items: list[ItemCreationRequest], custom_metadata: dict[str, Any] | None = None
+    ) -> ApplicationRun:
         """Creates a new application run.
 
         Args:
-            application_version (ApplicationVersion | str): The ID of the application version.
+            application_version (str): The ID of the application version.
             items (list[ItemCreationRequest]): The run creation request payload.
+            custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
 
         Returns:
             ApplicationRun: The created application run.
@@ -276,10 +288,10 @@ class Runs:
             ValueError: If the payload is invalid.
             Exception: If the API request fails.
         """
-        payload = RunCreationRequest(
-            application_version_id=application_version,
-            items=items,
-        )
+        custom_metadata = custom_metadata or {}
+        custom_metadata.setdefault("sdk", {})
+        custom_metadata["sdk"]["user_agent"] = user_agent()
+        payload = RunCreationRequest(application_version_id=application_version, items=items, metadata=custom_metadata)
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_application_run_v1_runs_post(payload)
         return ApplicationRun(self._api, str(res.application_run_id))
@@ -306,6 +318,7 @@ class Runs:
     def list_data(
         self,
         for_application_version: str | None = None,
+        metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ) -> t.Iterator[ApplicationRunData]:
@@ -313,6 +326,7 @@ class Runs:
 
         Args:
             for_application_version (str | None): Optional application version ID to filter by.
+            metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
 
@@ -332,6 +346,7 @@ class Runs:
             res = paginate(
                 self._api.list_application_runs_v1_runs_get,
                 page_size=page_size,
+                metadata=metadata,
                 sort=[sort] if sort else None,
             )
         else:
@@ -339,6 +354,7 @@ class Runs:
                 self._api.list_application_runs_v1_runs_get,
                 page_size=page_size,
                 application_version_id=for_application_version,
+                metadata=metadata,
                 sort=[sort] if sort else None,
             )
         return res

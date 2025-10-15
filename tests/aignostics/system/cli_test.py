@@ -12,28 +12,32 @@ from aignostics.cli import cli
 from aignostics.utils import __project_name__
 from tests.conftest import normalize_output
 
-THE_VALUE = "THE_VALUE"
+THE_VALUE = "test_secret_value_not_real_for_testing_only"
 
 
+@pytest.mark.e2e
 @pytest.mark.scheduled
+@pytest.mark.timeout(timeout=60)
 def test_cli_health_json(runner: CliRunner, record_property) -> None:
     """Check health is true."""
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
     result = runner.invoke(cli, ["system", "health"])
+    assert normalize_output(result.stdout).startswith('{  "status": "UP"')
     assert result.exit_code == 0
-    assert '"status": "UP"' in result.output
 
 
-@pytest.mark.scheduled
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=30)
 def test_cli_health_yaml(runner: CliRunner, record_property) -> None:
     """Check health is true."""
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
-    assert result.exit_code == 0
     assert "status: UP" in result.output
+    assert result.exit_code == 0
 
 
-@pytest.mark.sequential
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=30)
 def test_cli_info(runner: CliRunner) -> None:
     """Check aignostics.log in outpu of system info."""
     result = runner.invoke(cli, ["system", "info"])
@@ -41,6 +45,8 @@ def test_cli_info(runner: CliRunner) -> None:
     assert "aignostics.log" in result.output
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=30)
 @pytest.mark.sequential
 def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture) -> None:
     """Check secrets only shown if requested.
@@ -76,6 +82,7 @@ def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture) -
         assert secret_found, "Expected secret value to be present in unmasked output, but it was not found"
 
 
+@pytest.mark.integration
 @patch("aignostics.utils._gui.gui_register_pages")
 @patch("nicegui.ui.run")
 def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunner) -> None:
@@ -88,7 +95,8 @@ def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunn
         result = runner.invoke(cli, ["system", "serve", "--host", "127.0.0.1", "--port", "8000"])
 
         assert result.exit_code == 0
-        assert "Starting web application server at http://127.0.0.1:8000" in result.output
+        assert "Starting web application server" in result.output
+        assert "http://127.0.0.1:8000" in result.output
 
         # Check that gui_register_pages was called
         mock_register_pages.assert_called_once()
@@ -106,9 +114,11 @@ def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunn
             show_welcome_message=True,
             show=False,
             window_size=None,
+            reconnect_timeout=60 * 60 * 24 * 7,
         )
 
 
+@pytest.mark.integration
 def test_cli_openapi_yaml(runner: CliRunner) -> None:
     """Check openapi command outputs YAML schema."""
     result = runner.invoke(cli, ["system", "openapi", "--output-format", "yaml"])
@@ -123,6 +133,7 @@ def test_cli_openapi_yaml(runner: CliRunner) -> None:
     assert "Error: Invalid API version 'v3'. Available versions: v1" in result.output
 
 
+@pytest.mark.integration
 def test_cli_openapi_json(runner: CliRunner) -> None:
     """Check openapi command outputs JSON schema."""
     result = runner.invoke(cli, ["system", "openapi"])
@@ -133,12 +144,14 @@ def test_cli_openapi_json(runner: CliRunner) -> None:
     assert '"paths":' in result.output
 
 
+@pytest.mark.integration
 def test_cli_install(runner: CliRunner) -> None:
     """Check install command runs successfully."""
     result = runner.invoke(cli, ["system", "install"])
     assert result.exit_code == 0
 
 
+@pytest.mark.integration
 @pytest.mark.sequential
 def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path) -> None:
     """Check set, unset, and get commands."""
@@ -172,6 +185,7 @@ def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path) -> None:
         assert "None" in result.output
 
 
+@pytest.mark.integration
 @pytest.mark.sequential
 def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
     """Check disable/enable remote diagnostics."""
@@ -213,6 +227,7 @@ def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Pat
         assert "None" in result.output
 
 
+@pytest.mark.integration
 @pytest.mark.sequential
 def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> None:  # noqa: PLR0915
     """Check disable/enable remote diagnostics."""
@@ -358,3 +373,55 @@ def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path) -> No
         result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
         assert result.exit_code == 0
         assert "None" in result.output
+
+
+@pytest.mark.integration
+def test_cli_dump_dot_env_file(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
+    """Check dump-dot-env-file command creates a file with all settings."""
+    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+        # Create the .env file that the system expects to exist
+        (tmp_path / ".env").touch()
+
+        # Set some test environment variables to verify they appear in the dump
+        env = os.environ.copy()
+        env["AIGNOSTICS_SYSTEM_TOKEN"] = "test_token_value"  # noqa: S105 # Test data, not a real password
+        env["AIGNOSTICS_PLATFORM_BASE_URL"] = "https://test.example.com"
+
+        # Create a destination file path
+        destination = tmp_path / ".env.test"
+
+        # Run the dump-dot-env-file command
+        result = runner.invoke(cli, ["system", "dump-dot-env-file", "--destination", str(destination)], env=env)
+
+        # Check the command succeeded
+        assert result.exit_code == 0
+        assert f"Settings dumped to {destination}" in normalize_output(result.output)
+
+        # Verify the file was created
+        assert destination.exists()
+        assert destination.is_file()
+
+        # Read and verify the content
+        content = destination.read_text()
+
+        # Check that the file is not empty
+        assert len(content) > 0
+
+        # Check that it contains some expected settings keys (should be in uppercase with prefix)
+        lines = content.strip().split("\n")
+        assert len(lines) > 0
+
+        # Verify format: each line should be KEY=VALUE
+        for line in lines:
+            if line.strip():  # Skip empty lines
+                assert "=" in line, f"Line '{line}' does not have KEY=VALUE format"
+
+        # Check for specific settings that should be present
+        # The settings should be in the format ENV_PREFIX + KEY in uppercase
+        settings_keys = [key.split("=")[0] for key in lines if "=" in key]
+
+        # Should contain system settings
+        assert any("AIGNOSTICS_SYSTEM" in key for key in settings_keys), "Should contain AIGNOSTICS_SYSTEM settings"
+
+        # Verify that the token value is present (unmasked in dump)
+        assert "AIGNOSTICS_SYSTEM_TOKEN=test_token_value" in content or "AIGNOSTICS_SYSTEM_TOKEN=None" in content

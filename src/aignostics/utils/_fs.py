@@ -3,8 +3,9 @@
 import platform
 from pathlib import Path, PureWindowsPath
 
-import appdirs
-from showinfm.showinfm import show_in_file_manager
+import platformdirs
+
+from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 
 from ._constants import __is_running_in_read_only_environment__, __project_name__
 from ._log import get_logger
@@ -89,7 +90,7 @@ def get_user_data_directory(scope: str | None = None) -> Path:
     Returns:
         Path: The data directory path.
     """
-    directory = Path(appdirs.user_data_dir(__project_name__))
+    directory = Path(platformdirs.user_data_dir(__project_name__))
     if scope:
         directory /= scope
     if not __is_running_in_read_only_environment__:
@@ -113,15 +114,15 @@ def open_user_data_directory(scope: str | None = None) -> Path:
     except (OSError, RuntimeError, FileNotFoundError) as error:
         logger.warning(
             "Failed to open user data directory in file manager: %s. Directory path: %s",
-            str(error),
-            str(directory),
+            error,
+            directory,
         )
     except Exception as error:  # noqa: BLE001
         # Catch any other unexpected exceptions to ensure function still returns directory path
         logger.warning(
             "Unexpected error opening user data directory in file manager: %s. Directory path: %s",
-            str(error),
-            str(directory),
+            error,
+            directory,
         )
 
     return directory

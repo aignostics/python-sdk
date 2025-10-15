@@ -2,7 +2,15 @@ name: "Scheduled Test"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE:
+        required: false
+      AIGNOSTICS_REFRESH_TOKEN:
+        required: false
+      GCP_CREDENTIALS:
+        required: false
+      BETTERSTACK_HEARTBEAT_URL:
+        required: false
 
 jobs:
   test-scheduled:
@@ -17,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -40,8 +48,10 @@ jobs:
 
       - name: Set up GCP credentials for bucket access
         shell: bash
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
+          echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Test / scheduled
@@ -105,7 +115,6 @@ jobs:
                 timestamp: $timestamp,
               }'
             )
-
             curl \
               --fail-with-body \
               --silent \
@@ -113,6 +122,9 @@ jobs:
               --header "Content-Type: application/json" \
               --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
               "${BETTERSTACK_HEARTBEAT_URL}/${EXIT_CODE}"
+            echo "INFO: Sent heartbeat to betterstack with exit code '${EXIT_CODE}'"
+          else
+            echo "WARNING: No BetterStack heartbeat URL configured, skipped heartbeat notification."
           fi
           exit $EXIT_CODE
 

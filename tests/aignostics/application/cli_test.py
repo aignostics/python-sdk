@@ -13,10 +13,11 @@ from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 from tests.contants_test import HETA_APPLICATION_ID, TEST_APPLICATION_ID
 
-MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_list(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -26,6 +27,9 @@ def test_cli_application_list(runner: CliRunner, record_property) -> None:
     assert TEST_APPLICATION_ID in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.scheduled
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_list_verbose(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -36,6 +40,8 @@ def test_cli_application_list_verbose(runner: CliRunner, record_property) -> Non
     assert TEST_APPLICATION_ID in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_describe(runner: CliRunner, record_property) -> None:
     """Check application describe command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -44,6 +50,8 @@ def test_cli_application_describe(runner: CliRunner, record_property) -> None:
     assert "tissue_qc:geojson_polygons" in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_describe_not_found(runner: CliRunner, record_property) -> None:
     """Check application describe command fails as expected on unknown application."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -52,6 +60,8 @@ def test_cli_application_describe_not_found(runner: CliRunner, record_property) 
     assert "Application with ID 'unknown' not found." in normalize_output(result.output)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check application dump schemata works as expected."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -65,6 +75,8 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     runner: CliRunner, tmp_path: Path, record_property
 ) -> None:
@@ -103,10 +115,12 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
     assert result.exit_code == 2
-    assert "Invalid metadata for artifact `user_slide`" in normalize_output(result.stdout)
+    assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -123,6 +137,8 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
     assert "Warning: Source file 'missing.file' (row 0) does not exist" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run submit command fails as expected."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -134,10 +150,12 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
 
     result = runner.invoke(cli, ["application", "run", "submit", "wrong:v1.2.3", str(csv_path)])
 
-    assert result.exit_code == 1
-    assert "Error: Failed to create run for application version" in normalize_output(result.stdout)
+    assert "Warning: Could not find application version" in normalize_output(result.stdout)
+    assert result.exit_code == 2
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run submit command fails as expected."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -153,6 +171,8 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
     assert "Invalid platform bucket URL: 'aws://bucket/test'" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run submit command fails as expected."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -168,6 +188,9 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=60 * 10)
 def test_cli_run_submit_and_describe_and_cancel_and_download(
     runner: CliRunner, tmp_path: Path, record_property
 ) -> None:
@@ -179,7 +202,18 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+            "--note",
+            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+        ],
+    )
     output = normalize_output(result.stdout)
     assert re.search(
         r"Submitted run with id '[0-9a-f-]+' for '",
@@ -197,6 +231,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
     assert "Status: RUNNING" in normalize_output(describe_result.stdout)
+    assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
+        describe_result.stdout
+    )
 
     # Test the download command spots the run is still running
     download_result = runner.invoke(
@@ -240,7 +277,26 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(
         assert download_result.exit_code == 2
         assert f"Failed to create destination directory '/4711/{run_id}'" in normalize_output(download_result.stdout)
 
+    # Test the result delete command with the extracted run ID
+    delete_result = runner.invoke(cli, ["application", "run", "result", "delete", run_id])
+    assert delete_result.exit_code == 0
+    assert f"Results for run with ID '{run_id}' have been deleted." in normalize_output(delete_result.stdout)
 
+    # Test the describe command with the extracted run ID on deleted run
+    describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
+    assert describe_result.exit_code == 0
+    assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
+    assert "Status: CANCELED_USER" in normalize_output(describe_result.stdout)
+
+
+# TODO(Helmut): Activate when PAPI fixed
+#    assert describe_result.exit_code == 2 # noqa: ERA001
+#    assert f"Run with id '{run_id}' not found." in normalize_output(describe_result.stdout) # noqa: ERA001
+
+
+@pytest.mark.e2e
+@pytest.mark.scheduled
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_list_limit_10(runner: CliRunner, record_property) -> None:
     """Check run list command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -255,6 +311,8 @@ def test_cli_run_list_limit_10(runner: CliRunner, record_property) -> None:
     assert displayed_count <= 10, f"Expected listed count to be <= 10, but got {displayed_count}"
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_list_verbose_limit_1(runner: CliRunner, record_property) -> None:
     """Check run list command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -269,6 +327,7 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner, record_property) -> Non
     assert displayed_count == 1, f"Expected listed count to be == 1, but got {displayed_count}"
 
 
+@pytest.mark.integration
 def test_cli_run_describe_invalid_uuid(runner: CliRunner, record_property) -> None:
     """Check run describe command fails as expected on run not found."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -277,6 +336,8 @@ def test_cli_run_describe_invalid_uuid(runner: CliRunner, record_property) -> No
     assert "Error: Failed to retrieve run details for ID '4711'" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_describe_not_found(runner: CliRunner, record_property) -> None:
     """Check run describe command fails as expected on run not found."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -285,22 +346,26 @@ def test_cli_run_describe_not_found(runner: CliRunner, record_property) -> None:
     assert "Warning: Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
 def test_cli_run_cancel_invalid_run_id(runner: CliRunner, record_property) -> None:
     """Check run cancel command fails as expected on run not found."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(cli, ["application", "run", "cancel", "4711"])
-    assert result.exit_code == 1
-    assert "Failed to cancel run with ID '4711'" in normalize_output(result.stdout)
+    assert "Run ID '4711' invalid" in normalize_output(result.stdout)
+    assert result.exit_code == 2
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_cancel_not_found(runner: CliRunner, record_property) -> None:
     """Check run cancel command fails as expected on run not found."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(cli, ["application", "run", "cancel", "00000000000000000000000000000000"])
-    assert result.exit_code == 2
     assert "Warning: Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
+    assert result.exit_code == 2
 
 
+@pytest.mark.e2e
 def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run result download command fails on invalid uui."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
@@ -309,25 +374,39 @@ def test_cli_run_result_download_invalid_uuid(runner: CliRunner, tmp_path: Path,
     assert "Run ID '4711' invalid" in normalize_output(result.stdout)
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run result download fails on ID not found."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(
         cli, ["application", "run", "result", "download", "00000000000000000000000000000000", str(tmp_path)]
     )
-    assert "Run with ID '00000000000000000000000000000000' not found." in result.output.replace("\n", "")
+    assert "Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
     assert result.exit_code == 2
 
 
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_result_delete(runner: CliRunner, record_property) -> None:
+    """Check run result delete command runs successfully."""
+    result = runner.invoke(cli, ["application", "run", "result", "delete", "00000000000000000000000000000000"])
+    assert "Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
+    assert result.exit_code == 2
+
+
+@pytest.mark.integration
+def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
     """Check run result delete command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(cli, ["application", "run", "result", "delete"])
-    assert result.exit_code == 1
-    assert MESSAGE_NOT_YET_IMPLEMENTED in normalize_output(result.stdout)
+    assert "Missing argument 'RUN_ID'." in normalize_output(result.stderr)
+    assert result.exit_code == 2
 
 
-@pytest.mark.long_running
+@pytest.mark.e2e
+@pytest.mark.very_long_running
+@pytest.mark.timeout(timeout=60 * 60 * 5)
 def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run execution runs e2e."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-03")
@@ -344,8 +423,8 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
     )
     print_directory_structure(tmp_path, "download")
     assert result.exit_code == 0
-    assert "Successfully downloaded" in result.stdout.replace("\n", "")
-    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout.replace("\n", "")
+    assert "Successfully downloaded" in normalize_output(result.stdout)
+    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
     expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
     assert expected_file.exists(), f"Expected file {expected_file} not found"
     assert expected_file.stat().st_size == 14681750

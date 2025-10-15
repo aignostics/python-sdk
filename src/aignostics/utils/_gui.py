@@ -3,13 +3,15 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from types import EllipsisType
 
+from nicegui import ui
+
 from ._constants import __is_running_in_container__, __project_name__
 from ._di import locate_subclasses
 from ._log import get_logger
 
 logger = get_logger(__name__)
 
-WINDOW_SIZE = (1200, 768)  # Default window size for the GUI
+WINDOW_SIZE = (1280, 768)  # Default window size for the GUI
 
 
 class BasePageBuilder(ABC):
@@ -28,6 +30,7 @@ def gui_register_pages() -> None:
     """
     page_builders = locate_subclasses(BasePageBuilder)
     for page_builder in page_builders:
+        page_builder: BasePageBuilder  # type: ignore[no-redef]
         page_builder.register_pages()
 
 
@@ -60,7 +63,6 @@ def gui_run(  # noqa: PLR0913, PLR0917
             or trying to run native within container.
     """
     from nicegui import native as native_app  # noqa: PLC0415
-    from nicegui import ui  # noqa: PLC0415
 
     if __is_running_in_container__ and native:
         message = "Native GUI cannot be run in a container. Please run with uvx or in browser."
@@ -88,6 +90,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         show_welcome_message=native is False,
         show=show,
         window_size=WINDOW_SIZE if native else None,
+        reconnect_timeout=60 * 60 * 24 * 7,
     )
 
 
@@ -113,7 +116,7 @@ class GUILocalFilePicker:
         Returns:
             An instance of the dialog with lazy-loaded dependencies.
         """
-        from nicegui import app, events, ui  # noqa: PLC0415
+        from nicegui import app, events  # noqa: PLC0415
         # Lazy import ui only when actually creating an instance
 
         # Define the actual implementation class with the imports available

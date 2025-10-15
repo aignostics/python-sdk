@@ -1,16 +1,14 @@
 """Tests to verify the GUI functionality of the Notebook module."""
 
+import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
 
-from aignostics.utils import gui_register_pages
 
-
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 async def test_gui_marimo_extension(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
     """Test that the user can install and launch Marimo via the GUI."""
-    record_property("tested-item-id", "TC-NOTEBOOK-GUI-01")
-    gui_register_pages()
-
     # Step 1: Check we are on the Notebook page
     await user.open("/notebook")
     await user.should_see("Manage your Marimo Extension")

@@ -13,10 +13,13 @@ from aignostics.qupath import QUPATH_VERSION
 from tests.conftest import normalize_output
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.skipif(
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
+@pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 def test_cli_install_and_uninstall(runner: CliRunner) -> None:
     """Check (un)install works for Windows, Mac and Linux package."""
@@ -57,10 +60,13 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
         result = runner.invoke(cli, ["qupath", "install"])
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.skipif(
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
+@pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown) -> None:
     """Check (un)install and launching headless works."""
@@ -109,11 +115,14 @@ def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown) -> 
         result = runner.invoke(cli, ["qupath", "install"])
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.skipif(
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
     """Check (un)install and launching UI versin of QuPath works."""

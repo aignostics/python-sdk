@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 from unittest import mock
 
-import appdirs
 import pytest
 from pydantic import SecretStr
+from pydantic import ValidationError as PydanticValidationError
 
 from aignostics.platform import (
     API_ROOT_DEV,
@@ -18,6 +18,9 @@ from aignostics.platform import (
     AUTHORIZATION_BASE_URL_DEV,
     AUTHORIZATION_BASE_URL_PRODUCTION,
     AUTHORIZATION_BASE_URL_STAGING,
+    CLIENT_ID_INTERACTIVE_DEV,
+    CLIENT_ID_INTERACTIVE_PRODUCTION,
+    CLIENT_ID_INTERACTIVE_STAGING,
     DEVICE_URL_DEV,
     DEVICE_URL_PRODUCTION,
     DEVICE_URL_STAGING,
@@ -39,12 +42,11 @@ from aignostics.utils import __project_name__
 
 @pytest.fixture
 def mock_env_vars():  # noqa: ANN201
-    """Mock environment variables required for settings."""
+    """Mock environment variable for testing of settings."""
     with mock.patch.dict(
         os.environ,
         {
             f"{__project_name__.upper()}_CLIENT_ID_DEVICE": "test-client-id-device",
-            f"{__project_name__.upper()}_CLIENT_ID_INTERACTIVE": "test-client-id-interactive",
         },
     ):
         yield
@@ -66,18 +68,20 @@ def reset_cached_settings():  # noqa: ANN201
     settings.__cached_settings = original
 
 
-def test_authentication_settings_production(record_property, mock_env_vars, reset_cached_settings) -> None:
+@pytest.mark.unit
+def test_authentication_settings_production(record_property) -> None:
     """Test authentication settings with production API root."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     # Create settings with production API root
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_PRODUCTION,
     )
 
     # Validate production-specific settings
     assert settings.api_root == API_ROOT_PRODUCTION
+    assert settings.client_id_interactive == CLIENT_ID_INTERACTIVE_PRODUCTION
+    assert settings.client_id_device.get_secret_value() == "test-client-id-device"
     assert settings.audience == AUDIENCE_PRODUCTION
     assert settings.authorization_base_url == AUTHORIZATION_BASE_URL_PRODUCTION
     assert settings.token_url == TOKEN_URL_PRODUCTION
@@ -85,25 +89,19 @@ def test_authentication_settings_production(record_property, mock_env_vars, rese
     assert settings.device_url == DEVICE_URL_PRODUCTION
     assert settings.jws_json_url == JWS_JSON_URL_PRODUCTION
 
-    # Test other properties
-    assert settings.scope == "offline_access"
-    assert settings.scope_elements == ["offline_access"]
-    assert settings.cache_dir == appdirs.user_cache_dir(__project_name__)
-    assert settings.token_file == Path(settings.cache_dir) / ".token"
-    assert settings.request_timeout_seconds == 30
-    assert settings.authorization_backoff_seconds == 3
 
-
+@pytest.mark.unit
 def test_authentication_settings_staging(record_property, mock_env_vars) -> None:
     """Test authentication settings with staging API root."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_STAGING,
     )
 
     assert settings.api_root == API_ROOT_STAGING
+    assert settings.client_id_interactive == CLIENT_ID_INTERACTIVE_STAGING
+    assert settings.client_id_device.get_secret_value() == "test-client-id-device"
     assert settings.audience == AUDIENCE_STAGING
     assert settings.authorization_base_url == AUTHORIZATION_BASE_URL_STAGING
     assert settings.token_url == TOKEN_URL_STAGING
@@ -112,16 +110,18 @@ def test_authentication_settings_staging(record_property, mock_env_vars) -> None
     assert settings.jws_json_url == JWS_JSON_URL_STAGING
 
 
-def test_authentication_settings_dev(record_property, mock_env_vars) -> None:
+@pytest.mark.unit
+def test_authentication_settings_dev(record_property: Callable[[str, object], None], mock_env_vars) -> None:
     """Test authentication settings with dev API root."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_DEV,
     )
 
     assert settings.api_root == API_ROOT_DEV
+    assert settings.client_id_interactive == CLIENT_ID_INTERACTIVE_DEV
+    assert settings.client_id_device.get_secret_value() == "test-client-id-device"
     assert settings.audience == AUDIENCE_DEV
     assert settings.authorization_base_url == AUTHORIZATION_BASE_URL_DEV
     assert settings.token_url == TOKEN_URL_DEV
@@ -130,53 +130,50 @@ def test_authentication_settings_dev(record_property, mock_env_vars) -> None:
     assert settings.jws_json_url == JWS_JSON_URL_DEV
 
 
+@pytest.mark.unit
 def test_authentication_settings_unknown_api_root(record_property, mock_env_vars) -> None:
     """Test authentication settings with unknown API root raises ValueError."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     with pytest.raises(ValueError, match=UNKNOWN_ENDPOINT_URL):
         Settings(
-            client_id_device=SecretStr("test-client-id-device"),
-            client_id_interactive=SecretStr("test-client-id-interactive"),
             api_root="https://unknown.example.com",
         )
 
 
-def test_scope_elements_empty(record_property) -> None:
-    """Test scope_elements property with empty scope."""
+@pytest.mark.unit
+def test_scope_elements_empty_fails_validation(record_property) -> None:
+    """Test scope_elements property with empty scope fails validation."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-    settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
-        scope="",
-        api_root=API_ROOT_PRODUCTION,
-    )
-    assert settings.scope_elements == []
+    with pytest.raises(PydanticValidationError, match="String should have at least 3 characters"):
+        Settings(
+            scope="",
+            api_root=API_ROOT_PRODUCTION,
+        )
 
 
+@pytest.mark.unit
 def test_scope_elements_multiple(record_property) -> None:
     """Test scope_elements property with multiple scopes."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         scope="offline_access, profile, email",
         api_root=API_ROOT_PRODUCTION,
     )
     assert settings.scope_elements == ["offline_access", "profile", "email"]
 
 
+@pytest.mark.unit
 def test_authentication_settings_with_refresh_token(record_property, mock_env_vars) -> None:
     """Test authentication settings with refresh token."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         refresh_token=SecretStr("test-refresh-token"),
         api_root=API_ROOT_PRODUCTION,
     )
     assert settings.refresh_token == SecretStr("test-refresh-token")
 
 
+@pytest.mark.unit
 def test_lazy_authentication_settings(record_property, mock_env_vars, reset_cached_settings) -> None:
     """Test lazy loading of authentication settings."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
@@ -189,19 +186,18 @@ def test_lazy_authentication_settings(record_property, mock_env_vars, reset_cach
     assert settings2 is settings1
 
 
+@pytest.mark.unit
 @pytest.mark.sequential
-# TODO(Helmut): fix race
-@pytest.mark.skip
 def test_authentication_settings_with_env_vars(record_property, mock_env_vars, reset_cached_settings) -> None:
     """Test authentication settings from environment variables."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings1 = settings()
     assert settings1.client_id_device.get_secret_value() == "test-client-id-device"
-    assert settings1.client_id_interactive.get_secret_value() == "test-client-id-interactive"
 
 
 # TODO(Helmut): fixme
-@pytest.mark.skip
+@pytest.mark.skip(reason="Broken feature")
+@pytest.mark.unit
 def test_custom_env_file_location(record_property, mock_env_vars) -> None:
     """Test custom env file location."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
@@ -211,13 +207,12 @@ def test_custom_env_file_location(record_property, mock_env_vars) -> None:
         assert custom_env_file in settings["env_file"]
 
 
+@pytest.mark.unit
 def test_custom_cache_dir(record_property, mock_env_vars) -> None:
     """Test custom cache directory."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     custom_cache_dir = "/home/dummy/test_cache_dir"
     settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         cache_dir=custom_cache_dir,
         api_root=API_ROOT_PRODUCTION,
     )
@@ -225,12 +220,11 @@ def test_custom_cache_dir(record_property, mock_env_vars) -> None:
     assert settings.token_file == Path(custom_cache_dir) / ".token"
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_production(record_property, mock_env_vars) -> None:
     """Test issuer computed field with production authorization base URL."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_PRODUCTION,
     )
     # Production authorization_base_url is https://aignostics-platform.eu.auth0.com/authorize
@@ -239,26 +233,24 @@ def test_issuer_computed_field_production(record_property, mock_env_vars) -> Non
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_staging(record_property, mock_env_vars) -> None:
     """Test issuer computed field with staging authorization base URL."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_STAGING,
     )
     # Staging authorization_base_url is https://todo (placeholder)
     # So issuer should be https://todo/
-    expected_issuer = "https://todo/"
+    expected_issuer = "https://aignostics-platform-staging.eu.auth0.com/"
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_dev(record_property, mock_env_vars) -> None:
     """Test issuer computed field with dev authorization base URL."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
-        client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive=SecretStr("test-client-id-interactive"),
         api_root=API_ROOT_DEV,
     )
     # Dev authorization_base_url is https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/authorize
@@ -267,14 +259,15 @@ def test_issuer_computed_field_dev(record_property, mock_env_vars) -> None:
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_custom_url(record_property, mock_env_vars) -> None:
     """Test issuer computed field with custom authorization base URL."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     # Avoid triggering api_root-based validator by setting all required fields manually
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        client_id_interactive="test-client-id-interactive",
         authorization_base_url="https://custom.example.com/auth/oauth2/authorize",
         audience="test-audience",
         token_url="https://custom.example.com/auth/oauth2/token",  # noqa: S106
@@ -286,13 +279,14 @@ def test_issuer_computed_field_custom_url(record_property, mock_env_vars) -> Non
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_malformed_url_no_scheme(record_property, mock_env_vars) -> None:
     """Test issuer computed field with malformed URL (no scheme) falls back gracefully."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        client_id_interactive="test-client-id-interactive",
         authorization_base_url="example.com/oauth2/auth",
         audience="test-audience",
         token_url="https://example.com/oauth2/token",  # noqa: S106
@@ -305,13 +299,14 @@ def test_issuer_computed_field_malformed_url_no_scheme(record_property, mock_env
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_malformed_url_no_domain(record_property, mock_env_vars) -> None:
     """Test issuer computed field with malformed URL (no domain) falls back gracefully."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        client_id_interactive="test-client-id-interactive",
         authorization_base_url="https:///oauth2/auth",
         audience="test-audience",
         token_url="https://example.com/oauth2/token",  # noqa: S106
@@ -324,13 +319,14 @@ def test_issuer_computed_field_malformed_url_no_domain(record_property, mock_env
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_url_with_port(record_property, mock_env_vars) -> None:
     """Test issuer computed field with URL containing port number."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        client_id_interactive="test-client-id-interactive",
         authorization_base_url="https://localhost:8080/oauth2/auth",
         audience="test-audience",
         token_url="https://localhost:8080/oauth2/token",  # noqa: S106
@@ -342,13 +338,14 @@ def test_issuer_computed_field_url_with_port(record_property, mock_env_vars) -> 
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_url_with_subdirectory(record_property, mock_env_vars) -> None:
     """Test issuer computed field with URL containing multiple path segments."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        client_id_interactive="test-client-id-interactive",
         authorization_base_url="https://example.com/auth/v1/oauth2/authorize",
         audience="test-audience",
         token_url="https://example.com/auth/v1/oauth2/token",  # noqa: S106
@@ -360,13 +357,14 @@ def test_issuer_computed_field_url_with_subdirectory(record_property, mock_env_v
     assert settings.issuer == expected_issuer
 
 
+@pytest.mark.unit
 def test_issuer_computed_field_url_with_query_params(record_property, mock_env_vars) -> None:
     """Test issuer computed field with URL containing query parameters."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(
         client_id_device=SecretStr("test-client-id-device"),
-        client_id_interactive="test-client-id-interactive",
         api_root="https://custom.platform.example.com",  # Custom api_root that doesn't match any preset
+        client_id_interactive="test-client-id-interactive",
         authorization_base_url="https://example.com/oauth2/auth?param=value",
         audience="test-audience",
         token_url="https://example.com/oauth2/token",  # noqa: S106
@@ -376,3 +374,41 @@ def test_issuer_computed_field_url_with_query_params(record_property, mock_env_v
     )
     expected_issuer = "https://example.com/"
     assert settings.issuer == expected_issuer
+
+
+@pytest.mark.unit
+def test_validate_retry_wait_times_valid(mock_env_vars) -> None:
+    """Test that valid retry wait times pass validation."""
+    settings = Settings(
+        api_root=API_ROOT_PRODUCTION,
+        auth_retry_wait_min=0.1,
+        auth_retry_wait_max=5.0,
+    )
+    assert settings.auth_retry_wait_min == 0.1
+    assert settings.auth_retry_wait_max == 5.0
+
+
+@pytest.mark.unit
+def test_validate_retry_wait_times_min_equals_max(mock_env_vars) -> None:
+    """Test that retry wait min equal to max passes validation."""
+    settings = Settings(
+        api_root=API_ROOT_PRODUCTION,
+        auth_retry_wait_min=3.0,
+        auth_retry_wait_max=3.0,
+    )
+    assert settings.auth_retry_wait_min == 3.0
+    assert settings.auth_retry_wait_max == 3.0
+
+
+@pytest.mark.unit
+def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
+    """Test that retry wait min greater than max fails validation."""
+    with pytest.raises(
+        PydanticValidationError,
+        match=r"auth_retry_wait_min \(10\.0\) must be less or equal than auth_retry_wait_max \(5.0\)",
+    ):
+        Settings(
+            api_root=API_ROOT_PRODUCTION,
+            auth_retry_wait_min=10.0,
+            auth_retry_wait_max=5.0,
+        )

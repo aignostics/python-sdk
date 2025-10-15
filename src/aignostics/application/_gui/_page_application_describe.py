@@ -6,6 +6,7 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 
+from aiopath import AsyncPath
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
@@ -21,7 +22,6 @@ from ._utils import (
 
 logger = get_logger(__name__)
 
-WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 
@@ -40,6 +40,8 @@ class SubmitForm:
     metadata_exclude_button: ui.button | None = None
     metadata_next_button: ui.button | None = None
     upload_and_submit_button: ui.button | None = None
+    note: str | None = None
+    onboard_to_aignostics_portal: bool = False
 
 
 submit_form = SubmitForm()
@@ -127,11 +129,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         from nicegui import ui  # noqa: PLC0415
 
         result = await GUILocalFilePicker(
-            str(get_user_data_directory("datasets") if data else Path.home()), multiple=False
+            str(get_user_data_directory("datasets") if data else str(Path(await AsyncPath.home()))), multiple=False
         )  # type: ignore
         if result and len(result) > 0:
-            path = Path(result[0])
-            if not path.is_dir():
+            path = AsyncPath(result[0])
+            if not await path.is_dir():
                 submit_form.source = None
                 submit_form.wsi_step_label.set_text(
                     "Select a folder with whole slide images you want to analyze"
@@ -139,7 +141,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
                 ui.notify("The selected path is not a directory. Please select a valid directory.", type="warning")
             else:
-                submit_form.source = path
+                submit_form.source = Path(path)
                 submit_form.wsi_step_label.set_text(
                     f"Selected folder {submit_form.source} to analyze."
                 ) if submit_form.wsi_step_label else None
@@ -159,11 +161,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 type="warning",
             )
 
-    async def _pytest_home() -> None:  # noqa: RUF029
+    async def _pytest_home() -> None:
         """Select home folder."""
         from nicegui import ui  # noqa: PLC0415
 
-        submit_form.source = Path.home()
+        submit_form.source = Path(await AsyncPath.home())
         submit_form.wsi_step_label.set_text(
             f"Selected folder {submit_form.source} to analyze."
         ) if submit_form.wsi_step_label else None
@@ -198,6 +200,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     submit_form.source,
                     True,
                     [".*:staining_method=H&E"],
+                    True,
                 )
                 if submit_form.metadata_grid.options["rowData"] is None:
                     msg = "nicegui_run.cpu_bound(Service.generate_metadata_from_source_directory) returned None"
@@ -242,7 +245,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 "mainMenuBar": False,
                                 "navigationBar": True,
                                 "statusBar": False,
-                            }).style(WIDTH_100)
+                            }).classes("full-width")
                     ui.label("Generated output artifacts:").classes("text-h5")
                     for artifact in application_version.output_artifacts:
                         with ui.expansion(
@@ -258,7 +261,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 "mainMenuBar": False,
                                 "navigationBar": True,
                                 "statusBar": False,
-                            }).style(WIDTH_100)
+                            }).classes("full-width")
                     break
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
@@ -553,6 +556,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 run = service.application_run_submit_from_metadata(
                     str(submit_form.application_version_id),
                     submit_form.metadata or [],
+                    {"sdk": {"note": submit_form.note}} if submit_form.note else None,
+                    submit_form.onboard_to_aignostics_portal,
                 )
             except Exception as e:  # noqa: BLE001
                 ui.notify(f"Failed to submit application run: {e}.", type="warning")
@@ -569,17 +574,21 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             if submit_form.upload_and_submit_button is None:
                 logger.error("Submission submit button is not initialized.")
                 return
-            ui.notify("Uploading whole slide images to Aignostics Platform ...", type="info")
+            message = "Uploading whole slide images to Aignostics Platform ..."
+            logger.debug(message)
+            ui.notify(message, type="info")
             submit_form.upload_and_submit_button.disable()
-
-            await nicegui_run.cpu_bound(
+            await nicegui_run.io_bound(
                 Service.application_run_upload,
                 str(submit_form.application_version_id),
                 submit_form.metadata or [],
+                submit_form.onboard_to_aignostics_portal,
                 str(time.time() * 1000),
                 upload_message_queue,
             )
-            ui.notify("Upload to Aignostics Platform completed.", type="positive")
+            message = "Upload to Aignostics Platform completed."
+            logger.debug(message)
+            ui.notify(message, type="positive")
             _submit()
 
         @ui.refreshable
@@ -587,6 +596,17 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Upload UI."""
             with ui.column(align_items="start"):
                 ui.label(f"Upload and submit your {len(metadata)} slide(s) for analysis.")
+                ui.textarea(
+                    label="Note (optional)",
+                    placeholder=(
+                        "Enter a note for this run. "
+                        "Tip: You can later use the search box in the left sidebar "
+                        "(see magnifying glass icon) to find runs by searching for text in this note."
+                    ),
+                ).bind_value(submit_form, "note").mark("TEXTAREA_NOTE").classes("full-width")
+                ui.checkbox(
+                    text="Onboard to Aignostics Portal (optional)",
+                ).bind_value(submit_form, "onboard_to_aignostics_portal").mark("CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL")
                 upload_complete = True
                 for row in metadata or []:
                     upload_complete = upload_complete and row["file_upload_progress"] == 1

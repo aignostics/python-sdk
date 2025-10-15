@@ -3,7 +3,7 @@ name: "CI/CD"
 on:
   push:
     branches:
-      - "**"
+      - "main"
     tags:
       - "v*.*.*"
   pull_request:
@@ -12,83 +12,121 @@ on:
   release:
     types: [created]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
 
   lint:
-    if: (!contains(github.event.head_commit.message, 'skip:ci'))
+    if: |
+      (!contains(github.event.head_commit.message, 'skip:ci')) &&
+      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_lint.yml
     permissions:
       contents: read
       id-token: write
       packages: read
-    secrets: inherit
 
   audit:
-    if: (!contains(github.event.head_commit.message, 'skip:ci'))
+    if: |
+      (!contains(github.event.head_commit.message, 'skip:ci')) &&
+      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_audit.yml
     permissions:
       contents: read
       id-token: write
       packages: read
-    secrets: inherit
     
   test:
-    if: (!contains(github.event.head_commit.message, 'skip:ci'))
+    if: |
+      (!contains(github.event.head_commit.message, 'skip:ci')) &&
+      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version:')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
     permissions:
       attestations: write
       contents: read
       id-token: write
       packages: write
-    secrets: inherit
-
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
+      AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+      GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   codeql:
-    if: (!contains(github.event.head_commit.message, 'skip:ci'))
+    if: |
+      (!contains(github.event.head_commit.message, 'skip:ci')) &&
+      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version:')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_codeql.yml
     permissions:
       actions: read
       contents: read
       packages: read
       security-events: write
-    secrets: inherit
-
 
   ketryx_report_and_check:
-
     needs: [lint, audit, test, codeql] 
-
     uses: ./.github/workflows/_ketryx_report_and_check.yml
-    if: (!contains(github.event.head_commit.message, 'skip:ci'))
+    if: |
+      (!contains(github.event.head_commit.message, 'skip:ci')) &&
+      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version:')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     permissions:
       attestations: write
       contents: write
       id-token: write
       packages: write
-    secrets: inherit
+    secrets:
+      KETRYX_PROJECT: ${{ secrets.KETRYX_PROJECT }}
+      KETRYX_API_KEY: ${{ secrets.KETRYX_API_KEY }}
 
   package_publish:
-
     needs: [ketryx_report_and_check] 
-
     uses: ./.github/workflows/_package-publish.yml
-    if: (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, 'skip:ci')))
+    if: |
+      (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, 'skip:ci'))) &&
+      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     permissions:
       attestations: write
       contents: write
       id-token: write
       packages: write
-    secrets: inherit
+    secrets:
+      UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
+      SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT }}
+      SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}
 
   docker_publish:
-
     needs: [ketryx_report_and_check]
-
-    if: (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, 'skip:ci')))
+    if: |
+      (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, 'skip:ci'))) &&
+      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_docker-publish.yml
     permissions:
       attestations: write
       contents: read
       id-token: write
       packages: write
-    secrets: inherit
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

@@ -36,7 +36,7 @@ from aignostics.platform import (
 from aignostics.platform import (
     Service as PlatformService,
 )
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, get_logger, sanitize_path_component
+from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
@@ -159,7 +159,7 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
+    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -168,7 +168,7 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        return {"settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})}
+        return {}
 
     def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
@@ -211,6 +211,21 @@ class Service(BaseService):
         else:
             logger.debug("Reusing platform service.")
         return self._platform_service
+
+    @staticmethod
+    def applications_static() -> list[Application]:
+        """Get a list of all applications, static variant.
+
+        Returns:
+            list[str]: A list of all applications.
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            Exception: If the application list cannot be retrieved.
+        """
+        return Service().applications()
 
     def applications(self) -> list[Application]:
         """Get a list of all applications.
@@ -298,38 +313,35 @@ class Service(BaseService):
         message = f"Application version with ID {application_version_id} not found in application {application_id}"
         raise NotFoundException(message)
 
-    def application_versions(self, application: Application) -> list[ApplicationVersion]:
+    def application_versions(self, application: Application | str) -> list[ApplicationVersion]:
         """Get a list of all versions of the given application.
 
         Args:
-            application (Application): The application to check for versions.
+            application (Application | str): The application to check for versions.
 
         Returns:
             list[ApplicationVersion]: A list of all application versions sorted by semantic versioning (latest first).
 
         Raises:
-            NotFoundException: If the application with the given ID is not found.
             RuntimeError: If version list cannot be retrieved unexpectedly.
         """
         try:
             return self._get_platform_client().applications.versions.list_sorted(application=application)
-        except NotFoundException as e:
-            message = f"Application with ID '{application.application_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
         except Exception as e:
-            message = f"Failed to retrieve application versions for application '{application.application_id}': {e}"
+            app_id = application if isinstance(application, str) else application.application_id
+            message = f"Failed to retrieve application versions for application '{app_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_version_latest(self, application: Application) -> ApplicationVersion | None:
+    def application_version_latest(self, application: Application | str) -> ApplicationVersion | None:
         """Get a latest application version.
 
         Args:
-            application (Application): The application to check for versions.
+            application (Application | str): The application to check for versions.
 
         Returns:
-            ApplicationVersion | None: A list of all application versions.
+            ApplicationVersion | None: The latest version of the given application,
+                or None if no latest version found.
 
         Raises:
             NotFoundException: If the application with the given ID is not found.
@@ -392,6 +404,7 @@ class Service(BaseService):
         source_directory: Path,
         with_gui_metadata: bool = False,
         mappings: list[str] | None = None,
+        with_extra_metadata: bool = False,
     ) -> list[dict[str, Any]]:
         """Generate metadata from the source directory.
 
@@ -415,6 +428,7 @@ class Service(BaseService):
             mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
                 The regular expression is matched against the reference attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
+            with_extra_metadata (bool): If True, include extra metadata from the WSIService.
 
         Returns:
             dict[str, Any]: The generated metadata.
@@ -465,6 +479,9 @@ class Service(BaseService):
                             "file_upload_progress": 0.0,
                             "platform_bucket_url": None,
                         }
+                        if with_extra_metadata:
+                            entry["extra"] = image_metadata.get("extra", {})
+
                         if not with_gui_metadata:
                             entry.pop("reference_short", None)
                             entry.pop("source", None)
@@ -489,10 +506,11 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     @staticmethod
-    def application_run_upload(
+    def application_run_upload(  # noqa: PLR0913, PLR0917
         application_version_id: str,
         metadata: list[dict[str, Any]],
-        upload_prefix: str,
+        onboard_to_aignostics_portal: bool = False,
+        upload_prefix: str = str(time.time() * 1000),
         upload_progress_queue: Any | None = None,  # noqa: ANN401
         upload_progress_callable: Callable[[int, Path, str], None] | None = None,
     ) -> bool:
@@ -502,7 +520,8 @@ class Service(BaseService):
             application_version_id (str): The ID of the application version.
                 If application id is given, the latest version of that application is used.
             metadata (list[dict[str, Any]]): The metadata to upload.
-            upload_prefix (str): The prefix for the upload.
+            onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
+            upload_prefix (str): The prefix for the upload, defaults to current milliseconds.
             upload_progress_queue (Queue | None): The queue to send progress updates to.
             upload_progress_callable (Callable[[int, Path, str], None] | None): The task to update for progress updates.
 
@@ -522,12 +541,14 @@ class Service(BaseService):
             reference = row["reference"]
             source_file_path = Path(row["reference"])
             if not source_file_path.is_file():
-                logger.warning("Source file '%s' does not exist.", row["referebce"])
+                logger.warning("Source file '%s' does not exist.", row["reference"])
                 return False
             username = psutil.Process().username().replace("\\", "_")
             object_key = (
                 f"{username}/{upload_prefix}/{application_version.application_version_id}/{source_file_path.name}"
             )
+            if onboard_to_aignostics_portal:
+                object_key = f"onboard/{object_key}"
             platform_bucket_url = (
                 f"{BucketService().get_bucket_protocol()}://{BucketService().get_bucket_name()}/{object_key}"
             )
@@ -582,12 +603,19 @@ class Service(BaseService):
         return True
 
     @staticmethod
-    def application_runs_static(limit: int | None = None, completed_only: bool = False) -> list[dict[str, Any]]:
+    def application_runs_static(
+        limit: int | None = None,
+        completed_only: bool = False,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
+    ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
             completed_only (bool): If True, only completed runs are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+            note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
         Returns:
             list[ApplicationRunData]: A list of all application runs.
@@ -603,18 +631,27 @@ class Service(BaseService):
                 "status": run.status,
             }
             for run in Service().application_runs(
-                limit=limit, status=ApplicationRunStatus.COMPLETED if completed_only else None
+                limit=limit,
+                status=ApplicationRunStatus.COMPLETED if completed_only else None,
+                note_regex=note_regex,
+                note_query_case_insensitive=note_query_case_insensitive,
             )
         ]
 
     def application_runs(
-        self, limit: int | None = None, status: ApplicationRunStatus | None = None
+        self,
+        limit: int | None = None,
+        status: ApplicationRunStatus | None = None,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
     ) -> list[ApplicationRunData]:
         """Get a list of all application runs.
 
         Args:
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
             status (ApplicationRunStatus | None): Filter runs by status. If None, all runs are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+            note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
         Returns:
             list[ApplicationRunData]: A list of all application runs.
@@ -627,7 +664,15 @@ class Service(BaseService):
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
-            run_iterator = self._get_platform_client().runs.list_data(sort="-triggered_at", page_size=page_size)
+            if note_regex:
+                flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
+                metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
+            else:
+                metadata = None
+
+            run_iterator = self._get_platform_client().runs.list_data(
+                sort="-triggered_at", page_size=page_size, metadata=metadata
+            )
             for run in run_iterator:
                 if status is not None and run.status != status:
                     continue
@@ -641,7 +686,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run(self, run_id: str) -> ApplicationRun:
-        """Find a run by its ID.
+        """Select a run by its ID.
 
         Args:
             run_id: The ID of the run to find
@@ -660,7 +705,11 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     def application_run_submit_from_metadata(
-        self, application_version_id: str, metadata: list[dict[str, Any]]
+        self,
+        application_version_id: str,
+        metadata: list[dict[str, Any]],
+        custom_metadata: dict[str, Any] | None = None,
+        onboard_to_aignostics_portal: bool = False,
     ) -> ApplicationRun:
         """Submit a run for the given application.
 
@@ -668,6 +717,8 @@ class Service(BaseService):
             application_version_id: The ID of the application version to run.
                 If application id is given, the latest version of that application is used.
             metadata: The metadata for the run.
+            custom_metadata: Optional custom metadata to attach to the run.
+            onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
 
         Returns:
             ApplicationRun: The submitted run.
@@ -679,6 +730,21 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         logger.debug("Submitting application run with metadata: %s", metadata)
+        if onboard_to_aignostics_portal:
+            custom_metadata = custom_metadata or {}
+            custom_metadata.setdefault("sdk", {})
+            custom_metadata["sdk"]["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
+        application_version = self.application_version(application_version_id, use_latest_if_no_version_given=True)
+        if len(application_version.input_artifacts) != 1:
+            message = (
+                f"Application version '{application_version_id}' has "
+                f"{len(application_version.input_artifacts)} input artifacts, "
+                "but only 1 is supported."
+            )
+            logger.warning(message)
+            raise RuntimeError(message)
+        input_artifact_name = application_version.input_artifacts[0].name
+
         items = []
         for row in metadata:
             platform_bucket_url = row["platform_bucket_url"]
@@ -697,7 +763,7 @@ class Service(BaseService):
                     reference=row["reference"],
                     input_artifacts=[
                         InputArtifact(
-                            name="user_slide",
+                            name=input_artifact_name,
                             download_url=download_url,
                             metadata={
                                 "checksum_base64_crc32c": row["checksum_base64_crc32c"],
@@ -722,11 +788,14 @@ class Service(BaseService):
                 )
             )
         logger.debug("Items for application run submission: %s", items)
+
         try:
-            application_version = self.application_version(application_version_id, use_latest_if_no_version_given=True)
-            run = self.application_run_submit(application_version.application_version_id, items)
+            run = self.application_run_submit(application_version.application_version_id, items, custom_metadata)
             logger.info(
-                "Submitted application run with items: %s, application run id %s", items, run.application_run_id
+                "Submitted application run with items: %s, application run id %s, custom metadata: %s",
+                items,
+                run.application_run_id,
+                custom_metadata,
             )
             return run
         except ValueError as e:
@@ -738,12 +807,15 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(self, application_version_id: str, items: list[InputItem]) -> ApplicationRun:
+    def application_run_submit(
+        self, application_version_id: str, items: list[InputItem], custom_metadata: dict[str, Any] | None = None
+    ) -> ApplicationRun:
         """Submit a run for the given application.
 
         Args:
             application_version_id: The ID of the application version to run.
             items: The input items for the run.
+            custom_metadata: Optional custom metadata to attach to the run.
 
         Returns:
             ApplicationRun: The submitted run.
@@ -754,7 +826,9 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         try:
-            return self._get_platform_client().runs.create(application_version=application_version_id, items=items)
+            return self._get_platform_client().runs.create(
+                application_version=application_version_id, items=items, custom_metadata=custom_metadata
+            )
         except ValueError as e:
             message = f"Failed to submit application run for version '{application_version_id}': {e}"
             logger.warning(message)
@@ -775,7 +849,7 @@ class Service(BaseService):
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
-            ValueError: If the run ID is invalid or the run cannot be canceled given its current status.
+            ValueError: If the run ID is invalid or the run cannot be canceled given its current state.
             RuntimeError: If canceling the run fails unexpectedly.
         """
         try:
@@ -788,8 +862,47 @@ class Service(BaseService):
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
             raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to retrieve application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
         except Exception as e:
             message = f"Failed to cancel application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_delete(self, run_id: str) -> None:
+        """Delete a run by its ID.
+
+        Args:
+            run_id: The ID of the run to delete
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid or the run cannot be deleted given its current state.
+            RuntimeError: If deleting the run fails unexpectedly.
+        """
+        try:
+            logger.debug("Deleting application run with ID '%s'", run_id)
+            self.application_run(run_id).delete()
+            logger.debug("Deleted application run with ID '%s'", run_id)
+        except ValueError as e:
+            message = f"Failed to delete application run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to delete application run with ID '{run_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
@@ -891,7 +1004,7 @@ class Service(BaseService):
             logger.warning(message)
             raise NotFoundException(message) from e
         except ApiException as e:
-            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:  # Don't use UNPROCESSABLE_CONTENT
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
                 message = f"Run ID '{run_id}' invalid: {e!s}."
                 logger.warning(message)
                 raise ValueError(message) from e
@@ -953,17 +1066,23 @@ class Service(BaseService):
                 ApplicationRunStatus.CANCELED_USER,
                 ApplicationRunStatus.COMPLETED,
                 ApplicationRunStatus.COMPLETED_WITH_ERROR,
-                ApplicationRunStatus.COMPLETED_WITH_ERROR,
                 ApplicationRunStatus.REJECTED,
             }:
-                logger.debug("Run '%s' reached final status '%s'.", run_id, run_details.status)
+                logger.debug(
+                    "Run '%s' reached final status '%s' with message '%s'.",
+                    run_id,
+                    run_details.status,
+                    run_details.message,
+                )
                 break
 
             if not wait_for_completion:
                 logger.debug(
-                    "Run '%s' is in progress with status '%s', but not requested to wait for completion.",
+                    "Run '%s' is in progress with status '%s' and message '%s', "
+                    "but not requested to wait for completion.",
                     run_id,
                     run_details.status,
+                    run_details.message,
                 )
                 break
 

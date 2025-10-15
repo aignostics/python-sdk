@@ -76,6 +76,7 @@ node_modules/
 
 # AI workflow
 .fixme
+CLAUDE.local.md
 
 # Copier
 *.rej
@@ -97,4 +98,3 @@ __marimo__
 dist_native/**
 !dist_native/.keep
 notes.md
-CLAUDE.md

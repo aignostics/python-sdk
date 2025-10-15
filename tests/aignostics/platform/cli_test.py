@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 
+import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
@@ -13,6 +14,7 @@ from tests.conftest import normalize_output
 class TestTokenInfo:
     """Test cases for TokenInfo model."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_token_info_from_claims(record_property) -> None:
         """Test TokenInfo creation from JWT claims."""
@@ -39,6 +41,7 @@ class TestTokenInfo:
         assert token_info.org_id == "org123"
         assert token_info.role == "member"
 
+    @pytest.mark.unit
     @staticmethod
     def test_token_info_from_claims_with_audience_list(record_property) -> None:
         """Test TokenInfo creation from JWT claims with audience as list."""
@@ -59,6 +62,7 @@ class TestTokenInfo:
         assert token_info.audience == ["https://test-audience1", "test-audience2"]
         assert token_info.role == "member"
 
+    @pytest.mark.unit
     @staticmethod
     def test_token_info_from_claims_without_role(record_property) -> None:
         """Test TokenInfo creation from JWT claims with role missing."""
@@ -82,6 +86,7 @@ class TestTokenInfo:
 class TestUserInfo:
     """Test cases for UserInfo model."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_user_info_from_claims_and_userinfo_with_profile(record_property) -> None:
         """Test UserInfo creation with both claims and userinfo."""
@@ -128,6 +133,7 @@ class TestUserInfo:
         assert user_info.role == "member"
         assert user_info.token.issuer == "https://test.auth0.com/"
 
+    @pytest.mark.unit
     @staticmethod
     def test_user_info_from_claims_and_userinfo_no_org_name(record_property) -> None:
         """Test UserInfo creation when org_name is not provided in claims."""
@@ -177,11 +183,14 @@ class TestUserInfo:
 class TestPlatformCLI:
     """Test cases for platform CLI commands."""
 
+    @pytest.mark.e2e
     @staticmethod
     def test_login_out_info_e2e(record_property, runner: CliRunner) -> None:
         """Test successful logout command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.logout", return_value=True):
+        with (
+            patch("aignostics.platform._service.Service.logout", return_value=True),
+        ):
             result = runner.invoke(cli, ["user", "login", "--relogin"])
             assert result.exit_code == 0
             assert "Successfully logged in." in normalize_output(result.output)
@@ -192,6 +201,7 @@ class TestPlatformCLI:
             assert result.exit_code == 0
             assert "https://aignostics-platform.eu.auth0.com/" in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_logout_success(record_property, runner: CliRunner) -> None:
         """Test successful logout command."""
@@ -202,6 +212,7 @@ class TestPlatformCLI:
             assert result.exit_code == 0
             assert "Successfully logged out." in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_logout_not_logged_in(record_property, runner: CliRunner) -> None:
         """Test logout command when not logged in."""
@@ -212,6 +223,7 @@ class TestPlatformCLI:
             assert result.exit_code == 2
             assert "Was not logged in." in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_logout_error(record_property, runner: CliRunner) -> None:
         """Test logout command when an error occurs."""
@@ -222,6 +234,7 @@ class TestPlatformCLI:
             assert result.exit_code == 1
             assert "Error during logout: Test error" in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_login_success(record_property, runner: CliRunner) -> None:
         """Test successful login command."""
@@ -232,6 +245,7 @@ class TestPlatformCLI:
             assert result.exit_code == 0
             assert "Successfully logged in." in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_login_with_relogin_flag(record_property, runner: CliRunner) -> None:
         """Test login command with relogin flag."""
@@ -243,6 +257,7 @@ class TestPlatformCLI:
             assert "Successfully logged in." in normalize_output(result.output)
             mock_login.assert_called_once_with(relogin=True)
 
+    @pytest.mark.integration
     @staticmethod
     def test_login_failure(record_property, runner: CliRunner) -> None:
         """Test login command when login fails."""
@@ -253,6 +268,7 @@ class TestPlatformCLI:
             assert result.exit_code == 1
             assert "Failed to log you in" in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_login_error(record_property, runner: CliRunner) -> None:
         """Test login command when an error occurs."""
@@ -263,6 +279,7 @@ class TestPlatformCLI:
             assert result.exit_code == 1
             assert "Error during login: Test error" in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_whoami_success(record_property, runner: CliRunner) -> None:
         """Test successful whoami command."""
@@ -309,6 +326,7 @@ class TestPlatformCLI:
             assert "Test Organization" in output
             assert "admin" in output
 
+    @pytest.mark.integration
     @staticmethod
     def test_whoami_with_relogin_flag(record_property, runner: CliRunner) -> None:
         """Test whoami command with relogin flag."""
@@ -351,18 +369,21 @@ class TestPlatformCLI:
             assert result.exit_code == 0
             mock_get_user_info.assert_called_once_with(relogin=True)
 
+    @pytest.mark.integration
     @staticmethod
     def test_whoami_not_logged_in(record_property, runner: CliRunner) -> None:
         """Test whoami command when not logged in."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch(
-            "aignostics.platform._service.Service.get_user_info", side_effect=RuntimeError("Could not user info")
+            "aignostics.platform._service.Service.get_user_info",
+            side_effect=RuntimeError("Could not retrieve user info"),
         ):
             result = runner.invoke(cli, ["user", "whoami"])
 
             assert result.exit_code == 1
-            assert "Error while getting user info: Could not user info" in normalize_output(result.output)
+            assert "Error while getting user info: Could not retrieve user info" in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_whoami_error(record_property, runner: CliRunner) -> None:
         """Test whoami command when an error occurs."""
@@ -373,6 +394,7 @@ class TestPlatformCLI:
             assert result.exit_code == 1
             assert "Error while getting user info: Test error" in normalize_output(result.output)
 
+    @pytest.mark.integration
     @staticmethod
     def test_whoami_success_with_no_org_name(record_property, runner: CliRunner) -> None:
         """Test successful whoami command when org_name is None."""
@@ -419,6 +441,7 @@ class TestPlatformCLI:
             # org_name should be null in JSON output
             assert '"name": null' in output or '"name":null' in output
 
+    @pytest.mark.integration
     @staticmethod
     def test_whoami_masks_secrets_by_default(record_property, runner: CliRunner) -> None:
         """Test that whoami masks secrets by default."""
@@ -465,6 +488,7 @@ class TestPlatformCLI:
             assert "the_logfire_token" not in output
             assert "very_secret_access_key_456" not in output
 
+    @pytest.mark.integration
     @staticmethod
     def test_whoami_shows_secrets_with_no_mask_flag(record_property, runner: CliRunner) -> None:
         """Test that whoami shows secrets when --no-mask-secrets flag is used."""

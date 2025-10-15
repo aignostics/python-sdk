@@ -4,6 +4,7 @@ import os
 from typing import Any, ClassVar
 from unittest.mock import patch
 
+import pytest
 from pydantic import SecretStr
 
 from aignostics.utils._settings import (
@@ -14,24 +15,28 @@ from aignostics.utils._settings import (
 )
 
 
+@pytest.mark.unit
 def test_strip_to_none_before_validator_with_none(record_property) -> None:
     """Test that None is returned when None is passed."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     assert strip_to_none_before_validator(None) is None
 
 
+@pytest.mark.unit
 def test_strip_to_none_before_validator_with_empty_string(record_property) -> None:
     """Test that None is returned when an empty string is passed."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     assert strip_to_none_before_validator("") is None
 
 
+@pytest.mark.unit
 def test_strip_to_none_before_validator_with_whitespace_string(record_property) -> None:
     """Test that None is returned when a whitespace string is passed."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     assert strip_to_none_before_validator("  \t\n  ") is None
 
 
+@pytest.mark.unit
 def test_strip_to_none_before_validator_with_valid_string(record_property) -> None:
     """Test that a stripped string is returned when a valid string is passed."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -46,6 +51,7 @@ class TheTestSettings(OpaqueSettings):
     required_value: str
 
 
+@pytest.mark.unit
 def test_opaque_settings_serialize_sensitive_info_with_unhide(record_property) -> None:
     """Test that sensitive info is revealed when unhide_sensitive_info is True."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -57,6 +63,7 @@ def test_opaque_settings_serialize_sensitive_info_with_unhide(record_property) -
     assert result == "sensitive"
 
 
+@pytest.mark.unit
 def test_opaque_settings_serialize_sensitive_info_without_unhide(record_property) -> None:
     """Test that sensitive info is hidden when unhide_sensitive_info is False."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -68,6 +75,7 @@ def test_opaque_settings_serialize_sensitive_info_without_unhide(record_property
     assert result == "**********"
 
 
+@pytest.mark.unit
 def test_opaque_settings_serialize_sensitive_info_empty(record_property) -> None:
     """Test that None is returned when the SecretStr is empty."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -79,6 +87,7 @@ def test_opaque_settings_serialize_sensitive_info_empty(record_property) -> None
     assert result is None
 
 
+@pytest.mark.unit
 @patch.dict(os.environ, {"REQUIRED_VALUE": "test_value"})
 def test_load_settings_success(record_property) -> None:
     """Test successful settings loading."""
@@ -88,6 +97,7 @@ def test_load_settings_success(record_property) -> None:
     assert settings.required_value == "test_value"
 
 
+@pytest.mark.unit
 @patch("sys.exit")
 @patch("rich.console.Console.print")
 def test_load_settings_validation_error(record_property, mock_console_print, mock_exit) -> None:
@@ -112,6 +122,7 @@ class TheTestSettingsWithEnvPrefix(OpaqueSettings):
     value: str
 
 
+@pytest.mark.unit
 @patch.dict(os.environ, {"TEST_VALUE": "prefixed_value"})
 def test_settings_with_env_prefix(record_property) -> None:
     """Test that settings with environment prefix work correctly."""

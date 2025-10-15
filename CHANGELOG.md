@@ -1,6 +1,520 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.140](https://github.com/aignostics/python-sdk/compare/v0.2.139..0.2.140) - 2025-08-14
+# [0.2.192](https://github.com/aignostics/python-sdk/compare/v0.2.191..0.2.192) - 2025-10-13
+
+### ⚙️ Miscellaneous Tasks
+
+- *(AI)* Add label skip:test:long_running when you are an AI and are creating a PR - ([799abca](https://github.com/aignostics/python-sdk/commit/799abcad7cec07adcfd0569c89bb51f8e3f49810))
+
+
+# [v0.2.191](https://github.com/aignostics/python-sdk/compare/v0.2.190..v0.2.191) - 2025-10-13
+
+### 🐛 Bug Fixes
+
+- *(system)* Rendering of json editor content - had to find workaround given bug in NiceGUI3 for json_editor - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+### 🚜 Refactor
+
+- *(dataset,wsi)* Catch exceptions in CLI commands - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(qupath)* Don’t count system as unhealthy if QuPath application not installed - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Refactored tests to reduce flakiness where avoidable, i.e. not solely dependent on external services - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(dependabot,renovate)* Add labels to PRs created by those bots - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(deps)* Bump - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(gha)* All all types of tests to be individually skippable, via commit message or PR label - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(gha)* Speed up ubuntu provisioning as man-db no longer updated on adding packages - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(gha)* Don’t run long_running tests on draft PRs, i.e. stop after unit, integration and e2e / regular. - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(precommit)* Fixed issues with precommit. - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Differentiate tests as unit, integration or e2e, with only e2e tests allowed to call external services, i.e. the others must be able to pass offline. - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce very_long_running test type, which must be explicitely enabled to run enable:test:very_long_running in the commit message or as PR label - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce scheduled_only marker, for tests that should only run on a schedule - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Make now calls make test_default which does not call long_running or very_long_running tests - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce pytest-durations, showing the duration per test execution - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(tests)* Introduce pytest-timeout, with a low 10s default timeout, and all tests that need longer explicitly marked with specific timeouts - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- *(xdist)* Use worksteal to minimize duration on varying test durations - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+- Don’t allow SDK to be used with Python 1.4.x (released days ago) as some dependencies don’t work with that version yet - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+### Choare
+
+- *(tests)* No longer test the combination of Python 3.12.x on Windows for ARM64, as a bit instable - ([99401ec](https://github.com/aignostics/python-sdk/commit/99401ec55d390039ec4e747a61573b163fdfc483))
+
+
+# [v0.2.190](https://github.com/aignostics/python-sdk/compare/v0.2.189..v0.2.190) - 2025-10-12
+
+### ⛰️  Features
+
+- *(platform)* Auto-retry when retrieving JWKS set from auth0 - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Cache JWKS set, TTL 24h, minimizing calls to auth0 on validating access tokens - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Auto-retry when calling auth0 to exchange refresh token for access token - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Configurable timeout for requesting platform health - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Introduce authentication aware operation cache - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Use authentication aware operation cache to cache /me result - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency pywin32 to v311 ([#170](https://github.com/orhun/git-cliff/issues/170)) - ([39428a2](https://github.com/aignostics/python-sdk/commit/39428a24181c7923438d9512efdcc7d0909698f8))
+- *(platform)* Remove unused setting authorization_backoff_seconds - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Fix wrong exception handler in _perform_device_flow - was catching exception from urllib, not requests lib - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Use dynamic user agent for requesting /me - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(utils)* Surface setting validation error on misconfigured api root - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([39428a2](https://github.com/aignostics/python-sdk/commit/39428a24181c7923438d9512efdcc7d0909698f8))
+
+### 🚜 Refactor
+
+- *(platform)* Use proper error messages and logging on failure (of attempts) to exchange refresh token and validate access token - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Consistently use HTTPStatus consts instead of 200, 500 etc. - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform)* Use proper constraints on settings - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- *(platform,system)* Optimize connection pooling - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+
+### 🎨 Styling
+
+- *(utils)* Consistent log formatting for file and console, both including process id - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(AI)* Improve Claude actions [skip:ci] - ([27a66c3](https://github.com/aignostics/python-sdk/commit/27a66c36dfaf942b027048cfb824e6a4ec6591df))
+- *(ai)* Have Claude Agent use Sonnet 4.5, and allow to create PRs - ([dcd6e60](https://github.com/aignostics/python-sdk/commit/dcd6e6011cc9f4e2ca92fb96f09d4066d79b248d))
+- *(deps)* Update ghcr.io/astral-sh/uv docker tag to v0.9.1 ([#60](https://github.com/orhun/git-cliff/issues/60)) - ([27d0e8f](https://github.com/aignostics/python-sdk/commit/27d0e8fdf29fd59b43318139eeeb0291d58456b3))
+- *(deps)* Update dependency sphinx-toolbox to v4 ([#169](https://github.com/orhun/git-cliff/issues/169)) - ([5050fe5](https://github.com/aignostics/python-sdk/commit/5050fe5def17aee4a3941b403d7726325b3a40d0))
+- *(gha)* Don't double-build on updates to PR by no longer building on push to branch other than main - ([5c6be6b](https://github.com/aignostics/python-sdk/commit/5c6be6bfca70906939d378cab4e3a06ffc55ef3b))
+- *(gha)* Cancel running build on update to pull request - ([2915534](https://github.com/aignostics/python-sdk/commit/2915534d8c78eab8d7b334be204e2247fa7f1106))
+- *(gha)* Don't run ci/cd twice on releases: skip:ci on push of commit for release, given already running on (annotated) tag pushed - ([399dae8](https://github.com/aignostics/python-sdk/commit/399dae87f3560e3b40f5c0feabff325db6ea3aa2))
+- *(pytst)* Add pytest-durations plugin to show durations of fixtures and tests - ([ac2fa0e](https://github.com/aignostics/python-sdk/commit/ac2fa0e91b2793b398119bea8346c21f898e89f1))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([27d0e8f](https://github.com/aignostics/python-sdk/commit/27d0e8fdf29fd59b43318139eeeb0291d58456b3))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([27d0e8f](https://github.com/aignostics/python-sdk/commit/27d0e8fdf29fd59b43318139eeeb0291d58456b3))
+
+
+# [v0.2.189](https://github.com/aignostics/python-sdk/compare/v0.2.188..v0.2.189) - 2025-10-05
+
+### ⚙️ Miscellaneous Tasks
+
+- *(qupath)* Give more time in test - ([4d21ada](https://github.com/aignostics/python-sdk/commit/4d21adacb262e7c8eaf99621a6045ff9d5135848))
+
+
+# [v0.2.188](https://github.com/aignostics/python-sdk/compare/v0.2.187..v0.2.188) - 2025-10-05
+
+### 🛡️ Security
+
+- *(gha)* Set permission for generate-matrix, see https://github.com/aignostics/python-sdk/security/code-scanning/15 - ([bd74dec](https://github.com/aignostics/python-sdk/commit/bd74dec470d9e181012c0f84e4fb6e97ec9d8130))
+
+
+# [v0.2.187](https://github.com/aignostics/python-sdk/compare/v0.2.186..v0.2.187) - 2025-10-05
+
+### 🛡️ Security
+
+- *(gui)* Introduce html-sanitizer, sanitizer footer. Rest is fine. - ([6cc4b04](https://github.com/aignostics/python-sdk/commit/6cc4b0423f47ea95e63a7c77679ebe0d0f713836))
+
+
+# [v0.2.186](https://github.com/aignostics/python-sdk/compare/v0.2.185..v0.2.186) - 2025-10-05
+
+### 🐛 Bug Fixes
+
+- *(application)* Properly render error if run details cannot be loaded - ([9a18478](https://github.com/aignostics/python-sdk/commit/9a184788c5cfeb6a2059b83f68968a0d78f52cc7))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* More grace in test - ([9a18478](https://github.com/aignostics/python-sdk/commit/9a184788c5cfeb6a2059b83f68968a0d78f52cc7))
+
+
+# [v0.2.185](https://github.com/aignostics/python-sdk/compare/v0.2.184..v0.2.185) - 2025-10-05
+
+### ⛰️  Features
+
+- *(gui)* Migrate to nicegui 3 - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+### 🐛 Bug Fixes
+
+- *(dep)* Incompatibility in 3rd party dependency showinfm lead to syntax error in modern Python - now vendored and fixed. - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+### 🎨 Styling
+
+- *(application)* Better rendering of loading errors - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Made test run sequentially so regular tests now pass without flakiness if platform reliable   - ([f556289](https://github.com/aignostics/python-sdk/commit/f5562897205f5a20255ead1d4e44df15ecf24274))
+
+
+# [v0.2.184](https://github.com/aignostics/python-sdk/compare/v0.2.183..v0.2.184) - 2025-10-05
+
+### 🐛 Bug Fixes
+
+- *(platform)* Get new token if cache entry broken - ([41fabaf](https://github.com/aignostics/python-sdk/commit/41fabaf6f42af2bfb93c1e01169575b3d7354dd3))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Make test resilient if loading me faster than expected - ([41fabaf](https://github.com/aignostics/python-sdk/commit/41fabaf6f42af2bfb93c1e01169575b3d7354dd3))
+
+
+# [v0.2.183](https://github.com/aignostics/python-sdk/compare/v0.2.182..v0.2.183) - 2025-10-05
+
+### 🐛 Bug Fixes
+
+- *(platform)* Invalid log formatting - ([99ab796](https://github.com/aignostics/python-sdk/commit/99ab79628253d1460e5da93f9293064d0ca8a4f3))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(scheduled)* Print info post sending heartbeat - ([58b2916](https://github.com/aignostics/python-sdk/commit/58b291663fd2cf8db9a2954fbcc12cdda64d4716))
+
+
+# [v0.2.182](https://github.com/aignostics/python-sdk/compare/v0.2.181..v0.2.182) - 2025-10-05
+
+### ⚙️ Miscellaneous Tasks
+
+- *(audit)* Pass betterstack url - ([6c6b924](https://github.com/aignostics/python-sdk/commit/6c6b924dd37891f9995cb3d0d1d24afd17c10c15))
+- *(audit,scheduled)* Warn if betterstack url not configured or not passed through unintentionally - ([6c6b924](https://github.com/aignostics/python-sdk/commit/6c6b924dd37891f9995cb3d0d1d24afd17c10c15))
+
+
+# [v0.2.181](https://github.com/aignostics/python-sdk/compare/v0.2.180..v0.2.181) - 2025-10-05
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([801c4e5](https://github.com/aignostics/python-sdk/commit/801c4e5b02dc730dfb35575e2978a5e9c5717219))
+
+
+# [v0.2.180](https://github.com/aignostics/python-sdk/compare/v0.2.179..v0.2.180) - 2025-10-04
+
+### 🛡️ Security
+
+- *(audit)* No secrets for audit - ([8677d8c](https://github.com/aignostics/python-sdk/commit/8677d8ca446aee99f33bdbc421fa94885d1c0c05))
+- *(dep)* CVE-2025-53354 ignored given we run as desktop app; still started to migrate to nicegui 3 - ([2557c51](https://github.com/aignostics/python-sdk/commit/2557c514e06387ebe2bfb4fc1b6c8440af5700db))
+
+
+# [v0.2.179](https://github.com/aignostics/python-sdk/compare/v0.2.178..v0.2.179) - 2025-10-03
+
+### 🛡️ Security
+
+- *(gha)* Don't use direct interpolation of user provided data in github workflows - ([3d0aef8](https://github.com/aignostics/python-sdk/commit/3d0aef8d4d717eabbfdef824606641936592f9f2))
+
+
+# [v0.2.178](https://github.com/aignostics/python-sdk/compare/v0.2.177..v0.2.178) - 2025-10-03
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Grace time in test - ([83c6a38](https://github.com/aignostics/python-sdk/commit/83c6a383830a9666af9d01a989b215e9dcd357dc))
+
+
+# [v0.2.177](https://github.com/aignostics/python-sdk/compare/v0.2.176..v0.2.177) - 2025-10-02
+
+### ⛰️  Features
+
+- *(application)* Allow to copy error message - ([8f9cada](https://github.com/aignostics/python-sdk/commit/8f9cada004ca154d250cd57e384178f28c0cf5cb))
+
+
+# [v0.2.176](https://github.com/aignostics/python-sdk/compare/v0.2.175..v0.2.176) - 2025-10-02
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix pyproject - ([ebc3fa8](https://github.com/aignostics/python-sdk/commit/ebc3fa8021959ef23ae4277c4a830af95b4942c4))
+
+
+# [v0.2.175](https://github.com/aignostics/python-sdk/compare/v0.2.174..v0.2.175) - 2025-10-02
+
+### ⚙️ Miscellaneous Tasks
+
+- Release - ([939463a](https://github.com/aignostics/python-sdk/commit/939463ae594fd2d6a0a2a4010cae7fabca290454))
+
+
+# [v0.2.174](https://github.com/aignostics/python-sdk/compare/v0.2.173..v0.2.174) - 2025-10-02
+
+### 🐛 Bug Fixes
+
+- *(platform)* Token refresh on long living api client - ([6494bcc](https://github.com/aignostics/python-sdk/commit/6494bcc0f10bb1dc85f0dd69753527effcf46476))
+
+
+
+* @akunft made their first contribution in [#123](https://github.com/aignostics/python-sdk/pull/123)
+
+# [v0.2.173](https://github.com/aignostics/python-sdk/compare/v0.2.172..v0.2.173) - 2025-10-02
+
+### 🚜 Refactor
+
+- *(platform,application)* Establish sdk subtree within custom metadata for contract with other sdks and apps - ([f449ecc](https://github.com/aignostics/python-sdk/commit/f449ecc9f982f74c4b28b5dd586e20faf99b838b))
+
+
+# [v0.2.172](https://github.com/aignostics/python-sdk/compare/v0.2.171..v0.2.172) - 2025-10-02
+
+### 🎨 Styling
+
+- *(application)* More prominent placement of per item message - ([5c93b56](https://github.com/aignostics/python-sdk/commit/5c93b5610bbeeffa441b1827aba8ce3824344189))
+
+
+# [v0.2.171](https://github.com/aignostics/python-sdk/compare/v0.2.170..v0.2.171) - 2025-10-02
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Grace for cancel button to appear in test - ([d0642ee](https://github.com/aignostics/python-sdk/commit/d0642eec26408000f39288b1b16668db5475c1f4))
+
+
+# [v0.2.170](https://github.com/aignostics/python-sdk/compare/v0.2.169..v0.2.170) - 2025-10-01
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* More time for test - ([303ee7d](https://github.com/aignostics/python-sdk/commit/303ee7dd1c0e50a86daaa1c2729e8a820a76d60c))
+
+
+# [v0.2.169](https://github.com/aignostics/python-sdk/compare/v0.2.168..v0.2.169) - 2025-10-01
+
+### ⛰️  Features
+
+- *(application)* Show duration, terminated at, run and item-level message ([#143](https://github.com/orhun/git-cliff/issues/143)) - ([17a0a54](https://github.com/aignostics/python-sdk/commit/17a0a54a6d188b4cebf90c46eb7602facd4397c6))
+
+
+# [v0.2.168](https://github.com/aignostics/python-sdk/compare/v0.2.167..v0.2.168) - 2025-10-01
+
+### ⛰️  Features
+
+- *(application)* Allow to set note on run submission, and retrieve on run describe - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(application)* Allow live search of runs by note - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(application)* Allow to flag to onboard to Aignostics Portal - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(platform)* Adapt to breaking changes in Platform API 1.0.0-beta6 - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(platform,application)* Support custom metadata attached to runs - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(utils)* Generate dynamic user agent including version, build number, os, and test calling - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- API v1.0.0-beta.6 ([#141](https://github.com/orhun/git-cliff/issues/141)) - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- Use dynamic user agent in http requests and run submissions via custom metadata - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### 🐛 Bug Fixes
+
+- *(application)* Don't show extra column in meta edit - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(wsi)* Don't fail on log on broken tiff test - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- Fix typo in log message caught by claude code review - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### 🚜 Refactor
+
+- *(application)* Load applications in left sidebar in thread to not block UI - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(codegen)* Download and archive openapi.json - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(deps)* Bump - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+### 🛡️ Security
+
+- *(dep)* Pip, CVE-2025-54368 - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+- *(gha)* Security improvements in github workflow as identified by sonarqube - ([5acee55](https://github.com/aignostics/python-sdk/commit/5acee55198523de6928dc004bb777992fe67c352))
+
+
+# [v0.2.167](https://github.com/aignostics/python-sdk/compare/v0.2.166..v0.2.167) - 2025-09-30
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Adapt tests to asynchronous loading of apps in GUI - ([1b8bfb2](https://github.com/aignostics/python-sdk/commit/1b8bfb2428d52d44c53bfde30de78e187143b022))
+
+
+# [v0.2.166](https://github.com/aignostics/python-sdk/compare/v0.2.165..v0.2.166) - 2025-09-30
+
+### 🚜 Refactor
+
+- *(application)* Load applications in left sidebar in thread to not block UI - ([7e3211b](https://github.com/aignostics/python-sdk/commit/7e3211baf29ff3f7c065af1d849805555dc0a322))
+
+### 🛡️ Security
+
+- *(GHA)* Apply security best practices for GitHub Workflows ([#139](https://github.com/orhun/git-cliff/issues/139)) - ([f0d8ac5](https://github.com/aignostics/python-sdk/commit/f0d8ac5ef361efe6cf0a261fb2f9365c83e85c16))
+- *(gha)* Security improvements in github workflow as identified by sonarqube - ([f0d8ac5](https://github.com/aignostics/python-sdk/commit/f0d8ac5ef361efe6cf0a261fb2f9365c83e85c16))
+
+
+# [v0.2.165](https://github.com/aignostics/python-sdk/compare/v0.2.164..v0.2.165) - 2025-09-29
+
+### ⚙️ Miscellaneous Tasks
+
+- *(wsi)* Don't fail test on log on broken tiff test - ([7392404](https://github.com/aignostics/python-sdk/commit/7392404eccafaa6cab1457f6e839ecab6a7f7d1a))
+
+
+# [v0.2.164](https://github.com/aignostics/python-sdk/compare/v0.2.163..v0.2.164) - 2025-09-29
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Bump login-action in claude and docker workflows - ([d55b0ce](https://github.com/aignostics/python-sdk/commit/d55b0ce49cb7f82eddc5c00fc7441d41bfa2d2f5))
+
+
+# [v0.2.163](https://github.com/aignostics/python-sdk/compare/v0.2.161..v0.2.163) - 2025-09-29
+
+### 🐛 Bug Fixes
+
+- *(dataset)* Custom download folder selection - ([cedf5c2](https://github.com/aignostics/python-sdk/commit/cedf5c2f2237f90b18c267a0fd5d20f21b8ed3ab))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(AI)* Claude.md files for assisted coding - ([1bb2021](https://github.com/aignostics/python-sdk/commit/1bb20211b43e5d0d14e6162768db5bb8afa53edf))
+- *(GHA)* Claude PR Assistant workflow - ([1bb2021](https://github.com/aignostics/python-sdk/commit/1bb20211b43e5d0d14e6162768db5bb8afa53edf))
+- Chore(GHA) Claude Code Review workflow - ([1bb2021](https://github.com/aignostics/python-sdk/commit/1bb20211b43e5d0d14e6162768db5bb8afa53edf))
+
+
+# [v0.2.161](https://github.com/aignostics/python-sdk/compare/v0.2.160..v0.2.161) - 2025-09-28
+
+### 🐛 Bug Fixes
+
+- *(dataset)* Custom download folder selection - ([af8adfb](https://github.com/aignostics/python-sdk/commit/af8adfb2c7afc72a0efe5154fa53be18c320a4a9))
+
+
+# [v0.2.160](https://github.com/aignostics/python-sdk/compare/v0.2.159..v0.2.160) - 2025-09-28
+
+### 🚜 Refactor
+
+- *(io)* Don't use synchronous fileio in async functions - ([5907231](https://github.com/aignostics/python-sdk/commit/590723198e88194635b35225039a846fc69a6cdd))
+- *(lint)* New ruff rules - ([58c009e](https://github.com/aignostics/python-sdk/commit/58c009effeb316be492b6c2e6b8561976504dd4a))
+
+### 📚 Documentation
+
+- *(claude)* Claude.md - ([c063fe2](https://github.com/aignostics/python-sdk/commit/c063fe22722c3e62b7f7a252c0d8df5dfd886e71))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([fa7b565](https://github.com/aignostics/python-sdk/commit/fa7b5651d5c19ac2668929c16eb47408d99b06eb))
+
+### 🛡️ Security
+
+- *(jupyterlab)* CVE-2025-59842 - ([57e3399](https://github.com/aignostics/python-sdk/commit/57e339909ac27efe253054f7b06b8e4e166cb7f3))
+
+
+# [v0.2.159](https://github.com/aignostics/python-sdk/compare/v0.2.158..v0.2.159) - 2025-09-20
+
+### 🎨 Styling
+
+- *(changelog)* Improve styling of release notes - ([24bda17](https://github.com/aignostics/python-sdk/commit/24bda1777be461e98c54a0e5189cc406f1266171))
+
+
+# [v0.2.158](https://github.com/aignostics/python-sdk/compare/v0.2.157..v0.2.158) - 2025-09-20
+
+### 🐛 Bug Fixes
+
+- *(system)* Disable cpu freq on gha macos latest runner given not supported - ([a9d2c0c](https://github.com/aignostics/python-sdk/commit/a9d2c0c993a9afadfe9b8374c7b4d4fd32b0de27))
+
+### 🚜 Refactor
+
+- *(platform)* Rename run delete to run result delete - ([a9d2c0c](https://github.com/aignostics/python-sdk/commit/a9d2c0c993a9afadfe9b8374c7b4d4fd32b0de27))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(changelog)* Introduce .cliffignore to prune changelog for maintenance commits - ([48b9132](https://github.com/aignostics/python-sdk/commit/48b913215a8bfb49d920f8333ee5d97459f52547))
+- *(deps)* Bump dependencies - ([a9d2c0c](https://github.com/aignostics/python-sdk/commit/a9d2c0c993a9afadfe9b8374c7b4d4fd32b0de27))
+- *(gha)* Re-enable tests for releases - ([a9d2c0c](https://github.com/aignostics/python-sdk/commit/a9d2c0c993a9afadfe9b8374c7b4d4fd32b0de27))
+
+
+# [v0.2.154](https://github.com/aignostics/python-sdk/compare/v0.2.153..v0.2.154) - 2025-09-17
+
+### 🐛 Bug Fixes
+
+- Update the input artifact name for HETA to whole_slide_image ([#121](https://github.com/orhun/git-cliff/issues/121)) - ([bccf3f5](https://github.com/aignostics/python-sdk/commit/bccf3f5de896667b182e6a536d8a0627756d0296))
+
+
+
+* @jstriebel made their first contribution in [#121](https://github.com/aignostics/python-sdk/pull/121)
+
+# [v0.2.153](https://github.com/aignostics/python-sdk/compare/v0.2.152..v0.2.153) - 2025-08-18
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Add final smoke test before publish - ([54304ad](https://github.com/aignostics/python-sdk/commit/54304adb4959a52da83a672473ed4b0fc8195711))
+
+
+# [v0.2.152](https://github.com/aignostics/python-sdk/compare/v0.2.151..v0.2.152) - 2025-08-17
+
+### ⛰️  Features
+
+- *(core)* Support Windows on ARM - ([b49fb28](https://github.com/aignostics/python-sdk/commit/b49fb28e288d50156b2d3c0078e7cf6cd9a7c3bc))
+
+### 🚜 Refactor
+
+- *(native)* Compress native installation using UPX on Windows - ([b49fb28](https://github.com/aignostics/python-sdk/commit/b49fb28e288d50156b2d3c0078e7cf6cd9a7c3bc))
+
+
+# [v0.2.151](https://github.com/aignostics/python-sdk/compare/v0.2.150..v0.2.151) - 2025-08-17
+
+### ⛰️  Features
+
+- *(networking)* Support system truststore for ssl trust chain [no:ci] ([#92](https://github.com/orhun/git-cliff/issues/92)) - ([e0a4565](https://github.com/aignostics/python-sdk/commit/e0a45658d2be8a9ceb2dddab7ed2b6c234c6b73f))
+
+
+# [v0.2.150](https://github.com/aignostics/python-sdk/compare/v0.2.149..v0.2.150) - 2025-08-17
+
+### ⛰️  Features
+
+- *(native)* Show progress on splash screen ([#91](https://github.com/orhun/git-cliff/issues/91)) - ([c027531](https://github.com/aignostics/python-sdk/commit/c02753148772afd33895ca08612f0604576b4d1a))
+
+
+# [v0.2.149](https://github.com/aignostics/python-sdk/compare/v0.2.148..v0.2.149) - 2025-08-17
+
+
+# [v0.2.148](https://github.com/aignostics/python-sdk/compare/v0.2.147..v0.2.148) - 2025-08-17
+
+### ⛰️  Features
+
+- *(native)* Splash screen for Windows and Linux ([#90](https://github.com/orhun/git-cliff/issues/90)) - ([8261771](https://github.com/aignostics/python-sdk/commit/8261771bd8abf980eca2a268e09a9d38539c2646))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(native)* Rfc [build:native:only] - ([8261771](https://github.com/aignostics/python-sdk/commit/8261771bd8abf980eca2a268e09a9d38539c2646))
+- *(native)* Splash screen on windows and linux build:native:only - ([8261771](https://github.com/aignostics/python-sdk/commit/8261771bd8abf980eca2a268e09a9d38539c2646))
+- *(native)* Use python 3.13.7 - ([8261771](https://github.com/aignostics/python-sdk/commit/8261771bd8abf980eca2a268e09a9d38539c2646))
+
+
+# [v0.2.147](https://github.com/aignostics/python-sdk/compare/v0.2.146..v0.2.147) - 2025-08-16
+
+### ⚙️ Miscellaneous Tasks
+
+- *(docker)* Bump to python 3.13 and latest uv - ([67c7141](https://github.com/aignostics/python-sdk/commit/67c714112759623f7020ebcae51648adc38b0b14))
+
+
+# [v0.2.146](https://github.com/aignostics/python-sdk/compare/v0.2.145..v0.2.146) - 2025-08-16
+
+### 🚜 Refactor
+
+- *(native)* Use archive; optimize - ([d9898ac](https://github.com/aignostics/python-sdk/commit/d9898ac4a39a1d7853035de645639bc0a0b4e128))
+
+
+# [v0.2.145](https://github.com/aignostics/python-sdk/compare/v0.2.144..v0.2.145) - 2025-08-16
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump in GHA and Dockerfile - ([4144534](https://github.com/aignostics/python-sdk/commit/41445345033c40bfdede91cdfdbe96c7107eb2cf))
+
+
+# [v0.2.144](https://github.com/aignostics/python-sdk/compare/v0.2.143..v0.2.144) - 2025-08-16
+
+### 🐛 Bug Fixes
+
+- *(native)* Windows - ([67dc61f](https://github.com/aignostics/python-sdk/commit/67dc61f3d8eb25d1cc89e22ece4264043189b77c))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([67dc61f](https://github.com/aignostics/python-sdk/commit/67dc61f3d8eb25d1cc89e22ece4264043189b77c))
+- *(gha)* Allow to build:native:only ([#89](https://github.com/orhun/git-cliff/issues/89)) - ([67dc61f](https://github.com/aignostics/python-sdk/commit/67dc61f3d8eb25d1cc89e22ece4264043189b77c))
+
+
+# [v0.2.143](https://github.com/aignostics/python-sdk/compare/v0.2.142..v0.2.143) - 2025-08-16
+
+### ⛰️  Features
+
+- *(application, platform)* Allow to delete run. Note: currently broken in Samia - ([f35410d](https://github.com/aignostics/python-sdk/commit/f35410dc856c6529ec692819355443b776f936d8))
+- *(native)* Show being native in footer of launchpad - ([62c4b17](https://github.com/aignostics/python-sdk/commit/62c4b1714fca7535bbf1d351a4be31e1fbc31405))
+
+### 🚜 Refactor
+
+- *(native)* Don't include dev dependencies - ([62c4b17](https://github.com/aignostics/python-sdk/commit/62c4b1714fca7535bbf1d351a4be31e1fbc31405))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Adapt test for delete cli - ([62c4b17](https://github.com/aignostics/python-sdk/commit/62c4b1714fca7535bbf1d351a4be31e1fbc31405))
+
+
+# [v0.2.142](https://github.com/aignostics/python-sdk/compare/v0.2.141..v0.2.142) - 2025-08-15
+
+### 🐛 Bug Fixes
+
+- *(native)* Marimo integration - ([5c7e2de](https://github.com/aignostics/python-sdk/commit/5c7e2dea7d863dc574f7e3b91a3f6ceef9a8c550))
+
+
+# [v0.2.141](https://github.com/aignostics/python-sdk/compare/v0.2.140..v0.2.141) - 2025-08-15
+
+### 🐛 Bug Fixes
+
+- *(native)* Marimo - ([b7a21f3](https://github.com/aignostics/python-sdk/commit/b7a21f386dd532bb24a04694d2c0950a531adc6f))
+
+
+# [v0.2.140](https://github.com/aignostics/python-sdk/compare/v0.2.139..v0.2.140) - 2025-08-14
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -312,9 +826,17 @@
 
 # [v0.2.105](https://github.com/aignostics/python-sdk/compare/v0.2.104..v0.2.105) - 2025-07-22
 
+### 🐛 Bug Fixes
+
+- *(platform)* Fix broken pytest collection if user does not have permission to access aignx test bucket - ([2c4da92](https://github.com/aignostics/python-sdk/commit/2c4da9236bcdf5d6b122d808d7c421bff19627d1))
+
 ### ⚙️ Miscellaneous Tasks
 
+- *(gha)* Spike for Ketryx integration - ([2c4da92](https://github.com/aignostics/python-sdk/commit/2c4da9236bcdf5d6b122d808d7c421bff19627d1))
+- *(gha)* Allow to skip jobs/steps via commit message, see CONTRIBUTING.md - ([2c4da92](https://github.com/aignostics/python-sdk/commit/2c4da9236bcdf5d6b122d808d7c421bff19627d1))
 - *(gha)* Add metadata to BetterStack when posting heartbeats ([#61](https://github.com/orhun/git-cliff/issues/61)) - ([bd74063](https://github.com/aignostics/python-sdk/commit/bd740634dcf8749e479c020556602d621d54cf7c))
+- *(gha)* Add metadata to BetterStack when posting heartbeats - ([bd74063](https://github.com/aignostics/python-sdk/commit/bd740634dcf8749e479c020556602d621d54cf7c))
+- *(gha)* Add --fail-with-body to BetterStack curl request and reorder arguments - ([bd74063](https://github.com/aignostics/python-sdk/commit/bd740634dcf8749e479c020556602d621d54cf7c))
 
 ### 🛡️ Security
 
@@ -354,6 +876,7 @@
 - *(deps)* Bump astral-sh/setup-uv from 6.3.0 to 6.3.1 ([#55](https://github.com/orhun/git-cliff/issues/55)) - ([1ee922e](https://github.com/aignostics/python-sdk/commit/1ee922ee3aefb89256f42652416fc326d9bef383))
 - Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([987828d](https://github.com/aignostics/python-sdk/commit/987828d3b2b25acfc74938c50f3b8c55e3b7805c))
 - Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([65a9b24](https://github.com/aignostics/python-sdk/commit/65a9b247f9fa1821a12d2f95685d70a0e7ae2be1))
+- Astral-sh/setup-uv - ([1ee922e](https://github.com/aignostics/python-sdk/commit/1ee922ee3aefb89256f42652416fc326d9bef383))
 - Dependabot[bot] <support@github.com> - ([1ee922e](https://github.com/aignostics/python-sdk/commit/1ee922ee3aefb89256f42652416fc326d9bef383))
 - Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([1ee922e](https://github.com/aignostics/python-sdk/commit/1ee922ee3aefb89256f42652416fc326d9bef383))
 
@@ -1124,9 +1647,37 @@
 
 # [v0.2.3](https://github.com/aignostics/python-sdk/compare/v0.2.2..v0.2.3) - 2025-05-26
 
+### ⛰️  Features
+
+- *(run_describe)* Show thumbnail per item - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Download Results - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+
+### 🚜 Refactor
+
+- *(tests)* Simplify - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Use native sorting provided by API - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+
 ### 📚 Documentation
 
+- Improve consistency - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Social preview for GH - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Copyright notice - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
 - Additional pages for read the docs (rtd) - ([c419e12](https://github.com/aignostics/python-sdk/commit/c419e1205a01f8e15700a5ce0bcfc6eeb0c5c056))
+
+### ⚙️ Miscellaneous Tasks
+
+- Add Andreas Kunft as co-author - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Make tests more robust - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Lint - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Touch for GH - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Touch - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Make t4est_gui_run_download reliable relative to mixed version runs - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Fix name - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+- Bump - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
+
+### Breaking
+
+- Change in metadata spec. for HETA application - ([fee6502](https://github.com/aignostics/python-sdk/commit/fee6502977f59d48df40beb19020375fdea37b7c))
 
 
 # [v0.2.2](https://github.com/aignostics/python-sdk/compare/v0.2.1..v0.2.2) - 2025-05-23

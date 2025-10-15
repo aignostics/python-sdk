@@ -11,7 +11,7 @@ from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import UserReadResponse as User
 from pydantic import BaseModel, computed_field
 
-from aignostics.utils import UNHIDE_SENSITIVE_INFO, BaseService, Health, __version__, get_logger
+from aignostics.utils import BaseService, Health, get_logger, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
 from ._client import Client
@@ -139,10 +139,27 @@ class Service(BaseService):
     """Service of the application module."""
 
     _settings: Settings
+    _http_pool: urllib3.PoolManager | None = None
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
+
+    @classmethod
+    def _get_http_pool(cls) -> urllib3.PoolManager:
+        """Get or create the shared HTTP pool manager.
+
+        All service instances share the same urllib3.PoolManager for efficient connection reuse.
+
+        Returns:
+            urllib3.PoolManager: Shared connection pool manager.
+        """
+        if cls._http_pool is None:
+            cls._http_pool = urllib3.PoolManager(
+                maxsize=10,  # Max connections per host
+                block=False,  # Don't block if pool is full
+            )
+        return cls._http_pool
 
     def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
@@ -153,9 +170,13 @@ class Service(BaseService):
         Returns:
             dict[str,Any]: The info of this service.
         """
-        user_info = self.get_user_info(relogin=mask_secrets)
+        user_info = None
+        try:
+            user_info = self.get_user_info()
+        except RuntimeError:
+            message = "Failed to retrieve user info for system info."
+            logger.warning(message)
         return {
-            "settings": self._settings.model_dump(context={UNHIDE_SENSITIVE_INFO: not mask_secrets}),
             "userinfo": (user_info.model_dump_secrets_masked() if mask_secrets else user_info.model_dump(mode="json"))
             if user_info
             else None,
@@ -171,11 +192,12 @@ class Service(BaseService):
             Health: The healthiness of the Aignostics Platform API via basic unauthenticated request.
         """
         try:
-            http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5.0, read=10.0))
+            http = self._get_http_pool()
             response = http.request(
                 method="GET",
                 url=f"{self._settings.api_root}/api/v1/health",
-                headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
+                headers={"User-Agent": user_agent()},
+                timeout=urllib3.Timeout(total=self._settings.health_timeout),
             )
 
             if response.status != HTTPStatus.OK:
@@ -198,11 +220,12 @@ class Service(BaseService):
             Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated API client.
         """
         try:
-            client = Client()
-            api_client = client.get_api_client(cache_token=True).api_client
+            api_client = Client.get_api_client(cache_token=True).api_client
             response = api_client.call_api(
                 url=self._settings.api_root + "/api/v1/health",
                 method="GET",
+                header_params={"User-Agent": user_agent()},
+                _request_timeout=self._settings.health_timeout,
             )
             if response.status != HTTPStatus.OK:
                 logger.error("Aignostics Platform API (authenticated) returned '%s'", response.status)
@@ -239,7 +262,7 @@ class Service(BaseService):
         if relogin:
             Service.logout()
         try:
-            _ = get_token(use_cache=True)
+            _ = get_token()
             return True
         except RuntimeError as e:
             message = f"Error during login: {e!s}"
@@ -273,7 +296,7 @@ class Service(BaseService):
         if relogin:
             Service.logout()
         try:
-            return UserInfo.from_claims_and_me(verify_and_decode_token(get_token()), Client().me())
+            return UserInfo.from_claims_and_me(verify_and_decode_token(get_token()), Client().me())  # pyright: ignore[reportArgumentType]
         except RuntimeError as e:
             message = f"Error during login: {e!s}"
             logger.exception(message)

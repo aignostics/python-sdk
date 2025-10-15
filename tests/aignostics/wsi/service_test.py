@@ -7,19 +7,18 @@ import threading
 from io import BytesIO
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from nicegui import app
 from nicegui.testing import User
 from PIL import Image
 
-from aignostics.utils import gui_register_pages
-
 CONTENT_LENGTH_FALLBACK = 32066  # Fallback image size in bytes
 
 
+@pytest.mark.integration
 def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
     """Test that the thumbnail fails on missing file."""
-    gui_register_pages()
     client = TestClient(app)
 
     test_dir = Path(__file__).parent
@@ -31,9 +30,9 @@ def test_serve_thumbnail_fails_on_missing_file(user: User) -> None:
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
+@pytest.mark.integration
 def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
     """Test that the thumbnail falls back on unsupported_filetype."""
-    gui_register_pages()
     client = TestClient(app)
 
     test_dir = Path(__file__).parent
@@ -45,9 +44,9 @@ def test_serve_thumbnail_fails_on_unsupported_filetype(user: User) -> None:
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
+@pytest.mark.integration
 def test_serve_thumbnail_for_dicom_thumbnail(user: User, silent_logging) -> None:
     """Test that the thumbnail route works for non-pyramidal dicom thumbnail file."""
-    gui_register_pages()
     client = TestClient(app)
 
     test_dir = Path(__file__).parent
@@ -65,9 +64,9 @@ def test_serve_thumbnail_for_dicom_thumbnail(user: User, silent_logging) -> None
     assert image.height > 0
 
 
+@pytest.mark.integration
 def test_serve_thumbnail_for_dicom_pyramidal_small(user: User) -> None:
     """Test that the thumbnail route works for small pyramidal dicom file."""
-    gui_register_pages()
     client = TestClient(app)
 
     test_dir = Path(__file__).parent
@@ -85,9 +84,9 @@ def test_serve_thumbnail_for_dicom_pyramidal_small(user: User) -> None:
     assert image.height > 0
 
 
+@pytest.mark.integration
 def test_serve_thumbnail_for_tiff(user: User) -> None:
     """Test that the thumbnail route works for dicom file."""
-    gui_register_pages()
     client = TestClient(app)
 
     test_dir = Path(__file__).parent
@@ -105,6 +104,8 @@ def test_serve_thumbnail_for_tiff(user: User) -> None:
     assert image.height > 0
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User) -> None:
     """Test that the tiff route serves the expected jpeg.
 
@@ -112,7 +113,6 @@ def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User) -> None:
     - Open the tiff and check that the response is a valid jpeg
 
     """
-    gui_register_pages()
     client = TestClient(app)
 
     response = client.get("/tiff?url=bla")
@@ -157,14 +157,15 @@ def _local_http_server(directory: Path) -> str:
             print("Warning: Server thread did not terminate within timeout")
 
 
-def test_serve_tiff_to_jpeg(user: User, silent_logging) -> None:
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
+def test_serve_tiff_to_jpeg_serves(user: User, silent_logging) -> None:
     """Test that the tiff route serves the expected jpeg.
 
     - Spin up local webserver serving tests/resources/single-channel-ome.tiff
     - Open the tiff and check that the response is a valid jpeg
 
     """
-    gui_register_pages()
     client = TestClient(app)
 
     test_dir = Path(__file__).parent
@@ -186,14 +187,15 @@ def test_serve_tiff_to_jpeg(user: User, silent_logging) -> None:
     assert image.height > 0
 
 
-def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
+def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir, silent_logging) -> None:
     """Test that the tiff route falls back as expected on broken tiff.
 
     - Spin up local webserver serving 4711 random bytes
     - Open the tiff and check the response
 
     """
-    gui_register_pages()
     client = TestClient(app)
 
     random_file_path = Path(tmpdir) / "broken.tiff"
@@ -208,6 +210,8 @@ def test_serve_tiff_to_jpeg_fails_on_broken_tiff(user: User, tmpdir) -> None:
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
     """Test that the tiff route falls back as expected on tiff not found.
 
@@ -215,7 +219,6 @@ def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
     - Open the unavailable tiff and check the response
 
     """
-    gui_register_pages()
     client = TestClient(app)
 
     random_file_path = Path(tmpdir) / "broken.tiff"
@@ -230,13 +233,14 @@ def test_serve_tiff_to_jpeg_fails_on_tiff_not_found(user: User, tmpdir) -> None:
     assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_serve_tiff_to_jpeg_fails_on_tiff_url_broken(user: User) -> None:
     """Test that the tiff route falls back as expected on invalid url as arg.
 
     - Open the broken url and check the response
 
     """
-    gui_register_pages()
     client = TestClient(app)
 
     response = client.get("/tiff?url=https://")

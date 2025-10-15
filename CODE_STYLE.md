@@ -21,6 +21,7 @@ We favor readability and maintainability over cleverness and brevity.
   dependencies.
 5. We always write code that is compatible with the Python version indicated in
   the .python-version file in the root of this repository.
+6. We like functional programming and lambdas.
 
 ## Naming
 
@@ -111,12 +112,12 @@ We use [pytest](https://docs.pytest.org/en/stable/) for testing Python code.
 1. Tests are defined in the `tests/` directory
 2. We use pytest fixtures to set up test data and state
 3. We leverage several pytest plugins:
-  1. `pytest-asyncio` for testing async code
-  2. `pytest-cov` for coverage reporting
-  3. `pytest-docker` for integration tests with containers
-  4. `pytest-env` for environment variable management
-  5. `pytest-regressions` for regression testing
-  6. `pytest-xdist` for parallel test execution
+1. `pytest-asyncio` for testing async code
+2. `pytest-cov` for coverage reporting
+3. `pytest-docker` for integration tests with containers
+4. `pytest-env` for environment variable management
+5. `pytest-regressions` for regression testing
+6. `pytest-xdist` for parallel test execution
 4. Test execution is automated through the nox test session which runs across the
   Python versions indicated in the `pyproject.toml`.
 
@@ -193,8 +194,8 @@ and protect our users.
 1. Follow the principle of least privilege for all operations and access
   controls.
 2. Never store secrets (API keys, passwords, tokens) in code repositories.
-  1. Use environment variables or dedicated secret management services.
-  2. Code is checked via `detect-secrets` pre-commit hook to prevent accidental
+1. Use environment variables or dedicated secret management services.
+2. Code is checked via `detect-secrets` pre-commit hook to prevent accidental
     commits of secrets.
 
 We implement proper input validation and sanitization for all external inputs
@@ -208,11 +209,11 @@ We handle authentication and authorization correctly:
 2. Separate authentication from authorization logic.
 3. Implement proper session management with secure cookies.
 4. Protect against common vulnerabilities:
-  1. SQL Injection: Use parameterized queries or ORM frameworks.
-  2. XSS: Apply proper output encoding.
-  3. CSRF: Implement anti-CSRF tokens for state-changing operations.
-  4. SSRF: Validate and restrict URL destinations.
-  5. Command Injection: Avoid direct system command execution where possible.
+1. SQL Injection: Use parameterized queries or ORM frameworks.
+2. XSS: Apply proper output encoding.
+3. CSRF: Implement anti-CSRF tokens for state-changing operations.
+4. SSRF: Validate and restrict URL destinations.
+5. Command Injection: Avoid direct system command execution where possible.
 5. Implement proper error handling that doesn't leak sensitive information.
 6. Use secure defaults and fail closed (secure) rather than open (insecure).
 
@@ -222,17 +223,17 @@ We apply the principle of defense in depth:
 2. Implement multiple layers of protection.
 3. Document security considerations in code and design documents.
 4. Write security-focused tests:
-  1. Test for security property violations.
-  2. Test error cases and edge conditions.
-  3. Test for resource exhaustion scenarios.
+1. Test for security property violations.
+2. Test error cases and edge conditions.
+3. Test for resource exhaustion scenarios.
 5. Apply proper rate limiting and throttling to prevent abuse.
 6. For cryptographic operations:
-  1. Use established libraries, not custom implementations.
-  2. Follow current best practices for algorithm selection and key management.
-  3. Be aware of the limitations of cryptographic primitives.
+1. Use established libraries, not custom implementations.
+2. Follow current best practices for algorithm selection and key management.
+3. Be aware of the limitations of cryptographic primitives.
 7. Regularly run security-focused static analysis tools as part of CI/CD:
-  1. CodeQL analysis (via GitHub Actions)
-  2. SonarCloud checks for security vulnerabilities
+1. CodeQL analysis (via GitHub Actions)
+2. SonarCloud checks for security vulnerabilities
 
 Our security posture is defined in [SECURITY.md](SECURITY.md).
 
@@ -244,9 +245,9 @@ We use modern dependency management practices:
   and environment management
 2. Dependency version locking via uv.lock file
 3. Regular dependency auditing:
-  1. Security auditing via `pip-audit`
-  2. License compliance checks via `pip-licenses`
-  3. SBOM generation via `cyclonedx-py`
+1. Security auditing via `pip-audit`
+2. License compliance checks via `pip-licenses`
+3. SBOM generation via `cyclonedx-py`
 
 Dependency updates are automated via Dependabot and Renovate to ensure we stay
 current with security patches.

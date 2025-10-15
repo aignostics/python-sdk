@@ -6,18 +6,24 @@ import sys
 from pathlib import Path
 
 import certifi
+import truststore
 
 from ._log import logging_initialize
 
-_boot_called = False
-
-if ssl.get_default_verify_paths().cafile is None and os.environ.get("SSL_CERT_FILE") is None:
-    os.environ["SSL_CERT_FILE"] = certifi.where()
-
-# Import third party dependencies
+# Import third party dependencies.
 third_party_dir = Path(__file__).parent.absolute() / ".." / "third_party"
 if third_party_dir.is_dir() and str(third_party_dir) not in sys.path:
     sys.path.insert(0, str(third_party_dir))
+
+# Amend library path
+if "DYLD_FALLBACK_LIBRARY_PATH" not in os.environ:
+    os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{os.getenv('HOMEBREW_PREFIX', '/opt/homebrew')}/lib/"
+
+from ._constants import __project_name__, __version__  # noqa: E402
+from ._log import get_logger  # noqa: E402
+from ._process import get_process_info  # noqa: E402
+
+_boot_called = False
 
 
 def boot(modules_to_instrument: list[str]) -> None:
@@ -33,6 +39,8 @@ def boot(modules_to_instrument: list[str]) -> None:
         return
     _boot_called = True
 
+    _amend_ssl_trust_chain()
+
     from ._sentry import sentry_initialize  # noqa: PLC0415
 
     sentry_initialize()
@@ -44,13 +52,8 @@ def boot(modules_to_instrument: list[str]) -> None:
 
     _parse_env_args()
     logging_initialize(log_to_logfire)
-    _amend_library_path()
+
     _log_boot_message()
-
-
-from ._constants import __project_name__, __version__  # noqa: E402
-from ._log import get_logger  # noqa: E402
-from ._process import get_process_info  # noqa: E402
 
 
 def _parse_env_args() -> None:
@@ -83,10 +86,11 @@ def _parse_env_args() -> None:
         del sys.argv[index]
 
 
-def _amend_library_path() -> None:
-    """Patch environment variables before any other imports."""
-    if "DYLD_FALLBACK_LIBRARY_PATH" not in os.environ:
-        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{os.getenv('HOMEBREW_PREFIX', '/opt/homebrew')}/lib/"
+def _amend_ssl_trust_chain() -> None:
+    truststore.inject_into_ssl()
+
+    if ssl.get_default_verify_paths().cafile is None and os.environ.get("SSL_CERT_FILE") is None:
+        os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
 def _log_boot_message() -> None:

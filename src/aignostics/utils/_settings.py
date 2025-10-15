@@ -70,7 +70,7 @@ def load_settings(settings_class: type[T]) -> T:
 
         prefix = settings_class.model_config.get("env_prefix", "")
         for error in errors:
-            env_var = f"{prefix}{error['loc'][0]}".upper()
+            env_var = f"{prefix}{error['loc'][0]}".upper() if error["loc"] else prefix.rstrip("_").upper()
             logger.fatal(f"Configuration invalid! {env_var}: {error['msg']}")
             text.append(f"• {env_var}", style="yellow bold")
             text.append(f": {error['msg']}\n")

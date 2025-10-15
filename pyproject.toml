@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "0.2.140"
+version = "0.2.192"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -70,120 +70,124 @@ classifiers = [
     "Natural Language :: English",
 ]
 
-requires-python = ">=3.11, <4.0"
+requires-python = ">=3.11, <3.14"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.116.1",
-    "humanize>=4.12.3",
-    "logfire[system-metrics]>=4.3.3",
-    "nicegui[native]>=2.22.2",
-    "opentelemetry-instrumentation-fastapi>=0.53b0",
-    "opentelemetry-instrumentation-httpx>=0.53b0",
-    "opentelemetry-instrumentation-jinja2>=0.53b0",
-    "opentelemetry-instrumentation-requests>=0.53b0",
-    "opentelemetry-instrumentation-sqlite3>=0.53b0",
-    "opentelemetry-instrumentation-tornado>=0.53b0",
-    "opentelemetry-instrumentation-urllib>=0.53b0",
-    "opentelemetry-instrumentation-urllib3>=0.53b0",
-    "packaging>=25.0",
-    "platformdirs>=4.3.8",
-    "psutil>=7.0.0",
-    "pydantic-settings>=2.10.1",
-    "pywin32>=310 ; sys_platform == 'win32'",
-    "pyyaml>=6.0",
-    "sentry-sdk>=2.33.0",
-    "typer>=0.16.0",
-    "uptime>=3.0.1",
+    "fastapi[standard,all]>=0.119.0,<1",
+    "humanize>=4.13.0,<5",
+    "logfire[system-metrics]>=4.13.0,<5",
+    "nicegui[native]>=3.0.4,<4",
+    "opentelemetry-instrumentation-fastapi>=0.53b0,<1",
+    "opentelemetry-instrumentation-httpx>=0.53b0,<1",
+    "opentelemetry-instrumentation-jinja2>=0.53b0,<1",
+    "opentelemetry-instrumentation-requests>=0.53b0,<1",
+    "opentelemetry-instrumentation-sqlite3>=0.53b0,<1",
+    "opentelemetry-instrumentation-tornado>=0.53b0,<1",
+    "opentelemetry-instrumentation-urllib>=0.53b0,<1",
+    "opentelemetry-instrumentation-urllib3>=0.53b0,<1",
+    "packaging>=25.0,<26",
+    "platformdirs>=4.5.0,<5",
+    "psutil>=7.1.0,<8",
+    "pydantic-settings>=2.11.0,<3",
+    "pywin32>=311,<312; sys_platform == 'win32'",
+    "pyyaml>=6.0.3,<7",
+    "sentry-sdk>=2.41.0,<3",
+    "typer>=0.19.2,<1",
+    "uptime>=3.0.1,<4",
     # Custom
-    "appdirs>=1.4.4",
-    "boto3>=1.40.8",
-    "certifi>=2025.8.3",
-    "dicom-validator>=0.7.1",
-    "dicomweb-client[gcp]>=0.59.2",
-    "duckdb>=0.10.0,<=1.4.0",
-    "fastparquet>=2024.11.0",
-    "google-cloud-storage>=3.3.0",
-    "google-crc32c>=1.7.1",
-    "highdicom>=0.26.1",
-    "httpx>=0.28.1",
-    "idc-index-data==21.0.0",
-    "ijson>=3.4.0",
-    "jsf>=0.11.2",
-    "jsonschema>=4.24.1",
-    "openslide-bin>=4.0.0.8",
-    "openslide-python>=1.4.2",
-    "pandas<=2.3.1",
-    "pyjwt[crypto]>=2.10.1",
-    "python-dateutil>=2.9.0.post0",
-    # "pywebview[qt6]>=5.4; sys_platform == 'linux'",
-    "requests>=2.32.3",
-    "requests-oauthlib>=2.0.0",
-    "s5cmd>=0.2.0",
-    "semver>=3.0.4",
-    "shapely>=2.1.1",
-    "show-in-file-manager>=1.1.5",
-    "tqdm>=4.67.1",
-    "urllib3>=2.5.0",
-    "wsidicom>=0.27.1",
+    "aiopath>=0.6.11,<1",
+    "boto3>=1.40.50,<2",
+    "certifi>=2025.10.5,<2026",
+    "dicom-validator>=0.7.2,<1",
+    "dicomweb-client[gcp]>=0.59.3,<1",
+    "duckdb>=0.10.0,<=1.4.1",
+    "fastparquet>=2024.11.0,<2025",
+    "google-cloud-storage>=3.4.1,<4",
+    "google-crc32c>=1.7.1,<2",
+    "highdicom>=0.26.1,<1",
+    "html-sanitizer>=2.6.0,<3",
+    "httpx>=0.28.1,<1",
+    "idc-index-data==22.0.2",
+    "ijson>=3.4.0.post0,<4",
+    "jsf>=0.11.2,<1",
+    "jsonschema[format-nongpl]>=4.25.1,<5",
+    "openslide-bin>=4.0.0.8,<5",
+    "openslide-python>=1.4.2,<2",
+    "pandas>=2.3.3,<3",
+    "platformdirs>=4.3.8,<5",
+    "pyjwt[crypto]>=2.10.1,<3",
+    "python-dateutil>=2.9.0.post0,<3",
+    # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
+    "requests>=2.32.5,<3",
+    "requests-oauthlib>=2.0.0,<3",
+    "s5cmd>=0.3.3,<1",
+    "semver>=3.0.4,<4",
+    "shapely>=2.1.2,<3",
+    "tenacity>=9.1.2,<10",
+    "tqdm>=4.67.1,<5",
+    "truststore>=0.10.4,<1",
+    "urllib3>=2.5.0,<3",
+    "wsidicom>=0.28.1,<1",
 ]
 
 [project.optional-dependencies]
-pyinstaller = ["pyinstaller>=6.14.0"]
-jupyter = ["jupyter>=1.1.1"]
+pyinstaller = ["pyinstaller>=6.14.0,<7"]
+jupyter = ["jupyter>=1.1.1,<2"]
 marimo = [
-    "cloudpathlib>=0.21.1",
-    "marimo>=0.14.17",
-    "matplotlib>=3.10.3",
-    "shapely>=2.1.0",
+    "cloudpathlib>=0.23.0,<1",
+    "ipython>=9.6.0,<10",
+    "marimo>=0.16.5,<1",
+    "matplotlib>=3.10.7,<4",
+    "shapely>=2.1.0,<3",
 ]
-qupath = [] # Making this a default extra
+qupath = []
 [dependency-groups]
 dev = [
-    "autodoc-pydantic>=2.2.0",
-    "bump-my-version>=1.1.2",
-    "cyclonedx-py>=1.0.1",
-    "detect-secrets>=1.5.0",
-    "enum-tools>=0.13.0",
-    "furo>=2024.8.6",
-    "git-cliff>=2.9.1",
-    "mypy>=1.17.0",
-    "nox[uv]>=2025.5.1",
-    "pip-audit>=2.9.0",
+    "autodoc-pydantic>=2.2.0,<3",
+    "bump-my-version>=1.2.4,<2",
+    "cyclonedx-py>=1.0.1,<2",
+    "detect-secrets>=1.5.0,<2",
+    "enum-tools>=0.13.0,<1",
+    "furo>=2025.9.25,<2026",
+    "git-cliff>=2.10.1,<3",
+    "mypy>=1.18.2,<2",
+    "nox[uv]>=2025.5.1,<2026",
+    "pip-audit>=2.9.0,<3",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
-    "pre-commit>=4.3.0",
-    "pyright>=1.1.403",
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
-    "pytest-docker>=3.2.3",
-    "pytest-env>=1.1.5",
-    "pytest-md-report>=0.7.0",
-    "pytest-regressions>=2.8.1",
-    "pytest-retry>=1.7.0",
-    "pytest-selenium>=4.1.0",
-    "pytest-subprocess>=1.5.3",
-    "pytest-timeout>=2.4.0",
-    "pytest-watcher>=0.4.3",
-    "pytest-xdist[psutil]>=3.8.0",
-    "ruff>=0.12.8",
-    "scalene>=1.5.53",
-    "sphinx>=8.2.3",
-    "sphinx-autobuild>=2024.10.3",
-    "sphinx-click>=6.0.0",
-    "sphinx-copybutton>=0.5.2",
-    "sphinx-inline-tabs>=2023.4.21",
-    "sphinx-mdinclude>=0.6.2",
-    "sphinx-rtd-theme>=3.0.2",
-    "sphinx_selective_exclude>=1.0.3",
-    "sphinx-toolbox>=3.9.0",
-    "sphinxext.opengraph>=0.9.1",
-    "swagger-plugin-for-sphinx>=5.1.3",
-    "tomli>=2.1.0",
-    "types-pyyaml>=6.0.12.20250809",
-    "types-requests>=2.32.4.20250809",
-    "watchdog>=6.0.0",
-    "uv>=0.8.9",                                                             # CVE-2025-54368                                                       # CVE-2025-54368
+    "pre-commit>=4.3.0,<5",
+    "pyright>=1.1.406,<2",
+    "pytest>=8.4.2,<9",
+    "pytest-asyncio>=1.2.0,<2",
+    "pytest-cov>=7.0.0,<8",
+    "pytest-docker>=3.2.3,<4",
+    "pytest-durations>=1.6.1,<2",
+    "pytest-env>=1.2.0,<2",
+    "pytest-md-report>=0.7.0,<1",
+    "pytest-regressions>=2.8.3,<3",
+    "pytest-retry>=1.7.0,<2",
+    "pytest-selenium>=4.1.0,<5",
+    "pytest-subprocess>=1.5.3,<2",
+    "pytest-timeout>=2.4.0,<3",
+    "pytest-watcher>=0.4.3,<1",
+    "pytest-xdist[psutil]>=3.8.0,<4",
+    "ruff>=0.14.0,<1",
+    "scalene>=1.5.55,<2",
+    "sphinx>=8.2.3,<9",
+    "sphinx-autobuild>=2025.8.25,<2026",
+    "sphinx-click>=6.1.0,<7",
+    "sphinx-copybutton>=0.5.2,<1",
+    "sphinx-inline-tabs>=2023.4.21,<2024",
+    "sphinx-mdinclude>=0.6.2,<1",
+    "sphinx-rtd-theme>=3.0.2,<4",
+    "sphinx_selective_exclude>=1.0.3,<2",
+    "sphinx-toolbox>=4,<5",
+    "sphinxext.opengraph>=0.9.1,<1",
+    "swagger-plugin-for-sphinx>=5.2.0,<6",
+    "tomli>=2.3.0,<3",
+    "types-pyyaml>=6.0.12.20250915,<7",
+    "types-requests>=2.32.4.20250913,<3",
+    "watchdog>=6.0.0,<7",
 ]
 
 [project.scripts]
@@ -210,6 +214,7 @@ packages = ["src/aignostics", "codegen/out/aignx", "examples"]
 allow-direct-references = true
 
 [tool.uv]
+required-version = ">=0.8.9" # CVE-2025-54368
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
@@ -217,10 +222,12 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "jupyter-core>=5.8.1",              # CVE-2025-30167
     "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182,
     "pillow>=11.3.0",                   # CVE-2025-48379,
-    "aiohttp>=3.12.14",                 # GHSA-9548-qrrj-x5pj
-    "starlette>=0.47.2",                # GHSA-2c2j-9gv5-cj73
+    "aiohttp>=3.12.14",                 # CVE-2025-53643
+    "starlette>=0.47.2",                # CVE-2025-54121
+    "uv>=0.8.9",                        # CVE-2025-54368
+    "jupyterlab>=4.4.9",                # CVE-2025-59842
+    "pip>=5.3",                         # CVE-2025-8869  
 ]
-required-version = ">=0.8.6" # CVE-2025-54368
 
 [tool.ruff]
 target-version = "py311"
@@ -294,7 +301,7 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["_notebook.py", "bottle.py", "idc_index.py", "_pydicom_handler.py"]
+exclude = ["src/aignostics/third_party", "_notebook.py", "_pydicom_handler.py"]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -314,22 +321,29 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
+main_file = "tests/main.py"
 testpaths = ["tests"]
 python_files = ["*_test.py", "test_*.py"]
-addopts = "-v --strict-markers --log-disable=aignostics --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
+addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostics --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+timeout = 10 # We use a rather short default timeout. Override with @pytest.mark.timeout(timeout=N)
+# timeout_method="signal" 
 env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
 markers = [
     # From Template
     "no_extras: Tests that do require no extras installed.",
     "scheduled: Tests to run on a schedule. They will still be part on non-scheduled test executions.",
+    "scheduled_only: Tests to run on a schedule only.",
     "sequential: Exclude from parallel test execution.",
     "skip_with_act: Don't run with act.",
-    "docker: tests That require Docker.",
-    "long_running: Tests that take a long time to run. Tests marked as long runing excluded from execution by default. Enable by passing any -m your_marker that matches a marker of the test.",
-    # Custom
-    # Nothing yet
+    "docker: That require Docker.",
+    "long_running: Tests with a test timeout >=5 min and < 60 min. CI/CD will run long running tests with one Python version only. When calling `make` long running tests are excluded - use `make test_long_running` instead.",
+    # Test Categories (following Martin Fowler's Solitary vs Sociable unit test distinction)
+    "unit: Solitary unit tests - test a layer of a module in isolation with all dependencies mocked, except interaction with shared utils and the systems module. Unit tests must be able to pass offline, i.e. not calls to external services. The timeout should not be bigger than the default 10s, and must be <5 min.",
+    "integration: Sociable integration tests - test interactions across architectural layers (e.g. CLI/GUI→Service, Service→Utils) or between modules (e.g. Application→Platform), using real SDK collaborators, real file I/O, real subprocesses, and real Docker containers. Integration test must be able to pass offline, i.e. mock external services (Aignostics Platform API, Auth0, S3/GCS buckets, IDC). The timeout should not be bigger than the default 10s, and must be <5 min.",
+    "e2e: End-to-end tests - test complete workflows with real external network services (Aignostics Platform API, cloud storage, IDC, etc). If the test timeout is >= 5 min and < 60 min, additionally mark as `long_running`, if >= 60min mark as 'very_long_running'.",
+    "very_long_running: Tests with a test timeout >= 60 min. CI/CD will run very long running tests with one Python version only. When calling `make` very long runing tests are excluded - use `make test_very_long_running` instead.",
 ]
 md_report = true
 md_report_output = "reports/pytest.md"
@@ -357,7 +371,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "0.2.140"
+current_version = "0.2.192"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
@@ -368,11 +382,14 @@ ignore_missing_files = false
 tag = true
 sign_tags = false
 tag_name = "v{new_version}"
-tag_message = "Bump version: {current_version} → {new_version}"
 allow_dirty = false
 commit = true
-message = "Bump version: {current_version} → {new_version}"
 commit_args = "--no-verify"
+tag_message = "Bump version: {current_version} → {new_version}"
+message = "Bump version: {current_version} → {new_version}"
+# Note: Uncomment the following line to avoid running tests and ketryx during version bumps
+#message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
+#tag_message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
 setup_hooks = []
 pre_commit_hooks = [
     "uv sync",
@@ -439,7 +456,7 @@ https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
 
 {% if version %}\
     {% if previous.version %}\
-          # [{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+        # [{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
     {% else %}\
     {% endif %}\
 {% else %}\
@@ -507,6 +524,8 @@ split_commits = true
 # regex for preprocessing the commit messages
 commit_preprocessors = [
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))" },
+    { pattern = '^[-*]?\s+(\w+)\s+\(([^)]+)\):', replace = "* ${1}(${2}):" },
+    { pattern = '^[-*]\s+', replace = "" },
 ]
 # regex for parsing and grouping commits
 commit_parsers = [

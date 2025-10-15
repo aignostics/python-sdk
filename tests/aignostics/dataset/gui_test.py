@@ -6,27 +6,28 @@ from unittest.mock import patch
 import pytest
 from nicegui.testing import User
 
-from aignostics.utils import gui_register_pages
 from tests.conftest import assert_notified, print_directory_structure
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 IDC_DOWNLOAD_MAX_DURATION = 60
 
 
+@pytest.mark.integration
 async def test_gui_idc_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
-    gui_register_pages()
     await user.open("/dataset/idc")
     await user.should_see("Explore Portal")
 
 
+@pytest.mark.e2e
+@pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 5)
 async def test_gui_idc_downloads(user: User, tmp_path, silent_logging, record_property) -> None:
     """Test that the user can download a dataset to a temporary directory."""
     record_property("tested-item-id", "TC-DATASET-GUI-01")
     # Mock get_user_data_directory to return the tmpdir for this test
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=tmp_path):
-        gui_register_pages()
         await user.open("/dataset/idc")
 
         await user.should_see(marker="BUTTON_EXAMPLE_DATASET")
@@ -73,28 +74,11 @@ async def test_gui_idc_downloads(user: User, tmp_path, silent_logging, record_pr
         )
 
 
-@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-@pytest.mark.parametrize(
-    ("source_input", "expected_notification"),
-    [
-        (" ", "Download failed: No IDs provided."),
-        (
-            "4711",
-            "Download failed: None of the values passed matched any of the identifiers: "
-            "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID.",
-        ),
-        (
-            " ",
-            "Download failed: No IDs provided",
-        ),
-    ],
-)
-async def test_gui_idc_download_fails_with_invalid_inputs(
+async def _gui_idc_download_fails_with_invalid_inputs(
     user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None
 ) -> None:
-    """Test that the download fails with appropriate notification when invalid IDs are provided."""
+    """Test that the download fails with appropriate notification."""
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=Path(tmpdir)):
-        gui_register_pages()
         await user.open("/dataset/idc")
         await user.should_see(marker="SOURCE_INPUT")
         user.find(marker="SOURCE_INPUT").clear()
@@ -107,4 +91,39 @@ async def test_gui_idc_download_fails_with_invalid_inputs(
         await user.should_see(marker="BUTTON_DOWNLOAD")
         user.find(marker="BUTTON_DOWNLOAD").click()
 
-        await assert_notified(user, expected_notification, wait_seconds=30)
+        await assert_notified(user, expected_notification, wait_seconds=90)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("source_input", "expected_notification"),
+    [
+        (" ", "Download failed: No IDs provided."),
+    ],
+)
+@pytest.mark.timeout(timeout=60)
+async def test_gui_idc_download_fails_with_no_inputs(
+    user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None
+) -> None:
+    """Test that the download fails with appropriate notification when no IDs are provided."""
+    await _gui_idc_download_fails_with_invalid_inputs(user, tmpdir, source_input, expected_notification, silent_logging)
+
+
+@pytest.mark.e2e
+@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 2)
+@pytest.mark.parametrize(
+    ("source_input", "expected_notification"),
+    [
+        (
+            "4711",
+            "Download failed: None of the values passed matched any of the identifiers: "
+            "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID.",
+        ),
+    ],
+)
+async def test_gui_idc_download_fails_with_invalid_inputs(
+    user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None
+) -> None:
+    """Test that the download fails with appropriate notification when invalid IDs are provided."""
+    await _gui_idc_download_fails_with_invalid_inputs(user, tmpdir, source_input, expected_notification, silent_logging)

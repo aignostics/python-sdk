@@ -14,6 +14,7 @@ repos:
         exclude: "bottle.py"
       - id: python-no-log-warn
       - id: python-use-type-annotations
+        exclude: "src/aignostics/third_party"
       - id: rst-backticks
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
@@ -37,10 +38,10 @@ repos:
       - id: destroyed-symlinks
       - id: detect-private-key
       - id: end-of-file-fixer
-        exclude: "^tests/fixtures/|.json$"
-      - id: fix-byte-order-marker
+        exclude: "^tests/fixtures/|.json|^codegen"
       - id: mixed-line-ending
       - id: name-tests-test
+        exclude: "^tests/main.py"
       - id: requirements-txt-fixer
       - id: trailing-whitespace
         exclude: "docs/source/_static|ATTRIBUTIONS.md||API_REFEREENCE"
@@ -51,7 +52,7 @@ repos:
         args: ["--baseline", ".secrets.baseline"]
         additional_dependencies: ["gibberish-detector"]
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.8.6
+    rev: 0.8.9
     hooks:
       - id: uv-lock
   - repo: local

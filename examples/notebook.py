@@ -2,7 +2,7 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
-#     "aignostics==0.2.140",
+#     "aignostics==0.2.192",
 # ]
 # ///
 
@@ -137,7 +137,7 @@ def _(mo):
             input_artifacts=[platform.InputArtifact]
         )
         ```
-        The `InputArtifact` defines the actual data that you provide aka. in this case the image that you want to be processed. The expected values are defined by the application version and have to align with the `input_artifacts` schema of the application version. In the case of the two task dummy application, we only require a single artifact per item, which is the image to process on. The artifact name is defined as `user_slide`. The `download_url` is a signed URL that allows the Aignostics Platform to download the image data later during processing. In addition to the image data itself, you have to provide the metadata defined in the input artifact schema, i.e., `checksum_crc32c`, `base_mpp`, `width`, and `height`. The metadata is used to validate the input data and is required for the processing of the image. The following example shows how to create an item with a single input artifact:
+        The `InputArtifact` defines the actual data that you provide aka. in this case the image that you want to be processed. The expected values are defined by the application version and have to align with the `input_artifacts` schema of the application version. In the case of the two task dummy application, we only require a single artifact per item, which is the image to process on. The artifact name is defined as `user_slide` for the `two-task-dummy` application and `whole_slide_image` for the `he-tme` application. The `download_url` is a signed URL that allows the Aignostics Platform to download the image data later during processing. In addition to the image data itself, you have to provide the metadata defined in the input artifact schema, i.e., `checksum_crc32c`, `base_mpp`, `width`, and `height`. The metadata is used to validate the input data and is required for the processing of the image. The following example shows how to create an item with a single input artifact:
 
         ```python
         platform.InputArtifact(

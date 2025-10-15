@@ -6,11 +6,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+import humanize
+from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
-from showinfm.showinfm import show_in_file_manager
 
 from aignostics.platform import ApplicationRunStatus, ItemStatus
+from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
 from .._service import DownloadProgressState, Service  # noqa: TID252
@@ -24,13 +26,12 @@ from ._utils import (
 
 logger = get_logger(__name__)
 
-WIDTH_100 = "width: 100%"
 WIDTH_1200px = "width: 1200px; max-width: none"
 
 service = Service()
 
 
-async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
+async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
     """Describe Application.
 
     Args:
@@ -44,7 +45,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     run = await nicegui_run.io_bound(service.application_run, application_run_id)
     spinner.set_visibility(False)
-    run_data = run.details()
+    run_data = run.details() if run else None
 
     if run and run_data:
         icon, color = run_status_to_icon_and_color(run_data.status.value)
@@ -97,6 +98,30 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
             ui.notify(f"Failed to cancel application run: {e}.", type="warning")
             return False
 
+    async def _delete(run_id: str) -> bool:
+        """Delete the application run results and navigate to the main page.
+
+        Args:
+            run_id (str): The ID of the run to cancel.
+
+        Returns:
+            bool: True if the run was cancelled, False otherwise.
+        """
+        ui.notify(f"Deleting results of application run with id '{run_id}' ...", type="info")
+        try:
+            delete_button.disable()
+            delete_button.props(add="loading")
+            await nicegui_run.io_bound(service.application_run_delete, run_id)
+            delete_button.props(remove="loading")
+            ui.navigate.to("/")
+            ui.notify("Application run deleted!", type="positive")
+            return True
+        except Exception as e:  # noqa: BLE001
+            delete_button.enable()
+            delete_button.props(remove="loading")
+            ui.notify(f"Failed to delete results of application run: {e}.", type="warning")
+            return False
+
     @ui.refreshable
     def download_run_dialog_content(qupath_project: bool = False, marimo: bool = False) -> None:  # noqa: C901, PLR0915
         if qupath_project:
@@ -127,10 +152,10 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         with ui.row().classes("w-full"):
 
             async def _select_download_destination() -> None:
-                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
+                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
-                    folder_path = Path(result[0])
-                    if folder_path.is_dir():
+                    folder_path = AsyncPath(result[0])
+                    if await folder_path.is_dir():
                         selected_folder.value = str(folder_path)
                     else:
                         selected_folder.value = str(folder_path.parent)
@@ -168,7 +193,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                 ui.notify("Please select a folder first", type="warning")
                 return
 
-            ui.notify("Downloading  ...", type="info")
+            ui.notify("Downloading ...", type="info")
             progress_queue = Manager().Queue()
 
             def update_download_progress() -> None:
@@ -330,7 +355,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     "mainMenuBar": False,
                     "navigationBar": True,
                     "statusBar": False,
-                }).style(WIDTH_100)
+                }).classes("full-width")
             except Exception as e:  # noqa: BLE001
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
@@ -407,15 +432,39 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
             with ui.expansion(text=f"Run {run.application_run_id}"):
-                ui.markdown(
+                # Display run metadata, including duration if possible, using humanize
+
+                triggered_at = run_data.triggered_at.astimezone()
+                terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
+                if triggered_at and terminated_at:
+                    duration_seconds = (terminated_at - triggered_at).total_seconds()
+                    duration_str = humanize.precisedelta(duration_seconds, format="%0.0f")
+                else:
+                    duration_str = "N/A"
+
+                ui.code(
                     f"""
                     * Run ID: {run_data.application_run_id}
                     * Application Version: {run_data.application_version_id}
-                    * Triggered On: {run_data.triggered_at.astimezone().strftime("%m-%d %H:%M")}
-                    * Triggered by: {run_data.triggered_by}
+                    * Message: {run_data.message}
+                    * Duration: {duration_str}
+                    * Triggered On: {triggered_at.strftime("%m-%d %H:%M")}
+                    * Terminated At: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"}
+                    * Triggered By: {run_data.triggered_by}
                     * Organization: {run_data.organization_id}
-                    """
-                )
+                    """,
+                    language="markdown",
+                ).classes("full-width")
+                if run_data.metadata:
+                    properties = {
+                        "content": {"json": run_data.metadata},
+                        "mode": "tree",
+                        "readOnly": True,
+                        "mainMenuBar": True,
+                        "navigationBar": False,
+                        "statusBar": False,
+                    }
+                    ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
                 if run_data.status.value == ApplicationRunStatus.COMPLETED:
@@ -448,6 +497,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                                 .props("push")
                             ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
+
                 if run_data.status.value == ApplicationRunStatus.RUNNING:
                     cancel_button = ui.button(
                         "Cancel",
@@ -455,6 +505,27 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         on_click=lambda: _cancel(run.application_run_id),
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
+
+                if run_data.status.value in {
+                    ApplicationRunStatus.CANCELED_USER,
+                    ApplicationRunStatus.CANCELED_SYSTEM,
+                    ApplicationRunStatus.COMPLETED,
+                    ApplicationRunStatus.COMPLETED_WITH_ERROR,
+                    ApplicationRunStatus.REJECTED,
+                    ApplicationRunStatus.RUNNING,
+                    ApplicationRunStatus.SCHEDULED,
+                }:
+                    delete_button = ui.button(
+                        "Delete",
+                        color="red",
+                        on_click=lambda: _delete(run.application_run_id),
+                        icon="delete",
+                    ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
+
+        note = run_data.metadata.get("sdk", {}).get("note") if run_data.metadata else None
+        if note:
+            with ui.card().classes("full-width"):
+                ui.markdown(str(note))
 
         with ui.list().classes("full-width"):
             results = list(run.results())
@@ -464,7 +535,8 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     ui.html(
                         '<dotlottie-player src="/application_assets/empty.lottie" '
                         'background="transparent" speed="1" style="width: 700px; height: 700px" '
-                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
+                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                        sanitize=False,
                     )
                     ui.space()
                 return
@@ -475,8 +547,8 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         ui.card().tight().classes("h-full"),
                         ui.row().classes("w-full"),
                     ):
-                        image_file: Path | None = Path(item.reference).resolve()
-                        if image_file and image_file.is_file():
+                        image_file: AsyncPath | None = await AsyncPath(item.reference).resolve()
+                        if image_file and await image_file.is_file():
                             image_url = "/thumbnail?source=" + quote(image_file.as_posix())
                         else:
                             image_file = None
@@ -485,12 +557,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         icon, color = run_item_status_to_icon_and_color(item.status.value)
                         with ui.row().classes("justify-center w-full"):
                             with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                if item.error:
-                                    ui.tooltip(
-                                        f"Item {item.item_id}, status {item.status.value.upper()}, error: {item.error}"
-                                    )
-                                else:
-                                    ui.tooltip(f"Item {item.item_id}, status {item.status.value.upper()}")
+                                ui.tooltip(f"Item {item.item_id}, status {item.status.value.upper()}")
                             ui.space()
                             with ui.button_group().props():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():
@@ -574,18 +641,26 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         ItemStatus.CANCELED_USER,
                         ItemStatus.CANCELED_SYSTEM,
                     }:
-                        with ui.row().classes("w-1/2 justify-center content-center"):
-                            ui.space()
-                            animation_file = {
-                                ItemStatus.PENDING: "pending.lottie",
-                                ItemStatus.ERROR_USER: "error.lottie",
-                                ItemStatus.ERROR_SYSTEM: "error.lottie",
-                                ItemStatus.CANCELED_USER: "canceled.lottie",
-                                ItemStatus.CANCELED_SYSTEM: "canceled.lottie",
-                            }[item.status]
-                            ui.html(
-                                f'<dotlottie-player src="/application_assets/{animation_file}" '
-                                'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                                'direction="1" playMode="normal" loop autoplay></dotlottie-player>'
-                            )
-                            ui.space()
+                        if item.message:
+                            with ui.row().classes("w-1/2 justify-start items-start content-start ml-4"):
+                                ui.code(
+                                    item.message,
+                                    language="markdown",
+                                ).classes("full-width break-all ml-8")
+                        else:
+                            with ui.row().classes("w-1/2 justify-center content-center"):
+                                ui.space()
+                                animation_file = {
+                                    ItemStatus.PENDING: "pending.lottie",
+                                    ItemStatus.ERROR_USER: "error.lottie",
+                                    ItemStatus.ERROR_SYSTEM: "error.lottie",
+                                    ItemStatus.CANCELED_USER: "canceled.lottie",
+                                    ItemStatus.CANCELED_SYSTEM: "canceled.lottie",
+                                }[item.status]
+                                ui.html(
+                                    f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                    'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                                    sanitize=False,
+                                )
+                                ui.space()

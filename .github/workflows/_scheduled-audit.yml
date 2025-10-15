@@ -2,7 +2,9 @@ name: "Scheduled Audit"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      BETTERSTACK_AUDIT_HEARTBEAT_URL:
+        required: false
 
 jobs:
   audit-scheduled:
@@ -17,7 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -30,19 +32,6 @@ jobs:
       - name: Install Python, venv and dependencies
         shell: bash
         run: uv sync --all-extras --frozen --link-mode=copy
-
-      - name: Create .env file
-        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
-        with:
-          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
-          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
-          fail_on_empty: false
-
-      - name: Set up GCP credentials for bucket access
-        shell: bash
-        run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Audit
         shell: bash
@@ -84,7 +73,6 @@ jobs:
                 timestamp: $timestamp,
               }'
             )
-
             curl \
               --fail-with-body \
               --silent \
@@ -92,6 +80,9 @@ jobs:
               --header "Content-Type: application/json" \
               --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
               "${BETTERSTACK_AUDIT_HEARTBEAT_URL}/${EXIT_CODE}"
+            echo "INFO: Sent heartbeat to betterstack with exit code '${EXIT_CODE}'"
+          else
+            echo "WARNING: No BetterStack heartbeat URL configured, skipped heartbeat notification."
           fi
           exit $EXIT_CODE
 

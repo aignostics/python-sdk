@@ -10,14 +10,22 @@ if TYPE_CHECKING:
     from nicegui.testing import User, UserInteraction
     from nicegui.ui import switch
 
-from aignostics.utils import __project_name__, gui_register_pages
+from aignostics.utils import __project_name__
 
 
+@pytest.mark.integration
+async def test_gui_system_alive(user: User) -> None:
+    """Test that the user sees the info page with the mask secrets switch on by default."""
+    await user.open("/alive")
+    await user.should_see("Yes")
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 3)
 @pytest.mark.sequential
 async def test_gui_system_switch_right(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the info page with the mask secrets switch on by default."""
     record_property("tested-item-id", "TEST-SYSTEM-GUI-SETTINGS-MASKING-DEFAULT")
-    gui_register_pages()
     await user.open("/system")
     await user.should_see(__project_name__)
     await user.should_see("Health")

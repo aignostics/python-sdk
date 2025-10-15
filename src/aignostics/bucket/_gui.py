@@ -4,9 +4,10 @@ from multiprocessing import Manager
 from pathlib import Path
 
 import humanize
-from showinfm.showinfm import show_in_file_manager
+from aiopath import AsyncPath
 
 from aignostics.gui import frame
+from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import get_user_data_directory
 
 from ..utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
@@ -306,10 +307,10 @@ class PageBuilder(BasePageBuilder):
                 ):
                     return
 
-                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore
+                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore
                 if result and len(result) > 0:
-                    path = Path(result[0])
-                    if not path.is_dir():
+                    path = AsyncPath(result[0])
+                    if not await path.is_dir():
                         bucket_form.destination = None
                         bucket_form.destination_label.set_text(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
                         bucket_form.destination_open_button.disable()
@@ -317,7 +318,7 @@ class PageBuilder(BasePageBuilder):
                             "The selected path is not a directory. Please select a valid directory.", type="warning"
                         )
                     else:
-                        bucket_form.destination = path
+                        bucket_form.destination = Path(path)
                         bucket_form.destination_label.set_text(f"Will download to {bucket_form.destination!s}")
                         bucket_form.destination_open_button.enable()
                         ui.notify(f"You chose directory {bucket_form.destination}.", type="info")

@@ -2,6 +2,7 @@
     "recommendations": [
         "charliermarsh.ruff",
         "codecov.codecov",
+        "daelonsuzuka.nicegui",
         "donjayamanne.python-environment-manager",
         "fill-labs.dependi",
         "github.vscode-github-actions",

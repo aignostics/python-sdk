@@ -41,6 +41,7 @@ if find_spec("sentry_sdk"):
         ):
             yield
 
+    @pytest.mark.unit
     def test_validate_url_scheme(record_property) -> None:
         """Test URL scheme validation."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -55,6 +56,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_MISSING_SCHEME)):
             _validate_url_scheme(invalid_url)
 
+    @pytest.mark.unit
     def test_validate_url_netloc(record_property) -> None:
         """Test network location validation."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -69,6 +71,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_MISSING_NETLOC)):
             _validate_url_netloc(invalid_url)
 
+    @pytest.mark.unit
     def test_validate_https_scheme(record_property) -> None:
         """Test HTTPS scheme validation."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -83,6 +86,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_NON_HTTPS)):
             _validate_https_scheme(invalid_url)
 
+    @pytest.mark.unit
     def test_validate_sentry_domain(record_property) -> None:
         """Test Sentry domain validation."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -105,6 +109,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_INVALID_DOMAIN)):
             _validate_sentry_domain(invalid_netloc)
 
+    @pytest.mark.unit
     def test_validate_https_dsn_with_valid_dsn(record_property) -> None:
         """Test DSN validation with valid DSN."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -112,12 +117,14 @@ if find_spec("sentry_sdk"):
         result = _validate_https_dsn(valid_dsn)
         assert result is valid_dsn  # Should return the same object
 
+    @pytest.mark.unit
     def test_validate_https_dsn_with_none(record_property) -> None:
         """Test DSN validation with None value."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
         result = _validate_https_dsn(None)
         assert result is None  # Should return None unchanged
 
+    @pytest.mark.unit
     def test_validate_https_dsn_invalid_cases(record_property) -> None:
         """Test DSN validation with various invalid cases."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -137,6 +144,7 @@ if find_spec("sentry_sdk"):
         with pytest.raises(ValueError, match=re.escape(_ERR_MSG_INVALID_DOMAIN)):
             _validate_https_dsn(SecretStr("https://user@example.com"))
 
+    @pytest.mark.unit
     def test_sentry_initialize_with_no_dsn(record_property, mock_environment: None) -> None:
         """Test sentry_initialize with no DSN."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -148,6 +156,7 @@ if find_spec("sentry_sdk"):
             result = sentry_initialize()
             assert result is False  # Should return False when no DSN is provided
 
+    @pytest.mark.unit
     def test_sentry_initialize_with_valid_dsn(record_property, mock_environment: None) -> None:
         """Test sentry_initialize with a valid DSN."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")

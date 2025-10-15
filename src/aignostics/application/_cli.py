@@ -45,8 +45,8 @@ def application_list(
     try:
         applications = Service().applications()
     except Exception as e:
-        logger.exception("Failed to list applications")
-        console.print(f"[error]Error:[/error] Failed to list applications: {e}")
+        logger.exception("Could not load applications")
+        console.print(f"[error]Error:[/error] Could not load applications: {e}")
         sys.exit(1)
 
     app_count = 0
@@ -447,7 +447,13 @@ def run_upload(
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
         ),
-    ] = f"{time.time() * 1000}",
+    ] = str(time.time() * 1000),
+    onboard_to_aignostics_portal: Annotated[
+        bool,
+        typer.Option(
+            help="If set, the run will be onboarded to the Aignostics Portal.",
+        ),
+    ] = False,
 ) -> None:
     """Upload files referenced in the metadata CSV file to the Aignostics platform.
 
@@ -510,6 +516,7 @@ def run_upload(
         Service().application_run_upload(
             application_version_id=application_version_id,
             metadata=metadata_dict,
+            onboard_to_aignostics_portal=onboard_to_aignostics_portal,
             upload_prefix=upload_prefix,
             upload_progress_callable=update_progress,
         )
@@ -539,6 +546,10 @@ def run_submit(
             resolve_path=True,
         ),
     ],
+    note: Annotated[
+        str | None,
+        typer.Option(help="Optional note to include with the run submission via custom metadata."),
+    ] = None,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -558,6 +569,7 @@ def run_submit(
         application_run = Service().application_run_submit_from_metadata(
             application_version_id=application_version_id,
             metadata=metadata_dict,
+            custom_metadata={"sdk": {"note": note}} if note else None,
         )
         console.print(f"Submitted run with id '{application_run.application_run_id}' for '{application_version_id}'.")
         return application_run.application_run_id
@@ -567,6 +579,10 @@ def run_submit(
             f"[warning]Warning:[/warning] Bad input to create run for application version "
             f"'{application_version_id}': {e}"
         )
+        sys.exit(2)
+    except NotFoundException as e:
+        logger.warning("Could not find application version '%s': %s", application_version_id, e)
+        console.print(f"[warning]Warning:[/warning] Could not find application version '{application_version_id}': {e}")
         sys.exit(2)
     except Exception as e:
         logger.exception("Failed to create run for application version '%s'", application_version_id)
@@ -622,7 +638,6 @@ def run_cancel(
 ) -> None:
     """Cancel run."""
     logger.debug("Canceling run with ID '%s'", run_id)
-
     try:
         Service().application_run_cancel(run_id)
         logger.info("Canceled run with ID '%s'.", run_id)
@@ -630,6 +645,10 @@ def run_cancel(
     except NotFoundException:
         logger.warning("Run with ID '%s' not found.", run_id)
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except ValueError:
+        logger.warning("Run ID '%s' invalid", run_id)
+        console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid.")
         sys.exit(2)
     except Exception as e:
         logger.exception("Failed to cancel run with ID '%s'", run_id)
@@ -819,9 +838,22 @@ def result_download(
         sys.exit(1)
 
 
-# TODO(Helmut): Implement result delete when available in platform
 @result_app.command("delete")
-def result_delete() -> None:
-    """Delete results of a run."""
-    console.print(MESSAGE_NOT_YET_IMPLEMENTED)
-    sys.exit(1)
+def result_delete(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to delete results for")],
+) -> None:
+    """Delete results of run."""
+    logger.debug("Deleting results for run with ID '%s'", run_id)
+
+    try:
+        Service().application_run_delete(run_id)
+        logger.info("Deleted run with ID '%s'.", run_id)
+        console.print(f"Results for run with ID '{run_id}' have been deleted.")
+    except NotFoundException:
+        logger.warning("Results for with ID '%s' not found.", run_id)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to delete run with ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to delete results for with ID '{run_id}': {e}")
+        sys.exit(1)

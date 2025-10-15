@@ -14,12 +14,14 @@ from aignostics.utils._log import _validate_file_name, logging_initialize
 log = get_logger(__name__)
 
 
+@pytest.mark.unit
 def test_validate_file_name_none(record_property) -> None:
     """Test that None file name is returned unchanged."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     assert _validate_file_name(None) is None
 
 
+@pytest.mark.integration
 def test_validate_file_name_nonexistent(record_property) -> None:
     """Test validation of a non-existent file that can be created."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -30,6 +32,7 @@ def test_validate_file_name_nonexistent(record_property) -> None:
         assert not test_file.exists()
 
 
+@pytest.mark.integration
 def test_validate_file_name_existing(record_property) -> None:
     """Test validation of an existing writable file."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -44,6 +47,7 @@ def test_validate_file_name_existing(record_property) -> None:
         temp_file_path.unlink(missing_ok=True)
 
 
+@pytest.mark.integration
 def test_validate_file_name_existing_readonly(record_property) -> None:
     """Test validation of an existing read-only file."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -63,6 +67,7 @@ def test_validate_file_name_existing_readonly(record_property) -> None:
         temp_file_path.unlink(missing_ok=True)
 
 
+@pytest.mark.integration
 def test_validate_file_name_directory(record_property) -> None:
     """Test validation of a path that points to a directory."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -70,6 +75,7 @@ def test_validate_file_name_directory(record_property) -> None:
         _validate_file_name(temp_dir)
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     platform.system() == "Windows",
     reason="This test is designed for Unix-like systems where permissions can be set to non-writable.",
@@ -89,6 +95,7 @@ def test_validate_file_name_cannot_create(record_property) -> None:
             temp_dir_path.chmod(0o755)
 
 
+@pytest.mark.unit
 def test_validate_file_name_invalid_path(record_property) -> None:
     """Test validation of a file with an invalid path."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -98,6 +105,7 @@ def test_validate_file_name_invalid_path(record_property) -> None:
         _validate_file_name(str(invalid_path))
 
 
+@pytest.mark.unit
 def test_get_logger_with_name(record_property) -> None:
     """Test get_logger with a specific name."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -105,6 +113,7 @@ def test_get_logger_with_name(record_property) -> None:
     assert logger.name == "aignostics.test_module"
 
 
+@pytest.mark.unit
 def test_get_logger_none(record_property) -> None:
     """Test get_logger with None name."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -112,6 +121,7 @@ def test_get_logger_none(record_property) -> None:
     assert logger.name == "aignostics"
 
 
+@pytest.mark.unit
 def test_get_logger_project_name(record_property) -> None:
     """Test get_logger with the project name."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -119,6 +129,7 @@ def test_get_logger_project_name(record_property) -> None:
     assert logger.name == "aignostics"
 
 
+@pytest.mark.unit
 def test_logging_initialize_with_defaults(record_property) -> None:
     """Test logging_initialize with default settings."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")

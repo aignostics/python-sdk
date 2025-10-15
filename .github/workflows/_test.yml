@@ -2,7 +2,17 @@ name: "Test"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE:
+        required: false
+      AIGNOSTICS_REFRESH_TOKEN:
+        required: false
+      GCP_CREDENTIALS:
+        required: false
+      CODECOV_TOKEN:
+        required: false
+      SONAR_TOKEN:
+        required: false
   
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -12,16 +22,21 @@ jobs:
 
   generate-matrix:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Set matrix based on commit message
+      - name: Set matrix based on commit message and PR labels
         id: set-matrix
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"skip:test:matrix-runner"* ]]; then
+          if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]] || [[ "$PR_LABELS" == *"skip:test:matrix-runner"* ]]; then
             echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
           else
-            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true}]}' >> $GITHUB_OUTPUT
+            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true},{"runner":"windows-11-arm","experimental":true}]}' >> $GITHUB_OUTPUT
           fi
 
   test:
@@ -44,7 +59,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -81,7 +96,6 @@ jobs:
           TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
 
-
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
@@ -91,11 +105,13 @@ jobs:
 
       - name: Set up GCP credentials for bucket access
         shell: bash
+        env:
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 -d > credentials.json
+          echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
-      - name: Validate installation
+      - name: Validate installation (single Python version)
         shell: bash
         run: |
             OUTPUT=$(uv run --no-dev aignostics --help)
@@ -104,7 +120,7 @@ jobs:
             exit 1
             fi
 
-      - name: Smoke tests
+      - name: Test / Smoke (single Python version)
         shell: bash
         run: |
           uv run --no-dev aignostics --help
@@ -114,67 +130,51 @@ jobs:
           uv run --all-extras aignostics application list
           uv run --all-extras aignostics application run list --verbose --limit 1
 
-      - name: Test / regular
-        if: (!contains(github.event.head_commit.message, 'skip:test:regular'))
-        shell: bash
-        run: |
-          set +e
-          make test
-          EXIT_CODE=$?
-          # Show test execution in GitHub Job summary
-          found_files=0
-          for file in reports/pytest_*.md; do
-          if [ -f "$file" ]; then
-            cat "$file" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            found_files=1
-          fi
-          done
-          if [ $found_files -eq 0 ]; then
-            echo "# All regular tests passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Show test coverage in GitHub Job summary
-          if [ -f "reports/coverage.md" ]; then
-            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          exit $EXIT_CODE
+      - name: Test / Unit (multiple Python versions)
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: unit
+          make-target: test_unit_matrix
+          skip-marker: skip:test:unit
+          summary-title: All unit tests passed
 
-      - name: Test / long running
-        if: (!contains(github.event.head_commit.message, 'skip:test:long-running'))
-        shell: bash
-        run: |
-          set +e
-          make test_long_running
-          EXIT_CODE=$?
-          # Show test execution in GitHub Job summary
-          found_files=0
-          for file in reports/pytest_*.md; do
-          if [ -f "$file" ]; then
-            cat "$file" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            found_files=1
-          fi
-          done
-          if [ $found_files -eq 0 ]; then
-            echo "# All long running tests passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          # Show test coverage in GitHub Job summary
-          if [ -f "reports/coverage.md" ]; then
-            cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "# No test coverage computed." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-          fi
-          exit $EXIT_CODE
+      - name: Test / Integration (multiple Python versions)
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: integration
+          make-target: test_integration_matrix
+          skip-marker: skip:test:integration
+          summary-title: All integration tests passed
 
-      - name: Upload test results
+      - name: Test / E2E / regular (multiple Python versions)
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: e2e
+          make-target: test_e2e_matrix
+          skip-marker: skip:test:e2e
+          summary-title: All regular e2e tests passed
+
+      - name: Test / E2E / long running (single Python version)
+        if: |
+          !github.event.pull_request.draft
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: long-running
+          make-target: test_long_running
+          skip-marker: skip:test:long_running
+          summary-title: All long running e2e tests passed
+
+      - name: Test / E2E / very long running (single Python version)
+        if: |
+          contains(github.event.head_commit.message, 'enable:test:very_long_running') || 
+          contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: very-long-running
+          make-target: test_very_long_running
+          summary-title: All very long running e2e tests passed
+
+      - name: Upload test artifacts for inspection
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:
@@ -188,7 +188,7 @@ jobs:
           retention-days: 7
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -202,7 +202,7 @@ jobs:
 
       - name: SonarQube Scan
         if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
-        uses: SonarSource/sonarqube-scan-action@8c71dc039c2dd71d3821e89a2b58ecc7fee6ced9 # v5.3.0
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

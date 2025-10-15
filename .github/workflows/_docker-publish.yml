@@ -2,7 +2,11 @@ name: "Publish Docker Image"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      DOCKER_USERNAME:
+        required: false
+      DOCKER_PASSWORD:
+        required: false
 
 jobs:
   docker_publish:
@@ -32,37 +36,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-
       - name: Log in to Docker Hub
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
-
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-
-
       - name: Log in to GitHub container registry
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
-
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: "(all target): Extract metadata (tags, labels) for Docker"
         id: meta-all
         uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
         with:
-
-
           images: |
             ${{ env.DOCKER_IO_IMAGE_NAME_ALL }}
             ghcr.io/${{ github.repository }}
-
-
-
           tags: |
             # set latest tag for releases
             type=raw,value=latest
@@ -70,20 +63,14 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-
 
       - name: "(slim target): Extract metadata (tags, labels) for Docker"
         id: meta-slim
         uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
         with:
-
-
           images: |
             ${{ env.DOCKER_IO_IMAGE_NAME_SLIM }}
             ghcr.io/${{ github.repository }}-slim
-
-
-
           tags: |
             # set latest tag for releases
             type=raw,value=latest
@@ -91,8 +78,6 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-
-
 
       - name: "(all target): Build and push Docker image"
         id: build-and-push-all
@@ -105,8 +90,6 @@ jobs:
           push: true
           tags: ${{ steps.meta-all.outputs.tags }}
           labels: ${{ steps.meta-all.outputs.labels }}
-
-
 
       - name: "(slim target): Build and push Docker image"
         id: build-and-push-slim

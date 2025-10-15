@@ -8,8 +8,8 @@ from logging import Handler
 from pathlib import Path
 from typing import Annotated, Literal
 
-import appdirs
 import click
+import platformdirs
 from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
@@ -100,7 +100,7 @@ class LogSettings(BaseSettings):
             description="Name of the log file",
             default="/dev/stdout"
             if __is_running_in_read_only_environment__
-            else appdirs.user_data_dir(__project_name__) + f"/{__project_name__}.log",
+            else platformdirs.user_data_dir(__project_name__) + f"/{__project_name__}.log",
         ),
     ]
     console_enabled: Annotated[
@@ -140,7 +140,7 @@ class CustomFilter(LogggingFilter):
         Returns:
             bool: True if the record should be logged, False otherwise.
         """
-        excluded_dependencies = {"showinfm"}
+        excluded_dependencies: set[str] | dict[str, str] = {"bla"}
         if record.name in excluded_dependencies:
             return False
         return not (record.name == "dotenv.main" and record.getMessage().endswith("key doesn't exist."))
@@ -157,7 +157,7 @@ def logging_initialize(log_to_logfire: bool = False) -> None:
     if settings.file_enabled:
         file_handler = python_logging.FileHandler(settings.file_name)
         file_formatter = python_logging.Formatter(
-            fmt="%(asctime)s %(process)d %(levelname)s %(name)s %(message)s",
+            fmt="%(asctime)s %(levelname)s [%(name)s] [%(process)d] %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_formatter)
@@ -193,7 +193,7 @@ def logging_initialize(log_to_logfire: bool = False) -> None:
         handlers = [python_logging.NullHandler()]
     python_logging.basicConfig(
         level=settings.level,
-        format="%(name)s %(message)s",
+        format=r"\[%(name)s] [%(process)d] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         handlers=handlers,
     )

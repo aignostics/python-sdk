@@ -1,0 +1,69 @@
+name: "Build Native Only"
+
+on:
+  workflow_call:
+    # No secrets needed
+
+env:
+  # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
+  PYTHONIOENCODING: "utf8"
+
+jobs:
+
+  build_native:
+
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest]
+        experimental: [false]
+        include:
+          - runner: ubuntu-24.04-arm
+            experimental: true
+          - runner: macos-latest
+            experimental: true
+          - runner: macos-13
+            experimental: true
+          - runner: windows-latest
+            experimental: true
+          - runner: windows-11-arm
+            experimental: true
+
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
+        with:
+          version-file: "pyproject.toml"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install upx for native Windows version
+        if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'windows-11-arm' }}
+        shell: bash
+        run: |
+          choco install upx --no-progress
+
+      - name: Build native distribution into dist_native/
+        shell: bash
+        run: make dist_native
+
+      - name: Upload dist_native artifacts
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
+        with:
+          name: dist_native-${{ matrix.runner }}
+          path: dist_native/aignostics.7z
+          retention-days: 1

@@ -14,7 +14,7 @@ from typer.testing import CliRunner
 from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.platform import ApplicationRunStatus
-from aignostics.utils import get_logger, gui_register_pages
+from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION_ID
 
@@ -24,17 +24,20 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-@pytest.mark.sequential
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=30)
 async def test_gui_index(user: User, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     # hello world
-    gui_register_pages()
     await user.open("/")
-    await user.should_see("Atlas H&E-TME")
+    await user.should_see("Atlas H&E-TME", retries=100)
     await user.should_see("Download Datasets")
 
 
+@pytest.mark.e2e
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 2)
 @pytest.mark.parametrize(
     ("application_id", "application_name", "expected_text"),
     [
@@ -55,20 +58,27 @@ async def test_gui_home_to_application(
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
-    gui_register_pages()
     await user.open("/")
     await user.should_see(application_name, retries=100)
     user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
-    await user.should_see(expected_text, retries=100)
+    await user.should_see(expected_text, retries=300)
 
 
-@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
-async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
-    """Test that the user sees the index page, and sees the intro."""
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.sequential
+async def test_gui_cli_submit_to_run_result_delete(
+    user: User,
+    runner: CliRunner,
+    silent_logging: None,
+    record_property,
+) -> None:
+    """Test that the user can submit a run via the CLI up to deleting the run results."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
-    with tempfile.TemporaryDirectory() as tmpdir:
-        gui_register_pages()
 
+    with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
@@ -82,7 +92,18 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_loggi
         csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
         csv_path = tmp_path / "dummy.csv"
         csv_path.write_text(csv_content)
-        result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "submit",
+                HETA_APPLICATION_ID,
+                str(csv_path),
+                "--note",
+                "test_gui_cli_submit_to_run_result_delete",
+            ],
+        )
         assert result.exit_code == 0
 
         # Extract the run ID from the output
@@ -94,33 +115,48 @@ async def test_gui_cli_to_run_cancel(user: User, runner: CliRunner, silent_loggi
         # Run shown in he GUI
         await user.open("/")
         await user.should_see("Applications")
-        await user.should_see("Atlas H&E-TME")
+        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
+        await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("Runs")
-        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=1000)
+        await user.should_see(HETA_APPLICATION_VERSION_ID, marker="SIDEBAR_RUN_ITEM:0", retries=100)
 
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
         await user.should_see(f"Run of {latest_version_id}")
-        await user.should_see(f"Application Version: {latest_version_id}")
-        await user.should_see("status RUNNING")
+        await user.should_see(f"Application Version: {latest_version_id}", retries=100)
+        await user.should_see("status RUNNING", retries=100)
+        await user.should_see("test_gui_cli_submit_to_run_result_delete", retries=100)
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
         await assert_notified(user, f"Canceling application run with id '{run_id}' ...")
         await assert_notified(user, "Application run cancelled!")
 
         # Check user sees refreshed run page and run is cancelled
-        await user.should_see("status CANCELED_USER", retries=200)
+        await user.should_see("status CANCELED_USER", retries=100)
+
+        # ... and user can delete run
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE", retries=100)
+
+        # Have user delete run
+        user.find(marker="BUTTON_APPLICATION_RUN_RESULT_DELETE").click()
+        await assert_notified(user, f"Deleting results of application run with id '{run_id}' ...")
+        await assert_notified(user, "Application run deleted!")
+
+        # Assert user was auto-navigated to Homepage
+        await user.should_see("Welcome", retries=500)
 
 
+@pytest.mark.e2e
 @pytest.mark.long_running
+@pytest.mark.flaky(retries=1, delay=5)
+@pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
     record_property("tested-item-id", "TC-APPLICATION-GUI-04")
     with patch("aignostics.application._gui._page_application_describe.Path.home", return_value=tmp_path):
-        gui_register_pages()
-
         # Download example wsi
         result = runner.invoke(
             cli,
@@ -142,10 +178,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         # Open the GUI and navigate to Atlas H&E-TME application
         await user.open("/")
         await user.should_see("Applications")
-        await user.should_see("Atlas H&E-TME")
-        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme")
+        await user.should_see("Atlas H&E-TME", retries=100)
+        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
-        await user.should_see("Atlas H&E-TME")
+        await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("The Atlas", retries=100)
         await user.should_see("The Atlas H&E TME is an AI application")
 
@@ -171,7 +207,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see(f"Selected folder {tmp_path!s} to analyze.")
         await assert_notified(user, f"You chose directory {tmp_path!s}.")
         user.find(marker="BUTTON_WSI_NEXT").click()
-        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=20)
+        await assert_notified(user, "Finding WSIs and generating metadata", wait_seconds=5)
+        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=120)
         await sleep(10)
 
         # Generate remaining metadata, going to upload UI
@@ -179,38 +216,45 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             "The Launchpad has found all compatible slide files in your selected folder.",
             retries=100,
         )
+
         user.find(marker="BUTTON_PYTEST_META").click()
         await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
         user.find(marker="BUTTON_METADATA_NEXT").click()
         await assert_notified(user, "Prepared upload UI.")
-        print(user.current_layout)
         await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
 
         # Trigger upload and submission
         await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
+        button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
+        assert button_submission_upload.enabled, "Upload button should be enabled"
         user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
-        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...")
+        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...", 10)
         button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
         assert not button_submission_upload.enabled, "Upload button should be disabled after click"
-        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=30)
+        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=60)
         await assert_notified(user, "Submitting application run ...")
-        await assert_notified(user, "Application run submitted with id", wait_seconds=10)
+        await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
         # Check user is redirected to the run page and run is running
+        await sleep(2)
         await user.should_see(f"Run of he-tme:v{latest_application_version.version}", retries=200)
         await user.should_see("status RUNNING")
 
         # Check user can cancel run
-        await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL")
+        await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
         user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
         await assert_notified(user, "Canceling application run with id")
-        await assert_notified(user, "Application run cancelled!")
+        await assert_notified(user, "Application run cancelled!", wait_seconds=20)
 
         # Check user sees refreshed run page and run is cancelled
         await user.should_see("status CANCELED_USER", retries=200)
 
 
-@pytest.mark.sequential
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.flaky(retries=1, delay=5)
+@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
 async def test_gui_run_download(
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
@@ -219,14 +263,13 @@ async def test_gui_run_download(
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
-        gui_register_pages()
-
         latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
         latest_version_id = latest_version.application_version_id
-        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+        # This assumes a successful HETA run is in the last 200 completed runs
+        runs = Service().application_runs(limit=200, status=ApplicationRunStatus.COMPLETED)
 
         if not runs:
-            pytest.fail("No completed runs found, please run the test first.")
+            pytest.fail("No completed runs found, please run other tests first.")
         # Find a completed run with the latest application version ID
         run = None
         for potential_run in runs:
@@ -239,23 +282,28 @@ async def test_gui_run_download(
         # Step 1: Go to latest completed run
         print(f"Found existing run: {run.application_run_id}, status: {run.status}")
         await user.open(f"/application/run/{run.application_run_id}")
-        await user.should_see(f"Run {run.application_run_id}")
-        await user.should_see(f"Run of {latest_version_id}")
+        await user.should_see(f"Run {run.application_run_id}", retries=100)
+        await user.should_see(f"Run of {latest_version_id}", retries=100)
 
         # Step 2: Open Result Download dialog
-        await user.should_see(marker="BUTTON_DOWNLOAD_RUN")
+        await user.should_see(marker="BUTTON_DOWNLOAD_RUN", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_RUN").click()
 
         # Step 3: Select Data
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
+        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        assert not download_run_button.enabled, "Download button should be disabled before selecting target"
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
 
         # Step 3: Trigger Download
-        await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")
+        await sleep(2)  # Wait a bit for button state to update so we can click
+        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        assert download_run_button.enabled, "Download button should be enabled after selecting target"
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
+        await assert_notified(user, "Downloading ...")
 
         # Check: Download completed
-        await assert_notified(user, "Download completed.", 60)
+        await assert_notified(user, "Download completed.", 60 * 4)
         print_directory_structure(tmp_path, "execute")
         run_out_dir = tmp_path / run.application_run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"

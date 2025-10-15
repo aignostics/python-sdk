@@ -2,16 +2,20 @@ name: "Publish Package"
 
 on:
   workflow_call:
-    # No inputs needed at this time
+    secrets:
+      UV_PUBLISH_TOKEN:
+        required: false
+      SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT:
+        required: false
+      SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT:
+        required: false
 
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
   PYTHONIOENCODING: "utf8"
 
 jobs:
-
   build_native:
-
     runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -28,6 +32,8 @@ jobs:
             experimental: true
           - runner: windows-latest
             experimental: true
+          - runner: windows-11-arm
+            experimental: true
 
     permissions:
       attestations: write
@@ -42,7 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -60,6 +66,12 @@ jobs:
             echo "Output does not contain 'built with love in Berlin'"
             exit 1
             fi
+
+      - name: Install upx for native Windows version
+        if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'windows-11-arm' }}
+        shell: bash
+        run: |
+          choco install upx --no-progress
 
       - name: Build native distribution into dist_native/
         shell: bash
@@ -86,7 +98,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
+        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
         with:
           version-file: "pyproject.toml"
           cache-dependency-glob: uv.lock
@@ -129,12 +141,17 @@ jobs:
           cd ..
           ls -la dist_native_zipped/
 
+      - name: Final smoke test
+        shell: bash
+        run: |
+          uv run --no-dev aignostics --help
+
       - name: Docs
         shell: bash
         run: make docs
 
       - name: Generate release notes
-        uses: orhun/git-cliff-action@98c93442bb05a455a77bee982867857ae748eeea # v4.5.1
+        uses: orhun/git-cliff-action@d77b37db2e3f7398432d34b72a12aa3e2ba87e51 # v4.6.0
         id: git-cliff
         with:
           config: pyproject.toml
@@ -153,9 +170,16 @@ jobs:
 
       - name: Publish distribution to Python Package Index at pypi.org
         shell: bash
-        run: uv publish -t ${{ secrets.UV_PUBLISH_TOKEN }}
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
+        run: |
+          # Use uv's credential storage - uv will read from UV_PUBLISH_TOKEN env var automatically
+          uv publish
 
       - name: Download test results for ubuntu-latest generated in _test.yml
+        if: |
+          (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+          (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: test-results-ubuntu-latest
@@ -168,6 +192,9 @@ jobs:
           path: audit-results
 
       - name: Create GitHub release
+        if: |
+          (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+          (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -176,6 +203,17 @@ jobs:
           gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./test-results/* ./audit-results/*   \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
+      - name: Create GitHub release (no test results)
+        if: |
+          (contains(github.event.head_commit.message, 'skip:test:all')) ||
+          (contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          rm -rf ./test-results/coverage_html
+          gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./audit-results/*   \
+            --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
       - name: Release Announcement
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1

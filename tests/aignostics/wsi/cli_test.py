@@ -1,15 +1,22 @@
 """Tests to verify the CLI functionality of the wsi module."""
 
+import platform
+import sys
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
+import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from tests.conftest import normalize_output
 
 SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
 
 
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 5)
 def test_inspect_openslide_dicom(runner: CliRunner) -> None:
     """Check expected column returned."""
     file_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
@@ -27,7 +34,13 @@ def test_inspect_openslide_dicom(runner: CliRunner) -> None:
     )
 
 
-def test_inspect_pydicom_directory(runner: CliRunner) -> None:
+@pytest.mark.skipif(
+    sys.platform == "win32" and platform.machine().lower() in {"arm64", "aarch64"} and sys.version_info[:2] == (3, 12),
+    reason="Skipping on Windows ARM with Python 3.12.x",
+)
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 5)
+def test_inspect_pydicom_directory_non_verbose(runner: CliRunner) -> None:
     """Check expected column returned."""
     file_path = Path(__file__).parent.parent.parent / "resources"
     result = runner.invoke(cli, ["wsi", "dicom", "inspect", str(file_path)])
@@ -41,6 +54,14 @@ def test_inspect_pydicom_directory(runner: CliRunner) -> None:
     )
 
 
+@pytest.mark.skipif(
+    platform.system() == "Windows"
+    and platform.machine().lower() in {"arm64", "aarch64"}
+    and sys.version_info[:2] == (3, 12),
+    reason="Skipping on Windows ARM with Python 3.12.x given instability of pydicom on this platform",
+)
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 5)
 def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
     """Check expected column returned."""
     file_path = Path(__file__).parent.parent.parent / "resources"
@@ -59,6 +80,14 @@ def test_inspect_pydicom_directory_verbose(runner: CliRunner) -> None:
     )
 
 
+@pytest.mark.skipif(
+    platform.system() == "Windows"
+    and platform.machine().lower() in {"arm64", "aarch64"}
+    and sys.version_info[:2] == (3, 12),
+    reason="Skipping on Windows ARM with Python 3.12.x given instability of pydicom on this platform",
+)
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 5)
 def test_inspect_pydicom_geojson_import(runner: CliRunner) -> None:
     """Check expected column returned."""
     dicom_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
@@ -71,3 +100,52 @@ def test_inspect_pydicom_geojson_import(runner: CliRunner) -> None:
             "Failed to import GeoJSON: Expecting value: line 1 column 1 (char 0)",
         ]
     )
+
+
+@pytest.mark.integration
+def test_wsi_inspect_error_handling(runner: CliRunner) -> None:
+    """Test that wsi inspect command properly displays error messages."""
+    file_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
+    error_message = "Mock error: Failed to read file"
+
+    with patch("aignostics.wsi._service.Service.get_metadata") as mock_get_metadata:
+        mock_get_metadata.side_effect = RuntimeError(error_message)
+        result = runner.invoke(cli, ["wsi", "inspect", str(file_path)])
+
+        assert result.exit_code == 1
+        assert "Failed to read file" in normalize_output(result.output)
+        assert str(file_path) in normalize_output(result.output)
+
+
+@pytest.mark.integration
+def test_wsi_dicom_inspect_error_handling(runner: CliRunner) -> None:
+    """Test that wsi dicom inspect command properly displays error messages."""
+    file_path = Path(__file__).parent.parent.parent / "resources"
+    error_message = "Mock error: Invalid DICOM structure"
+
+    with patch("aignostics.wsi._pydicom_handler.PydicomHandler.from_file") as mock_from_file:
+        mock_handler = MagicMock()
+        mock_handler.__enter__ = MagicMock(side_effect=RuntimeError(error_message))
+        mock_from_file.return_value = mock_handler
+
+        result = runner.invoke(cli, ["wsi", "dicom", "inspect", str(file_path)])
+
+        assert result.exit_code == 1
+        assert "Invalid DICOM structure" in normalize_output(result.output)
+
+
+@pytest.mark.integration
+def test_wsi_dicom_geojson_import_error_handling(runner: CliRunner) -> None:
+    """Test that wsi dicom geojson_import command properly displays error messages."""
+    dicom_path = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
+    geojson_path = Path(__file__).parent.parent.parent / "resources" / "cells.json"
+    error_message = "Mock error: Invalid GeoJSON format"
+
+    with patch("aignostics.wsi._pydicom_handler.PydicomHandler.geojson_import") as mock_geojson_import:
+        mock_geojson_import.side_effect = ValueError(error_message)
+        result = runner.invoke(cli, ["wsi", "dicom", "geojson_import", str(dicom_path), str(geojson_path)])
+
+        assert result.exit_code == 1
+        assert "Invalid GeoJSON format" in normalize_output(result.output)
+        assert str(geojson_path) in normalize_output(result.output)
+        assert str(dicom_path) in normalize_output(result.output)

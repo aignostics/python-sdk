@@ -4,18 +4,19 @@ import json
 import os
 import platform
 import re
+import ssl
 import sys
 import typing as t
 from http import HTTPStatus
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
-from typing import Any, NotRequired, TypedDict
+from typing import Any, ClassVar, NotRequired, TypedDict
 from urllib.request import getproxies
 
+import urllib3
 from dotenv import set_key as dotenv_set_key
 from dotenv import unset_key as dotenv_unset_key
 from pydantic_settings import BaseSettings
-from requests import get
 
 from ..utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
@@ -31,6 +32,7 @@ from ..utils import (  # noqa: TID252
     get_process_info,
     load_settings,
     locate_subclasses,
+    user_agent,
 )
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
@@ -70,10 +72,27 @@ class Service(BaseService):
     """System service."""
 
     _settings: Settings
+    _http_pool: ClassVar[urllib3.PoolManager | None] = None
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)
+
+    @classmethod
+    def _get_http_pool(cls) -> urllib3.PoolManager:
+        """Get or create the shared HTTP pool manager.
+
+        All service instances share the same urllib3.PoolManager for efficient connection reuse.
+
+        Returns:
+            urllib3.PoolManager: Shared connection pool manager.
+        """
+        if cls._http_pool is None:
+            cls._http_pool = urllib3.PoolManager(
+                maxsize=10,  # Max connections per host
+                block=False,  # Don't block if pool is full
+            )
+        return cls._http_pool
 
     @staticmethod
     def _is_healthy() -> bool:
@@ -89,23 +108,25 @@ class Service(BaseService):
         """Determine we can reach a well known and secure endpoint.
 
         - Checks if health endpoint is reachable and returns 200 OK
-        - Uses requests library for a direct connection check without authentication
+        - Uses urllib3 for a direct connection check without authentication
 
         Returns:
             Health: The healthiness of the network connection via basic unauthenticated request.
         """
         try:
-            response = get(
+            http = Service._get_http_pool()
+            response = http.request(
+                method="GET",
                 url=IPIFY_URL,
-                headers={"User-Agent": f"aignostics-python-sdk/{__version__}"},
-                timeout=NETWORK_TIMEOUT,
+                headers={"User-Agent": user_agent()},
+                timeout=urllib3.Timeout(total=NETWORK_TIMEOUT),
             )
 
-            if response.status_code != HTTPStatus.OK:
-                logger.error("'%s' returned '%s'", IPIFY_URL, response.status_code)
+            if response.status != HTTPStatus.OK:
+                logger.error("'%s' returned '%s'", IPIFY_URL, response.status)
                 return Health(
                     status=Health.Code.DOWN,
-                    reason=f"'{IPIFY_URL}' returned status '{response.status_code}'",
+                    reason=f"'{IPIFY_URL}' returned status '{response.status}'",
                 )
         except Exception as e:
             message = f"Issue reaching {IPIFY_URL}: {e}"
@@ -167,12 +188,19 @@ class Service(BaseService):
             timeout (int): Timeout for the request in seconds.
 
         Returns:
-            str: The public IPv4 address.
+            str | None: The public IPv4 address, or None if failed.
         """
         try:
-            response = get(url=IPIFY_URL, timeout=timeout)
-            response.raise_for_status()
-            return response.text
+            http = Service._get_http_pool()
+            response = http.request(
+                method="GET",
+                url=IPIFY_URL,
+                timeout=urllib3.Timeout(total=timeout),
+            )
+            if response.status != HTTPStatus.OK:
+                logger.error("Failed to get public IP: HTTP %s", response.status)
+                return None
+            return response.data.decode("utf-8")
         except Exception as e:
             message = f"Failed to get public IP: {e}"
             logger.exception(message)
@@ -244,6 +272,28 @@ class Service(BaseService):
         return any(term in key_lower for term in string_match_terms)
 
     @staticmethod
+    def _collect_all_settings(mask_secrets: bool = True) -> dict[str, Any]:
+        """Collect settings from all BaseSettings subclasses.
+
+        Args:
+            mask_secrets (bool): Whether to mask sensitive information in the output.
+
+        Returns:
+            dict[str, Any]: Flattened settings dictionary with env_prefix + key as the key.
+        """
+        settings: dict[str, Any] = {}
+        for settings_class in locate_subclasses(BaseSettings):
+            settings_instance = load_settings(settings_class)
+            env_prefix = settings_instance.model_config.get("env_prefix", "")
+            settings_dict = json.loads(
+                settings_instance.model_dump_json(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})
+            )
+            for key, value in settings_dict.items():
+                flat_key = f"{env_prefix}{key}".upper()
+                settings[flat_key] = value
+        return {k: settings[k] for k in sorted(settings)}
+
+    @staticmethod
     def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:  # type: ignore[override]
         """
         Get info about configuration of service.
@@ -271,7 +321,7 @@ class Service(BaseService):
         cpu_times_percent = psutil.cpu_times_percent(interval=MEASURE_INTERVAL_SECONDS)
         cpu_freq = None
         try:
-            cpu_freq = psutil.cpu_freq()
+            cpu_freq = psutil.cpu_freq() if hasattr(psutil, "cpu_freq") else None  # Happens on macOS latest VM on GHA
         except RuntimeError:
             logger.warning("Failed to get CPU frequency.")  # Happens on macOS VM on GHA
 
@@ -333,6 +383,9 @@ class Service(BaseService):
                         "public_ipv4": Service._get_public_ipv4(),
                         "proxies": getproxies(),
                         "requests_ca_bundle": os.getenv("REQUESTS_CA_BUNDLE"),
+                        "ssl_cert_file": os.getenv("SSL_CERT_FILE"),
+                        "ssl_cert_dir": os.getenv("SSL_CERT_DIR"),
+                        "ssl_default_verify_paths": ssl.get_default_verify_paths()._asdict(),
                     },
                     "uptime": {
                         "seconds": uptime(),
@@ -359,17 +412,7 @@ class Service(BaseService):
             else:
                 runtime["environ"] = dict(sorted(os.environ.items()))
 
-        settings: dict[str, Any] = {}
-        for settings_class in locate_subclasses(BaseSettings):
-            settings_instance = load_settings(settings_class)
-            env_prefix = settings_instance.model_config.get("env_prefix", "")
-            settings_dict = json.loads(
-                settings_instance.model_dump_json(context={UNHIDE_SENSITIVE_INFO: not mask_secrets})
-            )
-            for key, value in settings_dict.items():
-                flat_key = f"{env_prefix}{key}".upper()
-                settings[flat_key] = value
-        rtn["settings"] = {k: settings[k] for k in sorted(settings)}
+        rtn["settings"] = Service._collect_all_settings(mask_secrets=mask_secrets)
 
         # Convert the TypedDict to a regular dict before adding dynamic service keys
         result_dict: dict[str, Any] = dict(rtn)
@@ -381,6 +424,21 @@ class Service(BaseService):
 
         logger.info("Service info: %s", result_dict)
         return result_dict
+
+    @staticmethod
+    def dump_dot_env_file(destination: Path) -> None:
+        """Dump settings to .env file.
+
+        Args:
+            destination (Path): Path pointing to .env file to generate.
+
+        Raises:
+            ValueError: If the primary .env file does not exist.
+        """
+        dump = Service._collect_all_settings(mask_secrets=False)
+        with destination.open("w", encoding="utf-8") as f:
+            for key, value in dump.items():
+                f.write(f"{key}={value}\n")
 
     @staticmethod
     def openapi_schema() -> JsonType:

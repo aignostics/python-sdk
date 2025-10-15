@@ -120,7 +120,7 @@ def upload(  # noqa: C901
     except ValueError as e:
         msg = f"Failed to upload: {e!s}"
         logger.exception(msg)
-        console.print(f"[warning]Warning:[/red] {e}")
+        console.print(f"[yellow]Warning:[/yellow] {e}")
         sys.exit(2)
     except Exception as e:
         msg = f"Failed to upload: {e!s}"
