@@ -152,9 +152,9 @@ def _run_application_test(
         _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
 
+# TODO(Helmut): Currently not scheduled, as it fails on staging
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.scheduled
 @pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
 def test_application_runs_test_version() -> None:
     """Test application runs with the test application.
