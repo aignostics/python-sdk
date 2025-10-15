@@ -41,8 +41,9 @@ def test_application_version_valid_semver_formats(runner: CliRunner) -> None:
             pytest.skip(f"Application '{version_id.split(':')[0]}' not found, skipping test for this version format.")
 
 
-def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
+def test_application_version_invalid_semver_formats(runner: CliRunner, record_property) -> None:
     """Test that invalid semver formats are rejected with ValueError."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     from aignostics.application import Service as ApplicationService
 
     service = ApplicationService()
@@ -72,8 +73,9 @@ def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
             service.application_version(version_id)
 
 
-def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
+def test_application_version_use_latest_fallback(runner: CliRunner, record_property) -> None:
     """Test that use_latest_if_no_version_given works correctly."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     service = ApplicationService()
 
     try:
