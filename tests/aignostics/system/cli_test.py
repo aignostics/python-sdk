@@ -20,7 +20,7 @@ THE_VALUE = "test_secret_value_not_real_for_testing_only"
 @pytest.mark.timeout(timeout=60)
 def test_cli_health_json(runner: CliRunner, record_property) -> None:
     """Check health is true."""
-    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
+    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
     result = runner.invoke(cli, ["system", "health"])
     assert normalize_output(result.stdout).startswith('{  "status": "UP"')
     assert result.exit_code == 0
@@ -30,7 +30,7 @@ def test_cli_health_json(runner: CliRunner, record_property) -> None:
 @pytest.mark.timeout(timeout=30)
 def test_cli_health_yaml(runner: CliRunner, record_property) -> None:
     """Check health is true."""
-    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
+    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
     assert "status: UP" in result.output
     assert result.exit_code == 0
