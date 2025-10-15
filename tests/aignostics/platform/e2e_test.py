@@ -76,6 +76,7 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
                         "checksum_base64_crc32c": "9l3NNQ==",
                         "width_px": 3728,
                         "height_px": 3640,
+                        "resolution_mpp": 0.46499982,
                         "media_type": "image/tiff",
                     },
                 )
@@ -92,6 +93,7 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
                     ),
                     metadata={
                         "checksum_base64_crc32c": "w+ud3g==",
+                        "resolution_mpp": 0.46499982,
                         "width_px": 3616,
                         "height_px": 3400,
                         "media_type": "image/tiff",
@@ -110,6 +112,7 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
                     ),
                     metadata={
                         "checksum_base64_crc32c": "Zmx0wA==",
+                        "resolution_mpp": 0.46499982,
                         "width_px": 4016,
                         "height_px": 3952,
                         "media_type": "image/tiff",
