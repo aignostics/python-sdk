@@ -190,6 +190,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
+        await sleep(2)
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see("The Atlas", retries=100)
         await user.should_see("The Atlas H&E TME is an AI application")
@@ -247,7 +248,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
         # Check user is redirected to the run page and run is running
         await user.should_see(f"Run of he-tme ({latest_application_version.number})", retries=200)
-        await user.should_see("status RUNNING")
+        try:
+            await user.should_see("PENDING", retries=100)
+        except AssertionError:
+            await user.should_see("PROCESSING", retries=100)
 
         # Check user can cancel run
         await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
@@ -256,7 +260,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await assert_notified(user, "Application run cancelled!", wait_seconds=20)
 
         # Check user sees refreshed run page and run is cancelled
-        await user.should_see("status CANCELED_USER", retries=200)
+        await user.should_see("CANCELED_BY_USER", retries=200)
 
 
 @pytest.mark.e2e
