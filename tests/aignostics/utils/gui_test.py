@@ -19,7 +19,7 @@ def test_base_page_builder_is_abstract(record_property) -> None:
     """Test that BasePageBuilder is an abstract class.
 
     Args:
-        None
+        record_property: pytest record_property fixture
     """
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with pytest.raises(TypeError):
@@ -31,7 +31,7 @@ def test_register_pages_is_abstract(record_property) -> None:
     """Test that register_pages is an abstract method.
 
     Args:
-        None
+        record_property: pytest record_property fixture
     """
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
 
@@ -49,6 +49,7 @@ def test_register_pages_calls_all_builders(record_property, mock_locate_subclass
 
     Args:
         mock_locate_subclasses: Mock for locate_subclasses function
+        record_property: pytest record_property fixture
     """
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Create mock page builders
@@ -76,6 +77,7 @@ def test_gui_run_default_params(record_property, mock_ui: mock.MagicMock, mock_r
         mock_ui: Mock for nicegui UI
         mock_register_pages: Mock for gui_register_pages function
         nicegui_reset_globals: Fixture to reset NiceGUI globals
+        record_property: pytest record_property fixture
     """
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with mock.patch("nicegui.native.find_open_port", return_value=8000):

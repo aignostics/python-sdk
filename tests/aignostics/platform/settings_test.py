@@ -111,7 +111,7 @@ def test_authentication_settings_staging(record_property, mock_env_vars) -> None
 
 
 @pytest.mark.unit
-def test_authentication_settings_dev(record_property: Callable[[str, object], None], mock_env_vars) -> None:
+def test_authentication_settings_dev(record_property, mock_env_vars) -> None:
     """Test authentication settings with dev API root."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     settings = Settings(

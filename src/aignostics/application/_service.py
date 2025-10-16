@@ -506,7 +506,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     @staticmethod
-    def application_run_upload(  # noqa: PLR0913, PLR0917
+    def application_run_upload(
         application_version_id: str,
         metadata: list[dict[str, Any]],
         onboard_to_aignostics_portal: bool = False,
