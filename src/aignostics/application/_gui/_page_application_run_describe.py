@@ -98,6 +98,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
         return
 
+    # Forward declaration of UI buttons that will be defined later
+    cancel_button: ui.button
+    delete_button: ui.button
+
     async def _cancel(run_id: str) -> bool:
         """Cancel the application run.
 
@@ -455,7 +459,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
-            expansion = ui.expansion(text=f"Run {run.run_id}", icon="info").on_value_change(
+            expansion = ui.expansion(text=f"Run {run.run_id}", icon="info")
+            expansion.on_value_change(
                 lambda e: expansion.classes(add="w-full" if e.value else "", remove="w-full" if not e.value else "")
             )
             with expansion:
