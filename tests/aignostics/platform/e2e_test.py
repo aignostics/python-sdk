@@ -115,7 +115,6 @@ def _run_application_test(
     application_version_id: str,
     payload: list[platform.InputItem],
     checksum_attribute_key: str,
-    record_property,
 ) -> None:
     """Helper function to run an application test.
 
@@ -125,12 +124,10 @@ def _run_application_test(
         application_version_id (str): The application version ID to use for the test.
         payload (list[platform.InputItem]): The input items for the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
-        record_property: Pytest fixture for adding properties to test reports.
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     client = platform.Client(cache_token=False)
     application_run = client.runs.create(application_version_id, items=payload)
 
@@ -144,7 +141,7 @@ def _run_application_test(
 @pytest.mark.long_running
 @pytest.mark.scheduled
 @pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
-def test_application_runs_test_version() -> None:
+def test_application_runs_test_version(record_property) -> None:
     """Test application runs with the test application.
 
     This test creates an application run using the test application and three spots.
@@ -154,6 +151,7 @@ def test_application_runs_test_version() -> None:
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     _run_application_test(
         application_version_id=TEST_APPLICATION_VERSION_ID,
         payload=_get_three_spots_payload_for_test_v0_0_1(),
