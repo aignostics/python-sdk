@@ -95,13 +95,16 @@ def test_gui_run_default_params(record_property, mock_ui: mock.MagicMock, mock_r
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui.run")
-def test_gui_run_custom_params(record_property, mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock) -> None:
+def test_gui_run_custom_params(
+    record_property, mock_ui_run: mock.MagicMock, mock_register_pages: mock.MagicMock
+) -> None:
     """Test gui_run with custom parameters.
 
     Args:
         mock_ui_run: Mock for nicegui UI run
         mock_register_pages: Mock for gui_register_pages function
         nicegui_reset_globals: Fixture to reset NiceGUI globals
+        record_property: pytest record_property fixture
     """
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     os.environ["NICEGUI_SCREEN_TEST_PORT"] = "3392"
@@ -132,8 +135,9 @@ def test_gui_run_in_container_with_native(record_property, mock_ui: mock.MagicMo
     """Test that gui_run raises ValueError when running native in container.
 
     Args:
-        mock_ui_run: Mock for nicegui UI run
+        mock_ui: Mock for nicegui UI run
         nicegui_reset_globals: Fixture to reset NiceGUI globals
+        record_property: pytest record_property fixture
     """
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with pytest.raises(ValueError) as excinfo:

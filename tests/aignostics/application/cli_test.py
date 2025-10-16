@@ -191,7 +191,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 10)
-def test_cli_run_submit_and_describe_and_cancel_and_download(
+def test_cli_run_submit_and_describe_and_cancel_and_download(  # noqa: PLR0915
     runner: CliRunner, tmp_path: Path, record_property
 ) -> None:
     """Check run submit command runs successfully."""
@@ -201,7 +201,6 @@ def test_cli_run_submit_and_describe_and_cancel_and_download(
     csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
-
     result = runner.invoke(
         cli,
         [
@@ -396,7 +395,7 @@ def test_cli_run_result_delete(runner: CliRunner, record_property) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
+def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner, record_property) -> None:
     """Check run result delete command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(cli, ["application", "run", "result", "delete"])
