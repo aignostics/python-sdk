@@ -11,7 +11,7 @@ from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
 
-from aignostics.platform import ApplicationRunStatus, ItemStatus, ItemTerminationReason
+from aignostics.platform import ApplicationRunStatus, ItemOutput, ItemStatus
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
@@ -41,6 +41,25 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
     if find_spec("ijson"):
         from aignostics.qupath import Service as QuPathService  # noqa: PLC0415
+
+    ui.add_head_html("""
+        <style>
+        /* Force text wrapping in code blocks */
+        .nicegui-code pre {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            max-width: 100% !important;
+        }
+        /* Remove padding from expansion items to make full use of space */
+        .q-expansion-item .q-item {
+            padding-left: 0 !important;
+        }
+        .q-expansion-item .q-expansion-item__content {
+            padding: 0 !important;
+        }
+        </style>
+    """)
 
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     run = await nicegui_run.io_bound(service.application_run, run_id)
@@ -436,7 +455,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
-            with ui.expansion(text=f"Run {run.run_id}"):
+            expansion = ui.expansion(text=f"Run {run.run_id}", icon="info").on_value_change(
+                lambda e: expansion.classes(add="w-full" if e.value else "", remove="w-full" if not e.value else "")
+            )
+            with expansion:
                 # Display run metadata, including duration if possible, using humanize
 
                 submitted_at = run_data.submitted_at.astimezone()
@@ -448,7 +470,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     duration_str = "N/A"
 
                 if run_data.state is ApplicationRunStatus.TERMINATED and run_data.termination_reason:
-                    status_str = f"{run_data.state.value} ({run_data.termination_reason})"
+                    status_str = f"{run_data.state.value} ({run_data.termination_reason.name})"
                 else:
                     status_str = f"{run_data.state.value}"
 
@@ -457,6 +479,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     * Run ID: {run_data.run_id}
                     * Application: {run_data.application_id} ({run_data.version_number})
                     * Status: {status_str}
+                    * Output: {run_data.output.name}
                         - {run_data.statistics.item_count} items
                         - {run_data.statistics.item_pending_count} pending
                         - {run_data.statistics.item_processing_count} processing
@@ -534,8 +557,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
         note = run_data.custom_metadata.get("sdk", {}).get("note") if run_data.custom_metadata else None
         if note:
-            with ui.card().classes("full-width"):
-                ui.markdown(str(note))
+            with ui.card().classes("full-width bg-aignostics-light"):
+                ui.label("Note:").classes("text-italic text-sm text-gray-500")
+                ui.label(str(note)).classes("-mt-4")
 
         with ui.list().classes("full-width"):
             results = list(run.results())
@@ -551,7 +575,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     ui.space()
                 return
             for item in results:
-                with ui.item().classes("h-96").props("clickable"):
+                with ui.item().classes("h-96 px-0").props("clickable"):
                     with (
                         ui.item_section().classes("h-full"),
                         ui.card().tight().classes("h-full"),
@@ -601,64 +625,61 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             ui.label(item.external_id).classes(
                                 "text-center break-all text-white font-semibold text-shadow-lg/30"
                             )
-                    if (
-                        item.state is ItemStatus.TERMINATED
-                        and item.termination_reason == ItemTerminationReason.SUCCEEDED
-                    ):
-                        with ui.item_section().classes("w-full"):
-                            if item.state is ItemStatus.TERMINATED and item.output_artifacts:
-                                with ui.scroll_area().classes("h-full").style("padding: 0"):
-                                    for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
-                                        mime_type = get_mime_type_for_artifact(artifact)
-                                        with ui.expansion(
-                                            str(artifact.name),
-                                            icon=mime_type_to_icon(mime_type),
-                                            group="artifacts",
-                                        ).classes("w-full"):
-                                            if artifact.download_url:
-                                                url = artifact.download_url
-                                                title = artifact.name
-                                                metadata = artifact.metadata
-                                                with ui.button_group():
-                                                    if mime_type == "image/tiff":
-                                                        ui.button(
-                                                            "Preview",
-                                                            icon=mime_type_to_icon(mime_type),
-                                                            on_click=lambda _, url=url, title=title: tiff_dialog_open(
-                                                                title, url
-                                                            ),
-                                                        )
-                                                    if mime_type == "text/csv":
-                                                        ui.button(
-                                                            "Preview",
-                                                            icon=mime_type_to_icon(mime_type),
-                                                            on_click=lambda _, url=url, title=title: csv_dialog_open(
-                                                                title, url
-                                                            ),
-                                                        )
-                                                    if url:
-                                                        ui.button(
-                                                            text="Download",
-                                                            icon="cloud_download",
-                                                            on_click=lambda _, url=url: ui.navigate.to(
-                                                                url, new_tab=True
-                                                            ),
-                                                        )
-                                                    if metadata:
-                                                        ui.button(
-                                                            text="Schema",
-                                                            icon="schema",
-                                                            on_click=lambda _,
-                                                            title=title,
-                                                            metadata=metadata: metadata_dialog_open(title, metadata),
-                                                        )
+                    if item.output is ItemOutput.FULL:
+                        with ui.item_section().classes("w-full"), ui.scroll_area().classes("h-full p-0"):
+                            for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
+                                mime_type = get_mime_type_for_artifact(artifact)
+                                with ui.expansion(
+                                    str(artifact.name),
+                                    icon=mime_type_to_icon(mime_type),
+                                    group="artifacts",
+                                ).classes("w-full"):
+                                    if artifact.download_url:
+                                        url = artifact.download_url
+                                        title = artifact.name
+                                        metadata = artifact.metadata
+                                        with ui.button_group():
+                                            if mime_type == "image/tiff":
+                                                ui.button(
+                                                    "Preview",
+                                                    icon=mime_type_to_icon(mime_type),
+                                                    on_click=lambda _, url=url, title=title: tiff_dialog_open(
+                                                        title, url
+                                                    ),
+                                                )
+                                            if mime_type == "text/csv":
+                                                ui.button(
+                                                    "Preview",
+                                                    icon=mime_type_to_icon(mime_type),
+                                                    on_click=lambda _, url=url, title=title: csv_dialog_open(
+                                                        title, url
+                                                    ),
+                                                )
+                                            if url:
+                                                ui.button(
+                                                    text="Download",
+                                                    icon="cloud_download",
+                                                    on_click=lambda _, url=url: ui.navigate.to(url, new_tab=True),
+                                                )
+                                            if metadata:
+                                                ui.button(
+                                                    text="Schema",
+                                                    icon="schema",
+                                                    on_click=lambda _,
+                                                    title=title,
+                                                    metadata=metadata: metadata_dialog_open(title, metadata),
+                                                )
                     elif item.state is ItemStatus.TERMINATED:
                         if item.error_message:
-                            with ui.row().classes("w-1/2 justify-start items-start content-start ml-4"):
+                            with (
+                                ui.row()
+                                .classes("w-1/2 justify-start items-start content-start ml-4")
+                                .style("max-width: 50%;")
+                            ):
                                 ui.code(
                                     item.error_message,
                                     language="markdown",
-                                ).classes("full-width break-all ml-8")
+                                ).classes("ml-8").style("width: 100%; max-width: 100%;")
                         else:
                             with ui.row().classes("w-1/2 justify-center content-center"):
                                 ui.space()

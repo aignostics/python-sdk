@@ -16,6 +16,7 @@ from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSumm
 from aignx.codegen.models import InputArtifact as InputArtifactData
 from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import ItemCreationRequest as InputItem
+from aignx.codegen.models import ItemOutput as ItemOutput
 from aignx.codegen.models import ItemResultReadResponse as ItemResult
 from aignx.codegen.models import ItemState as ItemStatus
 from aignx.codegen.models import ItemTerminationReason
@@ -113,6 +114,7 @@ __all__ = [
     "InputArtifact",
     "InputArtifactData",
     "InputItem",
+    "ItemOutput",
     "ItemResult",
     "ItemStatus",
     "ItemTerminationReason",

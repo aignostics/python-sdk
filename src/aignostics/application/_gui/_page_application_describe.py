@@ -58,6 +58,15 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     Args:
         application_id (str): The application ID.
     """
+    ui.add_head_html("""
+        <style>
+        /* Remove padding from expansion items to make full use of space */
+        .q-expansion-item .q-item {
+            padding-left: 0 !important;
+        }
+        </style>
+    """)
+
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     application = await nicegui_run.io_bound(service.application, application_id)
     application_versions = await nicegui_run.io_bound(service.application_versions, application_id)
