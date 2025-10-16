@@ -2,6 +2,10 @@ name: "Report build to Ketryx and check for approval"
 
 on:
   workflow_call:
+    inputs:
+      commit-sha:
+        required: true
+        type: string
     secrets:
       KETRYX_PROJECT:
         required: false
@@ -13,7 +17,6 @@ env:
   PYTHONIOENCODING: "utf8"
 
 jobs:
-
   ketryx_report_and_check:
     runs-on: ubuntu-latest
     permissions:
@@ -29,13 +32,13 @@ jobs:
         if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
-          name: test-results-ubuntu-latest          
+          name: test-results-ubuntu-latest
 
       - name: Download audit results generated in _audit.yml
         if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
-          name: audit-results          
+          name: audit-results
 
       - name: Report build to Ketryx and check for approval
         if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
@@ -44,6 +47,7 @@ jobs:
         with:
           project: ${{ secrets.KETRYX_PROJECT }}
           api-key: ${{ secrets.KETRYX_API_KEY }}
+          commit-sha: ${{ inputs.commit-sha }}
           build-name: "ci-cd"
           check-dependencies-status: true
           test-junit-path: reports/junit_*.xml
