@@ -43,7 +43,6 @@ jobs:
       - name: Report build to Ketryx and check for approval
         if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
         uses: Ketryx/ketryx-github-action@40b13ef68c772e96e58ec01a81f5b216d7710186 # v1.4.0
-        continue-on-error: true # TODO(Helmut): Remove post having Ketryx configured to inspect the main branch
         with:
           project: ${{ secrets.KETRYX_PROJECT }}
           api-key: ${{ secrets.KETRYX_API_KEY }}
@@ -62,4 +61,3 @@ jobs:
             reports/mypy_junit.xml
             reports/coverage.xml
             reports/coverage.md
-            # aignostics.log
