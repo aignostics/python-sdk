@@ -100,7 +100,7 @@ def test_load_settings_success(record_property) -> None:
 @pytest.mark.unit
 @patch("sys.exit")
 @patch("rich.console.Console.print")
-def test_load_settings_validation_error(record_property, mock_console_print, mock_exit) -> None:
+def test_load_settings_validation_error(mock_console_print, mock_exit, record_property) -> None:
     """Test that validation error is handled properly."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # The settings class requires required_value, but we're not providing it

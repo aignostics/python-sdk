@@ -44,7 +44,7 @@ def test_register_pages_is_abstract(record_property) -> None:
 
 @pytest.mark.unit
 @mock.patch("aignostics.utils._gui.locate_subclasses")
-def test_register_pages_calls_all_builders(record_property, mock_locate_subclasses: mock.MagicMock) -> None:
+def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMock, record_property) -> None:
     """Test that gui_register_pages calls register_pages on all builders.
 
     Args:
@@ -98,7 +98,7 @@ def test_gui_run_default_params(record_property, mock_ui: mock.MagicMock, mock_r
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui.run")
 def test_gui_run_custom_params(
-    record_property, mock_ui_run: mock.MagicMock, mock_register_pages: mock.MagicMock
+    mock_ui_run: mock.MagicMock, mock_register_pages: mock.MagicMock, record_property
 ) -> None:
     """Test gui_run with custom parameters.
 
@@ -133,7 +133,7 @@ def test_gui_run_custom_params(
 @pytest.mark.unit
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", True)
 @mock.patch("nicegui.ui.run")
-def test_gui_run_in_container_with_native(record_property, mock_ui: mock.MagicMock) -> None:
+def test_gui_run_in_container_with_native(mock_ui: mock.MagicMock, record_property) -> None:
     """Test that gui_run raises ValueError when running native in container.
 
     Args:
