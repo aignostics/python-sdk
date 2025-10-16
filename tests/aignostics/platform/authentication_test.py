@@ -568,6 +568,8 @@ class TestPortAvailability:
             # Verify SO_REUSEADDR was set
             mock_socket.setsockopt.assert_called_with(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+    @pytest.mark.unit
+    @pytest.mark.sequential
     @staticmethod
     def test_authorization_flow_retries_on_port_in_use(mock_settings) -> None:
         """Test that authorization flow retries when port is in use."""

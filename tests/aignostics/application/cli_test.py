@@ -53,6 +53,7 @@ def test_cli_application_describe_success(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
+@pytest.mark.e2e
 def test_cli_application_describe_verbose(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID, "--verbose"])

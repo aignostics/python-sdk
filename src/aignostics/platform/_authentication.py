@@ -298,7 +298,6 @@ def _can_open_browser() -> bool:
     return launch_browser
 
 
-# TODO(Andreas): This function is complex. Can we unwrap parts of it into smaller functions?
 def _perform_authorization_code_with_pkce_flow() -> str:  # noqa: C901
     """Performs the OAuth 2.0 Authorization Code flow with PKCE.
 
