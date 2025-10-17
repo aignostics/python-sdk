@@ -33,12 +33,14 @@ jobs:
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: test-results-ubuntu-latest
+          path: test-results
 
       - name: Download audit results generated in _audit.yml
         if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: audit-results
+          path: audit-results
 
       - name: Report build to Ketryx and check for approval
         if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
@@ -49,15 +51,14 @@ jobs:
           commit-sha: ${{ inputs.commit-sha }}
           build-name: "ci-cd"
           check-dependencies-status: true
-          test-junit-path: reports/junit_*.xml
+          test-junit-path: test-results/junit_*.xml
           cyclonedx-json-path: |
-            reports/sbom.json
+            audit-results/sbom.json
           artifact-path: |
-            reports/sbom.spdx
-            reports/licenses.csv
-            reports/licenses.json
-            reports/licenses_grouped.json
-            reports/vulnerabilities.json
-            reports/mypy_junit.xml
-            reports/coverage.xml
-            reports/coverage.md
+            audit-results/sbom.spdx
+            audit-results/licenses.csv
+            audit-results/licenses.json
+            audit-results/licenses_grouped.json
+            audit-results/vulnerabilities.json
+            test-results/coverage.xml
+            test-results/coverage.md
