@@ -186,15 +186,70 @@ def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_setti
     assert settings1.client_id_device.get_secret_value() == "test-client-id-device"
 
 
-# TODO(Helmut): fixme
-@pytest.mark.skip(reason="Broken feature")
 @pytest.mark.unit
-def test_custom_env_file_location(mock_env_vars) -> None:
-    """Test custom env file location."""
-    custom_env_file = "/home/dummy/test_env_file"
-    with mock.patch.dict(os.environ, {f"{__project_name__.upper()}_ENV_FILE": custom_env_file}):
-        settings = Settings.model_config
-        assert custom_env_file in settings["env_file"]
+@pytest.mark.sequential
+def test_custom_env_file_location(reset_cached_settings) -> None:
+    """Test custom env file location.
+
+    This test verifies that a custom env file can be specified via the AIGNOSTICS_ENV_FILE
+    environment variable and that Settings will load from that file. The test uses a context
+    manager to ensure proper cleanup of the temporary env file.
+
+    Note: This test uses health_timeout instead of client_id_device because in CI environments,
+    the AIGNOSTICS_CLIENT_ID_DEVICE environment variable takes precedence over env file values
+    (as per pydantic-settings priority). The health_timeout field is less likely to be set
+    in CI environments.
+    """
+    import sys
+    import tempfile
+    from contextlib import contextmanager
+
+    settings_module = "aignostics.platform._settings"
+
+    @contextmanager
+    def temp_env_file(content: str):  # type: ignore[misc]
+        """Context manager for creating a temporary env file that's cleaned up automatically.
+
+        Args:
+            content: The content to write to the temporary env file.
+
+        Yields:
+            str: The path to the temporary env file.
+        """
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False, encoding="utf-8") as f:
+            f.write(content)
+            temp_path = f.name
+        try:
+            yield temp_path
+        finally:
+            Path(temp_path).unlink(missing_ok=True)
+
+    # Create a temporary env file with test settings
+    with temp_env_file("AIGNOSTICS_HEALTH_TIMEOUT=42.5\n") as custom_env_file:
+        # Set the custom env file location BEFORE importing Settings
+        # This requires reimporting the module to pick up the new env var
+        # Clear ALL AIGNOSTICS_ environment variables to ensure clean state
+        env_patch = {k: v for k, v in os.environ.items() if not k.startswith(f"{__project_name__.upper()}_")}
+
+        # Now set only the variables we want for this test
+        env_patch[f"{__project_name__.upper()}_ENV_FILE"] = custom_env_file
+
+        try:
+            with mock.patch.dict(os.environ, env_patch, clear=True):
+                # Remove the module from sys.modules to force reimport
+                if settings_module in sys.modules:
+                    del sys.modules[settings_module]
+
+                # Now import Settings fresh - it should read from the custom env file
+                from aignostics.platform._settings import Settings
+
+                assert custom_env_file in Settings.model_config["env_file"]
+                test_settings = Settings()
+                assert test_settings.health_timeout == pytest.approx(42.5)
+        finally:
+            # Restore the original module state by deleting it so it gets reimported fresh next time
+            if settings_module in sys.modules:
+                del sys.modules[settings_module]
 
 
 @pytest.mark.unit
