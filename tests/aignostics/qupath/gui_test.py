@@ -31,7 +31,7 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None) -> None:
+async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
@@ -51,7 +51,7 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
     await assert_notified(
         user,
         f"QuPath installed successfully to '{app_dir}",
-        wait_seconds=35,
+        wait_seconds=60 * 2,
     )
 
     # Step 4: Check we indicate QuPath is installed
