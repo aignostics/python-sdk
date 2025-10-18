@@ -128,9 +128,9 @@ def _(client):
 def _(mo):
     mo.md(
         r"""
-    # Trigger an application run
+    # Submit an application run
 
-    Now, let's trigger an application run. We will use the application ID retrieved in the previous steps. We will not specify the version, which automatically uses the latest version. To create an application run, we need to provide a payload that consists of 1 or more items. We provide the Pydantic model `InputItem` an item and the data that comes with it:
+    Now, let's submit an application run. We will use the application ID retrieved in the previous steps. We will not specify the version, which automatically uses the latest version. To submit an application run, we need to provide a payload that consists of 1 or more items. We provide the Pydantic model `InputItem` an item and the data that comes with it:
     ```python
     platform.InputItem(
         external_id="<a unique identifier to associate outputs to this input item>",
@@ -158,7 +158,7 @@ def _(mo):
 
 @app.cell
 def _(client, platform):
-    application_run = client.runs.create(
+    application_run = client.runs.submit(
         application_id="test-app",
         items=[
             platform.InputItem(
@@ -209,7 +209,7 @@ def _(mo):
         r"""
     # Continue to retrieve results for an application run
 
-    In case you just triggered an application run and want to check on the results later or you had a connection loss, you can simply initialize an application run object via its `run_id`. If you do not have the `run_id` anymore, you can simply list all currently running application versions via the `client.runs.list()` method. The `run_id` is part of the `ApplicationRun` object returned by the `list()` method. You can then use the `download_to_folder()` method to continue downloading the results.
+    In case you just submitted an application run and want to check on the results later or you had a connection loss, you can simply initialize an application run object via its `run_id`. If you do not have the `run_id` anymore, you can simply list all currently running application versions via the `client.runs.list()` method. The `run_id` is part of the `ApplicationRun` object returned by the `list()` method. You can then use the `download_to_folder()` method to continue downloading the results.
     """
     )
     return

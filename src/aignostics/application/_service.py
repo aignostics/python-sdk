@@ -21,7 +21,6 @@ from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
     Application,
-    ApplicationRun,
     ApplicationSummary,
     ApplicationVersion,
     Client,
@@ -30,6 +29,7 @@ from aignostics.platform import (
     ItemResult,
     NotFoundException,
     OutputArtifactElement,
+    Run,
     RunData,
     RunOutput,
     RunState,
@@ -260,7 +260,10 @@ class Service(BaseService):
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
         try:
-            return self._get_platform_client().application(application_id)
+            logger.debug("Retrieving application with ID '%s'.", application_id)
+            rtn = self._get_platform_client().application(application_id)
+            logger.debug("Retrieved application: %s", rtn)
+            return rtn
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
@@ -287,7 +290,12 @@ class Service(BaseService):
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
         try:
-            return self._get_platform_client().application_version(application_id, application_version)
+            logger.debug(
+                "Retrieving application version '%s' for application with ID '%s'.", application_version, application_id
+            )
+            rtn = self._get_platform_client().application_version(application_id, application_version)
+            logger.debug("Retrieved application version: %s", rtn)
+            return rtn
         except ValueError:
             raise
         except NotFoundException as e:
@@ -332,11 +340,14 @@ class Service(BaseService):
         # Can be optimized to one call if API would support it.
         # Let's discuss if we should re-add the endpoint that existed.
         try:
+            logger.debug("Retrieving application versions for application with ID '%s'.", application_id)
             client = self._get_platform_client()
-            return [
+            rtn = [
                 client.application_version(application_id, version.number)
                 for version in client.versions.list(application_id)
             ]
+            logger.debug("Retrieved %d application versions: %s", len(rtn), rtn)
+            return rtn
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
@@ -690,14 +701,14 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run(self, run_id: str) -> ApplicationRun:
+    def application_run(self, run_id: str) -> Run:
         """Select a run by its ID.
 
         Args:
             run_id: The ID of the run to find
 
         Returns:
-            ApplicationRun: The run that can be fetched using the .details() call.
+            Run: The run that can be fetched using the .details() call.
 
         Raises:
             RuntimeError: If initializing the client fails or the run cannot be retrieved.
@@ -716,7 +727,7 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         onboard_to_aignostics_portal: bool = False,
-    ) -> ApplicationRun:
+    ) -> Run:
         """Submit a run for the given application.
 
         Args:
@@ -728,7 +739,7 @@ class Service(BaseService):
             onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
 
         Returns:
-            ApplicationRun: The submitted run.
+            Run: The submitted run.
 
         Raises:
             NotFoundException: If the application version with the given ID is not found.
@@ -831,7 +842,7 @@ class Service(BaseService):
         items: list[InputItem],
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
-    ) -> ApplicationRun:
+    ) -> Run:
         """Submit a run for the given application.
 
         Args:
@@ -841,7 +852,7 @@ class Service(BaseService):
             custom_metadata: Optional custom metadata to attach to the run.
 
         Returns:
-            ApplicationRun: The submitted run.
+            Run: The submitted run.
 
         Raises:
             NotFoundException: If the application version with the given ID is not found.
@@ -852,7 +863,7 @@ class Service(BaseService):
             # TODO (Andreas): This is broken in the openapi.json - runs.create certainly
             # needs the application_id and the application_version, not just the version
             # Below must be changed post fix in openapi.json
-            return self._get_platform_client().runs.create(
+            return self._get_platform_client().runs.submit(
                 application_id=application_id,
                 items=items,
                 application_version=application_version,
@@ -1203,7 +1214,7 @@ class Service(BaseService):
     def _download_available_items(  # noqa: PLR0913, PLR0917
         self,
         progress: DownloadProgress,
-        application_run: ApplicationRun,
+        application_run: Run,
         destination_directory: Path,
         downloaded_items: set[str],
         create_subdirectory_per_item: bool = False,
@@ -1214,7 +1225,7 @@ class Service(BaseService):
 
         Args:
             progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-            application_run (ApplicationRun): The application run object.
+            application_run (Run): The application run object.
             destination_directory (Path): Directory to save files.
             downloaded_items (set): Set of already downloaded item external ids.
             create_subdirectory_per_item (bool): Whether to create a subdirectory for each item.

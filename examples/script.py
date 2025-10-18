@@ -6,9 +6,9 @@ from aignostics import platform
 
 # initialize the client
 client = platform.Client()
-# create application run
+# submit application run
 # for details, see the IPython or Marimo notebooks for a detailed explanation of the payload
-application_run = client.runs.create(
+application_run = client.runs.submit(
     application_id="two-task-dummy",
     items=[
         platform.InputItem(

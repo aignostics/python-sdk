@@ -69,7 +69,7 @@ from ._utils import (
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
-from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, ApplicationRun
+from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Run
 
 __all__ = [
     "API_ROOT_DEV",
@@ -104,7 +104,6 @@ __all__ = [
     "UNKNOWN_ENDPOINT_URL",
     "ApiException",
     "Application",
-    "ApplicationRun",
     "ApplicationSummary",
     "ApplicationVersion",
     "Client",
@@ -120,6 +119,7 @@ __all__ = [
     "Organization",
     "OutputArtifactData",
     "OutputArtifactElement",
+    "Run",
     "RunData",
     "RunOutput",
     "RunState",

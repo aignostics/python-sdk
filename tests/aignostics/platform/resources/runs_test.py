@@ -1,10 +1,10 @@
 """Tests for the runs resource module.
 
-This module contains unit tests for the Runs class and ApplicationRun class,
+This module contains unit tests for the Runs class and Run class,
 verifying their functionality for listing, creating, and managing application runs.
 """
 
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 import pytest
 from aignx.codegen.api.public_api import PublicApi
@@ -16,7 +16,7 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
-from aignostics.platform.resources.runs import ApplicationRun, Runs
+from aignostics.platform.resources.runs import Run, Runs
 from aignostics.platform.resources.utils import PAGE_SIZE
 
 
@@ -44,16 +44,16 @@ def runs(mock_api) -> Runs:
 
 
 @pytest.fixture
-def app_run(mock_api) -> ApplicationRun:
-    """Create an ApplicationRun instance with a mock API for testing.
+def app_run(mock_api) -> Run:
+    """Create an Run instance with a mock API for testing.
 
     Args:
         mock_api: A mock instance of ExternalsApi.
 
     Returns:
-        ApplicationRun: An ApplicationRun instance using the mock API.
+        Run: An Run instance using the mock API.
     """
-    return ApplicationRun(mock_api, "test-run-id")
+    return Run(mock_api, "test-run-id")
 
 
 @pytest.mark.unit
@@ -61,7 +61,7 @@ def test_runs_list_with_pagination(runs, mock_api) -> None:
     """Test that Runs.list() correctly handles pagination.
 
     This test verifies that the list method properly aggregates results from
-    multiple paginated API responses and converts them to ApplicationRun instances.
+    multiple paginated API responses and converts them to Run instances.
 
     Args:
         runs: Runs instance with mock API.
@@ -77,12 +77,17 @@ def test_runs_list_with_pagination(runs, mock_api) -> None:
 
     # Assert
     assert len(result) == PAGE_SIZE + 5
-    assert all(isinstance(run, ApplicationRun) for run in result)
+    assert all(isinstance(run, Run) for run in result)
     assert mock_api.list_runs_v1_runs_get.call_count == 2
-    mock_api.list_runs_v1_runs_get.assert_has_calls([
-        call(page=1, page_size=PAGE_SIZE, application_id=None, application_version=None),
-        call(page=2, page_size=PAGE_SIZE, application_id=None, application_version=None),
-    ])
+    # Check that the calls were made with the expected parameters (ignoring _request_timeout and _headers)
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["page"] == 1
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["page_size"] == PAGE_SIZE
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["application_id"] is None
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["application_version"] is None
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["page"] == 2
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["page_size"] == PAGE_SIZE
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["application_id"] is None
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["application_version"] is None
 
 
 @pytest.mark.unit
@@ -105,20 +110,23 @@ def test_runs_list_with_application_version_filter(runs, mock_api) -> None:
     list(runs.list(application_id=app_id, application_version=app_version))
 
     # Assert
-    mock_api.list_runs_v1_runs_get.assert_called_once_with(
-        application_id=app_id, application_version=app_version, page=1, page_size=PAGE_SIZE
-    )
+    mock_api.list_runs_v1_runs_get.assert_called_once()
+    call_kwargs = mock_api.list_runs_v1_runs_get.call_args[1]
+    assert call_kwargs["application_id"] == app_id
+    assert call_kwargs["application_version"] == app_version
+    assert call_kwargs["page"] == 1
+    assert call_kwargs["page_size"] == PAGE_SIZE
 
 
 @pytest.mark.unit
 def test_application_run_results_with_pagination(app_run, mock_api) -> None:
-    """Test that ApplicationRun.results() correctly handles pagination.
+    """Test that Run.results() correctly handles pagination.
 
     This test verifies that the results method properly aggregates results
     from multiple paginated API responses when requesting run results.
 
     Args:
-        app_run: ApplicationRun instance with mock API.
+        app_run: Run instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
     # Arrange
@@ -132,18 +140,21 @@ def test_application_run_results_with_pagination(app_run, mock_api) -> None:
     # Assert
     assert len(result) == PAGE_SIZE + 5
     assert mock_api.list_run_items_v1_runs_run_id_items_get.call_count == 2
-    mock_api.list_run_items_v1_runs_run_id_items_get.assert_has_calls([
-        call(run_id=app_run.run_id, page=1, page_size=PAGE_SIZE),
-        call(run_id=app_run.run_id, page=2, page_size=PAGE_SIZE),
-    ])
+    # Check that the calls were made with the expected parameters (ignoring _request_timeout and _headers)
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_args_list[0][1]["run_id"] == app_run.run_id
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_args_list[0][1]["page"] == 1
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_args_list[0][1]["page_size"] == PAGE_SIZE
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_args_list[1][1]["run_id"] == app_run.run_id
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_args_list[1][1]["page"] == 2
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_args_list[1][1]["page_size"] == PAGE_SIZE
 
 
 @pytest.mark.unit
 def test_runs_call_returns_application_run(runs) -> None:
-    """Test that Runs.__call__() returns an ApplicationRun instance.
+    """Test that Runs.__call__() returns an Run instance.
 
     This test verifies that calling the Runs instance as a function correctly
-    initializes and returns an ApplicationRun instance with the specified run ID.
+    initializes and returns an Run instance with the specified run ID.
 
     Args:
         runs: Runs instance with mock API.
@@ -153,17 +164,17 @@ def test_runs_call_returns_application_run(runs) -> None:
     app_run = runs(run_id)
 
     # Assert
-    assert isinstance(app_run, ApplicationRun)
+    assert isinstance(app_run, Run)
     assert app_run.run_id == run_id
     assert app_run._api == runs._api
 
 
 @pytest.mark.unit
-def test_runs_create_returns_application_run(runs, mock_api) -> None:
-    """Test that Runs.create() returns an ApplicationRun instance.
+def test_runs_submit_returns_application_run(runs, mock_api) -> None:
+    """Test that Runs.submit() returns an Run instance.
 
-    This test verifies that the create method correctly calls the API client
-    to create a new run and returns an ApplicationRun instance for the created run.
+    This test verifies that the submit method correctly calls the API client
+    to submit a new run and returns an Run instance for the submitted run.
 
     Args:
         runs: Runs instance with mock API.
@@ -185,10 +196,10 @@ def test_runs_create_returns_application_run(runs, mock_api) -> None:
     runs._validate_input_items = Mock()
 
     # Act
-    app_run = runs.create(application_id="test", items=mock_items, application_version="1.0.0")
+    app_run = runs.submit(application_id="test", items=mock_items, application_version="1.0.0")
 
     # Assert
-    assert isinstance(app_run, ApplicationRun)
+    assert isinstance(app_run, Run)
     assert app_run.run_id == run_id
     mock_api.create_run_v1_runs_post.assert_called_once()
     # Check that a RunCreationRequest was passed to the API call
@@ -220,9 +231,12 @@ def test_paginate_with_not_found_exception_on_first_page(runs, mock_api) -> None
 
     # Assert
     assert len(result) == 0
-    mock_api.list_runs_v1_runs_get.assert_called_once_with(
-        page=1, page_size=PAGE_SIZE, application_id=None, application_version=None
-    )
+    mock_api.list_runs_v1_runs_get.assert_called_once()
+    call_kwargs = mock_api.list_runs_v1_runs_get.call_args[1]
+    assert call_kwargs["page"] == 1
+    assert call_kwargs["page_size"] == PAGE_SIZE
+    assert call_kwargs["application_id"] is None
+    assert call_kwargs["application_version"] is None
 
 
 @pytest.mark.unit
@@ -250,7 +264,12 @@ def test_paginate_with_not_found_exception_after_full_page(runs, mock_api) -> No
     # Assert
     assert len(result) == PAGE_SIZE
     assert mock_api.list_runs_v1_runs_get.call_count == 2
-    mock_api.list_runs_v1_runs_get.assert_has_calls([
-        call(page=1, page_size=PAGE_SIZE, application_id=None, application_version=None),
-        call(page=2, page_size=PAGE_SIZE, application_id=None, application_version=None),
-    ])
+    # Check that the calls were made with the expected parameters (ignoring _request_timeout and _headers)
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["page"] == 1
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["page_size"] == PAGE_SIZE
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["application_id"] is None
+    assert mock_api.list_runs_v1_runs_get.call_args_list[0][1]["application_version"] is None
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["page"] == 2
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["page_size"] == PAGE_SIZE
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["application_id"] is None
+    assert mock_api.list_runs_v1_runs_get.call_args_list[1][1]["application_version"] is None

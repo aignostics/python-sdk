@@ -4,13 +4,15 @@ This module provides classes for creating and managing application runs on the A
 It includes functionality for starting runs, monitoring status, and downloading results.
 """
 
+import logging
 import typing as t
 from collections.abc import Generator
 from pathlib import Path
 from time import sleep
-from typing import Any
+from typing import Any, cast
 
 from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.exceptions import ServiceException
 from aignx.codegen.models import (
     ItemCreationRequest,
     ItemOutput,
@@ -26,10 +28,24 @@ from aignx.codegen.models import (
 from aignx.codegen.models import (
     RunReadResponse as RunData,
 )
+from aignx.codegen.models import (
+    VersionReadResponse as ApplicationVersion,
+)
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
+from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
+from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._settings import settings
 from aignostics.platform._utils import (
+    cached_operation,
     calculate_file_crc32c,
     download_file,
     get_mime_type_for_artifact,
@@ -41,18 +57,27 @@ from aignostics.utils import get_logger, user_agent
 
 logger = get_logger(__name__)
 
+RETRYABLE_EXCEPTIONS = (
+    ServiceException,
+    Urllib3TimeoutError,
+    PoolError,
+    IncompleteRead,
+    ProtocolError,
+    ProxyError,
+)
+
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 
 
-class ApplicationRun:
+class Run:
     """Represents a single application run.
 
     Provides operations to check status, retrieve results, and download artifacts.
     """
 
     def __init__(self, api: PublicApi, run_id: str) -> None:
-        """Initializes an ApplicationRun instance.
+        """Initializes an Run instance.
 
         Args:
             api (PublicApi): The configured API client.
@@ -62,21 +87,25 @@ class ApplicationRun:
         self.run_id = run_id
 
     @classmethod
-    def for_run_id(cls, run_id: str) -> "ApplicationRun":
-        """Creates an ApplicationRun instance for an existing run.
+    def for_run_id(cls, run_id: str, cache_token: bool = True) -> "Run":
+        """Creates an Run instance for an existing run.
 
         Args:
             run_id (str): The ID of the application run.
+            cache_token (bool): Whether to cache the API token.
 
         Returns:
-            ApplicationRun: The initialized ApplicationRun instance.
+            Run: The initialized Run instance.
         """
         from aignostics.platform._client import Client  # noqa: PLC0415
 
-        return cls(Client.get_api_client(cache_token=False), run_id)
+        return cls(Client.get_api_client(cache_token=cache_token), run_id)
 
+    @cached_operation(ttl=settings().run_cache_ttl, instance_attrs=("run_id",))
     def details(self) -> RunData:
         """Retrieves the current status of the application run.
+
+        Retries on network and server errors.
 
         Returns:
             RunData: The run data.
@@ -84,7 +113,19 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        return self._api.get_run_v1_runs_run_id_get(self.run_id)
+        return Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().run_retry_attempts_max),
+            wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )(
+            lambda: self._api.get_run_v1_runs_run_id_get(
+                self.run_id,
+                _request_timeout=settings().run_timeout,
+                _headers={"User-Agent": user_agent()},
+            )
+        )
 
     # TODO(Andreas): Low Prio / existed prior to API migraiton: Please check if this still fails with
     #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.
@@ -94,7 +135,11 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        self._api.cancel_run_v1_runs_run_id_cancel_post(self.run_id)
+        self._api.cancel_run_v1_runs_run_id_cancel_post(
+            self.run_id,
+            _request_timeout=settings().run_cancel_timeout,
+            _headers={"User-Agent": user_agent()},
+        )
 
     def delete(self) -> None:
         """Delete the application run.
@@ -102,10 +147,17 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        self._api.delete_run_items_v1_runs_run_id_artifacts_delete(self.run_id)
+        self._api.delete_run_items_v1_runs_run_id_artifacts_delete(
+            self.run_id,
+            _request_timeout=settings().run_delete_timeout,
+            _headers={"User-Agent": user_agent()},
+        )
 
+    @cached_operation(ttl=settings().run_cache_ttl, instance_attrs=("run_id",))
     def results(self) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
+
+        Retries on network and server errors.
 
         Returns:
             list[ItemResultData]: A list of item results.
@@ -113,10 +165,24 @@ class ApplicationRun:
         Raises:
             Exception: If the API request fails.
         """
-        return paginate(
-            self._api.list_run_items_v1_runs_run_id_items_get,
-            run_id=self.run_id,
-        )
+
+        def results_with_retry() -> t.Iterator[ItemResultData]:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: paginate(
+                    self._api.list_run_items_v1_runs_run_id_items_get,
+                    run_id=self.run_id,
+                    _request_timeout=settings().run_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
+            )
+
+        return results_with_retry()
 
     def download_to_folder(
         self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c"
@@ -220,13 +286,13 @@ class ApplicationRun:
         Returns:
             str: String representation of the application run.
         """
-        details = self.details()
+        details = cast("RunData", self.details())
         app_status = details.state.value
         items = (
             f"{details.statistics.item_count} items - "
             f"({details.statistics.item_pending_count}/{details.statistics.item_succeeded_count}/"
             f"{details.statistics.item_system_error_count + details.statistics.item_user_error_count}) "
-            f"[pending/succeeded/error]"
+            "[pending/succeeded/error]"
         )
         return f"Application run `{self.run_id}`: {app_status}, {items}"
 
@@ -234,7 +300,7 @@ class ApplicationRun:
 class Runs:
     """Resource class for managing application runs.
 
-    Provides operations to create, find, and retrieve runs.
+    Provides operations to submit, find, and retrieve runs.
     """
 
     def __init__(self, api: PublicApi) -> None:
@@ -245,25 +311,25 @@ class Runs:
         """
         self._api = api
 
-    def __call__(self, run_id: str) -> ApplicationRun:
-        """Retrieves an ApplicationRun instance for an existing run.
+    def __call__(self, run_id: str) -> Run:
+        """Retrieves an Run instance for an existing run.
 
         Args:
             run_id (str): The ID of the application run.
 
         Returns:
-            ApplicationRun: The initialized ApplicationRun instance.
+            Run: The initialized Run instance.
         """
-        return ApplicationRun(self._api, run_id)
+        return Run(self._api, run_id)
 
-    def create(
+    def submit(
         self,
         application_id: str,
         items: list[ItemCreationRequest],
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
-    ) -> ApplicationRun:
-        """Creates a new application run.
+    ) -> Run:
+        """Submit a new application run.
 
         Args:
             application_id (str): The ID of the application.
@@ -273,7 +339,7 @@ class Runs:
             custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
 
         Returns:
-            ApplicationRun: The created application run.
+            Run: The submitted application run.
 
         Raises:
             ValueError: If the payload is invalid.
@@ -289,30 +355,52 @@ class Runs:
             items=items,
         )
         self._validate_input_items(payload)
-        res: RunCreationResponse = self._api.create_run_v1_runs_post(payload)
-        return ApplicationRun(self._api, str(res.run_id))
+        res: RunCreationResponse = self._api.create_run_v1_runs_post(
+            payload,
+            _request_timeout=settings().run_submit_timeout,
+            _headers={"User-Agent": user_agent()},
+        )
+        return Run(self._api, str(res.run_id))
 
     def list(
         self, application_id: str | None = None, application_version: str | None = None
-    ) -> Generator[ApplicationRun, Any, None]:
+    ) -> Generator[Run, Any, None]:
         """Find application runs, optionally filtered by application id and/or version.
+
+        Retries on network and server errors.
 
         Args:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version to filter by.
 
         Returns:
-            Generator[ApplicationRun, Any, None]: A generator yielding application runs.
+            Generator[Run, Any, None]: A generator yielding application runs.
 
         Raises:
             Exception: If the API request fails.
         """
-        res = paginate(
-            self._api.list_runs_v1_runs_get,
+
+        def list_with_retry(**kwargs: object) -> t.Iterator[RunData]:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: paginate(
+                    self._api.list_runs_v1_runs_get,
+                    **kwargs,  # type: ignore[arg-type]
+                    _request_timeout=settings().run_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
+            )
+
+        res = list_with_retry(
             application_id=application_id,
             application_version=application_version,
         )
-        return (ApplicationRun(self._api, response.run_id) for response in res)
+        return (Run(self._api, response.run_id) for response in res)
 
     def list_data(
         self,
@@ -323,6 +411,8 @@ class Runs:
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ) -> t.Iterator[RunData]:
         """Fetch application runs, optionally filtered by application version.
+
+        Retries on network and server errors.
 
         Args:
             application_id (str | None): Optional application ID to filter by.
@@ -343,8 +433,24 @@ class Runs:
                 f"page_size is must be less than or equal to {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}, but got {page_size}"
             )
             raise ValueError(message)
-        return paginate(
-            self._api.list_runs_v1_runs_get,
+
+        def list_data_with_retry(**kwargs: object) -> t.Iterator[RunData]:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: paginate(
+                    self._api.list_runs_v1_runs_get,
+                    **kwargs,  # type: ignore[arg-type]
+                    _request_timeout=settings().run_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
+            )
+
+        return list_data_with_retry(
             page_size=page_size,
             application_id=application_id,
             application_version=application_version,
@@ -366,8 +472,11 @@ class Runs:
             Exception: If the API request fails.
         """
         # validate metadata based on schema of application version
-        app_version = Versions(self._api).details(
-            application_id=payload.application_id, application_version=payload.version_number
+        app_version = cast(
+            "ApplicationVersion",
+            Versions(self._api).details(
+                application_id=payload.application_id, application_version=payload.version_number
+            ),
         )
         schema_idx = {
             input_artifact.name: input_artifact.metadata_schema for input_artifact in app_version.input_artifacts

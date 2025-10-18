@@ -107,6 +107,26 @@ class Settings(OpaqueSettings):
         me_retry_wait_min (float): Minimum wait time between "me" request retries in seconds.
         me_retry_wait_max (float): Maximum wait time between "me" request retries in seconds.
         me_cache_ttl (int): Time-to-live for "me" cache in seconds.
+        application_timeout (float): Timeout for application requests in seconds.
+        application_retry_attempts_max (int): Maximum number of retry attempts for application requests.
+        application_retry_wait_min (float): Minimum wait time between application request retries in seconds.
+        application_retry_wait_max (float): Maximum wait time between application request retries in seconds.
+        application_cache_ttl (int): Time-to-live for application cache in seconds.
+        application_version_timeout (float): Timeout for application version requests in seconds.
+        application_version_retry_attempts_max (int): Maximum number of retry attempts for application version requests.
+        application_version_retry_wait_min (float): Minimum wait time between application version request
+            retries in seconds.
+        application_version_retry_wait_max (float): Maximum wait time between application version request
+            retries in seconds.
+        application_version_cache_ttl (int): Time-to-live for application version cache in seconds.
+        run_timeout (float): Timeout for run requests in seconds.
+        run_retry_attempts_max (int): Maximum number of retry attempts for run requests.
+        run_retry_wait_min (float): Minimum wait time between run request retries in seconds.
+        run_retry_wait_max (float): Maximum wait time between run request retries in seconds.
+        run_cache_ttl (int): Time-to-live for run cache in seconds.
+        run_cancel_timeout (float): Timeout for run cancel requests in seconds.
+        run_delete_timeout (float): Timeout for run delete requests in seconds.
+        run_submit_timeout (float): Timeout for run submit requests in seconds.
         scope (str): OAuth scopes required by the SDK.
         scope_elements (list[str]): OAuth scopes split into individual elements.
         token_file (Path): Path to the token storage file.
@@ -329,6 +349,156 @@ class Settings(OpaqueSettings):
         ),
     ] = 60
 
+    application_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for application requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 30.0
+    application_retry_attempts_max: Annotated[
+        int,
+        Field(
+            description="Maximum number of retry attempts for application requests",
+            ge=0,
+            le=10,
+        ),
+    ] = 4
+    application_retry_wait_min: Annotated[
+        float,
+        Field(
+            description="Minimum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 0.1
+    application_retry_wait_max: Annotated[
+        float,
+        Field(
+            description="Maximum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 60.0
+    application_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for application cache (in seconds)",
+            ge=0,
+            le=3600,
+        ),
+    ] = 60
+
+    application_version_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for application version requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 30.0
+    application_version_retry_attempts_max: Annotated[
+        int,
+        Field(
+            description="Maximum number of retry attempts for application version requests",
+            ge=0,
+            le=10,
+        ),
+    ] = 4
+    application_version_retry_wait_min: Annotated[
+        float,
+        Field(
+            description="Minimum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 0.1
+    application_version_retry_wait_max: Annotated[
+        float,
+        Field(
+            description="Maximum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 60.0
+    application_version_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for application version cache (in seconds)",
+            ge=0,
+            le=3600,
+        ),
+    ] = 60
+
+    run_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for run requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 30.0
+    run_retry_attempts_max: Annotated[
+        int,
+        Field(
+            description="Maximum number of retry attempts for run requests",
+            ge=0,
+            le=10,
+        ),
+    ] = 4
+    run_retry_wait_min: Annotated[
+        float,
+        Field(
+            description="Minimum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 0.1
+    run_retry_wait_max: Annotated[
+        float,
+        Field(
+            description="Maximum wait time between retry attempts (in seconds)",
+            ge=0.0,
+            le=600.0,
+        ),
+    ] = 60.0
+    run_cache_ttl: Annotated[
+        int,
+        Field(
+            description="Time-to-live for run cache (in seconds)",
+            ge=0,
+            le=3600,
+        ),
+    ] = 60
+
+    run_cancel_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for run cancel requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 60.0
+
+    run_delete_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for run delete requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 60.0
+
+    run_submit_timeout: Annotated[
+        float,
+        Field(
+            description="Timeout for run submit requests",
+            ge=0.1,
+            le=300.0,
+        ),
+    ] = 60.0
+
     @model_validator(mode="before")
     def pre_init(cls, values: dict) -> dict:  # type: ignore[type-arg] # noqa: N805
         """Initialize auth-related fields based on the API root.
@@ -397,14 +567,13 @@ class Settings(OpaqueSettings):
 
     @model_validator(mode="after")
     def validate_retry_wait_times(self) -> "Settings":
-        """Validate that retry wait min is less or equal than retry wait max for both auth and me requests.
+        """Validate that retry wait min is less or equal than retry wait max for all operations.
 
         Returns:
             Settings: The validated settings instance.
 
         Raises:
-            ValueError: If auth_retry_wait_min is greater than or equal to auth_retry_wait_max,
-                       or if me_retry_wait_min is greater than or equal to me_retry_wait_max.
+            ValueError: If any operation's retry_wait_min is greater than retry_wait_max.
         """
         if self.auth_retry_wait_min > self.auth_retry_wait_max:
             msg = (
@@ -416,6 +585,25 @@ class Settings(OpaqueSettings):
             msg = (
                 f"me_retry_wait_min ({self.me_retry_wait_min}) must be less or equal than "
                 f"me_retry_wait_max ({self.me_retry_wait_max})"
+            )
+            raise ValueError(msg)
+        if self.application_retry_wait_min > self.application_retry_wait_max:
+            msg = (
+                f"application_retry_wait_min ({self.application_retry_wait_min}) must be less or equal than "
+                f"application_retry_wait_max ({self.application_retry_wait_max})"
+            )
+            raise ValueError(msg)
+        if self.application_version_retry_wait_min > self.application_version_retry_wait_max:
+            msg = (
+                f"application_version_retry_wait_min ({self.application_version_retry_wait_min}) "
+                f"must be less or equal than application_version_retry_wait_max "
+                f"({self.application_version_retry_wait_max})"
+            )
+            raise ValueError(msg)
+        if self.run_retry_wait_min > self.run_retry_wait_max:
+            msg = (
+                f"run_retry_wait_min ({self.run_retry_wait_min}) must be less or equal than "
+                f"run_retry_wait_max ({self.run_retry_wait_max})"
             )
             raise ValueError(msg)
         return self

@@ -19,7 +19,7 @@ from aignx.codegen.models import (
 )
 
 from aignostics import platform
-from aignostics.platform.resources.runs import ApplicationRun
+from aignostics.platform.resources.runs import Run
 from tests.contants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_TIMEOUT_SECONDS,
@@ -145,7 +145,7 @@ def _run_application_test(
     """
     # TODO(Helmut): Try with caching ...
     client = platform.Client(cache_token=False)
-    application_run = client.runs.create(
+    application_run = client.runs.submit(
         application_id=application_id, application_version=application_version, items=payload
     )
 
@@ -198,7 +198,7 @@ def test_application_runs_heta_version() -> None:
 
 
 def _validate_output(
-    application_run: ApplicationRun,
+    application_run: Run,
     output_base_folder: Path,
     checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
@@ -207,7 +207,7 @@ def _validate_output(
     This function checks if the application run has completed successfully and verifies the output artifact checksum
 
     Args:
-        application_run (ApplicationRun): The application run to validate.
+        application_run (Run): The application run to validate.
         output_base_folder (Path): The base folder where the output is stored.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """

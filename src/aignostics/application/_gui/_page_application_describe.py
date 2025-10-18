@@ -52,7 +52,7 @@ upload_message_queue = Manager().Queue()
 service = Service()
 
 
-async def _page_application_describe(application_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
+async def _page_application_describe(application_id: str) -> None:  # noqa: C901, PLR0915
     """Describe Application.
 
     Args:
@@ -68,8 +68,16 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     """)
 
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
+    ui.notify(f"Loading application details for {application_id}...", type="info")
     application = await nicegui_run.io_bound(service.application, application_id)
     application_versions = await nicegui_run.io_bound(service.application_versions, application_id)
+    ui.notify(
+        (
+            f"Loaded {application.name if application else ''} with "
+            f"{len(application_versions) if application_versions else 0} versions."
+        ),
+        type="positive",
+    )
     spinner.set_visibility(False)
 
     if application is None:
@@ -235,9 +243,13 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         else:
             ui.notify("No source directory selected", type="warning")
 
-    with ui.dialog() as info_dialog, ui.card().style("width: 1200px; max-width: none; height: 1000px"):  # noqa: PLR1702
+    @ui.refreshable
+    def _info_dialog_content() -> None:
+        """Refreshable content for the info dialog."""
         if submit_form.application_version is None:
+            ui.label("No version selected").classes("text-h6")
             return
+
         with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
             for application_version in application_versions:
                 if application_version.version_number == submit_form.application_version:
@@ -274,6 +286,9 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 "statusBar": False,
                             }).classes("full-width")
                     break
+
+    with ui.dialog() as info_dialog, ui.card().style("width: 1200px; max-width: none; height: 1000px"):
+        _info_dialog_content()
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
 
@@ -285,10 +300,16 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         f"Select the version of {application.name} you want to run. Not sure? "
                         "Click “Next” to auto-select the latest version"
                     )
+                    unique_versions = list(
+                        dict.fromkeys(
+                            str(version.number) for version in application.versions if version.number is not None
+                        )
+                    )
                     ui.select(
-                        {version.number: version.number for version in application.versions},
+                        options={version: version for version in unique_versions},
                         value=latest_application_version.number if latest_application_version else None,
-                    ).bind_value(submit_form, "application_version")
+                        on_change=lambda _: _info_dialog_content.refresh(),
+                    ).bind_value_to(submit_form, "application_version")
                 ui.space()
                 with ui.column(), ui.button(icon="info", on_click=info_dialog.open):
                     ui.tooltip("Show changes and input/ouput schema of this application version.")

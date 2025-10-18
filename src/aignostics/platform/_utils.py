@@ -1,22 +1,24 @@
 """
 This module provides utility functions to support the Aignostics client operations.
 
-It includes helpers for file operations, checksum verification, and Google Cloud Storage
-interactions.
+It includes helpers for file operations, checksum verification, Google Cloud Storage
+interactions, and operation caching.
 
-These utilities primarily handle file operations, data integrity, and cloud storage
-interactions to support the main client functionality.
+These utilities primarily handle file operations, data integrity, cloud storage
+interactions, and caching to support the main client functionality.
 """
 
 import base64
 import contextlib
 import datetime
+import hashlib
 import re
 import tempfile
+import time
 import typing as t
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import IO, Any
+from typing import IO, Any, ParamSpec, TypeVar
 
 import google_crc32c
 import requests
@@ -25,8 +27,110 @@ from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from tqdm.auto import tqdm
 
+from aignostics.platform._authentication import get_token
+
 EIGHT_MB = 8_388_608
 SIGNED_DOWNLOAD_URL_EXPIRES_SECONDS_DEFAULT = 6 * 60 * 60  # 6 hours
+
+# Cache storage for operation results
+_operation_cache: dict[str, tuple[Any, float]] = {}
+
+# Type variables for the cached_operation decorator
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def cache_key(method_name: str, *args: object, **kwargs: object) -> str:
+    """Generates a cache key based on the method name and parameters.
+
+    Args:
+        method_name (str): The name of the method being cached.
+        *args: Positional arguments to the method.
+        **kwargs: Keyword arguments to the method.
+
+    Returns:
+        str: A unique cache key.
+    """
+    params = f"{args}:{sorted(kwargs.items())}"
+    return f"{method_name}:{params}"
+
+
+def cache_key_with_token(token: str, method_name: str, *args: object, **kwargs: object) -> str:
+    """Generates a cache key based on the token, method name, and parameters.
+
+    Args:
+        token (str): The authentication token.
+        method_name (str): The name of the method being cached.
+        *args: Positional arguments to the method.
+        **kwargs: Keyword arguments to the method.
+
+    Returns:
+        str: A unique cache key.
+    """
+    token_hash = hashlib.sha256((token or "").encode()).hexdigest()[:16]
+    params = f"{args}:{sorted(kwargs.items())}"
+    return f"{token_hash}:{method_name}:{params}"
+
+
+def cached_operation(
+    ttl: int, *, use_token: bool = False, instance_attrs: tuple[str, ...] | None = None
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    """Caches the result of a method call for a specified time-to-live (TTL).
+
+    Args:
+        ttl (int): Time-to-live for the cache in seconds.
+        use_token (bool): If True, includes the authentication token in the cache key.
+            This is useful for Client methods that should cache per-user.
+            When use_token is True and no instance_attrs are specified, the 'self'
+            argument is excluded from the cache key to enable cache sharing across instances.
+        instance_attrs (tuple[str, ...] | None): Instance attributes to include in the cache key.
+            This is useful for instance methods where caching should be per-instance based on
+            specific attributes (e.g., 'run_id' for Run.details()).
+
+    Returns:
+        Callable: A decorator that caches the method result.
+
+    Warning:
+        When using cached objects with NiceGUI's binding system, extract primitive values
+        (str, int, etc.) before assigning to bindable properties to avoid infinite recursion.
+        Example: `form.value = str(cached_obj.field)` instead of `form.value = cached_obj.field`
+    """
+
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            # Build cache key components
+            cache_args: tuple[object, ...] = args
+
+            # If instance_attrs specified, extract them from self (args[0])
+            if instance_attrs and args:
+                instance = args[0]
+                instance_values = tuple(getattr(instance, attr) for attr in instance_attrs)
+                # Replace self with instance attribute values in cache key
+                cache_args = instance_values + args[1:]
+            elif use_token and args:
+                # When using token-based caching without instance_attrs,
+                # skip 'self' to enable cache sharing across instances
+                cache_args = args[1:]
+
+            if use_token:
+                token = get_token(True)
+                key = cache_key_with_token(token, func.__name__, *cache_args, **kwargs)
+            else:
+                key = cache_key(func.__name__, *cache_args, **kwargs)
+
+            if key in _operation_cache:
+                value, expiry = _operation_cache[key]
+                if time.time() < expiry:
+                    return t.cast("T", value)
+                del _operation_cache[key]
+
+            result = func(*args, **kwargs)
+            _operation_cache[key] = (result, time.time() + ttl)
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 def mime_type_to_file_ending(mime_type: str) -> str:

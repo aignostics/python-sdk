@@ -80,9 +80,9 @@ class Client:
         """Get current user info."""
         return self._api.get_me_v1_me_get()
 
-    def run(self, run_id: str) -> ApplicationRun:
+    def run(self, run_id: str) -> Run:
         """Get specific run by ID."""
-        return ApplicationRun(self._api, run_id)
+        return Run(self._api, run_id)
 
     def application(self, application_id: str) -> Application:
         """Find application by ID (iterates through list)."""
@@ -194,13 +194,13 @@ class Runs:
             page_size: Number of results per page (max 100)
         
         Returns:
-            Generator of ApplicationRun instances
+            Generator of Run instances
         """
         if page_size > LIST_APPLICATION_RUNS_MAX_PAGE_SIZE:
             raise ValueError(f"page_size must be <= {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}")
 
         # Uses paginate helper internally
-        # Returns generator of ApplicationRun instances
+        # Returns generator of Run instances
         # Each run has application_id and version_number attributes
 ```
 
@@ -322,7 +322,7 @@ def test_runs_list_with_pagination(runs, mock_api):
     # Test pagination
     result = list(runs.list())
     assert len(result) == PAGE_SIZE + 5
-    assert all(isinstance(run, ApplicationRun) for run in result)
+    assert all(isinstance(run, Run) for run in result)
 ```
 
 ## Operational Requirements

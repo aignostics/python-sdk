@@ -14,10 +14,10 @@ from typing import Any
 import humanize
 
 from aignostics.platform import (
-    ApplicationRun,
     InputArtifactData,
     OutputArtifactData,
     OutputArtifactElement,
+    Run,
     RunData,
     RunState,
 )
@@ -41,11 +41,11 @@ class OutputFormat(StrEnum):
     JSON = "json"
 
 
-def retrieve_and_print_run_details(run: ApplicationRun) -> None:
+def retrieve_and_print_run_details(run: Run) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
-        run (ApplicationRun): The ApplicationRun object
+        run (Run): The Run object
 
     """
     run_data = run.details()
@@ -86,11 +86,11 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     _print_run_statistics(run)
 
 
-def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
+def _retrieve_and_print_run_items(run: Run) -> None:
     """Retrieve and print information about items in a run.
 
     Args:
-        run (ApplicationRun): The ApplicationRun object
+        run (Run): The Run object
     """
     # Get results with detailed information
     results = run.results()
@@ -121,11 +121,11 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         console.print()
 
 
-def _print_run_statistics(run: ApplicationRun) -> None:
+def _print_run_statistics(run: Run) -> None:
     """Print statistics of items in a run.
 
     Args:
-        run (ApplicationRun): The ApplicationRun object
+        run (Run): The Run object
     """
     console.print("[bold]Item Statistics:[/bold]")
     console.print(run.details().statistics)

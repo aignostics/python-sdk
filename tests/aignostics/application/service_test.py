@@ -76,3 +76,28 @@ def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
 
     with pytest.raises(ValueError, match=r"not compliant with semantic versioning"):
         service.application_version(HETA_APPLICATION_ID, "invalid-format")
+
+
+# TODO(Andreas): Must fix
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
+@pytest.mark.skip(reason="Backend on staging serves duplicate versions atm")
+def test_application_versions_are_unique(runner: CliRunner) -> None:
+    """Check that application versions are unique (currently fails due to backend bug)."""
+    # Get all applications
+    service = ApplicationService()
+    applications = service.applications()
+
+    # Check each application for duplicate versions
+    for app in applications:
+        versions = service.application_versions(app.application_id)
+
+        # Extract version numbers
+        version_numbers = [v.version_number for v in versions]
+
+        # Check for duplicates
+        unique_versions = set(version_numbers)
+        assert len(version_numbers) == len(unique_versions), (
+            f"Application '{app.application_id}' has duplicate versions. "
+            f"Found {len(version_numbers)} versions but only {len(unique_versions)} unique: {version_numbers}"
+        )

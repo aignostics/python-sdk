@@ -4,7 +4,7 @@ This module contains unit tests for the Applications and Versions classes,
 verifying their functionality for listing applications and application versions.
 """
 
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 import pytest
 from aignx.codegen.api.public_api import PublicApi
@@ -62,10 +62,12 @@ def test_applications_list_with_pagination(applications, mock_api) -> None:
     # Assert
     assert len(result) == PAGE_SIZE + 5
     assert mock_api.list_applications_v1_applications_get.call_count == 2
-    mock_api.list_applications_v1_applications_get.assert_has_calls([
-        call(page=1, page_size=PAGE_SIZE),
-        call(page=2, page_size=PAGE_SIZE),
-    ])
+    # Check that calls were made with pagination parameters (ignore timeout/headers)
+    calls = mock_api.list_applications_v1_applications_get.call_args_list
+    assert calls[0].kwargs["page"] == 1
+    assert calls[0].kwargs["page_size"] == PAGE_SIZE
+    assert calls[1].kwargs["page"] == 2
+    assert calls[1].kwargs["page_size"] == PAGE_SIZE
 
 
 @pytest.mark.unit
@@ -86,7 +88,10 @@ def test_applications_list_returns_empty_list_when_no_applications(applications,
 
     # Assert
     assert len(result) == 0
-    mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
+    mock_api.list_applications_v1_applications_get.assert_called_once()
+    call_kwargs = mock_api.list_applications_v1_applications_get.call_args.kwargs
+    assert call_kwargs["page"] == 1
+    assert call_kwargs["page_size"] == PAGE_SIZE
 
 
 @pytest.mark.unit
@@ -112,7 +117,10 @@ def test_applications_list_returns_applications_when_available(applications, moc
     assert len(result) == 2
     assert result[0] == mock_app1
     assert result[1] == mock_app2
-    mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
+    mock_api.list_applications_v1_applications_get.assert_called_once()
+    call_kwargs = mock_api.list_applications_v1_applications_get.call_args.kwargs
+    assert call_kwargs["page"] == 1
+    assert call_kwargs["page_size"] == PAGE_SIZE
 
 
 @pytest.mark.unit
@@ -132,7 +140,10 @@ def test_applications_list_passes_through_api_exception(applications, mock_api) 
     # Act & Assert
     with pytest.raises(Exception, match=API_ERROR):
         list(applications.list())
-    mock_api.list_applications_v1_applications_get.assert_called_once_with(page=1, page_size=PAGE_SIZE)
+    mock_api.list_applications_v1_applications_get.assert_called_once()
+    call_kwargs = mock_api.list_applications_v1_applications_get.call_args.kwargs
+    assert call_kwargs["page"] == 1
+    assert call_kwargs["page_size"] == PAGE_SIZE
 
 
 @pytest.mark.unit

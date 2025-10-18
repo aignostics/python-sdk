@@ -86,7 +86,7 @@ nano tcga_luad/metadata.csv
 uvx aignostics application run upload he-tme data/tcga_luad/run.csv
 # Submit the application run and print tha run id
 uvx aignostics application run submit he-tme data/tcga_luad/run.csv
-# Check the status of the application run you triggered
+# Check the status of the application run you submitted
 uvx aignostics application run list
 # Incrementally download results when they become available
 # Fill in the id from the output in the previous step
@@ -185,7 +185,7 @@ pip install aignostics
 
 #### Usage
 
-The following snippet shows how to use the Client to trigger an application
+The following snippet shows how to use the Client to submit an application
 run:
 
 ```python
@@ -193,8 +193,8 @@ from aignostics import platform
 
 # initialize the client
 client = platform.Client()
-# trigger an application run
-application_run = client.runs.create(
+# submit an application run
+application_run = client.runs.submit(
    application_id="test-app",
    items=[
       platform.InputItem(

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from aignostics.platform._client import Client
+from aignostics.platform._utils import _operation_cache
 
 
 @pytest.fixture
@@ -42,7 +43,7 @@ def clear_cache() -> None:
 
     This ensures tests don't interfere with each other through shared cache state.
     """
-    Client._operation_cache.clear()
+    _operation_cache.clear()
 
 
 @pytest.fixture

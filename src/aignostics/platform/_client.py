@@ -1,16 +1,14 @@
-import hashlib
 import logging
 import os
-import time
 from collections.abc import Callable
-from functools import wraps
-from typing import Any, ClassVar
+from typing import ClassVar
 from urllib.request import getproxies
 
+import semver
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
 from aignx.codegen.configuration import AuthSettings, Configuration
-from aignx.codegen.exceptions import ServiceException
+from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
@@ -25,8 +23,9 @@ from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyEr
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
 from aignostics.platform._authentication import get_token
+from aignostics.platform._utils import cached_operation
 from aignostics.platform.resources.applications import Applications, Versions
-from aignostics.platform.resources.runs import ApplicationRun, Runs
+from aignostics.platform.resources.runs import Run, Runs
 from aignostics.utils import get_logger, user_agent
 
 from ._settings import settings
@@ -80,7 +79,6 @@ class Client:
     - Caches operation results for specific operations.
     """
 
-    _operation_cache: ClassVar[dict[str, tuple[Any, float]]] = {}
     _api_client_cached: ClassVar[PublicApi | None] = None
     _api_client_uncached: ClassVar[PublicApi | None] = None
 
@@ -108,55 +106,7 @@ class Client:
             logger.exception("Failed to initialize client.")
             raise
 
-    @staticmethod
-    def _cache_key(token: str, method_name: str, *args: object, **kwargs: object) -> str:
-        """Generates a cache key based on the token, method name, and parameters.
-
-        Args:
-            token (str): The authentication token.
-            method_name (str): The name of the method being cached.
-            *args: Positional arguments to the method.
-            **kwargs: Keyword arguments to the method.
-
-        Returns:
-            str: A unique cache key.
-        """
-        token_hash = hashlib.sha256((token or "").encode()).hexdigest()[:16]
-        params = f"{args}:{sorted(kwargs.items())}"
-        return f"{token_hash}:{method_name}:{params}"
-
-    @staticmethod
-    def cached_operation(ttl: int) -> Callable[[Callable[..., object]], Callable[..., object]]:
-        """Caches the result of a method call for a specified time-to-live (TTL).
-
-        Args:
-            ttl (int): Time-to-live for the cache in seconds.
-
-        Returns:
-            Callable: A decorator that caches the method result.
-        """
-
-        def decorator(func: Callable[..., object]) -> Callable[..., object]:
-            @wraps(func)
-            def wrapper(self: "Client", *args: object, **kwargs: object) -> object:
-                token = get_token(True)
-                cache_key = Client._cache_key(token, func.__name__, *args, **kwargs)
-
-                if cache_key in Client._operation_cache:
-                    value, expiry = Client._operation_cache[cache_key]
-                    if time.time() < expiry:
-                        return value
-                    del Client._operation_cache[cache_key]
-
-                result = func(self, *args, **kwargs)
-                Client._operation_cache[cache_key] = (result, time.time() + ttl)
-                return result
-
-            return wrapper
-
-        return decorator
-
-    @cached_operation(ttl=60)
+    @cached_operation(ttl=settings().me_cache_ttl, use_token=True)
     def me(self) -> Me:
         """Retrieves info about the current user and their organisation.
 
@@ -187,19 +137,38 @@ class Client:
     def application(self, application_id: str) -> Application:
         """Find application by id.
 
+        Retries on network and server errors.
+
         Args:
             application_id (str): The ID of the application.
 
         Raises:
             NotFoundException: If the application with the given ID is not found.
+            aignx.codegen.exceptions.ApiException: If the API call fails.
 
         Returns:
             Application: The application object.
         """
-        return Applications(self._api).details(application_id)
+        return Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().application_retry_attempts_max),
+            wait=wait_exponential_jitter(
+                initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
+            ),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )(
+            lambda: self._api.read_application_by_id_v1_applications_application_id_get(
+                application_id=application_id,
+                _request_timeout=settings().application_timeout,
+                _headers={"User-Agent": user_agent()},
+            )
+        )
 
     def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
         """Find application version by id.
+
+        Retries on network and server errors.
 
         Args:
             application_id (str): The ID of the application.
@@ -207,14 +176,46 @@ class Client:
                 If None, the latest version will be retrieved.
 
         Raises:
-            NotFoundException: If the application with the given ID and version numberis not found.
+            NotFoundException: If the application with the given ID and version number is not found.
+            ValueError: If the version is not valid semver.
+            aignx.codegen.exceptions.ApiException: If the API call fails.
 
         Returns:
             ApplicationVersion: The application version object.
         """
-        return Versions(self._api).details(application_id=application_id, application_version=version_number)
+        # Handle version resolution and validation first (not retried)
+        if version_number is None:
+            # Get the latest version - this call already has its own retry logic in Versions
+            version_tuple = Versions(self._api).latest(application=application_id)
+            if version_tuple is None:
+                message = f"No versions found for application '{application_id}'."
+                raise NotFoundException(message)
+            version_number = version_tuple.number
 
-    def run(self, run_id: str) -> ApplicationRun:
+        # Validate semver format
+        if version_number and not semver.Version.is_valid(version_number):
+            message = f"Invalid version format: '{version_number}' not compliant with semantic versioning."
+            raise ValueError(message)
+
+        # Make the API call with retry logic
+        return Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().application_version_retry_attempts_max),
+            wait=wait_exponential_jitter(
+                initial=settings().application_version_retry_wait_min, max=settings().application_version_retry_wait_max
+            ),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )(
+            lambda: self._api.application_version_details_v1_applications_application_id_versions_version_get(
+                application_id=application_id,
+                version=version_number,
+                _request_timeout=settings().application_version_timeout,
+                _headers={"User-Agent": user_agent()},
+            )
+        )
+
+    def run(self, run_id: str) -> Run:
         """Finds run by id.
 
         Args:
@@ -223,7 +224,7 @@ class Client:
         Returns:
             Run: The run object.
         """
-        return ApplicationRun(self._api, run_id)
+        return Run(self._api, run_id)
 
     @staticmethod
     def get_api_client(cache_token: bool = True) -> PublicApi:
