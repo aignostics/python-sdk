@@ -360,9 +360,9 @@ source = ["src"]
 omit = [
     "src/aignostics/aignostics.py",
     "src/aignostics/third_party/*",
-    "src/notebook/_notebook.py",
-    "src/wsi/_pydicom_handler.py",
-    "src/wsi/_openslide_handler.py",
+    "src/aignostics/notebook/_notebook.py",
+    "src/aignostics/wsi/_pydicom_handler.py",
+    "src/aignostics/wsi/_openslide_handler.py",
 ]
 branch = true
 parallel = true
