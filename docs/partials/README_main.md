@@ -58,14 +58,14 @@ The Launchpad is available for Mac OS X, Windows, and Linux, and can be installe
    with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and other computational pathology applications.
 
 > [!Note]
-> The Launchpad features a growing ecosystem of extensions that seamlessly integrate with standard digital pathology tools. To use the Launchpad with all available extensions, run `uvx --with aignostics[qupath,marimo] aignostics launchpad`. Currently available extensions are:
+> The Launchpad features a growing ecosystem of extensions that seamlessly integrate with standard digital pathology tools. To use the Launchpad with all available extensions, run `uvx --from "aignostics[qupath,marimo]" aignostics launchpad`. Currently available extensions are:
 >
 > 1. **QuPath extension**: View your application results in [QuPath](https://qupath.github.io/) with a single click. The Launchpad creates QuPath projects on-the-fly.
 > 2. **Marimo extension**: Analyze your application results using [Marimo](https://marimo.io/) notebooks embedded in the Launchpad. You don't have to leave the Launchpad to do real data science.
 
 ### CLI: Manage datasets and application runs from your terminal
 
-The Python SDK includes the **Aignostics CLI**, a Command-Line Interface that allows you to
+The Python SDK includes the **Aignostics CLI**, a Command-Line Interface (CLI) that allows you to
 interact with the Aignostics Platform directly from your terminal or shell script.
 
 See as follows for a simple example where we download a sample dataset for the [Atlas
@@ -195,20 +195,19 @@ from aignostics import platform
 client = platform.Client()
 # trigger an application run
 application_run = client.runs.create(
-   application_id="two-task-dummy",
-   application_version="0.35.0",  # version number without 'v' prefix, omit for latest version
+   application_id="test-app",
    items=[
       platform.InputItem(
          external_id="slide-1",
          input_artifacts=[
             platform.InputArtifact(
-               name="user_slide",
+               name="whole_slide_image",
                download_url="<a signed url to download the data>",
                metadata={
-                  "checksum_crc32c": "AAAAAA==",
-                  "base_mpp": 0.25,
-                  "width": 1000,
-                  "height": 1000,
+                  "checksum_base64_crc32c": "AAAAAA==",
+                  "resolution_mpp": 0.25,
+                  "width_px": 1000,
+                  "height_px": 1000,
                },
             )
          ],
@@ -236,13 +235,13 @@ platform.InputItem(
     external_id="1",
     input_artifacts=[
         platform.InputArtifact(
-            name="user_slide", # defined by the application version input_artifact schema
+            name="whole_slide_image", # defined by the application version's input artifact schema
             download_url="<a signed url to download the data>",
-            metadata={ # defined by the application version input_artifact schema
-                "checksum_crc32c": "N+LWCg==",
-                "base_mpp": 0.46499982,
-                "width": 3728,
-                "height": 3640,
+            metadata={ # defined by the application version's input artifact schema
+                "checksum_base64_crc32c": "N+LWCg==",
+                "resolution_mpp": 0.46499982,
+                "width_px": 3728,
+                "height_px": 3640,
             },
         )
     ],
@@ -255,8 +254,7 @@ string. This is used to identify the item in the results later on. The
 data & metadata you need to provide for each item. The required artifacts depend
 on the application version you want to run - in the case of test application,
 there is only one artifact required, which is the image to process on. The
-artifact name is defined as `user_slide` for the `two-task-dummy` application
-and `whole_slide_image` for the `he-tme` application.
+artifact name is defined as `whole_slide_image` for this application.
 
 The `download_url` is a signed URL that allows the Aignostics Platform to
 download the image data later during processing.

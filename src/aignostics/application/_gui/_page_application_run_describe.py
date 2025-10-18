@@ -11,7 +11,7 @@ from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
 
-from aignostics.platform import ApplicationRunStatus, ItemOutput, ItemStatus
+from aignostics.platform import ItemOutput, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
@@ -474,7 +474,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     duration_str = "N/A"
 
-                if run_data.state is ApplicationRunStatus.TERMINATED and run_data.termination_reason:
+                if run_data.state is RunState.TERMINATED and run_data.termination_reason:
                     status_str = f"{run_data.state.value} ({run_data.termination_reason.name})"
                 else:
                     status_str = f"{run_data.state.value}"
@@ -510,10 +510,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
-                if (
-                    run_data.state.value == ApplicationRunStatus.TERMINATED
-                    and run_data.statistics.item_succeeded_count > 0
-                ):
+                if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:
                     with ui.button_group().props("push"):
                         with (
                             ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
@@ -544,7 +541,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
 
-                if run_data.state.value in {ApplicationRunStatus.PENDING, ApplicationRunStatus.PROCESSING}:
+                if run_data.state.value in {RunState.PENDING, RunState.PROCESSING}:
                     cancel_button = ui.button(
                         "Cancel",
                         color="red",
@@ -674,7 +671,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                                     title=title,
                                                     metadata=metadata: metadata_dialog_open(title, metadata),
                                                 )
-                    elif item.state is ItemStatus.TERMINATED:
+                    elif item.state is ItemState.TERMINATED:
                         if item.error_message:
                             with (
                                 ui.row()
@@ -699,8 +696,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         with ui.row().classes("w-1/2 justify-center content-center"):
                             ui.space()
                             animation_file = {
-                                ItemStatus.PENDING: "pending.lottie",
-                                ItemStatus.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
+                                ItemState.PENDING: "pending.lottie",
+                                ItemState.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
                             }[item.state]
                             ui.html(
                                 f'<dotlottie-player src="/application_assets/{animation_file}" '

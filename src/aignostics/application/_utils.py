@@ -15,11 +15,11 @@ import humanize
 
 from aignostics.platform import (
     ApplicationRun,
-    ApplicationRunData,
-    ApplicationRunStatus,
     InputArtifactData,
     OutputArtifactData,
     OutputArtifactElement,
+    RunData,
+    RunState,
 )
 from aignostics.utils import console, get_logger
 
@@ -52,7 +52,7 @@ def retrieve_and_print_run_details(run: ApplicationRun) -> None:
     console.print(f"[bold]Run Details for {run.run_id}[/bold]")
     console.print("=" * 80)
     console.print(f"[bold]Application (Version):[/bold] {run_data.application_id} ({run_data.version_number})   ")
-    if run_data.state is ApplicationRunStatus.TERMINATED and run_data.termination_reason:
+    if run_data.state is RunState.TERMINATED and run_data.termination_reason:
         status_str = f"{run_data.state.value} ({run_data.termination_reason})"
     else:
         status_str = f"{run_data.state.value}"
@@ -131,11 +131,11 @@ def _print_run_statistics(run: ApplicationRun) -> None:
     console.print(run.details().statistics)
 
 
-def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
+def print_runs_verbose(runs: list[RunData]) -> None:
     """Print detailed information about runs, sorted by submitted_at in descending order.
 
     Args:
-        runs (list[ApplicationRunData]): List of run data
+        runs (list[RunData]): List of run data
         service (Service): The Service instance to use
 
     """
@@ -163,11 +163,11 @@ def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
         console.print("-" * 80)
 
 
-def print_runs_non_verbose(runs: list[ApplicationRunData]) -> None:
+def print_runs_non_verbose(runs: list[RunData]) -> None:
     """Print simplified information about runs, sorted by submitted_at in descending order.
 
     Args:
-        runs (list[ApplicationRunData]): List of runs
+        runs (list[RunData]): List of runs
 
     """
     console.print("[bold]Application Run IDs:[/bold]")
@@ -226,12 +226,12 @@ def read_metadata_csv_to_dict(
 
 
 def application_run_status_to_str(
-    status: ApplicationRunStatus,
+    status: RunState,
 ) -> str:
     """Convert application status to a human-readable string.
 
     Args:
-        status (ApplicationRunStatus): The application status
+        status (RunState): The application status
 
     Raises:
         RuntimeError: If the status is invalid or unknown
@@ -240,9 +240,9 @@ def application_run_status_to_str(
         str: Human-readable string representation of the status
     """
     status_mapping = {
-        ApplicationRunStatus.PENDING: "pending",
-        ApplicationRunStatus.PROCESSING: "processing",
-        ApplicationRunStatus.TERMINATED: "terminated",
+        RunState.PENDING: "pending",
+        RunState.PROCESSING: "processing",
+        RunState.TERMINATED: "terminated",
     }
 
     if status in status_mapping:

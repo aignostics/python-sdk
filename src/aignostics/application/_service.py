@@ -22,8 +22,6 @@ from aignostics.platform import (
     ApiException,
     Application,
     ApplicationRun,
-    ApplicationRunData,
-    ApplicationRunStatus,
     ApplicationSummary,
     ApplicationVersion,
     Client,
@@ -32,7 +30,9 @@ from aignostics.platform import (
     ItemResult,
     NotFoundException,
     OutputArtifactElement,
+    RunData,
     RunOutput,
+    RunState,
 )
 from aignostics.platform import (
     Service as PlatformService,
@@ -73,7 +73,7 @@ class DownloadProgressState(StrEnum):
 
 class DownloadProgress(BaseModel):
     status: DownloadProgressState = DownloadProgressState.INITIALIZING
-    run: ApplicationRunData | None = None
+    run: RunData | None = None
     item: ItemResult | None = None
     item_count: int | None = None
     item_index: int | None = None
@@ -619,7 +619,7 @@ class Service(BaseService):
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
         Returns:
-            list[ApplicationRunData]: A list of all application runs.
+            list[RunData]: A list of all application runs.
 
         Raises:
             RuntimeError: If the application run list cannot be retrieved.
@@ -649,7 +649,7 @@ class Service(BaseService):
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
-    ) -> list[ApplicationRunData]:
+    ) -> list[RunData]:
         """Get a list of all application runs.
 
         Args:
@@ -659,7 +659,7 @@ class Service(BaseService):
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
 
         Returns:
-            list[ApplicationRunData]: A list of all application runs.
+            list[RunData]: A list of all application runs.
 
         Raises:
             RuntimeError: If the application run list cannot be retrieved.
@@ -1090,7 +1090,7 @@ class Service(BaseService):
             )
 
             # TODO(Helmut): More info
-            if run_details.state == ApplicationRunStatus.TERMINATED:
+            if run_details.state == RunState.TERMINATED:
                 logger.debug(
                     "Run '%s' reached final status '%s' with message '%s' (%s).",
                     run_id,

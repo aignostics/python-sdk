@@ -1,6 +1,6 @@
 """Utility functions for the application GUI."""
 
-from aignostics.platform import ApplicationRunStatus, ItemStatus, ItemTerminationReason, RunTerminationReason
+from aignostics.platform import ItemState, ItemTerminationReason, RunState, RunTerminationReason
 
 
 def application_id_to_icon(application_id: str) -> str:
@@ -35,11 +35,11 @@ def run_status_to_icon_and_color(
         tuple[str, str]: The icon name and color.
     """
     match run_status:
-        case ApplicationRunStatus.PENDING:
+        case RunState.PENDING:
             return "schedule", "info"
-        case ApplicationRunStatus.PROCESSING:
+        case RunState.PROCESSING:
             return "directions_run", "info"
-        case ApplicationRunStatus.TERMINATED:
+        case RunState.TERMINATED:
             icon = "bug_report"
             if termination_reason == RunTerminationReason.CANCELED_BY_USER:
                 icon = "cancel"
@@ -71,11 +71,11 @@ def run_item_status_and_termination_reason_to_icon_and_color(  # noqa: PLR0911
         tuple[str, str]: The icon name and color.
     """
     match item_status:
-        case ItemStatus.PENDING:
+        case ItemState.PENDING:
             return "schedule", "info"
-        case ItemStatus.PROCESSING:
+        case ItemState.PROCESSING:
             return "directions_run", "info"
-        case ItemStatus.TERMINATED:
+        case ItemState.TERMINATED:
             if termination_reason == ItemTerminationReason.SKIPPED:
                 return "next_plan", "warning"
             if termination_reason == ItemTerminationReason.SUCCEEDED:

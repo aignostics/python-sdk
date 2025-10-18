@@ -241,6 +241,7 @@ extend-exclude = [
     "template/*.py",
     "**/third_party/*.py",
     "examples/*.py",
+    "examples/*.ipynb",
     "codegen",
 ]
 

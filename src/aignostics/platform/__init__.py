@@ -18,15 +18,15 @@ from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
 from aignx.codegen.models import ItemCreationRequest as InputItem
 from aignx.codegen.models import ItemOutput as ItemOutput
 from aignx.codegen.models import ItemResultReadResponse as ItemResult
-from aignx.codegen.models import ItemState as ItemStatus
-from aignx.codegen.models import ItemTerminationReason
+from aignx.codegen.models import ItemState as ItemState
+from aignx.codegen.models import ItemTerminationReason as ItemTerminationReason
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from aignx.codegen.models import RunOutput as RunOutput
-from aignx.codegen.models import RunReadResponse as ApplicationRunData
-from aignx.codegen.models import RunState as ApplicationRunStatus  # TODO(Helmut): Refactor
+from aignx.codegen.models import RunReadResponse as RunData
+from aignx.codegen.models import RunState as RunState  # TODO(Helmut): Refactor
 from aignx.codegen.models import RunTerminationReason as RunTerminationReason
 from aignx.codegen.models import UserReadResponse as User
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
@@ -105,9 +105,6 @@ __all__ = [
     "ApiException",
     "Application",
     "ApplicationRun",
-    "ApplicationRunData",
-    "ApplicationRunStatus",
-    "ApplicationRunStatus",
     "ApplicationSummary",
     "ApplicationVersion",
     "Client",
@@ -116,14 +113,17 @@ __all__ = [
     "InputItem",
     "ItemOutput",
     "ItemResult",
-    "ItemStatus",
+    "ItemState",
     "ItemTerminationReason",
     "Me",
     "NotFoundException",
     "Organization",
     "OutputArtifactData",
     "OutputArtifactElement",
+    "RunData",
     "RunOutput",
+    "RunState",
+    "RunState",
     "RunTerminationReason",
     "Service",
     "Settings",

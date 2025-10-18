@@ -4,10 +4,8 @@ This module provides classes for creating and managing application runs on the A
 It includes functionality for starting runs, monitoring status, and downloading results.
 """
 
-import json
 import typing as t
 from collections.abc import Generator
-from enum import StrEnum
 from pathlib import Path
 from time import sleep
 from typing import Any
@@ -26,7 +24,7 @@ from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
 )
 from aignx.codegen.models import (
-    RunReadResponse as ApplicationRunData,
+    RunReadResponse as RunData,
 )
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
@@ -45,31 +43,6 @@ logger = get_logger(__name__)
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
-
-
-# TODO(andreas): As soon as we switch to the new status types of the API,
-# this class is obsolete
-class ItemStatus(StrEnum):
-    """Interim Mapping."""
-
-    PENDING = "PENDING"
-    CANCELED_USER = "CANCELED_USER"
-    CANCELED_SYSTEM = "CANCELED_SYSTEM"
-    USER_ERROR = "USER_ERROR"
-    SYSTEM_ERROR = "SYSTEM_ERROR"
-    SUCCEEDED = "SUCCEEDED"
-
-    @classmethod
-    def from_json(cls, json_str: str) -> t.Self:
-        """Create an instance of ItemStatus from a JSON string.
-
-        Args:
-            json_str (str): The JSON string to parse.
-
-        Returns:
-            ItemStatus: The parsed ItemStatus instance.
-        """
-        return cls(json.loads(json_str))
 
 
 class ApplicationRun:
@@ -102,11 +75,11 @@ class ApplicationRun:
 
         return cls(Client.get_api_client(cache_token=False), run_id)
 
-    def details(self) -> ApplicationRunData:
+    def details(self) -> RunData:
         """Retrieves the current status of the application run.
 
         Returns:
-            ApplicationRunData: The run data.
+            RunData: The run data.
 
         Raises:
             Exception: If the API request fails.
@@ -348,7 +321,7 @@ class Runs:
         custom_metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
-    ) -> t.Iterator[ApplicationRunData]:
+    ) -> t.Iterator[RunData]:
         """Fetch application runs, optionally filtered by application version.
 
         Args:
@@ -359,7 +332,7 @@ class Runs:
             page_size (int): Number of items per page, defaults to max
 
         Returns:
-            Iterator[ApplicationRunData]: Iterator yielding application run data.
+            Iterator[RunData]: Iterator yielding application run data.
 
         Raises:
             ValueError: If page_size is greater than 100.

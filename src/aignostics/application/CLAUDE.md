@@ -70,12 +70,12 @@ Core application operations:
 ### State Machine Design
 
 ```python
-ApplicationRunStatus:
+RunState:
     QUEUED → RUNNING → COMPLETED
                 ↓
             FAILED / CANCELLED
 
-ItemStatus:
+ItemState:
     PENDING → PROCESSING → COMPLETED
                   ↓
               FAILED
@@ -150,7 +150,7 @@ class DownloadProgress(BaseModel):
     status: DownloadProgressState = DownloadProgressState.INITIALIZING
 
     # Run and item tracking
-    run: ApplicationRunData | None = None
+    run: RunData | None = None
     item: ItemResult | None = None
     item_count: int | None = None
     item_index: int | None = None
