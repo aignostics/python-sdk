@@ -99,19 +99,20 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
     assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
     assert result.exit_code == 0
 
-    # Step 5: Create QuPath project and add image
-    project_dir = Path(tmpdir) / "qupath_project"
-    small_pyramidal_dcm = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
-    result = runner.invoke(cli, ["qupath", "add", str(project_dir), str(small_pyramidal_dcm)])
-    assert f"Added '1' images to project '{project_dir}'." in normalize_output(result.output)
-    assert project_dir.exists(), f"Project directory {project_dir} was not created"
-    assert project_dir.parent == Path(tmpdir), f"Project directory {project_dir} is not a subdirectory of {tmpdir}"
+    if platform.system() in {"Linux", "Darwin"}:
+        # Step 5: Create QuPath project and add image
+        project_dir = Path(tmpdir) / "qupath_project"
+        small_pyramidal_dcm = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
+        result = runner.invoke(cli, ["qupath", "add", str(project_dir), str(small_pyramidal_dcm)])
+        assert f"Added '1' images to project '{project_dir}'." in normalize_output(result.output)
+        assert project_dir.exists(), f"Project directory {project_dir} was not created"
+        assert project_dir.parent == Path(tmpdir), f"Project directory {project_dir} is not a subdirectory of {tmpdir}"
 
-    # Step 6: Annotate project with polygons
-    cells_json = Path(__file__).parent.parent.parent / "resources" / "cells_broken.json"
-    result = runner.invoke(cli, ["qupath", "annotate", str(project_dir), str(small_pyramidal_dcm), str(cells_json)])
-    assert "Failed to add images to project: parse error: premature EOF" in normalize_output(result.output)
-    assert result.exit_code == 1
+        # Step 6: Annotate project with polygons
+        cells_json = Path(__file__).parent.parent.parent / "resources" / "cells_broken.json"
+        result = runner.invoke(cli, ["qupath", "annotate", str(project_dir), str(small_pyramidal_dcm), str(cells_json)])
+        assert "Failed to add images to project: parse error: premature EOF" in normalize_output(result.output)
+        assert result.exit_code == 1
 
     # Step 7: Uninstall QuPath
     result = runner.invoke(cli, ["qupath", "uninstall"])

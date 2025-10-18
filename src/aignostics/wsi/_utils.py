@@ -8,26 +8,6 @@ import humanize
 from aignostics.utils import console
 
 
-def get_tag_info(tag_str: str) -> str:
-    """Convert DICOM tag to human readable name.
-
-    Args:
-        tag_str(str): DICOM tag string in format '00100010'.
-
-    Returns:
-        str: Human readable name of the DICOM tag or the original tag string if not found.
-    """
-    from pydicom.datadict import dictionary_description  # noqa: PLC0415
-
-    try:
-        # Convert string tag like '00100010' to tuple format (0010,0010)
-        tag_tuple = (int(tag_str[0:4], 16), int(tag_str[4:8], 16))
-        description = dictionary_description(tag_tuple)
-        return f"{description}" if description else tag_str
-    except KeyError:
-        return tag_str
-
-
 def print_file_info(file_info: dict[str, Any], indent: int = 0) -> None:  # noqa: C901, PLR0912, PLR0915
     """Print formatted file information.
 
