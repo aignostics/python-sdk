@@ -357,10 +357,11 @@ sigterm = true
 relative_files = true
 source = ["src"]
 omit = [
-    "*/third_party/*",
-    "*/_notebook.py",
-    "*/_pydicom_handler.py",
-    "*/_openslide_handler.py",
+    "src/aignostics/aignostics.py",
+    "src/aignostics/third_party/*",
+    "src/notebook/_notebook.py",
+    "src/wsi/_pydicom_handler.py",
+    "src/wsi/_openslide_handler.py",
 ]
 branch = true
 parallel = true
