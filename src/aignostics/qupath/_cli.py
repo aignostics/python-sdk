@@ -376,7 +376,7 @@ def annotate(
     try:
         annotation_count = Service().annotate(project=project, image=image, annotations=annotations)
         console.print(
-            f"Added {annotation_count} annotations to {image} in {project}.",
+            f"Added '{annotation_count}' annotations to '{image}' in '{project}'.",
             style="success",
         )
     except Exception as e:

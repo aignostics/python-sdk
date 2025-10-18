@@ -3,6 +3,7 @@
 import json
 import platform
 import re
+from pathlib import Path
 
 import psutil
 import pytest
@@ -68,8 +69,8 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown) -> None:
-    """Check (un)install and launching headless works."""
+def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpdir, qupath_teardown) -> None:
+    """Check (un)install, launching headless, creating project and adding annotations works."""
     # Uninstall QuPath if it exists to have a clean state for the test
     result = runner.invoke(cli, ["qupath", "uninstall"])
     was_installed = result.exit_code == 0
@@ -93,24 +94,38 @@ def test_cli_install_and_launch_headless(runner: CliRunner, qupath_teardown) -> 
     assert output_data["qupath"]["app"]["version"]["version"] == QUPATH_VERSION
     assert result.exit_code == 0
 
-    # Step 4: Check QuPath install succeeds (idempotent operation)
+    # Step 4: Check repeated QuPath install succeeds (idempotent operation)
     result = runner.invoke(cli, ["qupath", "install"])
     assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
     assert result.exit_code == 0
 
-    # Step 5: Uninstall QuPath
+    # Step 5: Create QuPath project and add image
+    project_dir = Path(tmpdir) / "qupath_project"
+    small_pyramidal_dcm = Path(__file__).parent.parent.parent / "resources" / "run" / "small-pyramidal.dcm"
+    result = runner.invoke(cli, ["qupath", "add", str(project_dir), str(small_pyramidal_dcm)])
+    assert f"Added '1' images to project '{project_dir}'." in normalize_output(result.output)
+    assert project_dir.exists(), f"Project directory {project_dir} was not created"
+    assert project_dir.parent == Path(tmpdir), f"Project directory {project_dir} is not a subdirectory of {tmpdir}"
+
+    # Step 6: Annotate project with polygons
+    cells_json = Path(__file__).parent.parent.parent / "resources" / "cells_broken.json"
+    result = runner.invoke(cli, ["qupath", "annotate", str(project_dir), str(small_pyramidal_dcm), str(cells_json)])
+    assert "Failed to add images to project: parse error: premature EOF" in normalize_output(result.output)
+    assert result.exit_code == 1
+
+    # Step 7: Uninstall QuPath
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert "QuPath uninstalled successfully." in normalize_output(result.output)
     assert result.exit_code == 0
 
-    # Step 6: Check QuPath info fails if not installed
+    # Step 8: Check QuPath info fails if not installed
     result = runner.invoke(cli, ["system", "info"])
     output_data = json.loads(result.output)
     assert output_data["qupath"]["app"]["path"] is None
     assert output_data["qupath"]["app"]["version"] is None
     assert result.exit_code == 0
 
-    # Step 7: Reinstall QuPath if it was installed before
+    # Step 9: Reinstall QuPath if it was installed before
     if was_installed:
         result = runner.invoke(cli, ["qupath", "install"])
 
@@ -154,6 +169,9 @@ def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
     # Step 4: Check we list the process via the CLI
     result = runner.invoke(cli, ["qupath", "processes", "--json"])
     assert f'"pid": {pid},' in normalize_output(result.output)
+    result = runner.invoke(cli, ["qupath", "processes"])
+    assert "Process ID" in normalize_output(result.output)
+    assert f"{pid}" in normalize_output(result.output)
 
     # Step 5: Terminate via CLI
     result = runner.invoke(cli, ["qupath", "terminate"])

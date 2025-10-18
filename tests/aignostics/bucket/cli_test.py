@@ -154,3 +154,114 @@ def test_cli_bucket_purge(runner: CliRunner) -> None:
     """Check bucket purge command runs successfully."""
     result = runner.invoke(cli, ["bucket", "purge", "--dry-run"])
     assert result.exit_code == 0
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
+def test_cli_bucket_find_invalid_regex(runner: CliRunner) -> None:
+    """Test bucket find with invalid regex pattern triggers ValueError."""
+    # Use an invalid regex pattern (unclosed bracket)
+    result = runner.invoke(cli, ["bucket", "find", "[invalid(regex"])
+    assert result.exit_code == 2
+    assert "Invalid regex pattern" in result.output or "Failed to find objects" in result.output
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
+def test_cli_bucket_find_nonexistent_key(runner: CliRunner) -> None:
+    """Test bucket find with non-existent key returns empty result."""
+    # Use a key that definitely doesn't exist
+    nonexistent_key = f"nonexistent/file/{uuid.uuid4()}.txt"
+    result = runner.invoke(cli, ["bucket", "find", nonexistent_key, "--what-is-key"])
+    assert result.exit_code == 0
+    # Should return empty JSON array or object
+    assert "[]" in result.output or "{}" in result.output
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
+def test_cli_bucket_download_invalid_regex(runner: CliRunner, tmpdir) -> None:
+    """Test bucket download with invalid regex pattern triggers ValueError."""
+    result = runner.invoke(cli, ["bucket", "download", "[invalid(regex", "--destination", str(tmpdir)])
+    assert result.exit_code == 2
+    assert "Invalid regex pattern" in result.output or "Failed to download" in result.output
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
+def test_cli_bucket_download_nonexistent_key(runner: CliRunner, tmpdir) -> None:
+    """Test bucket download with non-existent key completes with no files."""
+    nonexistent_key = f"nonexistent/file/{uuid.uuid4()}.txt"
+    result = runner.invoke(cli, ["bucket", "download", nonexistent_key, "--what-is-key", "--destination", str(tmpdir)])
+    assert result.exit_code == 0
+    # Should complete successfully but with no objects found message
+    assert "No objects found" in result.output
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
+def test_cli_bucket_delete_invalid_regex(runner: CliRunner) -> None:
+    """Test bucket delete with invalid regex pattern triggers ValueError."""
+    result = runner.invoke(cli, ["bucket", "delete", "[invalid(regex", "--dry-run"])
+    assert result.exit_code == 2
+    assert "Invalid regex pattern" in result.output or "Failed to delete" in result.output
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 2)
+def test_cli_bucket_delete_nonexistent_key(runner: CliRunner) -> None:
+    """Test bucket delete with non-existent key returns no objects found."""
+    nonexistent_key = f"nonexistent/file/{uuid.uuid4()}.txt"
+    result = runner.invoke(cli, ["bucket", "delete", nonexistent_key, "--what-is-key", "--dry-run"])
+    assert result.exit_code == 0
+    assert "No objects found" in result.output
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60 * 5)
+def test_cli_bucket_upload_single_file(runner: CliRunner, tmpdir) -> None:
+    """Test uploading a single file, then cleaning up from bucket and locally.
+
+    1. Creates a single random 1KB file in tmpdir
+    2. Uploads the file to bucket
+    3. Verifies the file was uploaded
+    4. Deletes the file from the bucket
+    5. Verifies the file is no longer in the bucket
+    6. Deletes the local file
+    """
+    import psutil
+
+    # Get username for path verification
+    the_uuid = str(uuid.uuid4())[:8]
+    username = psutil.Process().username().replace("\\", "_")
+    test_prefix = f"{username}/test/{the_uuid}/single-file-test"
+
+    # Step 1: Create a single random 1KB file
+    test_file = Path(tmpdir) / "test_file.bin"
+    test_file.write_bytes(os.urandom(1024))  # 1KB of random data
+    assert test_file.exists()
+
+    # Step 2: Upload the single file to bucket
+    result = runner.invoke(cli, ["bucket", "upload", str(test_file), "--destination-prefix", test_prefix])
+    assert result.exit_code == 0
+    assert "Successfully uploaded 1 files" in result.output or "test_file.bin" in result.output
+
+    # Step 3: Verify the file was uploaded
+    uploaded_key = f"{test_prefix}/test_file.bin"
+    result = runner.invoke(cli, ["bucket", "find", uploaded_key, "--what-is-key"])
+    assert result.exit_code == 0
+    assert uploaded_key in normalize_output(result.stdout)
+
+    # Step 4: Delete the file from the bucket
+    result = runner.invoke(cli, ["bucket", "delete", uploaded_key, "--what-is-key", "--no-dry-run"])
+    assert result.exit_code == 0
+    assert "Deleted 1 object" in normalize_output(result.stdout)
+
+    # Step 5: Verify the file is no longer in the bucket
+    result = runner.invoke(cli, ["bucket", "find", uploaded_key, "--what-is-key"])
+    assert result.exit_code == 0
+    assert "[]" in result.output or "{}" in result.output  # Empty result
+
+    # Step 6: Delete the local file
+    test_file.unlink()
+    assert not test_file.exists()
