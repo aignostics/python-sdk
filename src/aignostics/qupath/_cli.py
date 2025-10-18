@@ -181,7 +181,7 @@ def processes(
             "-j",
             help="Output the running QuPath processes as JSON.",
         ),
-    ],
+    ] = False,
 ) -> None:
     """List running QuPath processes.
 

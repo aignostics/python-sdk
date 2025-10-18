@@ -164,14 +164,16 @@ def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
     pid_match = re.search(r"QuPath launched successfully with process id '(\d+)'.", normalize_output(result.output))
     assert pid_match is not None, "PID not found in launch output"
     pid = int(pid_match.group(1))
-    assert psutil.Process(pid).is_running(), "QuPath process is not running"
+    assert psutil.Process(pid).is_running(), f"QuPath process wit pid '{pid}' is not running as expected."
 
     # Step 4: Check we list the process via the CLI
     result = runner.invoke(cli, ["qupath", "processes", "--json"])
     assert f'"pid": {pid},' in normalize_output(result.output)
+    assert result.exit_code == 0
     result = runner.invoke(cli, ["qupath", "processes"])
     assert "Process ID" in normalize_output(result.output)
     assert f"{pid}" in normalize_output(result.output)
+    assert result.exit_code == 0
 
     # Step 5: Terminate via CLI
     result = runner.invoke(cli, ["qupath", "terminate"])
