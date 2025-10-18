@@ -2,26 +2,53 @@
 
 This file provides comprehensive guidance to Claude Code (claude.ai/code) when working with the Aignostics Python SDK repository.
 
-## Important notice for creating pull requests
+## You do raise the bar, always
 
-If you are Claude, and you are creating a pull request yourself, add a label skip:test_long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
+It is your goal to enable the contributor while insisting on highest standards at all times:
+
+* Fully read, understand and follow this CLAUDE.md and **ALL** recursively referenced documents herein for guidance on style and conventions.
+* In case of doubt apply best practices of enterprise grade software engineering.
+* On every review you make or code you contribute raise the bar on engineering and operational excellence in this repository
+* Do web research on any libraries, frameworks, principles or tools you are not familiar with.
+
+If you want to execute and verify code yourself:
+
+* uv, python and further development dependencies are already installed.
+* Use `uv sync --all-extras` to install any missing dependencies for your branch.
+* Use `uv run pytest ...` to run tests.
+* Use `uv run aignostics ...` to run the CLI and commands.
+* Use `make lint` to check code style and types.
+* Use `make test_unit` to run the unit test suite.
+* Use `make test_integration` to run the integration test suite.
+* Use `make test_e2e` to run the end-to-end (e2e) test suite.
+* Use `make audit` to run security audits of 3rd party dependencies and check compliance with our license policy.
+
+If you write code yourself, it is a strict requirement to validate your work on completion before you call it done:
+
+* Linting must pass.
+* The unit, integration and e2e test suites must pass.
+* Auditing must pass.
+
+If you you are creating a pull request yourself:
+
+* Add a label skip:test_long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
 
 ## Module Documentation Index
 
 Every module has detailed CLAUDE.md documentation. For module-specific guidance, see:
 
-- [src/aignostics/CLAUDE.md](src/aignostics/CLAUDE.md) - **Module index and architecture overview**
-- [src/aignostics/platform/CLAUDE.md](src/aignostics/platform/CLAUDE.md) - Authentication and API client
-- [src/aignostics/application/CLAUDE.md](src/aignostics/application/CLAUDE.md) - Application run orchestration
-- [src/aignostics/wsi/CLAUDE.md](src/aignostics/wsi/CLAUDE.md) - Whole slide image processing
-- [src/aignostics/dataset/CLAUDE.md](src/aignostics/dataset/CLAUDE.md) - Dataset operations
-- [src/aignostics/bucket/CLAUDE.md](src/aignostics/bucket/CLAUDE.md) - Cloud storage management
-- [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure
-- [src/aignostics/gui/CLAUDE.md](src/aignostics/gui/CLAUDE.md) - Desktop interface
-- [src/aignostics/notebook/CLAUDE.md](src/aignostics/notebook/CLAUDE.md) - Marimo notebook integration
-- [src/aignostics/qupath/CLAUDE.md](src/aignostics/qupath/CLAUDE.md) - QuPath bioimage analysis
-- [src/aignostics/system/CLAUDE.md](src/aignostics/system/CLAUDE.md) - System diagnostics
-- [tests/CLAUDE.md](tests/CLAUDE.md) - Test suite documentation
+* [src/aignostics/CLAUDE.md](src/aignostics/CLAUDE.md) - **Module index and architecture overview**
+* [src/aignostics/platform/CLAUDE.md](src/aignostics/platform/CLAUDE.md) - Authentication and API client
+* [src/aignostics/application/CLAUDE.md](src/aignostics/application/CLAUDE.md) - Application run orchestration
+* [src/aignostics/wsi/CLAUDE.md](src/aignostics/wsi/CLAUDE.md) - Whole slide image processing
+* [src/aignostics/dataset/CLAUDE.md](src/aignostics/dataset/CLAUDE.md) - Dataset operations
+* [src/aignostics/bucket/CLAUDE.md](src/aignostics/bucket/CLAUDE.md) - Cloud storage management
+* [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure
+* [src/aignostics/gui/CLAUDE.md](src/aignostics/gui/CLAUDE.md) - Desktop interface
+* [src/aignostics/notebook/CLAUDE.md](src/aignostics/notebook/CLAUDE.md) - Marimo notebook integration
+* [src/aignostics/qupath/CLAUDE.md](src/aignostics/qupath/CLAUDE.md) - QuPath bioimage analysis
+* [src/aignostics/system/CLAUDE.md](src/aignostics/system/CLAUDE.md) - System diagnostics
+* [tests/CLAUDE.md](tests/CLAUDE.md) - Test suite documentation
 
 ## Development Commands
 
@@ -39,17 +66,17 @@ make audit           # Security and license compliance checks
 
 **Package management:**
 
-- Uses `uv` as package manager (not pip/poetry)
-- Run `uv sync` to install dependencies
-- Run `uv add <package>` to add new dependencies
+* Uses `uv` as package manager (not pip/poetry)
+* Run `uv sync` to install dependencies
+* Run `uv add <package>` to add new dependencies
 
 **Testing:**
 
-- Pytest with 85% minimum coverage requirement
-- Use `pytest tests/path/to/test.py::test_function` for single tests
-- Docker integration tests available with `make test-docker`
-- Test markers available: `sequential`, `long_running`, `scheduled`, `docker`, `skip_with_act`
-- Special test commands: `make test_sequential`, `make test_long_running`, `make test_scheduled`
+* Pytest with 85% minimum coverage requirement
+* Use `pytest tests/path/to/test.py::test_function` for single tests
+* Docker integration tests available with `make test-docker`
+* Test markers available: `sequential`, `long_running`, `scheduled`, `docker`, `skip_with_act`
+* Special test commands: `make test_sequential`, `make test_long_running`, `make test_scheduled`
 
 ## Software Architecture Principles
 
@@ -57,25 +84,25 @@ This SDK follows a **Modulith Architecture** with these core principles:
 
 ### 1. Modulith Design
 
-- **Single deployable unit** with well-defined module boundaries
-- **High cohesion** within modules, **loose coupling** between modules
-- **Each module is self-contained** with its own service, configuration, and optional UI
-- **Clear dependency hierarchy** preventing circular dependencies
+* **Single deployable unit** with well-defined module boundaries
+* **High cohesion** within modules, **loose coupling** between modules
+* **Each module is self-contained** with its own service, configuration, and optional UI
+* **Clear dependency hierarchy** preventing circular dependencies
 
 ### 2. Dependency Injection & Service Discovery
 
-- **No decorators or annotations** - uses runtime service discovery
-- **Dynamic module loading** via `locate_implementations(BaseService)`
-- **All services inherit from `BaseService`** providing standard `health()` and `info()` interfaces
-- **Singleton pattern** for service instances within the DI container
+* **No decorators or annotations** - uses runtime service discovery
+* **Dynamic module loading** via `locate_implementations(BaseService)`
+* **All services inherit from `BaseService`** providing standard `health()` and `info()` interfaces
+* **Singleton pattern** for service instances within the DI container
 
 ### 3. Presentation Layer Pattern
 
 Each module can have **zero, one, or both** presentation layers:
 
-- **CLI (_cli.py)**: Text-based interface using Typer framework
-- **GUI (_gui.py)**: Graphical interface using NiceGUI framework
-- **Both layers depend on the Service layer**, never on each other
+* **CLI (_cli.py)**: Text-based interface using Typer framework
+* **GUI (_gui.py)**: Graphical interface using NiceGUI framework
+* **Both layers depend on the Service layer**, never on each other
 
 ### Module Architecture Pattern
 
@@ -111,78 +138,78 @@ Module/
 
 **utils** - Infrastructure module providing:
 
-- Dependency injection container (`locate_implementations`, `locate_subclasses`)
-- Structured logging (`get_logger`)
-- Settings management (Pydantic-based)
-- Health check framework (`BaseService`, `Health`)
+* Dependency injection container (`locate_implementations`, `locate_subclasses`)
+* Structured logging (`get_logger`)
+* Settings management (Pydantic-based)
+* Health check framework (`BaseService`, `Health`)
 
 ### API Layer
 
 **platform** - Authentication and API gateway:
 
-- OAuth 2.0 device flow authentication
-- Token lifecycle management
-- Resource clients (applications, runs)
-- *Dependencies*: `utils`
+* OAuth 2.0 device flow authentication
+* Token lifecycle management
+* Resource clients (applications, runs)
+* *Dependencies*: `utils`
 
 ### Domain Modules
 
 **application** - ML application orchestration:
 
-- Run lifecycle management
-- Version control (semver)
-- File upload/download with progress
-- *Dependencies*: `platform`, `bucket`, `wsi`, `utils`, `qupath` (optional)
+* Run lifecycle management
+* Version control (semver)
+* File upload/download with progress
+* *Dependencies*: `platform`, `bucket`, `wsi`, `utils`, `qupath` (optional)
 
 **wsi** - Whole slide image processing:
 
-- Multi-format support (OpenSlide, PyDICOM)
-- Thumbnail generation
-- Tile extraction
-- *Dependencies*: `utils`
+* Multi-format support (OpenSlide, PyDICOM)
+* Thumbnail generation
+* Tile extraction
+* *Dependencies*: `utils`
 
 **dataset** - Large-scale data operations:
 
-- IDC (Imaging Data Commons) integration
-- High-performance downloads (s5cmd)
-- *Dependencies*: `platform`, `utils`
+* IDC (Imaging Data Commons) integration
+* High-performance downloads (s5cmd)
+* *Dependencies*: `platform`, `utils`
 
 **bucket** - Cloud storage abstraction:
 
-- S3/GCS unified interface
-- Signed URL generation
-- Chunked transfers
-- *Dependencies*: `platform`, `utils`
+* S3/GCS unified interface
+* Signed URL generation
+* Chunked transfers
+* *Dependencies*: `platform`, `utils`
 
 ### Integration Modules
 
 **qupath** - Bioimage analysis platform:
 
-- QuPath installation and lifecycle
-- Project management
-- Script execution
-- *Dependencies*: `utils`, requires `ijson`
+* QuPath installation and lifecycle
+* Project management
+* Script execution
+* *Dependencies*: `utils`, requires `ijson`
 
 **notebook** - Interactive analysis:
 
-- Marimo notebook server
-- Process management
-- *Dependencies*: `utils`, requires `marimo`
+* Marimo notebook server
+* Process management
+* *Dependencies*: `utils`, requires `marimo`
 
 ### System Modules
 
 **system** - Diagnostics and monitoring:
 
-- **Health aggregation from ALL modules** via `BaseService.health()`
-- Comprehensive system information
-- Environment detection and diagnostics
-- *Dependencies*: All modules (queries health status from every service)
+* **Health aggregation from ALL modules** via `BaseService.health()`
+* Comprehensive system information
+* Environment detection and diagnostics
+* *Dependencies*: All modules (queries health status from every service)
 
 **gui** - Desktop launchpad:
 
-- Aggregates all module GUIs
-- Unified desktop interface
-- *Dependencies*: All modules with GUI components
+* Aggregates all module GUIs
+* Unified desktop interface
+* *Dependencies*: All modules with GUI components
 
 ### Dependency Graph
 
@@ -313,53 +340,53 @@ uvx --with "aignostics[gui]" aignostics gui
 
 **Type Checking:**
 
-- MyPy strict mode enforced
-- All public APIs must have type hints
-- Use `from __future__ import annotations` for forward references
+* MyPy strict mode enforced
+* All public APIs must have type hints
+* Use `from __future__ import annotations` for forward references
 
 **Code Style:**
 
-- Ruff handles all formatting/linting (Black-compatible)
-- 120 character line limit
-- Google-style docstrings required for public APIs
+* Ruff handles all formatting/linting (Black-compatible)
+* 120 character line limit
+* Google-style docstrings required for public APIs
 
 **Import Organization:**
 
-- Standard library imports first
-- Third-party imports second
-- Local imports last
-- Use relative imports within modules (`from ._service import Service`)
+* Standard library imports first
+* Third-party imports second
+* Local imports last
+* Use relative imports within modules (`from ._service import Service`)
 
 **Error Handling:**
 
-- Custom exceptions in `system/_exceptions.py`
-- Use structured logging with correlation IDs
-- HTTP errors wrapped in domain-specific exceptions
+* Custom exceptions in `system/_exceptions.py`
+* Use structured logging with correlation IDs
+* HTTP errors wrapped in domain-specific exceptions
 
 **Security:**
 
-- OAuth-based authentication via `platform/_authentication.py`
-- No secrets/tokens in code or commits
-- Signed URLs for data transfer
-- Sensitive data masking in logs and info outputs
+* OAuth-based authentication via `platform/_authentication.py`
+* No secrets/tokens in code or commits
+* Signed URLs for data transfer
+* Sensitive data masking in logs and info outputs
 
 ## Medical Domain Context
 
 This is a computational pathology SDK working with:
 
-- **DICOM medical imaging standards** - Medical image format
-- **Whole slide images (WSI)** - Gigapixel-scale pathology images
-- **IDC (Imaging Data Commons)** - National Cancer Institute data repository
-- **QuPath** - Leading bioimage analysis platform
-- **Machine learning inference** - AI/ML model execution on medical data
-- **HIPAA compliance** - Medical data privacy requirements
+* **DICOM medical imaging standards** - Medical image format
+* **Whole slide images (WSI)** - Gigapixel-scale pathology images
+* **IDC (Imaging Data Commons)** - National Cancer Institute data repository
+* **QuPath** - Leading bioimage analysis platform
+* **Machine learning inference** - AI/ML model execution on medical data
+* **HIPAA compliance** - Medical data privacy requirements
 
 **WSI Processing:**
 
-- OpenSlide for standard formats (.svs, .tiff, .ndpi)
-- PyDICOM for DICOM files
-- Support for multi-resolution pyramidal images
-- Tile-based processing for memory efficiency
+* OpenSlide for standard formats (.svs, .tiff, .ndpi)
+* PyDICOM for DICOM files
+* Support for multi-resolution pyramidal images
+* Tile-based processing for memory efficiency
 
 ## Build System
 
@@ -377,10 +404,10 @@ aignostics-python-sdk/
 
 **Build configuration:**
 
-- `pyproject.toml` - Package metadata and dependencies
-- `ruff.toml` - Linting and formatting rules
-- `.pre-commit-config.yaml` - Git hooks
-- `cliff.toml` - Changelog generation
+* `pyproject.toml` - Package metadata and dependencies
+* `ruff.toml` - Linting and formatting rules
+* `.pre-commit-config.yaml` - Git hooks
+* `cliff.toml` - Changelog generation
 
 ## Development Guidelines
 
@@ -430,11 +457,11 @@ def action_command(param: str):
 
 ### Testing Requirements
 
-- Minimum 85% code coverage
-- Unit tests for all public methods
-- Integration tests for CLI commands
-- Mock external dependencies
-- Use fixtures from `conftest.py`
+* Minimum 85% code coverage
+* Unit tests for all public methods
+* Integration tests for CLI commands
+* Mock external dependencies
+* Use fixtures from `conftest.py`
 
 ## Important Notes
 
@@ -442,23 +469,23 @@ def action_command(param: str):
 
 Some modules have conditional loading based on dependencies:
 
-- **qupath** requires `ijson` package
-- **gui** requires `nicegui` package
-- **notebook** requires `marimo` package
+* **qupath** requires `ijson` package
+* **gui** requires `nicegui` package
+* **notebook** requires `marimo` package
 
 ### Platform Authentication
 
-- Token cached in `~/.aignostics/token.json`
-- Format: `token:expiry_timestamp`
-- 5-minute refresh buffer before expiry
-- OAuth 2.0 device flow
+* Token cached in `~/.aignostics/token.json`
+* Format: `token:expiry_timestamp`
+* 5-minute refresh buffer before expiry
+* OAuth 2.0 device flow
 
 ### Performance Considerations
 
-- Chunked uploads/downloads (1MB/10MB chunks)
-- Streaming for large files
-- Process management for subprocesses
-- Memory-efficient WSI tile processing
+* Chunked uploads/downloads (1MB/10MB chunks)
+* Streaming for large files
+* Process management for subprocesses
+* Memory-efficient WSI tile processing
 
 ### Common Pitfalls
 
