@@ -260,10 +260,7 @@ class Service(BaseService):
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
         try:
-            logger.debug("Retrieving application with ID '%s'.", application_id)
-            rtn = self._get_platform_client().application(application_id)
-            logger.debug("Retrieved application: %s", rtn)
-            return rtn
+            return self._get_platform_client().application(application_id)
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
@@ -290,12 +287,7 @@ class Service(BaseService):
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
         try:
-            logger.debug(
-                "Retrieving application version '%s' for application with ID '%s'.", application_version, application_id
-            )
-            rtn = self._get_platform_client().application_version(application_id, application_version)
-            logger.debug("Retrieved application version: %s", rtn)
-            return rtn
+            return self._get_platform_client().application_version(application_id, application_version)
         except ValueError:
             raise
         except NotFoundException as e:
@@ -340,14 +332,11 @@ class Service(BaseService):
         # Can be optimized to one call if API would support it.
         # Let's discuss if we should re-add the endpoint that existed.
         try:
-            logger.debug("Retrieving application versions for application with ID '%s'.", application_id)
             client = self._get_platform_client()
-            rtn = [
+            return [
                 client.application_version(application_id, version.number)
                 for version in client.versions.list(application_id)
             ]
-            logger.debug("Retrieved %d application versions: %s", len(rtn), rtn)
-            return rtn
         except NotFoundException as e:
             message = f"Application with ID '{application_id}' not found: {e}"
             logger.warning(message)
