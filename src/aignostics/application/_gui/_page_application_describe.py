@@ -304,7 +304,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         _info_dialog_content()
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
-    with ui.stepper(value="Scheduling").props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
+    with ui.stepper().props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
         with ui.step("Select Application Version"):
             with ui.row().classes("w-full justify-center"):
                 with ui.column():
