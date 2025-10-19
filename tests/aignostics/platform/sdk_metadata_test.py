@@ -37,6 +37,7 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
 class TestBuildSdkMetadata:
     """Test cases for build_sdk_metadata function."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_basic_metadata_structure(clean_env: None) -> None:
         """Test that basic metadata structure is created correctly."""
@@ -50,6 +51,7 @@ class TestBuildSdkMetadata:
             assert "submission" in metadata
             assert "user_agent" in metadata
 
+    @pytest.mark.unit
     @staticmethod
     def test_submission_metadata_default(clean_env: None) -> None:
         """Test default submission metadata when no special environment is detected."""
@@ -67,6 +69,7 @@ class TestBuildSdkMetadata:
             # Verify date is in ISO format
             datetime.fromisoformat(metadata["submission"]["date"])
 
+    @pytest.mark.unit
     @staticmethod
     def test_submission_source_bridge(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that bridge source is detected when AIGNOSTICS_BRIDGE_VERSION is set."""
@@ -79,6 +82,7 @@ class TestBuildSdkMetadata:
 
             assert metadata["submission"]["source"] == "bridge"
 
+    @pytest.mark.unit
     @staticmethod
     def test_submission_source_test(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that test source is detected when PYTEST_CURRENT_TEST is set."""
@@ -91,6 +95,7 @@ class TestBuildSdkMetadata:
 
             assert metadata["submission"]["source"] == "test"
 
+    @pytest.mark.unit
     @staticmethod
     def test_submission_source_bridge_takes_precedence(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that bridge source takes precedence over test source."""
@@ -104,6 +109,7 @@ class TestBuildSdkMetadata:
 
             assert metadata["submission"]["source"] == "bridge"
 
+    @pytest.mark.unit
     @staticmethod
     def test_submission_interface_cli_typer(clean_env: None) -> None:
         """Test that CLI interface is detected when running via typer."""
@@ -120,6 +126,7 @@ class TestBuildSdkMetadata:
         finally:
             sys.argv = original_argv
 
+    @pytest.mark.unit
     @staticmethod
     def test_submission_interface_cli_aignostics(clean_env: None) -> None:
         """Test that CLI interface is detected when running via aignostics command."""
@@ -136,6 +143,7 @@ class TestBuildSdkMetadata:
         finally:
             sys.argv = original_argv
 
+    @pytest.mark.unit
     @staticmethod
     def test_submission_interface_launchpad(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that launchpad interface is detected when NICEGUI_HOST is set."""
@@ -148,6 +156,7 @@ class TestBuildSdkMetadata:
 
             assert metadata["submission"]["interface"] == "launchpad"
 
+    @pytest.mark.unit
     @staticmethod
     def test_user_metadata_success(clean_env: None) -> None:
         """Test that user metadata is included when Client().me() succeeds."""
@@ -168,6 +177,7 @@ class TestBuildSdkMetadata:
             assert metadata["user"]["user_email"] == "test@example.com"
             assert metadata["user"]["user_id"] == "user-456"
 
+    @pytest.mark.unit
     @staticmethod
     def test_user_metadata_failure(clean_env: None) -> None:
         """Test that user metadata is omitted when Client().me() fails."""
@@ -178,6 +188,7 @@ class TestBuildSdkMetadata:
 
             assert "user" not in metadata
 
+    @pytest.mark.unit
     @staticmethod
     def test_github_ci_metadata(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that GitHub CI metadata is collected correctly."""
@@ -222,6 +233,7 @@ class TestBuildSdkMetadata:
             assert github["workflow"] == "CI"
             assert github["workflow_ref"] == "owner/repo/.github/workflows/ci.yml@main"
 
+    @pytest.mark.unit
     @staticmethod
     def test_github_ci_metadata_custom_server(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test GitHub CI metadata with custom server URL."""
@@ -238,6 +250,7 @@ class TestBuildSdkMetadata:
                 "https://github.enterprise.com/owner/repo/actions/runs/12345"
             )
 
+    @pytest.mark.unit
     @staticmethod
     def test_pytest_metadata_basic(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that pytest metadata is collected correctly."""
@@ -252,6 +265,7 @@ class TestBuildSdkMetadata:
             assert "pytest" in metadata["ci"]
             assert metadata["ci"]["pytest"]["current_test"] == "tests/test_example.py::test_func (call)"
 
+    @pytest.mark.unit
     @staticmethod
     def test_pytest_metadata_with_markers(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that pytest markers are parsed correctly."""
@@ -266,6 +280,7 @@ class TestBuildSdkMetadata:
             assert "markers" in metadata["ci"]["pytest"]
             assert metadata["ci"]["pytest"]["markers"] == ["slow", "integration", "unit"]
 
+    @pytest.mark.unit
     @staticmethod
     def test_combined_github_and_pytest_metadata(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that both GitHub and pytest metadata can coexist."""
@@ -282,6 +297,7 @@ class TestBuildSdkMetadata:
             assert "github" in metadata["ci"]
             assert "pytest" in metadata["ci"]
 
+    @pytest.mark.unit
     @staticmethod
     def test_no_ci_metadata_when_not_in_ci(clean_env: None) -> None:
         """Test that ci field is omitted when not in CI environment."""
@@ -295,6 +311,7 @@ class TestBuildSdkMetadata:
 
             assert "ci" not in metadata
 
+    @pytest.mark.unit
     @staticmethod
     def test_user_agent_included(clean_env: None) -> None:
         """Test that user_agent is included in metadata."""
@@ -305,6 +322,7 @@ class TestBuildSdkMetadata:
 
                 assert metadata["user_agent"] == "test-agent/1.0"
 
+    @pytest.mark.unit
     @staticmethod
     def test_metadata_date_format(clean_env: None) -> None:
         """Test that submission date is in correct ISO format with seconds precision."""
@@ -325,6 +343,7 @@ class TestBuildSdkMetadata:
 class TestSdkMetadataValidation:
     """Test cases for SDK metadata validation."""
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_basic_metadata(clean_env: None) -> None:
         """Test validation of basic metadata structure."""
@@ -334,6 +353,7 @@ class TestSdkMetadataValidation:
             metadata = build_sdk_metadata()
             assert validate_sdk_metadata(metadata) is True
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_metadata_with_user(clean_env: None) -> None:
         """Test validation of metadata with user information."""
@@ -348,6 +368,7 @@ class TestSdkMetadataValidation:
             metadata = build_sdk_metadata()
             assert validate_sdk_metadata(metadata) is True
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_metadata_with_github_ci(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test validation of metadata with GitHub CI information."""
@@ -360,6 +381,7 @@ class TestSdkMetadataValidation:
             metadata = build_sdk_metadata()
             assert validate_sdk_metadata(metadata) is True
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_metadata_with_pytest_ci(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test validation of metadata with pytest information."""
@@ -372,6 +394,7 @@ class TestSdkMetadataValidation:
             metadata = build_sdk_metadata()
             assert validate_sdk_metadata(metadata) is True
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_metadata_with_workflow(clean_env: None) -> None:
         """Test validation of metadata with workflow fields."""
@@ -391,6 +414,7 @@ class TestSdkMetadataValidation:
 
             assert validate_sdk_metadata(metadata) is True
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_invalid_schema_version() -> None:
         """Test that invalid schema version fails validation."""
@@ -407,6 +431,7 @@ class TestSdkMetadataValidation:
         with pytest.raises(ValidationError):
             validate_sdk_metadata(metadata)
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_invalid_submission_interface() -> None:
         """Test that invalid submission interface fails validation."""
@@ -423,6 +448,7 @@ class TestSdkMetadataValidation:
         with pytest.raises(ValidationError):
             validate_sdk_metadata(metadata)
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_invalid_submission_source() -> None:
         """Test that invalid submission source fails validation."""
@@ -439,6 +465,7 @@ class TestSdkMetadataValidation:
         with pytest.raises(ValidationError):
             validate_sdk_metadata(metadata)
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_missing_required_fields() -> None:
         """Test that missing required fields fail validation."""
@@ -455,6 +482,7 @@ class TestSdkMetadataValidation:
         with pytest.raises(ValidationError):
             validate_sdk_metadata(metadata)
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_extra_fields_rejected() -> None:
         """Test that extra unknown fields are rejected."""
@@ -472,6 +500,7 @@ class TestSdkMetadataValidation:
         with pytest.raises(ValidationError):
             validate_sdk_metadata(metadata)
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_sdk_metadata_silent_valid(clean_env: None) -> None:
         """Test silent validation with valid metadata."""
@@ -481,6 +510,7 @@ class TestSdkMetadataValidation:
             metadata = build_sdk_metadata()
             assert validate_sdk_metadata_silent(metadata) is True
 
+    @pytest.mark.unit
     @staticmethod
     def test_validate_sdk_metadata_silent_invalid() -> None:
         """Test silent validation with invalid metadata."""
@@ -496,6 +526,7 @@ class TestSdkMetadataValidation:
 
         assert validate_sdk_metadata_silent(metadata) is False
 
+    @pytest.mark.unit
     @staticmethod
     def test_get_json_schema() -> None:
         """Test that JSON schema can be exported."""

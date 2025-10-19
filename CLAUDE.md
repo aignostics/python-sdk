@@ -37,6 +37,7 @@ If you you are creating a pull request yourself:
 
 Every module has detailed CLAUDE.md documentation. For module-specific guidance, see:
 
+* [.github/CLAUDE.md](.github/CLAUDE.md) - **CI/CD workflows and GitHub Actions complete guide**
 * [src/aignostics/CLAUDE.md](src/aignostics/CLAUDE.md) - **Module index and architecture overview**
 * [src/aignostics/platform/CLAUDE.md](src/aignostics/platform/CLAUDE.md) - Authentication and API client
 * [src/aignostics/application/CLAUDE.md](src/aignostics/application/CLAUDE.md) - Application run orchestration
@@ -73,10 +74,10 @@ make audit           # Security and license compliance checks
 **Testing:**
 
 * Pytest with 85% minimum coverage requirement
-* Use `pytest tests/path/to/test.py::test_function` for single tests
-* Docker integration tests available with `make test-docker`
-* Test markers available: `sequential`, `long_running`, `scheduled`, `docker`, `skip_with_act`
-* Special test commands: `make test_sequential`, `make test_long_running`, `make test_scheduled`
+* Default timeout: 10 seconds (override with `@pytest.mark.timeout(timeout=N)`)
+* Use `uv run pytest tests/path/to/test.py::test_function` for single tests
+* See **Testing Workflow** section below for complete marker documentation
+* Special test commands: `make test_unit`, `make test_integration`, `make test_e2e`, `make test_long_running`, `make test_very_long_running`, `make test_sequential`, `make test_scheduled`
 
 **Type Checking (NEW in v1.0.0-beta.7 - Dual Type Checkers):**
 
@@ -661,20 +662,75 @@ See `platform/CLAUDE.md` for complete state machine diagrams and migration guide
 
 ### Test Suite Organization
 
-The SDK has a comprehensive test suite organized by test type and execution strategy:
+The SDK has a comprehensive test suite organized by test type and execution strategy.
 
-**Test Markers:**
+**Pytest Configuration**:
 
-* `unit` - Fast, isolated tests with no external dependencies (~3 min)
-* `integration` - Tests with mocked external services (~5 min)
-* `e2e` - End-to-end tests against real staging environment (~7 min)
-* `sequential` - Tests that must run in order (not parallelized)
-* `long_running` - Tests taking >30 seconds (skipped by default in CI)
-* `very_long_running` - Tests taking >5 minutes (only in scheduled runs)
-* `scheduled` - Tests run on schedule against live environments
-* `scheduled_only` - Tests ONLY run on schedule (never in PR CI)
-* `docker` - Tests requiring Docker
-* `skip_with_act` - Tests skipped when using Act (local GitHub Actions)
+* Default timeout: **10 seconds** per test
+* Coverage requirement: **85% minimum**
+* Async mode: `auto` (detects async tests automatically)
+* Parallel execution: Via pytest-xdist with work stealing
+
+**Test Markers** (authoritative definitions from `pyproject.toml`):
+
+**IMPORTANT**: Every test **MUST** have at least one of: `unit`, `integration`, or `e2e` marker, otherwise it will **NOT run in CI**. The CI pipeline explicitly runs tests with these markers only.
+
+**Test Categories** (Martin Fowler's Solitary vs Sociable distinction):
+
+* **`unit`** - Solitary unit tests
+  * Test a layer of a module in isolation with all dependencies mocked (except shared utils and systems module)
+  * Must pass **offline** (no external service calls)
+  * Timeout: ≤ 10s (default), must be < 5 min
+  * ~3 minutes total execution time
+
+* **`integration`** - Sociable integration tests
+  * Test interactions across architectural layers (CLI/GUI→Service, Service→Utils) or between modules (Application→Platform)
+  * Uses real SDK collaborators, real file I/O, real subprocesses, real Docker containers
+  * Must pass **offline** (mock external services: Aignostics Platform API, Auth0, S3/GCS, IDC)
+  * Timeout: ≤ 10s (default), must be < 5 min
+  * ~5 minutes total execution time
+
+* **`e2e`** - End-to-end tests
+  * Test complete workflows with **real external network services** (Aignostics Platform API, cloud storage, IDC, etc)
+  * If timeout ≥ 5 min and < 60 min, additionally mark as `long_running`
+  * If timeout ≥ 60 min, additionally mark as `very_long_running`
+  * ~7 minutes total execution time (regular tests only)
+
+**Test Execution Control Markers**:
+
+* **`long_running`** - Tests with timeout **≥ 5 min and < 60 min**
+  * CI/CD runs with **one Python version only** (3.13)
+  * Excluded by default in `make test` - use `make test_long_running`
+  * Can be skipped in PRs with `skip:test:long_running` label
+
+* **`very_long_running`** - Tests with timeout **≥ 60 min**
+  * CI/CD runs with **one Python version only** (3.13)
+  * Excluded by default in `make test` - use `make test_very_long_running`
+  * Only runs when explicitly enabled with `enable:test:very_long_running` label
+
+**Scheduling Markers**:
+
+* **`scheduled`** - Tests to run on a schedule
+  * Still part of non-scheduled test executions
+  * Run every 6h (staging) and 24h (production)
+
+* **`scheduled_only`** - Tests to run **on schedule only**
+  * Never run in regular CI/CD
+  * Only in scheduled test workflows
+
+**Infrastructure Markers**:
+
+* **`sequential`** - Exclude from parallel test execution
+  * Tests that must run in specific order or have interdependencies
+
+* **`docker`** - Tests that require Docker
+  * Docker daemon must be running
+
+* **`skip_with_act`** - Don't run with [Act](https://github.com/nektos/act)
+  * For local GitHub Actions testing
+
+* **`no_extras`** - Tests that require no extras installed
+  * Test behavior without optional dependencies
 
 **Test Structure:**
 
@@ -832,6 +888,54 @@ make test_e2e
 uv run pytest -m "e2e and not long_running" -v
 ```
 
+### Pytest Configuration Details
+
+**From `pyproject.toml` `[tool.pytest.ini_options]`**:
+
+**Test Discovery**:
+
+* Test paths: `tests/`
+* Python files: `*_test.py`, `test_*.py`
+* Main file: `tests/main.py`
+
+**CLI Options** (always applied):
+
+```bash
+-p nicegui.testing.plugin  # NiceGUI testing support
+-v                          # Verbose output
+--strict-markers            # Error on unknown markers
+--log-disable=aignostics    # Disable SDK logging during tests
+--cov=aignostics            # Coverage for src/aignostics
+--cov-report=term-missing   # Terminal report with missing lines
+--cov-report=xml:reports/coverage.xml     # XML for Codecov
+--cov-report=html:reports/coverage_html   # HTML report
+```
+
+**Timeouts**:
+
+* Default: **10 seconds** per test
+* Override in test: `@pytest.mark.timeout(timeout=60)`
+* Method: `signal` (can be configured)
+
+**Async Support**:
+
+* Mode: `auto` (automatically detects async tests)
+* Default fixture loop scope: `function`
+
+**Coverage**:
+
+* Environment: `COVERAGE_FILE=.coverage`, `COVERAGE_PROCESS_START=pyproject.toml`
+* Minimum: 85% (enforced in CI)
+* Branch coverage: Enabled
+* Parallel mode: Enabled (thread + multiprocessing concurrency)
+
+**Markdown Reports**:
+
+* Enabled: `md_report = true`
+* Output: `reports/pytest.md`
+* Flavor: GitHub-flavored markdown
+* Exclude outcomes: `passed`, `skipped` (only show failures/errors)
+
 ### Test Fixtures and Patterns
 
 **Key fixtures (conftest.py):**
@@ -863,6 +967,32 @@ def test_sdk_metadata_minimal(monkeypatch):
 ```
 
 **See tests/CLAUDE.md for comprehensive testing patterns and examples.**
+
+### Finding Unmarked Tests
+
+**Critical**: To find tests missing category markers (which will NOT run in CI):
+
+```bash
+# Find all tests without unit/integration/e2e markers
+uv run pytest -m "not unit and not integration and not e2e" --collect-only
+
+# This should return 0 tests if all are properly marked
+# If tests are found, they are missing required markers
+```
+
+**Why this works**: The marker expression matches tests that don't have any of the required category markers.
+
+**Add to pre-commit checks**:
+
+```bash
+# Verify no unmarked tests exist
+if uv run pytest -m "not unit and not integration and not e2e" --collect-only 2>&1 | grep -q "collected 0 items"; then
+    echo "✅ All tests have category markers"
+else
+    echo "❌ Found tests without category markers - they will NOT run in CI!"
+    exit 1
+fi
+```
 
 ## Development Workflow
 
@@ -1181,6 +1311,438 @@ gh pr edit --add-label "skip:test_long_running"
 * Enable pytest as test runner
 * Set up ruff as external tool
 * Configure mypy plugin for type checking
+
+## Tips and Tricks for Claude Code Efficiency
+
+### Quick Discovery Commands
+
+**Find files by pattern**:
+
+```bash
+# Find all test files
+find tests -name "*_test.py" -o -name "test_*.py"
+
+# Find Python files excluding tests
+find src -name "*.py" | grep -v __pycache__
+
+# Find configuration files
+find . -maxdepth 2 -name "*.toml" -o -name "*.yml" -o -name "*.yaml" | grep -v node_modules
+```
+
+**Search code effectively**:
+
+```bash
+# Find all imports of a module
+grep -r "from aignostics.platform import" --include="*.py"
+
+# Find all test markers
+grep -r "@pytest.mark." tests/ --include="*.py" | cut -d: -f2 | sort | uniq -c
+
+# Find all CLI commands
+grep -r "@cli.*\.command" src/ --include="*.py"
+
+# Find TODOs and FIXMEs
+grep -rn "TODO\|FIXME" src/ --include="*.py"
+```
+
+**Git exploration**:
+
+```bash
+# View commit history for a specific file
+git log --oneline --follow -- path/to/file.py
+
+# See what changed in recent commits
+git log --oneline --stat -10
+
+# Find who last modified a line
+git blame -L 100,110 path/to/file.py
+
+# Check current branch and recent commits
+git log --oneline --graph --decorate -20
+```
+
+### Testing Shortcuts
+
+**Run specific test categories**:
+
+```bash
+# Run only fast tests (unit + integration, no e2e)
+uv run pytest -m "unit or integration" -v
+
+# Run tests for a specific module
+uv run pytest tests/aignostics/platform/ -v
+
+# Run tests matching a pattern
+uv run pytest -k "metadata" -v
+
+# Run last failed tests
+uv run pytest --lf
+
+# Run tests that failed in last session, then continue with others
+uv run pytest --ff
+```
+
+**Test discovery and validation**:
+
+```bash
+# Collect tests without running (verify test discovery)
+uv run pytest --collect-only
+
+# Find tests without category markers (CRITICAL - they won't run in CI!)
+uv run pytest -m "not unit and not integration and not e2e" --collect-only
+
+# List all available markers
+uv run pytest --markers
+
+# Dry run with verbose output
+uv run pytest --collect-only -v | grep "<Function"
+```
+
+**Coverage shortcuts**:
+
+```bash
+# Quick coverage check without HTML
+uv run pytest --cov=aignostics --cov-report=term-missing --no-cov-on-fail
+
+# Coverage for specific module
+uv run pytest tests/aignostics/platform/ --cov=aignostics.platform --cov-report=term
+
+# View coverage report from last run
+uv run coverage report
+
+# Open HTML coverage report
+open reports/coverage_html/index.html
+```
+
+### Code Quality Checks
+
+**Incremental linting** (faster than full `make lint`):
+
+```bash
+# Format only changed files
+git diff --name-only --diff-filter=AM | grep "\.py$" | xargs ruff format
+
+# Lint only changed files
+git diff --name-only --diff-filter=AM | grep "\.py$" | xargs ruff check
+
+# Type check specific file
+uv run mypy src/aignostics/platform/_client.py
+
+# Check specific file with pyright
+uv run pyright src/aignostics/platform/_client.py
+```
+
+**Quick fixes**:
+
+```bash
+# Auto-fix ruff issues
+ruff check . --fix
+
+# Auto-fix unsafe issues too (use with caution)
+ruff check . --fix --unsafe-fixes
+
+# Format all Python files
+ruff format .
+```
+
+### Debugging Techniques
+
+**Pytest debugging**:
+
+```bash
+# Drop into pdb on first failure
+uv run pytest --pdb
+
+# Drop into pdb on any exception
+uv run pytest --pdb --pdbcls=IPython.terminal.debugger:TerminalPdb
+
+# Show local variables on failure
+uv run pytest --showlocals
+
+# Ultra-verbose output
+uv run pytest -vvv --tb=long
+
+# Capture output for debugging
+uv run pytest -s --log-cli-level=DEBUG
+```
+
+**Module import testing**:
+
+```bash
+# Test if module imports successfully
+python -c "from aignostics.platform import Client; print('OK')"
+
+# Check module version
+python -c "import aignostics; print(aignostics.__version__)"
+
+# List module contents
+python -c "from aignostics import platform; print(dir(platform))"
+```
+
+### Efficient File Exploration
+
+**Understanding module structure**:
+
+```bash
+# List all Python modules
+find src/aignostics -type d -name "[!_]*" | grep -v __pycache__
+
+# Count lines of code by module
+for dir in src/aignostics/*/; do
+  echo "$(find "$dir" -name '*.py' | xargs wc -l | tail -1 | awk '{print $1}') lines in $(basename $dir)"
+done | sort -rn
+
+# Find largest Python files
+find src -name "*.py" -exec wc -l {} \; | sort -rn | head -10
+
+# Count test files vs source files
+echo "Source: $(find src -name '*.py' | wc -l) files"
+echo "Tests: $(find tests -name '*test.py' | wc -l) files"
+```
+
+**Checking dependencies**:
+
+```bash
+# List all direct dependencies
+grep "dependencies = \[" pyproject.toml -A 50 | grep -E "^\s+\"" | head -20
+
+# Check installed packages
+uv pip list
+
+# Find unused imports (requires autoflake)
+uv run python -m autoflake --check --remove-all-unused-imports src/
+
+# Check for outdated dependencies
+uv pip list --outdated
+```
+
+### Working with Reports
+
+**Generated reports location**: `reports/`
+
+```bash
+# View pytest summary
+cat reports/pytest.md
+
+# Check coverage summary
+cat reports/coverage.md
+
+# View JUnit XML for specific marker
+ls reports/junit_*.xml
+
+# Quick coverage percentage
+grep "TOTAL" reports/coverage.md
+```
+
+### Nox Session Shortcuts
+
+```bash
+# List all available nox sessions
+uv run nox --list
+
+# Run specific session
+uv run nox -s lint
+
+# Run session with specific Python version
+uv run nox -s test-3.13.7
+
+# Run multiple sessions
+uv run nox -s lint audit
+
+# Pass arguments to pytest through nox
+uv run nox -s test -- -v -k "metadata"
+
+# Reuse existing virtualenvs (faster)
+uv run nox --reuse-existing-virtualenvs -s test
+```
+
+### Branch and Commit Hygiene
+
+**Before starting work**:
+
+```bash
+# Ensure clean state
+git status
+make lint
+make test_unit
+
+# Update from main
+git fetch origin
+git rebase origin/main
+```
+
+**During development**:
+
+```bash
+# Incremental validation (fast feedback)
+make lint                    # ~5 min
+make test_unit              # ~3 min
+
+# Full validation before commit
+make all                    # ~20 min (lint + test + docs + audit)
+```
+
+**Before creating PR**:
+
+```bash
+# Verify all tests pass
+make test
+
+# Check for unmarked tests
+uv run pytest -m "not unit and not integration and not e2e" --collect-only
+
+# Verify no lint issues
+make lint
+
+# Check coverage hasn't dropped
+uv run coverage report --fail-under=85
+
+# Review changes
+git diff origin/main..HEAD --stat
+```
+
+### Performance Profiling
+
+**Test execution time**:
+
+```bash
+# Show slowest tests
+uv run pytest --durations=10
+
+# Show slowest tests with setup/teardown
+uv run pytest --durations=10 --durations-min=1.0
+
+# Profile test execution
+uv run pytest --profile
+
+# Time a specific test
+time uv run pytest tests/aignostics/platform/sdk_metadata_test.py -v
+```
+
+**Memory profiling**:
+
+```bash
+# Run with memory profiler
+python -m memory_profiler script.py
+
+# Check memory usage during tests
+uv run pytest --memray tests/
+```
+
+### Documentation Generation
+
+```bash
+# Build docs locally
+make docs
+
+# Open generated docs
+open docs/build/html/index.html
+
+# Check for broken links in docs
+uv run sphinx-build -b linkcheck docs/source docs/build/linkcheck
+
+# Generate API documentation
+uv run sphinx-apidoc -o docs/source/api src/aignostics
+```
+
+### CLI Testing and Exploration
+
+```bash
+# Test CLI works
+uv run aignostics --help
+
+# Test specific command
+uv run aignostics user whoami --mask-secrets
+
+# Test with verbose output
+uv run aignostics system info --verbose
+
+# Check CLI completion
+uv run aignostics --install-completion
+
+# Test SDK metadata schema export
+uv run aignostics sdk metadata-schema --pretty | jq .
+```
+
+### Quick Fixes for Common Issues
+
+**"No module named" errors**:
+
+```bash
+uv sync --all-extras
+```
+
+**Test failures after merge**:
+
+```bash
+# Clean caches
+make clean
+rm -rf .pytest_cache .mypy_cache .ruff_cache
+
+# Reinstall
+uv sync --all-extras
+```
+
+**Coverage file issues**:
+
+```bash
+# Reset coverage
+make test_coverage_reset
+
+# Rerun tests
+make test
+```
+
+**Git conflicts in lockfiles**:
+
+```bash
+# Regenerate uv.lock
+uv lock --upgrade
+```
+
+**Type checking errors**:
+
+```bash
+# Check which type checker is failing
+uv run mypy src/aignostics/platform/
+uv run pyright src/aignostics/platform/
+
+# See pyrightconfig.json for exclusions
+cat pyrightconfig.json
+```
+
+### Efficient Code Review
+
+**Review checklist**:
+
+```bash
+# 1. Check what changed
+git diff --stat origin/main...HEAD
+
+# 2. Review code changes
+git diff origin/main...HEAD
+
+# 3. Check test coverage for changed files
+git diff --name-only origin/main...HEAD | grep "\.py$" | xargs uv run pytest --cov-report=term-missing --cov=
+
+# 4. Verify tests pass
+make test_unit
+
+# 5. Check for new TODOs
+git diff origin/main...HEAD | grep "+.*TODO"
+
+# 6. Verify lint passes
+make lint
+```
+
+**Finding related tests**:
+
+```bash
+# Given a source file, find its tests
+src_file="src/aignostics/platform/_client.py"
+test_file="tests/aignostics/platform/$(basename ${src_file%%.py}_test.py)"
+ls $test_file
+```
 
 ### Performance Considerations
 
