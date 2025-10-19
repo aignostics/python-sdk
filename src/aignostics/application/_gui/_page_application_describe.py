@@ -591,7 +591,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.metadata_exclude_button.disable()
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
-        with ui.step("Notes & Metadata"):
+        with ui.step("Leave Note"):
             with ui.column(align_items="start").classes("w-full"):
                 ui.textarea(
                     label="Note (optional)",
@@ -606,7 +606,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 ui.button("Next", on_click=stepper.next).mark("BUTTON_NOTES_NEXT")
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
-        with ui.step("Scheduling"):
+        with ui.step("Schedule"):
             with ui.column(align_items="start").classes("w-full"):
                 now = datetime.now().astimezone()
                 today = now.strftime("%Y/%m/%d")
@@ -808,7 +808,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 break
                 _upload_ui.refresh(submit_form.metadata)
 
-        with ui.step("Slide Submission"):
+        with ui.step("Submit"):
             _upload_ui([])
             ui.timer(0.1, callback=_update_upload_progress)
 

@@ -238,7 +238,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         user.find(marker="BUTTON_METADATA_NEXT").click()
         await assert_notified(user, "Metadata captured.")
 
-        # Navigate through Notes & Metadata step
+        # Navigate through Notes step
         await user.should_see("Note (optional)", retries=100)
         user.find("TEXTAREA_NOTE").type("test_gui_download_dataset_via_application_to_run_cancel:note").trigger(
             "keydown.enter"
@@ -252,7 +252,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         user.find(marker="BUTTON_SCHEDULING_NEXT").click()
         await assert_notified(user, "Prepared upload UI.")
 
-        # Now on Slide Submission step
+        # Now on Submission step
         await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
 
         # Indicate to validate only, to not waste GPU resources
