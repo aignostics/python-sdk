@@ -50,7 +50,7 @@ from aignostics.platform._utils import (
     download_file,
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
-    operation_cache_prune,
+    operation_cache_clear,
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
@@ -102,7 +102,6 @@ class Run:
 
         return cls(Client.get_api_client(cache_token=cache_token), run_id)
 
-    @cached_operation(ttl=settings().run_cache_ttl, instance_attrs=("run_id",))
     def details(self) -> RunData:
         """Retrieves the current status of the application run.
 
@@ -114,21 +113,26 @@ class Run:
         Raises:
             Exception: If the API request fails.
         """
-        return Retrying(
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().run_retry_attempts_max),
-            wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True,
-        )(
-            lambda: self._api.get_run_v1_runs_run_id_get(
-                self.run_id,
-                _request_timeout=settings().run_timeout,
-                _headers={"User-Agent": user_agent()},
-            )
-        )
 
-    # TODO(Andreas): Low Prio / existed prior to API migraiton: Please check if this still fails with
+        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+        def details_with_retry(run_id: str) -> RunData:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: self._api.get_run_v1_runs_run_id_get(
+                    run_id,
+                    _request_timeout=settings().run_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
+            )
+
+        return details_with_retry(self.run_id)
+
+    # TODO(Andreas): Low Prio / existed prior to API migration: Please check if this still fails with
     #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.
     def cancel(self) -> None:
         """Cancels the application run.
@@ -136,7 +140,8 @@ class Run:
         Raises:
             Exception: If the API request fails.
         """
-        operation_cache_prune([self.details, self.results])
+        # Clear all caches since run state is changing
+        operation_cache_clear()
         self._api.cancel_run_v1_runs_run_id_cancel_post(
             self.run_id,
             _request_timeout=settings().run_cancel_timeout,
@@ -149,13 +154,14 @@ class Run:
         Raises:
             Exception: If the API request fails.
         """
+        # Clear all caches since run is being deleted
+        operation_cache_clear()
         self._api.delete_run_items_v1_runs_run_id_artifacts_delete(
             self.run_id,
             _request_timeout=settings().run_delete_timeout,
             _headers={"User-Agent": user_agent()},
         )
 
-    @cached_operation(ttl=settings().run_cache_ttl, instance_attrs=("run_id",))
     def results(self) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
 
@@ -168,7 +174,10 @@ class Run:
             Exception: If the API request fails.
         """
 
-        def results_with_retry() -> t.Iterator[ItemResultData]:
+        # Create a wrapper function that applies retry logic and caching to each API call
+        # Caching at this level ensures having a fresh iterator on cache hits
+        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+        def results_with_retry(run_id: str, **kwargs: object) -> list[ItemResultData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts_max),
@@ -176,15 +185,15 @@ class Run:
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
             )(
-                lambda: paginate(
-                    self._api.list_run_items_v1_runs_run_id_items_get,
-                    run_id=self.run_id,
+                lambda: self._api.list_run_items_v1_runs_run_id_items_get(
+                    run_id=run_id,
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
+                    **kwargs,  # pyright: ignore[reportArgumentType]
                 )
             )
 
-        return results_with_retry()
+        return paginate(lambda **kwargs: results_with_retry(self.run_id, **kwargs))
 
     def download_to_folder(
         self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c"
@@ -357,6 +366,8 @@ class Runs:
             items=items,
         )
         self._validate_input_items(payload)
+        # Clear all cached run list data since we're adding a new run
+        operation_cache_clear()
         res: RunCreationResponse = self._api.create_run_v1_runs_post(
             payload,
             _request_timeout=settings().run_submit_timeout,
@@ -382,7 +393,8 @@ class Runs:
             Exception: If the API request fails.
         """
 
-        def list_with_retry(**kwargs: object) -> t.Iterator[RunData]:
+        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+        def list_with_retry(**kwargs: object) -> list[RunData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts_max),
@@ -390,17 +402,19 @@ class Runs:
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
             )(
-                lambda: paginate(
-                    self._api.list_runs_v1_runs_get,
-                    **kwargs,  # type: ignore[arg-type]
+                lambda: self._api.list_runs_v1_runs_get(
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
+                    **kwargs,  # type: ignore[arg-type]
                 )
             )
 
-        res = list_with_retry(
-            application_id=application_id,
-            application_version=application_version,
+        res = paginate(
+            lambda **kwargs: list_with_retry(
+                application_id=application_id,
+                application_version=application_version,
+                **kwargs,
+            )
         )
         return (Run(self._api, response.run_id) for response in res)
 
@@ -436,7 +450,8 @@ class Runs:
             )
             raise ValueError(message)
 
-        def list_data_with_retry(**kwargs: object) -> t.Iterator[RunData]:
+        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+        def list_data_with_retry(**kwargs: object) -> list[RunData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts_max),
@@ -444,20 +459,22 @@ class Runs:
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
             )(
-                lambda: paginate(
-                    self._api.list_runs_v1_runs_get,
-                    **kwargs,  # type: ignore[arg-type]
+                lambda: self._api.list_runs_v1_runs_get(
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
+                    **kwargs,  # type: ignore[arg-type]
                 )
             )
 
-        return list_data_with_retry(
-            page_size=page_size,
-            application_id=application_id,
-            application_version=application_version,
-            custom_metadata=custom_metadata,
-            sort=[sort] if sort else None,
+        return paginate(
+            lambda **kwargs: list_data_with_retry(
+                page_size=page_size,
+                application_id=application_id,
+                application_version=application_version,
+                custom_metadata=custom_metadata,
+                sort=[sort] if sort else None,
+                **kwargs,
+            )
         )
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:

@@ -57,7 +57,6 @@ class Versions:
         """
         self._api = api
 
-    @cached_operation(ttl=settings().run_cache_ttl)
     def list(self, application: Application | str) -> list[VersionTuple]:
         """Find all versions for a specific application.
 
@@ -74,24 +73,27 @@ class Versions:
         """
         application_id = application.application_id if isinstance(application, Application) else application
 
-        app = Retrying(
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().application_retry_attempts_max),
-            wait=wait_exponential_jitter(
-                initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
-            ),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True,
-        )(
-            lambda: self._api.read_application_by_id_v1_applications_application_id_get(
-                application_id=application_id,
-                _request_timeout=settings().application_timeout,
-                _headers={"User-Agent": user_agent()},
+        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
+        def list_with_retry(app_id: str) -> Application:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().application_retry_attempts_max),
+                wait=wait_exponential_jitter(
+                    initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
+                ),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: self._api.read_application_by_id_v1_applications_application_id_get(
+                    application_id=app_id,
+                    _request_timeout=settings().application_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
             )
-        )
+
+        app = list_with_retry(application_id)
         return app.versions if app.versions is not None else []
 
-    @cached_operation(ttl=settings().application_version_cache_ttl)
     def details(self, application_id: str, application_version: VersionTuple | str | None = None) -> ApplicationVersion:
         """Retrieves details for a specific application version.
 
@@ -123,24 +125,28 @@ class Versions:
             message = f"Invalid version format: '{application_version}' not compliant with semantic versioning."
             raise ValueError(message)
 
-        # Make the API call with retry logic
-        return Retrying(
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().application_version_retry_attempts_max),
-            wait=wait_exponential_jitter(
-                initial=settings().application_version_retry_wait_min,
-                max=settings().application_version_retry_wait_max,
-            ),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True,
-        )(
-            lambda: self._api.application_version_details_v1_applications_application_id_versions_version_get(
-                application_id=application_id,
-                version=application_version,
-                _request_timeout=settings().application_version_timeout,
-                _headers={"User-Agent": user_agent()},
+        # Make the API call with retry logic and caching
+        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        def details_with_retry(app_id: str, app_version: str) -> ApplicationVersion:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().application_version_retry_attempts_max),
+                wait=wait_exponential_jitter(
+                    initial=settings().application_version_retry_wait_min,
+                    max=settings().application_version_retry_wait_max,
+                ),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: self._api.application_version_details_v1_applications_application_id_versions_version_get(
+                    application_id=app_id,
+                    version=app_version,
+                    _request_timeout=settings().application_version_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
             )
-        )
+
+        return details_with_retry(application_id, application_version)
 
     # TODO(Helmut): Refactor given new API capabilities
     def list_sorted(self, application: Application | str) -> builtins.list[VersionTuple]:
@@ -206,7 +212,6 @@ class Applications:
         self._api = api
         self.versions: Versions = Versions(self._api)
 
-    @cached_operation(ttl=settings().run_cache_ttl, instance_attrs=("run_id",))
     def details(self, application_id: str) -> Application:
         """Find application by id.
 
@@ -222,23 +227,27 @@ class Applications:
             NotFoundException: If the application with the given ID is not found.
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
-        return Retrying(
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().application_retry_attempts_max),
-            wait=wait_exponential_jitter(
-                initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
-            ),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True,
-        )(
-            lambda: self._api.read_application_by_id_v1_applications_application_id_get(
-                application_id=application_id,
-                _request_timeout=settings().application_timeout,
-                _headers={"User-Agent": user_agent()},
-            )
-        )
 
-    @cached_operation(ttl=settings().application_cache_ttl)
+        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
+        def details_with_retry(application_id: str) -> Application:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().application_retry_attempts_max),
+                wait=wait_exponential_jitter(
+                    initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
+                ),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: self._api.read_application_by_id_v1_applications_application_id_get(
+                    application_id=application_id,
+                    _request_timeout=settings().application_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
+            )
+
+        return details_with_retry(application_id)
+
     def list(self) -> t.Iterator[ApplicationSummary]:
         """Find all available applications.
 
@@ -251,7 +260,9 @@ class Applications:
             aignx.codegen.exceptions.ApiException: If the API request fails.
         """
 
-        # Create a wrapper function that applies retry logic to each API call
+        # Create a wrapper function that applies retry logic and caching to each API call
+        # Caching at this level ensures having a fresh iterator on cache hits
+        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
         def list_with_retry(**kwargs: object) -> list[ApplicationSummary]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),

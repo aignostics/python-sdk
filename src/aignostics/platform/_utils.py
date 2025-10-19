@@ -27,8 +27,9 @@ from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from tqdm.auto import tqdm
 
-from aignostics.platform._authentication import get_token
 from aignostics.utils import get_logger
+
+from ._authentication import get_token
 
 logger = get_logger(__name__)
 
@@ -43,74 +44,74 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
-def operation_cache_prune(func: Callable[..., Any] | list[Callable[..., Any]] | None = None) -> int:
-    """Prunes the operation cache, optionally filtering by function(s).
+def operation_cache_clear(func: Callable[..., Any] | list[Callable[..., Any]] | None = None) -> int:
+    """Clears the operation cache, optionally filtering by function(s).
 
     Args:
-        func (Callable | list[Callable] | None): If provided, only prune cache entries
+        func (Callable | list[Callable] | None): If provided, only clear cache entries
             for the specified function(s). Can be:
             - A callable (function/method)
             - A list of callables
-            - None to prune all expired entries
+            - None to clear all cache entries
 
     Returns:
         int: Number of cache entries removed.
     """
-    current_time = time.time()
     removed_count = 0
 
     if func is None:
-        # Remove all expired entries
-        keys_to_remove = [key for key, (_, expiry) in _operation_cache.items() if current_time >= expiry]
+        # Remove all cache entries
+        removed_count = len(_operation_cache)
+        _operation_cache.clear()
     else:
-        # Normalize input to a list of function names
+        # Normalize input to a list of function qualified names
         func_list = func if isinstance(func, list) else [func]
-        func_names = [f.__name__ for f in func_list]
+        func_qualified_names = [f.__qualname__ for f in func_list]
 
-        # Remove entries matching any of the function names (expired or not)
-        keys_to_remove = [key for key in _operation_cache if any(name in key for name in func_names)]
+        # Remove entries matching any of the function qualified names
+        keys_to_remove = [key for key in _operation_cache if any(name in key for name in func_qualified_names)]
 
-    for key in keys_to_remove:
-        del _operation_cache[key]
-        removed_count += 1
+        for key in keys_to_remove:
+            del _operation_cache[key]
+            removed_count += 1
 
     return removed_count
 
 
-def cache_key(method_name: str, *args: object, **kwargs: object) -> str:
-    """Generates a cache key based on the method name and parameters.
+def cache_key(func_qualified_name: str, *args: object, **kwargs: object) -> str:
+    """Generates a cache key based on the function name and parameters.
 
     Args:
-        method_name (str): The qualified name of the method being cached (e.g., 'ClassName.method_name').
-        *args: Positional arguments to the method.
-        **kwargs: Keyword arguments to the method.
+        func_qualified_name (str): The qualified name of the function being cached (e.g., 'ClassName.func1').
+        *args: Positional arguments to the function.
+        **kwargs: Keyword arguments to the function.
 
     Returns:
         str: A unique cache key.
     """
-    return f"{method_name}:{args}:{sorted(kwargs.items())}"
+    return f"{func_qualified_name}:{args}:{sorted(kwargs.items())}"
 
 
-def cache_key_with_token(token: str, method_name: str, *args: object, **kwargs: object) -> str:
-    """Generates a cache key based on the token, method name, and parameters.
+def cache_key_with_token(token: str, func_qualified_name: str, *args: object, **kwargs: object) -> str:
+    """Generates a cache key based on the token, function name, and parameters.
 
     Args:
         token (str): The authentication token.
-        method_name (str): The qualified name of the method being cached (e.g., 'ClassName.method_name').
-        *args: Positional arguments to the method.
-        **kwargs: Keyword arguments to the method.
+        func_qualified_name (str): The qualified name of the function being cached (e.g., 'ClassName.func1').
+        *args: Positional arguments to the function.
+        **kwargs: Keyword arguments to the function.
 
     Returns:
         str: A unique cache key.
     """
     token_hash = hashlib.sha256((token or "").encode()).hexdigest()[:16]
-    return f"{token_hash}:{method_name}:{args}:{sorted(kwargs.items())}"
+    return f"{token_hash}:{func_qualified_name}:{args}:{sorted(kwargs.items())}"
 
 
 def cached_operation(
-    ttl: int, *, use_token: bool = False, instance_attrs: tuple[str, ...] | None = None
+    ttl: int, *, use_token: bool = True, instance_attrs: tuple[str, ...] | None = None
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    """Caches the result of a method call for a specified time-to-live (TTL).
+    """Caches the result of a function call for a specified time-to-live (TTL).
 
     Args:
         ttl (int): Time-to-live for the cache in seconds.
@@ -123,7 +124,7 @@ def cached_operation(
             specific attributes (e.g., 'run_id' for Run.details()).
 
     Returns:
-        Callable: A decorator that caches the method result.
+        Callable: A decorator that caches the function result.
     """
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
@@ -138,24 +139,17 @@ def cached_operation(
             if instance_attrs and args:
                 instance = args[0]
                 instance_values = tuple(getattr(instance, attr) for attr in instance_attrs)
-                # Replace self with instance attribute values in cache key
                 cache_args = instance_values + args[1:]
-            elif use_token and args:
-                # When using token-based caching without instance_attrs,
-                # skip 'self' to enable cache sharing across instances
-                cache_args = args[1:]
 
             if use_token:
-                token = get_token(True)
-                key = cache_key_with_token(token, func_qualified_name, *cache_args, **kwargs)
+                key = cache_key_with_token(get_token(True), func_qualified_name, *cache_args, **kwargs)
             else:
                 key = cache_key(func_qualified_name, *cache_args, **kwargs)
 
-            logger.debug("Cache key for %s: %s", func_qualified_name, key)
             if key in _operation_cache:
-                value, expiry = _operation_cache[key]
+                result, expiry = _operation_cache[key]
                 if time.time() < expiry:
-                    return t.cast("T", value)
+                    return t.cast("T", result)
                 del _operation_cache[key]
 
             result = func(*args, **kwargs)

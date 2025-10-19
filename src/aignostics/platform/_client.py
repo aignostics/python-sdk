@@ -106,7 +106,6 @@ class Client:
             logger.exception("Failed to initialize client.")
             raise
 
-    @cached_operation(ttl=settings().me_cache_ttl, use_token=True)
     def me(self) -> Me:
         """Retrieves info about the current user and their organisation.
 
@@ -122,17 +121,22 @@ class Client:
         Raises:
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
-        return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().me_retry_attempts_max),
-            wait=wait_exponential_jitter(initial=settings().me_retry_wait_min, max=settings().me_retry_wait_max),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True,
-        )(
-            lambda: self._api.get_me_v1_me_get(
-                _request_timeout=settings().me_timeout, _headers={"User-Agent": user_agent()}
-            )
-        )  # Retryer will pass down arguments
+
+        @cached_operation(ttl=settings().me_cache_ttl, use_token=True)
+        def me_with_retry() -> Me:
+            return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().me_retry_attempts_max),
+                wait=wait_exponential_jitter(initial=settings().me_retry_wait_min, max=settings().me_retry_wait_max),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: self._api.get_me_v1_me_get(
+                    _request_timeout=settings().me_timeout, _headers={"User-Agent": user_agent()}
+                )
+            )  # Retryer will pass down arguments
+
+        return me_with_retry()
 
     def application(self, application_id: str) -> Application:
         """Find application by id.
@@ -149,21 +153,26 @@ class Client:
         Returns:
             Application: The application object.
         """
-        return Retrying(
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().application_retry_attempts_max),
-            wait=wait_exponential_jitter(
-                initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
-            ),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True,
-        )(
-            lambda: self._api.read_application_by_id_v1_applications_application_id_get(
-                application_id=application_id,
-                _request_timeout=settings().application_timeout,
-                _headers={"User-Agent": user_agent()},
+
+        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
+        def application_with_retry(application_id: str) -> Application:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().application_retry_attempts_max),
+                wait=wait_exponential_jitter(
+                    initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
+                ),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: self._api.read_application_by_id_v1_applications_application_id_get(
+                    application_id=application_id,
+                    _request_timeout=settings().application_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
             )
-        )
+
+        return application_with_retry(application_id)
 
     def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
         """Find application version by id.
@@ -197,23 +206,28 @@ class Client:
             message = f"Invalid version format: '{version_number}' not compliant with semantic versioning."
             raise ValueError(message)
 
-        # Make the API call with retry logic
-        return Retrying(
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().application_version_retry_attempts_max),
-            wait=wait_exponential_jitter(
-                initial=settings().application_version_retry_wait_min, max=settings().application_version_retry_wait_max
-            ),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True,
-        )(
-            lambda: self._api.application_version_details_v1_applications_application_id_versions_version_get(
-                application_id=application_id,
-                version=version_number,
-                _request_timeout=settings().application_version_timeout,
-                _headers={"User-Agent": user_agent()},
+        # Make the API call with retry logic and caching
+        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        def application_version_with_retry(application_id: str, version: str) -> ApplicationVersion:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().application_version_retry_attempts_max),
+                wait=wait_exponential_jitter(
+                    initial=settings().application_version_retry_wait_min,
+                    max=settings().application_version_retry_wait_max,
+                ),
+                before_sleep=before_sleep_log(logger, logging.WARNING),
+                reraise=True,
+            )(
+                lambda: self._api.application_version_details_v1_applications_application_id_versions_version_get(
+                    application_id=application_id,
+                    version=version,
+                    _request_timeout=settings().application_version_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
             )
-        )
+
+        return application_version_with_retry(application_id, version_number)
 
     def run(self, run_id: str) -> Run:
         """Finds run by id.
