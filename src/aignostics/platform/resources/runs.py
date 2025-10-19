@@ -50,6 +50,7 @@ from aignostics.platform._utils import (
     download_file,
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
+    operation_cache_prune,
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
@@ -135,6 +136,7 @@ class Run:
         Raises:
             Exception: If the API request fails.
         """
+        operation_cache_prune([self.details, self.results])
         self._api.cancel_run_v1_runs_run_id_cancel_post(
             self.run_id,
             _request_timeout=settings().run_cancel_timeout,

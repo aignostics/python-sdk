@@ -388,7 +388,7 @@ class Settings(OpaqueSettings):
             ge=0,
             le=3600,
         ),
-    ] = 60
+    ] = 0
 
     application_version_timeout: Annotated[
         float,
@@ -429,7 +429,7 @@ class Settings(OpaqueSettings):
             ge=0,
             le=3600,
         ),
-    ] = 60
+    ] = 0
 
     run_timeout: Annotated[
         float,
