@@ -43,16 +43,15 @@ from tenacity import (
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._operation_cache import cached_operation, operation_cache_clear
+from aignostics.platform._sdk_metadata import build_sdk_metadata
 from aignostics.platform._settings import settings
 from aignostics.platform._utils import (
-    cached_operation,
     calculate_file_crc32c,
     download_file,
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
-    operation_cache_clear,
 )
-from aignostics.platform.resources._sdk_metadata import build_sdk_metadata
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import get_logger, user_agent

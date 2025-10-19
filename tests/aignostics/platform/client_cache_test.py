@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from aignostics.platform._client import Client
-from aignostics.platform._utils import _operation_cache, cache_key_with_token
+from aignostics.platform._operation_cache import _operation_cache, cache_key_with_token
 
 
 class TestCacheKeyGeneration:
@@ -291,7 +291,7 @@ class TestCacheWithDifferentTokens:
 
         # Client with token-1
         with (
-            patch("aignostics.platform._utils.get_token", return_value="token-1"),
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-1"),
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -305,7 +305,7 @@ class TestCacheWithDifferentTokens:
 
         # Client with token-2
         with (
-            patch("aignostics.platform._utils.get_token", return_value="token-2"),
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-2"),
             patch("aignostics.platform._client.get_token", return_value="token-2"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -332,7 +332,7 @@ class TestCacheWithDifferentTokens:
 
         # First call with token-1
         with (
-            patch("aignostics.platform._utils.get_token") as mock_get_token,
+            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -364,7 +364,7 @@ class TestCacheWithDifferentTokens:
 
         # First client with token-123
         with (
-            patch("aignostics.platform._utils.get_token", return_value="token-123"),
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -378,7 +378,7 @@ class TestCacheWithDifferentTokens:
 
         # Second client with same token-123
         with (
-            patch("aignostics.platform._utils.get_token", return_value="token-123"),
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -546,7 +546,7 @@ class TestCacheConcurrency:
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
 
         with (
-            patch("aignostics.platform._utils.get_token", return_value="token-123"),
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -577,7 +577,7 @@ class TestCacheConcurrency:
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
 
         with (
-            patch("aignostics.platform._utils.get_token", return_value="token-123"),
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -687,7 +687,7 @@ class TestCacheEdgeCases:
         long_token = "x" * 10000  # Very long token
 
         with (
-            patch("aignostics.platform._utils.get_token", return_value=long_token),
+            patch("aignostics.platform._operation_cache.get_token", return_value=long_token),
             patch("aignostics.platform._client.get_token", return_value=long_token),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -715,7 +715,7 @@ class TestCacheIntegrationWithAuthentication:
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
 
         with (
-            patch("aignostics.platform._utils.get_token") as mock_get_token,
+            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -750,7 +750,7 @@ class TestCacheIntegrationWithAuthentication:
         mock_me_response_2 = {"user_id": "user-2", "org_id": "org-2"}
 
         with (
-            patch("aignostics.platform._utils.get_token") as mock_get_token,
+            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
             patch("aignostics.platform._client.get_token", return_value="token-initial"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):

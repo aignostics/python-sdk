@@ -26,8 +26,8 @@ from tenacity import (
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform._settings import settings
-from aignostics.platform._utils import cached_operation
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import get_logger, user_agent
 

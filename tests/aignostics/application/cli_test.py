@@ -2,6 +2,7 @@
 
 import platform
 import re
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -216,6 +217,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: 
             str(csv_path),
             "--note",
             "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+            "--requested-completion",
+            (datetime.now(UTC) + timedelta(hours=24)).isoformat(),
+            "--validate-only",
         ],
     )
     output = normalize_output(result.stdout)
@@ -439,6 +443,9 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
             str(tmp_path),
             ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER",
             "--no-create-subdirectory-for-run",
+            "--requested-completion",
+            (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+            "--validate-only",
         ],
     )
     print_directory_structure(tmp_path, "execute")

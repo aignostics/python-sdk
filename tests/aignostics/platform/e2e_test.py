@@ -5,6 +5,7 @@ against the Aignostics platform. These tests verify end-to-end functionality
 including creating runs, downloading results, and validating outputs.
 """
 
+import datetime
 import tempfile
 from pathlib import Path
 
@@ -146,7 +147,15 @@ def _run_application_test(
     # TODO(Helmut): Try with caching ...
     client = platform.Client(cache_token=False)
     application_run = client.runs.submit(
-        application_id=application_id, application_version=application_version, items=payload
+        application_id=application_id,
+        application_version=application_version,
+        items=payload,
+        custom_metadata={
+            "sdk": {
+                "requested_completion": (datetime.now(datetime.UTC) + datetime.timedelta(hours=1)).isoformat(),
+                "note": "_run_application_test",
+            }
+        },  # Request completion within 1 hour
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:

@@ -342,6 +342,17 @@ def run_execute(  # noqa: PLR0913, PLR0917
         str | None,
         typer.Option(help="Optional note to include with the run submission via custom metadata."),
     ] = None,
+    requested_completion: Annotated[
+        str | None,
+        typer.Option(help="Optional requested completion time to include with the run submission, ISO8601 format."),
+    ] = None,
+    onboard_to_aignostics_portal: Annotated[
+        bool,
+        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
+    ] = False,
+    validate_only: Annotated[
+        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
+    ] = False,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -370,12 +381,16 @@ def run_execute(  # noqa: PLR0913, PLR0917
         metadata_csv_file=metadata_csv_file,
         application_version=application_version,
         upload_prefix=upload_prefix,
+        onboard_to_aignostics_portal=onboard_to_aignostics_portal,
     )
     run_id = run_submit(
         application_id=application_id,
         metadata_csv_file=metadata_csv_file,
         application_version=application_version,
         note=note,
+        requested_completion=requested_completion,
+        onboard_to_aignostics_portal=onboard_to_aignostics_portal,
+        validate_only=validate_only,
     )
     result_download(
         run_id=run_id,
@@ -567,7 +582,7 @@ def run_upload(
 
 
 @run_app.command("submit")
-def run_submit(
+def run_submit(  # noqa: PLR0913, PLR0917
     application_id: Annotated[
         str,
         typer.Argument(help="Id of the application to submit run for."),
@@ -597,15 +612,14 @@ def run_submit(
     ] = None,
     requested_completion: Annotated[
         str | None,
-        typer.Option(help="Optional requested completion time to include with the run submission."),
+        typer.Option(help="Optional requested completion time to include with the run submission, ISO8601 format."),
     ] = None,
     onboard_to_aignostics_portal: Annotated[
         bool,
         typer.Option(help="If True, onboard the run to the Aignostics Portal."),
     ] = False,
-    cancel_early: Annotated[
-        bool,
-        typer.Option(help="If True, cancel the run post validation, before analysis."),
+    validate_only: Annotated[
+        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
     ] = False,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
@@ -664,7 +678,7 @@ def run_submit(
             note=note,
             requested_completion=requested_completion,
             onboard_to_aignostics_portal=onboard_to_aignostics_portal,
-            cancel_early=cancel_early,
+            validate_only=validate_only,
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "

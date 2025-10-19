@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from aignostics.platform._client import Client
-from aignostics.platform._utils import _operation_cache
+from aignostics.platform._operation_cache import _operation_cache
 
 
 @pytest.fixture

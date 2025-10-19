@@ -97,6 +97,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
                 str(csv_path),
                 "--note",
                 "test_gui_cli_submit_to_run_result_delete",
+                "--validate-only",
             ],
         )
         assert result.exit_code == 0
@@ -156,7 +157,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.flaky(retries=1, delay=5)
+@pytest.mark.flaky(retries=0, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
@@ -232,8 +233,27 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         user.find(marker="BUTTON_PYTEST_META").click()
         await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
         user.find(marker="BUTTON_METADATA_NEXT").click()
+        await assert_notified(user, "Metadata captured.")
+
+        # Navigate through Notes & Metadata step
+        await user.should_see("Note (optional)", retries=100)
+        user.find("TEXTAREA_NOTE").type("test_gui_download_dataset_via_application_to_run_cancel:note").trigger(
+            "keydown.enter"
+        )
+
+        user.find(marker="BUTTON_NOTES_NEXT").click()
+
+        # Navigate through Scheduling step
+        await user.should_see("Requested Completion Time", retries=100)
+        await user.should_see("We will do our best to accommodate your priorities and timeline", retries=100)
+        user.find(marker="BUTTON_SCHEDULING_NEXT").click()
         await assert_notified(user, "Prepared upload UI.")
+
+        # Now on Slide Submission step
         await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
+
+        # Indicate to validate only, to not waste GPU resources
+        user.find(marker="CHECKBOX_VALIDATE_ONLY").click()
 
         # Trigger upload and submission
         await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
@@ -262,6 +282,9 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
         # Check user sees refreshed run page and run is cancelled
         await user.should_see("CANCELED_BY_USER", retries=200)
+
+        # Check the note was saved correctly
+        await user.should_see("test_gui_download_dataset_via_application_to_run_cancel:note", retries=100)
 
 
 @pytest.mark.e2e

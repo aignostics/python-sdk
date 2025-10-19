@@ -4,6 +4,7 @@ import base64
 import re
 import time
 from collections.abc import Callable, Generator
+from datetime import UTC, datetime
 from enum import StrEnum
 from http import HTTPStatus
 from importlib.util import find_spec
@@ -214,6 +215,53 @@ class Service(BaseService):
         return self._platform_service
 
     @staticmethod
+    def _validate_requested_completion(requested_completion: str | None) -> None:
+        """Validate that requested_completion is in ISO 8601 format and in the future.
+
+        Args:
+            requested_completion: The datetime string to validate.
+
+        Raises:
+            ValueError: If
+                the format is invalid
+                or the requested_completion is not in the future.
+        """
+        if requested_completion is None:
+            return
+
+        # Try parsing with fromisoformat (handles most ISO 8601 formats)
+        try:
+            # Handle 'Z' suffix by replacing with '+00:00'
+            normalized = requested_completion.replace("Z", "+00:00")
+            parsed_dt = datetime.fromisoformat(normalized)
+        except (ValueError, TypeError) as e:
+            message = (
+                f"Invalid ISO 8601 format for requested_completion. "
+                f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+                f"but got: '{requested_completion}' (error: {e})"
+            )
+            raise ValueError(message) from e
+
+        # Ensure the datetime is timezone-aware (reject naive datetimes)
+        if parsed_dt.tzinfo is None:
+            message = (
+                f"Invalid ISO 8601 format for requested_completion. "
+                f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+                f"but got: '{requested_completion}' (missing timezone information)"
+            )
+            raise ValueError(message)
+
+        # Check that the datetime is in the future
+        now = datetime.now(UTC)
+        if parsed_dt <= now:
+            message = (
+                f"requested_completion must be in the future. "
+                f"Got '{requested_completion}' ({parsed_dt.isoformat()}), "
+                f"but current UTC time is {now.isoformat()}"
+            )
+            raise ValueError(message)
+
+    @staticmethod
     def applications_static() -> list[ApplicationSummary]:
         """Get a list of all applications, static variant.
 
@@ -282,7 +330,8 @@ class Service(BaseService):
             ApplicationVersion: The application version
 
         Raises:
-            ValueError: If the application version number is invalid.
+            ValueError: If
+                the application version number is invalid.
             NotFoundException: If the application version with the given ID and number is not found.
             RuntimeError: If the application cannot be retrieved unexpectedly.
         """
@@ -436,7 +485,9 @@ class Service(BaseService):
 
         Raises:
             NotFoundError: If the application version with the given ID is not found.
-            ValueError: If the source directory does not exist or is not a directory.
+            ValueError: If
+                the source directory does not exist
+                or is not a directory.
             RuntimeError: If the metadata generation fails unexpectedly.
         """
         logger.debug("Generating metadata from source directory: %s", source_directory)
@@ -727,7 +778,7 @@ class Service(BaseService):
             metadata: The metadata for the run.
             custom_metadata: Optional custom metadata to attach to the run.
             note: An optional note for the run.
-            requested_completion: An optional requested completion time for the run.
+            requested_completion: An optional requested completion time for the run, ISO8601 format.
             application_version: The version of the application.
                 If not given latest version is used.
             onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
@@ -738,10 +789,15 @@ class Service(BaseService):
 
         Raises:
             NotFoundException: If the application version with the given ID is not found.
-            ValueError: If platform bucket URL is missing or has unsupported protocol,
-                or if the application version ID is invalid.
+            ValueError: If
+                platform bucket URL is missing
+                or has unsupported protocol,
+                or if the application version ID is invalid,
+                or if requested_completion is not ISO 8601
+                or if requested_completion not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
+        self._validate_requested_completion(requested_completion)
         logger.debug("Submitting application run with metadata: %s", metadata)
         app_version = self.application_version(application_id, application_version=application_version)
         if len(app_version.input_artifacts) != 1:
@@ -850,7 +906,7 @@ class Service(BaseService):
             application_version: The version of the application to run.
             custom_metadata: Optional custom metadata to attach to the run.
             note: An optional note for the run.
-            requested_completion: An optional requested completion time for the run.
+            requested_completion: An optional requested completion time for the run, ISO8601 format.
             onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
             validate_only (bool): If True, cancel the run post validation, before analysis.
 
@@ -859,9 +915,14 @@ class Service(BaseService):
 
         Raises:
             NotFoundException: If the application version with the given ID is not found.
-            ValueError: If the application version ID is invalid or items invalid.
+            ValueError: If
+                the application version ID is invalid
+                or items invalid
+                or requested_completion not ISO 8601
+                or requested_completion not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
+        self._validate_requested_completion(requested_completion)
         try:
             if custom_metadata is None:
                 custom_metadata = {}
@@ -896,7 +957,9 @@ class Service(BaseService):
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
-            ValueError: If the run ID is invalid or the run cannot be canceled given its current state.
+            ValueError: If
+                the run ID is invalid
+                or the run cannot be canceled given its current state.
             RuntimeError: If canceling the run fails unexpectedly.
         """
         try:
@@ -933,7 +996,9 @@ class Service(BaseService):
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
-            ValueError: If the run ID is invalid or the run cannot be deleted given its current state.
+            ValueError: If
+                the run ID is invalid
+                or the run cannot be deleted given its current state.
             RuntimeError: If deleting the run fails unexpectedly.
         """
         try:
@@ -982,7 +1047,9 @@ class Service(BaseService):
             Path: The directory containing downloaded results.
 
         Raises:
-            ValueError: If the run ID is invalid or destination directory cannot be created.
+            ValueError: If
+                the run ID is invalid
+                or destination directory cannot be created.
             NotFoundException: If the application run with the given ID is not found.
             RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
             requests.HTTPError: If the download fails with an HTTP error.
@@ -1028,7 +1095,9 @@ class Service(BaseService):
             Path: The directory containing downloaded results.
 
         Raises:
-            ValueError: If the run ID is invalid or destination directory cannot be created.
+            ValueError: If
+                the run ID is invalid
+                or destination directory cannot be created.
             NotFoundException: If the application run with the given ID is not found.
             RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
             requests.HTTPError: If the download fails with an HTTP error.
@@ -1305,7 +1374,8 @@ class Service(BaseService):
             download_progress_callable (Callable | None): Callback for CLI progress updates.
 
         Raises:
-            ValueError: If no checksum metadata is found for the artifact.
+            ValueError: If
+                no checksum metadata is found for the artifact.
             requests.HTTPError: If the download fails.
         """
         metadata = artifact.metadata or {}
@@ -1359,7 +1429,8 @@ class Service(BaseService):
             download_progress_callable (Callable | None): Callback for CLI progress updates.
 
         Raises:
-            ValueError: If checksum verification fails.
+            ValueError: If
+                checksum verification fails.
             requests.HTTPError: If download fails.
         """
         logger.debug(

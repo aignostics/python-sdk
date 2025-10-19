@@ -46,8 +46,6 @@ class SubmitForm:
     metadata_next_button: ui.button | None = None
     upload_and_submit_button: ui.button | None = None
     note: str | None = None
-    requested_date: str = (datetime.now().astimezone() + timedelta(days=1)).strftime("%Y-%m-%d")
-    requested_time: str = (datetime.now().astimezone() + timedelta(hours=0)).strftime("%H:%M")
     requested_completion: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
     validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
@@ -305,7 +303,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         _info_dialog_content()
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
-    with ui.stepper(value="Slide Submission").props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
+    with ui.stepper(value="Scheduling").props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
         with ui.step("Select Application Version"):
             with ui.row().classes("w-full justify-center"):
                 with ui.column():
@@ -331,7 +329,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     "BUTTON_APPLICATION_VERSION_NEXT"
                 )
 
-        with ui.step("Select Whole Slide Images"):
+        with ui.step("Find Whole Slide Images"):
             submit_form.wsi_step_label = ui.label(
                 "Select the folder with the whole slide images you want to analyze then click Next."
             )
@@ -350,7 +348,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.wsi_spinner.set_visibility(False)
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
-        with ui.step("Choose Images and Edit Metadata"):
+        with ui.step("Prepare Whole Slide Images"):
             ui.markdown(
                 """
                 The Launchpad has found all compatible slide files in your selected folder.
@@ -421,7 +419,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.metadata_grid.run_grid_method("autoSizeAllColumns")
 
             async def _metadata_next() -> None:
-                if submit_form.metadata_grid is None or submit_form.upload_and_submit_button is None:
+                if submit_form.metadata_grid is None:
                     logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                     return
                 if "pytest" in sys.modules:
@@ -432,12 +430,10 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     submit_form.metadata = rows
                 else:
                     submit_form.metadata = await submit_form.metadata_grid.get_client_data()
-                _upload_ui.refresh(submit_form.metadata)
-                submit_form.upload_and_submit_button.enable()
                 if "pytest" in sys.modules:
-                    message = f"Prepared upload UI with metadata '{submit_form.metadata}' for pytest."
+                    message = f"Captured metadata '{submit_form.metadata}' for pytest."
                     logger.debug(message)
-                    ui.notify("Prepared upload UI.", type="info")
+                    ui.notify("Metadata captured.", type="info")
                 stepper.next()
 
             async def _delete_selected() -> None:
@@ -594,35 +590,111 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.metadata_exclude_button.disable()
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
+        with ui.step("Notes & Metadata"):
+            with ui.column(align_items="start").classes("w-full"):
+                ui.textarea(
+                    label="Note (optional)",
+                    placeholder=(
+                        "Enter a note for this run. "
+                        "Tip: You can later use the search box in the left sidebar "
+                        "(see magnifying glass icon) to find runs by searching for text in this note."
+                    ),
+                ).bind_value(submit_form, "note").mark("TEXTAREA_NOTE").classes("full-width")
+
+            with ui.stepper_navigation():
+                ui.button("Next", on_click=stepper.next).mark("BUTTON_NOTES_NEXT")
+                ui.button("Back", on_click=stepper.previous).props("flat")
+
+        with ui.step("Scheduling"):
+            with ui.column(align_items="start").classes("w-full"):
+                ui.label("Requested Completion Time").classes("text-h6 mb-0 pb-0")
+                ui.label(
+                    "We will do our best to accommodate your priorities and timeline "
+                    "given your subscription tier and available GPU resources."
+                ).classes("text-sm mt-0 pt-0")
+                with ui.row().classes("full-width"):
+                    now = datetime.now().astimezone()
+                    today = now.strftime("%Y/%m/%d")
+                    min_hour = (now + timedelta(hours=1)).hour
+                    min_minute = (now + timedelta(hours=1)).minute
+
+                    date_picker = (
+                        ui.date(mask="YYYY-MM-DD HH:mm")
+                        .bind_value(submit_form, "requested_completion")
+                        .props(f":options=\"(date) => date >= '{today}'\"")
+                        .mark("DATE_REQUESTED_COMPLETION")
+                    )
+
+                    time_picker = (
+                        ui.time(mask="YYYY-MM-DD HH:mm")
+                        .bind_value(submit_form, "requested_completion")
+                        .props("format24h now-btn")
+                        .mark("TIME_REQUESTED_COMPLETION")
+                    )
+
+                    # Add dynamic time restriction based on selected date
+                    ui.run_javascript(
+                        f"""
+                        const datePicker = getElement({date_picker.id});
+                        const timePicker = getElement({time_picker.id});
+                        const today = '{today}';
+                        const minHour = {min_hour};
+                        const minMinute = {min_minute};
+
+                        function updateTimeOptions() {{
+                            const selectedDate = datePicker?.$refs?.qDateProxy?.modelValue?.split(' ')[0];
+                            if (!selectedDate) return;
+
+                            const selectedDateStr = selectedDate.replace(/-/g, '/');
+                            const isToday = selectedDateStr === today;
+
+                            if (isToday) {{
+                                timePicker.$refs.qTimeProxy.options = (hr, min) => {{
+                                    if (hr < minHour) return false;
+                                    if (hr === minHour && min < minMinute) return false;
+                                    return true;
+                                }};
+                            }} else {{
+                                timePicker.$refs.qTimeProxy.options = null;
+                            }}
+                        }}
+
+                        // Watch for date changes
+                        if (datePicker?.$refs?.qDateProxy) {{
+                            datePicker.$refs.qDateProxy.$watch('modelValue', updateTimeOptions);
+                            updateTimeOptions();
+                        }}
+                    """
+                    )
+
+            def _scheduling_next() -> None:
+                if submit_form.upload_and_submit_button is None:
+                    logger.error("Submission submit button is not initialized.")
+                    return
+                _upload_ui.refresh(submit_form.metadata or [])
+                submit_form.upload_and_submit_button.enable()
+                if "pytest" in sys.modules:
+                    ui.notify("Prepared upload UI.", type="info")
+                stepper.next()
+
+            with ui.stepper_navigation():
+                ui.button("Next", on_click=_scheduling_next).mark("BUTTON_SCHEDULING_NEXT")
+                ui.button("Back", on_click=stepper.previous).props("flat")
+
         def _submit() -> None:
             """Submit the application run."""
             ui.notify("Submitting application run ...", type="info")
             try:
-                # Compute requested_completion from requested_date and requested_time
-                requested_completion = None
-                if submit_form.requested_date and submit_form.requested_time:
-                    try:
-                        parsed_datetime = datetime.strptime(
-                            f"{submit_form.requested_date} {submit_form.requested_time}", "%Y-%m-%d %H:%M"
-                        ).replace(tzinfo=UTC)  # We expect date (YYYY-MM-DD) and time (HH:mm)
-                        requested_completion = parsed_datetime.isoformat()  # Convert to ISO 8601 / UTC
-                        ui.notify(requested_completion, type="info")
-                    except ValueError as e:
-                        logger.warning(
-                            "Invalid date/time format. Expected YYYY-MM-DD and HH:mm, got '%s' and '%s'. "
-                            "Error: %s. Setting requested_completion to None.",
-                            submit_form.requested_date,
-                            submit_form.requested_time,
-                            e,
-                        )
-
                 run = service.application_run_submit_from_metadata(
                     application_id=str(submit_form.application_id),
                     metadata=submit_form.metadata or [],
                     application_version=str(submit_form.application_version),
                     custom_metadata=None,  # TODO(Helmut): Allow user to edit custom metadata
                     note=submit_form.note,
-                    requested_completion=requested_completion,
+                    requested_completion=datetime.strptime(submit_form.requested_completion, "%Y-%m-%d %H:%M")
+                    .astimezone()
+                    .astimezone(UTC)
+                    .isoformat(),
                     validate_only=submit_form.validate_only,
                     onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
                 )
@@ -668,33 +740,12 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         @ui.refreshable
         def _upload_ui(metadata: list[dict[str, Any]]) -> None:
             """Upload UI."""
-            with ui.column(align_items="start"):
+            with ui.column(align_items="start").classes("w-full"):
                 ui.label(f"Upload and submit your {len(metadata)} slide(s) for analysis.")
-                # Allow user to leave a note, searchable
-                ui.textarea(
-                    label="Note (optional)",
-                    placeholder=(
-                        "Enter a note for this run. "
-                        "Tip: You can later use the search box in the left sidebar "
-                        "(see magnifying glass icon) to find runs by searching for text in this note."
-                    ),
-                ).bind_value(submit_form, "note").mark("TEXTAREA_NOTE").classes("full-width")
-                # Allow user to request completion time
-                with ui.row().classes("full-width"):
-                    today = (datetime.now().astimezone()).strftime("%Y/%m/%d")
-                    ui.label(today)
-                    ui.date(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "requested_completion").props(
-                        f":options=\"(date) => date >= '{today}'\""
-                    ).mark("DATE_REQUESTED_COMPLETION")
-                    ui.time(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "requested_completion").props(
-                        "format24h now-btn"
-                    ).mark("TIME_REQUESTED_COMPLETION")
-                ui.label().bind_text_from(submit_form, "requested_completion").classes("text-sm text-gray-500")
-                ui.label().bind_text_from(submit_form, "requested_date").classes("text-sm text-gray-500")
-                ui.label().bind_text_from(submit_form, "requested_time").classes("text-sm text-gray-500")
+
                 # Allow users of some organisations to request onboarding slides to Portal
                 user_info: UserInfo | None = app.storage.tab.get("user_info", None)
-                with ui.row().classes("full-width"):
+                with ui.row().classes("full-width mt-4 mb-4"):
                     if (
                         user_info
                         and user_info.organization
@@ -716,6 +767,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         ui.checkbox(
                             text="Validate only",
                         ).bind_value(submit_form, "validate_only").mark("CHECKBOX_VALIDATE_ONLY")
+
                 upload_complete = True
                 for row in metadata or []:
                     upload_complete = upload_complete and row["file_upload_progress"] == 1

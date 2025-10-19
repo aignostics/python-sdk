@@ -23,7 +23,7 @@ from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyEr
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
 from aignostics.platform._authentication import get_token
-from aignostics.platform._utils import cached_operation
+from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform.resources.applications import Applications, Versions
 from aignostics.platform.resources.runs import Run, Runs
 from aignostics.utils import get_logger, user_agent
