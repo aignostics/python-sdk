@@ -178,7 +178,6 @@ def test_lazy_authentication_settings(mock_env_vars, reset_cached_settings) -> N
     assert settings2 is settings1
 
 
-@pytest.mark.skip(reason="Broken")
 @pytest.mark.unit
 @pytest.mark.sequential
 def test_authentication_settings_with_env_vars(mock_env_vars, reset_cached_settings) -> None:

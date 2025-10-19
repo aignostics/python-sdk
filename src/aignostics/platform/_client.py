@@ -126,7 +126,7 @@ class Client:
         def me_with_retry() -> Me:
             return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().me_retry_attempts_max),
+                stop=stop_after_attempt(settings().me_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().me_retry_wait_min, max=settings().me_retry_wait_max),
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
@@ -158,7 +158,7 @@ class Client:
         def application_with_retry(application_id: str) -> Application:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().application_retry_attempts_max),
+                stop=stop_after_attempt(settings().application_retry_attempts),
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),
@@ -211,7 +211,7 @@ class Client:
         def application_version_with_retry(application_id: str, version: str) -> ApplicationVersion:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().application_version_retry_attempts_max),
+                stop=stop_after_attempt(settings().application_version_retry_attempts),
                 wait=wait_exponential_jitter(
                     initial=settings().application_version_retry_wait_min,
                     max=settings().application_version_retry_wait_max,

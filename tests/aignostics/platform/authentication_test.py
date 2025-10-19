@@ -58,7 +58,7 @@ def mock_settings() -> MagicMock:
         settings.auth_timeout = 10.0
         settings.auth_retry_wait_min = 0.1
         settings.auth_retry_wait_max = 5.0
-        settings.auth_retry_attempts_max = 3
+        settings.auth_retry_attempts = 3
         settings.auth_jwk_set_cache_ttl = 300
         settings.refresh_token = None
         mock_settings.return_value = settings

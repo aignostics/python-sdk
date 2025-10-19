@@ -18,10 +18,11 @@ def mock_settings() -> MagicMock:
     """
     with patch("aignostics.platform._client.settings") as mock_settings:
         settings = MagicMock()
-        settings.me_retry_attempts_max = 3
+        settings.me_retry_attempts = 3
         settings.me_retry_wait_min = 0.1
         settings.me_retry_wait_max = 5.0
         settings.me_timeout = 10.0
+        settings.me_cache_ttl = 60  # 60 seconds for testing
         settings.api_root = "https://test.api.com"
         mock_settings.return_value = settings
         yield mock_settings

@@ -77,7 +77,7 @@ class Versions:
         def list_with_retry(app_id: str) -> Application:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().application_retry_attempts_max),
+                stop=stop_after_attempt(settings().application_retry_attempts),
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),
@@ -130,7 +130,7 @@ class Versions:
         def details_with_retry(app_id: str, app_version: str) -> ApplicationVersion:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().application_version_retry_attempts_max),
+                stop=stop_after_attempt(settings().application_version_retry_attempts),
                 wait=wait_exponential_jitter(
                     initial=settings().application_version_retry_wait_min,
                     max=settings().application_version_retry_wait_max,
@@ -232,7 +232,7 @@ class Applications:
         def details_with_retry(application_id: str) -> Application:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().application_retry_attempts_max),
+                stop=stop_after_attempt(settings().application_retry_attempts),
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),
@@ -266,7 +266,7 @@ class Applications:
         def list_with_retry(**kwargs: object) -> list[ApplicationSummary]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().application_retry_attempts_max),
+                stop=stop_after_attempt(settings().application_retry_attempts),
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),

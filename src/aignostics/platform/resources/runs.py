@@ -118,7 +118,7 @@ class Run:
         def details_with_retry(run_id: str) -> RunData:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
@@ -180,7 +180,7 @@ class Run:
         def results_with_retry(run_id: str, **kwargs: object) -> list[ItemResultData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
@@ -397,7 +397,7 @@ class Runs:
         def list_with_retry(**kwargs: object) -> list[RunData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
@@ -405,7 +405,7 @@ class Runs:
                 lambda: self._api.list_runs_v1_runs_get(
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
-                    **kwargs,  # type: ignore[arg-type]
+                    **kwargs,  # pyright: ignore[reportArgumentType]
                 )
             )
 
@@ -454,7 +454,7 @@ class Runs:
         def list_data_with_retry(**kwargs: object) -> list[RunData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().run_retry_attempts_max),
+                stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
                 before_sleep=before_sleep_log(logger, logging.WARNING),
                 reraise=True,
@@ -462,7 +462,7 @@ class Runs:
                 lambda: self._api.list_runs_v1_runs_get(
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
-                    **kwargs,  # type: ignore[arg-type]
+                    **kwargs,  # pyright: ignore[reportArgumentType]
                 )
             )
 

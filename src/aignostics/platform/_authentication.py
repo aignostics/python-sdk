@@ -201,7 +201,7 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         retry=retry_if_exception(  # Have to unpack wrapped exception
             lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
         ),
-        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        stop=stop_after_attempt(settings().auth_retry_attempts),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
@@ -523,7 +523,7 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     """
     return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(_is_not_client_or_key_error),
-        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        stop=stop_after_attempt(settings().auth_retry_attempts),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
