@@ -73,7 +73,7 @@ def cache_key_with_token(token: str, method_name: str, *args: object, **kwargs: 
 
 
 def cached_operation(
-    ttl: int, *, use_token: bool = False, instance_attrs: tuple[str, ...] | None = None
+    ttl: int, *, use_token: bool = True, instance_attrs: tuple[str, ...] | None = None
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Caches the result of a method call for a specified time-to-live (TTL).
 
@@ -89,11 +89,6 @@ def cached_operation(
 
     Returns:
         Callable: A decorator that caches the method result.
-
-    Warning:
-        When using cached objects with NiceGUI's binding system, extract primitive values
-        (str, int, etc.) before assigning to bindable properties to avoid infinite recursion.
-        Example: `form.value = str(cached_obj.field)` instead of `form.value = cached_obj.field`
     """
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:

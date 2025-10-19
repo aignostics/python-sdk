@@ -470,7 +470,7 @@ class Settings(OpaqueSettings):
             ge=0,
             le=3600,
         ),
-    ] = 60
+    ] = 0
 
     run_cancel_timeout: Annotated[
         float,
