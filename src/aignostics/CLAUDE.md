@@ -21,12 +21,18 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 
 ### 🔐 platform
 
-**Foundation module providing authentication and API access**
+**Foundation module providing authentication, API access, and SDK metadata tracking**
 
-- **Core Features**: OAuth 2.0 authentication, JWT token management, API client wrapper
-- **CLI**: `login`, `logout`, `whoami` commands for authentication
-- **Dependencies**: None (foundation layer)
-- **Used By**: All modules requiring API access
+- **Core Features**:
+  - OAuth 2.0 authentication, JWT token management, API client wrapper
+  - **SDK Metadata System** (NEW): Automatic tracking of execution context, user info, CI/CD environment
+  - JSON Schema validation for metadata with versioning (v0.0.1)
+  - Operation caching for non-mutating API calls
+- **CLI**:
+  - `user login`, `user logout`, `user whoami` for authentication
+  - `sdk metadata-schema` for JSON Schema export
+- **Dependencies**: `utils` (logging, user_agent generation)
+- **Used By**: All modules requiring API access; application module for automatic metadata attachment
 
 ### 🚀 application
 
@@ -72,10 +78,13 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 
 **Core infrastructure and shared utilities**
 
-- **Core Features**: Dependency injection, logging, settings, health checks
+- **Core Features**:
+  - Dependency injection, logging, settings, health checks
+  - **Enhanced User Agent** (NEW): Context-aware user agent with CI/CD tracking
 - **Service Discovery**: `locate_implementations()`, `locate_subclasses()`
+- **User Agent**: Generates `{name}/{version} ({platform}; {test}; {github_run_url})`
 - **No CLI/GUI**: Infrastructure module
-- **Used By**: All modules
+- **Used By**: All modules; platform module for SDK metadata
 
 ### 🖥️ gui
 
@@ -257,7 +266,7 @@ aignostics gui
 
 For detailed information about each module, see:
 
-- [platform/CLAUDE.md](platform/CLAUDE.md) - Authentication and API details
+- [platform/CLAUDE.md](platform/CLAUDE.md) - Authentication, API client, and SDK metadata system
 - [application/CLAUDE.md](application/CLAUDE.md) - Application orchestration
 - [wsi/CLAUDE.md](wsi/CLAUDE.md) - Image processing
 - [dataset/CLAUDE.md](dataset/CLAUDE.md) - Dataset operations

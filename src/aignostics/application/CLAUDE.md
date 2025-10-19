@@ -13,6 +13,7 @@ The application module provides high-level orchestration for AI/ML applications 
 - **Progress Tracking**: Multi-stage progress monitoring with real-time updates and QuPath integration
 - **File Processing**: WSI validation, chunked uploads, CRC32C integrity verification
 - **State Management**: Complex state machines for run lifecycle with error recovery
+- **SDK Metadata Integration**: Automatic attachment of SDK context metadata to all submitted runs
 - **Integration Hub**: Bridges platform, WSI, bucket, and QuPath services seamlessly
 
 ### User Interfaces
@@ -481,11 +482,22 @@ with open(file_path, 'rb') as f:
 
 ### Internal Dependencies
 
-- `platform` - Client and API operations
+- `platform` - Client, API operations, and **SDK metadata system** (automatic attachment to all runs)
 - `wsi` - WSI file validation
 - `bucket` - Cloud storage operations
 - `qupath` - Analysis integration (optional, requires ijson)
 - `utils` - Logging and utilities
+
+**SDK Metadata Integration:**
+
+Every run submitted through the application module automatically includes SDK metadata from `platform._sdk_metadata.build_sdk_metadata()`. This provides:
+- Execution context (script vs CLI vs GUI)
+- User and organization information (when authenticated)
+- CI/CD environment details (GitHub Actions, pytest)
+- Workflow control flags and scheduling information
+- User agent with test/CI context
+
+See `platform/CLAUDE.md` for detailed SDK metadata documentation and schema.
 
 ### External Dependencies
 

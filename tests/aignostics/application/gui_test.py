@@ -247,8 +247,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         user.find(marker="BUTTON_NOTES_NEXT").click()
 
         # Navigate through Scheduling step
-        await user.should_see("Requested Completion Time", retries=100)
-        await user.should_see("We will do our best to accommodate your priorities and timeline", retries=100)
+        await user.should_see("Soft Due Date", retries=100)
+        await user.should_see("The platform will try to complete the run before this time", retries=100)
         user.find(marker="BUTTON_SCHEDULING_NEXT").click()
         await assert_notified(user, "Prepared upload UI.")
 
