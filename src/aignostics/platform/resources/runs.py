@@ -6,7 +6,7 @@ It includes functionality for starting runs, monitoring status, and downloading 
 
 import logging
 import typing as t
-from collections.abc import Generator
+from collections.abc import Iterator
 from pathlib import Path
 from time import sleep
 from typing import Any, cast
@@ -375,9 +375,7 @@ class Runs:
         )
         return Run(self._api, str(res.run_id))
 
-    def list(
-        self, application_id: str | None = None, application_version: str | None = None
-    ) -> Generator[Run, Any, None]:
+    def list(self, application_id: str | None = None, application_version: str | None = None) -> Iterator[Run]:
         """Find application runs, optionally filtered by application id and/or version.
 
         Retries on network and server errors.
@@ -387,7 +385,7 @@ class Runs:
             application_version (str | None): Optional application version to filter by.
 
         Returns:
-            Generator[Run, Any, None]: A generator yielding application runs.
+            Iterator[Run]: An iterator yielding application runs.
 
         Raises:
             Exception: If the API request fails.

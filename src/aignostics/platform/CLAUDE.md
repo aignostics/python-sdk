@@ -194,13 +194,13 @@ class Runs:
             page_size: Number of results per page (max 100)
         
         Returns:
-            Generator of Run instances
+            Iterator[Run] Iterator of Run instances
         """
         if page_size > LIST_APPLICATION_RUNS_MAX_PAGE_SIZE:
             raise ValueError(f"page_size must be <= {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}")
 
         # Uses paginate helper internally
-        # Returns generator of Run instances
+        # Returns iterator of run instances
         # Each run has application_id and version_number attributes
 ```
 
