@@ -73,6 +73,7 @@ CACHE_TTL_MIN_DEFAULT = 0  # seconds
 CACHE_TTL_MAX_DEFAULT = 60 * 60 * 24 * 7  # 1 week
 CACHE_TTL_DEFAULT = 60 * 5  # 5 minutes
 AUTH_JWK_SET_CACHE_TTL_DEFAULT = 60 * 60 * 24  # 1 day
+RUN_CACHE_TTL_DEFAULT = 15  # 15 seconds
 
 
 def _validate_url(value: str) -> str:
@@ -491,7 +492,7 @@ class Settings(OpaqueSettings):
             ge=CACHE_TTL_MIN_DEFAULT,
             le=CACHE_TTL_MAX_DEFAULT,
         ),
-    ] = CACHE_TTL_DEFAULT
+    ] = RUN_CACHE_TTL_DEFAULT
 
     run_cancel_timeout: Annotated[
         float,

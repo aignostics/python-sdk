@@ -52,6 +52,7 @@ from aignostics.platform._utils import (
     mime_type_to_file_ending,
     operation_cache_clear,
 )
+from aignostics.platform.resources._sdk_metadata import build_sdk_metadata
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import get_logger, user_agent
@@ -358,7 +359,7 @@ class Runs:
         """
         custom_metadata = custom_metadata or {}
         custom_metadata.setdefault("sdk", {})
-        custom_metadata["sdk"]["user_agent"] = user_agent()
+        custom_metadata["sdk"].update(build_sdk_metadata())
         payload = RunCreationRequest(
             application_id=application_id,
             version_number=application_version,

@@ -122,6 +122,39 @@ async def assert_notified(user: User, expected_notification: str, wait_seconds: 
     )
 
 
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_setup(item) -> Generator[None, None, None]:
+    """Capture test markers and store them in environment variable before test execution.
+
+    This hook runs before each test and sets the PYTEST_MARKERS environment variable
+    with a comma-separated list of all markers applied to the test.
+
+    Args:
+        item: The pytest test item being executed.
+
+    Yields:
+        None: This is a hookwrapper that yields control to other hooks.
+    """
+    # Get all marker names for this test item
+    markers = [marker.name for marker in item.iter_markers()]
+    # Filter out built-in pytest markers that are not user-defined
+    filtered_markers = [
+        m
+        for m in markers
+        if m not in {"parametrize", "skip", "skipif", "xfail", "usefixtures", "filterwarnings", "tryfirst", "trylast"}
+    ]
+    # Set environment variable with comma-separated markers
+    if filtered_markers:
+        os.environ["PYTEST_MARKERS"] = ",".join(sorted(filtered_markers))
+    else:
+        os.environ.pop("PYTEST_MARKERS", None)
+
+    yield
+
+    # Clean up after test
+    os.environ.pop("PYTEST_MARKERS", None)
+
+
 def pytest_collection_modifyitems(config, items) -> None:
     """Modify collected test items by skipping tests marked as '[very_]long_running' unless matching marker given.
 

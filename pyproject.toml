@@ -345,6 +345,9 @@ markers = [
     "integration: Sociable integration tests - test interactions across architectural layers (e.g. CLI/GUI→Service, Service→Utils) or between modules (e.g. Application→Platform), using real SDK collaborators, real file I/O, real subprocesses, and real Docker containers. Integration test must be able to pass offline, i.e. mock external services (Aignostics Platform API, Auth0, S3/GCS buckets, IDC). The timeout should not be bigger than the default 10s, and must be <5 min.",
     "e2e: End-to-end tests - test complete workflows with real external network services (Aignostics Platform API, cloud storage, IDC, etc). If the test timeout is >= 5 min and < 60 min, additionally mark as `long_running`, if >= 60min mark as 'very_long_running'.",
     "very_long_running: Tests with a test timeout >= 60 min. CI/CD will run very long running tests with one Python version only. When calling `make` very long runing tests are excluded - use `make test_very_long_running` instead.",
+    # Application Run Extras - for tests that create runs on the Aignostics Platform
+    "run_cancel_early: Application run should be cancelled early, i.e. post successful execution of normalization algorithm of ML pipeline, thereby not consuming GPU resources. Use for tests that only verify submission/scheduling logic, not actual algorithm results.",
+    "run_priority_low: Run has low scheduling priority and can tolerate delays. Suitable for scheduled tests that can wait 24h+ for GPU availability without impacting development velocity.",
 ]
 md_report = true
 md_report_output = "reports/pytest.md"
