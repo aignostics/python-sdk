@@ -2,15 +2,19 @@
 
 import sys
 import time
+from datetime import UTC, datetime, timedelta
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aiopath import AsyncPath
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
+
+if TYPE_CHECKING:
+    from aignostics.platform import UserInfo
 
 from .._service import Service  # noqa: TID252
 from .._utils import get_mime_type_for_artifact  # noqa: TID252
@@ -42,6 +46,10 @@ class SubmitForm:
     metadata_next_button: ui.button | None = None
     upload_and_submit_button: ui.button | None = None
     note: str | None = None
+    requested_date: str = (datetime.now().astimezone() + timedelta(days=1)).strftime("%Y-%m-%d")
+    requested_time: str = (datetime.now().astimezone() + timedelta(hours=0)).strftime("%H:%M")
+    requested_completion: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
+    validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
 
 
@@ -238,7 +246,13 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 stepper.next()
             except Exception as e:
                 logger.exception("Error generating metadata from source directory")
-                ui.notify(f"Error generating metadata: {e!s}", type="warning")
+                ui.notify(
+                    f"Error generating metadata: {e!s}",
+                    type="negative",
+                    progress=True,
+                    timeout=1000 * 60 * 5,
+                    close_button=True,
+                )
                 raise
         else:
             ui.notify("No source directory selected", type="warning")
@@ -291,8 +305,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         _info_dialog_content()
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
-
-    with ui.stepper().props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
+    with ui.stepper(value="Slide Submission").props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
         with ui.step("Select Application Version"):
             with ui.row().classes("w-full justify-center"):
                 with ui.column():
@@ -585,15 +598,42 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Submit the application run."""
             ui.notify("Submitting application run ...", type="info")
             try:
+                # Compute requested_completion from requested_date and requested_time
+                requested_completion = None
+                if submit_form.requested_date and submit_form.requested_time:
+                    try:
+                        parsed_datetime = datetime.strptime(
+                            f"{submit_form.requested_date} {submit_form.requested_time}", "%Y-%m-%d %H:%M"
+                        ).replace(tzinfo=UTC)  # We expect date (YYYY-MM-DD) and time (HH:mm)
+                        requested_completion = parsed_datetime.isoformat()  # Convert to ISO 8601 / UTC
+                        ui.notify(requested_completion, type="info")
+                    except ValueError as e:
+                        logger.warning(
+                            "Invalid date/time format. Expected YYYY-MM-DD and HH:mm, got '%s' and '%s'. "
+                            "Error: %s. Setting requested_completion to None.",
+                            submit_form.requested_date,
+                            submit_form.requested_time,
+                            e,
+                        )
+
                 run = service.application_run_submit_from_metadata(
-                    str(submit_form.application_id),
-                    submit_form.metadata or [],
-                    str(submit_form.application_version),
-                    {"sdk": {"note": submit_form.note}} if submit_form.note else None,
-                    submit_form.onboard_to_aignostics_portal,
+                    application_id=str(submit_form.application_id),
+                    metadata=submit_form.metadata or [],
+                    application_version=str(submit_form.application_version),
+                    custom_metadata=None,  # TODO(Helmut): Allow user to edit custom metadata
+                    note=submit_form.note,
+                    requested_completion=requested_completion,
+                    validate_only=submit_form.validate_only,
+                    onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
                 )
             except Exception as e:  # noqa: BLE001
-                ui.notify(f"Failed to submit application run: {e}.", type="warning")
+                ui.notify(
+                    f"Failed to submit application run: {e}.",
+                    type="negative",
+                    progress=True,
+                    timeout=1000 * 60 * 5,
+                    close_button=True,
+                )
                 return
             ui.notify(
                 f"Application run submitted with id '{run.run_id}'. Navigating to application run ...",
@@ -630,6 +670,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Upload UI."""
             with ui.column(align_items="start"):
                 ui.label(f"Upload and submit your {len(metadata)} slide(s) for analysis.")
+                # Allow user to leave a note, searchable
                 ui.textarea(
                     label="Note (optional)",
                     placeholder=(
@@ -638,9 +679,43 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         "(see magnifying glass icon) to find runs by searching for text in this note."
                     ),
                 ).bind_value(submit_form, "note").mark("TEXTAREA_NOTE").classes("full-width")
-                ui.checkbox(
-                    text="Onboard to Aignostics Portal (optional)",
-                ).bind_value(submit_form, "onboard_to_aignostics_portal").mark("CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL")
+                # Allow user to request completion time
+                with ui.row().classes("full-width"):
+                    today = (datetime.now().astimezone()).strftime("%Y/%m/%d")
+                    ui.label(today)
+                    ui.date(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "requested_completion").props(
+                        f":options=\"(date) => date >= '{today}'\""
+                    ).mark("DATE_REQUESTED_COMPLETION")
+                    ui.time(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "requested_completion").props(
+                        "format24h now-btn"
+                    ).mark("TIME_REQUESTED_COMPLETION")
+                ui.label().bind_text_from(submit_form, "requested_completion").classes("text-sm text-gray-500")
+                ui.label().bind_text_from(submit_form, "requested_date").classes("text-sm text-gray-500")
+                ui.label().bind_text_from(submit_form, "requested_time").classes("text-sm text-gray-500")
+                # Allow users of some organisations to request onboarding slides to Portal
+                user_info: UserInfo | None = app.storage.tab.get("user_info", None)
+                with ui.row().classes("full-width"):
+                    if (
+                        user_info
+                        and user_info.organization
+                        and user_info.organization.name
+                        and user_info.organization.name.lower() in {"aignostics", "lmu", "charite"}
+                    ):
+                        ui.checkbox(
+                            text="Onboard Slides and Output to Aignostics Portal",
+                        ).bind_value(submit_form, "onboard_to_aignostics_portal").mark(
+                            "CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL"
+                        )
+                    # Allow users in aignostics organisation to do validate only runs
+                    if (
+                        user_info
+                        and user_info.organization
+                        and user_info.organization.name
+                        and user_info.organization.name == "aignostics"
+                    ):
+                        ui.checkbox(
+                            text="Validate only",
+                        ).bind_value(submit_form, "validate_only").mark("CHECKBOX_VALIDATE_ONLY")
                 upload_complete = True
                 for row in metadata or []:
                     upload_complete = upload_complete and row["file_upload_progress"] == 1

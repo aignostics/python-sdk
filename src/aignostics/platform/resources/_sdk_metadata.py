@@ -28,19 +28,14 @@ def build_sdk_metadata() -> dict[str, Any]:
     """
     from aignostics.platform._client import Client  # noqa: PLC0415
 
-    # Determine submission source and interface
-    # submission_source: who/what initiated the run (user, test, bridge)
-    # submission_interface: how the SDK was accessed (script, cli, launchpad)
-    submission_source = "user"
-    submission_interface = "script"
+    submission_source = "user"  # who/what initiated the run (user, test, bridge)
+    submission_interface = "script"  # how the SDK was accessed (script, cli, launchpad)
 
-    # Determine source (who initiated)
     if os.environ.get("AIGNOSTICS_BRIDGE_VERSION"):
         submission_source = "bridge"
     elif os.environ.get("PYTEST_CURRENT_TEST"):
         submission_source = "test"
 
-    # Determine interface (how accessed) - independent of source
     if "typer" in sys.argv[0] or "aignostics" in sys.argv[0]:
         submission_interface = "cli"
     elif os.getenv("NICEGUI_HOST"):
@@ -56,7 +51,6 @@ def build_sdk_metadata() -> dict[str, Any]:
         "user_agent": user_agent(),
     }
 
-    # Add user information
     try:
         me = Client().me()
         metadata["user"] = {
@@ -70,7 +64,6 @@ def build_sdk_metadata() -> dict[str, Any]:
 
     ci_metadata: dict[str, Any] = {}
 
-    # Add GitHub Actions metadata if running in CI
     github_run_id = os.environ.get("GITHUB_RUN_ID")
     if github_run_id:
         github_server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
@@ -94,21 +87,18 @@ def build_sdk_metadata() -> dict[str, Any]:
             "workflow_ref": os.environ.get("GITHUB_WORKFLOW_REF"),
         }
 
-    # Add pytest metadata if running in tests
     pytest_current_test = os.environ.get("PYTEST_CURRENT_TEST")
     if pytest_current_test:
         pytest_metadata: dict[str, Any] = {
             "current_test": pytest_current_test,
         }
 
-        # Add markers if available
         pytest_markers = os.environ.get("PYTEST_MARKERS")
         if pytest_markers:
             pytest_metadata["markers"] = pytest_markers.split(",")
 
         ci_metadata["pytest"] = pytest_metadata
 
-    # Only add ci metadata if we have at least one CI context
     if ci_metadata:
         metadata["ci"] = ci_metadata
 

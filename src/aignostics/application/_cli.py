@@ -595,6 +595,18 @@ def run_submit(
         str | None,
         typer.Option(help="Optional note to include with the run submission via custom metadata."),
     ] = None,
+    requested_completion: Annotated[
+        str | None,
+        typer.Option(help="Optional requested completion time to include with the run submission."),
+    ] = None,
+    onboard_to_aignostics_portal: Annotated[
+        bool,
+        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
+    ] = False,
+    cancel_early: Annotated[
+        bool,
+        typer.Option(help="If True, cancel the run post validation, before analysis."),
+    ] = False,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -648,7 +660,11 @@ def run_submit(
             application_id=application_id,
             metadata=metadata_dict,
             application_version=application_version,
-            custom_metadata={"sdk": {"note": note}} if note else None,
+            custom_metadata=None,  # TODO(Helmut): Add support for custom metadata
+            note=note,
+            requested_completion=requested_completion,
+            onboard_to_aignostics_portal=onboard_to_aignostics_portal,
+            cancel_early=cancel_early,
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "

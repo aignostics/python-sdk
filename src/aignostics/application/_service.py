@@ -709,23 +709,29 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit_from_metadata(
+    def application_run_submit_from_metadata(  # noqa: PLR0913, PLR0917
         self,
         application_id: str,
         metadata: list[dict[str, Any]],
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        requested_completion: str | None = None,
         onboard_to_aignostics_portal: bool = False,
+        validate_only: bool = False,
     ) -> Run:
         """Submit a run for the given application.
 
         Args:
             application_id: The ID of the application to run.
             metadata: The metadata for the run.
+            custom_metadata: Optional custom metadata to attach to the run.
+            note: An optional note for the run.
+            requested_completion: An optional requested completion time for the run.
             application_version: The version of the application.
                 If not given latest version is used.
-            custom_metadata: Optional custom metadata to attach to the run.
             onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
+            validate_only (bool): If True, cancel the run post validation, before analysis.
 
         Returns:
             Run: The submitted run.
@@ -737,10 +743,6 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         logger.debug("Submitting application run with metadata: %s", metadata)
-        if onboard_to_aignostics_portal:
-            custom_metadata = custom_metadata or {}
-            custom_metadata.setdefault("sdk", {})
-            custom_metadata["sdk"]["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
         app_version = self.application_version(application_id, application_version=application_version)
         if len(app_version.input_artifacts) != 1:
             message = (
@@ -802,6 +804,10 @@ class Service(BaseService):
                 items=items,
                 application_version=app_version.version_number,
                 custom_metadata=custom_metadata,
+                note=note,
+                requested_completion=requested_completion,
+                onboard_to_aignostics_portal=onboard_to_aignostics_portal,
+                validate_only=validate_only,
             )
             logger.info(
                 "Submitted application run with items: %s, application run id %s, custom metadata: %s",
@@ -825,12 +831,16 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(
+    def application_run_submit(  # noqa: PLR0913, PLR0917
         self,
         application_id: str,
         items: list[InputItem],
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        requested_completion: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        validate_only: bool = False,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -839,6 +849,10 @@ class Service(BaseService):
             items: The input items for the run.
             application_version: The version of the application to run.
             custom_metadata: Optional custom metadata to attach to the run.
+            note: An optional note for the run.
+            requested_completion: An optional requested completion time for the run.
+            onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
+            validate_only (bool): If True, cancel the run post validation, before analysis.
 
         Returns:
             Run: The submitted run.
@@ -849,9 +863,13 @@ class Service(BaseService):
             RuntimeError: If submitting the run failed unexpectedly.
         """
         try:
-            # TODO (Andreas): This is broken in the openapi.json - runs.create certainly
-            # needs the application_id and the application_version, not just the version
-            # Below must be changed post fix in openapi.json
+            if custom_metadata is None:
+                custom_metadata = {}
+            custom_metadata["sdk"] = {}
+            custom_metadata["sdk"]["note"] = note
+            custom_metadata["sdk"]["requested_completion"] = requested_completion
+            custom_metadata["sdk"]["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
+            custom_metadata["sdk"]["validate_only"] = validate_only
             return self._get_platform_client().runs.submit(
                 application_id=application_id,
                 items=items,
