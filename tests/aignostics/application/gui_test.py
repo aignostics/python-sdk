@@ -3,6 +3,7 @@
 import re
 import tempfile
 from asyncio import sleep
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -97,6 +98,8 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
                 str(csv_path),
                 "--note",
                 "test_gui_cli_submit_to_run_result_delete",
+                "--deadline",
+                (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
                 "--validate-only",
             ],
         )

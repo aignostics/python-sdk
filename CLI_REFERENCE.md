@@ -23,6 +23,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `application`: List and inspect applications on...
 * `bucket`: Operations on cloud bucket on Aignostics...
 * `dataset`: Download datasets from National Institute...
+* `sdk`: Platform operations such as dumping the...
 * `user`: User operations such as login, logout and...
 * `qupath`: Interact with QuPath application.
 * `system`: Determine health, info and further...
@@ -199,9 +200,13 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760863837577.447]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760895098364.396]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
+* `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
+* `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
+* `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
+* `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run prepare`
@@ -258,7 +263,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 **Options**:
 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760863837577.562]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760895098364.4978]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -286,6 +291,10 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 
 * `--application-version TEXT`: Version of the application to generate the metadata for. If not provided, the latest version will be used.
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
+* `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
+* `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
+* `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
+* `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`
@@ -690,6 +699,43 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+## `aignostics sdk`
+
+Platform operations such as dumping the SDK metadata schema.
+
+**Usage**:
+
+```console
+$ aignostics sdk [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `metadata-schema`: Print the JSON Schema for SDK metadata.
+
+### `aignostics sdk metadata-schema`
+
+Print the JSON Schema for SDK metadata.
+
+This schema defines the structure and validation rules for metadata
+that the SDK attaches to application runs. Use this to understand
+what fields are expected and their types.
+
+**Usage**:
+
+```console
+$ aignostics sdk metadata-schema [OPTIONS]
+```
+
+**Options**:
+
+* `--pretty / --no-pretty`: Pretty print JSON output  [default: pretty]
 * `--help`: Show this message and exit.
 
 ## `aignostics user`

@@ -342,9 +342,22 @@ def run_execute(  # noqa: PLR0913, PLR0917
         str | None,
         typer.Option(help="Optional note to include with the run submission via custom metadata."),
     ] = None,
-    requested_completion: Annotated[
+    due_date: Annotated[
         str | None,
-        typer.Option(help="Optional requested completion time to include with the run submission, ISO8601 format."),
+        typer.Option(
+            help="Optional soft due date to include with the run submission, ISO8601 format. "
+            "The scheduler will try to complete the run by this date, taking the subscription tier"
+            "and available GPU resources into account."
+        ),
+    ] = None,
+    deadline: Annotated[
+        str | None,
+        typer.Option(
+            help=(
+                "Optional hard deadline to include with the run submission, ISO8601 format. "
+                "If processing exceeds this deadline, the run can be aborted."
+            ),
+        ),
     ] = None,
     onboard_to_aignostics_portal: Annotated[
         bool,
@@ -388,7 +401,8 @@ def run_execute(  # noqa: PLR0913, PLR0917
         metadata_csv_file=metadata_csv_file,
         application_version=application_version,
         note=note,
-        requested_completion=requested_completion,
+        due_date=due_date,
+        deadline=deadline,
         onboard_to_aignostics_portal=onboard_to_aignostics_portal,
         validate_only=validate_only,
     )
@@ -610,9 +624,22 @@ def run_submit(  # noqa: PLR0913, PLR0917
         str | None,
         typer.Option(help="Optional note to include with the run submission via custom metadata."),
     ] = None,
-    requested_completion: Annotated[
+    due_date: Annotated[
         str | None,
-        typer.Option(help="Optional requested completion time to include with the run submission, ISO8601 format."),
+        typer.Option(
+            help="Optional soft due date to include with the run submission, ISO8601 format. "
+            "The scheduler will try to complete the run by this date, taking the subscription tier"
+            "and available GPU resources into account."
+        ),
+    ] = None,
+    deadline: Annotated[
+        str | None,
+        typer.Option(
+            help=(
+                "Optional hard deadline to include with the run submission, ISO8601 format. "
+                "If processing exceeds this deadline, the run can be aborted."
+            ),
+        ),
     ] = None,
     onboard_to_aignostics_portal: Annotated[
         bool,
@@ -676,7 +703,8 @@ def run_submit(  # noqa: PLR0913, PLR0917
             application_version=application_version,
             custom_metadata=None,  # TODO(Helmut): Add support for custom metadata
             note=note,
-            requested_completion=requested_completion,
+            due_date=due_date,
+            deadline=deadline,
             onboard_to_aignostics_portal=onboard_to_aignostics_portal,
             validate_only=validate_only,
         )

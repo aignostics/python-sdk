@@ -5,8 +5,8 @@ against the Aignostics platform. These tests verify end-to-end functionality
 including creating runs, downloading results, and validating outputs.
 """
 
-import datetime
 import tempfile
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -144,15 +144,15 @@ def _run_application_test(
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    # TODO(Helmut): Try with caching ...
-    client = platform.Client(cache_token=False)
+    client = platform.Client()
     application_run = client.runs.submit(
         application_id=application_id,
         application_version=application_version,
         items=payload,
         custom_metadata={
             "sdk": {
-                "requested_completion": (datetime.now(datetime.UTC) + datetime.timedelta(hours=1)).isoformat(),
+                "due_date": (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+                "deadline": (datetime.now(tz=UTC) + timedelta(hours=3)).isoformat(),
                 "note": "_run_application_test",
             }
         },  # Request completion within 1 hour

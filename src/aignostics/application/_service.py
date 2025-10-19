@@ -215,39 +215,39 @@ class Service(BaseService):
         return self._platform_service
 
     @staticmethod
-    def _validate_requested_completion(requested_completion: str | None) -> None:
-        """Validate that requested_completion is in ISO 8601 format and in the future.
+    def _validate_due_date(due_date: str | None) -> None:
+        """Validate that due_date is in ISO 8601 format and in the future.
 
         Args:
-            requested_completion: The datetime string to validate.
+            due_date (str | None): The datetime string to validate.
 
         Raises:
             ValueError: If
                 the format is invalid
-                or the requested_completion is not in the future.
+                or the due_date is not in the future.
         """
-        if requested_completion is None:
+        if due_date is None:
             return
 
         # Try parsing with fromisoformat (handles most ISO 8601 formats)
         try:
             # Handle 'Z' suffix by replacing with '+00:00'
-            normalized = requested_completion.replace("Z", "+00:00")
+            normalized = due_date.replace("Z", "+00:00")
             parsed_dt = datetime.fromisoformat(normalized)
         except (ValueError, TypeError) as e:
             message = (
-                f"Invalid ISO 8601 format for requested_completion. "
+                f"Invalid ISO 8601 format for due_date. "
                 f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-                f"but got: '{requested_completion}' (error: {e})"
+                f"but got: '{due_date}' (error: {e})"
             )
             raise ValueError(message) from e
 
         # Ensure the datetime is timezone-aware (reject naive datetimes)
         if parsed_dt.tzinfo is None:
             message = (
-                f"Invalid ISO 8601 format for requested_completion. "
+                f"Invalid ISO 8601 format for due_date. "
                 f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-                f"but got: '{requested_completion}' (missing timezone information)"
+                f"but got: '{due_date}' (missing timezone information)"
             )
             raise ValueError(message)
 
@@ -255,8 +255,8 @@ class Service(BaseService):
         now = datetime.now(UTC)
         if parsed_dt <= now:
             message = (
-                f"requested_completion must be in the future. "
-                f"Got '{requested_completion}' ({parsed_dt.isoformat()}), "
+                f"due_date must be in the future. "
+                f"Got '{due_date}' ({parsed_dt.isoformat()}), "
                 f"but current UTC time is {now.isoformat()}"
             )
             raise ValueError(message)
@@ -400,9 +400,9 @@ class Service(BaseService):
         """Process a single key-value pair from a mapping.
 
         Args:
-            entry: The entry dictionary to update
-            key_value: String in the format "key=value"
-            external_id: The external_id value for logging
+            entry (dict[str, Any]): The entry dictionary to update
+            key_value (str): String in the format "key=value"
+            external_id (str): The external_id value for logging
         """
         key, value = key_value.split("=", 1)
         key = key.strip()
@@ -425,8 +425,8 @@ class Service(BaseService):
             the key/value pairs are applied.
 
         Args:
-            entry: The entry dictionary to update with mapped values
-            mappings: List of strings with format 'regex:key=value,...'
+            entry (dict[str, Any]): The entry dictionary to update with mapped values
+            mappings (list[str]): List of strings with format 'regex:key=value,...'
                 where regex ismatched against the external_id attribute in the entry
         """
         external_id = entry["external_id"]
@@ -745,7 +745,7 @@ class Service(BaseService):
         """Select a run by its ID.
 
         Args:
-            run_id: The ID of the run to find
+            run_id (str): The ID of the run to find
 
         Returns:
             Run: The run that can be fetched using the .details() call.
@@ -767,21 +767,26 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
-        requested_completion: str | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
         validate_only: bool = False,
     ) -> Run:
         """Submit a run for the given application.
 
         Args:
-            application_id: The ID of the application to run.
-            metadata: The metadata for the run.
-            custom_metadata: Optional custom metadata to attach to the run.
-            note: An optional note for the run.
-            requested_completion: An optional requested completion time for the run, ISO8601 format.
-            application_version: The version of the application.
+            application_id (str): The ID of the application to run.
+            metadata (list[dict[str, Any]]): The metadata for the run.
+            custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
+            note (str | None): An optional note for the run.
+            due_date (str | None): An optional requested completion time for the run, ISO8601 format.
+                The scheduler will try to complete the run before this time, taking
+                the subscription tier and available GPU resources into account.
+            deadline (str | None): An optional hard deadline for the run, ISO8601 format.
+                If processing exceeds this deadline, the run can be aborted.
+            application_version (str | None): The version of the application.
                 If not given latest version is used.
-            onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
+            onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
             validate_only (bool): If True, cancel the run post validation, before analysis.
 
         Returns:
@@ -793,11 +798,11 @@ class Service(BaseService):
                 platform bucket URL is missing
                 or has unsupported protocol,
                 or if the application version ID is invalid,
-                or if requested_completion is not ISO 8601
-                or if requested_completion not in the future.
+                or if due_date is not ISO 8601
+                or if due_date not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
-        self._validate_requested_completion(requested_completion)
+        self._validate_due_date(due_date)
         logger.debug("Submitting application run with metadata: %s", metadata)
         app_version = self.application_version(application_id, application_version=application_version)
         if len(app_version.input_artifacts) != 1:
@@ -861,7 +866,8 @@ class Service(BaseService):
                 application_version=app_version.version_number,
                 custom_metadata=custom_metadata,
                 note=note,
-                requested_completion=requested_completion,
+                due_date=due_date,
+                deadline=deadline,
                 onboard_to_aignostics_portal=onboard_to_aignostics_portal,
                 validate_only=validate_only,
             )
@@ -894,20 +900,25 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
-        requested_completion: str | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
         validate_only: bool = False,
     ) -> Run:
         """Submit a run for the given application.
 
         Args:
-            application_id: The ID of the application to run.
-            items: The input items for the run.
-            application_version: The version of the application to run.
-            custom_metadata: Optional custom metadata to attach to the run.
-            note: An optional note for the run.
-            requested_completion: An optional requested completion time for the run, ISO8601 format.
-            onboard_to_aignostics_portal: True if the run should be onboarded to the Aignostics Portal.
+            application_id (str): The ID of the application to run.
+            items (list[InputItem]): The input items for the run.
+            application_version (str | None): The version of the application to run.
+            custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
+            note (str | None): An optional note for the run.
+            due_date (str | None): An optional requested completion time for the run, ISO8601 format.
+                The scheduler will try to complete the run before this time, taking
+                the subscription tier and available GPU resources into account.
+            deadline (str | None): An optional hard deadline for the run, ISO8601 format.
+                If processing exceeds this deadline, the run can be aborted.
+            onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
             validate_only (bool): If True, cancel the run post validation, before analysis.
 
         Returns:
@@ -918,19 +929,26 @@ class Service(BaseService):
             ValueError: If
                 the application version ID is invalid
                 or items invalid
-                or requested_completion not ISO 8601
-                or requested_completion not in the future.
+                or due_date not ISO 8601
+                or due_date not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
-        self._validate_requested_completion(requested_completion)
+        self._validate_due_date(due_date)
         try:
             if custom_metadata is None:
                 custom_metadata = {}
-            custom_metadata["sdk"] = {}
+            custom_metadata["sdk"] = {
+                "note": note,
+                "workflow": {
+                    "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
+                    "validate_only": validate_only,
+                },
+                "scheduling": {
+                    "due_date": due_date,
+                    "deadline": deadline,
+                },
+            }
             custom_metadata["sdk"]["note"] = note
-            custom_metadata["sdk"]["requested_completion"] = requested_completion
-            custom_metadata["sdk"]["onboard_to_aignostics_portal"] = onboard_to_aignostics_portal
-            custom_metadata["sdk"]["validate_only"] = validate_only
             return self._get_platform_client().runs.submit(
                 application_id=application_id,
                 items=items,
@@ -950,7 +968,7 @@ class Service(BaseService):
         """Cancel a run by its ID.
 
         Args:
-            run_id: The ID of the run to cancel
+            run_id (str): The ID of the run to cancel
 
         Raises:
             Exception: If the client cannot be created.
@@ -989,7 +1007,7 @@ class Service(BaseService):
         """Delete a run by its ID.
 
         Args:
-            run_id: The ID of the run to delete
+            run_id (str): The ID of the run to delete
 
         Raises:
             Exception: If the client cannot be created.

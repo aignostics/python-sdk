@@ -1,5 +1,6 @@
 """CLI of platform module."""
 
+import json
 import sys
 from typing import Annotated
 
@@ -7,11 +8,12 @@ import typer
 
 from aignostics.utils import console, get_logger
 
+from ._sdk_metadata import get_sdk_metadata_json_schema
 from ._service import Service
 
 logger = get_logger(__name__)
 
-cli = typer.Typer(name="user", help="User operations such as login, logout and whoami.")
+cli_user = typer.Typer(name="user", help="User operations such as login, logout and whoami.")
 
 service: Service | None = None
 
@@ -28,7 +30,7 @@ def _get_service() -> Service:
     return service
 
 
-@cli.command("logout")
+@cli_user.command("logout")
 def logout() -> None:
     """Logout if authenticated.
 
@@ -48,7 +50,7 @@ def logout() -> None:
         sys.exit(1)
 
 
-@cli.command("login")
+@cli_user.command("login")
 def login(
     relogin: Annotated[bool, typer.Option(help="Re-login")] = False,
 ) -> None:
@@ -67,7 +69,7 @@ def login(
         sys.exit(1)
 
 
-@cli.command("whoami")
+@cli_user.command("whoami")
 def whoami(
     mask_secrets: Annotated[bool, typer.Option(help="Mask secrets")] = True,
     relogin: Annotated[bool, typer.Option(help="Re-login")] = False,
@@ -84,4 +86,30 @@ def whoami(
         logger.exception(message)
         console.print(message, style="error")
         sys.exit(1)
+        sys.exit(1)
+
+
+cli_sdk = typer.Typer(name="sdk", help="Platform operations such as dumping the SDK metadata schema.")
+
+
+@cli_sdk.command("metadata-schema")
+def sdk_metadata_schema(
+    pretty: Annotated[bool, typer.Option(help="Pretty print JSON output")] = True,
+) -> None:
+    """Print the JSON Schema for SDK metadata.
+
+    This schema defines the structure and validation rules for metadata
+    that the SDK attaches to application runs. Use this to understand
+    what fields are expected and their types.
+    """
+    try:
+        schema = get_sdk_metadata_json_schema()
+        if pretty:
+            console.print_json(data=schema)
+        else:
+            print(json.dumps(schema))
+    except Exception as e:
+        message = f"Error getting SDK metadata schema: {e!s}"
+        logger.exception(message)
+        console.print(message, style="error")
         sys.exit(1)

@@ -44,7 +44,7 @@ from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyEr
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
 from aignostics.platform._operation_cache import cached_operation, operation_cache_clear
-from aignostics.platform._sdk_metadata import build_sdk_metadata
+from aignostics.platform._sdk_metadata import build_sdk_metadata, validate_sdk_metadata
 from aignostics.platform._settings import settings
 from aignostics.platform._utils import (
     calculate_file_crc32c,
@@ -358,7 +358,9 @@ class Runs:
         """
         custom_metadata = custom_metadata or {}
         custom_metadata.setdefault("sdk", {})
-        custom_metadata["sdk"].update(build_sdk_metadata())
+        sdk_metadata = build_sdk_metadata()
+        validate_sdk_metadata(sdk_metadata)
+        custom_metadata["sdk"].update(sdk_metadata)
         payload = RunCreationRequest(
             application_id=application_id,
             version_number=application_version,

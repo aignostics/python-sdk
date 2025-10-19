@@ -5,8 +5,15 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
 
-from aignostics.platform._sdk_metadata import SDK_METADATA_SCHEMA_VERSION, build_sdk_metadata
+from aignostics.platform._sdk_metadata import (
+    SDK_METADATA_SCHEMA_VERSION,
+    build_sdk_metadata,
+    get_sdk_metadata_json_schema,
+    validate_sdk_metadata,
+    validate_sdk_metadata_silent,
+)
 
 
 @pytest.fixture
@@ -313,3 +320,200 @@ class TestBuildSdkMetadata:
             assert parsed_date.tzinfo is not None
             # Should be in ISO format with seconds precision (no microseconds)
             assert "." not in date_str or date_str.count(".") == 0 or len(date_str.split(".")[-1]) <= 3
+
+
+class TestSdkMetadataValidation:
+    """Test cases for SDK metadata validation."""
+
+    @staticmethod
+    def test_validate_basic_metadata(clean_env: None) -> None:
+        """Test validation of basic metadata structure."""
+        with patch("aignostics.platform._client.Client") as mock_client:
+            mock_client.return_value.me.side_effect = Exception("No client available")
+
+            metadata = build_sdk_metadata()
+            assert validate_sdk_metadata(metadata) is True
+
+    @staticmethod
+    def test_validate_metadata_with_user(clean_env: None) -> None:
+        """Test validation of metadata with user information."""
+        with patch("aignostics.platform._client.Client") as mock_client:
+            mock_user = MagicMock()
+            mock_user.organization.id = "org-123"
+            mock_user.organization.name = "Test Org"
+            mock_user.user.email = "test@example.com"
+            mock_user.user.id = "user-456"
+            mock_client.return_value.me.return_value = mock_user
+
+            metadata = build_sdk_metadata()
+            assert validate_sdk_metadata(metadata) is True
+
+    @staticmethod
+    def test_validate_metadata_with_github_ci(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test validation of metadata with GitHub CI information."""
+        monkeypatch.setenv("GITHUB_RUN_ID", "123456")
+        monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
+
+        with patch("aignostics.platform._client.Client") as mock_client:
+            mock_client.return_value.me.side_effect = Exception("No client available")
+
+            metadata = build_sdk_metadata()
+            assert validate_sdk_metadata(metadata) is True
+
+    @staticmethod
+    def test_validate_metadata_with_pytest_ci(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test validation of metadata with pytest information."""
+        monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func")
+        monkeypatch.setenv("PYTEST_MARKERS", "unit,integration")
+
+        with patch("aignostics.platform._client.Client") as mock_client:
+            mock_client.return_value.me.side_effect = Exception("No client available")
+
+            metadata = build_sdk_metadata()
+            assert validate_sdk_metadata(metadata) is True
+
+    @staticmethod
+    def test_validate_metadata_with_workflow(clean_env: None) -> None:
+        """Test validation of metadata with workflow fields."""
+        with patch("aignostics.platform._client.Client") as mock_client:
+            mock_client.return_value.me.side_effect = Exception("No client available")
+
+            metadata = build_sdk_metadata()
+            metadata["note"] = "Test run note"
+            metadata["workflow"] = {
+                "onboard_to_aignostics_portal": True,
+                "validate_only": False,
+            }
+            metadata["scheduling"] = {
+                "due_date": "2025-12-31T23:59:59+00:00",
+                "deadline": "2026-01-01T00:00:00+00:00",
+            }
+
+            assert validate_sdk_metadata(metadata) is True
+
+    @staticmethod
+    def test_validate_invalid_schema_version() -> None:
+        """Test that invalid schema version fails validation."""
+        metadata = {
+            "schema_version": "invalid-version",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "source": "user",
+            },
+            "user_agent": "test-agent/1.0",
+        }
+
+        with pytest.raises(ValidationError):
+            validate_sdk_metadata(metadata)
+
+    @staticmethod
+    def test_validate_invalid_submission_interface() -> None:
+        """Test that invalid submission interface fails validation."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "invalid",
+                "source": "user",
+            },
+            "user_agent": "test-agent/1.0",
+        }
+
+        with pytest.raises(ValidationError):
+            validate_sdk_metadata(metadata)
+
+    @staticmethod
+    def test_validate_invalid_submission_source() -> None:
+        """Test that invalid submission source fails validation."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "source": "invalid",
+            },
+            "user_agent": "test-agent/1.0",
+        }
+
+        with pytest.raises(ValidationError):
+            validate_sdk_metadata(metadata)
+
+    @staticmethod
+    def test_validate_missing_required_fields() -> None:
+        """Test that missing required fields fail validation."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+            },
+            # Missing source
+            "user_agent": "test-agent/1.0",
+        }
+
+        with pytest.raises(ValidationError):
+            validate_sdk_metadata(metadata)
+
+    @staticmethod
+    def test_validate_extra_fields_rejected() -> None:
+        """Test that extra unknown fields are rejected."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "source": "user",
+            },
+            "user_agent": "test-agent/1.0",
+            "unknown_field": "should fail",
+        }
+
+        with pytest.raises(ValidationError):
+            validate_sdk_metadata(metadata)
+
+    @staticmethod
+    def test_validate_sdk_metadata_silent_valid(clean_env: None) -> None:
+        """Test silent validation with valid metadata."""
+        with patch("aignostics.platform._client.Client") as mock_client:
+            mock_client.return_value.me.side_effect = Exception("No client available")
+
+            metadata = build_sdk_metadata()
+            assert validate_sdk_metadata_silent(metadata) is True
+
+    @staticmethod
+    def test_validate_sdk_metadata_silent_invalid() -> None:
+        """Test silent validation with invalid metadata."""
+        metadata = {
+            "schema_version": "invalid",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "invalid",
+                "source": "user",
+            },
+            "user_agent": "test-agent/1.0",
+        }
+
+        assert validate_sdk_metadata_silent(metadata) is False
+
+    @staticmethod
+    def test_get_json_schema() -> None:
+        """Test that JSON schema can be exported."""
+        schema = get_sdk_metadata_json_schema()
+
+        assert isinstance(schema, dict)
+        assert "$schema" in schema
+        assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+        assert "$id" in schema
+        assert (
+            schema["$id"]
+            == f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_{SDK_METADATA_SCHEMA_VERSION}.json"
+        )
+        assert "properties" in schema
+        assert "schema_version" in schema["properties"]
+        assert "submission" in schema["properties"]
+        assert "user_agent" in schema["properties"]
+        assert "required" in schema
+        assert "schema_version" in schema["required"]
+        assert "submission" in schema["required"]
+        assert "user_agent" in schema["required"]

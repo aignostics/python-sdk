@@ -11,17 +11,17 @@ from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 
 
 @pytest.mark.unit
-def test_validate_requested_completion_none() -> None:
+def test_validate_due_date_none() -> None:
     """Test that None is accepted (optional parameter)."""
     # Should not raise any exception
-    ApplicationService._validate_requested_completion(None)
+    ApplicationService._validate_due_date(None)
 
 
 @pytest.mark.unit
-def test_validate_requested_completion_valid_formats() -> None:
+def test_validate_due_date_valid_formats() -> None:
     """Test that valid ISO 8601 formats in the future are accepted."""
     # Create a datetime 2 hours in the future
-    future_time = datetime.now(UTC) + timedelta(hours=2)
+    future_time = datetime.now(tz=UTC) + timedelta(hours=2)
 
     valid_formats = [
         future_time.isoformat(),  # With timezone offset like +00:00
@@ -33,13 +33,13 @@ def test_validate_requested_completion_valid_formats() -> None:
     for time_str in valid_formats:
         # Should not raise any exception
         try:
-            ApplicationService._validate_requested_completion(time_str)
+            ApplicationService._validate_due_date(time_str)
         except ValueError as e:
             pytest.fail(f"Valid ISO 8601 format '{time_str}' was rejected: {e}")
 
 
 @pytest.mark.unit
-def test_validate_requested_completion_invalid_format() -> None:
+def test_validate_due_date_invalid_format() -> None:
     """Test that invalid ISO 8601 formats are rejected."""
     invalid_formats = [
         "2025-10-19",  # Date only
@@ -52,14 +52,14 @@ def test_validate_requested_completion_invalid_format() -> None:
 
     for time_str in invalid_formats:
         with pytest.raises(ValueError, match=r"Invalid ISO 8601 format"):
-            ApplicationService._validate_requested_completion(time_str)
+            ApplicationService._validate_due_date(time_str)
 
 
 @pytest.mark.unit
-def test_validate_requested_completion_past_datetime() -> None:
+def test_validate_due_date_past_datetime() -> None:
     """Test that datetimes in the past are rejected."""
     # Create a datetime 2 hours in the past
-    past_time = datetime.now(UTC) - timedelta(hours=2)
+    past_time = datetime.now(tz=UTC) - timedelta(hours=2)
 
     past_formats = [
         past_time.isoformat(),
@@ -67,31 +67,31 @@ def test_validate_requested_completion_past_datetime() -> None:
     ]
 
     for time_str in past_formats:
-        with pytest.raises(ValueError, match=r"requested_completion must be in the future"):
-            ApplicationService._validate_requested_completion(time_str)
+        with pytest.raises(ValueError, match=r"due_date must be in the future"):
+            ApplicationService._validate_due_date(time_str)
 
 
 @pytest.mark.unit
-def test_validate_requested_completion_current_time() -> None:
+def test_validate_due_date_current_time() -> None:
     """Test that current time (not future) is rejected."""
     # Get current time - should be rejected as it's not in the future
-    current_time = datetime.now(UTC)
+    current_time = datetime.now(tz=UTC)
     current_time_str = current_time.isoformat()
 
-    with pytest.raises(ValueError, match=r"requested_completion must be in the future"):
-        ApplicationService._validate_requested_completion(current_time_str)
+    with pytest.raises(ValueError, match=r"due_date must be in the future"):
+        ApplicationService._validate_due_date(current_time_str)
 
 
 @pytest.mark.unit
-def test_validate_requested_completion_edge_case_one_second_future() -> None:
+def test_validate_due_date_edge_case_one_second_future() -> None:
     """Test that a datetime 1 second in the future is accepted."""
     # Create a datetime 1 second in the future
-    future_time = datetime.now(UTC) + timedelta(seconds=1)
+    future_time = datetime.now(tz=UTC) + timedelta(seconds=1)
     future_time_str = future_time.isoformat()
 
     # Should not raise any exception
     try:
-        ApplicationService._validate_requested_completion(future_time_str)
+        ApplicationService._validate_due_date(future_time_str)
     except ValueError as e:
         pytest.fail(f"Future datetime '{future_time_str}' was rejected: {e}")
 

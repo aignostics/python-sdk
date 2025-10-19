@@ -46,7 +46,8 @@ class SubmitForm:
     metadata_next_button: ui.button | None = None
     upload_and_submit_button: ui.button | None = None
     note: str | None = None
-    requested_completion: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
+    due_date: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
+    deadline: str = (datetime.now().astimezone() + timedelta(hours=24)).strftime("%Y-%m-%d %H:%M")
     validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
 
@@ -607,36 +608,34 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
 
         with ui.step("Scheduling"):
             with ui.column(align_items="start").classes("w-full"):
-                ui.label("Requested Completion Time").classes("text-h6 mb-0 pb-0")
+                now = datetime.now().astimezone()
+                today = now.strftime("%Y/%m/%d")
+                min_hour = (now + timedelta(hours=1)).hour
+                min_minute = (now + timedelta(hours=1)).minute
+                ui.label("Soft Due Date").classes("text-h6 mb-0 pb-0")
                 ui.label(
-                    "We will do our best to accommodate your priorities and timeline "
+                    "The platform will try to complete the run before this time, "
                     "given your subscription tier and available GPU resources."
                 ).classes("text-sm mt-0 pt-0")
                 with ui.row().classes("full-width"):
-                    now = datetime.now().astimezone()
-                    today = now.strftime("%Y/%m/%d")
-                    min_hour = (now + timedelta(hours=1)).hour
-                    min_minute = (now + timedelta(hours=1)).minute
-
-                    date_picker = (
+                    ui.label("")
+                    due_date_date_picker = (
                         ui.date(mask="YYYY-MM-DD HH:mm")
-                        .bind_value(submit_form, "requested_completion")
+                        .bind_value(submit_form, "due_date")
                         .props(f":options=\"(date) => date >= '{today}'\"")
-                        .mark("DATE_REQUESTED_COMPLETION")
+                        .mark("DATE_DUE_DATE")
                     )
-
-                    time_picker = (
+                    due_date_time_picker = (
                         ui.time(mask="YYYY-MM-DD HH:mm")
-                        .bind_value(submit_form, "requested_completion")
+                        .bind_value(submit_form, "due_date")
                         .props("format24h now-btn")
-                        .mark("TIME_REQUESTED_COMPLETION")
+                        .mark("TIME_DUE_DATE")
                     )
-
                     # Add dynamic time restriction based on selected date
                     ui.run_javascript(
                         f"""
-                        const datePicker = getElement({date_picker.id});
-                        const timePicker = getElement({time_picker.id});
+                        const datePicker = getElement({due_date_date_picker.id});
+                        const timePicker = getElement({due_date_time_picker.id});
                         const today = '{today}';
                         const minHour = {min_hour};
                         const minMinute = {min_minute};
@@ -666,6 +665,17 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         }}
                     """
                     )
+                ui.label("Hard Deadline").classes("text-h6 mb-0 pb-0")
+                ui.label("The platform might cancel the run if not completed by this time.").classes(
+                    "text-sm mt-0 pt-0"
+                )
+                with ui.row().classes("full-width"):
+                    ui.date(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "deadline").props(
+                        f":options=\"(date) => date >= '{today}'\""
+                    ).mark("DATE_DEADLINE")
+                    ui.time(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "deadline").props(
+                        "format24h now-btn"
+                    ).mark("TIME_DEADLINE")
 
             def _scheduling_next() -> None:
                 if submit_form.upload_and_submit_button is None:
@@ -691,7 +701,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     application_version=str(submit_form.application_version),
                     custom_metadata=None,  # TODO(Helmut): Allow user to edit custom metadata
                     note=submit_form.note,
-                    requested_completion=datetime.strptime(submit_form.requested_completion, "%Y-%m-%d %H:%M")
+                    due_date=datetime.strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
+                    .astimezone()
+                    .astimezone(UTC)
+                    .isoformat(),
+                    deadline=datetime.strptime(submit_form.deadline, "%Y-%m-%d %H:%M")
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
