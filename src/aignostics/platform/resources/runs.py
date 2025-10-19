@@ -366,7 +366,7 @@ class Runs:
             items=items,
         )
         self._validate_input_items(payload)
-        # Clear all cached run list data since we're adding a new run
+        # Clear all caches since we added a new run
         operation_cache_clear()
         res: RunCreationResponse = self._api.create_run_v1_runs_post(
             payload,
@@ -468,13 +468,13 @@ class Runs:
 
         return paginate(
             lambda **kwargs: list_data_with_retry(
-                page_size=page_size,
                 application_id=application_id,
                 application_version=application_version,
                 custom_metadata=custom_metadata,
                 sort=[sort] if sort else None,
                 **kwargs,
-            )
+            ),
+            page_size=page_size,
         )
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
