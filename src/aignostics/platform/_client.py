@@ -106,7 +106,7 @@ class Client:
             logger.exception("Failed to initialize client.")
             raise
 
-    @cached_operation(ttl=settings().me_cache_ttl)
+    @cached_operation(ttl=settings().me_cache_ttl, use_token=True)
     def me(self) -> Me:
         """Retrieves info about the current user and their organisation.
 
