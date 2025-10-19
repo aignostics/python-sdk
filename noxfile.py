@@ -452,11 +452,11 @@ def _generate_sdk_metadata_schema(session: nox.Session) -> None:
 
     # Extract version from $id URL
     schema_id = schema.get("$id", "")
-    version = schema_id.split("_")[-1].replace(".json", "") if "_" in schema_id else "0.0.1"
+    version = schema_id.split("_")[-1].replace(".json", "") if "_" in schema_id else "v0.0.1"
 
     # Write to final locations
     output_path_versioned = Path(f"docs/source/_static/sdk_metadata_schema_{version}.json")
-    output_path_latest = Path("docs/source/_static/sdk_metadata_schema.json")
+    output_path_latest = Path("docs/source/_static/sdk_metadata_schema_latest.json")
 
     for output_path in [output_path_versioned, output_path_latest]:
         with output_path.open("w", encoding="utf-8") as f:
@@ -465,7 +465,7 @@ def _generate_sdk_metadata_schema(session: nox.Session) -> None:
     # Clean up temp file
     Path("docs/source/_static/sdk_metadata_schema_temp.json").unlink()
 
-    session.log(f"Generated SDK metadata JSON schema: {output_path_versioned.name} and sdk_metadata_schema.json")
+    session.log(f"Generated SDK metadata JSON schema: {output_path_versioned.name} and sdk_metadata_schema_latest.json")
 
 
 def _generate_cli_reference(session: nox.Session) -> None:

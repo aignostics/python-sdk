@@ -239,7 +239,7 @@ def get_sdk_metadata_json_schema() -> dict[str, Any]:
     schema = SdkMetadata.model_json_schema()
     schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     schema["$id"] = (
-        f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_{SDK_METADATA_SCHEMA_VERSION}.json"
+        f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
     )
     return schema
 

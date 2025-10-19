@@ -507,7 +507,7 @@ class TestSdkMetadataValidation:
         assert "$id" in schema
         assert (
             schema["$id"]
-            == f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_{SDK_METADATA_SCHEMA_VERSION}.json"
+            == f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
         )
         assert "properties" in schema
         assert "schema_version" in schema["properties"]
