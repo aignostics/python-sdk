@@ -2,8 +2,8 @@ name: Claude Code / Automation / Operational Excellence
 
 on:
   schedule:
-    # Every Monday at 9:00 AM UTC
-    - cron: "0 9 * * 1"
+    # Every Monday at 6:00 AM UTC
+    - cron: "0 6 * * 1"
   workflow_dispatch:
     inputs:
       platform_environment:
