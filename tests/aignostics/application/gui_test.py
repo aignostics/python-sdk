@@ -26,8 +26,9 @@ logger = get_logger(__name__)
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=30)
-async def test_gui_index(user: User) -> None:
+async def test_gui_index(user: User, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     # hello world
     await user.open("/")
     await user.should_see("Atlas H&E-TME", retries=100)
@@ -53,13 +54,10 @@ async def test_gui_index(user: User) -> None:
     ],
 )
 async def test_gui_home_to_application(
-    user: User,
-    application_id: str,
-    application_name: str,
-    expected_text: str,
-    silent_logging: None,
+    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None, record_property
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     await user.open("/")
     await user.should_see(application_name, retries=100)
     user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
@@ -71,8 +69,15 @@ async def test_gui_home_to_application(
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
-async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner, silent_logging) -> None:
+async def test_gui_cli_submit_to_run_result_delete(
+    user: User,
+    runner: CliRunner,
+    silent_logging: None,
+    record_property,
+) -> None:
     """Test that the user can submit a run via the CLI up to deleting the run results."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
@@ -164,9 +169,10 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
-    user: User, runner: CliRunner, silent_logging: None
+    user: User, runner: CliRunner, silent_logging: None, record_property
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
+    record_property("tested-item-id", "TC-APPLICATION-GUI-04")
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
@@ -296,8 +302,11 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+async def test_gui_run_download(
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
+) -> None:
     """Test that the user can download a run result via the GUI."""
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory",
         return_value=tmp_path,
