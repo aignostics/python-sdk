@@ -147,7 +147,6 @@ def test_application_version_invalid_semver_formats(runner: CliRunner) -> None:
             service.application_version("test-app", application_version)
 
 
-@pytest.mark.skip(reason="staging now returns 1.0.0-softlaunch.2")
 @pytest.mark.e2e
 def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
     """Test that latest version works and tested."""
