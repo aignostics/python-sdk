@@ -18,11 +18,40 @@ concurrency:
 
 jobs:
 
+  get-commit-message:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      commit_message: ${{ steps.get-commit-message.outputs.commit_message }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Get commit message
+        id: get-commit-message
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PR events, get the commit message from the PR head SHA
+            COMMIT_MESSAGE=$(git log -1 --format=%B ${{ github.event.pull_request.head.sha }})
+          else
+            # For push events, use the head commit message
+            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          fi
+          # Export for use in other steps (multiline-safe)
+          echo "commit_message<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
   lint:
+    needs: [get-commit-message]
     if: |
-      (!contains(github.event.head_commit.message, 'skip:ci')) &&
-      (!contains(github.event.head_commit.message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_lint.yml
@@ -32,10 +61,11 @@ jobs:
       packages: read
 
   audit:
+    needs: [get-commit-message]
     if: |
-      (!contains(github.event.head_commit.message, 'skip:ci')) &&
-      (!contains(github.event.head_commit.message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_audit.yml
@@ -45,10 +75,11 @@ jobs:
       packages: read
     
   test:
+    needs: [get-commit-message]
     if: |
-      (!contains(github.event.head_commit.message, 'skip:ci')) &&
-      (!contains(github.event.head_commit.message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version:')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
@@ -70,10 +101,11 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   codeql:
+    needs: [get-commit-message]
     if: |
-      (!contains(github.event.head_commit.message, 'skip:ci')) &&
-      (!contains(github.event.head_commit.message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version:')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_codeql.yml
@@ -84,12 +116,12 @@ jobs:
       security-events: write
 
   ketryx_report_and_check:
-    needs: [lint, audit, test, codeql] 
+    needs: [get-commit-message, lint, audit, test, codeql] 
     uses: ./.github/workflows/_ketryx_report_and_check.yml
     if: |
-      (!contains(github.event.head_commit.message, 'skip:ci')) &&
-      (!contains(github.event.head_commit.message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(github.event.head_commit.message, 'Bump version:')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     permissions:
@@ -102,11 +134,11 @@ jobs:
       KETRYX_API_KEY: ${{ secrets.KETRYX_API_KEY }}
 
   package_publish:
-    needs: [ketryx_report_and_check] 
+    needs: [get-commit-message, ketryx_report_and_check] 
     uses: ./.github/workflows/_package-publish.yml
     if: |
-      (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, 'skip:ci'))) &&
-      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      (startsWith(github.ref, 'refs/tags/v') && (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci'))) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     permissions:
@@ -120,10 +152,10 @@ jobs:
       SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}
 
   docker_publish:
-    needs: [ketryx_report_and_check]
+    needs: [get-commit-message, ketryx_report_and_check]
     if: |
-      (startsWith(github.ref, 'refs/tags/v') && (!contains(github.event.head_commit.message, 'skip:ci'))) &&
-      (!contains(github.event.head_commit.message, 'build:native:only')) &&
+      (startsWith(github.ref, 'refs/tags/v') && (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci'))) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_docker-publish.yml

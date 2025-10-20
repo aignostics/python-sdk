@@ -32,7 +32,36 @@ env:
 
 jobs:
 
+  get-commit-message:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      commit_message: ${{ steps.get-commit-message.outputs.commit_message }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Get commit message
+        id: get-commit-message
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PR events, get the commit message from the PR head SHA
+            COMMIT_MESSAGE=$(git log -1 --format=%B ${{ github.event.pull_request.head.sha }})
+          else
+            # For push events, use the head commit message
+            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          fi
+          # Export for use in other steps (multiline-safe)
+          echo "commit_message<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
   generate-matrix:
+    needs: get-commit-message
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -42,7 +71,7 @@ jobs:
       - name: Set matrix based on commit message and PR labels
         id: set-matrix
         env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_MESSAGE: ${{ needs.get-commit-message.outputs.commit_message }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
           if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]] || [[ "$PR_LABELS" == *"skip:test:matrix-runner"* ]]; then
@@ -52,7 +81,7 @@ jobs:
           fi
 
   test:
-    needs: generate-matrix
+    needs: [get-commit-message, generate-matrix]
     runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -151,6 +180,7 @@ jobs:
           make-target: test_unit_matrix
           skip-marker: skip:test:unit
           summary-title: All unit tests passed
+          commit-message: ${{ needs.get-commit-message.outputs.commit_message }}
 
       - name: Test / Integration (multiple Python versions)
         uses: ./.github/actions/run-tests
@@ -159,6 +189,7 @@ jobs:
           make-target: test_integration_matrix
           skip-marker: skip:test:integration
           summary-title: All integration tests passed
+          commit-message: ${{ needs.get-commit-message.outputs.commit_message }}
 
       - name: Test / E2E / regular (multiple Python versions)
         uses: ./.github/actions/run-tests
@@ -167,26 +198,31 @@ jobs:
           make-target: test_e2e_matrix
           skip-marker: skip:test:e2e
           summary-title: All regular e2e tests passed
+          commit-message: ${{ needs.get-commit-message.outputs.commit_message }}
 
       - name: Test / E2E / long running (single Python version)
         if: |
-          !github.event.pull_request.draft
+          !github.event.pull_request.draft &&
+          !contains(needs.get-commit-message.outputs.commit_message, 'skip:test:long_running') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:test:long_running')
         uses: ./.github/actions/run-tests
         with:
           test-type: long-running
           make-target: test_long_running
           skip-marker: skip:test:long_running
           summary-title: All long running e2e tests passed
+          commit-message: ${{ needs.get-commit-message.outputs.commit_message }}
 
       - name: Test / E2E / very long running (single Python version)
         if: |
-          contains(github.event.head_commit.message, 'enable:test:very_long_running') || 
+          contains(needs.get-commit-message.outputs.commit_message, 'enable:test:very_long_running') || 
           contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
         uses: ./.github/actions/run-tests
         with:
           test-type: very-long-running
           make-target: test_very_long_running
           summary-title: All very long running e2e tests passed
+          commit-message: ${{ needs.get-commit-message.outputs.commit_message }}
 
       - name: Upload test artifacts for inspection
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
