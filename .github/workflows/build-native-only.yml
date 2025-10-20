@@ -41,7 +41,9 @@ jobs:
 
   only_build_native:
     needs: get-commit-message
-    if: (contains(needs.get-commit-message.outputs.commit_message, 'build:native:only'))
+    if: |
+      contains(needs.get-commit-message.outputs.commit_message, 'build:native:only') ||
+      contains(github.event.pull_request.labels.*.name, 'build:native:only')
     uses: ./.github/workflows/_build-native-only.yml
     permissions:
       attestations: write
