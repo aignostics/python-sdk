@@ -200,7 +200,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760989349343.918]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760991967659.294]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
@@ -263,7 +263,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 **Options**:
 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760989349344.034]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760991967659.4062]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -390,7 +390,7 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results. 
 The QuPath project will be created in a subfolder of the destination directory. 
-This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...`
+This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...` 
 This options requires installation of the QuPath application: Run uvx --with &quot;aignostics&quot; aignostics qupath install  [default: no-qupath-project]
 * `--help`: Show this message and exit.
 
