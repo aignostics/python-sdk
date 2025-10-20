@@ -166,10 +166,8 @@ def test_application_version_use_latest_fallback(runner: CliRunner) -> None:
         service.application_version(HETA_APPLICATION_ID, "invalid-format")
 
 
-# TODO(Andreas): Must fix
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60 * 2)
-@pytest.mark.skip(reason="Backend on staging serves duplicate versions atm")
 def test_application_versions_are_unique(runner: CliRunner) -> None:
     """Check that application versions are unique (currently fails due to backend bug)."""
     # Get all applications
