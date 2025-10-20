@@ -15,6 +15,7 @@ you can typically navigate to http://127.0.0.1:8000/application/he-tme . Don't a
 The Aignostics Python SDK is a **computational pathology platform** providing multiple interfaces to process whole slide images (WSI) with AI/ML applications. It follows a **modulith architecture** with independent modules connected via dependency injection.
 
 **Key Components:**
+
 - **Launchpad**: Desktop GUI (NiceGUI + webview)
 - **CLI**: Command-line interface (Typer)
 - **Client Library**: Python API wrapper
@@ -23,7 +24,9 @@ The Aignostics Python SDK is a **computational pathology platform** providing mu
 ## Architecture Principles
 
 ### 1. Modulith Design Pattern
+
 Each module follows a consistent three-layer structure:
+
 ```
 module/
 ├── _service.py     # Business logic (inherits BaseService)
@@ -34,34 +37,41 @@ module/
 ```
 
 ### 2. Service Discovery & Dependency Injection
+
 - All services inherit from `BaseService` and implement `health()` and `info()` methods
 - Use `locate_implementations(BaseService)` for runtime service discovery
 - No decorators - pure runtime DI container pattern
 - Services are singletons within the DI container
 
 ### 3. Presentation Layer Independence
+
 ```
 CLI Layer ─┐
            ├─→ Service Layer
 GUI Layer ─┘
 ```
+
 CLI and GUI layers depend on Service layer, never on each other.
 
 ## Module Dependencies & Communication
 
 **Foundation Layer:**
+
 - `utils`: DI container, logging, settings, health checks
 
 **API Layer:**
+
 - `platform`: OAuth 2.0 auth, JWT tokens, API client
 
 **Domain Modules:**
+
 - `application`: ML run orchestration (depends on: platform, bucket, wsi, qupath optional)
 - `wsi`: Medical image processing (OpenSlide, PyDICOM)
 - `dataset`: IDC downloads with s5cmd
 - `bucket`: Cloud storage (S3/GCS)
 
 **Integration:**
+
 - `qupath`: Bioimage analysis (requires `ijson`)
 - `notebook`: Marimo server (requires `marimo`)
 - `gui`: Desktop launchpad (aggregates all GUIs)
@@ -70,6 +80,7 @@ CLI and GUI layers depend on Service layer, never on each other.
 ## Development Workflow Commands
 
 **Primary Commands:**
+
 ```bash
 make install          # Install dev deps + pre-commit hooks
 make all             # Full CI pipeline (lint, test, docs, audit)
@@ -79,10 +90,12 @@ make lint            # Ruff formatting + MyPy type checking
 ```
 
 **Package Management:**
+
 - Uses `uv` (not pip/poetry): `uv sync --all-extras`
 - Add dependencies: `uv add <package>`
 
 **Testing:**
+
 - Pytest with markers: `sequential`, `long_running`, `scheduled`, `docker`, `skip_with_act`
 - Run specific tests: `uv run pytest tests/path/test.py::test_function`
 - Docker integration: `make test-docker`
@@ -90,21 +103,23 @@ make lint            # Ruff formatting + MyPy type checking
 ## Code Patterns & Standards
 
 ### Service Implementation
+
 ```python
 from aignostics.utils import BaseService, Health
 
 class Service(BaseService):
     def __init__(self):
         super().__init__(SettingsClass)  # Optional settings
-    
+
     def health(self) -> Health:
         return Health(status=Health.Code.UP)
-    
+
     def info(self, mask_secrets: bool = True) -> dict:
         return {"version": "1.0.0"}
 ```
 
 ### CLI Pattern
+
 ```python
 import typer
 from ._service import Service
@@ -120,6 +135,7 @@ def action_command(param: str):
 ```
 
 ### GUI Pattern
+
 ```python
 from nicegui import ui
 
@@ -131,11 +147,13 @@ def create_page():
 ## Testing Conventions
 
 **File Structure:**
+
 - Tests in `tests/aignostics/<module>/`
 - Use `conftest.py` fixtures for common setup
 - Mock external dependencies
 
 **Patterns:**
+
 - Use `CliRunner` from `typer.testing` for CLI tests
 - Use `normalize_output()` helper for cross-platform CLI output
 - Cleanup fixtures for processes (e.g., `qupath_teardown`)
@@ -143,6 +161,7 @@ def create_page():
 ## Medical Domain Context
 
 **Key Technologies:**
+
 - **DICOM**: Medical imaging standard
 - **WSI**: Gigapixel pathology images (pyramidal multi-resolution)
 - **IDC**: NCI Imaging Data Commons for public datasets
@@ -150,6 +169,7 @@ def create_page():
 - **H&E**: Hematoxylin & Eosin histological staining
 
 **Processing Patterns:**
+
 - Tile-based processing for memory efficiency
 - Streaming for large file transfers
 - Chunked uploads/downloads (1MB/10MB chunks)
@@ -158,11 +178,13 @@ def create_page():
 ## Security & Performance
 
 **Authentication:**
+
 - OAuth 2.0 device flow via `platform` module
 - Tokens cached in `~/.aignostics/token.json`
 - 5-minute refresh buffer before expiry
 
 **Performance:**
+
 - Lazy evaluation for large datasets
 - Process management for subprocesses
 - Memory-efficient WSI processing in tiles
@@ -171,17 +193,19 @@ def create_page():
 ## Configuration & Environment
 
 **Settings Pattern:**
+
 ```python
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     api_root: str = "https://platform.aignostics.com"
-    
+
     class Config:
         env_prefix = "AIGNOSTICS_"
 ```
 
 **Environment Variables:**
+
 - `AIGNOSTICS_API_ROOT`: Platform endpoint
 - `AIGNOSTICS_CLIENT_ID_DEVICE`: OAuth client ID
 - `AIGNOSTICS_REFRESH_TOKEN`: Auth token
@@ -189,6 +213,7 @@ class Settings(BaseSettings):
 ## Common Integration Points
 
 **Application Run Workflow:**
+
 ```python
 # 1. Authenticate
 client = platform.Client()
@@ -205,6 +230,7 @@ run.download_to_folder("./results")
 ```
 
 **Service Health Monitoring:**
+
 ```python
 from aignostics.utils import locate_implementations, BaseService
 
@@ -221,16 +247,19 @@ for service_class in services:
 ## Important Notes
 
 **Optional Dependencies:**
+
 - GUI requires: `pip install "aignostics[gui]"`
 - QuPath requires: `pip install "aignostics[qupath]"`
 - Notebooks require: `pip install "aignostics[notebook]"`
 
 **Platform Constraints:**
+
 - Windows path length limitations
 - Memory usage for large WSI files
 - Token expiry handling (force refresh with `remove_cached_token()`)
 
 **Build System:**
+
 - Main config: `pyproject.toml`
 - Build tasks: `noxfile.py` (not tox)
 - Quality gates: Ruff (formatting/linting), MyPy (typing), 85% test coverage
