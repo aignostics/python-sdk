@@ -21,7 +21,6 @@ async def test_gui_system_alive(user: User) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 3)
 @pytest.mark.sequential
 async def test_gui_system_switch_right(user: User, silent_logging, record_property) -> None:

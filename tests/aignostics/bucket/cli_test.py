@@ -16,7 +16,7 @@ MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 15)
-def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0912, PLR0915
+def test_cli_bucket_flow(runner: CliRunner, tmpdir, record_property) -> None:  # noqa: C901, PLR0912, PLR0915
     """E2E flow testing all bucket CLI commands.
 
     1. Creates 9 files with 2 sub directories in tmpdir, with total file size of 1MB
@@ -28,6 +28,7 @@ def test_cli_bucket_flow(runner: CliRunner, tmpdir) -> None:  # noqa: C901, PLR0
     7. No longer finds any of the 9 files
     8. Tries to delete a file that does not exist and gets "Object with key '{file}' not found message
     """
+    record_property("tested-item-id", "TC-BUCKET-CLI-01")
     import re
 
     import psutil
