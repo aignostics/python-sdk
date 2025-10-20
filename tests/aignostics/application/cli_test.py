@@ -18,7 +18,7 @@ MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
-def test_cli_application_list(runner: CliRunner, record_property) -> None:
+def test_cli_application_list_non_verbose(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(cli, ["application", "list"])
@@ -191,7 +191,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 10)
-def test_cli_run_submit_and_describe_and_cancel_and_download(  # noqa: PLR0915
+def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa: PLR0915
     runner: CliRunner, tmp_path: Path, record_property
 ) -> None:
     """Check run submit command runs successfully."""
@@ -387,7 +387,7 @@ def test_cli_run_result_download_uuid_not_found(runner: CliRunner, tmp_path: Pat
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
-def test_cli_run_result_delete(runner: CliRunner, record_property) -> None:
+def test_cli_run_result_delete_not_found(runner: CliRunner, record_property) -> None:
     """Check run result delete command runs successfully."""
     result = runner.invoke(cli, ["application", "run", "result", "delete", "00000000000000000000000000000000"])
     assert "Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)

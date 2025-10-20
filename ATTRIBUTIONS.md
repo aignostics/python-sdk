@@ -506,7 +506,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.190) - MIT License
+## aignostics (0.2.192) - MIT License
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -3659,7 +3659,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.40.47) - Apache Software License
+## boto3 (1.40.50) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3857,7 +3857,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.40.47) - Apache Software License
+## botocore (1.40.50) - Apache Software License
 
 Low-level, data-driven core of boto 3.
 
@@ -7585,7 +7585,7 @@ SOFTWARE.
 
 ```
 
-## fastapi (0.118.2) - MIT License
+## fastapi (0.119.0) - MIT License
 
 FastAPI framework, high performance, easy to learn, fast to code, ready for production
 
@@ -9312,7 +9312,7 @@ Google Cloud API client core library
 
 ```
 
-## google-cloud-storage (3.4.0) - Apache Software License
+## google-cloud-storage (3.4.1) - Apache Software License
 
 Google Cloud Storage API client library
 
@@ -10576,7 +10576,7 @@ THE SOFTWARE.
 
 ```
 
-## ijson (3.4.0) - UNKNOWN
+## ijson (3.4.0.post0) - UNKNOWN
 
 Iterative JSON parser with standard Python iterator interfaces
 
@@ -12635,7 +12635,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (4.12.0) - UNKNOWN
+## logfire (4.13.0) - UNKNOWN
 
 The best Python observability tool! 🪵🔥
 
@@ -12969,7 +12969,7 @@ THE SOFTWARE.
 
 ```
 
-## matplotlib (3.10.6) - Python Software Foundation License
+## matplotlib (3.10.7) - Python Software Foundation License
 
 Python plotting package
 
@@ -13884,7 +13884,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (3.0.3) - MIT License
+## nicegui (3.0.4) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -23772,7 +23772,7 @@ A tool for scanning Python environments for known vulnerabilities
 
 ```
 
-## platformdirs (4.4.0) - MIT License
+## platformdirs (4.5.0) - MIT License
 
 A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`.
 
@@ -24682,43 +24682,6 @@ Proxy Implementation
 
 * URL: http://github.com/jtushman/proxy_tools
 * Author(s): Jonathan Tushman
-
-## pscript (0.7.7) - BSD License
-
-Python to JavaScript compiler.
-
-* URL: http://pscript.readthedocs.io
-* Author(s): Almar Klein and contributors
-
-### License Text
-
-```
-Copyright (c) 2015-2020, PScript developers
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-```
 
 ## psutil (7.1.0) - BSD-3-Clause
 
@@ -26614,7 +26577,7 @@ SOFTWARE.
 
 ```
 
-## pytest-env (1.1.5) - MIT License
+## pytest-env (1.2.0) - MIT License
 
 pytest plugin that allows you to add environment variables.
 
@@ -29629,7 +29592,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## sentry-sdk (2.40.0) - BSD License
+## sentry-sdk (2.41.0) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -30701,7 +30664,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## swagger-plugin-for-sphinx (5.1.3) - UNKNOWN
+## swagger-plugin-for-sphinx (5.2.0) - UNKNOWN
 
 Sphinx plugin which renders a OpenAPI specification with Swagger
 
@@ -31352,7 +31315,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-## tomli (2.2.1) - MIT License
+## tomli (2.3.0) - UNKNOWN
 
 A lil' TOML parser
 
@@ -33725,40 +33688,6 @@ Copyright (C) 2016-present the uvloop authors and contributors.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
-```
-
-## vbuild (0.8.2) - MIT License
-
-A simple module to extract html/script/style from a vuejs '.vue' file (can minimize/es2015 compliant js) ... just py2 or py3, NO nodejs !
-
-* URL: https://github.com/manatlan/vbuild
-* Author(s): manatlan
-
-### License Text
-
-```
-MIT License
-
-Copyright (c) 2018 manatlan
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 
 ```
 

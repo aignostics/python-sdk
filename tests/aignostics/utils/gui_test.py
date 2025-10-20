@@ -133,11 +133,11 @@ def test_gui_run_custom_params(
 @pytest.mark.unit
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", True)
 @mock.patch("nicegui.ui.run")
-def test_gui_run_in_container_with_native(mock_ui: mock.MagicMock, record_property) -> None:
+def test_gui_run_in_container_with_native(mock_ui_run: mock.MagicMock, record_property) -> None:
     """Test that gui_run raises ValueError when running native in container.
 
     Args:
-        mock_ui: Mock for nicegui UI run
+        mock_ui_run: Mock for nicegui UI run
         nicegui_reset_globals: Fixture to reset NiceGUI globals
         record_property: pytest record_property fixture
     """
@@ -145,4 +145,4 @@ def test_gui_run_in_container_with_native(mock_ui: mock.MagicMock, record_proper
     with pytest.raises(ValueError) as excinfo:
         gui_run(native=True)
     assert "Native GUI cannot be run in a container" in str(excinfo.value)
-    mock_ui.assert_not_called()
+    mock_ui_run.assert_not_called()
