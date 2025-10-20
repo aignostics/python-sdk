@@ -1193,7 +1193,7 @@ run = client.runs.submit(
 # Access SDK metadata from run
 sdk_metadata = run.payload.custom_metadata.get("sdk", {})
 print(f"Submitted via: {sdk_metadata['submission']['interface']}")  # cli, script, or launchpad
-print(f"Submitted by: {sdk_metadata['submission']['source']}")  # user, test, or bridge
+print(f"Submitted by: {sdk_metadata['submission']['initiator']}")  # user, test, or bridge
 print(f"User: {sdk_metadata['user']['user_email']}")  # if authenticated
 if "ci" in sdk_metadata:
     print(f"GitHub Run: {sdk_metadata['ci']['github']['run_url']}")  # if in CI

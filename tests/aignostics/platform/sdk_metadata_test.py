@@ -20,7 +20,7 @@ from aignostics.platform._sdk_metadata import (
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Clean environment variables."""
     env_vars_to_clear = [
-        "AIGNOSTICS_SUBMISSION_SOURCE_BRIDGE",
+        "AIGNOSTICS_SUBMISSION_INITIATOR_BRIDGE",
         "GITHUB_ACTIONS",
         "GITHUB_SERVER_URL",
         "GITHUB_REPOSITORY",
@@ -63,7 +63,7 @@ class TestBuildSdkMetadata:
 
             metadata = build_sdk_metadata()
 
-            assert metadata["submission"]["source"] == "user"
+            assert metadata["submission"]["initiator"] == "user"
             assert metadata["submission"]["interface"] == "script"
             assert "date" in metadata["submission"]
             # Verify date is in ISO format
@@ -71,8 +71,8 @@ class TestBuildSdkMetadata:
 
     @pytest.mark.unit
     @staticmethod
-    def test_submission_source_bridge(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that bridge source is detected when AIGNOSTICS_BRIDGE_VERSION is set."""
+    def test_submission_initiator_bridge(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that bridge initiator is detected when AIGNOSTICS_BRIDGE_VERSION is set."""
         monkeypatch.setenv("AIGNOSTICS_BRIDGE_VERSION", "1.0.0")
 
         with patch("aignostics.platform._client.Client") as mock_client:
@@ -80,12 +80,12 @@ class TestBuildSdkMetadata:
 
             metadata = build_sdk_metadata()
 
-            assert metadata["submission"]["source"] == "bridge"
+            assert metadata["submission"]["initiator"] == "bridge"
 
     @pytest.mark.unit
     @staticmethod
-    def test_submission_source_test(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that test source is detected when PYTEST_CURRENT_TEST is set."""
+    def test_submission_initiator_test(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that test initiator is detected when PYTEST_CURRENT_TEST is set."""
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func")
 
         with patch("aignostics.platform._client.Client") as mock_client:
@@ -93,12 +93,12 @@ class TestBuildSdkMetadata:
 
             metadata = build_sdk_metadata()
 
-            assert metadata["submission"]["source"] == "test"
+            assert metadata["submission"]["initiator"] == "test"
 
     @pytest.mark.unit
     @staticmethod
-    def test_submission_source_bridge_takes_precedence(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that bridge source takes precedence over test source."""
+    def test_submission_initiator_bridge_takes_precedence(clean_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that bridge initiator takes precedence over test initiator."""
         monkeypatch.setenv("AIGNOSTICS_BRIDGE_VERSION", "1.0.0")
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func")
 
@@ -107,7 +107,7 @@ class TestBuildSdkMetadata:
 
             metadata = build_sdk_metadata()
 
-            assert metadata["submission"]["source"] == "bridge"
+            assert metadata["submission"]["initiator"] == "bridge"
 
     @pytest.mark.unit
     @staticmethod
@@ -423,7 +423,7 @@ class TestSdkMetadataValidation:
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
-                "source": "user",
+                "initiator": "user",
             },
             "user_agent": "test-agent/1.0",
         }
@@ -440,7 +440,7 @@ class TestSdkMetadataValidation:
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "invalid",
-                "source": "user",
+                "initiator": "user",
             },
             "user_agent": "test-agent/1.0",
         }
@@ -450,14 +450,14 @@ class TestSdkMetadataValidation:
 
     @pytest.mark.unit
     @staticmethod
-    def test_validate_invalid_submission_source() -> None:
-        """Test that invalid submission source fails validation."""
+    def test_validate_invalid_submission_initiator() -> None:
+        """Test that invalid submission initiator fails validation."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
-                "source": "invalid",
+                "initiator": "invalid",
             },
             "user_agent": "test-agent/1.0",
         }
@@ -475,7 +475,7 @@ class TestSdkMetadataValidation:
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
             },
-            # Missing source
+            # Missing initiator
             "user_agent": "test-agent/1.0",
         }
 
@@ -491,7 +491,7 @@ class TestSdkMetadataValidation:
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
-                "source": "user",
+                "initiator": "user",
             },
             "user_agent": "test-agent/1.0",
             "unknown_field": "should fail",
@@ -519,7 +519,7 @@ class TestSdkMetadataValidation:
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "invalid",
-                "source": "user",
+                "initiator": "user",
             },
             "user_agent": "test-agent/1.0",
         }

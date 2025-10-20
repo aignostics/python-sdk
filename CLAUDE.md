@@ -524,7 +524,7 @@ Some modules have conditional loading based on dependencies:
 
 **What's Tracked:**
 
-* Submission metadata (date, interface, source)
+* Submission metadata (date, interface, initiator)
 * Enhanced user agent with platform and CI/CD context
 * User and organization information (when authenticated)
 * GitHub Actions workflow details (repository, run URL, runner info)

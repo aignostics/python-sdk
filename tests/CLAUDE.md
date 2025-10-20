@@ -148,7 +148,7 @@ class TestBuildSdkMetadata:
         assert "submission" in metadata
         assert "user_agent" in metadata
         assert metadata["submission"]["interface"] in ["script", "cli", "launchpad"]
-        assert metadata["submission"]["source"] in ["user", "test", "bridge"]
+        assert metadata["submission"]["initiator"] in ["user", "test", "bridge"]
         assert "date" in metadata["submission"]
 
         # Optional fields may be absent
@@ -206,13 +206,13 @@ class TestBuildSdkMetadata:
         """Test source detection for pytest."""
         os.environ["PYTEST_CURRENT_TEST"] = "test.py::test_foo"
         metadata = build_sdk_metadata()
-        assert metadata["submission"]["source"] == "test"
+        assert metadata["submission"]["initiator"] == "test"
 
     def test_source_detection_bridge(clean_env: None) -> None:
         """Test source detection for bridge."""
         os.environ["AIGNOSTICS_BRIDGE_VERSION"] = "1.0.0"
         metadata = build_sdk_metadata()
-        assert metadata["submission"]["source"] == "bridge"
+        assert metadata["submission"]["initiator"] == "bridge"
 ```
 
 **Validation Tests:**

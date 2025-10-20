@@ -15,7 +15,7 @@ from aignostics.utils import get_logger, user_agent
 
 logger = get_logger(__name__)
 
-SDK_METADATA_SCHEMA_VERSION = "0.0.1"
+SDK_METADATA_SCHEMA_VERSION = "0.0.2"
 
 
 class SubmissionMetadata(BaseModel):
@@ -25,7 +25,7 @@ class SubmissionMetadata(BaseModel):
     interface: Literal["script", "cli", "launchpad"] = Field(
         ..., description="How the SDK was accessed (script, cli, launchpad)"
     )
-    source: Literal["user", "test", "bridge"] = Field(
+    initiator: Literal["user", "test", "bridge"] = Field(
         ..., description="Who/what initiated the run (user, test, bridge)"
     )
 
@@ -133,13 +133,13 @@ def build_sdk_metadata() -> dict[str, Any]:
     """
     from aignostics.platform._client import Client  # noqa: PLC0415
 
-    submission_source = "user"  # who/what initiated the run (user, test, bridge)
+    submission_initiator = "user"  # who/what initiated the run (user, test, bridge)
     submission_interface = "script"  # how the SDK was accessed (script, cli, launchpad)
 
     if os.environ.get("AIGNOSTICS_BRIDGE_VERSION"):
-        submission_source = "bridge"
+        submission_initiator = "bridge"
     elif os.environ.get("PYTEST_CURRENT_TEST"):
-        submission_source = "test"
+        submission_initiator = "test"
 
     if "typer" in sys.argv[0] or "aignostics" in sys.argv[0]:
         submission_interface = "cli"
@@ -151,7 +151,7 @@ def build_sdk_metadata() -> dict[str, Any]:
         "submission": {
             "date": datetime.now(UTC).isoformat(timespec="seconds"),
             "interface": submission_interface,
-            "source": submission_source,
+            "initiator": submission_initiator,
         },
         "user_agent": user_agent(),
     }
