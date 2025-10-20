@@ -180,7 +180,7 @@ jobs:
         run: |
           # Use uv's credential storage - uv will read from UV_PUBLISH_TOKEN env var automatically
           uv publish
-s
+
       - name: Download test results for ubuntu-latest generated in _test.yml
         if: |
           (!contains(inputs.commit_message, 'skip:test:all')) &&
