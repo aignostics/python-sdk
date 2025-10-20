@@ -90,8 +90,9 @@ def test_cli_idc_download_series_dry(runner: CliRunner, caplog) -> None:
 @pytest.mark.e2e
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 2)
-def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog) -> None:
+def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog, record_property) -> None:
     """Check download functionality with dry-run option."""
+    record_property("tested-item-id", "TC-DATASET-CLI-01")
     caplog.set_level(logging.INFO)
     with tempfile.TemporaryDirectory() as tmpdir:
         result = runner.invoke(
@@ -124,8 +125,9 @@ def test_cli_idc_download_instance_thumbnail(runner: CliRunner, caplog) -> None:
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60 * 2)
-def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check download functionality with dry-run option."""
+    record_property("tested-item-id", "TC-DATASET-CLI-01")
     result = runner.invoke(
         cli,
         [

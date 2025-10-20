@@ -23,8 +23,9 @@ async def test_gui_idc_shows(user: User) -> None:
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 5)
-async def test_gui_idc_downloads(user: User, tmp_path: Path, silent_logging: bool) -> None:
+async def test_gui_idc_downloads(user: User, tmp_path, silent_logging, record_property) -> None:
     """Test that the user can download a dataset to a temporary directory."""
+    record_property("tested-item-id", "TC-DATASET-GUI-01")
     # Mock get_user_data_directory to return the tmpdir for this test
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=tmp_path):
         await user.open("/dataset/idc")

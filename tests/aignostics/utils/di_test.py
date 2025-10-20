@@ -19,8 +19,9 @@ SCRIPT_FILENAME = "script.py"
 
 @pytest.mark.unit
 @patch("aignostics.utils._cli.locate_implementations")
-def test_prepare_cli_registers_subcommands(mock_locate_implementations: Mock) -> None:
+def test_prepare_cli_registers_subcommands(mock_locate_implementations: Mock, record_property) -> None:
     """Test that prepare_cli registers all located implementations."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     mock_subcli = typer.Typer()
@@ -36,8 +37,9 @@ def test_prepare_cli_registers_subcommands(mock_locate_implementations: Mock) ->
 
 @pytest.mark.unit
 @patch("aignostics.utils._cli.locate_implementations")
-def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: Mock) -> None:
+def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: Mock, record_property) -> None:
     """Test that prepare_cli sets epilog and no_args_is_help on the cli instance."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     mock_locate_implementations.return_value = [cli]
@@ -55,9 +57,10 @@ def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: M
 @patch("aignostics.utils._cli.Path")
 @patch("aignostics.utils._cli.locate_implementations")
 def test_prepare_cli_adds_epilog_to_commands_when_not_running_from_typer(
-    mock_locate_implementations: Mock, mock_path: Mock
+    mock_locate_implementations: Mock, mock_path: Mock, record_property
 ) -> None:
     """Test that prepare_cli adds epilog to commands when not running from typer."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     mock_command = MagicMock()
@@ -78,9 +81,10 @@ def test_prepare_cli_adds_epilog_to_commands_when_not_running_from_typer(
 @patch("aignostics.utils._cli.Path")
 @patch("aignostics.utils._cli.locate_implementations")
 def test_prepare_cli_calls_add_epilog_recursively_when_not_running_from_typer(
-    mock_locate_implementations: Mock, mock_path: Mock, mock_add_epilog_recursively: Mock
+    mock_locate_implementations: Mock, mock_path: Mock, mock_add_epilog_recursively: Mock, record_property
 ) -> None:
     """Test that prepare_cli calls _add_epilog_recursively when not running from typer."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     mock_locate_implementations.return_value = [cli]
@@ -98,9 +102,10 @@ def test_prepare_cli_calls_add_epilog_recursively_when_not_running_from_typer(
 @patch("aignostics.utils._cli._no_args_is_help_recursively")
 @patch("aignostics.utils._cli.locate_implementations")
 def test_prepare_cli_calls_no_args_is_help_recursively(
-    mock_locate_implementations: Mock, mock_no_args_is_help_recursively: Mock
+    mock_locate_implementations: Mock, mock_no_args_is_help_recursively: Mock, record_property
 ) -> None:
     """Test that prepare_cli calls _no_args_is_help_recursively."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     mock_locate_implementations.return_value = [cli]
@@ -113,8 +118,9 @@ def test_prepare_cli_calls_no_args_is_help_recursively(
 
 
 @pytest.mark.unit
-def test_add_epilog_recursively_sets_epilog_on_cli() -> None:
+def test_add_epilog_recursively_sets_epilog_on_cli(record_property) -> None:
     """Test that _add_epilog_recursively sets epilog on the cli instance."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
 
@@ -126,8 +132,9 @@ def test_add_epilog_recursively_sets_epilog_on_cli() -> None:
 
 
 @pytest.mark.unit
-def test_add_epilog_recursively_sets_epilog_on_nested_typers() -> None:
+def test_add_epilog_recursively_sets_epilog_on_nested_typers(record_property) -> None:
     """Test that _add_epilog_recursively sets epilog on nested typer instances."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     subcli = typer.Typer()
@@ -141,8 +148,9 @@ def test_add_epilog_recursively_sets_epilog_on_nested_typers() -> None:
 
 
 @pytest.mark.unit
-def test_no_args_is_help_recursively_sets_no_args_is_help_on_groups() -> None:
+def test_no_args_is_help_recursively_sets_no_args_is_help_on_groups(record_property) -> None:
     """Test that _no_args_is_help_recursively sets no_args_is_help on groups."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     subcli = typer.Typer()
@@ -163,8 +171,9 @@ def test_no_args_is_help_recursively_sets_no_args_is_help_on_groups() -> None:
 
 @pytest.mark.unit
 @pytest.mark.skip(reason="https://github.com/fastapi/typer/pull/1240")
-def test_no_args_is_help_recursively_calls_itself_on_nested_typers() -> None:
+def test_no_args_is_help_recursively_calls_itself_on_nested_typers(record_property) -> None:
     """Test that _no_args_is_help_recursively calls itself on nested typer instances."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup
     cli = typer.Typer()
     subcli = typer.Typer()

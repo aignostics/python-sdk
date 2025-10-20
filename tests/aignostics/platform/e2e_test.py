@@ -141,7 +141,7 @@ def _run_application_test(
 @pytest.mark.long_running
 @pytest.mark.scheduled
 @pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
-def test_application_runs_test_version() -> None:
+def test_application_runs_test_version(record_property) -> None:
     """Test application runs with the test application.
 
     This test creates an application run using the test application and three spots.
@@ -151,6 +151,7 @@ def test_application_runs_test_version() -> None:
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     _run_application_test(
         application_version_id=TEST_APPLICATION_VERSION_ID,
         payload=_get_three_spots_payload_for_test_v0_0_1(),

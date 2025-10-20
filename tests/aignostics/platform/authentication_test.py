@@ -65,8 +65,9 @@ def mock_settings() -> MagicMock:
 
 
 @pytest.fixture
-def mock_token_file(tmp_path) -> Path:
+def mock_token_file(tmp_path, record_property) -> Path:
     """Create a temporary token file for testing."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     return tmp_path / "token"  # Return directly, no need for assignment
 
 
@@ -127,8 +128,9 @@ class TestGetToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_get_token_from_cache_valid(mock_settings: MagicMock, valid_token_with_expiry: str) -> None:
+    def test_get_token_from_cache_valid(record_property, mock_settings, valid_token_with_expiry) -> None:
         """Test retrieving a valid token from cache."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Create a mock for Path that can be properly asserted on
         mock_write_text = MagicMock()
 
@@ -166,8 +168,9 @@ class TestGetToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_get_token_from_cache_expired(mock_settings, expired_token) -> None:
+    def test_get_token_from_cache_expired(record_property, mock_settings, expired_token) -> None:
         """Test retrieving an expired token from cache, which should trigger re-authentication."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Create a mock for Path that can be properly asserted on
         mock_write_text = MagicMock()
 
@@ -188,8 +191,9 @@ class TestGetToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_get_token_no_cache(mock_settings) -> None:
+    def test_get_token_no_cache(record_property, mock_settings) -> None:
         """Test retrieving a token without using cache."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Create a mock for Path that can be properly asserted on
         mock_write_text = MagicMock()
 
@@ -208,8 +212,9 @@ class TestGetToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_authenticate_uses_refresh_token_when_available(mock_settings) -> None:
+    def test_authenticate_uses_refresh_token_when_available(record_property, mock_settings) -> None:
         """Test that _authenticate uses refresh token flow when refresh token is available."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Set up refresh token in settings
         mock_settings.return_value.refresh_token = SecretStr("test-refresh-token")
 
@@ -222,8 +227,9 @@ class TestGetToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_authenticate_uses_browser_flow_when_available(mock_settings) -> None:
+    def test_authenticate_uses_browser_flow_when_available(record_property, mock_settings) -> None:
         """Test that _authenticate uses browser flow when browser is available."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_settings.return_value.refresh_token = None
 
         with (
@@ -239,8 +245,9 @@ class TestGetToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_authenticate_falls_back_to_device_flow(mock_settings) -> None:
+    def test_authenticate_falls_back_to_device_flow(record_property, mock_settings) -> None:
         """Test that _authenticate falls back to device flow when browser and refresh token are unavailable."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_settings.return_value.refresh_token = None
 
         with (
@@ -255,8 +262,9 @@ class TestGetToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_authenticate_raises_error_on_failure(mock_settings) -> None:
+    def test_authenticate_raises_error_on_failure(record_property, mock_settings) -> None:
         """Test that _authenticate raises an error when all authentication methods fail."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_settings.return_value.refresh_token = None
 
         with (
@@ -272,8 +280,9 @@ class TestVerifyAndDecodeToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_verify_and_decode_valid_token(clear_jwk_cache) -> None:
+    def test_verify_and_decode_valid_token(clear_jwk_cache, record_property) -> None:
         """Test that a valid token is properly verified and decoded."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_jwt_client = MagicMock()
         mock_signing_key = MagicMock()
         mock_signing_key.key = "test-key"
@@ -290,8 +299,9 @@ class TestVerifyAndDecodeToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_verify_and_decode_invalid_token(clear_jwk_cache) -> None:
+    def test_verify_and_decode_invalid_token(clear_jwk_cache, record_property) -> None:
         """Test that an invalid token raises an appropriate error."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with (
             patch("jwt.PyJWKClient"),
             patch("jwt.get_unverified_header"),
@@ -306,8 +316,9 @@ class TestBrowserCapabilityCheck:
 
     @pytest.mark.unit
     @staticmethod
-    def test_can_open_browser_true() -> None:
+    def test_can_open_browser_true(record_property) -> None:
         """Test that _can_open_browser returns True when a browser is available."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # We need to override the autouse fixture here
         with (
             patch("webbrowser.get", return_value=MagicMock()),
@@ -317,8 +328,9 @@ class TestBrowserCapabilityCheck:
 
     @pytest.mark.unit
     @staticmethod
-    def test_can_open_browser_false() -> None:
+    def test_can_open_browser_false(record_property) -> None:
         """Test that _can_open_browser returns False when no browser is available."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("webbrowser.get", side_effect=webbrowser.Error):
             assert _can_open_browser() is False
 
@@ -328,8 +340,9 @@ class TestAuthorizationCodeFlow:
 
     @pytest.mark.unit
     @staticmethod
-    def test_perform_authorization_code_flow_success(mock_settings) -> None:
+    def test_perform_authorization_code_flow_success(record_property, mock_settings) -> None:
         """Test successful authorization code flow with PKCE."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Mock OAuth session
         mock_session = MagicMock(spec=OAuth2Session)
         mock_session.authorization_url.return_value = ("https://test.auth/authorize?code_challenge=abc", None)
@@ -382,8 +395,9 @@ class TestAuthorizationCodeFlow:
 
     @pytest.mark.unit
     @staticmethod
-    def test_perform_authorization_code_flow_invalid_redirect(mock_settings) -> None:
+    def test_perform_authorization_code_flow_invalid_redirect(record_property, mock_settings) -> None:
         """Test authorization code flow fails with invalid redirect URI."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Mock OAuth session to prevent it from being created
         mock_session = MagicMock(spec=OAuth2Session)
         mock_session.authorization_url.return_value = ("https://test.auth/authorize?code_challenge=abc", None)
@@ -402,8 +416,9 @@ class TestAuthorizationCodeFlow:
 
     @pytest.mark.unit
     @staticmethod
-    def test_perform_authorization_code_flow_failure(mock_settings) -> None:
+    def test_perform_authorization_code_flow_failure(record_property, mock_settings) -> None:
         """Test authorization code flow when authentication fails."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Mock OAuth session
         mock_session = MagicMock(spec=OAuth2Session)
         mock_session.authorization_url.return_value = ("https://test.auth/authorize?code_challenge=abc", None)
@@ -456,8 +471,9 @@ class TestDeviceFlow:
 
     @pytest.mark.unit
     @staticmethod
-    def test_perform_device_flow_success(mock_settings) -> None:
+    def test_perform_device_flow_success(record_property, mock_settings) -> None:
         """Test successful device flow authentication."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         device_response = {
             "device_code": "device-code-123",
             "verification_uri_complete": "https://test.auth/device/activate",
@@ -498,8 +514,9 @@ class TestPortAvailability:
 
     @pytest.mark.unit
     @staticmethod
-    def test_port_available() -> None:
+    def test_port_available(record_property) -> None:
         """Test that _ensure_local_port_is_available returns True when the port is available."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("socket.socket.bind", return_value=None) as mock_bind:
             assert _ensure_local_port_is_available(8000) is True
             mock_bind.assert_called_once()
@@ -507,16 +524,18 @@ class TestPortAvailability:
     @pytest.mark.unit
     @pytest.mark.timeout(timeout=15)  # 10 retries, 1s sleep
     @staticmethod
-    def test_port_unavailable() -> None:
+    def test_port_unavailable(record_property) -> None:
         """Test that _ensure_local_port_is_available returns False when the port is unavailable."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("socket.socket.bind", side_effect=socket.error) as mock_bind:
             assert _ensure_local_port_is_available(8000) is False
             mock_bind.assert_called()
 
     @pytest.mark.unit
     @staticmethod
-    def test_port_retries() -> None:
+    def test_port_retries(record_property) -> None:
         """Test that _ensure_local_port_is_available retries the specified number of times."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("socket.socket.bind", side_effect=socket.error) as mock_bind, patch("time.sleep") as mock_sleep:
             assert _ensure_local_port_is_available(8000, max_retries=3) is False
             assert mock_bind.call_count == 4  # Initial attempt + 3 retries
@@ -524,8 +543,9 @@ class TestPortAvailability:
 
     @pytest.mark.unit
     @staticmethod
-    def test_port_availability_uses_socket_reuse() -> None:
+    def test_port_availability_uses_socket_reuse(record_property) -> None:
         """Test that _ensure_local_port_is_available uses SO_REUSEADDR socket option."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_socket = MagicMock()
         # Make the mock work as a context manager
         mock_socket.__enter__ = MagicMock(return_value=mock_socket)
@@ -541,8 +561,9 @@ class TestPortAvailability:
 
     @pytest.mark.unit
     @staticmethod
-    def test_authorization_flow_sets_socket_reuse(mock_settings) -> None:
+    def test_authorization_flow_sets_socket_reuse(record_property, mock_settings) -> None:
         """Test that the HTTPServer in authorization flow uses SO_REUSEADDR."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_server = MagicMock()
         mock_socket = MagicMock()
         mock_server.socket = mock_socket
@@ -574,8 +595,9 @@ class TestRemoveCachedToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_remove_cached_token_exists(mock_settings) -> None:
+    def test_remove_cached_token_exists(record_property, mock_settings) -> None:
         """Test removing a cached token when the token file exists."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with (
             patch.object(Path, "exists", return_value=True),
             patch.object(Path, "unlink") as mock_unlink,
@@ -587,8 +609,9 @@ class TestRemoveCachedToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_remove_cached_token_not_exists(mock_settings) -> None:
+    def test_remove_cached_token_not_exists(record_property, mock_settings) -> None:
         """Test removing a cached token when the token file does not exist."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch.object(Path, "exists", return_value=False):
             result = remove_cached_token()
 
@@ -596,8 +619,9 @@ class TestRemoveCachedToken:
 
     @pytest.mark.unit
     @staticmethod
-    def test_remove_cached_token_unlink_error(mock_settings) -> None:
+    def test_remove_cached_token_unlink_error(record_property, mock_settings) -> None:
         """Test that remove_cached_token handles unlink errors gracefully."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with (
             patch.object(Path, "exists", return_value=True),
             patch.object(Path, "unlink", side_effect=OSError("Permission denied")) as mock_unlink,
@@ -612,8 +636,9 @@ class TestSentryIntegration:
 
     @pytest.mark.unit
     @staticmethod
-    def test_get_token_calls_sentry_set_user(mock_settings) -> None:
+    def test_get_token_calls_sentry_set_user(record_property, mock_settings) -> None:
         """Test that get_token calls sentry_sdk.set_user with correct user information extracted from token claims."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Mock token claims with the required fields
         mock_claims = {
             "sub": "user123",
@@ -646,8 +671,9 @@ class TestSentryIntegration:
 
     @pytest.mark.integration
     @staticmethod
-    def test_get_token_sentry_unavailable(mock_settings) -> None:
+    def test_get_token_sentry_unavailable(record_property, mock_settings) -> None:
         """Test that get_token works correctly when sentry_sdk is not available."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Mock token claims
         mock_claims = {
             "sub": "user123",
@@ -674,8 +700,9 @@ class TestSentryIntegration:
 
     @pytest.mark.integration
     @staticmethod
-    def test_get_token_sentry_missing_sub_claim(mock_settings) -> None:
+    def test_get_token_sentry_missing_sub_claim(record_property, mock_settings) -> None:
         """Test that get_token handles missing 'sub' claim gracefully when informing Sentry."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Mock token claims without 'sub' field
         mock_claims = {
             "org_id": "org456",
@@ -707,8 +734,9 @@ class TestSentryIntegration:
 
     @pytest.mark.integration
     @staticmethod
-    def test_get_token_sentry_handles_token_verification_error(mock_settings) -> None:
+    def test_get_token_sentry_handles_token_verification_error(record_property, mock_settings) -> None:
         """Test that get_token fails when token verification fails, and Sentry is not informed."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Create a mock for sentry_sdk
         mock_sentry_sdk = MagicMock()
 
