@@ -216,9 +216,6 @@ def docker_compose_file(pytestconfig) -> str:
 def docker_setup() -> list[str] | str:
     """Commands to run when spinning up services.
 
-    Args:
-        scope: The scope of the fixture.
-
     Returns:
         list[str] | str: The commands to run.
     """

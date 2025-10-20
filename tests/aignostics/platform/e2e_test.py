@@ -135,7 +135,6 @@ def _run_application_test(
     This function creates an application run, downloads results, and validates outputs.
 
     Args:
-        timeout (int): Timeout for the test in seconds.
         application_id (str): The application ID to use for the test.
         application_version (str): The application version to use for the test.
         payload (list[platform.InputItem]): The input items for the application run.

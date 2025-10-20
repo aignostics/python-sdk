@@ -31,8 +31,6 @@ def boot(modules_to_instrument: list[str]) -> None:
 
     Args:
         modules_to_instrument (list): List of modules to be instrumented.
-        repository_url (str): URL of the repository.
-        repository_root_path (str): The root path of the repository. Default is the root path.
     """
     global _boot_called  # noqa: PLW0603
     if _boot_called:

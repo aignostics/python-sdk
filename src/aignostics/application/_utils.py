@@ -136,7 +136,6 @@ def print_runs_verbose(runs: list[RunData]) -> None:
 
     Args:
         runs (list[RunData]): List of run data
-        service (Service): The Service instance to use
 
     """
     from ._service import Service  # noqa: PLC0415
