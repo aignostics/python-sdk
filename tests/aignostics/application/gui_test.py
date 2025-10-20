@@ -53,7 +53,7 @@ async def test_gui_index(user: User, record_property) -> None:
         ),
     ],
 )
-async def test_gui_home_to_application(
+async def test_gui_home_to_application(  # noqa: PLR0913, PLR0917
     user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None, record_property
 ) -> None:
     """Test that the user sees the specific application page with expected content."""
