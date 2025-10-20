@@ -2,6 +2,11 @@ name: "Publish Package"
 
 on:
   workflow_call:
+    inputs:
+      commit_message:
+        description: 'Commit message to check for skip markers'
+        required: false
+        type: string
     secrets:
       UV_PUBLISH_TOKEN:
         required: false
@@ -175,10 +180,10 @@ jobs:
         run: |
           # Use uv's credential storage - uv will read from UV_PUBLISH_TOKEN env var automatically
           uv publish
-
+s
       - name: Download test results for ubuntu-latest generated in _test.yml
         if: |
-          (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+          (!contains(inputs.commit_message, 'skip:test:all')) &&
           (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
@@ -193,7 +198,7 @@ jobs:
 
       - name: Create GitHub release
         if: |
-          (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+          (!contains(inputs.commit_message, 'skip:test:all')) &&
           (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -205,7 +210,7 @@ jobs:
             
       - name: Create GitHub release (no test results)
         if: |
-          (contains(github.event.head_commit.message, 'skip:test:all')) ||
+          (contains(inputs.commit_message, 'skip:test:all')) ||
           (contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

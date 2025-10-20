@@ -125,6 +125,8 @@ jobs:
       !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
+    with:
+      commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
       attestations: write
       contents: write
@@ -142,6 +144,8 @@ jobs:
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
+    with:
+      commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
       attestations: write
       contents: write
