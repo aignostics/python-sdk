@@ -6,13 +6,14 @@ from aignostics.system._service import Service
 
 
 @pytest.mark.unit
-def test_http_pool_is_shared() -> None:
+def test_http_pool_is_shared(record_property) -> None:
     """Test that Service._get_http_pool returns the same instance across multiple calls.
 
     This ensures that all service instances share the same urllib3.PoolManager
     for efficient connection reuse when calling ipify.
     """
     # Get pool instance
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     pool1 = Service._get_http_pool()
 
     # Get pool instance again (should return same instance)
@@ -23,11 +24,13 @@ def test_http_pool_is_shared() -> None:
 
 
 @pytest.mark.unit
-def test_http_pool_singleton() -> None:
+def test_http_pool_singleton(record_property) -> None:
     """Test that Service._http_pool maintains a singleton pattern.
 
     Multiple service instances should share the same connection pool.
     """
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
+
     # Create two service instances
     service1 = Service()
     service2 = Service()
