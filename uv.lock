@@ -263,7 +263,7 @@ dev = [
     { name = "sphinx-selective-exclude", specifier = ">=1.0.3,<2" },
     { name = "sphinx-toolbox", specifier = ">=4,<5" },
     { name = "sphinxext-opengraph", specifier = ">=0.9.1,<1" },
-    { name = "swagger-plugin-for-sphinx", specifier = ">=5.2.0,<6" },
+    { name = "swagger-plugin-for-sphinx", specifier = ">=6,<7" },
     { name = "tomli", specifier = ">=2.3.0,<3" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915,<7" },
     { name = "types-requests", specifier = ">=2.32.4.20250913,<3" },
@@ -6190,7 +6190,7 @@ wheels = [
 
 [[package]]
 name = "swagger-plugin-for-sphinx"
-version = "5.2.0"
+version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -6198,9 +6198,9 @@ dependencies = [
     { name = "sphinx" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c8/04/4e09392f114fa4e1ef07a05c73dc69f32e1cae0db0ddbf3870439e0ae974/swagger_plugin_for_sphinx-5.2.0.tar.gz", hash = "sha256:1d68c0a62d10e6f814ebc6741df8876d74c444490e27206deb23bd76ad17434d", size = 15967, upload-time = "2025-10-10T05:33:20.635Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/b3/84bc7d8af6b50e6c365f1593fe4a01245f4bfb2178040261c6429db0b46b/swagger_plugin_for_sphinx-6.0.0.tar.gz", hash = "sha256:70366c610648cede5ef482922c9c97c86c99746b9edf33e4ec13fab23d820251", size = 16026, upload-time = "2025-10-16T06:26:09.95Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dc/6f/14be3aea9402e5a4c39ce3068a3b40cd3ea56fa5fa1aa0afaca77f47654a/swagger_plugin_for_sphinx-5.2.0-py3-none-any.whl", hash = "sha256:8a0070e13a02d66c8443757906fb73c224d385000c3dcf4822e7b82dd690c34c", size = 11259, upload-time = "2025-10-10T05:33:19.439Z" },
+    { url = "https://files.pythonhosted.org/packages/51/f0/1098f6628bbe04b086ce59692d09b116ec751286eb7d33e88c5bf0c2e210/swagger_plugin_for_sphinx-6.0.0-py3-none-any.whl", hash = "sha256:35dc646d759a44ce78aefde2fe34f54e7b8c3439d0a52541a6a8b9924a711832", size = 11253, upload-time = "2025-10-16T06:26:08.504Z" },
 ]
 
 [[package]]
