@@ -123,7 +123,7 @@ async def assert_notified(user: User, expected_notification: str, wait_seconds: 
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call) -> Generator[None, None, None]:
+def pytest_runtest_makereport(item, call):  # noqa: ANN201
     """Hook to suppress expected teardown errors from NiceGUI background tasks.
 
     This hook wraps the test report generation and modifies teardown errors
@@ -139,7 +139,7 @@ def pytest_runtest_makereport(item, call) -> Generator[None, None, None]:
     outcome = yield
     report = outcome.get_result()
 
-    # Only process teardown phase errors
+    # Only process teardown phase errors that are NiceGUI-related
     if report.when == "teardown" and report.failed and hasattr(report, "longrepr") and report.longrepr:
         error_msg = str(report.longrepr)
         # Known benign NiceGUI teardown errors
