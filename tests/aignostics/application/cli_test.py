@@ -200,7 +200,9 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=60 * 10)
-def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(runner: CliRunner, tmp_path: Path) -> None:
+def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(
+    runner: CliRunner, tmp_path: Path, silent_logging
+) -> None:
     """Check run submit command runs successfully."""
     csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
