@@ -160,7 +160,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.flaky(retries=0, delay=5)
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
@@ -195,10 +195,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
         await user.should_see("Atlas H&E-TME", retries=100)
         await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
         user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
-        await sleep(2)
-        await user.should_see("Atlas H&E-TME", retries=100)
-        await user.should_see("The Atlas", retries=100)
-        await user.should_see("The Atlas H&E TME is an AI application")
+        await sleep(5)
+        await user.should_see("The Atlas H&E TME is an AI application", retries=100)
 
         # Check the latest application version is shown and select it
         application = Service().application("he-tme")

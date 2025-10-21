@@ -534,12 +534,14 @@ Some modules have conditional loading based on dependencies:
 * Optional user notes
 
 **CLI Command:**
+
 ```bash
 # Export SDK metadata JSON Schema
 aignostics sdk metadata-schema --pretty > schema.json
 ```
 
 **Implementation:**
+
 * Module: `platform._sdk_metadata`
 * Functions: `build_sdk_metadata()`, `validate_sdk_metadata()`, `get_sdk_metadata_json_schema()`
 * Integration: Automatic in `platform.resources.runs.submit()`
@@ -555,18 +557,21 @@ See `platform/CLAUDE.md` for detailed documentation.
 **Operation Caching (`platform/_operation_cache.py`):**
 
 **Key Features:**
+
 * **Token-Aware Caching**: Per-user cache isolation prevents data leakage
 * **Configurable TTLs**: 5 minutes for stable data (apps/versions), 15 seconds for dynamic data (runs)
 * **Automatic Invalidation**: All caches cleared on mutations (submit/cancel/delete)
 * **Memory Efficient**: Dictionary-based storage with automatic expiration
 
 **Cached Operations:**
+
 * `Client.me()` - User information (5 min TTL)
 * `Client.application()` / `application_version()` - Application metadata (5 min TTL)
 * `Applications.list()` / `details()` - Application lists (5 min TTL)
 * `Runs.details()` / `results()` / `list()` - Run data (15 sec TTL)
 
 **Performance Impact:**
+
 * Cache Hit: ~0.1ms (1000x faster than API call)
 * Cache Miss: Standard API latency (50-500ms)
 * Typical Speedup: 100-1000x for repeated reads within TTL
@@ -574,18 +579,21 @@ See `platform/CLAUDE.md` for detailed documentation.
 **Retry Logic with Exponential Backoff:**
 
 **Key Features:**
+
 * **Tenacity-Based**: Industry-standard retry library with exponential backoff
 * **Configurable**: Per-operation retry attempts (default: 4), wait times (0.1s-60s), timeouts (30s)
 * **Smart Exceptions**: Only retries transient errors (5xx, timeouts, connection issues)
 * **Jitter**: Randomized wait times prevent thundering herd problem
 
 **Retryable Exceptions:**
+
 * ServiceException (5xx server errors)
 * Urllib3TimeoutError
 * PoolError (connection pool exhausted)
 * IncompleteRead / ProtocolError / ProxyError
 
 **Retry Pattern:**
+
 ```
 Attempt 1: Immediate
 Attempt 2: ~100ms wait
@@ -594,6 +602,7 @@ Attempt 4: ~400-800ms wait (capped at 60s max)
 ```
 
 **Configuration:**
+
 ```bash
 # Example .env configuration
 AIGNOSTICS_ME_RETRY_ATTEMPTS=4
@@ -608,6 +617,7 @@ AIGNOSTICS_RUN_CACHE_TTL=15
 ```
 
 **Design Decisions:**
+
 * ✅ **Read-Only Retries**: Only safe, idempotent read operations retry
 * ✅ **Global Cache Clearing**: Simple consistency model - clear everything on writes
 * ✅ **Logging**: Warnings logged before retry sleeps for observability
@@ -620,31 +630,37 @@ See `platform/CLAUDE.md` for implementation details and usage patterns.
 **Breaking Change**: Complete refactoring of run, item, and artifact state management with enum-based models and termination reasons.
 
 **New State Enums:**
+
 * `RunState`: PENDING → PROCESSING → TERMINATED
 * `ItemState`: PENDING → PROCESSING → TERMINATED
 * `ArtifactState`: PENDING → PROCESSING → TERMINATED
 
 **New Termination Reason Enums:**
+
 * `RunTerminationReason`: ALL_ITEMS_PROCESSED, CANCELED_BY_USER, CANCELED_BY_SYSTEM
 * `ItemTerminationReason`: SUCCEEDED, USER_ERROR, SYSTEM_ERROR, SKIPPED
 * `ArtifactTerminationReason`: SUCCEEDED, USER_ERROR, SYSTEM_ERROR
 
 **New Models:**
+
 * `RunItemStatistics` - Aggregate counts (total, succeeded, user_error, system_error, skipped, pending, processing)
 * `RunOutput`, `ItemOutput`, `ArtifactOutput` - Structured output models with state + termination_reason
 
 **Deleted Models (Breaking Changes):**
+
 * ❌ `UserPayload` → Replaced with `Auth0User` and `Auth0Organization`
 * ❌ `PayloadItem` → Replaced with `ItemOutput`
 * ❌ `ApplicationVersionReadResponse` → Renamed to `ApplicationVersion`
 
 **Benefits:**
+
 1. **Type Safety**: Enum-based states prevent typos
 2. **Clear Semantics**: Separate "what happened" (state) from "why" (termination_reason)
 3. **Granular Errors**: Distinguish user errors from system errors for better debugging
 4. **Progress Tracking**: RunItemStatistics provides real-time aggregate view
 
 **Usage Example:**
+
 ```python
 run = client.run("run-123")
 details = run.details()

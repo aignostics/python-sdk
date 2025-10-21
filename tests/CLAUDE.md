@@ -347,6 +347,7 @@ Tested in `application/service_test.py` and `application/cli_test.py` to ensure 
 5. **CLI Integration**: Test schema export command
 6. **Optional Fields**: Verify system works with missing optional fields
 7. **Error Cases**: Test validation catches all invalid inputs
+
 ```
 
 ### Process Management Testing (`dataset/service_test.py`)

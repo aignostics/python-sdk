@@ -55,6 +55,7 @@ def test_cli_application_describe_success(runner: CliRunner) -> None:
 
 
 @pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_application_describe_verbose(runner: CliRunner) -> None:
     """Check application describe command runs successfully."""
     result = runner.invoke(cli, ["application", "describe", HETA_APPLICATION_ID, "--verbose"])

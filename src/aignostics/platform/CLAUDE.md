@@ -9,23 +9,27 @@ The platform module serves as the foundational API client interface for the Aign
 ### Core Responsibilities
 
 **Authentication & API Access:**
+
 - **OAuth 2.0 Authentication**: Device flow, JWT validation, token lifecycle management with 5-minute refresh buffer
 - **Environment Management**: Multi-environment support (dev/staging/production) with automatic endpoint detection
 - **Resource Abstraction**: Type-safe wrappers for applications, versions, runs with memory-efficient pagination
 
 **Performance & Reliability (NEW in v1.0.0-beta.7):**
+
 - **Operation Caching**: Token-aware caching for read operations with configurable TTLs (5-15 min)
 - **Retry Logic**: Exponential backoff with jitter for transient failures (4 attempts default)
 - **Timeout Management**: Per-operation timeouts (30s default, configurable 0.1s-300s)
 - **Cache Invalidation**: Automatic global cache clearing on mutations for consistency
 
 **Observability & Tracking (NEW in v1.0.0-beta.7):**
+
 - **SDK Metadata System**: Automatic tracking of execution context, user, CI/CD environment for all runs
 - **JSON Schema Validation**: Pydantic-based validation with versioned schemas (v0.0.1)
 - **Enhanced User Agent**: Context-aware user agent with pytest and GitHub Actions integration
 - **Structured Logging**: Retry warnings, cache hits/misses, performance metrics
 
 **API v1.0.0-beta.7 Support:**
+
 - **State Models**: Enum-based RunState, ItemState, ArtifactState with termination reasons
 - **Statistics Tracking**: Aggregate RunItemStatistics for progress monitoring
 - **Error Handling**: Comprehensive error recovery with user guidance
@@ -35,11 +39,13 @@ The platform module serves as the foundational API client interface for the Aign
 **CLI Commands (`_cli.py`):**
 
 User authentication commands:
+
 - `user login` - Authenticate with Aignostics Platform (device flow or browser)
 - `user logout` - Remove cached authentication token
 - `user whoami` - Display current user information and organization details
 
 SDK metadata commands:
+
 - `sdk metadata-schema` - Display or export the JSON Schema for SDK metadata (supports `--pretty` flag)
 
 **Service Layer (`_service.py`):**
@@ -512,6 +518,7 @@ def get_sdk_metadata_json_schema() -> dict[str, Any]:
 **Testing:**
 
 Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`:
+
 - Metadata building in various environments
 - Schema validation (valid and invalid cases)
 - GitHub CI metadata extraction
@@ -738,6 +745,7 @@ AIGNOSTICS_AUTH_JWK_SET_CACHE_TTL=86400  # 1 day
 **Testing:**
 
 Comprehensive test suite in `tests/aignostics/platform/client_cache_test.py`:
+
 - Cache hit/miss scenarios
 - TTL expiration
 - Token-aware caching
@@ -876,6 +884,7 @@ AIGNOSTICS_RUN_TIMEOUT=30.0
 **Operations with Retry Logic:**
 
 **Read Operations (All have retry + cache):**
+
 - ✅ `Client.me()` - 4 retries, 30s timeout
 - ✅ `Client.application()` - 4 retries, 30s timeout
 - ✅ `Client.application_version()` - 4 retries, 30s timeout
@@ -885,6 +894,7 @@ AIGNOSTICS_RUN_TIMEOUT=30.0
 - ✅ `Runs.list()` - 4 retries, 30s timeout
 
 **Write Operations (No retry, no cache):**
+
 - ❌ `Runs.submit()` - No retry (idempotency concerns), 30s timeout
 - ❌ `Run.cancel()` - No retry, 30s timeout
 - ❌ `Run.delete()` - No retry, 30s timeout
@@ -912,6 +922,7 @@ ERROR - Failed after 4 attempts: ServiceException: 503 Service Unavailable
 **Testing:**
 
 Comprehensive test suite in `tests/aignostics/platform/client_me_retry_test.py`:
+
 - Retry on transient errors
 - Exponential backoff timing
 - Max attempts enforcement
@@ -1036,6 +1047,7 @@ class RunItemStatistics(BaseModel):
 **Model Migrations (Deleted Models):**
 
 **Deleted in v1.0.0-beta.7:**
+
 - ❌ `UserPayload` - Replaced with structured user/organization models
 - ❌ `PayloadItem` - Replaced with `ItemOutput`
 - ❌ `ApplicationVersionReadResponse` - Renamed to `ApplicationVersion`
@@ -1043,6 +1055,7 @@ class RunItemStatistics(BaseModel):
 - ❌ `TransferUrls` - Merged into artifact models
 
 **New Models in v1.0.0-beta.7:**
+
 - ✅ `Auth0User` - Structured user information
 - ✅ `Auth0Organization` - Structured organization information
 - ✅ `ApplicationReadShortResponse` - Lightweight application summary
@@ -1092,6 +1105,7 @@ for item in run.results():
 **Migration Guide (v1.0.0-beta.6 → v1.0.0-beta.7):**
 
 **Before (v1.0.0-beta.6):**
+
 ```python
 # Old status checking (hypothetical old API)
 if run.status == "COMPLETED":
@@ -1099,6 +1113,7 @@ if run.status == "COMPLETED":
 ```
 
 **After (v1.0.0-beta.7):**
+
 ```python
 # New state + termination reason pattern
 if run.output.state == RunState.TERMINATED:
@@ -1117,6 +1132,7 @@ if run.output.state == RunState.TERMINATED:
 **Testing:**
 
 Updated test suite in `tests/aignostics/platform/e2e_test.py`:
+
 - State transitions
 - Termination reason validation
 - Statistics accuracy
