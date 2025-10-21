@@ -164,128 +164,131 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
+    user: User, runner: CliRunner, silent_logging: None
 ) -> None:
     """Test that the user can download a dataset via the application page and cancel the run."""
-    with patch(
-        "aignostics.application._gui._page_application_describe.Path.home",
-        return_value=tmp_path,
-    ):
-        # Download example wsi
-        result = runner.invoke(
-            cli,
-            [
-                "dataset",
-                "aignostics",
-                "download",
-                "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
-                str(tmp_path),
-            ],
-        )
-        assert result.exit_code == 0
-        assert "Successfully downloaded" in normalize_output(result.stdout)
-        assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
-        expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
-        assert expected_file.exists(), f"Expected file {expected_file} not found"
-        assert expected_file.stat().st_size == 14681750
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir)
 
-        # Open the GUI and navigate to Atlas H&E-TME application
-        await user.open("/")
-        await user.should_see("Applications")
-        await user.should_see("Atlas H&E-TME", retries=100)
-        await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
-        user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
-        await sleep(5)
-        await user.should_see("The Atlas H&E TME is an AI application", retries=100)
+        with patch(
+            "aignostics.application._gui._page_application_describe.Path.home",
+            return_value=tmp_path,
+        ):
+            # Download example wsi
+            result = runner.invoke(
+                cli,
+                [
+                    "dataset",
+                    "aignostics",
+                    "download",
+                    "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+                    str(tmp_path),
+                ],
+            )
+            assert result.exit_code == 0
+            assert "Successfully downloaded" in normalize_output(result.stdout)
+            assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
+            expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+            assert expected_file.exists(), f"Expected file {expected_file} not found"
+            assert expected_file.stat().st_size == 14681750
 
-        # Check the latest application version is shown and select it
-        application = Service().application("he-tme")
-        latest_application_version = application.versions[0] if application.versions else None
-        assert latest_application_version is not None, "No application versions found for he-tme"
-        await user.should_see(latest_application_version.number)
-        user.find(marker="BUTTON_APPLICATION_VERSION_NEXT").click()
+            # Open the GUI and navigate to Atlas H&E-TME application
+            await user.open("/")
+            await user.should_see("Applications")
+            await user.should_see("Atlas H&E-TME", retries=100)
+            await user.should_see(marker="SIDEBAR_APPLICATION:he-tme", retries=100)
+            user.find(marker="SIDEBAR_APPLICATION:he-tme").click()
+            await sleep(5)
+            await user.should_see("The Atlas H&E TME is an AI application", retries=100)
 
-        # Check the file picker opens and closes
-        await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
-        user.find(marker="BUTTON_WSI_SELECT_DATA").click()
-        await user.should_see("Ok")
-        await user.should_see("Cancel")
-        user.find(marker="BUTTON_WSI_SELECT_CUSTOM").click()
-        await user.should_see("Ok")
-        await user.should_see("Cancel")
-        user.find(marker="BUTTON_FILEPICKER_CANCEL").click()
-        await assert_notified(user, "You did not make a selection")
+            # Check the latest application version is shown and select it
+            application = Service().application("he-tme")
+            latest_application_version = application.versions[0] if application.versions else None
+            assert latest_application_version is not None, "No application versions found for he-tme"
+            await user.should_see(latest_application_version.number)
+            user.find(marker="BUTTON_APPLICATION_VERSION_NEXT").click()
 
-        # Select the home directory and trigger metadata generation
-        user.find(marker="BUTTON_PYTEST_HOME").click()
-        await user.should_see(f"Selected folder {tmp_path!s} to analyze.")
-        await assert_notified(user, f"You chose directory {tmp_path!s}.")
-        user.find(marker="BUTTON_WSI_NEXT").click()
-        await assert_notified(user, "Finding WSIs and generating metadata", wait_seconds=5)
-        await assert_notified(user, "Found 1 slides for analysis", wait_seconds=120)
-        await sleep(10)
+            # Check the file picker opens and closes
+            await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
+            user.find(marker="BUTTON_WSI_SELECT_DATA").click()
+            await user.should_see("Ok")
+            await user.should_see("Cancel")
+            user.find(marker="BUTTON_WSI_SELECT_CUSTOM").click()
+            await user.should_see("Ok")
+            await user.should_see("Cancel")
+            user.find(marker="BUTTON_FILEPICKER_CANCEL").click()
+            await assert_notified(user, "You did not make a selection")
 
-        # Generate remaining metadata, going to upload UI
-        await user.should_see(
-            "The Launchpad has found all compatible slide files in your selected folder.",
-            retries=100,
-        )
+            # Select the home directory and trigger metadata generation
+            user.find(marker="BUTTON_PYTEST_HOME").click()
+            await user.should_see(f"Selected folder {tmp_path!s} to analyze.")
+            await assert_notified(user, f"You chose directory {tmp_path!s}.")
+            user.find(marker="BUTTON_WSI_NEXT").click()
+            await assert_notified(user, "Finding WSIs and generating metadata", wait_seconds=5)
+            await assert_notified(user, "Found 1 slides for analysis", wait_seconds=120)
+            await sleep(10)
 
-        user.find(marker="BUTTON_PYTEST_META").click()
-        await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
-        user.find(marker="BUTTON_METADATA_NEXT").click()
-        await assert_notified(user, "Metadata captured.")
+            # Generate remaining metadata, going to upload UI
+            await user.should_see(
+                "The Launchpad has found all compatible slide files in your selected folder.",
+                retries=100,
+            )
 
-        # Navigate through Notes step
-        await user.should_see("Note (optional)", retries=100)
-        user.find("TEXTAREA_NOTE").type("test_gui_download_dataset_via_application_to_run_cancel:note").trigger(
-            "keydown.enter"
-        )
+            user.find(marker="BUTTON_PYTEST_META").click()
+            await assert_notified(user, "Your metadata is now valid! Feel free to continue to the next step.")
+            user.find(marker="BUTTON_METADATA_NEXT").click()
+            await assert_notified(user, "Metadata captured.")
 
-        user.find(marker="BUTTON_NOTES_NEXT").click()
+            # Navigate through Notes step
+            await user.should_see("Note (optional)", retries=100)
+            user.find("TEXTAREA_NOTE").type("test_gui_download_dataset_via_application_to_run_cancel:note").trigger(
+                "keydown.enter"
+            )
 
-        # Navigate through Scheduling step
-        await user.should_see("Soft Due Date", retries=100)
-        await user.should_see("The platform will try to complete the run before this time", retries=100)
-        user.find(marker="BUTTON_SCHEDULING_NEXT").click()
-        await assert_notified(user, "Prepared upload UI.")
+            user.find(marker="BUTTON_NOTES_NEXT").click()
 
-        # Now on Submission step
-        await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
+            # Navigate through Scheduling step
+            await user.should_see("Soft Due Date", retries=100)
+            await user.should_see("The platform will try to complete the run before this time", retries=100)
+            user.find(marker="BUTTON_SCHEDULING_NEXT").click()
+            await assert_notified(user, "Prepared upload UI.")
 
-        # Indicate to validate only, to not waste GPU resources
-        user.find(marker="CHECKBOX_VALIDATE_ONLY").click()
+            # Now on Submission step
+            await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
 
-        # Trigger upload and submission
-        await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
-        button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
-        assert button_submission_upload.enabled, "Upload button should be enabled"
-        user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
-        await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...", 10)
-        button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
-        assert not button_submission_upload.enabled, "Upload button should be disabled after click"
-        await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=60)
-        await assert_notified(user, "Submitting application run ...")
-        await assert_notified(user, "Application run submitted with id", wait_seconds=30)
+            # Indicate to validate only, to not waste GPU resources
+            user.find(marker="CHECKBOX_VALIDATE_ONLY").click()
 
-        # Check user is redirected to the run page and run is running
-        await user.should_see(f"Run of he-tme ({latest_application_version.number})", retries=200)
-        try:
-            await user.should_see("PENDING", retries=100)
-        except AssertionError:
-            await user.should_see("PROCESSING", retries=100)
+            # Trigger upload and submission
+            await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
+            button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
+            assert button_submission_upload.enabled, "Upload button should be enabled"
+            user.find(marker="BUTTON_SUBMISSION_UPLOAD").click()
+            await assert_notified(user, "Uploading whole slide images to Aignostics Platform ...", 10)
+            button_submission_upload: ui.button = user.find(marker="BUTTON_SUBMISSION_UPLOAD").elements.pop()
+            assert not button_submission_upload.enabled, "Upload button should be disabled after click"
+            await assert_notified(user, "Upload to Aignostics Platform completed.", wait_seconds=60)
+            await assert_notified(user, "Submitting application run ...")
+            await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
-        # Check user can cancel run
-        await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
-        user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
-        await assert_notified(user, "Canceling application run with id")
-        await assert_notified(user, "Application run cancelled!", wait_seconds=20)
+            # Check user is redirected to the run page and run is running
+            await user.should_see(f"Run of he-tme ({latest_application_version.number})", retries=200)
+            try:
+                await user.should_see("PENDING", retries=100)
+            except AssertionError:
+                await user.should_see("PROCESSING", retries=100)
 
-        # Check user sees refreshed run page and run is cancelled
-        await user.should_see("CANCELED_BY_USER", retries=200)
+            # Check user can cancel run
+            await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
+            user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
+            await assert_notified(user, "Canceling application run with id")
+            await assert_notified(user, "Application run cancelled!", wait_seconds=20)
 
-        # Check the note was saved correctly
-        await user.should_see("test_gui_download_dataset_via_application_to_run_cancel:note", retries=100)
+            # Check user sees refreshed run page and run is cancelled
+            await user.should_see("CANCELED_BY_USER", retries=200)
+
+            # Check the note was saved correctly
+            await user.should_see("test_gui_download_dataset_via_application_to_run_cancel:note", retries=100)
 
 
 @pytest.mark.e2e
