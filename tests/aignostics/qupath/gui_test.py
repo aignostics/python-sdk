@@ -32,7 +32,9 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None) -> None:
+async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
+    record_property("tested-item-id", "TC-QUPATH-01", "SPEC-GUI-SERVICE")
+
     """Test that the user can install and launch QuPath via the GUI."""
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
@@ -73,9 +75,11 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_qupath_install_and_launch(
-    user: User, runner: CliRunner, silent_logging: None, qupath_teardown
+    user: User, runner: CliRunner, silent_logging: None, qupath_teardown, record_property
 ) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
+    record_property("tested-item-id", "TC-QUPATH-01", "SPEC-GUI-SERVICE")
+
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code
@@ -140,7 +144,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
     """Test that the user can open QuPath on a run."""
-    record_property("tested-item-id", "TC-QUPATH-01")
+    record_property("tested-item-id", "TC-QUPATH-01", "SPEC-GUI-SERVICE")
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code

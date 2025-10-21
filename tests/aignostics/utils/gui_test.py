@@ -21,7 +21,7 @@ def test_base_page_builder_is_abstract(record_property) -> None:
     Args:
         record_property: pytest record_property fixture
     """
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE", "SPEC-GUI-SERVICE")
     with pytest.raises(TypeError):
         BasePageBuilder()  # type: ignore # Cannot instantiate abstract class
 
@@ -33,7 +33,7 @@ def test_register_pages_is_abstract(record_property) -> None:
     Args:
         record_property: pytest record_property fixture
     """
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE", "SPEC-GUI-SERVICE")
 
     class IncompletePageBuilder(BasePageBuilder):
         pass
@@ -51,7 +51,7 @@ def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMoc
         mock_locate_subclasses: Mock for locate_subclasses function
         record_property: pytest record_property fixture
     """
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE", "SPEC-GUI-SERVICE")
     # Create mock page builders
     mock_builder1 = mock.MagicMock()
     mock_builder2 = mock.MagicMock()
@@ -79,7 +79,7 @@ def test_gui_run_default_params(record_property, mock_ui: mock.MagicMock, mock_r
         nicegui_reset_globals: Fixture to reset NiceGUI globals
         record_property: pytest record_property fixture
     """
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE", "SPEC-GUI-SERVICE")
     with mock.patch("nicegui.native.find_open_port", return_value=8000):
         os.environ["NICEGUI_SCREEN_TEST_PORT"] = "3392"
         gui_run()
@@ -108,7 +108,7 @@ def test_gui_run_custom_params(
         nicegui_reset_globals: Fixture to reset NiceGUI globals
         record_property: pytest record_property fixture
     """
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE", "SPEC-GUI-SERVICE")
     os.environ["NICEGUI_SCREEN_TEST_PORT"] = "3392"
     gui_run(
         native=False,
@@ -141,7 +141,7 @@ def test_gui_run_in_container_with_native(mock_ui_run: mock.MagicMock, record_pr
         nicegui_reset_globals: Fixture to reset NiceGUI globals
         record_property: pytest record_property fixture
     """
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE", "SPEC-GUI-SERVICE")
     with pytest.raises(ValueError) as excinfo:
         gui_run(native=True)
     assert "Native GUI cannot be run in a container" in str(excinfo.value)
