@@ -123,7 +123,7 @@ async def assert_notified(user: User, expected_notification: str, wait_seconds: 
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item, call) -> Generator[None, None, None]:
     """Hook to suppress expected teardown errors from NiceGUI background tasks.
 
     This hook wraps the test report generation and modifies teardown errors
@@ -140,28 +140,26 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
 
     # Only process teardown phase errors
-    if report.when == "teardown" and report.failed:
-        # Check if this is a NiceGUI-related teardown error we can ignore
-        if hasattr(report, "longrepr") and report.longrepr:
-            error_msg = str(report.longrepr)
-            # Known benign NiceGUI teardown errors
-            if any(
-                pattern in error_msg
-                for pattern in [
-                    "Could not cancel",
-                    "tasks within timeout",
-                    "nicegui_run.io_bound",
-                    "returned None, likely canceled by shutdown",
-                    "KeyError: <_pytest.stash.StashKey",
-                ]
-            ):
-                # Mark as passed to avoid failing the test suite
-                report.outcome = "passed"
-                logger.warning(
-                    "Suppressed expected NiceGUI teardown error in test '%s': %s",
-                    item.nodeid,
-                    error_msg[:200],
-                )
+    if report.when == "teardown" and report.failed and hasattr(report, "longrepr") and report.longrepr:
+        error_msg = str(report.longrepr)
+        # Known benign NiceGUI teardown errors
+        if any(
+            pattern in error_msg
+            for pattern in [
+                "Could not cancel",
+                "tasks within timeout",
+                "nicegui_run.io_bound",
+                "returned None, likely canceled by shutdown",
+                "KeyError: <_pytest.stash.StashKey",
+            ]
+        ):
+            # Mark as passed to avoid failing the test suite
+            report.outcome = "passed"
+            logger.warning(
+                "Suppressed expected NiceGUI teardown error in test '%s': %s",
+                item.nodeid,
+                error_msg[:200],
+            )
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
