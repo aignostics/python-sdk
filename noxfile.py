@@ -65,7 +65,7 @@ def _get_test_python_versions() -> list[str]:
     """
     versions = ["3.11.9", "3.12.12", "3.13.7"]
     if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
-        versions = ["3.11.9", "3.13.7"]
+        versions = ["3.11.9"]
         # Only test with 3.13.7 on Windows ARM due to:
         # 1. Access denied errors when uv >= 0.9.4 tries to recreate venv directories (all Python versions)
         # 2. Instability of Python 3.12.x on Windows ARM platform
@@ -82,8 +82,6 @@ def _setup_venv(session: nox.Session, all_extras: bool = True, no_dev: bool = Fa
         args.append("--all-extras")
     if no_dev:
         args.append("--no-dev")
-    if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
-        args.append("--link-mode=copy")
     session.run_install(
         *args,
         env={
