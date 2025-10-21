@@ -3,6 +3,7 @@
 import base64
 import re
 import time
+from collections import defaultdict
 from collections.abc import Callable, Generator
 from http import HTTPStatus
 from importlib.util import find_spec
@@ -10,13 +11,12 @@ from pathlib import Path
 from typing import Any
 
 import google_crc32c
+import pydicom
 import requests
 from loguru import logger
 
 from aignostics.bucket import Service as BucketService
-from aignostics.constants import (
-    TEST_APP_APPLICATION_ID,
-)
+from aignostics.constants import TEST_APP_APPLICATION_ID
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -32,9 +32,7 @@ from aignostics.platform import (
     RunOutput,
     RunState,
 )
-from aignostics.platform import (
-    Service as PlatformService,
-)
+from aignostics.platform import Service as PlatformService
 from aignostics.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
@@ -313,6 +311,55 @@ class Service(BaseService):  # noqa: PLR0904
                 Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
+    def _filter_dicom_series_files(source_directory: Path) -> set[Path]:
+        """Filter DICOM files to keep only one representative per series.
+
+        For multi-file DICOM series, keeps only the highest resolution file.
+        OpenSlide will find other files in the same directory when needed.
+
+        Args:
+            source_directory: The directory to scan.
+
+        Returns:
+            set[Path]: Set of DICOM files to exclude from processing.
+        """
+        dicom_files = list(source_directory.glob("**/*.dcm"))
+        series_groups: dict[str, list[tuple[Path, int, int]]] = defaultdict(list)
+
+        # Group by SeriesInstanceUID with dimensions
+        for dcm_file in dicom_files:
+            try:
+                ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
+                series_uid = ds.SeriesInstanceUID
+                # Get dimensions (Rows and Columns from DICOM)
+                rows = int(getattr(ds, "Rows", 0))
+                cols = int(getattr(ds, "Columns", 0))
+                series_groups[series_uid].append((dcm_file, rows, cols))
+            except Exception as e:
+                logger.debug(f"Could not read DICOM {dcm_file}: {e}")
+                # Treat as standalone - don't exclude
+
+        # For each series with multiple files, keep only the highest resolution one
+        files_to_exclude = set()
+        for series_uid, files_with_dims in series_groups.items():
+            if len(files_with_dims) > 1:
+                # Find the file with the largest dimensions (rows * cols = total pixels)
+                highest_res_file = max(files_with_dims, key=lambda x: x[1] * x[2])
+                file_to_keep, rows, cols = highest_res_file
+
+                # Exclude all others
+                for file_path, _, _ in files_with_dims:
+                    if file_path != file_to_keep:
+                        files_to_exclude.add(file_path)
+
+                logger.debug(
+                    f"DICOM series {series_uid}: keeping {file_to_keep.name} "
+                    f"({rows}x{cols}), excluding {len(files_with_dims) - 1} related files"
+                )
+
+        return files_to_exclude
+
+    @staticmethod
     def generate_metadata_from_source_directory(  # noqa: PLR0913, PLR0917
         source_directory: Path,
         application_id: str,
@@ -366,10 +413,17 @@ class Service(BaseService):  # noqa: PLR0904
 
         metadata = []
 
+        # Pre-filter: exclude redundant DICOM files from multi-file series
+        dicom_files_to_exclude = Service._filter_dicom_series_files(source_directory)
+
         try:
             extensions = get_supported_extensions_for_application(application_id)
             for extension in extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
+                    # Skip excluded DICOM files
+                    if file_path in dicom_files_to_exclude:
+                        continue
+
                     # Generate CRC32C checksum with google_crc32c and encode as base64
                     hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
                     with file_path.open("rb") as f:

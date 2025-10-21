@@ -1,5 +1,6 @@
 """Handler for wsi files using OpenSlide."""
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +8,7 @@ import defusedxml.ElementTree as ET  # noqa: N817
 import openslide
 from loguru import logger
 from openslide import ImageSlide, OpenSlide, open_slide
+from packaging import version
 from PIL.Image import Image
 
 TIFF_IMAGE_DESCRIPTION = "tiff.ImageDescription"
@@ -61,6 +63,34 @@ class OpenSlideHandler:
             return "tiff"
 
         return base_format
+
+    @staticmethod
+    def _get_mpp_correction_factor(props: dict[str, Any]) -> float:
+        """Handle a scaling bug in libvips<8.8.3 for tiff files.
+
+        libvips<8.8.3 had a bug which wrote the tiff.XResolution as px / mm, but it should be
+        px / cm. Therefore, the resolution is 10x smaller than expected. To counteract, one has
+        to multiply the mpp with 0.1. Source: https://github.com/libvips/libvips/issues/1421
+
+        Returns:
+            float: Correction factor (0.1 for buggy versions, 1.0 otherwise).
+        """
+        LEGACY_MPP_FACTOR = 1 / 10  # noqa: N806
+
+        try:
+            xml_string = props[TIFF_IMAGE_DESCRIPTION]
+
+            # Match custom metadata for library version used during export
+            libvips_version_match = re.findall(r"libVips-version.*?(\d+\.\d+\.\d+)", xml_string, re.DOTALL)
+            if not libvips_version_match:
+                return LEGACY_MPP_FACTOR
+
+            if version.parse(libvips_version_match[0]) >= version.parse("8.8.3"):
+                # Bug-free libvips version was used during initial pyramid export
+                return 1.0
+            return LEGACY_MPP_FACTOR
+        except Exception:
+            return LEGACY_MPP_FACTOR
 
     def get_thumbnail(self) -> Image:
         """Get thumbnail of the slide.
@@ -122,7 +152,7 @@ class OpenSlideHandler:
         except ET.ParseError:
             return {}
 
-    def _get_level_info(self) -> list[dict[str, Any]]:
+    def _get_level_info(self, mpp_correction_factor: float) -> list[dict[str, Any]]:
         """Get detailed information for each level.
 
         Returns:
@@ -131,8 +161,9 @@ class OpenSlideHandler:
         """
         levels = []
         props = dict(self.slide.properties)
-        base_mpp_x = float(props.get(openslide.PROPERTY_NAME_MPP_X, 0))
-        base_mpp_y = float(props.get(openslide.PROPERTY_NAME_MPP_Y, 0))
+        mpp_correction_factor = self._get_mpp_correction_factor(props) if "tiff.XResolution" in props else 1.0
+        base_mpp_x = float(props.get(openslide.PROPERTY_NAME_MPP_X, 0)) * mpp_correction_factor
+        base_mpp_y = float(props.get(openslide.PROPERTY_NAME_MPP_Y, 0)) * mpp_correction_factor
 
         for level in range(self.slide.level_count):
             width, height = self.slide.level_dimensions[level]
@@ -178,6 +209,7 @@ class OpenSlideHandler:
         props = dict(self.slide.properties)
         file_size = self.path.stat().st_size
         base_width, base_height = self.slide.dimensions
+        mpp_correction_factor = self._get_mpp_correction_factor(props)
 
         metadata = {
             "format": self._detect_format(),
@@ -188,8 +220,8 @@ class OpenSlideHandler:
             },
             "dimensions": {"width": base_width, "height": base_height},
             "resolution": {
-                "mpp_x": float(props.get(openslide.PROPERTY_NAME_MPP_X, 0)),
-                "mpp_y": float(props.get(openslide.PROPERTY_NAME_MPP_Y, 0)),
+                "mpp_x": float(props.get(openslide.PROPERTY_NAME_MPP_X, 0)) * mpp_correction_factor,
+                "mpp_y": float(props.get(openslide.PROPERTY_NAME_MPP_Y, 0)) * mpp_correction_factor,
                 "unit": props.get("tiff.ResolutionUnit", "unknown"),
                 "x_resolution": float(props.get("tiff.XResolution", 0)),
                 "y_resolution": float(props.get("tiff.YResolution", 0)),
@@ -204,7 +236,7 @@ class OpenSlideHandler:
                 "width": int(props.get("openslide.level[0].tile-width", 256)),
                 "height": int(props.get("openslide.level[0].tile-height", 256)),
             },
-            "levels": {"count": self.slide.level_count, "data": self._get_level_info()},
+            "levels": {"count": self.slide.level_count, "data": self._get_level_info(mpp_correction_factor)},
             "extra": ", ".join([
                 props.get("dicom.ImageType[0]", "0"),
                 props.get("dicom.ImageType[1]", "1"),
