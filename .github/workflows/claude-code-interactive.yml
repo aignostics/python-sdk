@@ -35,6 +35,7 @@ jobs:
     with:
       platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'interactive'
+      track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
     secrets:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}

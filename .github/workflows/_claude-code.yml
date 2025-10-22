@@ -26,6 +26,11 @@ on:
         required: false
         default: 'mcp__github_inline_comment__create_inline_comment,Read,Write,Edit,MultiEdit,Glob,Grep,LS,WebFetch,WebSearch,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),Bash(uv:*),Bash(make:*),Bash(export:*)'
         type: string
+      track_progress:
+        description: 'Track progress (set to false for workflow_dispatch)'
+        required: false
+        default: true
+        type: boolean
     secrets:
       ANTHROPIC_API_KEY:
         required: true
@@ -103,8 +108,9 @@ jobs:
         if: inputs.mode == 'interactive'
         uses: anthropics/claude-code-action@v1
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          track_progress: true
+          track_progress: ${{ inputs.track_progress }}
           additional_permissions: |
             actions: read
           allowed_bots: "dependabot[bot],renovate[bot]"
@@ -113,13 +119,13 @@ jobs:
             --model claude-sonnet-4-5-20250929
             --allowed-tools "${{ inputs.allowed_tools }}"
             --system-prompt "Read the CLAUDE.md file in this repository and explicitely acknowledge you will apply the guidance therein."
-
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
         uses: anthropics/claude-code-action@v1.0.13
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          track_progress: true
+          track_progress: ${{ inputs.track_progress }}
           additional_permissions: |
             actions: read
           allowed_bots: "dependabot[bot],renovate[bot]"
