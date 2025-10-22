@@ -1,5 +1,15 @@
 # Copilot Instructions - Aignostics Python SDK
 
+## Tooling specific to use in VSCode
+
+When interacting with you NiceGUI is typically running in watch mode via `make gui_watch` in the terminal. In that case you can point the browser to http://localhost:8000
+to go to the homepage of the app, and from there via the left sidebar or top-right burger menu navigate to the page, e.g. top-left in the sidebar
+to the application_describe page. Check the output of the terminal to find the port, can be 8000 or 8001 etc.
+
+You are running embedded in VSCode. Bias to use the MCP tools made available for you. E.g. when asked to make changes in the GUI layer prefer opening
+the openSimpleBrowser, go to the page, make the code change, check output in inbuilt browser. When asked to go to the HETA application (describe) page
+you can typically navigate to http://127.0.0.1:8000/application/he-tme . Don't ask the user to open the browser, but use openSimpleBrowser MCP too.
+
 ## Project Overview
 
 The Aignostics Python SDK is a **computational pathology platform** providing multiple interfaces to process whole slide images (WSI) with AI/ML applications. It follows a **modulith architecture** with independent modules connected via dependency injection.
