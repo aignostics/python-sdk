@@ -21,6 +21,7 @@ jobs:
     with:
       platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'automation'
+      track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
       allowed_tools: 'Read,Write,Edit,Glob,Grep,LS,Bash(git:*),Bash(gh:*)'
       prompt: |
         # 🎯 AI-POWERED OPERATIONAL EXCELLENCE AUDIT
