@@ -25,7 +25,7 @@ async def test_gui_idc_shows(user: User) -> None:
 @pytest.mark.timeout(timeout=60 * 5)
 async def test_gui_idc_downloads(user: User, tmp_path: Path, silent_logging: bool, record_property) -> None:
     """Test that the user can download a dataset to a temporary directory."""
-    record_property("tested-item-id", "TC-DATASET-GUI-01", "SPEC-GUI-SERVICE")
+    record_property("tested-item-id", "TC-DATASET-GUI-01, SPEC-GUI-SERVICE")
     # Mock get_user_data_directory to return the tmpdir for this test
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=tmp_path):
         await user.open("/dataset/idc")
@@ -110,7 +110,9 @@ async def test_gui_idc_download_fails_with_no_inputs(  # noqa: PLR0913, PLR0917
     """Test that the download fails with appropriate notification when no IDs are provided."""
     record_property("tested-item-id", "TC-DATASET-GUI-01, SPEC-GUI-SERVICE")
 
-    await _gui_idc_download_fails_with_invalid_inputs(user, tmpdir, source_input, expected_notification, silent_logging)
+    await _gui_idc_download_fails_with_invalid_inputs(
+        user, tmpdir, source_input, expected_notification, silent_logging, record_property
+    )
 
 
 @pytest.mark.e2e
@@ -132,4 +134,6 @@ async def test_gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913, PLR
     """Test that the download fails with appropriate notification when invalid IDs are provided."""
     record_property("tested-item-id", "TC-DATASET-GUI-01, SPEC-GUI-SERVICE")
 
-    await _gui_idc_download_fails_with_invalid_inputs(user, tmpdir, source_input, expected_notification, silent_logging)
+    await _gui_idc_download_fails_with_invalid_inputs(
+        user, tmpdir, source_input, expected_notification, silent_logging, record_property
+    )

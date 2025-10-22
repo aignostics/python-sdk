@@ -117,17 +117,16 @@ jobs:
       security-events: write
 
   ketryx_report_and_check:
-    needs: [get-commit-message, lint, audit, test, codeql] 
-    uses: ./.github/workflows/_ketryx_report_and_check.yml
-    with:
-      commit-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+    needs: [get-commit-message, lint, audit, test, codeql]
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
       !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
+    uses: ./.github/workflows/_ketryx_report_and_check.yml
     with:
+      commit-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
       attestations: write
