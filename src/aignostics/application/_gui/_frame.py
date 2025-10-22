@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
-STORAGE_TAB_RUNS_COMPLETED_ONLY = "runs_completed_only"
+STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
 service = Service()
 
@@ -64,7 +64,9 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     ):
                         with (
                             ui.item_section().props("avatar"),
-                            ui.icon(application_id_to_icon(application.application_id), color="primary"),
+                            ui.icon(application_id_to_icon(application.application_id), color="primary").classes(
+                                "text-4xl"
+                            ),
                         ):
                             ui.tooltip(application.application_id)
                         with ui.item_section():
@@ -78,20 +80,20 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
             except Exception as e:
                 with ui.item():
                     with ui.item_section().props("avatar"):
-                        ui.icon("error", color="red")
+                        ui.icon("error", color="red").classes("text-4xl")
                     with ui.item_section():
                         ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
                         logger.exception("Could not load applications")
 
         async def application_runs_load_and_render(
-            runs_column: ui.column, completed_only: bool = False, note_query: str | None = None
+            runs_column: ui.column, has_output: bool = False, note_query: str | None = None
         ) -> None:
             with runs_column:
                 try:
                     runs = await nicegui_run.io_bound(
                         Service.application_runs_static,
                         limit=RUNS_LIMIT,
-                        completed_only=completed_only,
+                        has_output=has_output,
                         note_regex=f".*{note_query}.*" if note_query else None,
                         note_query_case_insensitive=True,
                     )
@@ -106,32 +108,46 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     for index, run_data in enumerate(runs):
                         with (
                             ui.item(
-                                on_click=lambda run_id=run_data["application_run_id"]: ui.navigate.to(
-                                    f"/application/run/{run_id}"
-                                )
+                                on_click=lambda run_id=run_data["run_id"]: ui.navigate.to(f"/application/run/{run_id}")
                             )
                             .props("clickable")
                             .classes("w-full")
                             .mark(f"SIDEBAR_RUN_ITEM:{index}")
                         ):
                             with ui.item_section().props("avatar"):
-                                icon, color = run_status_to_icon_and_color(run_data["status"])
-                                with ui.icon(icon, color=color):
-                                    ui.tooltip(
-                                        f"Run {run_data['application_run_id']}, "
-                                        f"status {run_data['status'].value.upper()}"
+                                icon, color = run_status_to_icon_and_color(
+                                    run_data["state"],
+                                    run_data["termination_reason"],
+                                    run_data["item_count"],
+                                    run_data["item_succeeded_count"],
+                                )
+                                with (
+                                    ui.circular_progress(
+                                        min=0,
+                                        max=run_data["item_count"] if run_data["item_count"] > 0 else 1,
+                                        value=run_data["item_succeeded_count"],
+                                        color=color,
+                                        show_value=False,
+                                    ),
+                                    ui.icon(icon, color=color).classes("text-4xl"),
+                                ):
+                                    tooltip_text = (
+                                        f"{run_data['item_succeeded_count']} of {run_data['item_count']} succeeded, "
+                                        f"status {run_data['state'].value.upper()}, "
                                     )
+                                    if run_data["termination_reason"]:
+                                        tooltip_text += f"{run_data['termination_reason']}, "
+                                    tooltip_text += f"run id {run_data['run_id']}"
+                                    ui.tooltip(tooltip_text)
                             with ui.item_section():
-                                ui.label(f"{run_data['application_version_id']}").classes(
+                                ui.label(f"{run_data['application_id']} ({run_data['version_number']})").classes(
                                     "font-bold"
-                                    if context.client.page.path == "/application/run/{application_run_id}"
+                                    if context.client.page.path == "/application/run/{run_id}"
                                     and args
-                                    and args.get("application_run_id") == run_data["application_run_id"]
+                                    and args.get("run_id") == run_data["run_id"]
                                     else "font-normal"
-                                )
-                                ui.label(
-                                    f"triggered on {run_data['triggered_at'].astimezone().strftime('%m-%d %H:%M')}"
-                                )
+                                ).mark(f"LABEL_RUN_APPLICATION:{index}")
+                                ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
                     if not runs:
                         with ui.item():
                             with ui.item_section().props("avatar"):
@@ -156,32 +172,32 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 background_tasks.create_lazy(
                     coroutine=application_runs_load_and_render(
                         runs_column=runs_column,
-                        completed_only=app.storage.tab.get(STORAGE_TAB_RUNS_COMPLETED_ONLY, False),
+                        has_output=app.storage.tab.get(STORAGE_TAB_RUNS_HAS_OUTPUT, False),
                         note_query=search_input.query,
                     ),
                     name="_runs_list",
                 )
 
         class RunFilterButton(ui.icon):
-            _state: bool = False
+            _has_output: bool = False
 
             def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
                 super().__init__(*args, **kwargs)
-                self._state = app.storage.tab.get(STORAGE_TAB_RUNS_COMPLETED_ONLY, False)
+                self._has_output = app.storage.tab.get(STORAGE_TAB_RUNS_HAS_OUTPUT, False)
                 self.on("click", self.toggle)
 
             def toggle(self) -> None:
-                self._state = not self._state
-                app.storage.tab[STORAGE_TAB_RUNS_COMPLETED_ONLY] = self._state
+                self._has_output = not self._has_output
+                app.storage.tab[STORAGE_TAB_RUNS_HAS_OUTPUT] = self._has_output
                 self.update()
                 _runs_list.refresh()
 
             def update(self) -> None:
-                self.props(f"color={'positive' if self._state else 'grey'}")
+                self.props(f"color={'positive' if self._has_output else 'grey'}")
                 super().update()
 
             def is_active(self) -> bool:
-                return bool(self._state)
+                return bool(self._has_output)
 
         try:
             with ui.list().props(BORDERED_SEPARATOR).classes("full-width"):

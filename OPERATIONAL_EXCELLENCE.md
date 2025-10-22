@@ -3,7 +3,7 @@
 > 🧠 This project was scaffolded using the template [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template) with [copier](https://copier.readthedocs.io/), thereby applying the following toolchain:
 >
 1. Linting with [Ruff](https://github.com/astral-sh/ruff)
-2. Static type checking with [mypy](https://mypy.readthedocs.io/en/stable/)
+2. Static type checking with [mypy](https://mypy.readthedocs.io/en/stable/) and [pyright](https://github.com/microsoft/pyright)
 3. Complete set of [pre-commit](https://pre-commit.com/) hooks including [detect-secrets](https://github.com/Yelp/detect-secrets) and [pygrep](https://github.com/pre-commit/pygrep-hooks)
 4. Unit and E2E testing with [pytest](https://docs.pytest.org/en/stable/) including parallel test execution
 5. Matrix testing in multiple environments with [nox](https://nox.thea.codes/en/stable/)
@@ -11,7 +11,7 @@
 7. CI/CD pipeline automated with [GitHub Actions](https://github.com/features/actions) with parallel and reusable workflows, including scheduled testing, release automation, and multiple reporting channels and formats
 8. CI/CD pipeline can be run locally with [act](https://github.com/nektos/act)
 9. Code quality and security checks with [SonarQube](https://www.sonarsource.com/products/sonarcloud) and [GitHub CodeQL](https://codeql.github.com/)
-10. Dependency monitoring and vulnerability scanning with [pip-audit](https://pypi.org/project/pip-audit/), [trivy](https://trivy.dev/latest/), [Renovate](https://github.com/renovatebot/renovate), and [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+10. Dependency monitoring and vulnerability scanning with [pip-audit](https://pypi.org/project/pip-audit/), [trivy](https://trivy.dev/latest/), [Renovate](https://github.com/renovatebot/renovate),  [GitHub Dependabot](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide) and [Ketryx](https://ketryx.com/)
 11. Error monitoring and profiling with [Sentry](https://sentry.io/)  (optional)
 12. Logging and metrics with [Logfire](https://logfire.dev/) (optional)
 13. Prepared for uptime monitoring and scheduled tests with [betterstack](https://betterstack.com/) or alternatives
@@ -30,5 +30,7 @@
 26. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
 27. Settings for use with [VSCode](https://code.visualstudio.com/)
 28. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+29. Automated Pull Request Reviews with [Claude Code](https://docs.claude.com/en/docs/claude-code/github-actions)
+30. ISO compliant Application Lifecycle Management (ALM) with [Ketryx](https://ketryx.com/)
 
 See [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template?tab=readme-ov-file#multi-head-application-features) for how to bootstrap multi-headed applications with the template. Example code generated applies the modulith software architecture pattern with dependency injection, enabling auto-discovery of domain services, CLI commands, API operations and GUI pages.

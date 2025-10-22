@@ -16,7 +16,7 @@ make install
 
 ## Directory Layout
 
-```
+```text
 ├── Makefile               # Central entrypoint for build, test, release and deploy
 ├── noxfile.py             # Noxfile for running tests in multiple python environments and other tasks
 ├── .pre-commit-config.yaml # Definition of hooks run on commits
@@ -218,6 +218,54 @@ Update project to latest version of [oe-python-template](https://github.com/helm
 ```shell
 make update_from_template
 ```
+
+## Custom Metadata
+
+When submitting application runs to the Aignostics Platform, you can attach custom metadata to provide additional context, tracking information, or control flags. The SDK itself automatically attaches structured metadata to every run, which includes:
+
+- **SDK version and submission details**: When and how the run was submitted (CLI, script, or GUI)
+- **User information**: Organization and user details (when authenticated)
+- **CI/CD context**: GitHub Actions workflow information, pytest test context
+- **Workflow control**: Flags like `validate_only` or `onboard_to_aignostics_portal`
+- **Scheduling**: Due dates and deadlines for run completion
+- **Notes**: Optional user-provided notes
+
+### SDK Metadata Schema
+
+The SDK metadata follows a strict JSON Schema to ensure data quality and consistency. You can:
+
+- **View the schema**: [SDK Metadata Schema (latest)](https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_latest.json)
+- **Validate your metadata**: The SDK automatically validates metadata before submission
+- **Extend with custom fields**: Add your own metadata alongside the SDK-generated metadata
+
+### Adding Custom Metadata
+
+When submitting runs programmatically, you can provide additional metadata:
+
+```python
+from aignostics.platform import Client
+
+client = Client()
+
+# Your custom metadata
+custom_metadata = {
+    "experiment_id": "exp-2025-001",
+    "dataset_version": "v2.1",
+    "custom_flags": {
+        "enable_feature_x": True
+    }
+}
+
+# Submit run with custom metadata
+# SDK metadata is automatically added under the "sdk" key
+run = client.runs.submit(
+    application_id="your-app",
+    items=[...],
+    custom_metadata=custom_metadata
+)
+```
+
+The SDK will merge your custom metadata with its own tracking metadata, ensuring both are included in the run submission. The SDK metadata is always placed under the `sdk` key to avoid conflicts with your custom fields.
 
 ## Pull Request Guidelines
 

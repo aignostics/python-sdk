@@ -50,8 +50,8 @@ def _():
 @app.cell
 def _(Path, mo):
     query_params = mo.query_params()
-    application_run_id = query_params.get("application_run_id","Not set")
-    print(f"Application run id '{application_run_id}'")
+    run_id = query_params.get("run_id","Not set")
+    print(f"Application run id '{run_id}'")
     mo.vstack([
         mo.ui.file_browser(
             Path(query_params.get("results_folder", get_user_data_directory("results"))),

@@ -31,8 +31,6 @@ def boot(modules_to_instrument: list[str]) -> None:
 
     Args:
         modules_to_instrument (list): List of modules to be instrumented.
-        repository_url (str): URL of the repository.
-        repository_root_path (str): The root path of the repository. Default is the root path.
     """
     global _boot_called  # noqa: PLW0603
     if _boot_called:
@@ -61,6 +59,9 @@ def _parse_env_args() -> None:
 
     - Last but not least removes those args so typer does not complain about them.
     """
+    logger = get_logger(__name__)
+    logger.debug("_parse_env_args called with sys.argv: %s", sys.argv)
+
     i = 1  # Start after script name
     to_remove = []
     prefix = f"{__project_name__.upper()}_"

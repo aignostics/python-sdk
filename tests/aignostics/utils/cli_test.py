@@ -134,7 +134,7 @@ def test_prepare_cli_conditional_epilog_recursion(
 @pytest.mark.unit
 def test_add_epilog_recursively_with_cycle(mock_typer: MockTyper) -> None:
     """Test that _add_epilog_recursively handles cycles in the typer structure."""
-    # Create a cycle by having the typer reference itself
+    # Create a cycle by having the typer external_id itself
     mock_typer.registered_groups = []
     group = Mock(spec=TyperInfo)
     group.typer_instance = mock_typer

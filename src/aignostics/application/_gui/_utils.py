@@ -1,6 +1,6 @@
 """Utility functions for the application GUI."""
 
-from aignostics.platform import ApplicationRunStatus, ItemStatus
+from aignostics.platform import ItemState, ItemTerminationReason, RunState, RunTerminationReason
 
 
 def application_id_to_icon(application_id: str) -> str:
@@ -20,59 +20,70 @@ def application_id_to_icon(application_id: str) -> str:
     return "bug_report"
 
 
-def run_status_to_icon_and_color(run_status: str) -> tuple[str, str]:  # noqa: PLR0911
-    """Convert run status to icon amd color.
+def run_status_to_icon_and_color(
+    run_status: str, termination_reason: str | None, item_count: int, item_succeeded_count: int
+) -> tuple[str, str]:
+    """Convert run status and termination reason to icon and color.
 
     Args:
         run_status (str): The run status.
+        termination_reason (str): The termination reason.
+        item_count (int): The total number of items in the run.
+        item_succeeded_count (int): The number of items that succeeded in the run.
 
     Returns:
         tuple[str, str]: The icon name and color.
     """
     match run_status:
-        case ApplicationRunStatus.RUNNING:
-            return "directions_run", "info"
-        case ApplicationRunStatus.CANCELED_USER:
-            return "cancel", "warning"
-        case ApplicationRunStatus.CANCELED_SYSTEM:
-            return "sync_problem", "negative"
-        case ApplicationRunStatus.COMPLETED:
-            return "done_all", "positive"
-        case ApplicationRunStatus.COMPLETED_WITH_ERROR:
-            return "error", "negative"
-        case ApplicationRunStatus.RECEIVED:
-            return "call_received", "info"
-        case ApplicationRunStatus.REJECTED:
-            return "hand_gesture_off", "negative"
-        case ApplicationRunStatus.RUNNING:
-            return "directions_run", "info"
-        case ApplicationRunStatus.SCHEDULED:
+        case RunState.PENDING:
             return "schedule", "info"
+        case RunState.PROCESSING:
+            return "directions_run", "info"
+        case RunState.TERMINATED:
+            icon = "bug_report"
+            if termination_reason == RunTerminationReason.CANCELED_BY_USER:
+                icon = "cancel"
+            if termination_reason == RunTerminationReason.CANCELED_BY_SYSTEM:
+                icon = "error"
+            if termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
+                icon = "sports_score"
+            color = "negative"
+            if item_succeeded_count <= 0:
+                color = "negative"
+            elif item_succeeded_count < item_count:
+                color = "warning"
+            elif item_succeeded_count == item_count:
+                color = "positive"
+            return (icon, color)
     return "bug_report", "negative"
 
 
-def run_item_status_to_icon_and_color(run_status: str) -> tuple[str, str]:  # noqa: PLR0911
-    """Convert run item status to icon.
+def run_item_status_and_termination_reason_to_icon_and_color(  # noqa: PLR0911
+    item_status: str, termination_reason: str | None
+) -> tuple[str, str]:
+    """Convert item status and termination reason to icon and color.
 
     Args:
-        run_status (str): The run item status.
+        item_status (str): The item status.
+        termination_reason (str | None): The termination reason.
 
     Returns:
         tuple[str, str]: The icon name and color.
     """
-    match run_status:
-        case ItemStatus.PENDING:
-            return "pending", "info"
-        case ItemStatus.CANCELED_USER:
-            return "cancel", "warning"
-        case ItemStatus.CANCELED_SYSTEM:
-            return "sync_problem", "negative"
-        case ItemStatus.ERROR_USER:
-            return "hand_gesture_off", "negative"
-        case ItemStatus.ERROR_SYSTEM:
-            return "error", "negative"
-        case ItemStatus.SUCCEEDED:
-            return "check", "positive"
+    match item_status:
+        case ItemState.PENDING:
+            return "schedule", "info"
+        case ItemState.PROCESSING:
+            return "directions_run", "info"
+        case ItemState.TERMINATED:
+            if termination_reason == ItemTerminationReason.SKIPPED:
+                return "next_plan", "warning"
+            if termination_reason == ItemTerminationReason.SUCCEEDED:
+                return "check_circle", "positive"
+            if termination_reason == ItemTerminationReason.SYSTEM_ERROR:
+                return "error", "negative"
+            if termination_reason == ItemTerminationReason.USER_ERROR:
+                return "warning", "negative"
     return "bug_report", "negative"
 
 

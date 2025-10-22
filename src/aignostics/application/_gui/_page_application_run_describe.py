@@ -11,7 +11,7 @@ from aiopath import AsyncPath
 from nicegui import run as nicegui_run
 from nicegui import ui  # noq
 
-from aignostics.platform import ApplicationRunStatus, ItemStatus
+from aignostics.platform import ItemOutput, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
@@ -20,7 +20,7 @@ from .._utils import get_mime_type_for_artifact  # noqa: TID252
 from ._frame import _frame
 from ._utils import (
     mime_type_to_icon,
-    run_item_status_to_icon_and_color,
+    run_item_status_and_termination_reason_to_icon_and_color,
     run_status_to_icon_and_color,
 )
 
@@ -31,48 +31,76 @@ WIDTH_1200px = "width: 1200px; max-width: none"
 service = Service()
 
 
-async def _page_application_run_describe(application_run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
+async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
     """Describe Application.
 
     Args:
-        application_run_id (str): The ID of the application run to describe.
+        run_id (str): The ID of the application run to describe.
     """
     import pandas as pd  # noqa: PLC0415
 
     if find_spec("ijson"):
         from aignostics.qupath import Service as QuPathService  # noqa: PLC0415
 
+    ui.add_head_html("""
+        <style>
+        /* Force text wrapping in code blocks */
+        .nicegui-code pre {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            max-width: 100% !important;
+        }
+        /* Remove padding from expansion items to make full use of space */
+        .q-expansion-item .q-item {
+            padding-left: 0 !important;
+        }
+        .q-expansion-item .q-expansion-item__content {
+            padding: 0 !important;
+        }
+        </style>
+    """)
+
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
-    run = await nicegui_run.io_bound(service.application_run, application_run_id)
+    run = await nicegui_run.io_bound(service.application_run, run_id)
     spinner.set_visibility(False)
     run_data = run.details() if run else None
 
     if run and run_data:
-        icon, color = run_status_to_icon_and_color(run_data.status.value)
+        icon, color = run_status_to_icon_and_color(
+            run_data.state.value,
+            run_data.termination_reason,
+            run_data.statistics.item_count,
+            run_data.statistics.item_succeeded_count,
+        )
         await _frame(
             navigation_title=(
-                f"Run of {run_data.application_version_id} "
-                f"on {run_data.triggered_at.astimezone().strftime('%m-%d %H:%M')}"
+                f"Run of {run_data.application_id} ({run_data.version_number}) on "
+                f"{run_data.submitted_at.astimezone().strftime('%m-%d %H:%M')}"
             ),
             navigation_icon=icon,
             navigation_icon_color=color,
-            navigation_icon_tooltip=f"Run {run_data.application_run_id}, status {run_data.status.value.upper()}",
+            navigation_icon_tooltip=f"Run {run_data.run_id}, status {run_data.state.value.upper()}",
             left_sidebar=True,
-            args={"application_run_id": application_run_id},
+            args={"run_id": run_id},
         )
     else:
         await _frame(
-            navigation_title=f"Run {application_run_id}",
+            navigation_title=f"Run {run_id}",
             navigation_icon="bug_report",
             navigation_icon_color="negative",
             navigation_icon_tooltip="Could not load run data",
             left_sidebar=True,
-            args={"application_run_id": application_run_id},
+            args={"run_id": run_id},
         )
 
     if run is None:
-        ui.label(f"Failed to get run '{application_run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
+        ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
         return
+
+    # Forward declaration of UI buttons that will be defined later
+    cancel_button: ui.button
+    delete_button: ui.button
 
     async def _cancel(run_id: str) -> bool:
         """Cancel the application run.
@@ -256,7 +284,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                 download_button.props(add="loading")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
-                    run_id=run.application_run_id,
+                    run_id=run.run_id,
                     destination_directory=Path(selected_folder.value),
                     wait_for_completion=True,
                     qupath_project=qupath_project,
@@ -426,38 +454,53 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
         if button:
             button.disable()
             button.props(add="loading")
-        ui.navigate.to(f"/notebook/{run.application_run_id}?results_folder={quote(results_folder.as_posix())}")
+        ui.navigate.to(f"/notebook/{run.run_id}?results_folder={quote(results_folder.as_posix())}")
         ui.navigate.reload()  # TODO(Helmut): Find out why this workaround works. Was just a hunch ...
 
     if run_data:  # noqa: PLR1702
         with ui.row().classes("w-full justify-center"):
-            with ui.expansion(text=f"Run {run.application_run_id}"):
+            expansion = ui.expansion(text=f"Run {run.run_id}", icon="info")
+            expansion.on_value_change(
+                lambda e: expansion.classes(add="w-full" if e.value else "", remove="w-full" if not e.value else "")
+            )
+            with expansion:
                 # Display run metadata, including duration if possible, using humanize
 
-                triggered_at = run_data.triggered_at.astimezone()
+                submitted_at = run_data.submitted_at.astimezone()
                 terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
-                if triggered_at and terminated_at:
-                    duration_seconds = (terminated_at - triggered_at).total_seconds()
+                if submitted_at and terminated_at:
+                    duration_seconds = (terminated_at - submitted_at).total_seconds()
                     duration_str = humanize.precisedelta(duration_seconds, format="%0.0f")
                 else:
                     duration_str = "N/A"
 
+                if run_data.state is RunState.TERMINATED and run_data.termination_reason:
+                    status_str = f"{run_data.state.value} ({run_data.termination_reason.name})"
+                else:
+                    status_str = f"{run_data.state.value}"
+
                 ui.code(
                     f"""
-                    * Run ID: {run_data.application_run_id}
-                    * Application Version: {run_data.application_version_id}
-                    * Message: {run_data.message}
-                    * Duration: {duration_str}
-                    * Triggered On: {triggered_at.strftime("%m-%d %H:%M")}
-                    * Terminated At: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"}
-                    * Triggered By: {run_data.triggered_by}
-                    * Organization: {run_data.organization_id}
+                    * Run ID: {run_data.run_id}
+                    * Application: {run_data.application_id} ({run_data.version_number})
+                    * Status: {status_str}
+                    * Output: {run_data.output.name}
+                        - {run_data.statistics.item_count} items
+                        - {run_data.statistics.item_pending_count} pending
+                        - {run_data.statistics.item_processing_count} processing
+                        - {run_data.statistics.item_skipped_count} skipped
+                        - {run_data.statistics.item_succeeded_count} succeeded
+                        - {run_data.statistics.item_user_error_count} user errors
+                        - {run_data.statistics.item_system_error_count} system errors
+                    * Submitted: {submitted_at.strftime("%m-%d %H:%M")} ({run_data.submitted_by})
+                    * Terminated: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"} ({duration_str})
+                    * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
                     """,
                     language="markdown",
                 ).classes("full-width")
-                if run_data.metadata:
+                if run_data.custom_metadata:
                     properties = {
-                        "content": {"json": run_data.metadata},
+                        "content": {"json": run_data.custom_metadata},
                         "mode": "tree",
                         "readOnly": True,
                         "mainMenuBar": True,
@@ -467,7 +510,7 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
             ui.space()
             with ui.row().classes("justify-end"):
-                if run_data.status.value == ApplicationRunStatus.COMPLETED:
+                if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:
                     with ui.button_group().props("push"):
                         with (
                             ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
@@ -498,34 +541,27 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                             ):
                                 ui.tooltip("Open results in Python Notebook served by Marimo")
 
-                if run_data.status.value == ApplicationRunStatus.RUNNING:
+                if run_data.state.value in {RunState.PENDING, RunState.PROCESSING}:
                     cancel_button = ui.button(
                         "Cancel",
                         color="red",
-                        on_click=lambda: _cancel(run.application_run_id),
+                        on_click=lambda: _cancel(run.run_id),
                         icon="cancel",
                     ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-                if run_data.status.value in {
-                    ApplicationRunStatus.CANCELED_USER,
-                    ApplicationRunStatus.CANCELED_SYSTEM,
-                    ApplicationRunStatus.COMPLETED,
-                    ApplicationRunStatus.COMPLETED_WITH_ERROR,
-                    ApplicationRunStatus.REJECTED,
-                    ApplicationRunStatus.RUNNING,
-                    ApplicationRunStatus.SCHEDULED,
-                }:
+                if run_data:
                     delete_button = ui.button(
                         "Delete",
                         color="red",
-                        on_click=lambda: _delete(run.application_run_id),
+                        on_click=lambda: _delete(run.run_id),
                         icon="delete",
                     ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
 
-        note = run_data.metadata.get("sdk", {}).get("note") if run_data.metadata else None
+        note = run_data.custom_metadata.get("sdk", {}).get("note") if run_data.custom_metadata else None
         if note:
-            with ui.card().classes("full-width"):
-                ui.markdown(str(note))
+            with ui.card().classes("full-width bg-aignostics-light"):
+                ui.label("Note:").classes("text-italic text-sm text-gray-500")
+                ui.label(str(note)).classes("-mt-4")
 
         with ui.list().classes("full-width"):
             results = list(run.results())
@@ -541,23 +577,28 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                     ui.space()
                 return
             for item in results:
-                with ui.item().classes("h-96").props("clickable"):
+                with ui.item().classes("h-96 px-0").props("clickable"):
                     with (
                         ui.item_section().classes("h-full"),
                         ui.card().tight().classes("h-full"),
                         ui.row().classes("w-full"),
                     ):
-                        image_file: AsyncPath | None = await AsyncPath(item.reference).resolve()
+                        image_file: AsyncPath | None = await AsyncPath(item.external_id).resolve()
                         if image_file and await image_file.is_file():
                             image_url = "/thumbnail?source=" + quote(image_file.as_posix())
                         else:
                             image_file = None
                             image_url = "/application_assets/image-not-found.png"
                         ui.image(image_url).classes("object-contain absolute-center max-h-full")
-                        icon, color = run_item_status_to_icon_and_color(item.status.value)
+                        icon, color = run_item_status_and_termination_reason_to_icon_and_color(
+                            item.state.value, item.termination_reason
+                        )
                         with ui.row().classes("justify-center w-full"):
                             with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                ui.tooltip(f"Item {item.item_id}, status {item.status.value.upper()}")
+                                tooltip = f"Item {item.item_id}, status {item.state.value.upper()}"
+                                if item.termination_reason:
+                                    tooltip += f" ({item.termination_reason})"
+                                ui.tooltip(tooltip)
                             ui.space()
                             with ui.button_group().props():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():
@@ -583,84 +624,85 @@ async def _page_application_run_describe(application_run_id: str) -> None:  # no
                         with ui.row().classes(
                             "absolute-bottom h-32 bg-indigo-700 bg-opacity-80 content-center w-full p-4"
                         ):
-                            ui.label(item.reference).classes(
+                            ui.label(item.external_id).classes(
                                 "text-center break-all text-white font-semibold text-shadow-lg/30"
                             )
-                    if item.status is ItemStatus.SUCCEEDED:
-                        with ui.item_section().classes("w-full"):
-                            if item.status is ItemStatus.SUCCEEDED and item.output_artifacts:
-                                with ui.scroll_area().classes("h-full").style("padding: 0"):
-                                    for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
-                                        mime_type = get_mime_type_for_artifact(artifact)
-                                        with ui.expansion(
-                                            str(artifact.name),
-                                            icon=mime_type_to_icon(mime_type),
-                                            group="artifacts",
-                                        ).classes("w-full"):
-                                            if artifact.download_url:
-                                                url = artifact.download_url
-                                                title = artifact.name
-                                                metadata = artifact.metadata
-                                                with ui.button_group():
-                                                    if mime_type == "image/tiff":
-                                                        ui.button(
-                                                            "Preview",
-                                                            icon=mime_type_to_icon(mime_type),
-                                                            on_click=lambda _, url=url, title=title: tiff_dialog_open(
-                                                                title, url
-                                                            ),
-                                                        )
-                                                    if mime_type == "text/csv":
-                                                        ui.button(
-                                                            "Preview",
-                                                            icon=mime_type_to_icon(mime_type),
-                                                            on_click=lambda _, url=url, title=title: csv_dialog_open(
-                                                                title, url
-                                                            ),
-                                                        )
-                                                    if url:
-                                                        ui.button(
-                                                            text="Download",
-                                                            icon="cloud_download",
-                                                            on_click=lambda _, url=url: ui.navigate.to(
-                                                                url, new_tab=True
-                                                            ),
-                                                        )
-                                                    if metadata:
-                                                        ui.button(
-                                                            text="Schema",
-                                                            icon="schema",
-                                                            on_click=lambda _,
-                                                            title=title,
-                                                            metadata=metadata: metadata_dialog_open(title, metadata),
-                                                        )
-                    elif item.status in {
-                        ItemStatus.PENDING,
-                        ItemStatus.ERROR_USER,
-                        ItemStatus.ERROR_SYSTEM,
-                        ItemStatus.CANCELED_USER,
-                        ItemStatus.CANCELED_SYSTEM,
-                    }:
-                        if item.message:
-                            with ui.row().classes("w-1/2 justify-start items-start content-start ml-4"):
+                    if item.output is ItemOutput.FULL:
+                        with ui.item_section().classes("w-full"), ui.scroll_area().classes("h-full p-0"):
+                            for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
+                                mime_type = get_mime_type_for_artifact(artifact)
+                                with ui.expansion(
+                                    str(artifact.name),
+                                    icon=mime_type_to_icon(mime_type),
+                                    group="artifacts",
+                                ).classes("w-full"):
+                                    if artifact.download_url:
+                                        url = artifact.download_url
+                                        title = artifact.name
+                                        metadata = artifact.metadata
+                                        with ui.button_group():
+                                            if mime_type == "image/tiff":
+                                                ui.button(
+                                                    "Preview",
+                                                    icon=mime_type_to_icon(mime_type),
+                                                    on_click=lambda _, url=url, title=title: tiff_dialog_open(
+                                                        title, url
+                                                    ),
+                                                )
+                                            if mime_type == "text/csv":
+                                                ui.button(
+                                                    "Preview",
+                                                    icon=mime_type_to_icon(mime_type),
+                                                    on_click=lambda _, url=url, title=title: csv_dialog_open(
+                                                        title, url
+                                                    ),
+                                                )
+                                            if url:
+                                                ui.button(
+                                                    text="Download",
+                                                    icon="cloud_download",
+                                                    on_click=lambda _, url=url: ui.navigate.to(url, new_tab=True),
+                                                )
+                                            if metadata:
+                                                ui.button(
+                                                    text="Schema",
+                                                    icon="schema",
+                                                    on_click=lambda _,
+                                                    title=title,
+                                                    metadata=metadata: metadata_dialog_open(title, metadata),
+                                                )
+                    elif item.state is ItemState.TERMINATED:
+                        if item.error_message:
+                            with (
+                                ui.row()
+                                .classes("w-1/2 justify-start items-start content-start ml-4")
+                                .style("max-width: 50%;")
+                            ):
                                 ui.code(
-                                    item.message,
+                                    item.error_message,
                                     language="markdown",
-                                ).classes("full-width break-all ml-8")
+                                ).classes("ml-8").style("width: 100%; max-width: 100%;")
                         else:
                             with ui.row().classes("w-1/2 justify-center content-center"):
                                 ui.space()
-                                animation_file = {
-                                    ItemStatus.PENDING: "pending.lottie",
-                                    ItemStatus.ERROR_USER: "error.lottie",
-                                    ItemStatus.ERROR_SYSTEM: "error.lottie",
-                                    ItemStatus.CANCELED_USER: "canceled.lottie",
-                                    ItemStatus.CANCELED_SYSTEM: "canceled.lottie",
-                                }[item.status]
                                 ui.html(
-                                    f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                    '<dotlottie-player src="/application_assets/error.lottie" '
                                     'background="transparent" speed="1" style="width: 300px; height: 300px" '
                                     'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
                                     sanitize=False,
                                 )
                                 ui.space()
+                    else:
+                        with ui.row().classes("w-1/2 justify-center content-center"):
+                            ui.space()
+                            animation_file = {
+                                ItemState.PENDING: "pending.lottie",
+                                ItemState.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
+                            }[item.state]
+                            ui.html(
+                                f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                                'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                                sanitize=False,
+                            )
+                            ui.space()

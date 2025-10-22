@@ -42,4 +42,4 @@ class PageBuilder(BasePageBuilder):
             """
             with frame("Forced Error", left_sidebar=False):
                 pass
-            raise Exception("bla")  # noqa: EM101, TRY002
+            raise Exception("forced")  # noqa: EM101, TRY002

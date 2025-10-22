@@ -14,6 +14,9 @@ inputs:
   summary-title:
     description: 'Title for the GitHub step summary'
     required: true
+  commit-message:
+    description: 'The commit message to check for skip markers'
+    required: true
 
 runs:
   using: 'composite'
@@ -21,10 +24,10 @@ runs:
     - name: Run tests
       if: |
         (inputs.skip-marker == '' || (
-          !contains(github.event.head_commit.message, inputs.skip-marker) && 
+          !contains(inputs.commit-message, inputs.skip-marker) && 
           !contains(github.event.pull_request.labels.*.name, inputs.skip-marker)
         )) && 
-        (!contains(github.event.head_commit.message, 'skip:test:all')) &&
+        (!contains(inputs.commit-message, 'skip:test:all')) &&
         (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
       shell: bash
       run: |

@@ -72,7 +72,6 @@ def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mo
     Args:
         mock_ui: Mock for nicegui UI
         mock_register_pages: Mock for gui_register_pages function
-        nicegui_reset_globals: Fixture to reset NiceGUI globals
     """
     with mock.patch("nicegui.native.find_open_port", return_value=8000):
         os.environ["NICEGUI_SCREEN_TEST_PORT"] = "3392"
@@ -97,7 +96,6 @@ def test_gui_run_custom_params(mock_ui_run: mock.MagicMock, mock_register_pages:
     Args:
         mock_ui_run: Mock for nicegui UI run
         mock_register_pages: Mock for gui_register_pages function
-        nicegui_reset_globals: Fixture to reset NiceGUI globals
     """
     os.environ["NICEGUI_SCREEN_TEST_PORT"] = "3392"
     gui_run(
@@ -128,7 +126,6 @@ def test_gui_run_in_container_with_native(mock_ui_run: mock.MagicMock) -> None:
 
     Args:
         mock_ui_run: Mock for nicegui UI run
-        nicegui_reset_globals: Fixture to reset NiceGUI globals
     """
     with pytest.raises(ValueError) as excinfo:
         gui_run(native=True)

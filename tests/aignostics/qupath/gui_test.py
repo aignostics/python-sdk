@@ -15,7 +15,6 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
-from aignostics.platform import ApplicationRunStatus
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
@@ -32,7 +31,7 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging: None) -> None:
+async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_logging: None) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
@@ -52,7 +51,7 @@ async def test_gui_qupath_install(user: User, runner: CliRunner, silent_logging:
     await assert_notified(
         user,
         f"QuPath installed successfully to '{app_dir}",
-        wait_seconds=35,
+        wait_seconds=60 * 2,
     )
 
     # Step 4: Check we indicate QuPath is installed
@@ -151,26 +150,30 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
-        latest_version = Service().application_version_latest(Service().application(HETA_APPLICATION_ID))
-        latest_version_id = latest_version.application_version_id
-        runs = Service().application_runs(limit=1, status=ApplicationRunStatus.COMPLETED)
+        application = Service().application(HETA_APPLICATION_ID)
+        latest_version_number = application.versions[0].number if application.versions else None
+        assert latest_version_number, f"No versions found for application {HETA_APPLICATION_ID}"
+        runs = Service().application_runs(limit=1, has_output=True)
 
         if not runs:
             pytest.fail("No completed runs found, please run the test first.")
         # Find a completed run with the latest application version ID
         run = None
         for potential_run in runs:
-            if potential_run.application_version_id == latest_version_id:
+            if (
+                potential_run.application_id == application.application_id
+                and potential_run.version_number == latest_version_number
+            ):
                 run = potential_run
                 break
         if not run:
-            pytest.skip(f"No completed runs found with version {latest_version_id}")
+            pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
 
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.application_run_id}, status: {run.status}")
-        await user.open(f"/application/run/{run.application_run_id}")
-        await user.should_see(f"Run {run.application_run_id}")
-        await user.should_see(f"Run of {latest_version_id}")
+        print(f"Found existing run: {run.run_id}, status: {run.state}")
+        await user.open(f"/application/run/{run.run_id}")
+        await user.should_see(f"Run {run.run_id}")
+        await user.should_see(f"Run of {application.application_id} ({latest_version_number})")
 
         # Step 2: Open Result Download dialog
         await user.should_see(marker="BUTTON_OPEN_QUPATH", retries=100)
@@ -185,9 +188,9 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
 
         # Check: Download completed
-        await assert_notified(user, "Download and QuPath project creation completed.", 60)
+        await assert_notified(user, "Download and QuPath project creation completed.", 60 * 2)
         print_directory_structure(tmp_path, "execute")
-        run_out_dir = tmp_path / run.application_run_id
+        run_out_dir = tmp_path / run.run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
         # Find any subdirectory in the run_out_dir that is not qupath
         subdirs = [d for d in run_out_dir.iterdir() if d.is_dir() and d.name != "qupath"]

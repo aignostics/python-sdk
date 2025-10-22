@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.190 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.192 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -23,6 +23,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `application`: List and inspect applications on...
 * `bucket`: Operations on cloud bucket on Aignostics...
 * `dataset`: Download datasets from National Institute...
+* `sdk`: Platform operations such as dumping the...
 * `user`: User operations such as login, logout and...
 * `qupath`: Interact with QuPath application.
 * `system`: Determine health, info and further...
@@ -106,15 +107,16 @@ Output the input schema of the application in JSON format.
 **Usage**:
 
 ```console
-$ aignostics application dump-schemata [OPTIONS] ID
+$ aignostics application dump-schemata [OPTIONS] APPLICATION_ID
 ```
 
 **Arguments**:
 
-* `ID`: Id of the application or application_version to dump the output schema for. If application id is given the latest version of the application will be used.  [required]
+* `APPLICATION_ID`: Id of the application or application_version to dump the output schema for.  [required]
 
 **Options**:
 
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--destination DIRECTORY`: Path pointing to directory where the input and output schemata will be dumped.  [default: /Users/helmut/Code/python-sdk]
 * `--zip / --no-zip`: If set, the schema files will be zipped into a single file, with the schema files deleted.  [default: no-zip]
 * `--help`: Show this message and exit.
@@ -135,6 +137,7 @@ $ aignostics application describe [OPTIONS] APPLICATION_ID
 
 **Options**:
 
+* `--verbose / --no-verbose`: Show application details  [default: no-verbose]
 * `--help`: Show this message and exit.
 
 ### `aignostics application run`
@@ -182,22 +185,28 @@ Prepare metadata, upload data to platform, and submit an application run, then i
 **Usage**:
 
 ```console
-$ aignostics application run execute [OPTIONS] APPLICATION_VERSION_ID METADATA_CSV_FILE SOURCE_DIRECTORY MAPPING...
+$ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE SOURCE_DIRECTORY MAPPING...
 ```
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of application version to execute. If application id is given, the latest version of that application is used.  [required]
-* `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and references.  [required]
+* `APPLICATION_ID`: Id of application version to execute.  [required]
+* `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and external ids.  [required]
 * `SOURCE_DIRECTORY`: Source directory to scan for whole slide images  [required]
-* `MAPPING...`: Mapping to use for amending metadata CSV file. Each mapping is of the form &#x27;&lt;regexp&gt;:&lt;key&gt;:&lt;value&gt;,&lt;key&gt;:&lt;value&gt;,...&#x27;.The regular expression is matched against the reference attribute of the entry. The key/value pairs are applied to the entry if the pattern matches. You can use the mapping option multiple times to set values for multiple files. Example: &quot;.*:staining_method:H&amp;E,tissue:LIVER,disease:LIVER_CANCER&quot;  [required]
+* `MAPPING...`: Mapping to use for amending metadata CSV file. Each mapping is of the form &#x27;&lt;regexp&gt;:&lt;key&gt;:&lt;value&gt;,&lt;key&gt;:&lt;value&gt;,...&#x27;.The regular expression is matched against the external_id attribute of the entry. The key/value pairs are applied to the entry if the pattern matches. You can use the mapping option multiple times to set values for multiple files. Example: &quot;.*:staining_method:H&amp;E,tissue:LIVER,disease:LIVER_CANCER&quot;  [required]
 
 **Options**:
 
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760341898253.002]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760991967659.294]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
+* `--note TEXT`: Optional note to include with the run submission via custom metadata.
+* `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
+* `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
+* `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
+* `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run prepare`
@@ -217,18 +226,19 @@ Example:
 **Usage**:
 
 ```console
-$ aignostics application run prepare [OPTIONS] APPLICATION_VERSION_ID METADATA_CSV SOURCE_DIRECTORY
+$ aignostics application run prepare [OPTIONS] APPLICATION_ID METADATA_CSV SOURCE_DIRECTORY
 ```
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of the application version to generate the metadata for. If application id is given, the latest version of that application is used.  [required]
+* `APPLICATION_ID`: Id of the application to generate the metadata for.   [required]
 * `METADATA_CSV`: Target filename for the generated metadata CSV file.  [required]
 * `SOURCE_DIRECTORY`: Source directory to scan for whole slide images  [required]
 
 **Options**:
 
-* `--mapping TEXT`: Mapping to use for amending metadata CSV file. Each mapping is of the form &#x27;&lt;regexp&gt;:&lt;key&gt;:&lt;value&gt;,&lt;key&gt;:&lt;value&gt;,...&#x27;. The regular expression is matched against the reference attribute of the entry. The key/value pairs are applied to the entry if the pattern matches. You can use the mapping option multiple times to set values for multiple files.
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
+* `--mapping TEXT`: Mapping to use for amending metadata CSV file. Each mapping is of the form &#x27;&lt;regexp&gt;:&lt;key&gt;:&lt;value&gt;,&lt;key&gt;:&lt;value&gt;,...&#x27;. The regular expression is matched against the external_id attribute of the entry. The key/value pairs are applied to the entry if the pattern matches. You can use the mapping option multiple times to set values for multiple files.
 * `--help`: Show this message and exit.
 
 #### `aignostics application run upload`
@@ -242,17 +252,18 @@ Upload files referenced in the metadata CSV file to the Aignostics platform.
 **Usage**:
 
 ```console
-$ aignostics application run upload [OPTIONS] APPLICATION_VERSION_ID METADATA_CSV_FILE
+$ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 ```
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of the application version to upload data for. If application id is given, the latest version of that application is used.  [required]
-* `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and references.  [required]
+* `APPLICATION_ID`: Id of the application to upload data for.   [required]
+* `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and external ids.  [required]
 
 **Options**:
 
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760341898253.1687]
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760991967659.4062]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -268,17 +279,22 @@ Returns:
 **Usage**:
 
 ```console
-$ aignostics application run submit [OPTIONS] APPLICATION_VERSION_ID METADATA_CSV_FILE
+$ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 ```
 
 **Arguments**:
 
-* `APPLICATION_VERSION_ID`: Id of the application version to submit run for. If application id is given, the latest version of that application is used.  [required]
-* `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and references.  [required]
+* `APPLICATION_ID`: Id of the application to submit run for.  [required]
+* `METADATA_CSV_FILE`: Filename of the .csv file containing the metadata and external ids.  [required]
 
 **Options**:
 
+* `--application-version TEXT`: Version of the application to generate the metadata for. If not provided, the latest version will be used.
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
+* `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
+* `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
+* `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
+* `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`
@@ -685,6 +701,43 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 * `--help`: Show this message and exit.
 
+## `aignostics sdk`
+
+Platform operations such as dumping the SDK metadata schema.
+
+**Usage**:
+
+```console
+$ aignostics sdk [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `metadata-schema`: Print the JSON Schema for SDK metadata.
+
+### `aignostics sdk metadata-schema`
+
+Print the JSON Schema for SDK metadata.
+
+This schema defines the structure and validation rules for metadata
+that the SDK attaches to application runs. Use this to understand
+what fields are expected and their types.
+
+**Usage**:
+
+```console
+$ aignostics sdk metadata-schema [OPTIONS]
+```
+
+**Options**:
+
+* `--pretty / --no-pretty`: Pretty print JSON output  [default: pretty]
+* `--help`: Show this message and exit.
+
 ## `aignostics user`
 
 User operations such as login, logout and whoami.
@@ -828,7 +881,7 @@ $ aignostics qupath processes [OPTIONS]
 
 **Options**:
 
-* `-j, --json`: Output the running QuPath processes as JSON.  [required]
+* `-j, --json`: Output the running QuPath processes as JSON.
 * `--help`: Show this message and exit.
 
 ### `aignostics qupath terminate`
@@ -1032,7 +1085,6 @@ Start the web server, hosting the graphical web application and/or webservice AP
 Args:
     host (str): Host to bind the server to.
     port (int): Port to bind the server to.
-    watch (bool): Enable auto-reload on changes of source code.
     open_browser (bool): Open app in browser after starting the server.
 
 **Usage**:

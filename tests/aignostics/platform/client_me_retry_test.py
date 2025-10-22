@@ -327,12 +327,12 @@ class TestMeRetryConfiguration:
     @pytest.mark.unit
     @staticmethod
     def test_me_respects_max_attempts_setting(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
-        """Test that me() respects the me_retry_attempts_max setting.
+        """Test that me() respects the me_retry_attempts setting.
 
         The retry logic should stop after the configured maximum number of attempts.
         """
         # Set max attempts to 5
-        mock_settings.return_value.me_retry_attempts_max = 5
+        mock_settings.return_value.me_retry_attempts = 5
 
         call_count = 0
 
@@ -355,12 +355,12 @@ class TestMeRetryConfiguration:
     @pytest.mark.unit
     @staticmethod
     def test_me_respects_zero_max_attempts(mock_settings: MagicMock, client_with_mock_api: Client) -> None:
-        """Test that me() with me_retry_attempts_max=0 does not retry.
+        """Test that me() with me_retry_attempts=0 does not retry.
 
         When max attempts is set to 0, the function should fail immediately without any retries.
         """
         # Set max attempts to 0 (no retries)
-        mock_settings.return_value.me_retry_attempts_max = 0
+        mock_settings.return_value.me_retry_attempts = 0
 
         call_count = 0
 
@@ -388,7 +388,7 @@ class TestMeRetryConfiguration:
         """
         mock_settings.return_value.me_retry_wait_min = 0.1
         mock_settings.return_value.me_retry_wait_max = 10.0
-        mock_settings.return_value.me_retry_attempts_max = 4
+        mock_settings.return_value.me_retry_attempts = 4
 
         call_times = []
 
@@ -500,7 +500,7 @@ class TestMeWithSettings:
 
         with patch("aignostics.platform._client.settings") as mock_settings:
             settings_obj = MagicMock()
-            settings_obj.me_retry_attempts_max = 3
+            settings_obj.me_retry_attempts = 3
             settings_obj.me_retry_wait_min = 0.1
             settings_obj.me_retry_wait_max = 5.0
             settings_obj.me_timeout = 20.0
@@ -538,7 +538,7 @@ class TestMeWithSettings:
         with patch("aignostics.platform._client.settings") as mock_settings:
             # First call with max_attempts = 1 (will fail)
             settings_obj_1 = MagicMock()
-            settings_obj_1.me_retry_attempts_max = 1
+            settings_obj_1.me_retry_attempts = 1
             settings_obj_1.me_retry_wait_min = 0.1
             settings_obj_1.me_retry_wait_max = 2.0
             settings_obj_1.me_timeout = 10.0
@@ -556,7 +556,7 @@ class TestMeWithSettings:
 
             # Second call with max_attempts = 3 (will succeed after retry)
             settings_obj_2 = MagicMock()
-            settings_obj_2.me_retry_attempts_max = 3
+            settings_obj_2.me_retry_attempts = 3
             settings_obj_2.me_retry_wait_min = 0.1
             settings_obj_2.me_retry_wait_max = 2.0
             settings_obj_2.me_timeout = 10.0

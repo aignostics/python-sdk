@@ -64,8 +64,11 @@ def _get_test_python_versions() -> list[str]:
         list[str]: List of Python version strings to test against
     """
     versions = ["3.11.9", "3.12.12", "3.13.7"]
-    if platform.system() == "Windows":
-        versions.remove("3.12.12")  # Remove 3.12.x on Windows due to instability on this platform
+    if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
+        versions = ["3.13.7"]
+        # Only test with 3.13.7 on Windows ARM due to:
+        # 1. Access denied errors when uv >= 0.9.4 tries to recreate venv directories (all Python versions)
+        # 2. Instability of Python 3.12.x on Windows ARM platform
     return versions
 
 
@@ -120,6 +123,7 @@ def lint(session: nox.Session) -> None:
         "--check",
         ".",
     )
+    session.run("pyright", "--pythonversion", PYTHON_VERSION, "--threads")
     session.run("mypy", "src")
 
 
@@ -385,10 +389,10 @@ def _generate_readme(session: nox.Session) -> None:
     preamble = "\n[//]: # (README.md generated from docs/partials/README_*.md)\n\n"
     header = Path("docs/partials/README_header.md").read_text(encoding="utf-8")
     main = Path("docs/partials/README_main.md").read_text(encoding="utf-8")
-    platform = Path("docs/partials/README_platform.md").read_text(encoding="utf-8")
+    platform_section = Path("docs/partials/README_platform.md").read_text(encoding="utf-8")
     glossary = Path("docs/partials/README_glossary.md").read_text(encoding="utf-8")
     footer = Path("docs/partials/README_footer.md").read_text(encoding="utf-8")
-    readme_content = f"{preamble}{header}\n\n{main}\n\n{platform}\n\n{footer}\n\n{glossary}"
+    readme_content = f"{preamble}{header}\n\n{main}\n\n{platform_section}\n\n{footer}\n\n{glossary}"
     Path("README.md").write_text(readme_content, encoding="utf-8")
     session.log("Generated README.md file from partials")
 
@@ -420,6 +424,51 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
                 ]
                 session.run(*cmd_args, stdout=f, external=True)
             session.log(f"Generated API {version} OpenAPI schema in {format_name} format")
+
+
+def _generate_sdk_metadata_schema(session: nox.Session) -> None:
+    """Generate SDK metadata JSON schema with versioned filename.
+
+    Args:
+        session: The nox session instance
+    """
+    # Create directory if it doesn't exist
+    Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
+
+    # Write both versioned and unversioned (latest) files
+    # First get the schema to extract the version
+    with Path("docs/source/_static/sdk_metadata_schema_temp.json").open("w", encoding="utf-8") as f:
+        session.run(
+            "aignostics",
+            "sdk",
+            "metadata-schema",
+            "--no-pretty",
+            "--env",
+            "AIGNOSTICS_LOG_CONSOLE_ENABLED=false",
+            stdout=f,
+            external=True,
+        )
+
+    # Read back to get the version from $id
+    with Path("docs/source/_static/sdk_metadata_schema_temp.json").open("r", encoding="utf-8") as f:
+        schema = json.load(f)
+
+    # Extract version from $id URL
+    schema_id = schema.get("$id", "")
+    version = schema_id.split("_")[-1].replace(".json", "") if "_" in schema_id else "v0.0.1"
+
+    # Write to final locations
+    output_path_versioned = Path(f"docs/source/_static/sdk_metadata_schema_{version}.json")
+    output_path_latest = Path("docs/source/_static/sdk_metadata_schema_latest.json")
+
+    for output_path in [output_path_versioned, output_path_latest]:
+        with output_path.open("w", encoding="utf-8") as f:
+            json.dump(schema, f, indent=2)
+
+    # Clean up temp file
+    Path("docs/source/_static/sdk_metadata_schema_temp.json").unlink()
+
+    session.log(f"Generated SDK metadata JSON schema: {output_path_versioned.name} and sdk_metadata_schema_latest.json")
 
 
 def _generate_cli_reference(session: nox.Session) -> None:
@@ -560,6 +609,7 @@ def docs(session: nox.Session) -> None:
     _generate_readme(session)
     _generate_cli_reference(session)
     _generate_openapi_schemas(session)
+    _generate_sdk_metadata_schema(session)
     _generate_api_reference(session)
     _generate_attributions(session, Path(LICENSES_JSON_PATH))
 

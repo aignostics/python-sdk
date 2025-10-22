@@ -6,18 +6,28 @@ including creating runs, downloading results, and validating outputs.
 """
 
 import tempfile
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-from aignx.codegen.models import ApplicationRunStatus, ItemStatus
+from aignx.codegen.models import (
+    ArtifactOutput,
+    ArtifactState,
+    ItemOutput,
+    ItemState,
+    RunOutput,
+    RunState,
+)
 
 from aignostics import platform
-from aignostics.platform.resources.runs import ApplicationRun
+from aignostics.platform.resources.runs import Run
 from tests.contants_test import (
+    HETA_APPLICATION_ID,
     HETA_APPLICATION_TIMEOUT_SECONDS,
-    HETA_APPLICATION_VERSION_ID,
+    HETA_APPLICATION_VERSION,
+    TEST_APPLICATION_ID,
     TEST_APPLICATION_TIMEOUT_SECONDS,
-    TEST_APPLICATION_VERSION_ID,
+    TEST_APPLICATION_VERSION,
 )
 
 
@@ -25,7 +35,7 @@ def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
         platform.InputItem(
-            reference="1",
+            external_id="1",
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
@@ -51,59 +61,62 @@ def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
     ]
 
 
-def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
+def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
         platform.InputItem(
-            reference="1",
+            external_id="1",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
-                        "checksum_crc32c": "9l3NNQ==",
-                        "base_mpp": 0.46499982,
-                        "width": 3728,
-                        "height": 3640,
+                        "checksum_base64_crc32c": "9l3NNQ==",
+                        "width_px": 3728,
+                        "height_px": 3640,
+                        "resolution_mpp": 0.46499982,
+                        "media_type": "image/tiff",
                     },
                 )
             ],
         ),
         platform.InputItem(
-            reference="2",
+            external_id="2",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
-                        "checksum_crc32c": "w+ud3g==",
-                        "base_mpp": 0.46499982,
-                        "width": 3616,
-                        "height": 3400,
+                        "checksum_base64_crc32c": "w+ud3g==",
+                        "width_px": 3616,
+                        "height_px": 3400,
+                        "resolution_mpp": 0.46499982,
+                        "media_type": "image/tiff",
                     },
                 )
             ],
         ),
         platform.InputItem(
-            reference="3",
+            external_id="3",
             input_artifacts=[
                 platform.InputArtifact(
-                    name="user_slide",
+                    name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
-                        "checksum_crc32c": "Zmx0wA==",
-                        "base_mpp": 0.46499982,
-                        "width": 4016,
-                        "height": 3952,
+                        "checksum_base64_crc32c": "Zmx0wA==",
+                        "width_px": 4016,
+                        "height_px": 3952,
+                        "resolution_mpp": 0.46499982,
+                        "media_type": "image/tiff",
                     },
                 )
             ],
@@ -112,24 +125,37 @@ def _get_three_spots_payload_for_test_v0_0_1() -> list[platform.InputItem]:
 
 
 def _run_application_test(
-    application_version_id: str,
+    application_id: str,
+    application_version: str,
     payload: list[platform.InputItem],
-    checksum_attribute_key: str,
+    checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
     """Helper function to run an application test.
 
     This function creates an application run, downloads results, and validates outputs.
 
     Args:
-        application_version_id (str): The application version ID to use for the test.
+        application_id (str): The application ID to use for the test.
+        application_version (str): The application version to use for the test.
         payload (list[platform.InputItem]): The input items for the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    client = platform.Client(cache_token=False)
-    application_run = client.runs.create(application_version_id, items=payload)
+    client = platform.Client()
+    application_run = client.runs.submit(
+        application_id=application_id,
+        application_version=application_version,
+        items=payload,
+        custom_metadata={
+            "sdk": {
+                "due_date": (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+                "deadline": (datetime.now(tz=UTC) + timedelta(hours=3)).isoformat(),
+                "note": "_run_application_test",
+            }
+        },  # Request completion within 1 hour
+    )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         application_run.download_to_folder(temp_dir, checksum_attribute_key)
@@ -137,9 +163,10 @@ def _run_application_test(
         _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
 
+# TODO(Helmut): Currently not scheduled, as it fails on staging
+@pytest.mark.skip(reason="Testing very long running on staging")
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.scheduled
 @pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
 def test_application_runs_test_version() -> None:
     """Test application runs with the test application.
@@ -152,9 +179,9 @@ def test_application_runs_test_version() -> None:
         AssertionError: If any of the validation checks fail.
     """
     _run_application_test(
-        application_version_id=TEST_APPLICATION_VERSION_ID,
-        payload=_get_three_spots_payload_for_test_v0_0_1(),
-        checksum_attribute_key="checksum_crc32c",
+        application_id=TEST_APPLICATION_ID,
+        application_version=TEST_APPLICATION_VERSION,
+        payload=_get_three_spots_payload_for_test_v0_0_4(),
     )
 
 
@@ -173,14 +200,14 @@ def test_application_runs_heta_version() -> None:
         AssertionError: If any of the validation checks fail.
     """
     _run_application_test(
-        application_version_id=HETA_APPLICATION_VERSION_ID,
+        application_id=HETA_APPLICATION_ID,
+        application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta_v1_0_0(),
-        checksum_attribute_key="checksum_base64_crc32c",
     )
 
 
 def _validate_output(
-    application_run: ApplicationRun,
+    application_run: Run,
     output_base_folder: Path,
     checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
@@ -189,50 +216,67 @@ def _validate_output(
     This function checks if the application run has completed successfully and verifies the output artifact checksum
 
     Args:
-        application_run (ApplicationRun): The application run to validate.
+        application_run (Run): The application run to validate.
         output_base_folder (Path): The base folder where the output is stored.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
     """
+    # validate run state
     run_details = application_run.details()
-    assert run_details.status == ApplicationRunStatus.COMPLETED, (
-        f"Application run {application_run.application_run_id}: "
-        f"Did not finish in status COMPLETED but '{run_details.status}",
-        f"run error message: '{run_details.message}'",
+    assert run_details.state == RunState.TERMINATED, (
+        f"Run `{application_run.run_id}`: "
+        f"Did not finish in state `TERMINATED`, but `{run_details.state}`.\n"
+        f"Termination reason `{run_details.termination_reason}`, "
+        f"error code `{run_details.error_code}`, message `{run_details.error_message}`."
+    )
+    assert run_details.output == RunOutput.FULL, (
+        f"Run `{application_run.run_id}`: "
+        f"Did not finish in state `FULL` for its output, but `{run_details.output}`.\n"
+        f"Termination reason `{run_details.termination_reason}`, "
+        f"error code `{run_details.error_code}`, message `{run_details.error_message}`."
     )
 
-    run_result_folder = output_base_folder / application_run.application_run_id
-    assert run_result_folder.exists(), (
-        f"Application run {application_run.application_run_id}: result folder does not exist"
-    )
+    run_result_folder = output_base_folder / application_run.run_id
+    assert run_result_folder.exists(), f"Application run {application_run.run_id}: result folder does not exist"
 
+    # validate item state
     run_results = application_run.results()
-
     for item in run_results:
-        # validate status
-        assert item.status == ItemStatus.SUCCEEDED, (
-            f"Application run {application_run.application_run_id}: "
-            f"item {item.reference} status is {item.status}, expected SUCCEEDED, "
-            f"item error message: '{item.message}'"
+        assert item.state == ItemState.TERMINATED, (
+            f"Application run `{application_run.run_id}`: "
+            f"state for item `{item.external_id}` is `{item.state}`, expected `TERMINATED`.\n"
+            f"Termination reason `{item.termination_reason}`, "
+            f"error code `{item.error_code}`, message `{item.error_message}`."
         )
-        # validate results
-        item_dir = run_result_folder / item.reference
+        assert item.output == ItemOutput.FULL, (
+            f"Application run `{application_run.run_id}`: "
+            f"output for item `{item.external_id}` is `{item.output}`, expected `FULL`.\n"
+            f"Termination reason`{item.termination_reason}`, "
+            f"error code `{item.error_code}`, message `{item.error_message}`."
+        )
+        # validate output artifact state
+        item_dir = run_result_folder / item.external_id
         assert item_dir.exists(), (
-            f"Application run {application_run.application_run_id}: "
-            f"result folder for item {item.reference} does not exist"
+            f"Application run `{application_run.run_id}`: result folder for item `{item.external_id}` does not exist"
         )
         for artifact in item.output_artifacts:
+            assert artifact.state == ArtifactState.TERMINATED, (
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` should have state `TERMINATED`"
+            )
+            assert artifact.output == ArtifactOutput.AVAILABLE, (
+                f"Application run `{application_run.run_id}`: "
+                f"artifact `{artifact}` should have output state `AVAILABLE`."
+            )
             assert artifact.download_url is not None, (
-                f"Application run {application_run.application_run_id}: "
-                f"artifact {artifact} should provide a download url"
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` should provide a download url."
             )
             file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"
             assert file_path.exists(), (
-                f"Application run {application_run.application_run_id}: artifact {artifact} was not downloaded"
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` was not downloaded/"
             )
             checksum = artifact.metadata[checksum_attribute_key]
             file_checksum = platform.calculate_file_crc32c(file_path)
             assert file_checksum == checksum, (
-                f"Application run {application_run.application_run_id}: "
-                f"metadata checksum != file checksum {checksum} <> {file_checksum}"
+                f"Application run `{application_run.run_id}`: "
+                f"metadata checksum != file checksum `{checksum}` <> `{file_checksum}` for artifact `{artifact}`."
             )
