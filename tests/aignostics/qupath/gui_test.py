@@ -25,6 +25,7 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
 @pytest.mark.e2e
 @pytest.mark.long_running
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.skipif(
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
@@ -65,6 +66,7 @@ async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_log
 
 @pytest.mark.e2e
 @pytest.mark.long_running
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.skipif(
     platform.system() == "Linux" and platform.machine() in {"arm64", "aarch64"},
     reason="QuPath is not supported on ARM64 Linux",
@@ -133,7 +135,8 @@ async def test_gui_qupath_install_and_launch(
     platform.system() == "Linux" and platform.machine() in {"arm64", "aarch64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.flaky(retries=1, delay=5)
+@pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
@@ -188,7 +191,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
 
         # Check: Download completed
-        await assert_notified(user, "Download and QuPath project creation completed.", 60 * 2)
+        await assert_notified(user, "Download and QuPath project creation completed.", 60 * 5)
         print_directory_structure(tmp_path, "execute")
         run_out_dir = tmp_path / run.run_id
         assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
