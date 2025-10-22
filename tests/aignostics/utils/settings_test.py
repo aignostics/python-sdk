@@ -102,6 +102,8 @@ def test_load_settings_validation_error(mock_console_print, mock_exit) -> None:
     mock_exit.assert_called_once_with(78)
 
     # Verify that console.print was called (with a panel showing the error)
+    # Assert fails if you set AIGNOSTICS_LOG_CONSOLE_ENABLE in your .env
+    # => disable to succeed
     mock_console_print.assert_called_once()
 
 

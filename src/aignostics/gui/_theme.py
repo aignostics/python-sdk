@@ -84,6 +84,12 @@ def theme() -> None:
                 height: 100%;
                 min-height: 900px;
             }
+            :global(.jse-modal-window.jse-modal-window-jsoneditor)
+            {
+                width: 100%;
+                height: 100%;
+                min-height: 900px;
+            }
         </style>
     """)
 

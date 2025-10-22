@@ -35,41 +35,15 @@ from aignostics.utils import get_logger
 
 logger = get_logger(__name__)
 
-CALLBACK_PORT_RETRY_COUNT = 10
+CALLBACK_PORT_RETRY_COUNT = 20
+CALLBACK_PORT_BACKOFF_DELAY = 1
 JWK_CLIENT_CACHE_SIZE = 4  # Multiple entries exist in the rare case of settings changing at runtime only
+
 
 try:
     import sentry_sdk
 except ImportError:
     sentry_sdk = None  # type: ignore[assignment]
-
-
-@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
-def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
-    """Returns a cached PyJWKClient instance for JWT verification.
-
-    Creates a client lazily on first access for each unique combination of URL, timeout,
-    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
-    is thread-safe and ensures that only one client is created per unique parameter set.
-
-    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
-    settings change at runtime, we get a new client with the updated settings. This is useful for handling
-    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
-    considered safe if different threads briefly use different jwt clients while settings change.
-
-    Args:
-        url: The JWS JSON URL to fetch the JWK set from.
-        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
-        lifespan: The lifespan in seconds for caching the JWK set.
-
-    Returns:
-        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
-
-    Raises:
-        PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
-        PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
-    """
-    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
 
 
 class AuthenticationResult(BaseModel):
@@ -227,11 +201,39 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         retry=retry_if_exception(  # Have to unpack wrapped exception
             lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
         ),
-        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        stop=stop_after_attempt(settings().auth_retry_attempts),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )(_do_verify_and_decode_token, token)  # Retryer will pass down arguments
+
+
+@functools.lru_cache(maxsize=JWK_CLIENT_CACHE_SIZE)
+def _get_jwk_client(url: str, timeout: int, lifespan: int) -> jwt.PyJWKClient:
+    """Returns a cached PyJWKClient instance for JWT verification.
+
+    Creates a client lazily on first access for each unique combination of URL, timeout,
+    and lifespan, and reuses it for subsequent calls with the same parameters. The LRU cache
+    is thread-safe and ensures that only one client is created per unique parameter set.
+
+    We intentionally have one cache entry per combination of url, timeout and lifespan, so that if any of these
+    settings change at runtime, we get a new client with the updated settings. This is useful for handling
+    different JWK sets for different environments or configurations, and not a cache invalidation gap. It's
+    considered safe if different threads briefly use different jwt clients while settings change.
+
+    Args:
+        url: The JWS JSON URL to fetch the JWK set from.
+        timeout: The timeout in seconds for HTTP requests to fetch the JWK set.
+        lifespan: The lifespan in seconds for caching the JWK set.
+
+    Returns:
+        jwt.PyJWKClient: The cached PyJWKClient instance for the given parameters.
+
+    Raises:
+        PyJWKClientError: If the JWS endpoint did not return a JSON, nor key matches kid etc.
+        PyJWKClientConnectionError: If there are connection issues fetching the JWK set.
+    """
+    return jwt.PyJWKClient(url, timeout=timeout, lifespan=lifespan)
 
 
 def _do_verify_and_decode_token(token: str) -> dict[str, str]:
@@ -296,7 +298,7 @@ def _can_open_browser() -> bool:
     return launch_browser
 
 
-def _perform_authorization_code_with_pkce_flow() -> str:
+def _perform_authorization_code_with_pkce_flow() -> str:  # noqa: C901
     """Performs the OAuth 2.0 Authorization Code flow with PKCE.
 
     Opens a browser for user authentication and uses a local redirect
@@ -375,26 +377,33 @@ def _perform_authorization_code_with_pkce_flow() -> str:
     host, port = parsed_redirect.hostname, parsed_redirect.port
     if not host or not port:
         raise RuntimeError(INVALID_REDIRECT_URI)
-    # check if port is callback port is available
-    port_unavailable_msg = f"Port {port} is already in use. Free the port, or use the device flow."
-    if not _ensure_local_port_is_available(port):
-        raise RuntimeError(port_unavailable_msg)
-    # start the server
-    try:
-        with HTTPServer((host, port), OAuthCallbackHandler) as server:
-            # Enable socket reuse to prevent "Address already in use" errors
-            # This allows the socket to be reused immediately after the server closes,
-            # even if the previous connection is in TIME_WAIT state
-            server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-            # Call Auth0 with challenge and redirect to localhost with code after successful authN
-            webbrowser.open_new(authorization_url)
-            # Extract authorization_code from redirected request, see: OAuthCallbackHandler
-            server.handle_request()
-    except OSError as e:
-        if e.errno == errno.EADDRINUSE:
-            raise RuntimeError(port_unavailable_msg) from e
-        raise RuntimeError(AUTHENTICATION_FAILED) from e
+    for retry_count in range(CALLBACK_PORT_RETRY_COUNT):
+        try:
+            with HTTPServer((host, port), OAuthCallbackHandler) as server:
+                # Enable socket reuse to prevent "Address already in use" errors
+                # This allows the socket to be reused immediately after the server closes,
+                # even if the previous connection is in TIME_WAIT state
+                server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+                webbrowser.open_new(authorization_url)
+                server.handle_request()
+                # If we get here, authentication was successful
+                break
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                if retry_count < CALLBACK_PORT_RETRY_COUNT - 1:
+                    # Port is in use, wait with exponential backoff before retrying
+                    time.sleep(CALLBACK_PORT_BACKOFF_DELAY)
+                    continue
+                # Max retries reached
+                port_unavailable_msg = (
+                    f"Port {port} is already in use after {CALLBACK_PORT_RETRY_COUNT} retries. "
+                    "Please wait a moment and try again, or use device flow authentication."
+                )
+                raise RuntimeError(port_unavailable_msg) from e
+            # Different OS error, not related to port being in use
+            raise RuntimeError(AUTHENTICATION_FAILED) from e
 
     if authentication_result.error or not authentication_result.token:
         raise RuntimeError(AUTHENTICATION_FAILED)
@@ -514,7 +523,7 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     """
     return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(_is_not_client_or_key_error),
-        stop=stop_after_attempt(settings().auth_retry_attempts_max),
+        stop=stop_after_attempt(settings().auth_retry_attempts),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,

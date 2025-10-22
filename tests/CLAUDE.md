@@ -14,6 +14,8 @@ tests/
 ├── aignostics/
 │   ├── platform/           # Platform module tests
 │   │   ├── authentication_test.py  # OAuth flow testing
+│   │   ├── sdk_metadata_test.py    # SDK metadata system tests (NEW)
+│   │   ├── cli_test.py            # CLI command testing (includes metadata schema)
 │   │   ├── resources/      # Resource-specific tests
 │   │   └── scheduled_test.py      # Periodic validation
 │   ├── application/        # Application orchestration tests
@@ -77,24 +79,275 @@ def test_token_refresh_timing():
 def test_application_version_formats():
     """Test all valid and invalid semver formats."""
     valid = [
-        "app:v1.0.0",
-        "app:v1.0.0-alpha",
-        "app:v1.0.0+meta",
-        "app:v1.0.0-rc.1+meta"
+        "1.0.0",
+        "1.0.0-alpha",
+        "1.0.0+meta",
+        "1.0.0-rc.1+meta"
     ]
 
     invalid = [
-        "app:1.0.0",  # Missing v
-        "app:v1.0",   # Incomplete
-        ":v1.0.0",    # Missing app
+        "v1.0.0",   # 'v' prefix not allowed
+        "1.0",      # Incomplete
+        "",         # Empty string
     ]
 
     for v in valid:
-        assert service.application_version(v)
+        assert service.application_version("test-app", v)
 
     for v in invalid:
         with pytest.raises(ValueError):
-            service.application_version(v)
+            service.application_version("test-app", v)
+```
+
+### SDK Metadata Testing (`platform/sdk_metadata_test.py`)
+
+**NEW FEATURE TESTS (v1.0.0-beta.7):** Comprehensive testing of the SDK metadata system ensuring robust tracking and validation.
+
+**Test Coverage:**
+
+1. **Metadata Building Tests** - Verify automatic metadata generation in various environments
+2. **Schema Validation Tests** - Ensure strict Pydantic validation catches invalid data
+3. **CI/CD Integration Tests** - Test GitHub Actions and pytest context capture
+4. **Environment Detection Tests** - Verify interface and source detection logic
+5. **JSON Schema Generation Tests** - Validate schema structure and versioning
+
+**Clean Environment Fixture:**
+
+```python
+@pytest.fixture
+def clean_env():
+    """Clean environment for SDK metadata tests."""
+    # Save original environment
+    original_env = os.environ.copy()
+
+    # Clear SDK-related variables
+    for key in list(os.environ.keys()):
+        if key.startswith(("GITHUB_", "PYTEST_", "NICEGUI_", "AIGNOSTICS_")):
+            del os.environ[key]
+
+    yield
+
+    # Restore original environment
+    os.environ.clear()
+    os.environ.update(original_env)
+```
+
+**Metadata Building Tests:**
+
+```python
+class TestBuildSdkMetadata:
+    """Test cases for build_sdk_metadata function."""
+
+    def test_build_metadata_minimal(clean_env: None) -> None:
+        """Test metadata building with minimal environment."""
+        metadata = build_sdk_metadata()
+
+        # Required fields always present
+        assert "schema_version" in metadata
+        assert metadata["schema_version"] == "0.0.1"
+        assert "submission" in metadata
+        assert "user_agent" in metadata
+        assert metadata["submission"]["interface"] in ["script", "cli", "launchpad"]
+        assert metadata["submission"]["initiator"] in ["user", "test", "bridge"]
+        assert "date" in metadata["submission"]
+
+        # Optional fields may be absent
+        # user, ci, note, workflow, scheduling are optional
+
+    def test_build_metadata_with_github_ci(clean_env: None) -> None:
+        """Test metadata with GitHub Actions environment."""
+        # Set GitHub Actions environment variables
+        os.environ["GITHUB_RUN_ID"] = "12345"
+        os.environ["GITHUB_REPOSITORY"] = "aignostics/python-sdk"
+        os.environ["GITHUB_SHA"] = "abc123def456"
+        os.environ["GITHUB_REF"] = "refs/heads/main"
+        os.environ["GITHUB_WORKFLOW"] = "CI/CD"
+
+        metadata = build_sdk_metadata()
+
+        # GitHub CI metadata should be present
+        assert "ci" in metadata
+        assert "github" in metadata["ci"]
+        assert metadata["ci"]["github"]["run_id"] == "12345"
+        assert metadata["ci"]["github"]["repository"] == "aignostics/python-sdk"
+        assert metadata["ci"]["github"]["sha"] == "abc123def456"
+        assert metadata["ci"]["github"]["run_url"] == (
+            "https://github.com/aignostics/python-sdk/actions/runs/12345"
+        )
+
+    def test_build_metadata_with_pytest(clean_env: None) -> None:
+        """Test metadata with pytest environment."""
+        os.environ["PYTEST_CURRENT_TEST"] = "tests/platform/sdk_metadata_test.py::test_foo"
+        os.environ["PYTEST_MARKERS"] = "unit,sequential"
+
+        metadata = build_sdk_metadata()
+
+        # Pytest CI metadata should be present
+        assert "ci" in metadata
+        assert "pytest" in metadata["ci"]
+        assert metadata["ci"]["pytest"]["current_test"] == (
+            "tests/platform/sdk_metadata_test.py::test_foo"
+        )
+        assert metadata["ci"]["pytest"]["markers"] == ["unit", "sequential"]
+
+    def test_interface_detection_cli(clean_env: None) -> None:
+        """Test CLI interface detection."""
+        with patch("sys.argv", ["aignostics", "user", "login"]):
+            metadata = build_sdk_metadata()
+            assert metadata["submission"]["interface"] == "cli"
+
+    def test_interface_detection_launchpad(clean_env: None) -> None:
+        """Test launchpad (GUI) interface detection."""
+        os.environ["NICEGUI_HOST"] = "localhost"
+        metadata = build_sdk_metadata()
+        assert metadata["submission"]["interface"] == "launchpad"
+
+    def test_source_detection_test(clean_env: None) -> None:
+        """Test source detection for pytest."""
+        os.environ["PYTEST_CURRENT_TEST"] = "test.py::test_foo"
+        metadata = build_sdk_metadata()
+        assert metadata["submission"]["initiator"] == "test"
+
+    def test_source_detection_bridge(clean_env: None) -> None:
+        """Test source detection for bridge."""
+        os.environ["AIGNOSTICS_BRIDGE_VERSION"] = "1.0.0"
+        metadata = build_sdk_metadata()
+        assert metadata["submission"]["initiator"] == "bridge"
+```
+
+**Validation Tests:**
+
+```python
+class TestValidateSdkMetadata:
+    """Test SDK metadata validation."""
+
+    def test_validate_valid_metadata(clean_env: None) -> None:
+        """Test validation of valid metadata."""
+        metadata = build_sdk_metadata()
+        assert validate_sdk_metadata(metadata) is True
+        assert validate_sdk_metadata_silent(metadata) is True
+
+    def test_validate_missing_required_field() -> None:
+        """Test validation fails for missing required fields."""
+        metadata = {
+            # Missing schema_version
+            "submission": {
+                "date": "2025-10-19T12:00:00Z",
+                "interface": "script",
+                "source": "user",
+            },
+            "user_agent": "test/1.0.0"
+        }
+
+        with pytest.raises(ValidationError):
+            validate_sdk_metadata(metadata)
+
+        assert validate_sdk_metadata_silent(metadata) is False
+
+    def test_validate_invalid_enum_value() -> None:
+        """Test validation fails for invalid enum values."""
+        metadata = {
+            "schema_version": "0.0.1",
+            "submission": {
+                "date": "2025-10-19T12:00:00Z",
+                "interface": "invalid_interface",  # Invalid enum value
+                "source": "user",
+            },
+            "user_agent": "test/1.0.0"
+        }
+
+        with pytest.raises(ValidationError):
+            validate_sdk_metadata(metadata)
+
+    def test_validate_extra_fields_forbidden() -> None:
+        """Test validation fails when extra fields are present."""
+        metadata = build_sdk_metadata()
+        metadata["unknown_field"] = "value"  # Extra field
+
+        with pytest.raises(ValidationError, match="extra fields not permitted"):
+            validate_sdk_metadata(metadata)
+```
+
+**JSON Schema Tests:**
+
+```python
+class TestGetSdkMetadataJsonSchema:
+    """Test JSON schema generation."""
+
+    def test_schema_structure() -> None:
+        """Test JSON schema has required fields."""
+        schema = get_sdk_metadata_json_schema()
+
+        assert "$schema" in schema
+        assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+
+        assert "$id" in schema
+        assert (
+            schema["$id"]
+            == f"https://raw.githubusercontent.com/aignostics/python-sdk/main/"
+               f"docs/source/_static/sdk_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
+        )
+
+        assert "properties" in schema
+        assert "required" in schema
+
+    def test_schema_validates_built_metadata(clean_env: None) -> None:
+        """Test that generated schema validates built metadata."""
+        import jsonschema
+
+        schema = get_sdk_metadata_json_schema()
+        metadata = build_sdk_metadata()
+
+        # Should not raise ValidationError
+        jsonschema.validate(instance=metadata, schema=schema)
+```
+
+**CLI Tests (`platform/cli_test.py`):**
+
+```python
+class TestSdkMetadataSchemaCommand:
+    """Test SDK metadata schema CLI command."""
+
+    def test_sdk_metadata_schema_pretty(runner: CliRunner) -> None:
+        """Test schema output with pretty printing."""
+        result = runner.invoke(cli_sdk, ["metadata-schema", "--pretty"])
+
+        assert result.exit_code == 0
+        assert "$schema" in result.output
+        assert "$id" in result.output
+        assert "sdk_metadata_schema" in result.output
+
+        # Should be valid JSON
+        schema = json.loads(result.output)
+        assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+
+    def test_sdk_metadata_schema_no_pretty(runner: CliRunner) -> None:
+        """Test schema output without pretty printing (compact)."""
+        result = runner.invoke(cli_sdk, ["metadata-schema", "--no-pretty"])
+
+        assert result.exit_code == 0
+        # Compact JSON (no indentation)
+        assert "\n  " not in result.output or result.output.count("\n") < 10
+
+        # Should still be valid JSON
+        schema = json.loads(result.output)
+        assert "$schema" in schema
+```
+
+**Integration with Run Submission:**
+
+Tested in `application/service_test.py` and `application/cli_test.py` to ensure SDK metadata is automatically attached to all run submissions.
+
+**Key Testing Principles:**
+
+1. **Clean Environment**: Use `clean_env` fixture to ensure test isolation
+2. **Environment Simulation**: Mock GitHub Actions and pytest environments
+3. **Validation Strictness**: Test both valid and invalid metadata structures
+4. **Schema Consistency**: Verify generated schema validates built metadata
+5. **CLI Integration**: Test schema export command
+6. **Optional Fields**: Verify system works with missing optional fields
+7. **Error Cases**: Test validation catches all invalid inputs
+
 ```
 
 ### Process Management Testing (`dataset/service_test.py`)

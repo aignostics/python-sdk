@@ -17,19 +17,6 @@ class PageBuilder(BasePageBuilder):
         locate_subclasses(BaseService)  # Ensure settings are loaded
         app.add_static_files("/system_assets", Path(__file__).parent / "assets")
 
-        # TODO(Helmut): Remove when working with nicegui 3
-        def deprecated() -> None:
-            ui.add_head_html("""
-                <style>
-                    :global(.jse-modal-window.jse-modal-window-jsoneditor)
-                    {
-                        width: 100%;
-                        height: 100%;
-                        min-height: 900px;
-                    }
-                </style>
-            """)
-
         @ui.page("/alive")
         def alive() -> None:
             """Simple page to check the GUI is alive."""

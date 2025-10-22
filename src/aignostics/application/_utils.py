@@ -9,17 +9,17 @@ import csv
 import mimetypes
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import humanize
 
 from aignostics.platform import (
-    ApplicationRun,
-    ApplicationRunData,
-    ApplicationRunStatus,
     InputArtifactData,
     OutputArtifactData,
     OutputArtifactElement,
+    Run,
+    RunData,
+    RunState,
 )
 from aignostics.utils import console, get_logger
 
@@ -41,43 +41,56 @@ class OutputFormat(StrEnum):
     JSON = "json"
 
 
-def retrieve_and_print_run_details(run: ApplicationRun) -> None:
+def retrieve_and_print_run_details(run: Run) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
-        run (ApplicationRun): The ApplicationRun object
+        run (Run): The Run object
 
     """
     run_data = run.details()
-    console.print(f"[bold]Run Details for {run.application_run_id}[/bold]")
+    console.print(f"[bold]Run Details for {run.run_id}[/bold]")
     console.print("=" * 80)
-    console.print(f"[bold]App Version:[/bold] {run_data.application_version_id}")
-    console.print(f"[bold]Status:[/bold] {run_data.status.value}")
-    console.print(f"[bold]Message:[/bold] {run_data.message}")
-    if run_data.terminated_at and run_data.triggered_at:
-        duration = run_data.terminated_at - run_data.triggered_at
+    console.print(f"[bold]Application (Version):[/bold] {run_data.application_id} ({run_data.version_number})   ")
+    if run_data.state is RunState.TERMINATED and run_data.termination_reason:
+        status_str = f"{run_data.state.value} ({run_data.termination_reason})"
+    else:
+        status_str = f"{run_data.state.value}"
+    console.print(f"[bold]Status:[/bold] {status_str}")
+    console.print(
+        f"  - {run_data.statistics.item_count} items\n"
+        f"  - {run_data.statistics.item_pending_count} pending\n"
+        f"  - {run_data.statistics.item_processing_count} processing\n"
+        f"  - {run_data.statistics.item_skipped_count} skipped\n"
+        f"  - {run_data.statistics.item_succeeded_count} succeeded\n"
+        f"  - {run_data.statistics.item_user_error_count} user errors\n"
+        f"  - {run_data.statistics.item_system_error_count} system errors\n"
+    )
+    console.print(f"[bold]Error:[/bold] {run_data.error_message or 'N/A'} ({run_data.error_code or 'N/A'})")
+    if run_data.terminated_at and run_data.submitted_at:
+        duration = run_data.terminated_at - run_data.submitted_at
         duration_str = humanize.precisedelta(duration)
         console.print(f"[bold]Duration:[/bold] {duration_str}")
-    console.print(f"[bold]Triggered at:[/bold] {run_data.triggered_at}")
-    console.print(f"[bold]Terminated at:[/bold] {run_data.terminated_at}")
-    console.print(f"[bold]Triggered by:[/bold] {run_data.triggered_by}")
-    console.print(f"[bold]Organization:[/bold] {run_data.organization_id}")
+    else:
+        duration_str = "still processing"
+    console.print(f"[bold]Submitted:[/bold] {run_data.submitted_at} ({run_data.submitted_by})")
+    console.print(f"[bold]Terminated:[/bold] {run_data.terminated_at} ({duration_str})")
 
-    console.print(f"[bold]Custom Metadata:[/bold] {run_data.metadata or 'None'}")
+    console.print(f"[bold]Custom Metadata:[/bold] {run_data.custom_metadata or 'None'}")
 
     # Get and display detailed item status
     console.print()
     console.print("[bold]Items:[/bold]")
 
     _retrieve_and_print_run_items(run)
-    _print_run_status_summary(run)
+    _print_run_statistics(run)
 
 
-def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
+def _retrieve_and_print_run_items(run: Run) -> None:
     """Retrieve and print information about items in a run.
 
     Args:
-        run (ApplicationRun): The ApplicationRun object
+        run (Run): The Run object
     """
     # Get results with detailed information
     results = run.results()
@@ -86,13 +99,16 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         return
 
     for item in results:
-        console.print(f"  [bold]Item Reference:[/bold] {item.reference}")
         console.print(f"  [bold]Item ID:[/bold] {item.item_id}")
-        console.print(f"  [bold]Status:[/bold] {item.status.value}")
-        console.print(f"  [bold]Message:[/bold] {item.message}")
+        console.print(f"  [bold]Item External ID:[/bold] {item.external_id}")
+        console.print(f"  [bold]Status (Termination Reason):[/bold] {item.state.value} ({item.termination_reason})")
+        console.print(f"  [bold]Error Message (Code):[/bold] {item.error_message} ({item.error_code})")
 
-        if item.error:
-            console.print(f"  [error]Error:[/error] {item.error}")
+        # TODO(Andreas): error_code is missing on item model; should be printed here as well.
+        # Please add in the openapi.json and regenerate the SDK, and add line here.
+        # Can be set to generic code initially so we have a stable API at last.
+        if item.error_message:
+            console.print(f"  [error]Error:[/error] {item.error_message}")
 
         if item.output_artifacts:
             console.print("  [bold]Output Artifacts:[/bold]")
@@ -105,66 +121,21 @@ def _retrieve_and_print_run_items(run: ApplicationRun) -> None:
         console.print()
 
 
-def _print_run_status_summary(run: ApplicationRun) -> None:
-    """Print summary of item statuses in a run.
+def _print_run_statistics(run: Run) -> None:
+    """Print statistics of items in a run.
 
     Args:
-        run (ApplicationRun): The ApplicationRun object
+        run (Run): The Run object
     """
-    # Get and display item status counts
-    item_statuses = run.item_status()
-    if not item_statuses:
-        return
-
-    status_counts: dict[
-        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "ERROR_USER", "ERROR_SYSTEM", "SUCCEEDED"], int
-    ] = {}
-    for status in item_statuses.values():
-        status_counts[status.value] = status_counts.get(status.value, 0) + 1
-
-    console.print("[bold]Item Status Summary:[/bold]")
-    for status, count in status_counts.items():
-        console.print(f"  {status}: {count}")
+    console.print("[bold]Item Statistics:[/bold]")
+    console.print(run.details().statistics)
 
 
-def _retrieve_and_print_item_status_counts(run: ApplicationRun) -> bool:
-    """Retrieve and print item status counts for a run.
+def print_runs_verbose(runs: list[RunData]) -> None:
+    """Print detailed information about runs, sorted by submitted_at in descending order.
 
     Args:
-        run (ApplicationRun): The run object
-
-    Returns:
-        bool: True if successful, False otherwise
-    """
-    try:
-        item_statuses = run.item_status()
-    except Exception as e:
-        logger.exception("Failed to get item status for run with ID '%s'", run.application_run_id)
-        console.print(
-            f"[error]Error:[/error] Failed to get item statuses for run with ID '{run.application_run_id}': {e}"
-        )
-        return False
-
-    status_counts: dict[
-        Literal["PENDING", "CANCELED_USER", "CANCELED_SYSTEM", "ERROR_USER", "ERROR_SYSTEM", "SUCCEEDED"], int
-    ] = {}
-    for status in item_statuses.values():
-        status_counts[status.value] = status_counts.get(status.value, 0) + 1
-
-    if status_counts:
-        console.print("[bold]Item Status Counts:[/bold]")
-        for status, count in status_counts.items():
-            console.print(f"  {status}: {count}")
-
-    return True
-
-
-def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
-    """Print detailed information about runs, sorted by triggered_at in descending order.
-
-    Args:
-        runs (list[ApplicationRunData]): List of run data
-        service (Service): The Service instance to use
+        runs (list[RunData]): List of run data
 
     """
     from ._service import Service  # noqa: PLC0415
@@ -173,39 +144,39 @@ def print_runs_verbose(runs: list[ApplicationRunData]) -> None:
     console.print("=" * 80)
 
     for run in runs:
-        console.print(f"[bold]Run ID:[/bold] {run.application_run_id}")
-        console.print(f"[bold]App Version:[/bold] {run.application_version_id}")
-        console.print(f"[bold]Status:[/bold] {run.status.value}")
-        console.print(f"[bold]Triggered at:[/bold] {run.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}")
-        console.print(f"[bold]Organization:[/bold] {run.organization_id}")
+        console.print(f"[bold]Run ID:[/bold] {run.run_id}")
+        console.print(f"[bold]Application:[/bold] {run.application_id} ({run.version_number})")
+        console.print(f"[bold]Status:[/bold] {run.state.value}")
+        console.print(
+            f"[bold]Submitted:[/bold] "
+            f"{run.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')} "
+            f"({run.submitted_by})"
+        )
 
         try:
-            _retrieve_and_print_item_status_counts(Service().application_run(run.application_run_id))
+            _print_run_statistics(Service().application_run(run.run_id))
         except Exception as e:
-            logger.exception("Failed to retrieve item status counts for run with ID '%s'", run.application_run_id)
-            console.print(
-                f"[error]Error:[/error] Failed to retrieve item status counts for run with ID "
-                f"'{run.application_run_id}': {e}"
-            )
+            logger.exception("Failed to retrieve  statistics for run with ID '%s'", run.run_id)
+            console.print(f"[error]Error:[/error] Failed to retrieve statistics for run with ID '{run.run_id}': {e}")
             continue
         console.print("-" * 80)
 
 
-def print_runs_non_verbose(runs: list[ApplicationRunData]) -> None:
-    """Print simplified information about runs, sorted by triggered_at in descending order.
+def print_runs_non_verbose(runs: list[RunData]) -> None:
+    """Print simplified information about runs, sorted by submitted_at in descending order.
 
     Args:
-        runs (list[ApplicationRunData]): List of runs
+        runs (list[RunData]): List of runs
 
     """
     console.print("[bold]Application Run IDs:[/bold]")
 
     for run_status in runs:
         console.print(
-            f"- [bold]{run_status.application_run_id}[/bold] of "
-            f"[bold]{run_status.application_version_id}[/bold] "
-            f"(triggered: {run_status.triggered_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
-            f"status: {run_status.status.value})"
+            f"- [bold]{run_status.run_id}[/bold] of "
+            f"[bold]{run_status.application_id} ({run_status.version_number})[/bold] "
+            f"(submitted: {run_status.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
+            f"status: {run_status.state.value})"
         )
 
 
@@ -254,12 +225,12 @@ def read_metadata_csv_to_dict(
 
 
 def application_run_status_to_str(
-    status: ApplicationRunStatus,
+    status: RunState,
 ) -> str:
     """Convert application status to a human-readable string.
 
     Args:
-        status (ApplicationRunStatus): The application status
+        status (RunState): The application status
 
     Raises:
         RuntimeError: If the status is invalid or unknown
@@ -268,14 +239,9 @@ def application_run_status_to_str(
         str: Human-readable string representation of the status
     """
     status_mapping = {
-        ApplicationRunStatus.CANCELED_SYSTEM: "canceled by platform",
-        ApplicationRunStatus.CANCELED_USER: "canceled by user",
-        ApplicationRunStatus.COMPLETED: "completed",
-        ApplicationRunStatus.COMPLETED_WITH_ERROR: "completed with error",
-        ApplicationRunStatus.RECEIVED: "received by platform",
-        ApplicationRunStatus.REJECTED: "rejected by platform",
-        ApplicationRunStatus.RUNNING: "running on platform",
-        ApplicationRunStatus.SCHEDULED: "scheduled for processing",
+        RunState.PENDING: "pending",
+        RunState.PROCESSING: "processing",
+        RunState.TERMINATED: "terminated",
     }
 
     if status in status_mapping:

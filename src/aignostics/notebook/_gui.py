@@ -80,24 +80,24 @@ class PageBuilder(BasePageBuilder):
                     )
                     ui.space()
 
-        @ui.page("/notebook/{application_run_id}")
-        def page_application_run_marimo(application_run_id: str, results_folder: str) -> None:
+        @ui.page("/notebook/{run_id}")
+        def page_application_run_marimo(run_id: str, results_folder: str) -> None:
             """Inspect Application Run in Marimo."""
             theme()
 
             with ui.row().classes("w-full justify-end"):
                 ui.button(
-                    "Back to Application Run" if application_run_id != "all" else "Back to Marimo Extension",
+                    "Back to Application Run" if run_id != "all" else "Back to Marimo Extension",
                     icon="arrow_back",
-                    on_click=lambda _, application_run_id=application_run_id: ui.navigate.to(
-                        f"/application/run/{application_run_id}" if application_run_id != "all" else "/notebook"
+                    on_click=lambda _, run_id=run_id: ui.navigate.to(
+                        f"/application/run/{run_id}" if run_id != "all" else "/notebook"
                     ),
                 ).mark("BUTTON_NOTEBOOK_BACK")
 
             try:
                 server_url = Service().start()
                 ui.html(
-                    f'<iframe src="{server_url}?application_run_id={application_run_id}'
+                    f'<iframe src="{server_url}?run_id={run_id}'
                     f'&results_folder={quote(results_folder)}" '
                     'width="100%" height="100%" id="marimo_iframe"></iframe>',
                     sanitize=False,

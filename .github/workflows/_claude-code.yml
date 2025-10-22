@@ -1,0 +1,131 @@
+name: "Claude Code"
+
+on:
+  workflow_call:
+    inputs:
+      platform_environment:
+        description: 'Environment to use, that is staging or production'
+        required: false
+        default: 'staging'
+        type: string
+      mode:
+        description: 'Mode: interactive or automation'
+        required: true
+        type: string
+      prompt:
+        description: 'Prompt for automation mode'
+        required: false
+        type: string
+      max_turns:
+        description: 'Maximum number of turns for Claude'
+        required: false
+        default: '200'
+        type: string
+      allowed_tools:
+        description: 'Allowed tools for Claude'
+        required: false
+        default: 'mcp__github_inline_comment__create_inline_comment,Read,Write,Edit,MultiEdit,Glob,Grep,LS,WebFetch,WebSearch,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),Bash(uv:*),Bash(make:*),Bash(export:*)'
+        type: string
+    secrets:
+      ANTHROPIC_API_KEY:
+        required: true
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
+        required: false
+      AIGNOSTICS_REFRESH_TOKEN_STAGING:
+        required: false
+      GCP_CREDENTIALS_STAGING:
+        required: false
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
+        required: false
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
+        required: false
+      GCP_CREDENTIALS_PRODUCTION:
+        required: false
+
+jobs:
+  claude-code:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read # Required for Claude to read CI results on PRs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: ${{ inputs.mode == 'interactive' && 0 || 1 }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
+        with:
+          version-file: "pyproject.toml"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dev tools
+        shell: bash
+        run: .github/workflows/_install_dev_tools.bash
+        
+      - name: Install Python, venv and dependencies
+        shell: bash
+        run: uv sync --all-extras --frozen --link-mode=copy
+
+      - name: Setup display
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
+
+      - name: Create .env file
+        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
+        with:
+          # The following 3 lines are correct even if vscode complains
+          envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
+          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+          fail_on_empty: false
+
+      - name: Set up GCP credentials for bucket access
+        shell: bash
+        env:
+          GCP_CREDENTIALS: ${{ inputs.platform_environment == 'staging' && secrets.GCP_CREDENTIALS_STAGING || secrets.GCP_CREDENTIALS_PRODUCTION }}
+        run: |
+          echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+
+      - name: Print development version info
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        shell: bash
+        run: |
+          TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
+
+      - name: Run Claude Code (Interactive Mode)
+        if: inputs.mode == 'interactive'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          additional_permissions: |
+            actions: read
+          allowed_bots: "dependabot[bot],renovate[bot]"
+          claude_args: >-
+            --max-turns ${{ inputs.max_turns }}
+            --model claude-sonnet-4-5-20250929
+            --allowed-tools "${{ inputs.allowed_tools }}"
+            --system-prompt "Read the CLAUDE.md file in this repository and explicitely acknowledge you will apply the guidance therein."
+
+      - name: Run Claude Code (Automation Mode)
+        if: inputs.mode == 'automation'
+        uses: anthropics/claude-code-action@v1.0.13
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          additional_permissions: |
+            actions: read
+          allowed_bots: "dependabot[bot],renovate[bot]"
+          claude_args: >-
+            --max-turns ${{ inputs.max_turns }}
+            --model claude-sonnet-4-5-20250929
+            --allowed-tools "${{ inputs.allowed_tools }}"
+            --system-prompt "Read the CLAUDE.md file in this repository and explicitely acknowledge you will apply the guidance therein."
+          prompt: ${{ inputs.prompt }}

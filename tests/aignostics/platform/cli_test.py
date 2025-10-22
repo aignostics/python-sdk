@@ -193,7 +193,14 @@ class TestPlatformCLI:
             assert "Successfully logged out." in normalize_output(result.output)
             result = runner.invoke(cli, ["user", "whoami"])
             assert result.exit_code == 0
-            assert "https://aignostics-platform.eu.auth0.com/" in normalize_output(result.output)
+            assert any(
+                url in normalize_output(result.output)
+                for url in [
+                    "https://aignostics-platform.eu.auth0.com/",
+                    "https://aignostics-platform-staging.eu.auth0.com/",
+                    "dev-8ouohmmrbuh2h4vu.eu.auth0.com",
+                ]
+            )
 
     @pytest.mark.integration
     @staticmethod
@@ -511,3 +518,46 @@ class TestPlatformCLI:
             assert "very_secret_access_key_456" in output
             # Check that masked values are not in output
             assert "***MASKED" not in output
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_sdk_metadata_schema_pretty(runner: CliRunner) -> None:
+        """Test sdk-metadata-schema command with pretty output (default)."""
+        result = runner.invoke(cli, ["sdk", "metadata-schema"])
+
+        assert result.exit_code == 0
+        output = normalize_output(result.output)
+        # Check that schema contains expected top-level properties
+        assert "schema_version" in output
+        assert "submission" in output
+        assert "user_agent" in output
+        assert "SubmissionMetadata" in output
+        assert "WorkflowMetadata" in output
+        assert "SchedulingMetadata" in output
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_sdk_metadata_schema_no_pretty(runner: CliRunner) -> None:
+        """Test sdk-metadata-schema command with --no-pretty flag."""
+        result = runner.invoke(cli, ["sdk", "metadata-schema", "--no-pretty"])
+
+        assert result.exit_code == 0
+        # Don't normalize output for JSON parsing
+        output = result.output
+        # Check that schema contains expected top-level properties
+        assert "schema_version" in output
+        assert "submission" in output
+        assert "user_agent" in output
+        # In non-pretty mode, output should still be valid JSON
+        import json
+
+        # Try to parse the output as JSON (should not raise an error)
+        try:
+            # Find JSON in output (skip boot messages)
+            json_start = output.find("{")
+            if json_start >= 0:
+                json.loads(output[json_start:])
+            else:
+                pytest.fail("No JSON found in output")
+        except json.JSONDecodeError:
+            pytest.fail("Output is not valid JSON")

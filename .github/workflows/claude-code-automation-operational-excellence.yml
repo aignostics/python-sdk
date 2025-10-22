@@ -1,0 +1,293 @@
+name: Claude Code / Automation / Operational Excellence
+
+on:
+  schedule:
+    # Every Monday at 6:00 AM UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      platform_environment:
+        description: 'Environment'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  operational-excellence:
+    uses: ./.github/workflows/_claude-code.yml
+    with:
+      platform_environment: ${{ inputs.platform_environment || 'staging' }}
+      mode: 'automation'
+      allowed_tools: 'Read,Write,Edit,Glob,Grep,LS,Bash(git:*),Bash(gh:*)'
+      prompt: |
+        # 🎯 AI-POWERED OPERATIONAL EXCELLENCE AUDIT
+
+        **REPO**: ${{ github.repository }}
+        **DATE**: $(date -u +"%Y-%m-%d %H:%M UTC")
+
+        ## Your Mission
+
+        Perform weekly quality audit focusing on **human judgment** areas that automated 
+        tools (Ruff, MyPy, PyRight, Codecov, SonarQube, etc.) cannot assess.
+
+        Read and apply standards from:
+        - **CODE_STYLE.md** - Coding standards for humans and AI
+        - **CONTRIBUTING.md** - Development workflow
+        - **OPERATIONAL_EXCELLENCE.md** - Toolchain overview
+
+        ## Audit Areas
+
+        ### 1. Documentation Quality ⭐ PRIMARY
+
+        **CLAUDE.md Files** - Find and review all dynamically:
+        ```bash
+        find . -name "CLAUDE.md" -type f
+        ```
+
+        For each file, assess:
+        - **Accuracy**: Does doc match code? Verify imports, signatures, examples
+        - **Clarity**: Can humans understand? Is context provided (why, not just what)?
+        - **Completeness**: Missing features? Outdated references?
+
+        **Check for missing CLAUDE.md**:
+        ```bash
+        # Modules with _service.py but no CLAUDE.md
+        find src/aignostics -name "_service.py" -exec dirname {} \; | while read dir; do
+          [ ! -f "$dir/CLAUDE.md" ] && echo "Missing: $dir/CLAUDE.md"
+        done
+        ```
+
+        **Suggest new CLAUDE.md** where valuable (complex modules, integrations, etc.)
+
+        **docs/partials/*.md** - Check narrative flow, working examples
+
+        **Top-level docs** - CONTRIBUTING.md, CODE_STYLE.md, SECURITY.md accuracy
+
+        ### 2. Docstring Quality
+
+        Sample 10-20 docstrings from key modules. Assess meaningfulness:
+        - ❌ Vague: "Returns the result"
+        - ✅ Specific: "Returns Run with status 'pending', signed URLs valid 7 days"
+
+        ### 3. Code Readability
+
+        Review recent commits for human comprehension:
+        ```bash
+        git log --since="2 weeks ago" --name-only --pretty=format: | sort -u | grep "\.py$"
+        ```
+
+        Sample 5-10 files - check intent clarity, variable names, helpful comments
+
+        ### 4. Architecture Consistency
+
+        Verify modulith principles - do modules follow BaseService pattern?
+
+        ### 5. Technical Debt Patterns
+
+        ```bash
+        grep -rn "TODO\|FIXME\|HACK" src/ tests/ --include="*.py"
+        ```
+
+        Analyze by age (git blame), impact, patterns. Prioritize 3-5 items.
+
+        ### 6. Meta-Improvements
+
+        Suggest improvements to this workflow itself! Missing checks? Better approach?
+
+        ## Output: Parent Issue + Branches
+
+        ### Create Parent Issue
+
+        ```bash
+        cat > /tmp/oe-report.md << 'EOF'
+        # 🤖 Operational Excellence - Weekly Quality Audit
+
+        **Date**: $(date -u +"%Y-%m-%d")
+        **Commit**: $(git rev-parse --short HEAD)
+
+        ## 🎯 Executive Summary
+
+        [2-3 sentences overview]
+
+        **Assessment**: 🟢 Excellent / 🟡 Good / 🟠 Needs Attention / 🔴 Critical
+
+        ## 🏆 Quality Champions Leaderboard
+
+        ### Top Contributors (Last 7 Days)
+        ```bash
+        git log --since="7 days ago" --pretty=format:"%an" | sort | uniq -c | sort -rn | head -5
+        ```
+
+        1. 🥇 **@contributor1** - [commits] commits, [quality score]
+        2. 🥈 **@contributor2** - [commits] commits, [quality score]
+        3. 🥉 **@contributor3** - [commits] commits, [quality score]
+
+        ### 🎖️ Special Recognition
+        - **📚 Best Documentation**: @[name] - [specific achievement]
+        - **✨ Code Clarity Award**: @[name] - [specific example]
+        - **🏛️ Architecture Excellence**: @[name] - [what they did]
+        - **📈 Most Improved**: @[name] - [improvement metric]
+
+        ### 📊 Team Stats
+        - Commits this week: [X]
+        - Quality score: [X]/10 (trend ↑↓)
+        - Technical debt: [X] TODOs (trend ↑↓)
+        - CLAUDE.md files: [X] (new: [Y])
+
+        ## 📋 Findings & Fix Branches
+
+        For each finding below, a branch has been created. Review, create PR, merge, or close.
+
+        ### 1️⃣ Documentation Issues
+
+        - [ ] **Branch: `oe/fix-doc-module-x`** - CLAUDE.md accuracy issue
+          - File: `src/aignostics/module/CLAUDE.md:45`
+          - Issue: [specific problem]
+          - Fix: [what was changed]
+          - Commands: `git checkout oe/fix-doc-module-x` → review → create PR
+
+        - [ ] **Branch: `oe/add-missing-claude-md`** - Missing CLAUDE.md
+          - Missing in: `src/aignostics/newmodule/`
+          - Rationale: [why needed]
+          - Commands: `git checkout oe/add-missing-claude-md` → review → create PR
+
+        ### 2️⃣ Docstring Quality
+
+        - [ ] **Branch: `oe/improve-docstrings-platform`** - Vague docstrings
+          - Files: [list]
+          - Before/After examples in branch
+          - Commands: `git checkout oe/improve-docstrings-platform` → review → create PR
+
+        ### 3️⃣ Code Readability
+
+        - [ ] **Discussion Needed** - Complex logic in `module/_file.py:123`
+          - Current: [description of issue]
+          - Suggestion: [how to improve]
+          - No branch (needs design discussion)
+
+        ### 4️⃣ Architecture
+
+        ✅ **All Good** - Modulith principles followed consistently
+
+        ### 5️⃣ Technical Debt Priority
+
+        1. [ ] **Branch: `oe/fix-todo-auth-refresh`** - Auth token refresh (6mo old)
+        2. [ ] **Branch: `oe/refactor-tile-processing`** - Recurring pattern (4 modules)
+        3. [ ] **Discussion Needed** - [item requiring design decision]
+
+        ### 6️⃣ Meta-Improvements
+
+        Suggestions for this workflow:
+        - [ ] Add check for [X]
+        - [ ] Consider tool [Y] for [Z]
+        - [ ] Workflow could be improved by [...]
+
+        ## 🎓 Kudos
+
+        **Excellent Examples This Week**:
+        - `wsi._service.extract_tiles()` - Clear, well-documented, great naming
+        - `platform.CLAUDE.md` - Perfect module documentation template
+        - [Other positive examples]
+
+        ## 📈 Trends
+
+        - Documentation drift: [improving/stable/worsening]
+        - Code quality: [improving/stable/worsening]
+        - Team velocity: [metric]
+
+        ---
+        *Next audit: [next Monday date]*
+        *Workflow: `.github/workflows/claude-code-automation-operational-excellence.yml`*
+        EOF
+
+        gh issue create \
+          --title "[OE Audit] $(date +%Y-%m-%d)" \
+          --body-file /tmp/oe-report.md \
+          --label "documentation,code-quality,automated-check"
+        ```
+
+        ### Create Fix Branches
+
+        For **each actionable finding**, create a branch with the fix:
+
+        ```bash
+        # Example: Fix CLAUDE.md in module X
+        git checkout -b oe/fix-doc-module-x main
+        # Make the fix (edit the file)
+        git add .
+        git commit -m "docs(module): fix CLAUDE.md accuracy issue
+
+        - Corrected method signature documentation
+        - Updated example code
+        - Fixed import path
+
+        Ref: [OE Audit] YYYY-MM-DD"
+        git push origin oe/fix-doc-module-x
+
+        # Add link to issue body
+        echo "- Branch: oe/fix-doc-module-x" >> /tmp/branches.txt
+        ```
+
+        **Branch naming convention**: `oe/fix-{category}-{brief-desc}`
+        - `oe/fix-doc-*` - Documentation fixes
+        - `oe/improve-docstrings-*` - Docstring improvements
+        - `oe/refactor-*` - Code readability refactors
+        - `oe/add-*` - New documentation/files
+
+        **Guidelines for branches**:
+        - Only create branches for **clear, mechanical fixes**
+        - Don't create branches for items needing discussion
+        - Each branch = one atomic fix
+        - Branch commit message references parent issue
+        - Push branches but **don't create PRs** (users will)
+
+        ### If No Issues Found
+
+        ```markdown
+        # ✅ Operational Excellence Audit - All Clear
+
+        No significant issues detected this week!
+
+        ## 🏆 Leaderboard
+
+        [Include leaderboard anyway]
+
+        ## 🎓 Highlights
+
+        - [Something done especially well]
+        - [Great example to follow]
+
+        Keep up the excellent work! 🎉
+
+        Next audit: [date]
+        ```
+
+        ## Important Guidelines
+
+        1. **Be constructive** - Frame as opportunities, not criticism
+        2. **Be specific** - File:line references, before/after examples
+        3. **Be pragmatic** - Focus on high-impact items
+        4. **Be positive** - Always highlight good work (leaderboard, kudos)
+        5. **Be actionable** - Clear steps to resolve each item
+        6. **Be collaborative** - Users create PRs, you provide branches
+
+        ## Medical Device Context
+
+        Documentation quality = regulatory compliance = patient safety.
+        Be thorough on documentation accuracy - it's not just "nice to have".
+
+        ## Meta
+
+        Suggest improvements to this workflow! You're continuously learning what works.
+
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
+      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
+      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}

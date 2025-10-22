@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from aignostics.platform._client import Client
+from aignostics.platform._operation_cache import _operation_cache, cache_key_with_token
 
 
 class TestCacheKeyGeneration:
@@ -25,8 +26,8 @@ class TestCacheKeyGeneration:
 
         This ensures different tokens produce different cache keys.
         """
-        key1 = Client._cache_key("token-123", "method_name")
-        key2 = Client._cache_key("token-456", "method_name")
+        key1 = cache_key_with_token("token-123", "method_name")
+        key2 = cache_key_with_token("token-456", "method_name")
 
         assert key1 != key2
         assert ":" in key1
@@ -39,8 +40,8 @@ class TestCacheKeyGeneration:
 
         This ensures different methods produce different cache keys even with same token.
         """
-        key1 = Client._cache_key("token-123", "method_a")
-        key2 = Client._cache_key("token-123", "method_b")
+        key1 = cache_key_with_token("token-123", "method_a")
+        key2 = cache_key_with_token("token-123", "method_b")
 
         assert key1 != key2
         assert "method_a" in key1
@@ -53,8 +54,8 @@ class TestCacheKeyGeneration:
 
         This ensures different args produce different cache keys.
         """
-        key1 = Client._cache_key("token-123", "method", "arg1", "arg2")
-        key2 = Client._cache_key("token-123", "method", "arg1", "arg3")
+        key1 = cache_key_with_token("token-123", "method", "arg1", "arg2")
+        key2 = cache_key_with_token("token-123", "method", "arg1", "arg3")
 
         assert key1 != key2
 
@@ -65,8 +66,8 @@ class TestCacheKeyGeneration:
 
         This ensures different kwargs produce different cache keys.
         """
-        key1 = Client._cache_key("token-123", "method", param1="value1")
-        key2 = Client._cache_key("token-123", "method", param1="value2")
+        key1 = cache_key_with_token("token-123", "method", param1="value1")
+        key2 = cache_key_with_token("token-123", "method", param1="value2")
 
         assert key1 != key2
 
@@ -77,8 +78,8 @@ class TestCacheKeyGeneration:
 
         This ensures the cache can find previously stored values.
         """
-        key1 = Client._cache_key("token-123", "method", "arg1", param1="value1")
-        key2 = Client._cache_key("token-123", "method", "arg1", param1="value1")
+        key1 = cache_key_with_token("token-123", "method", "arg1", param1="value1")
+        key2 = cache_key_with_token("token-123", "method", "arg1", param1="value1")
 
         assert key1 == key2
 
@@ -86,8 +87,8 @@ class TestCacheKeyGeneration:
     @staticmethod
     def test_cache_key_handles_empty_token() -> None:
         """Test that cache key handles empty or None token gracefully."""
-        key1 = Client._cache_key("", "method")
-        key2 = Client._cache_key("", "method")
+        key1 = cache_key_with_token("", "method")
+        key2 = cache_key_with_token("", "method")
 
         assert key1 == key2
         assert isinstance(key1, str)
@@ -100,8 +101,8 @@ class TestCacheKeyGeneration:
 
         Since kwargs are sorted in the cache key generation, the order should not matter.
         """
-        key1 = Client._cache_key("token-123", "method", a=1, b=2, c=3)
-        key2 = Client._cache_key("token-123", "method", c=3, a=1, b=2)
+        key1 = cache_key_with_token("token-123", "method", a=1, b=2, c=3)
+        key2 = cache_key_with_token("token-123", "method", c=3, a=1, b=2)
 
         assert key1 == key2
 
@@ -147,16 +148,16 @@ class TestCacheBasicFunctionality:
         mock_api_client.get_me_v1_me_get.return_value = mock_me_response
 
         # Initially cache should be empty
-        assert len(Client._operation_cache) == 0
+        assert len(_operation_cache) == 0
 
         # Call me()
         client_with_mock_api.me()
 
         # Cache should now have one entry
-        assert len(Client._operation_cache) == 1
+        assert len(_operation_cache) == 1
 
         # Verify cache structure: key -> (value, expiry_timestamp)
-        cache_entry = next(iter(Client._operation_cache.values()))
+        cache_entry = next(iter(_operation_cache.values()))
         assert isinstance(cache_entry, tuple)
         assert len(cache_entry) == 2
         assert cache_entry[0] == mock_me_response
@@ -212,9 +213,9 @@ class TestCacheTTL:
         assert mock_api_client.get_me_v1_me_get.call_count == 1
 
         # Manually expire the cache by setting expiry to the past
-        cache_key = next(iter(Client._operation_cache.keys()))
-        value, _ = Client._operation_cache[cache_key]
-        Client._operation_cache[cache_key] = (value, time.time() - 1)  # Set expiry to 1 second ago
+        cache_key = next(iter(_operation_cache.keys()))
+        value, _ = _operation_cache[cache_key]
+        _operation_cache[cache_key] = (value, time.time() - 1)  # Set expiry to 1 second ago
 
         # Third call after expiry - should hit API again
         mock_api_client.get_me_v1_me_get.return_value = mock_me_response_2
@@ -236,19 +237,19 @@ class TestCacheTTL:
 
         # First call - creates cache entry
         client_with_mock_api.me()
-        assert len(Client._operation_cache) == 1
+        assert len(_operation_cache) == 1
 
         # Expire the cache entry
-        cache_key = next(iter(Client._operation_cache.keys()))
-        value, _ = Client._operation_cache[cache_key]
-        Client._operation_cache[cache_key] = (value, time.time() - 1)
+        cache_key = next(iter(_operation_cache.keys()))
+        value, _ = _operation_cache[cache_key]
+        _operation_cache[cache_key] = (value, time.time() - 1)
 
         # Second call - should remove expired entry and create new one
         client_with_mock_api.me()
-        assert len(Client._operation_cache) == 1
+        assert len(_operation_cache) == 1
 
         # The new entry should not be expired
-        cache_entry = Client._operation_cache[cache_key]
+        cache_entry = _operation_cache[cache_key]
         assert cache_entry[1] > time.time()
 
     @pytest.mark.unit
@@ -267,7 +268,7 @@ class TestCacheTTL:
         client_with_mock_api.me()
 
         # Get the cache entry
-        cache_entry = next(iter(Client._operation_cache.values()))
+        cache_entry = next(iter(_operation_cache.values()))
         expiry_time = cache_entry[1]
 
         # Expiry should be approximately 60 seconds in the future
@@ -290,6 +291,7 @@ class TestCacheWithDifferentTokens:
 
         # Client with token-1
         with (
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-1"),
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -303,6 +305,7 @@ class TestCacheWithDifferentTokens:
 
         # Client with token-2
         with (
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-2"),
             patch("aignostics.platform._client.get_token", return_value="token-2"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -315,7 +318,7 @@ class TestCacheWithDifferentTokens:
             assert mock_api_client.get_me_v1_me_get.call_count == 2  # New API call
 
         # Cache should have two entries
-        assert len(Client._operation_cache) == 2
+        assert len(_operation_cache) == 2
 
     @pytest.mark.unit
     @staticmethod
@@ -329,9 +332,11 @@ class TestCacheWithDifferentTokens:
 
         # First call with token-1
         with (
+            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
+            mock_get_token.return_value = "token-1"
             client = Client(cache_token=False)
             client._api = mock_api_client
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_1
@@ -340,8 +345,8 @@ class TestCacheWithDifferentTokens:
             assert result1 == mock_me_response_1
             assert mock_api_client.get_me_v1_me_get.call_count == 1
 
-        # Second call with token-2 (simulating token refresh)
-        with patch("aignostics.platform._client.get_token", return_value="token-2"):
+            # Second call with token-2 (simulating token refresh)
+            mock_get_token.return_value = "token-2"
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_2
 
             result2 = client.me()
@@ -359,6 +364,7 @@ class TestCacheWithDifferentTokens:
 
         # First client with token-123
         with (
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -372,6 +378,7 @@ class TestCacheWithDifferentTokens:
 
         # Second client with same token-123
         with (
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -412,7 +419,7 @@ class TestCacheWithRetries:
             client_with_mock_api.me()
 
         # Cache should be empty after failed call
-        assert len(Client._operation_cache) == 0
+        assert len(_operation_cache) == 0
 
     @pytest.mark.unit
     @staticmethod
@@ -448,7 +455,7 @@ class TestCacheWithRetries:
             client_with_mock_api.me()
 
         assert call_count == 3  # Should have tried 3 times (max attempts)
-        assert len(Client._operation_cache) == 0  # No cache entry for failures
+        assert len(_operation_cache) == 0  # No cache entry for failures
 
         # Second call should retry the API (not use cached exception) and succeed
         result = client_with_mock_api.me()
@@ -539,6 +546,7 @@ class TestCacheConcurrency:
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
 
         with (
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -569,6 +577,7 @@ class TestCacheConcurrency:
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
 
         with (
+            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -578,11 +587,11 @@ class TestCacheConcurrency:
 
             # Populate cache with client1
             client1.me()
-            assert len(Client._operation_cache) == 1
+            assert len(_operation_cache) == 1
 
             # Clear cache
-            Client._operation_cache.clear()
-            assert len(Client._operation_cache) == 0
+            _operation_cache.clear()
+            assert len(_operation_cache) == 0
 
             # client2 should not find cached value
             client2 = Client(cache_token=False)
@@ -661,8 +670,8 @@ class TestCacheEdgeCases:
     @staticmethod
     def test_cache_key_with_unicode_args(mock_settings: MagicMock) -> None:
         """Test that cache key generation handles unicode characters correctly."""
-        key1 = Client._cache_key("token-123", "method", "arg-ü-ö-ä", param="value-é-ñ")
-        key2 = Client._cache_key("token-123", "method", "arg-ü-ö-ä", param="value-é-ñ")
+        key1 = cache_key_with_token("token-123", "method", "arg-ü-ö-ä", param="value-é-ñ")
+        key2 = cache_key_with_token("token-123", "method", "arg-ü-ö-ä", param="value-é-ñ")
 
         # Should be consistent
         assert key1 == key2
@@ -678,6 +687,7 @@ class TestCacheEdgeCases:
         long_token = "x" * 10000  # Very long token
 
         with (
+            patch("aignostics.platform._operation_cache.get_token", return_value=long_token),
             patch("aignostics.platform._client.get_token", return_value=long_token),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -688,7 +698,7 @@ class TestCacheEdgeCases:
             client.me()
 
             # Cache key should be reasonable length (token is hashed)
-            cache_key = next(iter(Client._operation_cache.keys()))
+            cache_key = next(iter(_operation_cache.keys()))
             assert len(cache_key) < 200  # Much shorter than the 10000 char token
 
 
@@ -705,7 +715,8 @@ class TestCacheIntegrationWithAuthentication:
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
 
         with (
-            patch("aignostics.platform._client.get_token") as mock_get_token,
+            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
+            patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             mock_get_token.return_value = "token-1"
@@ -739,7 +750,8 @@ class TestCacheIntegrationWithAuthentication:
         mock_me_response_2 = {"user_id": "user-2", "org_id": "org-2"}
 
         with (
-            patch("aignostics.platform._client.get_token") as mock_get_token,
+            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
+            patch("aignostics.platform._client.get_token", return_value="token-initial"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             # Initial token
@@ -774,4 +786,4 @@ class TestCacheIntegrationWithAuthentication:
             assert mock_api_client.get_me_v1_me_get.call_count == 2
 
             # Should now have 2 cache entries (one for each token)
-            assert len(Client._operation_cache) == 2
+            assert len(_operation_cache) == 2

@@ -2,12 +2,28 @@ name: "Test"
 
 on:
   workflow_call:
+    inputs:
+      platform_environment:
+        description: 'Environment to test against, that is staging or production'
+        required: false
+        default: 'staging'
+        type: string
+      commit_message:
+        description: 'Commit message to check for skip/enable markers'
+        required: false
+        type: string
     secrets:
-      AIGNOSTICS_CLIENT_ID_DEVICE:
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
         required: false
-      AIGNOSTICS_REFRESH_TOKEN:
+      AIGNOSTICS_REFRESH_TOKEN_STAGING:
         required: false
-      GCP_CREDENTIALS:
+      GCP_CREDENTIALS_STAGING:
+        required: false
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
+        required: false
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
+        required: false
+      GCP_CREDENTIALS_PRODUCTION:
         required: false
       CODECOV_TOKEN:
         required: false
@@ -30,13 +46,13 @@ jobs:
       - name: Set matrix based on commit message and PR labels
         id: set-matrix
         env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_MESSAGE: ${{ inputs.commit_message }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
           if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]] || [[ "$PR_LABELS" == *"skip:test:matrix-runner"* ]]; then
             echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
           else
-            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true},{"runner":"windows-11-arm","experimental":true}]}' >> $GITHUB_OUTPUT
+            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true}]}' >> $GITHUB_OUTPUT
           fi
 
   test:
@@ -59,7 +75,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
+        uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -99,14 +115,16 @@ jobs:
       - name: Create .env file
         uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
         with:
-          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE }}
-          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN }}
+          # The following 3 lines are correct even if vscode complains
+          envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
+          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access
         shell: bash
         env:
-          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          GCP_CREDENTIALS: ${{ inputs.platform_environment == 'staging' && secrets.GCP_CREDENTIALS_STAGING || secrets.GCP_CREDENTIALS_PRODUCTION }}
         run: |
           echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
@@ -137,6 +155,7 @@ jobs:
           make-target: test_unit_matrix
           skip-marker: skip:test:unit
           summary-title: All unit tests passed
+          commit-message: ${{ inputs.commit_message }}
 
       - name: Test / Integration (multiple Python versions)
         uses: ./.github/actions/run-tests
@@ -145,6 +164,7 @@ jobs:
           make-target: test_integration_matrix
           skip-marker: skip:test:integration
           summary-title: All integration tests passed
+          commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / regular (multiple Python versions)
         uses: ./.github/actions/run-tests
@@ -153,26 +173,31 @@ jobs:
           make-target: test_e2e_matrix
           skip-marker: skip:test:e2e
           summary-title: All regular e2e tests passed
+          commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / long running (single Python version)
         if: |
-          !github.event.pull_request.draft
+          !github.event.pull_request.draft &&
+          !contains(inputs.commit_message, 'skip:test:long_running') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:test:long_running')
         uses: ./.github/actions/run-tests
         with:
           test-type: long-running
           make-target: test_long_running
           skip-marker: skip:test:long_running
           summary-title: All long running e2e tests passed
+          commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / very long running (single Python version)
         if: |
-          contains(github.event.head_commit.message, 'enable:test:very_long_running') || 
+          contains(inputs.commit_message, 'enable:test:very_long_running') || 
           contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
         uses: ./.github/actions/run-tests
         with:
           test-type: very-long-running
           make-target: test_very_long_running
           summary-title: All very long running e2e tests passed
+          commit-message: ${{ inputs.commit_message }}
 
       - name: Upload test artifacts for inspection
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1

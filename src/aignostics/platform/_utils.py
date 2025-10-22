@@ -20,10 +20,14 @@ from typing import IO, Any
 
 import google_crc32c
 import requests
-from aignx.codegen.models import InputArtifactReadResponse as InputArtifactData
-from aignx.codegen.models import OutputArtifactReadResponse as OutputArtifactData
+from aignx.codegen.models import InputArtifact as InputArtifactData
+from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from tqdm.auto import tqdm
+
+from aignostics.utils import get_logger
+
+logger = get_logger(__name__)
 
 EIGHT_MB = 8_388_608
 SIGNED_DOWNLOAD_URL_EXPIRES_SECONDS_DEFAULT = 6 * 60 * 60  # 6 hours

@@ -1,0 +1,30 @@
+name: "Scheduled Testing / Production"
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test (leave empty for main)'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  test-scheduled:
+    uses: ./.github/workflows/_scheduled-test.yml
+    with:
+      platform_environment: "production"
+    permissions:
+      contents: read
+      id-token: write
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
+      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
+      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
+      BETTERSTACK_HEARTBEAT_URL_STAGING: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_STAGING }}
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
+      BETTERSTACK_HEARTBEAT_URL_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}

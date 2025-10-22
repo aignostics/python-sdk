@@ -132,7 +132,7 @@ SOFTWARE.
 
 ```
 
-## Faker (37.8.0) - MIT License
+## Faker (37.11.0) - MIT License
 
 Faker is a Python package that generates fake data for you.
 
@@ -506,7 +506,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.190) - MIT License
+## aignostics (0.2.192) - MIT License
 
 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
 
@@ -748,7 +748,7 @@ third-party archives.
 
 ```
 
-## aiofiles (24.1.0) - Apache Software License
+## aiofiles (25.1.0) - Apache Software License
 
 File support for asyncio.
 
@@ -1263,7 +1263,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ```
 
-## aiohttp (3.12.15) - Apache-2.0 AND MIT
+## aiohttp (3.13.0) - Apache-2.0 AND MIT
 
 Async http client/server framework (asyncio)
 
@@ -2841,7 +2841,7 @@ THE SOFTWARE.
 
 ```
 
-## attrs (25.3.0) - UNKNOWN
+## attrs (25.4.0) - UNKNOWN
 
 Classes Without Boilerplate
 
@@ -3659,7 +3659,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.40.47) - Apache Software License
+## boto3 (1.40.51) - Apache Software License
 
 The AWS SDK for Python
 
@@ -3857,7 +3857,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.40.47) - Apache Software License
+## botocore (1.40.51) - Apache-2.0
 
 Low-level, data-driven core of boto 3.
 
@@ -4213,7 +4213,7 @@ SOFTWARE.
 
 ```
 
-## cachetools (6.2.0) - MIT License
+## cachetools (6.2.1) - MIT License
 
 Extensible memoizing collections and decorators
 
@@ -5078,7 +5078,7 @@ That's all there is to it!
 
 ```
 
-## charset-normalizer (3.4.3) - MIT
+## charset-normalizer (3.4.4) - MIT
 
 The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet.
 
@@ -6644,7 +6644,7 @@ limitations under the License.
 
 ```
 
-## dicom-validator (0.7.2) - MIT License
+## dicom-validator (0.7.3) - MIT License
 
 Python DICOM validator using input from DICOM specs in docbook format
 
@@ -7281,7 +7281,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## duckdb (1.4.0) - MIT License
+## duckdb (1.4.1) - MIT License
 
 DuckDB in-process database
 
@@ -7585,7 +7585,7 @@ SOFTWARE.
 
 ```
 
-## fastapi (0.118.2) - MIT License
+## fastapi (0.119.0) - MIT License
 
 FastAPI framework, high performance, easy to learn, fast to code, ready for production
 
@@ -7653,7 +7653,7 @@ THE SOFTWARE.
 
 ```
 
-## fastapi-cloud-cli (0.3.0) - MIT License
+## fastapi-cloud-cli (0.3.1) - MIT License
 
 Deploy and manage FastAPI Cloud apps from the command line 🚀
 
@@ -7916,7 +7916,7 @@ Python support for Parquet file format
    END OF TERMS AND CONDITIONS
 ```
 
-## filelock (3.19.1) - The Unlicense (Unlicense)
+## filelock (3.20.0) - The Unlicense (Unlicense)
 
 A platform independent file lock.
 
@@ -8374,7 +8374,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 ```
 
-## frozenlist (1.7.0) - Apache-2.0
+## frozenlist (1.8.0) - Apache-2.0
 
 A list-like structure which implements collections.abc.MutableSequence
 
@@ -8668,7 +8668,7 @@ UNKNOWN
 
 * URL: https://github.com/orhun/git-cliff
 
-## google-api-core (2.25.2) - Apache Software License
+## google-api-core (2.26.0) - Apache Software License
 
 Google API client core library
 
@@ -9312,7 +9312,7 @@ Google Cloud API client core library
 
 ```
 
-## google-cloud-storage (3.4.0) - Apache Software License
+## google-cloud-storage (3.4.1) - Apache Software License
 
 Google Cloud Storage API client library
 
@@ -10341,12 +10341,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## httptools (0.6.4) - MIT License
+## httptools (0.7.1) - UNKNOWN
 
 A collection of framework independent HTTP protocol utils.
 
 * URL: https://github.com/MagicStack/httptools
-* Author(s): Yury Selivanov
+* Author(s): Yury Selivanov <yury@magic.io>
 
 ### License Text
 
@@ -10498,7 +10498,7 @@ THE SOFTWARE.
 
 ```
 
-## idna (3.10) - BSD License
+## idna (3.11) - UNKNOWN
 
 Internationalized Domain Names in Applications (IDNA)
 
@@ -10510,7 +10510,7 @@ Internationalized Domain Names in Applications (IDNA)
 ```
 BSD 3-Clause License
 
-Copyright (c) 2013-2024, Kim Davies and contributors.
+Copyright (c) 2013-2025, Kim Davies and contributors.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -10576,7 +10576,7 @@ THE SOFTWARE.
 
 ```
 
-## ijson (3.4.0) - UNKNOWN
+## ijson (3.4.0.post0) - UNKNOWN
 
 Iterative JSON parser with standard Python iterator interfaces
 
@@ -10915,36 +10915,7 @@ SOFTWARE.
 
 ```
 
-## ipykernel (6.30.1) - BSD 3-Clause License
-
-Copyright (c) 2015, IPython Development Team
-
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+## ipykernel (7.0.1) - UNKNOWN
 
 IPython Kernel for Jupyter
 
@@ -12635,7 +12606,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (4.12.0) - UNKNOWN
+## logfire (4.13.2) - UNKNOWN
 
 The best Python observability tool! 🪵🔥
 
@@ -12969,7 +12940,7 @@ THE SOFTWARE.
 
 ```
 
-## matplotlib (3.10.6) - Python Software Foundation License
+## matplotlib (3.10.7) - Python Software Foundation License
 
 Python plotting package
 
@@ -13274,7 +13245,7 @@ SOFTWARE.
 
 ```
 
-## msgpack (1.1.1) - Apache 2.0
+## msgpack (1.1.2) - UNKNOWN
 
 MessagePack serializer
 
@@ -13341,7 +13312,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## multidict (6.6.4) - Apache License 2.0
+## multidict (6.7.0) - Apache License 2.0
 
 multidict implementation
 
@@ -13649,7 +13620,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## narwhals (2.6.0) - MIT License
+## narwhals (2.8.0) - MIT License
 
 Extremely lightweight compatibility layer between dataframe libraries
 
@@ -13884,7 +13855,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (3.0.3) - MIT License
+## nicegui (3.0.4) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -23772,7 +23743,7 @@ A tool for scanning Python environments for known vulnerabilities
 
 ```
 
-## platformdirs (4.4.0) - MIT License
+## platformdirs (4.5.0) - MIT License
 
 A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`.
 
@@ -24181,7 +24152,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## propcache (0.4.0) - Apache Software License
+## propcache (0.4.1) - Apache Software License
 
 Accelerated property cache
 
@@ -24683,43 +24654,6 @@ Proxy Implementation
 * URL: http://github.com/jtushman/proxy_tools
 * Author(s): Jonathan Tushman
 
-## pscript (0.7.7) - BSD License
-
-Python to JavaScript compiler.
-
-* URL: http://pscript.readthedocs.io
-* Author(s): Almar Klein and contributors
-
-### License Text
-
-```
-Copyright (c) 2015-2020, PScript developers
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-```
-
 ## psutil (7.1.0) - BSD-3-Clause
 
 Cross-platform lib for process and system monitoring.
@@ -25157,12 +25091,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## pydantic (2.11.10) - MIT License
+## pydantic (2.12.2) - UNKNOWN
 
 Data validation using Python type hints
 
 * URL: https://github.com/pydantic/pydantic
-* Author(s): Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Terrence Dorsey <terry@pydantic.dev>, David Montague <david@pydantic.dev>, Serge Matveenko <lig@countzero.co>, Marcelo Trylesinski <marcelotryle@gmail.com>, Sydney Runkle <sydneymarierunkle@gmail.com>, David Hewitt <mail@davidhewitt.io>, Alex Hall <alex.mojaki@gmail.com>, Victorien Plot <contact@vctrn.dev>
+* Author(s): Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Terrence Dorsey <terry@pydantic.dev>, David Montague <david@pydantic.dev>, Serge Matveenko <lig@countzero.co>, Marcelo Trylesinski <marcelotryle@gmail.com>, Sydney Runkle <sydneymarierunkle@gmail.com>, David Hewitt <mail@davidhewitt.io>, Alex Hall <alex.mojaki@gmail.com>, Victorien Plot <contact@vctrn.dev>, Douwe Maan <hi@douwe.me>
 
 ### License Text
 
@@ -25191,7 +25125,7 @@ SOFTWARE.
 
 ```
 
-## pydantic-extra-types (2.10.5) - MIT License
+## pydantic-extra-types (2.10.6) - MIT License
 
 Extra Pydantic types.
 
@@ -25259,7 +25193,7 @@ SOFTWARE.
 
 ```
 
-## pydantic_core (2.33.2) - MIT License
+## pydantic_core (2.41.4) - UNKNOWN
 
 Core functionality for Pydantic validation and serialization
 
@@ -26614,7 +26548,7 @@ SOFTWARE.
 
 ```
 
-## pytest-env (1.1.5) - MIT License
+## pytest-env (1.2.0) - MIT License
 
 pytest plugin that allows you to add environment variables.
 
@@ -27095,7 +27029,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ```
 
-## python-json-logger (3.3.0) - BSD License
+## python-json-logger (4.0.0) - BSD License
 
 JSON Log Formatter for the Python Logging Package
 
@@ -27397,7 +27331,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 
 ```
 
-## referencing (0.36.2) - UNKNOWN
+## referencing (0.37.0) - UNKNOWN
 
 JSON Referencing + Python
 
@@ -27972,7 +27906,7 @@ SOFTWARE.
 
 ```
 
-## rich (14.1.0) - MIT License
+## rich (14.2.0) - MIT License
 
 Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal
 
@@ -28004,7 +27938,7 @@ SOFTWARE.
 
 ```
 
-## rich-click (1.9.2) - MIT License
+## rich-click (1.9.3) - MIT License
 
 Copyright (c) 2022 Phil Ewels
 
@@ -29629,7 +29563,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## sentry-sdk (2.40.0) - BSD License
+## sentry-sdk (2.41.0) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -30032,7 +29966,7 @@ THE SOFTWARE.
 
 ```
 
-## sphinx-autodoc-typehints (3.2.0) - MIT License
+## sphinx-autodoc-typehints (3.5.1) - MIT License
 
 Type hints (PEP 484) support for the Sphinx autodoc extension
 
@@ -30306,7 +30240,7 @@ SOFTWARE.
 
 ```
 
-## sphinx-toolbox (4.0.0) - MIT License
+## sphinx-toolbox (3.10.0) - MIT License
 
 Box of handy tools for Sphinx 🧰 📔
 
@@ -30701,7 +30635,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## swagger-plugin-for-sphinx (5.1.3) - UNKNOWN
+## swagger-plugin-for-sphinx (5.2.0) - UNKNOWN
 
 Sphinx plugin which renders a OpenAPI specification with Swagger
 
@@ -31352,7 +31286,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-## tomli (2.2.1) - MIT License
+## tomli (2.3.0) - UNKNOWN
 
 A lil' TOML parser
 
@@ -32140,7 +32074,7 @@ DEALINGS IN THE SOFTWARE.
 
 ```
 
-## types-python-dateutil (2.9.0.20250822) - UNKNOWN
+## types-python-dateutil (2.9.0.20251008) - UNKNOWN
 
 Typing stubs for python-dateutil
 
@@ -33258,7 +33192,7 @@ SOFTWARE.
 
 ```
 
-## uv (0.8.23) - Apache Software License; MIT License
+## uv (0.9.2) - Apache Software License; MIT License
 
 An extremely fast Python package and project manager, written in Rust.
 
@@ -33728,41 +33662,7 @@ Copyright (C) 2016-present the uvloop authors and contributors.
 
 ```
 
-## vbuild (0.8.2) - MIT License
-
-A simple module to extract html/script/style from a vuejs '.vue' file (can minimize/es2015 compliant js) ... just py2 or py3, NO nodejs !
-
-* URL: https://github.com/manatlan/vbuild
-* Author(s): manatlan
-
-### License Text
-
-```
-MIT License
-
-Copyright (c) 2018 manatlan
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
-## virtualenv (20.34.0) - MIT License
+## virtualenv (20.35.3) - MIT License
 
 Virtual Python Environment builder
 
@@ -33824,7 +33724,7 @@ limitations under the License.
 
 ```
 
-## watchfiles (1.1.0) - MIT License
+## watchfiles (1.1.1) - MIT License
 
 Simple, modern and high performance file watching and code reload in python.
 
@@ -33836,7 +33736,7 @@ Simple, modern and high performance file watching and code reload in python.
 ```
 The MIT License (MIT)
 
-Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022 Samuel Colvin
+Copyright (c) 2017 to present Samuel Colvin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33980,7 +33880,7 @@ Character encoding aliases for legacy web content
 * URL: https://github.com/SimonSapin/python-webencodings
 * Author(s): Geoffrey Sneddon
 
-## websocket-client (1.8.0) - Apache Software License
+## websocket-client (1.9.0) - Apache Software License
 
 WebSocket client for Python with low level API options
 
@@ -34180,7 +34080,7 @@ WebSocket client for Python with low level API options
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright 2024 engn33r
+   Copyright 2025 engn33r
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -34351,7 +34251,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-## yarl (1.20.1) - Apache Software License
+## yarl (1.22.0) - Apache Software License
 
 Yet another URL library
 

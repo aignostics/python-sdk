@@ -46,7 +46,6 @@ def sanitize_path(path: str | Path) -> str | Path:
 
     Args:
         path (str | Path): The path to sanitize.
-        replace_colon_with_underscore (bool): if True (default) will apply rule #2
 
     Returns:
         str | Path: The sanitized path.

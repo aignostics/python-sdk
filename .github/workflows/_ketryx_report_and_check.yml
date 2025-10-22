@@ -2,6 +2,11 @@ name: "Report build to Ketryx and check for approval"
 
 on:
   workflow_call:
+    inputs:
+      commit_message:
+        description: 'Commit message to check for skip markers'
+        required: false
+        type: string
     secrets:
       KETRYX_PROJECT:
         required: false
@@ -26,19 +31,25 @@ jobs:
           fetch-depth: 0
 
       - name: Download test results for ubuntu-latest generated in _test.yml
-        if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
+        if: |
+          !contains(inputs.commit_message, 'skip:ketryx') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: test-results-ubuntu-latest          
 
       - name: Download audit results generated in _audit.yml
-        if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
+        if: |
+          !contains(inputs.commit_message, 'skip:ketryx') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: audit-results          
 
       - name: Report build to Ketryx and check for approval
-        if: (!contains(github.event.head_commit.message, 'skip:ketryx'))
+        if: |
+          !contains(inputs.commit_message, 'skip:ketryx') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
         uses: Ketryx/ketryx-github-action@40b13ef68c772e96e58ec01a81f5b216d7710186 # v1.4.0
         continue-on-error: true # TODO(Helmut): Remove post having Ketryx configured to inspect the main branch
         with:

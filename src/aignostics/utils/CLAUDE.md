@@ -21,6 +21,7 @@ The utils module provides core infrastructure and shared utilities used across a
 - `_settings.py` - Settings management with Pydantic validation
 - `_log.py` - Structured logging configuration
 - `_health.py` - Health check framework
+- `_user_agent.py` - **Enhanced user agent generation with CI/CD context** (NEW)
 - `boot.py` - Application bootstrap and initialization
 
 **System Utilities:**
@@ -60,6 +61,27 @@ class MyService(BaseService):
         return {"version": "1.0.0"}
 ```
 
+**User Agent Generation:**
+
+```python
+from aignostics.utils import user_agent
+
+# Generate enhanced user agent with CI/CD context
+ua = user_agent()
+# Format: {project_name}/{version} ({platform}; {pytest_test}; {github_run_url})
+
+# Examples:
+# "aignostics/1.0.0-beta.7 (darwin)"
+# "aignostics/1.0.0-beta.7 (linux; tests/platform/test_auth.py::test_login)"
+# "aignostics/1.0.0-beta.7 (linux; +https://github.com/org/repo/actions/runs/123)"
+# "aignostics/1.0.0-beta.7 (linux; tests/.../test_e2e.py; +https://github.com/org/repo/actions/runs/456)"
+
+# Used automatically by:
+# - SDK metadata system (platform._sdk_metadata)
+# - API client HTTP headers
+# - Logging context
+```
+
 **Logging:**
 
 ```python
@@ -95,6 +117,61 @@ class MyService(BaseService):
 ```
 
 ## Technical Implementation
+
+**User Agent System (`_user_agent.py`):**
+
+**NEW FEATURE**: Enhanced user agent generation with automatic CI/CD context detection.
+
+```python
+def user_agent() -> str:
+    """Generate user agent string for HTTP requests.
+
+    Format: {project_name}/{version} ({platform}; {current_test}; {github_run})
+
+    Detection:
+    - Platform: sys.platform (darwin, linux, win32)
+    - Pytest: PYTEST_CURRENT_TEST environment variable
+    - GitHub Actions: GITHUB_RUN_ID, GITHUB_REPOSITORY environment variables
+
+    Returns:
+        str: User agent string with contextual information
+    """
+    current_test = os.getenv("PYTEST_CURRENT_TEST")  # e.g., "tests/test_foo.py::test_bar"
+    github_run_id = os.getenv("GITHUB_RUN_ID")  # GitHub Actions workflow run ID
+    github_repository = os.getenv("GITHUB_REPOSITORY")  # e.g., "owner/repo"
+
+    optional_parts = []
+
+    # Add test context if running under pytest
+    if current_test:
+        optional_parts.append(current_test)
+
+    # Add GitHub Actions context if available
+    if github_run_id and github_repository:
+        github_run_url = f"+https://github.com/{github_repository}/actions/runs/{github_run_id}"
+        optional_parts.append(github_run_url)
+
+    # Build user agent
+    base = f"{PROJECT_NAME}/{VERSION} ({sys.platform})"
+    if optional_parts:
+        return f"{base}; {'; '.join(optional_parts)}"
+    return base
+```
+
+**Usage in SDK:**
+
+1. **SDK Metadata**: Included in every run's metadata (`platform._sdk_metadata.build_sdk_metadata()`)
+2. **HTTP Headers**: Set in API client configuration for all HTTP requests
+3. **Logging Context**: Available for structured logging and observability
+4. **Debugging**: Provides traceability from API requests back to specific tests or workflow runs
+
+**Key Features:**
+
+- **Automatic Context Detection**: No manual configuration required
+- **CI/CD Integration**: Captures GitHub Actions workflow context with direct links to runs
+- **Test Traceability**: Links API requests to specific pytest tests
+- **Platform Identification**: Operating system detection for debugging platform-specific issues
+- **Lightweight**: Minimal performance overhead, simple environment variable reads
 
 **Service Discovery System:**
 

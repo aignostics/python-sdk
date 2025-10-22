@@ -12,20 +12,26 @@ Higher level abstractions are provided in the application module.
 
 from aignx.codegen.exceptions import ApiException, NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
-from aignx.codegen.models import ApplicationRunStatus, ItemStatus
-from aignx.codegen.models import ApplicationVersionReadResponse as ApplicationVersion
+from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
+from aignx.codegen.models import InputArtifact as InputArtifactData
 from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
-from aignx.codegen.models import InputArtifactReadResponse as InputArtifactData
 from aignx.codegen.models import ItemCreationRequest as InputItem
+from aignx.codegen.models import ItemOutput as ItemOutput
 from aignx.codegen.models import ItemResultReadResponse as ItemResult
+from aignx.codegen.models import ItemState as ItemState
+from aignx.codegen.models import ItemTerminationReason as ItemTerminationReason
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
-from aignx.codegen.models import OutputArtifactReadResponse as OutputArtifactData
+from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
-from aignx.codegen.models import RunReadResponse as ApplicationRunData
+from aignx.codegen.models import RunOutput as RunOutput
+from aignx.codegen.models import RunReadResponse as RunData
+from aignx.codegen.models import RunState as RunState  # TODO(Helmut): Refactor
+from aignx.codegen.models import RunTerminationReason as RunTerminationReason
 from aignx.codegen.models import UserReadResponse as User
+from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 
-from ._cli import cli
+from ._cli import cli_sdk, cli_user
 from ._client import Client
 from ._constants import (
     API_ROOT_DEV,
@@ -63,7 +69,7 @@ from ._utils import (
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
-from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, ApplicationRun
+from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Run
 
 __all__ = [
     "API_ROOT_DEV",
@@ -98,29 +104,35 @@ __all__ = [
     "UNKNOWN_ENDPOINT_URL",
     "ApiException",
     "Application",
-    "ApplicationRun",
-    "ApplicationRunData",
-    "ApplicationRunStatus",
-    "ApplicationRunStatus",
+    "ApplicationSummary",
     "ApplicationVersion",
     "Client",
     "InputArtifact",
     "InputArtifactData",
     "InputItem",
+    "ItemOutput",
     "ItemResult",
-    "ItemStatus",
+    "ItemState",
+    "ItemTerminationReason",
     "Me",
     "NotFoundException",
     "Organization",
     "OutputArtifactData",
     "OutputArtifactElement",
+    "Run",
+    "RunData",
+    "RunOutput",
+    "RunState",
+    "RunState",
+    "RunTerminationReason",
     "Service",
     "Settings",
     "TokenInfo",
     "User",
     "UserInfo",
     "calculate_file_crc32c",
-    "cli",
+    "cli_sdk",
+    "cli_user",
     "download_file",
     "generate_signed_url",
     "get_mime_type_for_artifact",
