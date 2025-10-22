@@ -89,7 +89,6 @@ def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture, r
 @patch("nicegui.ui.run")
 def test_cli_serve_api_and_app(mock_ui_run, mock_register_pages, runner: CliRunner, record_property) -> None:
     """Check serve command starts the server with API and GUI app."""
-
     record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
 
     # Create mocks for components needed in gui_run

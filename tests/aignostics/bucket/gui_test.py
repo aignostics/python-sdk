@@ -36,7 +36,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     5. Deletes the files using the GUI
     6. Checks the file is no longer there using the find command
     """
-    record_property("tested-item-id", "TC-BUCKET-GUI-01", "SPEC-GUI-SERVICE")
+    record_property("tested-item-id", "TC-BUCKET-GUI-01, SPEC-GUI-SERVICE")
 
     # Step 1: Create file
     test_prefix = "{username}/test-gui-" + "".join(random.choices(string.ascii_letters + string.digits, k=3))
