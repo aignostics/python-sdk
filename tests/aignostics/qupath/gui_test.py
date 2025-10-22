@@ -131,7 +131,10 @@ async def test_gui_qupath_install_and_launch(
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.skip(reason="broken on production given rollout")
+@pytest.mark.skipif(
+    platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
+    reason="QuPath is not supported on ARM64 Linux",
+)
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
