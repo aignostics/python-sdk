@@ -1,6 +1,43 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.192](https://github.com/aignostics/python-sdk/compare/v0.2.191..0.2.192) - 2025-10-13
+# [0.2.193](https://github.com/aignostics/python-sdk/compare/v0.2.192..0.2.193) - 2025-10-22
+
+### ⛰️  Features
+
+- *(application)* Custom metadata with run and scheduling information in custom metadata - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(platform)* Retries and caching for read-only and auth operations - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(platform)* Dynamic user agent for all operations - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+
+### 🐛 Bug Fixes
+
+- *(application)* Error handling if application_versions called with … ([#178](https://github.com/orhun/git-cliff/issues/178)) - ([fde115d](https://github.com/aignostics/python-sdk/commit/fde115d06da336e021fefc89fb8a8989df05d6e0))
+- *(application)* Error handling if application_versions called with str arg - ([fde115d](https://github.com/aignostics/python-sdk/commit/fde115d06da336e021fefc89fb8a8989df05d6e0))
+
+### 🎨 Styling
+
+- *(application)* Layout improvements on application detail page - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(AI)* Improve CLAUDE.md files and AI workflows - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(ai)* Improve Claude Code Workflows for GitHub - ([cb18241](https://github.com/aignostics/python-sdk/commit/cb18241a00844411ba7389a13da697eda662dd78))
+- *(ai)* A few permissions for Claude - ([6ba8cf3](https://github.com/aignostics/python-sdk/commit/6ba8cf3c8e67a4bd783f47510b23828f8c046e1d))
+- *(api)* Support Platform API 1.0.0-beta.7 - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(gha)* Scheduled test against staging platform, using code on branch - ([b4c4ad1](https://github.com/aignostics/python-sdk/commit/b4c4ad1307cb0e09e87d65b137c90520868a9ba2))
+- *(lint)* Integrate pyright as additional type checker - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(platform,qupath)* Enable additional tests - ([cb18241](https://github.com/aignostics/python-sdk/commit/cb18241a00844411ba7389a13da697eda662dd78))
+- *(qupath)* More time for tests - ([79238b2](https://github.com/aignostics/python-sdk/commit/79238b29e3614f30430022407c12b1815f0147ed))
+- *(test)* Introduce schedule tests against staging - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(tests)* Introduce very long running tests - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(tests)* Introduce pytest-timeout and 10s default timeout for all tests - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(tests)* Improve test coverage - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- *(tests)* Allow retry of another e2e test, given connection closed by server leading to SSL Errors, see https://github.com/aignostics/python-sdk/actions/runs/18486770436/job/52671622634\?pr\=178\#step:16:274 - ([fde115d](https://github.com/aignostics/python-sdk/commit/fde115d06da336e021fefc89fb8a8989df05d6e0))
+- *(tests)* Bump timeout for dataset integration tests - ([02440bf](https://github.com/aignostics/python-sdk/commit/02440bf55ffd9f025ac78a7f72fb180223ef6c2c))
+- Test on gh ([#180](https://github.com/orhun/git-cliff/issues/180)) - ([925df6f](https://github.com/aignostics/python-sdk/commit/925df6f33a4f6a7ad840045555c33a64da83158d))
+- Codecov - ([53f425c](https://github.com/aignostics/python-sdk/commit/53f425cdb45abbf57728aefcea6e8b63d276b8bb))
+
+
+# [v0.2.192](https://github.com/aignostics/python-sdk/compare/v0.2.191..v0.2.192) - 2025-10-13
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -1707,3 +1744,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
