@@ -74,11 +74,11 @@ async def test_gui_idc_downloads(user: User, tmp_path: Path, silent_logging: boo
         )
 
 
-async def _gui_idc_download_fails_with_invalid_inputs(
+async def _gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913, PLR0917
     user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
 ) -> None:
     """Test that the download fails with appropriate notification."""
-    record_property("tested-item-id", "TC-DATASET-GUI-01", "SPEC-GUI-SERVICE")
+    record_property("tested-item-id", "TC-DATASET-GUI-01, SPEC-GUI-SERVICE")
 
     with patch("aignostics.dataset._gui.get_user_data_directory", return_value=Path(tmpdir)):
         await user.open("/dataset/idc")
@@ -104,11 +104,11 @@ async def _gui_idc_download_fails_with_invalid_inputs(
     ],
 )
 @pytest.mark.timeout(timeout=60)
-async def test_gui_idc_download_fails_with_no_inputs(
+async def test_gui_idc_download_fails_with_no_inputs(  # noqa: PLR0913, PLR0917
     user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
 ) -> None:
     """Test that the download fails with appropriate notification when no IDs are provided."""
-    record_property("tested-item-id", "TC-DATASET-GUI-01", "SPEC-GUI-SERVICE")
+    record_property("tested-item-id", "TC-DATASET-GUI-01, SPEC-GUI-SERVICE")
 
     await _gui_idc_download_fails_with_invalid_inputs(user, tmpdir, source_input, expected_notification, silent_logging)
 
@@ -126,10 +126,10 @@ async def test_gui_idc_download_fails_with_no_inputs(
         ),
     ],
 )
-async def test_gui_idc_download_fails_with_invalid_inputs(
-    user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None,record_property
+async def test_gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913, PLR0917
+    user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
 ) -> None:
     """Test that the download fails with appropriate notification when invalid IDs are provided."""
-    record_property("tested-item-id", "TC-DATASET-GUI-01", "SPEC-GUI-SERVICE")
+    record_property("tested-item-id", "TC-DATASET-GUI-01, SPEC-GUI-SERVICE")
 
     await _gui_idc_download_fails_with_invalid_inputs(user, tmpdir, source_input, expected_notification, silent_logging)
