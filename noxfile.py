@@ -77,7 +77,7 @@ TEST_PYTHON_VERSIONS = _get_test_python_versions()
 
 def _setup_venv(session: nox.Session, all_extras: bool = True, no_dev: bool = False) -> None:
     """Install dependencies for the given session using uv."""
-    args = ["uv", "sync", "--frozen", "--link-mode", "copy"]
+    args = ["uv", "sync", "--frozen", "--link-mode=copy"]
     if all_extras:
         args.append("--all-extras")
     if no_dev:
