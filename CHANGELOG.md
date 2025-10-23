@@ -1,6 +1,20 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.193](https://github.com/aignostics/python-sdk/compare/v0.2.192..0.2.193) - 2025-10-22
+# [0.2.194](https://github.com/aignostics/python-sdk/compare/v0.2.193..0.2.194) - 2025-10-23
+
+### 🐛 Bug Fixes
+
+- *(ai)* Claude workflows - ([b0f6602](https://github.com/aignostics/python-sdk/commit/b0f6602e6fea3ce14a81323edc7ee2c6802dda99))
+
+### 🛡️ Security
+
+- *(uv)* Require uv >=0.9.5 given security advisory GHSA-w476-p2h3-79g9 - ([68c5b08](https://github.com/aignostics/python-sdk/commit/68c5b08e9ac15606fc39933a2d43d06d1ca54322))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.193](https://github.com/aignostics/python-sdk/compare/v0.2.192..v0.2.193) - 2025-10-22
 
 ### ⛰️  Features
 
