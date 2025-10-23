@@ -88,9 +88,11 @@ async def _gui_idc_download_fails_with_invalid_inputs(
 
         await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION")
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION").click()
-        await user.should_see("Ok")
-        await user.should_see("Cancel")
+        await user.should_see(marker="BUTTON_FILEPICKER_OK")
+        await user.should_see(marker="BUTTON_FILEPICKER_CANCEL")
         user.find(marker="BUTTON_FILEPICKER_OK").click()
+        # Wait for file picker dialog to close
+        await user.should_not_see(marker="BUTTON_FILEPICKER_OK")
         await user.should_not_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
         await user.should_see(marker="BUTTON_DOWNLOAD")
