@@ -158,7 +158,6 @@ class PageBuilder(BasePageBuilder):
                     download_form.destination is None
                     or download_form.download_button is None
                     or download_form.download_progress is None
-                    or download_form.destination is None
                     or download_form.download_arrow_icon is None
                 ):
                     return
