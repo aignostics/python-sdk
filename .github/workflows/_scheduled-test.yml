@@ -34,7 +34,7 @@ on:
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
   PYTHONIOENCODING: "utf8"
-  PLATFORM_ENVIRONMENT: ${{ inputs.platform_environment }}
+  AIGNOSTICS_PLATFORM_ENVIRONMENT: ${{ inputs.platform_environment }}
 
 jobs:
   test-scheduled:

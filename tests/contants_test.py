@@ -6,7 +6,7 @@ that are shared across different test modules to ensure consistency and easy mai
 
 import os
 
-match os.getenv("PLATFORM_ENVIRONMENT", "production"):
+match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
     case "staging":
         TEST_APPLICATION_ID = "test-app"
         TEST_APPLICATION_VERSION = "0.0.5"
