@@ -149,13 +149,20 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 ):
                     ui.image("/application_assets/ruo.png").style("width: 70px; height: 36px")
 
-    async def _select_source(data: bool = False) -> None:
-        """Open a file picker dialog and show notifier when closed again."""
+    async def _select_source() -> None:
+        """Open a file picker dialog starting at configured default folder.
+
+        Uses the user-configurable default folder path from Settings.
+        The path is persisted in app.storage.general and can be changed via Settings > Default Folder Path.
+        upper_limit=None allows full directory tree navigation from the starting point.
+        """
         from nicegui import ui  # noqa: PLC0415
 
-        result = await GUILocalFilePicker(
-            str(get_user_data_directory("datasets") if data else str(Path(await AsyncPath.home()))), multiple=False
-        )  # type: ignore
+        # Get default folder path from settings, fallback to datasets directory
+        default_path = app.storage.general.get("default_folder_path", str(get_user_data_directory("datasets")))
+
+        # upper_limit=None enables unrestricted navigation up the directory tree
+        result = await GUILocalFilePicker(default_path, upper_limit=None, multiple=False)  # type: ignore
         if result and len(result) > 0:
             path = AsyncPath(result[0])
             if not await path.is_dir():
@@ -337,12 +344,10 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             with ui.stepper_navigation():
                 if "pytest" in sys.modules:
                     ui.button("Home", on_click=_pytest_home, icon="folder").mark("BUTTON_PYTEST_HOME")
-                with ui.button(
-                    "Data", on_click=lambda _: _select_source(True), icon="folder_special", color="purple-400"
-                ).mark("BUTTON_WSI_SELECT_DATA"):
-                    ui.tooltip("Select folder within Launchpad datasets directory")
-                with ui.button("Custom", on_click=_select_source, icon="folder").mark("BUTTON_WSI_SELECT_CUSTOM"):
-                    ui.tooltip("Select custom folder starting at your home directory")
+                with ui.button("Select Files", on_click=_select_source, icon="folder", color="primary").mark(
+                    "BUTTON_WSI_SELECT_FILES"
+                ):
+                    ui.tooltip("Select folder from datasets directory")
                 submit_form.wsi_next_button = ui.button("Next", on_click=_on_wsi_next_click)
                 submit_form.wsi_next_button.mark("BUTTON_WSI_NEXT").disable()
                 submit_form.wsi_spinner = ui.spinner(size="lg")

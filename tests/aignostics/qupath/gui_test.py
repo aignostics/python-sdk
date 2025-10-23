@@ -180,8 +180,11 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         user.find(marker="BUTTON_OPEN_QUPATH").click()
 
         # Step 3: Select Data
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
-        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_SELECT")
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_SELECT").click()
+        await user.should_see("Ok")
+        await user.should_see("Cancel")
+        user.find(marker="BUTTON_FILEPICKER_OK").click()
 
         # Step 3: Trigger Download
         await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")

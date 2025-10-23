@@ -171,7 +171,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         else:
             ui.markdown(
                 "##### Download all results with one click \n"
-                "1. Use data directory of Launchpad or select a custom folder. \n"
+                "1. Select a folder for downloading results. \n"
                 "2. A subfolder with the application run will be created and all results downloaded there. \n"
             )
 
@@ -180,7 +180,19 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         with ui.row().classes("w-full"):
 
             async def _select_download_destination() -> None:
-                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore[misc]
+                """Open file picker starting at configured default folder.
+
+                Uses the user-configurable default folder path from Settings.
+                The path is persisted in app.storage.general and can be changed via Settings > Default Folder Path.
+                upper_limit=None allows full directory tree navigation from the starting point.
+                """
+                from nicegui import app  # noqa: PLC0415
+
+                # Get default folder path from settings, fallback to results directory
+                default_path = app.storage.general.get("default_folder_path", str(get_user_data_directory("results")))
+
+                # upper_limit=None enables unrestricted navigation up the directory tree
+                result = await GUILocalFilePicker(default_path, upper_limit=None, multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
                     folder_path = AsyncPath(result[0])
                     if await folder_path.is_dir():
@@ -191,21 +203,13 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     ui.notify("No folder selected", type="warning")
 
-            async def _select_data() -> None:  # noqa: RUF029
-                """Open a file picker dialog and show notifier when closed again."""
-                selected_folder.value = str(get_user_data_directory("results"))
-                download_button.enable()
-
-            with ui.row().classes("w-full"):
-                with ui.button("Data", on_click=_select_data, icon="folder_special", color="purple-400").mark(
-                    "BUTTON_DOWNLOAD_DESTINATION_DATA"
-                ):
-                    ui.tooltip("Use Launchpad results directory")
-                ui.space()
-                with ui.button("Custom", on_click=_select_download_destination, icon="folder").mark(
+            with (
+                ui.row().classes("w-full"),
+                ui.button("Select Folder", on_click=_select_download_destination, icon="folder", color="primary").mark(
                     "BUTTON_DOWNLOAD_DESTINATION_SELECT"
-                ):
-                    ui.tooltip("Select custom directory")
+                ),
+            ):
+                ui.tooltip("Select download folder")
 
         download_item_status = ui.label("")
         download_item_status.set_visibility(False)

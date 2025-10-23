@@ -210,10 +210,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
             # Check the file picker opens and closes
             await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
-            user.find(marker="BUTTON_WSI_SELECT_DATA").click()
-            await user.should_see("Ok")
-            await user.should_see("Cancel")
-            user.find(marker="BUTTON_WSI_SELECT_CUSTOM").click()
+            user.find(marker="BUTTON_WSI_SELECT_FILES").click()
             await user.should_see("Ok")
             await user.should_see("Cancel")
             user.find(marker="BUTTON_FILEPICKER_CANCEL").click()
@@ -338,8 +335,11 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         # Step 3: Select Data
         download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
         assert not download_run_button.enabled, "Download button should be disabled before selecting target"
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA", retries=100)
-        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_SELECT", retries=100)
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_SELECT").click()
+        await user.should_see("Ok")
+        await user.should_see("Cancel")
+        user.find(marker="BUTTON_FILEPICKER_OK").click()
 
         # Step 3: Trigger Download
         await sleep(2)  # Wait a bit for button state to update so we can click

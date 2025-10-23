@@ -45,8 +45,11 @@ async def test_gui_idc_downloads(user: User, tmp_path: Path, silent_logging: boo
         user.find(marker="BUTTON_FILEPICKER_CANCEL").click()
         await user.should_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
-        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION")
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION").click()
+        await user.should_see("Ok")
+        await user.should_see("Cancel")
+        user.find(marker="BUTTON_FILEPICKER_OK").click()
         await user.should_not_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
         await user.should_see(marker="BUTTON_DOWNLOAD")
@@ -83,8 +86,11 @@ async def _gui_idc_download_fails_with_invalid_inputs(
         user.find(marker="SOURCE_INPUT").clear()
         user.find(marker="SOURCE_INPUT").type(source_input)
 
-        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
-        user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION")
+        user.find(marker="BUTTON_DOWNLOAD_DESTINATION").click()
+        await user.should_see("Ok")
+        await user.should_see("Cancel")
+        user.find(marker="BUTTON_FILEPICKER_OK").click()
         await user.should_not_see(MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED)
 
         await user.should_see(marker="BUTTON_DOWNLOAD")

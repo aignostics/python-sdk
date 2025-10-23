@@ -104,7 +104,12 @@ class PageBuilder(BasePageBuilder):
                     download_form.download_button.disable()
 
             async def _select_destination() -> None:
-                """Open a file picker dialog and show notifier when closed again."""
+                """Open file picker starting at configured default folder.
+
+                Uses the user-configurable default folder path from Settings.
+                The path is persisted in app.storage.general and can be changed via Settings > Default Folder Path.
+                upper_limit=None allows full directory tree navigation from the starting point.
+                """
                 if (
                     download_form.destination_label is None
                     or download_form.destination_open_button is None
@@ -112,7 +117,13 @@ class PageBuilder(BasePageBuilder):
                 ):
                     return
 
-                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore
+                # Get default folder path from settings, fallback to datasets/idc directory
+                default_path = app.storage.general.get(
+                    "default_folder_path", str(get_user_data_directory("datasets/idc"))
+                )
+
+                # upper_limit=None enables unrestricted navigation up the directory tree
+                result = await GUILocalFilePicker(default_path, upper_limit=None, multiple=False)  # type: ignore
                 if result and len(result) > 0:
                     path = AsyncPath(result[0])
                     if not await path.is_dir():
@@ -133,23 +144,6 @@ class PageBuilder(BasePageBuilder):
                     download_form.destination_open_button.disable()
                     ui.notify("You did not make a selection. You must choose a download folder.", type="warning")
                 if (download_form.source is not None) and (download_form.destination is not None):
-                    download_form.download_button.enable()
-                else:
-                    download_form.download_button.disable()
-
-            async def _select_data() -> None:  # noqa: RUF029
-                """Open a file picker dialog and show notifier when closed again."""
-                if (
-                    download_form.destination_label is None
-                    or download_form.destination_open_button is None
-                    or download_form.download_button is None
-                ):
-                    return
-
-                download_form.destination = get_user_data_directory("datasets/idc")
-                download_form.destination_label.set_text(str(download_form.destination))
-                download_form.destination_open_button.enable()
-                if download_form.source is not None:
                     download_form.download_button.enable()
                 else:
                     download_form.download_button.disable()
@@ -237,15 +231,10 @@ class PageBuilder(BasePageBuilder):
                     ).mark("BUTTON_EXAMPLE_DATASET"):
                         ui.tooltip("Use a pre-selected example dataset")
                     ui.space()
-                    with ui.button("Data", on_click=_select_data, icon="folder_special", color="purple-400").mark(
-                        "BUTTON_DOWNLOAD_DESTINATION_DATA"
-                    ):
-                        ui.tooltip("Use Launchpad datasets directory")
-
-                    with ui.button("Custom", on_click=_select_destination, icon="folder").mark(
+                    with ui.button("Select Folder", on_click=_select_destination, icon="folder", color="primary").mark(
                         "BUTTON_DOWNLOAD_DESTINATION"
                     ):
-                        ui.tooltip("Select a custom directory")
+                        ui.tooltip("Select download folder")
                     ui.space()
                     with ui.row(align_items="center"):
                         with ui.button("Download", icon="cloud_download").mark("BUTTON_DOWNLOAD") as download_button:

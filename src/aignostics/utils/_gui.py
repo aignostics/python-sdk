@@ -166,9 +166,13 @@ class GUILocalFilePicker:
                         )
                         .on("cellDoubleClicked", self.handle_double_click)
                     )
-                    with ui.row().classes("w-full justify-end"):
-                        ui.button("Cancel", on_click=self.close).props("outline").mark("BUTTON_FILEPICKER_CANCEL")
-                        ui.button("Ok", on_click=self._handle_ok).mark("BUTTON_FILEPICKER_OK")
+                    with ui.row().classes("w-full justify-between"):
+                        ui.button("Create Folder", on_click=self._create_folder, icon="create_new_folder").props(
+                            "outline"
+                        ).mark("BUTTON_FILEPICKER_CREATE_FOLDER")
+                        with ui.row():
+                            ui.button("Cancel", on_click=self.close).props("outline").mark("BUTTON_FILEPICKER_CANCEL")
+                            ui.button("Ok", on_click=self._handle_ok).mark("BUTTON_FILEPICKER_OK")
                 self.update_grid()
 
             def add_drives_toggle(self) -> None:
@@ -218,6 +222,53 @@ class GUILocalFilePicker:
             async def _handle_ok(self) -> None:
                 rows = await self.grid.get_selected_rows()
                 self.submit([r["path"] for r in rows])
+
+            async def _create_folder(self) -> None:
+                """Create a new folder in the current directory.
+
+                Displays a modal dialog prompting for folder name, validates input,
+                creates the folder using pathlib.Path.mkdir(), and refreshes the file grid.
+                Cross-platform compatible (Windows, Linux, macOS) using pathlib abstraction.
+                """
+                # Prompt user for folder name
+                with ui.dialog() as dialog, ui.card():
+                    ui.label("Create New Folder").classes("text-h6")
+                    folder_name_input = (
+                        ui.input(label="Folder name", placeholder="Enter folder name")
+                        .props("autofocus")
+                        .classes("w-full")
+                    )
+
+                    def create_and_close() -> None:
+                        """Create folder and refresh the grid.
+
+                        Validates folder name, checks for duplicates, creates folder using
+                        pathlib.Path.mkdir() (cross-platform), and handles OS/permission errors.
+                        """
+                        folder_name = folder_name_input.value.strip()
+                        if not folder_name:
+                            ui.notify("Folder name cannot be empty", type="warning")
+                            return
+
+                        new_folder_path = self.path / folder_name
+                        if new_folder_path.exists():
+                            ui.notify(f"Folder '{folder_name}' already exists", type="warning")
+                            return
+
+                        try:
+                            # pathlib.Path.mkdir() is cross-platform compatible
+                            new_folder_path.mkdir(parents=True, exist_ok=False)
+                            ui.notify(f"Created folder: {folder_name}", type="positive")
+                            self.update_grid()
+                            dialog.close()
+                        except (OSError, PermissionError) as e:
+                            ui.notify(f"Failed to create folder: {e!s}", type="negative")
+
+                    with ui.row().classes("w-full justify-end"):
+                        ui.button("Cancel", on_click=dialog.close).props("flat")
+                        ui.button("Create", on_click=create_and_close).props("flat")
+
+                dialog.open()
 
         # Create and return an instance but tell mypy it's a GUILocalFilePicker
         return GUILocalFilePickerImpl(  # type: ignore[return-value]
