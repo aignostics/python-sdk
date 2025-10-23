@@ -84,7 +84,7 @@ jobs:
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
     with:
-      platform_environment: "staging"
+      platform_environment: "production"
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
       attestations: write

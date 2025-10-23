@@ -31,6 +31,11 @@ on:
       BETTERSTACK_HEARTBEAT_URL_PRODUCTION:
         required: false
 
+env:
+  # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
+  PYTHONIOENCODING: "utf8"
+  PLATFORM_ENVIRONMENT: ${{ inputs.platform_environment }}
+
 jobs:
   test-scheduled:
     runs-on: ubuntu-latest
