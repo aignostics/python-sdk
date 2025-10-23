@@ -214,7 +214,7 @@ packages = ["src/aignostics", "codegen/out/aignx", "examples"]
 allow-direct-references = true
 
 [tool.uv]
-required-version = ">=0.8.9" # CVE-2025-54368
+required-version = ">=0.9.5" # CVE-2025-54368, GHSA-w476-p2h3-79g9
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
@@ -224,7 +224,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pillow>=11.3.0",                   # CVE-2025-48379,
     "aiohttp>=3.12.14",                 # CVE-2025-53643
     "starlette>=0.47.2",                # CVE-2025-54121
-    "uv>=0.8.9",                        # CVE-2025-54368
+    "uv>=0.9.5",                        # CVE-2025-54368
     "jupyterlab>=4.4.9",                # CVE-2025-59842
     "pip>=5.3",                         # CVE-2025-8869  
 ]
