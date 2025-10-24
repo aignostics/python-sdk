@@ -2,7 +2,7 @@
 
 ## Read me first
 
-You must do this: Use the guidance provide in the root CLAUDE.md file, fully understand it, and apply all guidance therein!
+You must do this: Use the guidance provide in the root [CLAUDE.md](../CLAUDE.md) file, fully understand it, and apply **all** guidance therein and in **all** linked documents!
 
 ## Tooling specific to use in VSCode
 

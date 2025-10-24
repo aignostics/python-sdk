@@ -764,7 +764,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         user_info
                         and user_info.organization
                         and user_info.organization.name
-                        and user_info.organization.name.lower() in {"aignostics", "lmu", "charite"}
+                        and user_info.organization.name.lower()
+                        in {"aignostics", "pre-alpha organization", "lmu", "charite"}
                     ):
                         ui.checkbox(
                             text="Onboard Slides and Output to Aignostics Portal",
@@ -776,7 +777,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         user_info
                         and user_info.organization
                         and user_info.organization.name
-                        and user_info.organization.name == "aignostics"
+                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha organization"}
                     ):
                         ui.checkbox(
                             text="Validate only",

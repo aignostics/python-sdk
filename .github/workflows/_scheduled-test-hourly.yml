@@ -1,4 +1,4 @@
-name: "> Scheduled Test"
+name: "> Scheduled Test (Hourly)"
 
 on:
   workflow_call:
