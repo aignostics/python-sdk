@@ -5,6 +5,7 @@ import platform
 import re
 from asyncio import sleep
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import platformdirs
@@ -19,6 +20,9 @@ from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.contants_test import HETA_APPLICATION_ID
+
+if TYPE_CHECKING:
+    from nicegui import ui
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 
@@ -139,7 +143,7 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None
+    user: User, runner: CliRunner, tmp_path: Path
 ) -> None:
     """Test that the user can open QuPath on a run."""
     result = runner.invoke(cli, ["qupath", "uninstall"])
@@ -188,14 +192,21 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
 
         # Step 3: Select Data
         await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA")
+        download_destination_data_button: ui.button = user.find(
+            marker="BUTTON_DOWNLOAD_DESTINATION_DATA"
+        ).elements.pop()
+        assert not download_destination_data_button.enabled, "Download destination button should be enabled"
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await assert_notified(user, "Using Launchpad results directory", 30)
 
         # Step 3: Trigger Download
         await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")
+        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        assert not download_run_button.enabled, "Download button should be enabled before downloading"
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
+        await assert_notified(user, "Downloading ...", 30)
 
         # Check: Download completed
-        await assert_notified(user, "Downloading ....", 30)
         await assert_notified(user, "Download and QuPath project creation completed.", 60 * 5)
         print_directory_structure(tmp_path, "execute")
         run_out_dir = tmp_path / run.run_id
