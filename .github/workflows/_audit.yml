@@ -1,3 +1,5 @@
+name: "Audit"
+
 on:
   workflow_call:
     # No secrets needed
