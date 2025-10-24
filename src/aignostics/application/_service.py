@@ -1164,9 +1164,11 @@ class Service(BaseService):
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
             for item in application_run.results():
-                image_path = Path(item.external_id)
-                if image_path.is_file():
-                    image_paths.append(image_path.resolve())
+                external_id = Path(item.external_id)
+                if external_id.is_file():
+                    image_paths.append(external_id.resolve())
+                else:
+                    logger.warning("Input slide '%s' not found, skipping QuPath addition.", external_id)
             added = QuPathService.add(
                 final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
             )
@@ -1194,7 +1196,6 @@ class Service(BaseService):
                 download_progress_callable,
             )
 
-            # TODO(Helmut): More info
             if run_details.state == RunState.TERMINATED:
                 logger.debug(
                     "Run '%s' reached final status '%s' with message '%s' (%s).",

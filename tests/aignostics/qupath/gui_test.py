@@ -142,7 +142,7 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0914, PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None
+    user: User, runner: CliRunner, tmp_path: Path, qupath_teardown: None
 ) -> None:
     """Test that the user can open QuPath on a run."""
     result = runner.invoke(cli, ["qupath", "uninstall"])
@@ -243,19 +243,12 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0914, PLR091
 
         # Step 5: Inspect QuPath results
         result = runner.invoke(cli, ["qupath", "inspect", str(run_out_dir / "qupath")])
-        assert result.exit_code == 0
-
-        # Check images have been annotated in the QuPath project created
-        print(f"\n==> Raw QuPath inspect output (length: {len(result.output)}):")
-        print(repr(result.output[:500]))  # Show first 500 chars with escape sequences visible
-
-        # Strip ANSI codes and normalize output before parsing JSON
-        output_clean = normalize_output(result.output, strip_ansi=True)
-        print(f"\n==> Cleaned output (length: {len(output_clean)}):")
-        print(repr(output_clean))
+        output = normalize_output(result.output, strip_ansi=True)
+        print(repr(output))
+        assert result.exit_code == 0, f"QuPath inspect command failed with exit code {result.exit_code}"
 
         try:
-            project_info = json.loads(output_clean)
+            project_info = json.loads(output)
             annotations_total = 0
             for image in project_info["images"]:
                 hierarchy = image.get("hierarchy", {})
@@ -264,11 +257,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0914, PLR091
                     annotations_total += total
             assert annotations_total > 1000, "Expected at least 1001 annotations in the QuPath results"
         except json.JSONDecodeError as e:
-            pytest.fail(
-                f"Failed to parse QuPath inspect output as JSON: {e}\n"
-                f"Raw output: {result.output[:200]!r}\n"
-                f"Cleaned output: {output_clean[:200]!r}"
-            )
+            pytest.fail(f"Failed to parse QuPath inspect output as JSON: {e}\nOutput: {output!r}\n")
 
     if not was_installed:
         result = runner.invoke(cli, ["qupath", "uninstall"])
