@@ -136,13 +136,13 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.skipif(
-    platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
-    reason="QuPath is not supported on ARM64 Linux",
+    (platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"}) or platform.system() == "Windows",
+    reason="QuPath is not supported on ARM64 Linux; Windows support is not implemented yet",
 )
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0914, PLR0915
-    user: User, runner: CliRunner, tmp_path: Path
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None
 ) -> None:
     """Test that the user can open QuPath on a run."""
     result = runner.invoke(cli, ["qupath", "uninstall"])
@@ -252,7 +252,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0914, PLR091
         # Strip ANSI codes and normalize output before parsing JSON
         output_clean = normalize_output(result.output, strip_ansi=True)
         print(f"\n==> Cleaned output (length: {len(output_clean)}):")
-        print(repr(output_clean[:500]))
+        print(repr(output_clean))
 
         try:
             project_info = json.loads(output_clean)
