@@ -139,10 +139,9 @@ async def test_gui_qupath_install_and_launch(
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
-async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
+async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path
 ) -> None:
     """Test that the user can open QuPath on a run."""
@@ -151,7 +150,10 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     was_installed = not result.exit_code
 
     result = runner.invoke(cli, ["qupath", "install"])
-    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
+    output_clean = normalize_output(result.output, strip_ansi=True)
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in output_clean, (
+        f"Expected 'QuPath v{QUPATH_VERSION} installed successfully' in output.\nOutput: {output_clean}"
+    )
     assert result.exit_code == 0
 
     with patch(
@@ -195,14 +197,14 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         download_destination_data_button: ui.button = user.find(
             marker="BUTTON_DOWNLOAD_DESTINATION_DATA"
         ).elements.pop()
-        assert not download_destination_data_button.enabled, "Download destination button should be enabled"
+        assert download_destination_data_button.enabled, "Download destination button should be enabled"
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
         await assert_notified(user, "Using Launchpad results directory", 30)
 
         # Step 3: Trigger Download
         await user.should_see(marker="DIALOG_BUTTON_DOWNLOAD_RUN")
         download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
-        assert not download_run_button.enabled, "Download button should be enabled before downloading"
+        assert download_run_button.enabled, "Download button should be enabled before downloading"
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
         await assert_notified(user, "Downloading ...", 30)
 
@@ -244,15 +246,29 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         assert result.exit_code == 0
 
         # Check images have been annotated in the QuPath project created
-        print(result.output)
-        project_info = json.loads(result.output)
-        annotations_total = 0
-        for image in project_info["images"]:
-            hierarchy = image.get("hierarchy", {})
-            total = hierarchy.get("total", 0)
-            if total > 0:
-                annotations_total += total
-        assert annotations_total > 1000, "Expected at least 1001 annotations in the QuPath results"
+        print(f"\n==> Raw QuPath inspect output (length: {len(result.output)}):")
+        print(repr(result.output[:500]))  # Show first 500 chars with escape sequences visible
+
+        # Strip ANSI codes and normalize output before parsing JSON
+        output_clean = normalize_output(result.output, strip_ansi=True)
+        print(f"\n==> Cleaned output (length: {len(output_clean)}):")
+        print(repr(output_clean[:500]))
+
+        try:
+            project_info = json.loads(output_clean)
+            annotations_total = 0
+            for image in project_info["images"]:
+                hierarchy = image.get("hierarchy", {})
+                total = hierarchy.get("total", 0)
+                if total > 0:
+                    annotations_total += total
+            assert annotations_total > 1000, "Expected at least 1001 annotations in the QuPath results"
+        except json.JSONDecodeError as e:
+            pytest.fail(
+                f"Failed to parse QuPath inspect output as JSON: {e}\n"
+                f"Raw output: {result.output[:200]!r}\n"
+                f"Cleaned output: {output_clean[:200]!r}"
+            )
 
     if not was_installed:
         result = runner.invoke(cli, ["qupath", "uninstall"])
