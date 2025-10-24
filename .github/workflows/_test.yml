@@ -178,9 +178,7 @@ jobs:
 
       - name: Test / E2E / long running (single Python version)
         if: |
-          !github.event.pull_request.draft &&
-          !contains(inputs.commit_message, 'skip:test:long_running') &&
-          !contains(github.event.pull_request.labels.*.name, 'skip:test:long_running')
+          !github.event.pull_request.draft
         uses: ./.github/actions/run-tests
         with:
           test-type: long-running
