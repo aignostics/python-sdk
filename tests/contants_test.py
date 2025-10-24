@@ -9,7 +9,7 @@ import os
 match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
     case "staging":
         TEST_APPLICATION_ID = "test-app"
-        TEST_APPLICATION_VERSION = "0.0.5"
+        TEST_APPLICATION_VERSION = "0.0.4"
         TEST_APPLICATION_TIMEOUT_SECONDS = 60 * 45  # 45 minutes
 
         HETA_APPLICATION_ID = "he-tme"
