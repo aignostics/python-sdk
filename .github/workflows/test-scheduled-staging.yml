@@ -1,4 +1,4 @@
-name: "Scheduled Testing / Staging"
+name: "+ Scheduled Testing / Staging"
 
 on:
   schedule:

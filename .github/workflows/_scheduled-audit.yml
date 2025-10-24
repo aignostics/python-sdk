@@ -1,4 +1,4 @@
-name: "Scheduled Audit"
+name: "> Scheduled Audit"
 
 on:
   workflow_call:

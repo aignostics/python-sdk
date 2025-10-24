@@ -1,4 +1,4 @@
-name: "_claude-code"
+name: "> Claude Code"
 
 on:
   workflow_call:
