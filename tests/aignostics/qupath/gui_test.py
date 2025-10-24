@@ -195,6 +195,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
 
         # Check: Download completed
+        await assert_notified(user, "Downloading ....", 30)
         await assert_notified(user, "Download and QuPath project creation completed.", 60 * 5)
         print_directory_structure(tmp_path, "execute")
         run_out_dir = tmp_path / run.run_id
