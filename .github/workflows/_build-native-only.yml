@@ -1,4 +1,4 @@
-name: "Build Native Only"
+name: "_build-native-only"
 
 on:
   workflow_call:

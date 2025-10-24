@@ -1,4 +1,4 @@
-name: "Scheduled Test"
+name: "_Scheduled Test"
 
 on:
   workflow_call:
