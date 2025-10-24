@@ -764,20 +764,19 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         user_info
                         and user_info.organization
                         and user_info.organization.name
-                        and user_info.organization.name.lower()
-                        in {"aignostics", "pre-alpha organization", "lmu", "charite"}
+                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
                     ):
                         ui.checkbox(
                             text="Onboard Slides and Output to Aignostics Portal",
                         ).bind_value(submit_form, "onboard_to_aignostics_portal").mark(
                             "CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL"
                         )
-                    # Allow users in aignostics organisation to do validate only runs
+                    # Allow users in aignostics' organisations to do validate only runs
                     if (
                         user_info
                         and user_info.organization
                         and user_info.organization.name
-                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha organization"}
+                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org"}
                     ):
                         ui.checkbox(
                             text="Validate only",

@@ -173,7 +173,11 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
             pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
 
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.run_id}, status: {run.state}")
+        print(
+            f"Found existing run: {run.run_id}, status: {run.state}, "
+            f"application version: {run.version_number}, "
+            f"terminated at: {run.terminated_at}"
+        )
         await user.open(f"/application/run/{run.run_id}")
         await user.should_see(f"Run {run.run_id}")
         await user.should_see(f"Run of {application.application_id} ({latest_version_number})")
