@@ -171,8 +171,18 @@ class GUILocalFilePicker:
                             "outline"
                         ).mark("BUTTON_FILEPICKER_CREATE_FOLDER")
                         with ui.row():
-                            ui.button("Cancel", on_click=self.close).props("outline").mark("BUTTON_FILEPICKER_CANCEL")
-                            ui.button("Ok", on_click=self._handle_ok).mark("BUTTON_FILEPICKER_OK")
+                            def _on_cancel():
+                                self.submit([])
+
+                            def _on_ok():
+                                # Submit current directory (user clicked OK, so select current folder)
+                                if self.path.exists() and self.path.is_dir():
+                                    self.submit([str(self.path)])
+                                else:
+                                    self.submit([])
+
+                            ui.button("Cancel", on_click=_on_cancel).props("outline").mark("BUTTON_FILEPICKER_CANCEL")
+                            ui.button("Ok", on_click=_on_ok).mark("BUTTON_FILEPICKER_OK")
                 self.update_grid()
 
             def add_drives_toggle(self) -> None:
@@ -218,10 +228,6 @@ class GUILocalFilePicker:
                     self.update_grid()
                 else:
                     self.submit([str(self.path)])
-
-            async def _handle_ok(self) -> None:
-                rows = await self.grid.get_selected_rows()
-                self.submit([r["path"] for r in rows])
 
             async def _create_folder(self) -> None:
                 """Create a new folder in the current directory.
