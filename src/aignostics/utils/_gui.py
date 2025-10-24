@@ -171,10 +171,11 @@ class GUILocalFilePicker:
                             "outline"
                         ).mark("BUTTON_FILEPICKER_CREATE_FOLDER")
                         with ui.row():
-                            def _on_cancel():
+
+                            def _on_cancel() -> None:
                                 self.submit([])
 
-                            def _on_ok():
+                            def _on_ok() -> None:
                                 # Submit current directory (user clicked OK, so select current folder)
                                 if self.path.exists() and self.path.is_dir():
                                     self.submit([str(self.path)])
