@@ -16,7 +16,9 @@ import requests
 from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
-from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
+from aignostics.constants import (
+    TEST_APP_APPLICATION_ID,
+)
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -43,7 +45,11 @@ from aignostics.utils import BaseService, Health, get_logger, sanitize_path_comp
 from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
-from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
+from ._utils import (
+    get_file_extension_for_artifact,
+    get_mime_type_for_artifact,
+    get_supported_extensions_for_application,
+)
 
 has_qupath_extra = find_spec("ijson")
 if has_qupath_extra:
@@ -499,7 +505,8 @@ class Service(BaseService):
         metadata = []
 
         try:
-            for extension in list(WSI_SUPPORTED_FILE_EXTENSIONS):
+            extensions = get_supported_extensions_for_application(application_id)
+            for extension in extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
                     # Generate CRC32C checksum with google_crc32c and encode as base64
                     hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
@@ -866,7 +873,7 @@ class Service(BaseService):
 
             # Only add specimen and staining_method metadata if not test-app
             # TODO(Helmut): Remove condition when test-app reached input parity with heta
-            if application_id != "test-app":
+            if application_id != TEST_APP_APPLICATION_ID:
                 item_metadata["specimen"] = {
                     "disease": row["disease"],
                     "tissue": row["tissue"],

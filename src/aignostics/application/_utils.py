@@ -14,6 +14,12 @@ from typing import Any
 
 import humanize
 
+from aignostics.constants import (
+    HETA_APPLICATION_ID,
+    TEST_APP_APPLICATION_ID,
+    WSI_SUPPORTED_FILE_EXTENSIONS,
+    WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
+)
 from aignostics.platform import (
     InputArtifactData,
     OutputArtifactData,
@@ -328,3 +334,25 @@ def get_file_extension_for_artifact(artifact: OutputArtifactData) -> str:
         file_extension = ".bin"
     logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
     return file_extension
+
+
+def get_supported_extensions_for_application(application_id: str) -> set[str]:
+    """Get the list of supported file extensions for a given application.
+
+    Args:
+        application_id (str): The application ID
+
+    Returns:
+        set[str]: List of supported file extensions
+
+    Raises:
+        RuntimeError: If the application ID is not supported
+    """
+    if application_id == HETA_APPLICATION_ID:
+        return WSI_SUPPORTED_FILE_EXTENSIONS
+    if application_id == TEST_APP_APPLICATION_ID:
+        return WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP
+
+    message = f"Unsupported application {application_id}"
+    logger.critical(message)
+    raise RuntimeError(message)
