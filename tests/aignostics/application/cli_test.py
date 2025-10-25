@@ -12,7 +12,7 @@ from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
 from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
-from tests.contants_test import (
+from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     TEST_APPLICATION_ID,

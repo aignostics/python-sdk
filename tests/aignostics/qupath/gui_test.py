@@ -19,7 +19,7 @@ from aignostics.cli import cli
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION, HETA_SINGLE_SPOT_GS_URL
+from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION, HETA_SINGLE_SPOT_GS_URL
 
 if TYPE_CHECKING:
     from nicegui import ui
