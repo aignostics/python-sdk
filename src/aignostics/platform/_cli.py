@@ -8,7 +8,7 @@ import typer
 
 from aignostics.utils import console, get_logger
 
-from ._sdk_metadata import get_sdk_metadata_json_schema
+from ._sdk_metadata import get_item_sdk_metadata_json_schema, get_run_sdk_metadata_json_schema
 from ._service import Service
 
 logger = get_logger(__name__)
@@ -92,24 +92,47 @@ def whoami(
 cli_sdk = typer.Typer(name="sdk", help="Platform operations such as dumping the SDK metadata schema.")
 
 
-@cli_sdk.command("metadata-schema")
-def sdk_metadata_schema(
+@cli_sdk.command("run-metadata-schema")
+def run_sdk_metadata_schema(
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output")] = True,
 ) -> None:
-    """Print the JSON Schema for SDK metadata.
+    """Print the JSON Schema for Run SDK metadata.
 
     This schema defines the structure and validation rules for metadata
     that the SDK attaches to application runs. Use this to understand
     what fields are expected and their types.
     """
     try:
-        schema = get_sdk_metadata_json_schema()
+        schema = get_run_sdk_metadata_json_schema()
         if pretty:
             console.print_json(data=schema)
         else:
             print(json.dumps(schema))
     except Exception as e:
-        message = f"Error getting SDK metadata schema: {e!s}"
+        message = f"Error getting run SDK metadata schema: {e!s}"
+        logger.exception(message)
+        console.print(message, style="error")
+        sys.exit(1)
+
+
+@cli_sdk.command("item-metadata-schema")
+def item_sdk_metadata_schema(
+    pretty: Annotated[bool, typer.Option(help="Pretty print JSON output")] = True,
+) -> None:
+    """Print the JSON Schema for Item SDK metadata.
+
+    This schema defines the structure and validation rules for metadata
+    that the SDK attaches to individual items within application runs.
+    Use this to understand what fields are expected and their types.
+    """
+    try:
+        schema = get_item_sdk_metadata_json_schema()
+        if pretty:
+            console.print_json(data=schema)
+        else:
+            print(json.dumps(schema))
+    except Exception as e:
+        message = f"Error getting item SDK metadata schema: {e!s}"
         logger.exception(message)
         console.print(message, style="error")
         sys.exit(1)

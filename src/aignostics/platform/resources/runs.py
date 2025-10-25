@@ -4,6 +4,7 @@ This module provides classes for creating and managing application runs on the A
 It includes functionality for starting runs, monitoring status, and downloading results.
 """
 
+import builtins
 import logging
 import typing as t
 from collections.abc import Iterator
@@ -44,7 +45,12 @@ from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyEr
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
 from aignostics.platform._operation_cache import cached_operation, operation_cache_clear
-from aignostics.platform._sdk_metadata import build_sdk_metadata, validate_sdk_metadata
+from aignostics.platform._sdk_metadata import (
+    build_item_sdk_metadata,
+    build_run_sdk_metadata,
+    validate_item_sdk_metadata,
+    validate_run_sdk_metadata,
+)
 from aignostics.platform._settings import settings
 from aignostics.platform._utils import (
     calculate_file_crc32c,
@@ -358,9 +364,10 @@ class Runs:
         """
         custom_metadata = custom_metadata or {}
         custom_metadata.setdefault("sdk", {})
-        sdk_metadata = build_sdk_metadata()
-        validate_sdk_metadata(sdk_metadata)
+        sdk_metadata = build_run_sdk_metadata()
         custom_metadata["sdk"].update(sdk_metadata)
+        validate_run_sdk_metadata(custom_metadata["sdk"])
+        self._amend_input_items_with_sdk_metadata(items)
         payload = RunCreationRequest(
             application_id=application_id,
             version_number=application_version,
@@ -479,6 +486,20 @@ class Runs:
             ),
             page_size=page_size,
         )
+
+    @staticmethod
+    def _amend_input_items_with_sdk_metadata(items: builtins.list[ItemCreationRequest]) -> None:
+        """Amends input items with SDK metadata.
+
+        Args:
+            items (builtins.list[ItemCreationRequest]): The list of item creation requests to amend.
+        """
+        for item in items:
+            item.custom_metadata = item.custom_metadata or {}
+            item.custom_metadata.setdefault("sdk", {})
+            item_sdk_metadata = build_item_sdk_metadata()
+            item.custom_metadata["sdk"].update(item_sdk_metadata)
+            validate_item_sdk_metadata(item.custom_metadata["sdk"])
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.

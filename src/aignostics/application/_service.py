@@ -878,9 +878,11 @@ class Service(BaseService):
                     ],
                     custom_metadata={
                         "sdk": {
-                            "bucket_name": bucket_name,
-                            "object_key": object_key,
-                            "signed_download_url": download_url,
+                            "platform_bucket": {
+                                "bucket_name": bucket_name,
+                                "object_key": object_key,
+                                "signed_download_url": download_url,
+                            }
                         }
                     },
                 )

@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.192 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.195 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -200,7 +200,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760991967659.294]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1761393428019.061]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
@@ -263,7 +263,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 **Options**:
 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1760991967659.4062]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1761393428019.1792]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -717,11 +717,12 @@ $ aignostics sdk [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `metadata-schema`: Print the JSON Schema for SDK metadata.
+* `run-metadata-schema`: Print the JSON Schema for Run SDK metadata.
+* `item-metadata-schema`: Print the JSON Schema for Item SDK metadata.
 
-### `aignostics sdk metadata-schema`
+### `aignostics sdk run-metadata-schema`
 
-Print the JSON Schema for SDK metadata.
+Print the JSON Schema for Run SDK metadata.
 
 This schema defines the structure and validation rules for metadata
 that the SDK attaches to application runs. Use this to understand
@@ -730,7 +731,26 @@ what fields are expected and their types.
 **Usage**:
 
 ```console
-$ aignostics sdk metadata-schema [OPTIONS]
+$ aignostics sdk run-metadata-schema [OPTIONS]
+```
+
+**Options**:
+
+* `--pretty / --no-pretty`: Pretty print JSON output  [default: pretty]
+* `--help`: Show this message and exit.
+
+### `aignostics sdk item-metadata-schema`
+
+Print the JSON Schema for Item SDK metadata.
+
+This schema defines the structure and validation rules for metadata
+that the SDK attaches to individual items within application runs.
+Use this to understand what fields are expected and their types.
+
+**Usage**:
+
+```console
+$ aignostics sdk item-metadata-schema [OPTIONS]
 ```
 
 **Options**:
