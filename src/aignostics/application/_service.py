@@ -13,7 +13,6 @@ from typing import Any
 
 import google_crc32c
 import requests
-from aignx.codegen.models import ItemOutput, ItemState
 from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
@@ -27,7 +26,9 @@ from aignostics.platform import (
     Client,
     InputArtifact,
     InputItem,
+    ItemOutput,
     ItemResult,
+    ItemState,
     NotFoundException,
     OutputArtifactElement,
     Run,

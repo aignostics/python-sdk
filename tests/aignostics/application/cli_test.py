@@ -331,7 +331,7 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     assert result.exit_code == 0
     output = normalize_output(result.stdout)
     assert "Application Runs:" in output
-    assert "Item Statistics:" in output
+    assert "Statistics:" in output
     match = re.search(r"Listed '(\d+)' run\(s\)\.", output)
     assert match, "Expected run count message not found"
     displayed_count = int(match.group(1))

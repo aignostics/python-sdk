@@ -153,10 +153,11 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         has_output=False,
         limit=1,
     )
-    assert runs, (
-        f"No matching runs found for application {HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION}). "
-        f"Ensure the scheduled test test_application_runs_heta_version passed prior or skip this test."
-    )
+    if not runs:
+        message = f"No matching runs found for application {HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION}). "
+        message += "This test requires the scheduled test test_application_runs_heta_version passing first."
+        pytest.skip(message)
+
     run_id = runs[0].run_id
 
     # Explore run
