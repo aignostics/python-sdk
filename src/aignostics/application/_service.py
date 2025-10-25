@@ -4,8 +4,6 @@ import base64
 import re
 import time
 from collections.abc import Callable, Generator
-from datetime import UTC, datetime
-from enum import StrEnum
 from http import HTTPStatus
 from importlib.util import find_spec
 from pathlib import Path
@@ -13,7 +11,6 @@ from typing import Any
 
 import google_crc32c
 import requests
-from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
 from aignostics.constants import (
@@ -28,11 +25,7 @@ from aignostics.platform import (
     Client,
     InputArtifact,
     InputItem,
-    ItemOutput,
-    ItemResult,
-    ItemState,
     NotFoundException,
-    OutputArtifactElement,
     Run,
     RunData,
     RunOutput,
@@ -44,11 +37,18 @@ from aignostics.platform import (
 from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
+from ._download import (
+    download_available_items,
+    download_url_to_file_with_progress,
+    extract_filename_from_url,
+    update_progress,
+)
+from ._models import DownloadProgress, DownloadProgressState
 from ._settings import Settings
 from ._utils import (
-    get_file_extension_for_artifact,
     get_mime_type_for_artifact,
     get_supported_extensions_for_application,
+    validate_due_date,
 )
 
 has_qupath_extra = find_spec("ijson")
@@ -64,97 +64,6 @@ APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5
 APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
 APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
-
-
-class DownloadProgressState(StrEnum):
-    """Enum for download progress states."""
-
-    INITIALIZING = "Initializing ..."
-    QUPATH_ADD_INPUT = "Adding input slides to QuPath project ..."
-    CHECKING = "Checking run status ..."
-    WAITING = "Waiting for item completing ..."
-    DOWNLOADING = "Downloading artifact ..."
-    QUPATH_ADD_RESULTS = "Adding result images to QuPath project ..."
-    QUPATH_ANNOTATE_INPUT_WITH_RESULTS = "Annotating input slides in QuPath project with results ..."
-    COMPLETED = "Completed."
-
-
-class DownloadProgress(BaseModel):
-    status: DownloadProgressState = DownloadProgressState.INITIALIZING
-    run: RunData | None = None
-    item: ItemResult | None = None
-    item_count: int | None = None
-    item_index: int | None = None
-    item_external_id: str | None = None
-    artifact: OutputArtifactElement | None = None
-    artifact_count: int | None = None
-    artifact_index: int | None = None
-    artifact_path: Path | None = None
-    artifact_download_url: str | None = None
-    artifact_size: int | None = None
-    artifact_downloaded_chunk_size: int = 0
-    artifact_downloaded_size: int = 0
-    if has_qupath_extra:
-        qupath_add_input_progress: QuPathAddProgress | None = None
-        qupath_add_results_progress: QuPathAddProgress | None = None
-        qupath_annotate_input_with_results_progress: QuPathAnnotateProgress | None = None
-
-    @computed_field  # type: ignore
-    @property
-    def total_artifact_count(self) -> int | None:
-        if self.item_count and self.artifact_count:
-            return self.item_count * self.artifact_count
-        return None
-
-    @computed_field  # type: ignore
-    @property
-    def total_artifact_index(self) -> int | None:
-        if self.item_count and self.artifact_count and self.item_index is not None and self.artifact_index is not None:
-            return self.item_index * self.artifact_count + self.artifact_index
-        return None
-
-    @computed_field  # type: ignore
-    @property
-    def item_progress_normalized(self) -> float:  # noqa: PLR0911
-        """Compute normalized item progress in range 0..1.
-
-        Returns:
-            float: The normalized item progress in range 0..1.
-        """
-        if self.status == DownloadProgressState.DOWNLOADING:
-            if (not self.total_artifact_count) or self.total_artifact_index is None:
-                return 0.0
-            return min(1, float(self.total_artifact_index + 1) / float(self.total_artifact_count))
-        if has_qupath_extra:
-            if self.status == DownloadProgressState.QUPATH_ADD_INPUT and self.qupath_add_input_progress:
-                return self.qupath_add_input_progress.progress_normalized
-            if self.status == DownloadProgressState.QUPATH_ADD_RESULTS and self.qupath_add_results_progress:
-                return self.qupath_add_results_progress.progress_normalized
-            if self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS:
-                if (not self.item_count) or (not self.item_index):
-                    return 0.0
-                return min(1, float(self.item_index + 1) / float(self.item_count))
-        return 0.0
-
-    @computed_field  # type: ignore
-    @property
-    def artifact_progress_normalized(self) -> float:
-        """Compute normalized artifact progress in range 0..1.
-
-        Returns:
-            float: The normalized artifact progress in range 0..1.
-        """
-        if self.status == DownloadProgressState.DOWNLOADING:
-            if not self.artifact_size:
-                return 0.0
-            return min(1, float(self.artifact_downloaded_size) / float(self.artifact_size))
-        if (
-            has_qupath_extra
-            and self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
-            and self.qupath_annotate_input_with_results_progress
-        ):
-            return self.qupath_annotate_input_with_results_progress.progress_normalized
-        return 0.0
 
 
 class Service(BaseService):
@@ -220,53 +129,6 @@ class Service(BaseService):
         else:
             logger.debug("Reusing platform service.")
         return self._platform_service
-
-    @staticmethod
-    def _validate_due_date(due_date: str | None) -> None:
-        """Validate that due_date is in ISO 8601 format and in the future.
-
-        Args:
-            due_date (str | None): The datetime string to validate.
-
-        Raises:
-            ValueError: If
-                the format is invalid
-                or the due_date is not in the future.
-        """
-        if due_date is None:
-            return
-
-        # Try parsing with fromisoformat (handles most ISO 8601 formats)
-        try:
-            # Handle 'Z' suffix by replacing with '+00:00'
-            normalized = due_date.replace("Z", "+00:00")
-            parsed_dt = datetime.fromisoformat(normalized)
-        except (ValueError, TypeError) as e:
-            message = (
-                f"Invalid ISO 8601 format for due_date. "
-                f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-                f"but got: '{due_date}' (error: {e})"
-            )
-            raise ValueError(message) from e
-
-        # Ensure the datetime is timezone-aware (reject naive datetimes)
-        if parsed_dt.tzinfo is None:
-            message = (
-                f"Invalid ISO 8601 format for due_date. "
-                f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-                f"but got: '{due_date}' (missing timezone information)"
-            )
-            raise ValueError(message)
-
-        # Check that the datetime is in the future
-        now = datetime.now(UTC)
-        if parsed_dt <= now:
-            message = (
-                f"due_date must be in the future. "
-                f"Got '{due_date}' ({parsed_dt.isoformat()}), "
-                f"but current UTC time is {now.isoformat()}"
-            )
-            raise ValueError(message)
 
     @staticmethod
     def applications_static() -> list[ApplicationSummary]:
@@ -695,6 +557,7 @@ class Service(BaseService):
                 "application_id": run.application_id,
                 "version_number": run.version_number,
                 "submitted_at": run.submitted_at,
+                "terminated_at": run.terminated_at,
                 "state": run.state,
                 "termination_reason": run.termination_reason,
                 "item_count": run.statistics.item_count,
@@ -831,7 +694,7 @@ class Service(BaseService):
                 or if due_date not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
-        self._validate_due_date(due_date)
+        validate_due_date(due_date)
         logger.debug("Submitting application run with metadata: %s", metadata)
         app_version = self.application_version(application_id, application_version=application_version)
         if len(app_version.input_artifacts) != 1:
@@ -977,7 +840,7 @@ class Service(BaseService):
                 or due_date not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
-        self._validate_due_date(due_date)
+        validate_due_date(due_date)
         try:
             if custom_metadata is None:
                 custom_metadata = {}
@@ -1111,10 +974,10 @@ class Service(BaseService):
         Raises:
             ValueError: If
                 the run ID is invalid
-                or destination directory cannot be created.
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
             NotFoundException: If the application run with the given ID is not found.
-            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
-            requests.HTTPError: If the download fails with an HTTP error.
+            RuntimeError: If run details cannot be retrieved or download fails.
         """
         return Service().application_run_download(
             run_id,
@@ -1159,10 +1022,10 @@ class Service(BaseService):
         Raises:
             ValueError: If
                 the run ID is invalid
-                or destination directory cannot be created.
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
             NotFoundException: If the application run with the given ID is not found.
-            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
-            requests.HTTPError: If the download fails with an HTTP error.
+            RuntimeError: If run details cannot be retrieved or download fails.
         """
         if qupath_project and not has_qupath_extra:
             message = "QuPath project creation requested, but 'qupath' extra is not installed."
@@ -1170,7 +1033,7 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message)
         progress = DownloadProgress()
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+        update_progress(progress, download_progress_callable, download_progress_queue)
 
         application_run = self.application_run(run_id)
         final_destination_directory = destination_directory
@@ -1198,21 +1061,43 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message) from e
 
+        for item_index, item in enumerate(application_run.results()):
+            if item.external_id.startswith(("gs://", "http://", "https://")):
+                # Download URL to local input directory and update external_id
+                try:
+                    filename = extract_filename_from_url(item.external_id)
+                    local_path = final_destination_directory / "input" / filename
+                    if not local_path.exists():
+                        progress.item_index = item_index
+                        progress.item = item
+                        download_url_to_file_with_progress(
+                            progress,
+                            item.external_id,
+                            local_path,
+                            download_progress_queue,
+                            download_progress_callable,
+                        )
+                    item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
+                except Exception as e:  # noqa: BLE001
+                    logger.warning(
+                        "Failed to download input slide from '%s' to '%s': %s", item.external_id, local_path, e
+                    )
+
         if qupath_project:
 
             def update_qupath_add_input_progress(qupath_add_input_progress: QuPathAddProgress) -> None:
                 progress.status = DownloadProgressState.QUPATH_ADD_INPUT
                 progress.qupath_add_input_progress = qupath_add_input_progress
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
             for item in application_run.results():
-                external_id = Path(item.external_id)
-                if external_id.is_file():
-                    image_paths.append(external_id.resolve())
-                else:
-                    logger.warning("Input slide '%s' not found, skipping QuPath addition.", external_id)
+                local_path = Path(item.external_id)
+                if not local_path.is_file():
+                    logger.warning("Input slide '%s' not found, skipping QuPath addition.", local_path)
+                    continue
+                image_paths.append(local_path.resolve())
             added = QuPathService.add(
                 final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
             )
@@ -1222,15 +1107,15 @@ class Service(BaseService):
         logger.debug("Downloading results for run '%s' to '%s'", run_id, final_destination_directory)
 
         progress.status = DownloadProgressState.CHECKING
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+        update_progress(progress, download_progress_callable, download_progress_queue)
 
         downloaded_items: set[str] = set()  # Track downloaded items to avoid re-downloading
         while True:
             run_details = application_run.details()  # (Re)load current run details
             progress.run = run_details
-            Service._update_progress(progress, download_progress_callable, download_progress_queue)
+            update_progress(progress, download_progress_callable, download_progress_queue)
 
-            self._download_available_items(
+            download_available_items(
                 progress,
                 application_run,
                 final_destination_directory,
@@ -1265,7 +1150,7 @@ class Service(BaseService):
                 "Run '%s' is in progress with status '%s', waiting for completion ...", run_id, run_details.state
             )
             progress.status = DownloadProgressState.WAITING
-            Service._update_progress(progress, download_progress_callable, download_progress_queue)
+            update_progress(progress, download_progress_callable, download_progress_queue)
             time.sleep(APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS)
 
         if qupath_project:
@@ -1274,7 +1159,7 @@ class Service(BaseService):
             def update_qupath_add_results_progress(qupath_add_results_progress: QuPathAddProgress) -> None:
                 progress.status = DownloadProgressState.QUPATH_ADD_RESULTS
                 progress.qupath_add_results_progress = qupath_add_results_progress
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
             added = QuPathService.add(
                 final_destination_directory / "qupath",
@@ -1290,14 +1175,14 @@ class Service(BaseService):
             ) -> None:
                 progress.status = DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
                 progress.qupath_annotate_input_with_results_progress = qupath_annotate_input_with_results_progress
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
             total_annotations = 0
             results = list(application_run.results())
             progress.item_count = len(results)
             for item_index, item in enumerate(application_run.results()):
                 progress.item_index = item_index
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
                 image_path = Path(item.external_id)
                 if not image_path.is_file():
@@ -1335,199 +1220,6 @@ class Service(BaseService):
             logger.info(message)
 
         progress.status = DownloadProgressState.COMPLETED
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+        update_progress(progress, download_progress_callable, download_progress_queue)
 
         return final_destination_directory
-
-    @staticmethod
-    def _update_progress(
-        progress: DownloadProgress,
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-    ) -> None:
-        if download_progress_callable:
-            download_progress_callable(progress)
-        if download_progress_queue:
-            download_progress_queue.put_nowait(progress)
-
-    def _download_available_items(  # noqa: PLR0913, PLR0917
-        self,
-        progress: DownloadProgress,
-        application_run: Run,
-        destination_directory: Path,
-        downloaded_items: set[str],
-        create_subdirectory_per_item: bool = False,
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    ) -> None:
-        """Download items that are available and not yet downloaded.
-
-        Args:
-            progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-            application_run (Run): The application run object.
-            destination_directory (Path): Directory to save files.
-            downloaded_items (set): Set of already downloaded item external ids.
-            create_subdirectory_per_item (bool): Whether to create a subdirectory for each item.
-            download_progress_queue (Queue | None): Queue for GUI progress updates.
-            download_progress_callable (Callable | None): Callback for CLI progress updates.
-        """
-        items = list(application_run.results())
-        progress.item_count = len(items)
-        for item_index, item in enumerate(items):
-            if item.external_id in downloaded_items:
-                continue
-
-            if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
-                progress.status = DownloadProgressState.DOWNLOADING
-                progress.item_index = item_index
-                progress.item = item
-                progress.item_external_id = item.external_id
-
-                progress.artifact_count = len(item.output_artifacts)
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-                if create_subdirectory_per_item:
-                    path = Path(item.external_id)
-                    stem_name = path.stem
-                    try:
-                        # Handle case where path might be relative to destination
-                        rel_path = path.relative_to(destination_directory)
-                        stem_name = rel_path.stem
-                    except ValueError:
-                        # Not a subfolder - just use the stem
-                        pass
-                    item_directory = destination_directory / stem_name
-                else:
-                    item_directory = destination_directory
-                item_directory.mkdir(exist_ok=True)
-
-                for artifact_index, artifact in enumerate(item.output_artifacts):
-                    progress.artifact_index = artifact_index
-                    progress.artifact = artifact
-                    Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-                    self._download_item_artifact(
-                        progress,
-                        artifact,
-                        item_directory,
-                        item.external_id if not create_subdirectory_per_item else "",
-                        download_progress_queue,
-                        download_progress_callable,
-                    )
-
-                downloaded_items.add(item.external_id)
-
-    def _download_item_artifact(  # noqa: PLR0913, PLR0917
-        self,
-        progress: DownloadProgress,
-        artifact: Any,  # noqa: ANN401
-        destination_directory: Path,
-        prefix: str = "",
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    ) -> None:
-        """Download a an artifact of a result item with progress tracking.
-
-        Args:
-            progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-            artifact (Any): The artifact to download.
-            destination_directory (Path): Directory to save the file.
-            prefix (str): Prefix for the file name, if needed.
-            download_progress_queue (Queue | None): Queue for GUI progress updates.
-            download_progress_callable (Callable | None): Callback for CLI progress updates.
-
-        Raises:
-            ValueError: If
-                no checksum metadata is found for the artifact.
-            requests.HTTPError: If the download fails.
-        """
-        metadata = artifact.metadata or {}
-        metadata_checksum = metadata.get("checksum_base64_crc32c", "") or metadata.get("checksum_crc32c", "")
-        if not metadata_checksum:
-            message = f"No checksum metadata found for artifact {artifact.name}"
-            logger.error(message)
-            raise ValueError(message)
-
-        artifact_path = (
-            destination_directory
-            / f"{prefix}{sanitize_path_component(artifact.name)}{get_file_extension_for_artifact(artifact)}"
-        )
-
-        if artifact_path.exists():
-            checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
-            with open(artifact_path, "rb") as f:
-                while chunk := f.read(APPLICATION_RUN_FILE_READ_CHUNK_SIZE):
-                    checksum.update(chunk)  # type: ignore[no-untyped-call]
-            existing_checksum = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
-            if existing_checksum == metadata_checksum:
-                logger.debug("File %s already exists with correct checksum", artifact_path)
-                return
-
-        self._download_file_with_progress(
-            progress,
-            artifact.download_url,
-            artifact_path,
-            metadata_checksum,
-            download_progress_queue,
-            download_progress_callable,
-        )
-
-    @staticmethod
-    def _download_file_with_progress(  # noqa: PLR0913, PLR0917
-        progress: DownloadProgress,
-        signed_url: str,
-        artifact_path: Path,
-        metadata_checksum: str,
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    ) -> None:
-        """Download a file with progress tracking support.
-
-        Args:
-            progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-            signed_url (str): The signed URL to download from.
-            artifact_path (Path): Path to save the file.
-            metadata_checksum (str): Expected CRC32C checksum in base64.
-            download_progress_queue (Any | None): Queue for GUI progress updates.
-            download_progress_callable (Callable | None): Callback for CLI progress updates.
-
-        Raises:
-            ValueError: If
-                checksum verification fails.
-            requests.HTTPError: If download fails.
-        """
-        logger.debug(
-            "Downloading artifact '%s' to '%s' with expected checksum '%s' for item with external id '%s'",
-            progress.artifact.name if progress.artifact else "unknown",
-            artifact_path,
-            metadata_checksum,
-            progress.item_external_id or "unknown",
-        )
-        progress.artifact_download_url = signed_url
-        progress.artifact_path = artifact_path
-        progress.artifact_downloaded_size = 0
-        progress.artifact_downloaded_chunk_size = 0
-        progress.artifact_size = None
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-        checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
-
-        with requests.get(signed_url, stream=True, timeout=60) as stream:
-            stream.raise_for_status()
-            progress.artifact_size = int(stream.headers.get("content-length", 0))
-            Service._update_progress(progress, download_progress_callable, download_progress_queue)
-            with open(artifact_path, mode="wb") as file:
-                for chunk in stream.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
-                    if chunk:
-                        file.write(chunk)
-                        checksum.update(chunk)  # type: ignore[no-untyped-call]
-                        progress.artifact_downloaded_chunk_size = len(chunk)
-                        progress.artifact_downloaded_size += progress.artifact_downloaded_chunk_size
-                        Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-        downloaded_checksum = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
-        if downloaded_checksum != metadata_checksum:
-            artifact_path.unlink()  # Remove corrupted file
-            msg = f"Checksum mismatch for {artifact_path}: {downloaded_checksum} != {metadata_checksum}"
-            logger.error(msg)
-            raise ValueError(msg)

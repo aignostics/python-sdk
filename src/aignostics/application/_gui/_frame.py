@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from nicegui import app, background_tasks, context, ui  # noq
@@ -13,6 +14,7 @@ logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
+RUNS_REFRESH_INTERVAL = 60 * 5  # 5 minutes
 STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
 service = Service()
@@ -23,6 +25,9 @@ class SearchInput:
 
 
 search_input = SearchInput()
+
+# Module-level state for auto-refresh and notifications (reset on page reload)
+_runs_last_refresh_time: datetime | None = None
 
 
 async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
@@ -88,8 +93,13 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
         async def application_runs_load_and_render(
             runs_column: ui.column, has_output: bool = False, note_query: str | None = None
         ) -> None:
+            global _runs_last_refresh_time  # noqa: PLW0603
+
             with runs_column:
                 try:
+                    # Store previous refresh time for detecting newly terminated runs
+                    previous_refresh_time = _runs_last_refresh_time
+
                     runs = await nicegui_run.io_bound(
                         Service.application_runs_static,
                         limit=RUNS_LIMIT,
@@ -104,6 +114,29 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         )
                         logger.error(message)
                         raise RuntimeError(message)  # noqa: TRY301
+
+                    # Update refresh timestamp before checking for new terminations
+                    _runs_last_refresh_time = datetime.now(UTC)
+
+                    # Check for newly terminated runs and show notifications
+                    if previous_refresh_time is not None and runs:
+                        newly_terminated = [
+                            r
+                            for r in runs
+                            if r.get("terminated_at") is not None and r["terminated_at"] > previous_refresh_time
+                        ]
+
+                        # Show notifications for newly completed runs (limit to 3 to avoid spam)
+                        for run in newly_terminated[:3]:
+                            ui.notify(
+                                f"🎉 Run {run['application_id']} completed!",
+                                type="positive",
+                                position="top",
+                                timeout=60 * 60 * 24 * 7,
+                                progress=True,
+                                close_button=True,
+                            )
+
                     runs_column.clear()
                     for index, run_data in enumerate(runs):
                         with (
@@ -112,6 +145,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                             )
                             .props("clickable")
                             .classes("w-full")
+                            .style("padding-left: 0; padding-right: 0;")
                             .mark(f"SIDEBAR_RUN_ITEM:{index}")
                         ):
                             with ui.item_section().props("avatar"):
@@ -154,6 +188,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                 ui.icon("info")
                             with ui.item_section():
                                 ui.label("You did not yet create a run.")
+
                 except Exception as e:
                     runs_column.clear()
                     with ui.item():
@@ -165,7 +200,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
         @ui.refreshable
         async def _runs_list() -> None:
-            with ui.column().classes("full-width justify-center") as runs_column:
+            with (
+                ui.scroll_area()
+                .props('id="runs-list-container"')
+                .classes("w-full")
+                .style("height: calc(100vh - 300px);")
+                .props("content-style='padding-right: 0;'"),
+                ui.column().classes("full-width justify-center") as runs_column,
+            ):
                 with ui.row().classes("w-full justify-center"):
                     ui.spinner(size="lg").classes("m-5")
                 await ui.context.client.connected()
@@ -214,5 +256,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ui.tooltip("Show completed runs only")
                 ui.separator()
                 await _runs_list()
+
+                # Auto-refresh runs list every minute
+                ui.timer(interval=RUNS_REFRESH_INTERVAL, callback=_runs_list.refresh)
         except Exception as e:  # noqa: BLE001
             ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")
