@@ -126,11 +126,13 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
     ]
 
 
-def _run_application_test(
+def _run_application_test(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
     checksum_attribute_key: str = "checksum_base64_crc32c",
+    due_date_seconds: int = 60 * 60,
+    deadline_seconds: int = 60 * 60 * 3,
 ) -> None:
     """Helper function to run an application test.
 
@@ -141,6 +143,8 @@ def _run_application_test(
         application_version (str): The application version to use for the test.
         payload (list[platform.InputItem]): The input items for the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
+        due_date_seconds (int): The due date in seconds from now for the application run.
+        deadline_seconds (int): The deadline in seconds from now for the application run.
 
     Raises:
         AssertionError: If any of the validation checks fail.
@@ -152,23 +156,24 @@ def _run_application_test(
         items=payload,
         custom_metadata={
             "sdk": {
-                "due_date": (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
-                "deadline": (datetime.now(tz=UTC) + timedelta(hours=3)).isoformat(),
                 "note": "_run_application_test",
+                "scheduling": {
+                    "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
+                    "deadline": (datetime.now(tz=UTC) + timedelta(seconds=deadline_seconds)).isoformat(),
+                },
             }
-        },  # Request completion within 1 hour
+        },
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
         application_run.download_to_folder(temp_dir, checksum_attribute_key)
-        # validate the output
         _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
 
 @pytest.mark.skip(reason="v0.0.4 on production balking on whole_slide_image input")
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
+@pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS + 60 * 10)
 def test_application_runs_test_version() -> None:
     """Test application runs with the test application.
 
@@ -183,13 +188,14 @@ def test_application_runs_test_version() -> None:
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
         payload=_get_three_spots_payload_for_test(),
+        deadline_seconds=TEST_APPLICATION_TIMEOUT_SECONDS,
     )
 
 
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_TIMEOUT_SECONDS)
+@pytest.mark.timeout(timeout=HETA_APPLICATION_TIMEOUT_SECONDS + 60 * 10)
 def test_application_runs_heta_version() -> None:
     """Test application runs with the HETA application.
 
@@ -204,6 +210,7 @@ def test_application_runs_heta_version() -> None:
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta(),
+        deadline_seconds=HETA_APPLICATION_TIMEOUT_SECONDS,
     )
 
 
@@ -254,6 +261,7 @@ def _validate_output(
             f"Termination reason`{item.termination_reason}`, "
             f"error code `{item.error_code}`, message `{item.error_message}`."
         )
+
         # validate output artifact state
         item_dir = run_result_folder / item.external_id
         assert item_dir.exists(), (
