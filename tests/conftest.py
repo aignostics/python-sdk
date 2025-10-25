@@ -64,7 +64,7 @@ def normalize_output(output: str, strip_ansi: bool = True) -> str:
 
     Args:
         output (str): The output string to normalize.
-        strip_ansi (bool): Whether to remove ANSI escape codes. Defaults to False.
+        strip_ansi (bool): Whether to remove ANSI escape codes. Defaults to True.
 
     Returns:
         str: The normalized output with line endings removed and optionally ANSI codes stripped.

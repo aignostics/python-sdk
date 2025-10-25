@@ -49,11 +49,11 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
             uninstall_args.extend(["--platform-machine", platform_config["machine"]])
 
         result = runner.invoke(cli, install_args)
-        assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output, strip_ansi=True)
+        assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
         assert result.exit_code == 0
 
         result = runner.invoke(cli, uninstall_args)
-        assert "QuPath uninstalled successfully." in normalize_output(result.output, strip_ansi=True)
+        assert "QuPath uninstalled successfully." in normalize_output(result.output)
         assert result.exit_code == 0
 
     # Reinstall QuPath if it was installed before
@@ -84,7 +84,7 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
 
     # Step 2: Check QuPath install succeeds
     result = runner.invoke(cli, ["qupath", "install"])
-    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output, strip_ansi=True)
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
     assert result.exit_code == 0
 
     # Step 3: Check QuPath can now launch successfully
@@ -96,7 +96,7 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
 
     # Step 4: Check repeated QuPath install succeeds (idempotent operation)
     result = runner.invoke(cli, ["qupath", "install"])
-    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output, strip_ansi=True)
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
     assert result.exit_code == 0
 
     if platform.system() in {"Linux", "Darwin"}:
@@ -116,7 +116,7 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
 
     # Step 7: Uninstall QuPath
     result = runner.invoke(cli, ["qupath", "uninstall"])
-    assert "QuPath uninstalled successfully." in normalize_output(result.output, strip_ansi=True)
+    assert "QuPath uninstalled successfully." in normalize_output(result.output)
     assert result.exit_code == 0
 
     # Step 8: Check QuPath info fails if not installed
@@ -155,7 +155,7 @@ def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
 
     # Step 2: Check QuPath install succeeds
     result = runner.invoke(cli, ["qupath", "install"])
-    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output, strip_ansi=True)
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
     assert result.exit_code == 0
 
     # Step 3: Check QuPath can now launch successfully
@@ -187,12 +187,12 @@ def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
 
     # Step 6: Check QuPath install succeeds (idempotent operation)
     result = runner.invoke(cli, ["qupath", "install"])
-    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output, strip_ansi=True)
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
     assert result.exit_code == 0
 
     # Step 7: Uninstall QuPath
     result = runner.invoke(cli, ["qupath", "uninstall"])
-    assert "QuPath uninstalled successfully." in normalize_output(result.output, strip_ansi=True)
+    assert "QuPath uninstalled successfully." in normalize_output(result.output)
     assert result.exit_code == 0
 
     # Step 8: Check QuPath launch fails if not installed
