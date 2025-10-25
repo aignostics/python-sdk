@@ -270,7 +270,6 @@ class Run:
                 item_dir.mkdir(exist_ok=True, parents=True)
                 file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
                 file_path = item_dir / f"{artifact.name}{file_ending}"
-                # TODO(Andreas): Why is artifact metadata now optional?
                 if not artifact.metadata:
                     message = f"Skipping artifact {artifact.name} for item {item.external_id}, no metadata present"
                     logger.error(message)
@@ -306,12 +305,16 @@ class Run:
         details = cast("RunData", self.details())
         app_status = details.state.value
         items = (
-            f"{details.statistics.item_count} items - "
-            f"({details.statistics.item_pending_count}/{details.statistics.item_succeeded_count}/"
-            f"{details.statistics.item_system_error_count + details.statistics.item_user_error_count}) "
-            "[pending/succeeded/error]"
+            f"{details.statistics.item_count} items: "
+            f"{details.statistics.item_pending_count}/"
+            f"{details.statistics.item_processing_count}/"
+            f"{details.statistics.item_user_error_count}/"
+            f"{details.statistics.item_system_error_count}/"
+            f"{details.statistics.item_skipped_count}/"
+            f"{details.statistics.item_succeeded_count}"
+            " [pending/processing/user-error/system-error/skipped/succeeded]"
         )
-        return f"Application run `{self.run_id}`: {app_status}, {items}"
+        return f"Run `{self.run_id}`: {app_status}, {items}"
 
 
 class Runs:
