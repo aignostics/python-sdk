@@ -165,6 +165,7 @@ def _run_application_test(
         _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
 
+@pytest.mark.skip(reason="v0.0.4 on production balking on whole_slide_image input")
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
