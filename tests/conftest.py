@@ -55,19 +55,27 @@ if find_spec("nicegui"):
     pytest_plugins = ("nicegui.testing.plugin",)
 
 
-def normalize_output(output: str) -> str:
+def normalize_output(output: str, strip_ansi: bool = False) -> str:
     r"""Normalize output by removing both Windows and Unix line endings.
 
     This helper function ensures cross-platform compatibility when testing CLI output
-    by removing both Windows (\r\n) and Unix (\n) line endings.
+    by removing both Windows (\r\n) and Unix (\n) line endings. Optionally strips
+    ANSI escape codes (color codes and formatting) from the output.
 
     Args:
-        output: The output string to normalize.
+        output (str): The output string to normalize.
+        strip_ansi (bool): Whether to remove ANSI escape codes. Defaults to False.
 
     Returns:
-        str: The normalized output with line endings removed.
+        str: The normalized output with line endings removed and optionally ANSI codes stripped.
     """
-    return output.replace("\r\n", "").replace("\n", "")
+    normalized = output.replace("\r\n", "").replace("\n", "")
+    if strip_ansi:
+        import re
+
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+        normalized = ansi_escape.sub("", normalized)
+    return normalized
 
 
 @pytest.fixture

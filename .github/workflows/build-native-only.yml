@@ -1,4 +1,4 @@
-name: "Build Native Only"
+name: "+ Build Native Only"
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Claude Code / Interactive
+name: "+ Claude Code / Interactive"
 
 on:
   issue_comment:

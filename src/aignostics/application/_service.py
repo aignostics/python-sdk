@@ -653,21 +653,25 @@ class Service(BaseService):
         logger.info("Upload completed successfully.")
         return True
 
-    # TODO(Helmut): Refactor to find runs with succeeded items
     @staticmethod
-    def application_runs_static(
-        limit: int | None = None,
+    def application_runs_static(  # noqa: PLR0913, PLR0917
+        application_id: str | None = None,
+        application_version: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
 
         Args:
-            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
+            application_version (str | None): The version of the application to filter runs.
+                If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
@@ -687,27 +691,34 @@ class Service(BaseService):
                 "item_succeeded_count": run.statistics.item_succeeded_count,
             }
             for run in Service().application_runs(
-                limit=limit,
+                application_id=application_id,
+                application_version=application_version,
                 has_output=has_output,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
+                limit=limit,
             )
         ]
 
-    def application_runs(
+    def application_runs(  # noqa: PLR0913, PLR0917
         self,
-        limit: int | None = None,
+        application_id: str | None = None,
+        application_version: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        limit: int | None = None,
     ) -> list[RunData]:
         """Get a list of all application runs.
 
         Args:
-            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
+            application_version (str | None): The version of the application to filter runs.
+                If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
@@ -727,7 +738,11 @@ class Service(BaseService):
                 custom_metadata = None
 
             run_iterator = self._get_platform_client().runs.list_data(
-                sort="-submitted_at", page_size=page_size, custom_metadata=custom_metadata
+                application_id=application_id,
+                application_version=application_version,
+                custom_metadata=custom_metadata,
+                sort="-submitted_at",
+                page_size=page_size,
             )
             for run in run_iterator:
                 if has_output and run.output == RunOutput.NONE:
@@ -1164,9 +1179,11 @@ class Service(BaseService):
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
             for item in application_run.results():
-                image_path = Path(item.external_id)
-                if image_path.is_file():
-                    image_paths.append(image_path.resolve())
+                external_id = Path(item.external_id)
+                if external_id.is_file():
+                    image_paths.append(external_id.resolve())
+                else:
+                    logger.warning("Input slide '%s' not found, skipping QuPath addition.", external_id)
             added = QuPathService.add(
                 final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
             )
@@ -1194,7 +1211,6 @@ class Service(BaseService):
                 download_progress_callable,
             )
 
-            # TODO(Helmut): More info
             if run_details.state == RunState.TERMINATED:
                 logger.debug(
                     "Run '%s' reached final status '%s' with message '%s' (%s).",

@@ -1,4 +1,4 @@
-name: "Scheduled CodeQL"
+name: "+ Scheduled CodeQL"
 
 on:
   schedule:
