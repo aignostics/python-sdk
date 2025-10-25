@@ -850,6 +850,29 @@ class Service(BaseService):
                 logger.warning(message)
                 raise ValueError(message)
 
+            item_metadata = {
+                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
+                "height_px": int(row["height_px"]),
+                "width_px": int(row["width_px"]),
+                "media_type": (
+                    "image/tiff"
+                    if row["external_id"].lower().endswith((".tif", ".tiff"))
+                    else "application/dicom"
+                    if row["external_id"].lower().endswith(".dcm")
+                    else "application/octet-stream"
+                ),
+                "resolution_mpp": float(row["resolution_mpp"]),
+            }
+
+            # Only add specimen and staining_method metadata if not test-app
+            # TODO(Helmut): Remove condition when test-app reached input parity with heta
+            if application_id != "test-app":
+                item_metadata["specimen"] = {
+                    "disease": row["disease"],
+                    "tissue": row["tissue"],
+                }
+                item_metadata["staining_method"] = row["staining_method"]
+
             items.append(
                 InputItem(
                     external_id=row["external_id"],
@@ -857,24 +880,7 @@ class Service(BaseService):
                         InputArtifact(
                             name=input_artifact_name,
                             download_url=download_url,
-                            metadata={
-                                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
-                                "height_px": int(row["height_px"]),
-                                "width_px": int(row["width_px"]),
-                                "media_type": (
-                                    "image/tiff"
-                                    if row["external_id"].lower().endswith((".tif", ".tiff"))
-                                    else "application/dicom"
-                                    if row["external_id"].lower().endswith(".dcm")
-                                    else "application/octet-stream"
-                                ),
-                                "resolution_mpp": float(row["resolution_mpp"]),
-                                "specimen": {
-                                    "disease": row["disease"],
-                                    "tissue": row["tissue"],
-                                },
-                                "staining_method": row["staining_method"],
-                            },
+                            metadata=item_metadata,
                         )
                     ],
                     custom_metadata={
