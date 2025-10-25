@@ -6,7 +6,6 @@ that are shared across different test modules to ensure consistency and easy mai
 
 import os
 
-# GCS URLs for test data
 HETA_SINGLE_SPOT_GS_URL = (
     "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 )
