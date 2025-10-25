@@ -318,7 +318,7 @@ class TestBuildRunSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
             with patch("aignostics.platform._sdk_metadata.user_agent", return_value="test-agent/1.0"):
-                metadata = build_sdk_metadata()
+                metadata = build_run_sdk_metadata()
 
                 assert metadata["user_agent"] == "test-agent/1.0"
 

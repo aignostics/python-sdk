@@ -56,7 +56,11 @@ def retrieve_and_print_run_details(run: Run) -> None:
         status_str = f"{run_data.state.value} ({run_data.termination_reason})"
     else:
         status_str = f"{run_data.state.value}"
-    console.print(f"[bold]Status:[/bold] {status_str}")
+    console.print(f"[bold]Status (Termination Reason):[/bold] {status_str}")
+    console.print(f"[bold]Output:[/bold] {run_data.output.value}")
+    console.print(
+        f"[bold]Error Message (Code):[/bold] {run_data.error_message or 'N/A'} ({run_data.error_code or 'N/A'})"
+    )
     console.print(
         f"  - {run_data.statistics.item_count} items\n"
         f"  - {run_data.statistics.item_pending_count} pending\n"
@@ -66,14 +70,13 @@ def retrieve_and_print_run_details(run: Run) -> None:
         f"  - {run_data.statistics.item_user_error_count} user errors\n"
         f"  - {run_data.statistics.item_system_error_count} system errors\n"
     )
-    console.print(f"[bold]Error:[/bold] {run_data.error_message or 'N/A'} ({run_data.error_code or 'N/A'})")
     if run_data.terminated_at and run_data.submitted_at:
         duration = run_data.terminated_at - run_data.submitted_at
         duration_str = humanize.precisedelta(duration)
         console.print(f"[bold]Duration:[/bold] {duration_str}")
     else:
         duration_str = "still processing"
-    console.print(f"[bold]Submitted:[/bold] {run_data.submitted_at} ({run_data.submitted_by})")
+    console.print(f"[bold]Submitted (by):[/bold] {run_data.submitted_at} ({run_data.submitted_by})")
     console.print(f"[bold]Terminated:[/bold] {run_data.terminated_at} ({duration_str})")
 
     console.print(f"[bold]Custom Metadata:[/bold] {run_data.custom_metadata or 'None'}")
@@ -122,27 +125,39 @@ def print_runs_verbose(runs: list[RunData]) -> None:
         runs (list[RunData]): List of run data
 
     """
-    from ._service import Service  # noqa: PLC0415
-
     console.print("[bold]Application Runs:[/bold]")
     console.print("=" * 80)
 
     for run in runs:
         console.print(f"[bold]Run ID:[/bold] {run.run_id}")
         console.print(f"[bold]Application:[/bold] {run.application_id} ({run.version_number})")
-        console.print(f"[bold]Status:[/bold] {run.state.value}")
+        if run.state is RunState.TERMINATED and run.termination_reason:
+            status_str = f"{run.state.value} ({run.termination_reason})"
+        else:
+            status_str = f"{run.state.value}"
+        console.print(f"[bold]Status (Termination Reason):[/bold] {status_str}")
+        console.print(f"[bold]Output:[/bold] {run.output.value}")
+        if run.error_message or run.error_code:
+            console.print(
+                f"[bold]Error Message (Code):[/bold] {run.error_message or 'N/A'} ({run.error_code or 'N/A'})"
+            )
+
         console.print(
-            f"[bold]Submitted:[/bold] "
+            f"  - {run.statistics.item_count} items\n"
+            f"  - {run.statistics.item_pending_count} pending\n"
+            f"  - {run.statistics.item_processing_count} processing\n"
+            f"  - {run.statistics.item_skipped_count} skipped\n"
+            f"  - {run.statistics.item_succeeded_count} succeeded\n"
+            f"  - {run.statistics.item_user_error_count} user errors\n"
+            f"  - {run.statistics.item_system_error_count} system errors\n"
+        )
+
+        console.print(
+            f"[bold]Submitted (by):[/bold] "
             f"{run.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')} "
             f"({run.submitted_by})"
         )
 
-        try:
-            _print_run_statistics(Service().application_run(run.run_id))
-        except Exception as e:
-            logger.exception("Failed to retrieve  statistics for run with ID '%s'", run.run_id)
-            console.print(f"[error]Error:[/error] Failed to retrieve statistics for run with ID '{run.run_id}': {e}")
-            continue
         console.print("-" * 80)
 
 
@@ -155,12 +170,19 @@ def print_runs_non_verbose(runs: list[RunData]) -> None:
     """
     console.print("[bold]Application Run IDs:[/bold]")
 
-    for run_status in runs:
+    for run in runs:
+        if run.state is RunState.TERMINATED and run.termination_reason:
+            status_str = f"{run.state.value} ({run.termination_reason})"
+        else:
+            status_str = f"{run.state.value}"
+        if run.error_message or run.error_code:
+            status_str += f" | error: {run.error_message or 'N/A'} ({run.error_code or 'N/A'})"
         console.print(
-            f"- [bold]{run_status.run_id}[/bold] of "
-            f"[bold]{run_status.application_id} ({run_status.version_number})[/bold] "
-            f"(submitted: {run_status.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
-            f"status: {run_status.state.value})"
+            f"- [bold]{run.run_id}[/bold] of "
+            f"[bold]{run.application_id} ({run.version_number})[/bold] "
+            f"(submitted: {run.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
+            f"status: {status_str}, "
+            f"output: {run.output.value})"
         )
 
 
