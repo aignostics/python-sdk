@@ -55,7 +55,7 @@ if find_spec("nicegui"):
     pytest_plugins = ("nicegui.testing.plugin",)
 
 
-def normalize_output(output: str, strip_ansi: bool = False) -> str:
+def normalize_output(output: str, strip_ansi: bool = True) -> str:
     r"""Normalize output by removing both Windows and Unix line endings.
 
     This helper function ensures cross-platform compatibility when testing CLI output
