@@ -25,22 +25,24 @@ from tests.contants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_TIMEOUT_SECONDS,
     HETA_APPLICATION_VERSION,
+    HETA_SINGLE_SPOT_GS_URL,
     TEST_APPLICATION_ID,
     TEST_APPLICATION_TIMEOUT_SECONDS,
     TEST_APPLICATION_VERSION,
+    TEST_THREE_SPOTS_GS_URLS,
 )
 
 
-def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
+def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
         platform.InputItem(
-            external_id="gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
+            external_id=HETA_SINGLE_SPOT_GS_URL,
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
+                        HETA_SINGLE_SPOT_GS_URL,
                         HETA_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
@@ -61,16 +63,16 @@ def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
     ]
 
 
-def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
+def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
         platform.InputItem(
-            external_id="gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+            external_id=TEST_THREE_SPOTS_GS_URLS[0],
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+                        TEST_THREE_SPOTS_GS_URLS[0],
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
@@ -84,12 +86,12 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
             ],
         ),
         platform.InputItem(
-            external_id="gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
+            external_id=TEST_THREE_SPOTS_GS_URLS[1],
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
+                        TEST_THREE_SPOTS_GS_URLS[1],
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
@@ -103,12 +105,12 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
             ],
         ),
         platform.InputItem(
-            external_id="gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
+            external_id=TEST_THREE_SPOTS_GS_URLS[2],
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
+                        TEST_THREE_SPOTS_GS_URLS[2],
                         TEST_APPLICATION_TIMEOUT_SECONDS,
                     ),
                     metadata={
@@ -179,7 +181,7 @@ def test_application_runs_test_version() -> None:
     _run_application_test(
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
-        payload=_get_three_spots_payload_for_test_v0_0_4(),
+        payload=_get_three_spots_payload_for_test(),
     )
 
 
@@ -200,7 +202,7 @@ def test_application_runs_heta_version() -> None:
     _run_application_test(
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
-        payload=_get_single_spot_payload_for_heta_v1_0_0(),
+        payload=_get_single_spot_payload_for_heta(),
     )
 
 

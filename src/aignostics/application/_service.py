@@ -657,6 +657,7 @@ class Service(BaseService):
     def application_runs_static(  # noqa: PLR0913, PLR0917
         application_id: str | None = None,
         application_version: str | None = None,
+        external_id: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
@@ -668,6 +669,7 @@ class Service(BaseService):
             application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
             application_version (str | None): The version of the application to filter runs.
                 If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
@@ -693,6 +695,7 @@ class Service(BaseService):
             for run in Service().application_runs(
                 application_id=application_id,
                 application_version=application_version,
+                external_id=external_id,
                 has_output=has_output,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
@@ -704,6 +707,7 @@ class Service(BaseService):
         self,
         application_id: str | None = None,
         application_version: str | None = None,
+        external_id: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
@@ -715,6 +719,7 @@ class Service(BaseService):
             application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
             application_version (str | None): The version of the application to filter runs.
                 If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
@@ -740,6 +745,7 @@ class Service(BaseService):
             run_iterator = self._get_platform_client().runs.list_data(
                 application_id=application_id,
                 application_version=application_version,
+                external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort="-submitted_at",
                 page_size=page_size,
@@ -870,6 +876,13 @@ class Service(BaseService):
                             },
                         )
                     ],
+                    custom_metadata={
+                        "sdk": {
+                            "bucket_name": bucket_name,
+                            "object_key": object_key,
+                            "signed_download_url": platform_bucket_url,
+                        }
+                    },
                 )
             )
         logger.debug("Items for application run submission: %s", items)

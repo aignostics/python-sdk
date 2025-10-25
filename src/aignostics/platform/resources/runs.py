@@ -418,10 +418,11 @@ class Runs:
         )
         return (Run(self._api, response.run_id) for response in res)
 
-    def list_data(
+    def list_data(  # noqa: PLR0913, PLR0917
         self,
         application_id: str | None = None,
         application_version: str | None = None,
+        external_id: str | None = None,
         custom_metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
@@ -433,6 +434,7 @@ class Runs:
         Args:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version ID to filter by.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             custom_metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
@@ -470,6 +472,7 @@ class Runs:
             lambda **kwargs: list_data_with_retry(
                 application_id=application_id,
                 application_version=application_version,
+                external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=[sort] if sort else None,
                 **kwargs,

@@ -19,7 +19,7 @@ from aignostics.cli import cli
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
+from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION, HETA_SINGLE_SPOT_GS_URL
 
 if TYPE_CHECKING:
     from nicegui import ui
@@ -147,10 +147,16 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
     """Test installing QuPath, downloading run results, creating QuPath project from it, and inspecting results."""
     # Find run
     runs = Service().application_runs(
-        application_id=HETA_APPLICATION_ID, application_version=HETA_APPLICATION_VERSION, has_output=True, limit=1
+        application_id=HETA_APPLICATION_ID,
+        application_version=HETA_APPLICATION_VERSION,
+        external_id=HETA_SINGLE_SPOT_GS_URL,
+        has_output=False,
+        limit=1,
     )
-    assert runs, f"No runs found for application {HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION})."
-
+    assert runs, (
+        f"No matching runs found for application {HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION}). "
+        f"Ensure the scheduled test test_application_runs_heta_version passed prior or skip this test."
+    )
     run_id = runs[0].run_id
 
     # Explore run
@@ -183,9 +189,9 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         was_installed = not result.exit_code
 
         result = runner.invoke(cli, ["qupath", "install"])
-        output_clean = normalize_output(result.output, strip_ansi=True)
-        assert f"QuPath v{QUPATH_VERSION} installed successfully" in output_clean, (
-            f"Expected 'QuPath v{QUPATH_VERSION} installed successfully' in output.\nOutput: {output_clean}"
+        output = normalize_output(result.output, strip_ansi=True)
+        assert f"QuPath v{QUPATH_VERSION} installed successfully" in output, (
+            f"Expected 'QuPath v{QUPATH_VERSION} installed successfully' in output.\nOutput: {output}"
         )
         assert result.exit_code == 0
 
