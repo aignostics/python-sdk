@@ -3,11 +3,12 @@
 1. Printing of application resources
 2. Reading/writing metadata CSV files
 3. Mime type handling.
+4. Date/time validation.
 """
 
 import csv
 import mimetypes
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,53 @@ from aignostics.utils import console, get_logger
 logger = get_logger(__name__)
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
+
+
+def validate_due_date(due_date: str | None) -> None:
+    """Validate that due_date is in ISO 8601 format and in the future.
+
+    Args:
+        due_date (str | None): The datetime string to validate.
+
+    Raises:
+        ValueError: If
+            the format is invalid
+            or the due_date is not in the future.
+    """
+    if due_date is None:
+        return
+
+    # Try parsing with fromisoformat (handles most ISO 8601 formats)
+    try:
+        # Handle 'Z' suffix by replacing with '+00:00'
+        normalized = due_date.replace("Z", "+00:00")
+        parsed_dt = datetime.fromisoformat(normalized)
+    except (ValueError, TypeError) as e:
+        message = (
+            f"Invalid ISO 8601 format for due_date. "
+            f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+            f"but got: '{due_date}' (error: {e})"
+        )
+        raise ValueError(message) from e
+
+    # Ensure the datetime is timezone-aware (reject naive datetimes)
+    if parsed_dt.tzinfo is None:
+        message = (
+            f"Invalid ISO 8601 format for due_date. "
+            f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+            f"but got: '{due_date}' (missing timezone information)"
+        )
+        raise ValueError(message)
+
+    # Check that the datetime is in the future
+    now = datetime.now(UTC)
+    if parsed_dt <= now:
+        message = (
+            f"due_date must be in the future. "
+            f"Got '{due_date}' ({parsed_dt.isoformat()}), "
+            f"but current UTC time is {now.isoformat()}"
+        )
+        raise ValueError(message)
 
 
 class OutputFormat(StrEnum):

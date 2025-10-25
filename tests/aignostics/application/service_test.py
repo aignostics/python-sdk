@@ -6,6 +6,7 @@ import pytest
 from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
+from aignostics.application._utils import validate_due_date
 from aignostics.platform import NotFoundException
 from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 
@@ -14,7 +15,7 @@ from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 def test_validate_due_date_none() -> None:
     """Test that None is accepted (optional parameter)."""
     # Should not raise any exception
-    ApplicationService._validate_due_date(None)
+    validate_due_date(None)
 
 
 @pytest.mark.unit
@@ -33,7 +34,7 @@ def test_validate_due_date_valid_formats() -> None:
     for time_str in valid_formats:
         # Should not raise any exception
         try:
-            ApplicationService._validate_due_date(time_str)
+            validate_due_date(time_str)
         except ValueError as e:
             pytest.fail(f"Valid ISO 8601 format '{time_str}' was rejected: {e}")
 
@@ -52,7 +53,7 @@ def test_validate_due_date_invalid_format() -> None:
 
     for time_str in invalid_formats:
         with pytest.raises(ValueError, match=r"Invalid ISO 8601 format"):
-            ApplicationService._validate_due_date(time_str)
+            validate_due_date(time_str)
 
 
 @pytest.mark.unit
@@ -68,7 +69,7 @@ def test_validate_due_date_past_datetime() -> None:
 
     for time_str in past_formats:
         with pytest.raises(ValueError, match=r"due_date must be in the future"):
-            ApplicationService._validate_due_date(time_str)
+            validate_due_date(time_str)
 
 
 @pytest.mark.unit
@@ -79,7 +80,7 @@ def test_validate_due_date_current_time() -> None:
     current_time_str = current_time.isoformat()
 
     with pytest.raises(ValueError, match=r"due_date must be in the future"):
-        ApplicationService._validate_due_date(current_time_str)
+        validate_due_date(current_time_str)
 
 
 @pytest.mark.unit
@@ -91,7 +92,7 @@ def test_validate_due_date_edge_case_one_second_future() -> None:
 
     # Should not raise any exception
     try:
-        ApplicationService._validate_due_date(future_time_str)
+        validate_due_date(future_time_str)
     except ValueError as e:
         pytest.fail(f"Future datetime '{future_time_str}' was rejected: {e}")
 
