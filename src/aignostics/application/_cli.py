@@ -13,7 +13,8 @@ from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException, RunState
 from aignostics.utils import console, get_logger, get_user_data_directory, sanitize_path
 
-from ._service import DownloadProgress, DownloadProgressState, Service
+from ._models import DownloadProgress, DownloadProgressState
+from ._service import Service
 from ._utils import (
     application_run_status_to_str,
     get_mime_type_for_artifact,

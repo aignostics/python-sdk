@@ -15,7 +15,8 @@ from aignostics.platform import ItemOutput, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
-from .._service import DownloadProgressState, Service  # noqa: TID252
+from .._models import DownloadProgressState  # noqa: TID252
+from .._service import Service  # noqa: TID252
 from .._utils import get_mime_type_for_artifact  # noqa: TID252
 from ._frame import _frame
 from ._utils import (
