@@ -426,22 +426,20 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
             session.log(f"Generated API {version} OpenAPI schema in {format_name} format")
 
 
-def _generate_sdk_metadata_schema(session: nox.Session) -> None:
-    """Generate SDK metadata JSON schema with versioned filename.
+def _generate_sdk_metadata_schema(session: nox.Session, schema_type: str) -> None:
+    """Generate a single SDK metadata JSON schema with versioned filenames.
 
     Args:
         session: The nox session instance
+        schema_type: Type of schema ("run" or "item")
     """
-    # Create directory if it doesn't exist
-    Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
-
-    # Write both versioned and unversioned (latest) files
-    # First get the schema to extract the version
-    with Path("docs/source/_static/sdk_metadata_schema_temp.json").open("w", encoding="utf-8") as f:
+    # Write schema to temp file to extract version
+    temp_file = Path(f"docs/source/_static/sdk_{schema_type}_custom_metadata_schema_temp.json")
+    with temp_file.open("w", encoding="utf-8") as f:
         session.run(
             "aignostics",
             "sdk",
-            "metadata-schema",
+            f"{schema_type}-metadata-schema",
             "--no-pretty",
             "--env",
             "AIGNOSTICS_LOG_CONSOLE_ENABLED=false",
@@ -450,25 +448,42 @@ def _generate_sdk_metadata_schema(session: nox.Session) -> None:
         )
 
     # Read back to get the version from $id
-    with Path("docs/source/_static/sdk_metadata_schema_temp.json").open("r", encoding="utf-8") as f:
+    with temp_file.open("r", encoding="utf-8") as f:
         schema = json.load(f)
 
     # Extract version from $id URL
     schema_id = schema.get("$id", "")
     version = schema_id.split("_")[-1].replace(".json", "") if "_" in schema_id else "v0.0.1"
 
-    # Write to final locations
-    output_path_versioned = Path(f"docs/source/_static/sdk_metadata_schema_{version}.json")
-    output_path_latest = Path("docs/source/_static/sdk_metadata_schema_latest.json")
+    # Write to final locations (versioned and latest)
+    output_path_versioned = Path(f"docs/source/_static/sdk_{schema_type}_custom_metadata_schema_{version}.json")
+    output_path_latest = Path(f"docs/source/_static/sdk_{schema_type}_custom_metadata_schema_latest.json")
 
     for output_path in [output_path_versioned, output_path_latest]:
         with output_path.open("w", encoding="utf-8") as f:
             json.dump(schema, f, indent=2)
 
     # Clean up temp file
-    Path("docs/source/_static/sdk_metadata_schema_temp.json").unlink()
+    temp_file.unlink()
 
-    session.log(f"Generated SDK metadata JSON schema: {output_path_versioned.name} and sdk_metadata_schema_latest.json")
+    session.log(
+        f"Generated {schema_type.capitalize()} SDK metadata JSON schema: "
+        f"{output_path_versioned.name} and sdk_{schema_type}_custom_metadata_schema_latest.json"
+    )
+
+
+def _generate_sdk_metadata_schemas(session: nox.Session) -> None:
+    """Generate SDK metadata JSON schemas with versioned filenames.
+
+    Args:
+        session: The nox session instance
+    """
+    # Create directory if it doesn't exist
+    Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
+
+    # Generate both run and item metadata schemas
+    _generate_sdk_metadata_schema(session, "run")
+    _generate_sdk_metadata_schema(session, "item")
 
 
 def _generate_cli_reference(session: nox.Session) -> None:
@@ -609,7 +624,7 @@ def docs(session: nox.Session) -> None:
     _generate_readme(session)
     _generate_cli_reference(session)
     _generate_openapi_schemas(session)
-    _generate_sdk_metadata_schema(session)
+    _generate_sdk_metadata_schemas(session)
     _generate_api_reference(session)
     _generate_attributions(session, Path(LICENSES_JSON_PATH))
 

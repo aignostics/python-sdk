@@ -8,11 +8,16 @@ import pytest
 from pydantic import ValidationError
 
 from aignostics.platform._sdk_metadata import (
+    ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
-    build_sdk_metadata,
-    get_sdk_metadata_json_schema,
-    validate_sdk_metadata,
-    validate_sdk_metadata_silent,
+    build_item_sdk_metadata,
+    build_run_sdk_metadata,
+    get_item_sdk_metadata_json_schema,
+    get_run_sdk_metadata_json_schema,
+    validate_item_sdk_metadata,
+    validate_item_sdk_metadata_silent,
+    validate_run_sdk_metadata,
+    validate_run_sdk_metadata_silent,
 )
 
 
@@ -34,8 +39,8 @@ def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(var, raising=False)
 
 
-class TestBuildSdkMetadata:
-    """Test cases for build_sdk_metadata function."""
+class TestBuildRunSdkMetadata:
+    """Test cases for build_run_sdk_metadata function."""
 
     @pytest.mark.unit
     @staticmethod
@@ -44,7 +49,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "schema_version" in metadata
             assert metadata["schema_version"] == SDK_METADATA_SCHEMA_VERSION
@@ -61,7 +66,7 @@ class TestBuildSdkMetadata:
         ):
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert metadata["submission"]["initiator"] == "user"
             assert metadata["submission"]["interface"] == "script"
@@ -78,7 +83,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert metadata["submission"]["initiator"] == "bridge"
 
@@ -91,7 +96,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert metadata["submission"]["initiator"] == "test"
 
@@ -105,7 +110,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert metadata["submission"]["initiator"] == "bridge"
 
@@ -120,7 +125,7 @@ class TestBuildSdkMetadata:
             with patch("aignostics.platform._client.Client") as mock_client:
                 mock_client.return_value.me.side_effect = Exception("No client available")
 
-                metadata = build_sdk_metadata()
+                metadata = build_run_sdk_metadata()
 
                 assert metadata["submission"]["interface"] == "cli"
         finally:
@@ -137,7 +142,7 @@ class TestBuildSdkMetadata:
             with patch("aignostics.platform._client.Client") as mock_client:
                 mock_client.return_value.me.side_effect = Exception("No client available")
 
-                metadata = build_sdk_metadata()
+                metadata = build_run_sdk_metadata()
 
                 assert metadata["submission"]["interface"] == "cli"
         finally:
@@ -152,7 +157,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert metadata["submission"]["interface"] == "launchpad"
 
@@ -169,7 +174,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.return_value = mock_me
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "user" in metadata
             assert metadata["user"]["organization_id"] == "org-123"
@@ -184,7 +189,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("Auth failed")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "user" not in metadata
 
@@ -211,7 +216,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "ci" in metadata
             assert "github" in metadata["ci"]
@@ -244,7 +249,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert metadata["ci"]["github"]["run_url"] == (
                 "https://github.enterprise.com/owner/repo/actions/runs/12345"
@@ -259,7 +264,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "ci" in metadata
             assert "pytest" in metadata["ci"]
@@ -275,7 +280,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "markers" in metadata["ci"]["pytest"]
             assert metadata["ci"]["pytest"]["markers"] == ["slow", "integration", "unit"]
@@ -291,7 +296,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "ci" in metadata
             assert "github" in metadata["ci"]
@@ -307,7 +312,7 @@ class TestBuildSdkMetadata:
         ):
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             assert "ci" not in metadata
 
@@ -318,7 +323,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
             with patch("aignostics.platform._sdk_metadata.user_agent", return_value="test-agent/1.0"):
-                metadata = build_sdk_metadata()
+                metadata = build_run_sdk_metadata()
 
                 assert metadata["user_agent"] == "test-agent/1.0"
 
@@ -329,7 +334,7 @@ class TestBuildSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
 
             date_str = metadata["submission"]["date"]
             # Should be able to parse as datetime
@@ -340,8 +345,8 @@ class TestBuildSdkMetadata:
             assert "." not in date_str or date_str.count(".") == 0 or len(date_str.split(".")[-1]) <= 3
 
 
-class TestSdkMetadataValidation:
-    """Test cases for SDK metadata validation."""
+class TestRunSdkMetadataValidation:
+    """Test cases for Run SDK metadata validation."""
 
     @pytest.mark.unit
     @staticmethod
@@ -350,8 +355,8 @@ class TestSdkMetadataValidation:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
-            assert validate_sdk_metadata(metadata) is True
+            metadata = build_run_sdk_metadata()
+            assert validate_run_sdk_metadata(metadata) is True
 
     @pytest.mark.unit
     @staticmethod
@@ -365,8 +370,8 @@ class TestSdkMetadataValidation:
             mock_user.user.id = "user-456"
             mock_client.return_value.me.return_value = mock_user
 
-            metadata = build_sdk_metadata()
-            assert validate_sdk_metadata(metadata) is True
+            metadata = build_run_sdk_metadata()
+            assert validate_run_sdk_metadata(metadata) is True
 
     @pytest.mark.unit
     @staticmethod
@@ -378,8 +383,8 @@ class TestSdkMetadataValidation:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
-            assert validate_sdk_metadata(metadata) is True
+            metadata = build_run_sdk_metadata()
+            assert validate_run_sdk_metadata(metadata) is True
 
     @pytest.mark.unit
     @staticmethod
@@ -391,8 +396,8 @@ class TestSdkMetadataValidation:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
-            assert validate_sdk_metadata(metadata) is True
+            metadata = build_run_sdk_metadata()
+            assert validate_run_sdk_metadata(metadata) is True
 
     @pytest.mark.unit
     @staticmethod
@@ -401,7 +406,7 @@ class TestSdkMetadataValidation:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
+            metadata = build_run_sdk_metadata()
             metadata["note"] = "Test run note"
             metadata["workflow"] = {
                 "onboard_to_aignostics_portal": True,
@@ -412,7 +417,7 @@ class TestSdkMetadataValidation:
                 "deadline": "2026-01-01T00:00:00+00:00",
             }
 
-            assert validate_sdk_metadata(metadata) is True
+            assert validate_run_sdk_metadata(metadata) is True
 
     @pytest.mark.unit
     @staticmethod
@@ -429,7 +434,7 @@ class TestSdkMetadataValidation:
         }
 
         with pytest.raises(ValidationError):
-            validate_sdk_metadata(metadata)
+            validate_run_sdk_metadata(metadata)
 
     @pytest.mark.unit
     @staticmethod
@@ -446,7 +451,7 @@ class TestSdkMetadataValidation:
         }
 
         with pytest.raises(ValidationError):
-            validate_sdk_metadata(metadata)
+            validate_run_sdk_metadata(metadata)
 
     @pytest.mark.unit
     @staticmethod
@@ -463,7 +468,7 @@ class TestSdkMetadataValidation:
         }
 
         with pytest.raises(ValidationError):
-            validate_sdk_metadata(metadata)
+            validate_run_sdk_metadata(metadata)
 
     @pytest.mark.unit
     @staticmethod
@@ -480,7 +485,7 @@ class TestSdkMetadataValidation:
         }
 
         with pytest.raises(ValidationError):
-            validate_sdk_metadata(metadata)
+            validate_run_sdk_metadata(metadata)
 
     @pytest.mark.unit
     @staticmethod
@@ -498,7 +503,7 @@ class TestSdkMetadataValidation:
         }
 
         with pytest.raises(ValidationError):
-            validate_sdk_metadata(metadata)
+            validate_run_sdk_metadata(metadata)
 
     @pytest.mark.unit
     @staticmethod
@@ -507,8 +512,8 @@ class TestSdkMetadataValidation:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
-            metadata = build_sdk_metadata()
-            assert validate_sdk_metadata_silent(metadata) is True
+            metadata = build_run_sdk_metadata()
+            assert validate_run_sdk_metadata_silent(metadata) is True
 
     @pytest.mark.unit
     @staticmethod
@@ -524,13 +529,13 @@ class TestSdkMetadataValidation:
             "user_agent": "test-agent/1.0",
         }
 
-        assert validate_sdk_metadata_silent(metadata) is False
+        assert validate_run_sdk_metadata_silent(metadata) is False
 
     @pytest.mark.unit
     @staticmethod
     def test_get_json_schema() -> None:
         """Test that JSON schema can be exported."""
-        schema = get_sdk_metadata_json_schema()
+        schema = get_run_sdk_metadata_json_schema()
 
         assert isinstance(schema, dict)
         assert "$schema" in schema
@@ -548,3 +553,114 @@ class TestSdkMetadataValidation:
         assert "schema_version" in schema["required"]
         assert "submission" in schema["required"]
         assert "user_agent" in schema["required"]
+
+
+class TestItemSdkMetadata:
+    """Test cases for Item SDK metadata."""
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_build_item_metadata_basic() -> None:
+        """Test that basic item metadata structure is created correctly."""
+        metadata = build_item_sdk_metadata()
+
+        assert metadata["schema_version"] == ITEM_SDK_METADATA_SCHEMA_VERSION
+        assert "platform_bucket" not in metadata
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_basic() -> None:
+        """Test validation of the default item metadata."""
+        metadata = build_item_sdk_metadata()
+
+        assert validate_item_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_with_platform_bucket() -> None:
+        """Test validation succeeds with platform bucket metadata present."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "platform_bucket": {
+                "bucket_name": "sdk-bucket",
+                "object_key": "runs/123/items/456",
+                "signed_download_url": "https://example.com/run-item",
+            },
+        }
+
+        assert validate_item_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_missing_platform_bucket_fields() -> None:
+        """Test validation fails when required platform bucket fields are missing."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "platform_bucket": {
+                "bucket_name": "sdk-bucket",
+                "object_key": "runs/123/items/456",
+            },
+        }
+
+        with pytest.raises(ValidationError):
+            validate_item_sdk_metadata(metadata)
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_invalid_schema_version() -> None:
+        """Test that an invalid schema version fails validation."""
+        metadata = {
+            "schema_version": "invalid",
+        }
+
+        with pytest.raises(ValidationError):
+            validate_item_sdk_metadata(metadata)
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_extra_fields() -> None:
+        """Test that extra fields are rejected for item metadata."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "unexpected": "value",
+        }
+
+        with pytest.raises(ValidationError):
+            validate_item_sdk_metadata(metadata)
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_silent_valid() -> None:
+        """Test silent validation passes for valid item metadata."""
+        metadata = build_item_sdk_metadata()
+
+        assert validate_item_sdk_metadata_silent(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_silent_invalid() -> None:
+        """Test silent validation fails for invalid item metadata."""
+        metadata = {
+            "schema_version": "invalid",
+        }
+
+        assert validate_item_sdk_metadata_silent(metadata) is False
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_get_item_json_schema() -> None:
+        """Test that the item metadata JSON schema can be exported."""
+        schema = get_item_sdk_metadata_json_schema()
+
+        assert isinstance(schema, dict)
+        assert "$schema" in schema
+        assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+        assert "$id" in schema
+        assert schema["$id"] == (
+            f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/"
+            f"item_sdk_metadata_schema_v{ITEM_SDK_METADATA_SCHEMA_VERSION}.json"
+        )
+        assert "properties" in schema
+        assert "schema_version" in schema["properties"]
+        assert "required" in schema
+        assert "schema_version" in schema["required"]

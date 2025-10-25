@@ -426,6 +426,33 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         tiff_view_dialog_content.refresh(title=title, url=url)
         tiff_view_dialog.open()
 
+    @ui.refreshable
+    def custom_metadata_dialog_content(title: str | None, custom_metadata: str | None) -> None:
+        if title:
+            ui.label(title).classes("text-h5")
+        if custom_metadata:
+            try:
+                ui.json_editor({
+                    "content": {"json": custom_metadata},
+                    "mode": "tree",
+                    "readOnly": True,
+                    "mainMenuBar": False,
+                    "navigationBar": True,
+                    "statusBar": False,
+                }).classes("full-width")
+            except Exception as e:  # noqa: BLE001
+                ui.notify(f"Failed to render metadata: {e!s}", type="negative")
+
+    with ui.dialog() as custom_metadata_dialog, ui.card().style(WIDTH_1200px):
+        custom_metadata_dialog_content(title=None, custom_metadata=None)
+        with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+            ui.button("Close", on_click=custom_metadata_dialog.close)
+
+    def custom_metadata_dialog_open(title: str, custom_metadata: dict[str, Any]) -> None:
+        """Open the Custom Metadata dialog."""
+        custom_metadata_dialog_content.refresh(title=title, custom_metadata=custom_metadata)
+        custom_metadata_dialog.open()
+
     async def open_qupath(
         project: Path | None = None, image: Path | str | None = None, button: ui.button | None = None
     ) -> None:
@@ -602,7 +629,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                     tooltip += f" ({item.termination_reason})"
                                 ui.tooltip(tooltip)
                             ui.space()
-                            with ui.button_group().props():
+                            with ui.button_group():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():
                                     with ui.button(
                                         icon="zoom_in",
@@ -614,10 +641,20 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                             )
                                         )
                                         ui.tooltip("Open in QuPath")
+                                if item.custom_metadata:
+                                    with ui.button(
+                                        icon="info",
+                                        on_click=lambda _,
+                                        custom_metadata=item.custom_metadata,
+                                        external_id=item.external_id: custom_metadata_dialog_open(
+                                            title=f"Custom Metadata of item {external_id} ",
+                                            custom_metadata=custom_metadata,
+                                        ),
+                                    ).props("floating"):
+                                        ui.tooltip("Show custom metadata")
                                 if image_file:
                                     with ui.button(
                                         icon="folder_open",
-                                        color="primary",
                                         on_click=lambda _, image_file=image_file: show_in_file_manager(
                                             str(image_file.parent)
                                         ),
@@ -681,7 +718,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 .style("max-width: 50%;")
                             ):
                                 ui.code(
-                                    item.error_message,
+                                    f"Error: {item.error_message}, code: {item.error_code or 'N/A'}",
                                     language="markdown",
                                 ).classes("ml-8").style("width: 100%; max-width: 100%;")
                         else:

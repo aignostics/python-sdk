@@ -16,7 +16,7 @@ from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
+from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 
 if TYPE_CHECKING:
     from nicegui import ui

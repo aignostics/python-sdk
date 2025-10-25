@@ -2,7 +2,13 @@
 
 import os
 
-from .constants import MODULES_TO_INSTRUMENT, WSI_SUPPORTED_FILE_EXTENSIONS
+from .constants import (
+    HETA_APPLICATION_ID,
+    MODULES_TO_INSTRUMENT,
+    TEST_APP_APPLICATION_ID,
+    WSI_SUPPORTED_FILE_EXTENSIONS,
+    WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
+)
 from .utils.boot import boot
 
 # Add scheme to HTTP proxy environment variables if missing
@@ -13,4 +19,9 @@ for proxy_var in ["HTTP_PROXY", "HTTPS_PROXY"]:
 
 boot(modules_to_instrument=MODULES_TO_INSTRUMENT)
 
-__all__ = ["WSI_SUPPORTED_FILE_EXTENSIONS"]
+__all__ = [
+    "HETA_APPLICATION_ID",
+    "TEST_APP_APPLICATION_ID",
+    "WSI_SUPPORTED_FILE_EXTENSIONS",
+    "WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP",
+]
