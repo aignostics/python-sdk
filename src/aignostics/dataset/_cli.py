@@ -11,7 +11,7 @@ from aignostics.utils import console, get_logger, get_user_data_directory
 
 logger = get_logger(__name__)
 
-PATH_LENFTH_MAX = 260
+PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"
 
 cli = typer.Typer(
