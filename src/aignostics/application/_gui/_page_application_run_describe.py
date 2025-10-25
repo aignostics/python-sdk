@@ -187,6 +187,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         selected_folder.value = str(folder_path)
                     else:
                         selected_folder.value = str(folder_path.parent)
+                    ui.notify(f"Using custom directory: {selected_folder.value}", type="info")
                     download_button.enable()
                 else:
                     ui.notify("No folder selected", type="warning")
@@ -194,6 +195,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             async def _select_data() -> None:  # noqa: RUF029
                 """Open a file picker dialog and show notifier when closed again."""
                 selected_folder.value = str(get_user_data_directory("results"))
+                ui.notify("Using Launchpad results directory", type="info")
                 download_button.enable()
 
             with ui.row().classes("w-full"):

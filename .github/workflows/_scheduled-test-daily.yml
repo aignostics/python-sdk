@@ -1,4 +1,4 @@
-name: "> Test"
+name: "> Scheduled Test (Daily)"
 
 on:
   workflow_call:
@@ -7,10 +7,6 @@ on:
         description: 'Environment to test against, that is staging or production'
         required: false
         default: 'staging'
-        type: string
-      commit_message:
-        description: 'Commit message to check for skip/enable markers'
-        required: false
         type: string
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
@@ -37,32 +33,8 @@ env:
 
 jobs:
 
-  generate-matrix:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Set matrix based on commit message and PR labels
-        id: set-matrix
-        env:
-          COMMIT_MESSAGE: ${{ inputs.commit_message }}
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-        run: |
-          if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]] || [[ "$PR_LABELS" == *"skip:test:matrix-runner"* ]]; then
-            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
-          else
-            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true}]}' >> $GITHUB_OUTPUT
-          fi
-
   test:
-    needs: generate-matrix
-    runs-on: ${{ matrix.runner }}
-    continue-on-error: ${{ matrix.experimental }}
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    runs-on: "ubuntu-latest"
     permissions:
       attestations: write
       contents: read
@@ -94,17 +66,6 @@ jobs:
       # Need xdisplay for testing QuPath app integration
       - name: Setup display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
-  
-      - name: Release version check
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
-        run: |
-          TAG_VERSION=${GITHUB_REF#refs/tags/v}
-          TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
-          if [ "$TAG_VERSION" != "$TOML_VERSION" ]; then
-            echo "Release version mismatch: Tag $TAG_VERSION != pyproject.toml $TOML_VERSION"
-            exit 1
-          fi
 
       - name: Print development version info
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
@@ -210,23 +171,3 @@ jobs:
             reports/coverage.md
             reports/coverage_html
           retention-days: 7
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: aignostics/python-sdk
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
-        uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: SonarQube Scan
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
-        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

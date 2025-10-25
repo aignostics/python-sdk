@@ -1,4 +1,4 @@
-name: Claude Code / Automation / Operational Excellence
+name: "+ Claude Code / Automation / Operational Excellence (Weekly)"
 
 on:
   schedule:

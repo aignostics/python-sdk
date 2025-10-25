@@ -76,8 +76,8 @@ dependencies = [
     # From Template
     "fastapi[standard,all]>=0.119.1,<1",
     "humanize>=4.14.0,<5",
-    "logfire[system-metrics]>=4.13.2,<5",
-    "nicegui[native]>=3.0.4,<4",
+    "logfire[system-metrics]>=4.14.1,<5",
+    "nicegui[native]>=3.1.0,<4",
     "opentelemetry-instrumentation-fastapi>=0.53b0,<1",
     "opentelemetry-instrumentation-httpx>=0.53b0,<1",
     "opentelemetry-instrumentation-jinja2>=0.53b0,<1",
@@ -97,7 +97,7 @@ dependencies = [
     "uptime>=3.0.1,<4",
     # Custom
     "aiopath>=0.6.11,<1",
-    "boto3>=1.40.55,<2",
+    "boto3>=1.40.58,<2",
     "certifi>=2025.10.5,<2026",
     "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
@@ -156,7 +156,7 @@ dev = [
     "pip-audit>=2.9.0,<3",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.3.0,<5",
-    "pyright>=1.1.406,<2",
+    "pyright>=1.1.406,<1.1.407", # Regression in 1.1.407, see https://github.com/microsoft/pyright/issues/11060
     "pytest>=8.4.2,<9",
     "pytest-asyncio>=1.2.0,<2",
     "pytest-cov>=7.0.0,<8",
@@ -171,7 +171,7 @@ dev = [
     "pytest-timeout>=2.4.0,<3",
     "pytest-watcher>=0.4.3,<1",
     "pytest-xdist[psutil]>=3.8.0,<4",
-    "ruff>=0.14.1,<1",
+    "ruff>=0.14.2,<1",
     "scalene>=1.5.55,<2",
     "sphinx>=8.2.3,<9",
     "sphinx-autobuild>=2025.8.25,<2026",

@@ -255,9 +255,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 
             # Now on Submission step
             await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
-
-            # Indicate to validate only, to not waste GPU resources
-            user.find(marker="CHECKBOX_VALIDATE_ONLY").click()
+            user.find(marker="CHECKBOX_VALIDATE_ONLY").click()  # only for aignostics' orgs
 
             # Trigger upload and submission
             await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")

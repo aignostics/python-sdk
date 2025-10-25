@@ -1,4 +1,4 @@
-name: "Claude Code"
+name: "> Claude Code"
 
 on:
   workflow_call:
@@ -118,7 +118,7 @@ jobs:
             --max-turns ${{ inputs.max_turns }}
             --model claude-sonnet-4-5-20250929
             --allowed-tools "${{ inputs.allowed_tools }}"
-            --system-prompt "Read the CLAUDE.md file in this repository and explicitely acknowledge you will apply the guidance therein."
+            --system-prompt "Read the CLAUDE.md file in the root folder of this repository and explicitely acknowledge you will apply **all** guidance therein and in **all** linked documents."
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
         uses: anthropics/claude-code-action@v1.0.13
