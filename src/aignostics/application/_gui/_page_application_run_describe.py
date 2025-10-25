@@ -227,19 +227,29 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.notify("Downloading ...", type="info")
             progress_queue = Manager().Queue()
 
-            def update_download_progress() -> None:
+            def update_download_progress() -> None:  # noqa: C901, PLR0912
                 """Update the progress indicator with values from the queue."""
                 while not progress_queue.empty():
                     progress = progress_queue.get()
-                    download_item_status.set_text(
-                        progress.status
-                        if progress.status is not DownloadProgressState.DOWNLOADING
-                        or progress.total_artifact_index is None
-                        else (
+                    # Determine status text based on progress state
+                    if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                        status_text = (
+                            f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
+                            if progress.item_index is not None and progress.item_count
+                            else "Downloading input slide ..."
+                        )
+                    elif (
+                        progress.status is DownloadProgressState.DOWNLOADING
+                        and progress.total_artifact_index is not None
+                    ):
+                        status_text = (
                             f"Downloading artifact {progress.total_artifact_index + 1} "
                             f"of {progress.total_artifact_count}"
                         )
-                    )
+                    else:
+                        status_text = progress.status
+
+                    download_item_status.set_text(status_text)
                     download_item_status.set_visibility(True)
                     download_item_progress.set_value(progress.item_progress_normalized)
                     download_artifact_progress.set_value(progress.artifact_progress_normalized)
@@ -247,7 +257,13 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         download_artifact_status.set_visibility(False)
                         download_item_progress.set_visibility(False)
                         download_artifact_progress.set_visibility(False)
-                    if progress.status is DownloadProgressState.DOWNLOADING:
+                    elif progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                        if progress.input_slide_path:
+                            download_artifact_status.set_text(f"Input: {progress.input_slide_path.name}")
+                        download_artifact_status.set_visibility(True)
+                        download_item_progress.set_visibility(True)
+                        download_artifact_progress.set_visibility(True)
+                    elif progress.status is DownloadProgressState.DOWNLOADING:
                         if progress.artifact_path:
                             download_artifact_status.set_text(str(progress.artifact_path))
                         download_artifact_status.set_visibility(True)

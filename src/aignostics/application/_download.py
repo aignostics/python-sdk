@@ -8,7 +8,7 @@ from typing import Any
 import google_crc32c
 import requests
 
-from aignostics.platform import ItemOutput, ItemState, Run
+from aignostics.platform import ItemOutput, ItemState, Run, generate_signed_url
 from aignostics.utils import get_logger, sanitize_path_component
 
 from ._models import DownloadProgress, DownloadProgressState
@@ -19,6 +19,63 @@ logger = get_logger(__name__)
 # Download chunk sizes
 APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
 APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
+
+
+def download_gs_url_to_file_with_progress(
+    progress: DownloadProgress,
+    gs_url: str,
+    destination_path: Path,
+    download_progress_queue: Any | None = None,  # noqa: ANN401
+    download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
+) -> Path:
+    """Download a file from a gs:// URL with progress tracking.
+
+    Args:
+        progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
+        gs_url (str): The gs:// URL to download from.
+        destination_path (Path): The local file path to save to.
+        download_progress_queue (Any | None): Queue for GUI progress updates.
+        download_progress_callable (Callable | None): Callback for CLI progress updates.
+
+    Returns:
+        Path: The path to the downloaded file.
+
+    Raises:
+        ValueError: If the gs:// URL is invalid or the blob doesn't exist.
+        requests.HTTPError: If the download fails.
+    """
+    logger.debug("Downloading gs:// URL '%s' to '%s' with progress tracking", gs_url, destination_path)
+
+    # Initialize progress tracking
+    progress.status = DownloadProgressState.DOWNLOADING_INPUT
+    progress.input_slide_url = gs_url
+    progress.input_slide_path = destination_path
+    progress.input_slide_downloaded_size = 0
+    progress.input_slide_downloaded_chunk_size = 0
+    progress.input_slide_size = None
+    update_progress(progress, download_progress_callable, download_progress_queue)
+
+    # Generate signed URL and prepare destination
+    signed_url = generate_signed_url(gs_url)
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Download with progress tracking
+    response = requests.get(signed_url, stream=True, timeout=60)
+    response.raise_for_status()
+
+    progress.input_slide_size = int(response.headers.get("content-length", 0))
+    update_progress(progress, download_progress_callable, download_progress_queue)
+
+    with destination_path.open("wb") as f:
+        for chunk in response.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
+                progress.input_slide_downloaded_chunk_size = len(chunk)
+                progress.input_slide_downloaded_size += progress.input_slide_downloaded_chunk_size
+                update_progress(progress, download_progress_callable, download_progress_queue)
+
+    logger.info("Downloaded gs:// URL '%s' to '%s'", gs_url, destination_path)
+    return destination_path
 
 
 def update_progress(

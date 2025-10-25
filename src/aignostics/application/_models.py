@@ -18,6 +18,7 @@ class DownloadProgressState(StrEnum):
     """Enum for download progress states."""
 
     INITIALIZING = "Initializing ..."
+    DOWNLOADING_INPUT = "Downloading input slide ..."
     QUPATH_ADD_INPUT = "Adding input slides to QuPath project ..."
     CHECKING = "Checking run status ..."
     WAITING = "Waiting for item completing ..."
@@ -44,6 +45,11 @@ class DownloadProgress(BaseModel):
     artifact_size: int | None = None
     artifact_downloaded_chunk_size: int = 0
     artifact_downloaded_size: int = 0
+    input_slide_path: Path | None = None
+    input_slide_url: str | None = None
+    input_slide_size: int | None = None
+    input_slide_downloaded_chunk_size: int = 0
+    input_slide_downloaded_size: int = 0
     if has_qupath_extra:
         qupath_add_input_progress: QuPathAddProgress | None = None
         qupath_add_results_progress: QuPathAddProgress | None = None
@@ -81,6 +87,10 @@ class DownloadProgress(BaseModel):
         Returns:
             float: The normalized item progress in range 0..1.
         """
+        if self.status == DownloadProgressState.DOWNLOADING_INPUT:
+            if (not self.item_count) or self.item_index is None:
+                return 0.0
+            return min(1, float(self.item_index + 1) / float(self.item_count))
         if self.status == DownloadProgressState.DOWNLOADING:
             if (not self.total_artifact_count) or self.total_artifact_index is None:
                 return 0.0
@@ -104,6 +114,10 @@ class DownloadProgress(BaseModel):
         Returns:
             float: The normalized artifact progress in range 0..1.
         """
+        if self.status == DownloadProgressState.DOWNLOADING_INPUT:
+            if not self.input_slide_size:
+                return 0.0
+            return min(1, float(self.input_slide_downloaded_size) / float(self.input_slide_size))
         if self.status == DownloadProgressState.DOWNLOADING:
             if not self.artifact_size:
                 return 0.0

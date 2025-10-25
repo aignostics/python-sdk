@@ -904,7 +904,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
         with Live(panel):
             main_task = main_download_progress_ui.add_task(description="", total=None, extra_description="")
 
-            def update_progress(progress: DownloadProgress) -> None:
+            def update_progress(progress: DownloadProgress) -> None:  # noqa: C901
                 """Update progress bar for file downloads."""
                 if progress.run:
                     panel.title = (
@@ -921,18 +921,43 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         panel.subtitle += f", status: {status_text} ({progress.run.termination_reason})."
                     else:
                         panel.subtitle += f", status: {application_run_status_to_str(progress.run.state)}."
+                # Determine the status message based on progress state
+                if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                    status_message = (
+                        f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
+                        if progress.item_index is not None and progress.item_count
+                        else "Downloading input slide ..."
+                    )
+                elif progress.status is DownloadProgressState.DOWNLOADING and progress.total_artifact_index is not None:
+                    status_message = (
+                        f"Downloading artifact {progress.total_artifact_index + 1} of {progress.total_artifact_count}"
+                    )
+                else:
+                    status_message = progress.status
+
                 main_download_progress_ui.update(
                     main_task,
-                    description=(
-                        progress.status
-                        if progress.status is not DownloadProgressState.DOWNLOADING or not progress.total_artifact_index
-                        else (
-                            f"Downloading artifact {progress.total_artifact_index + 1} "
-                            f"of {progress.total_artifact_count}"
-                        )
-                    ).ljust(50),
+                    description=status_message.ljust(50),
                 )
-                if progress.artifact_path:
+                # Handle input slide download progress
+                if progress.status is DownloadProgressState.DOWNLOADING_INPUT and progress.input_slide_path:
+                    task_key = str(progress.input_slide_path.absolute())
+                    if task_key not in download_tasks:
+                        download_tasks[task_key] = artifact_download_progress_ui.add_task(
+                            f"{progress.input_slide_path.name}".ljust(50),
+                            total=progress.input_slide_size,
+                            extra_description=f"Input from {progress.input_slide_url or 'gs://'}"
+                            if progress.input_slide_url
+                            else "Input slide",
+                        )
+
+                    artifact_download_progress_ui.update(
+                        download_tasks[task_key],
+                        total=progress.input_slide_size,
+                        advance=progress.input_slide_downloaded_chunk_size,
+                    )
+                # Handle artifact download progress
+                elif progress.artifact_path:
                     task_key = str(progress.artifact_path.absolute())
                     if task_key not in download_tasks:
                         download_tasks[task_key] = artifact_download_progress_ui.add_task(
