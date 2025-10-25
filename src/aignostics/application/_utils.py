@@ -83,7 +83,6 @@ def retrieve_and_print_run_details(run: Run) -> None:
     console.print("[bold]Items:[/bold]")
 
     _retrieve_and_print_run_items(run)
-    _print_run_statistics(run)
 
 
 def _retrieve_and_print_run_items(run: Run) -> None:
@@ -103,12 +102,7 @@ def _retrieve_and_print_run_items(run: Run) -> None:
         console.print(f"  [bold]Item External ID:[/bold] {item.external_id}")
         console.print(f"  [bold]Status (Termination Reason):[/bold] {item.state.value} ({item.termination_reason})")
         console.print(f"  [bold]Error Message (Code):[/bold] {item.error_message} ({item.error_code})")
-
-        # TODO(Andreas): error_code is missing on item model; should be printed here as well.
-        # Please add in the openapi.json and regenerate the SDK, and add line here.
-        # Can be set to generic code initially so we have a stable API at last.
-        if item.error_message:
-            console.print(f"  [error]Error:[/error] {item.error_message}")
+        console.print(f"  [bold]Custom Metadata:[/bold] {item.custom_metadata or 'None'}")
 
         if item.output_artifacts:
             console.print("  [bold]Output Artifacts:[/bold]")
@@ -119,16 +113,6 @@ def _retrieve_and_print_run_items(run: Run) -> None:
                 console.print(f"      Download URL: {artifact.download_url}")
 
         console.print()
-
-
-def _print_run_statistics(run: Run) -> None:
-    """Print statistics of items in a run.
-
-    Args:
-        run (Run): The Run object
-    """
-    console.print("[bold]Item Statistics:[/bold]")
-    console.print(run.details().statistics)
 
 
 def print_runs_verbose(runs: list[RunData]) -> None:

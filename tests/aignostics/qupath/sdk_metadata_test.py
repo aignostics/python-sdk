@@ -8,14 +8,9 @@ import pytest
 from pydantic import ValidationError
 
 from aignostics.platform._sdk_metadata import (
-    ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
-    build_item_sdk_metadata,
     build_run_sdk_metadata,
-    get_item_sdk_metadata_json_schema,
     get_run_sdk_metadata_json_schema,
-    validate_item_sdk_metadata,
-    validate_item_sdk_metadata_silent,
     validate_run_sdk_metadata,
     validate_run_sdk_metadata_silent,
 )
@@ -323,7 +318,7 @@ class TestBuildRunSdkMetadata:
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
             with patch("aignostics.platform._sdk_metadata.user_agent", return_value="test-agent/1.0"):
-                metadata = build_run_sdk_metadata()
+                metadata = build_sdk_metadata()
 
                 assert metadata["user_agent"] == "test-agent/1.0"
 
@@ -553,114 +548,3 @@ class TestRunSdkMetadataValidation:
         assert "schema_version" in schema["required"]
         assert "submission" in schema["required"]
         assert "user_agent" in schema["required"]
-
-
-class TestItemSdkMetadata:
-    """Test cases for Item SDK metadata."""
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_build_item_metadata_basic() -> None:
-        """Test that basic item metadata structure is created correctly."""
-        metadata = build_item_sdk_metadata()
-
-        assert metadata["schema_version"] == ITEM_SDK_METADATA_SCHEMA_VERSION
-        assert "platform_bucket" not in metadata
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_validate_item_metadata_basic() -> None:
-        """Test validation of the default item metadata."""
-        metadata = build_item_sdk_metadata()
-
-        assert validate_item_sdk_metadata(metadata) is True
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_validate_item_metadata_with_platform_bucket() -> None:
-        """Test validation succeeds with platform bucket metadata present."""
-        metadata = {
-            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
-            "platform_bucket": {
-                "bucket_name": "sdk-bucket",
-                "object_key": "runs/123/items/456",
-                "signed_download_url": "https://example.com/run-item",
-            },
-        }
-
-        assert validate_item_sdk_metadata(metadata) is True
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_validate_item_metadata_missing_platform_bucket_fields() -> None:
-        """Test validation fails when required platform bucket fields are missing."""
-        metadata = {
-            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
-            "platform_bucket": {
-                "bucket_name": "sdk-bucket",
-                "object_key": "runs/123/items/456",
-            },
-        }
-
-        with pytest.raises(ValidationError):
-            validate_item_sdk_metadata(metadata)
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_validate_item_metadata_invalid_schema_version() -> None:
-        """Test that an invalid schema version fails validation."""
-        metadata = {
-            "schema_version": "invalid",
-        }
-
-        with pytest.raises(ValidationError):
-            validate_item_sdk_metadata(metadata)
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_validate_item_metadata_extra_fields() -> None:
-        """Test that extra fields are rejected for item metadata."""
-        metadata = {
-            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
-            "unexpected": "value",
-        }
-
-        with pytest.raises(ValidationError):
-            validate_item_sdk_metadata(metadata)
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_validate_item_metadata_silent_valid() -> None:
-        """Test silent validation passes for valid item metadata."""
-        metadata = build_item_sdk_metadata()
-
-        assert validate_item_sdk_metadata_silent(metadata) is True
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_validate_item_metadata_silent_invalid() -> None:
-        """Test silent validation fails for invalid item metadata."""
-        metadata = {
-            "schema_version": "invalid",
-        }
-
-        assert validate_item_sdk_metadata_silent(metadata) is False
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_get_item_json_schema() -> None:
-        """Test that the item metadata JSON schema can be exported."""
-        schema = get_item_sdk_metadata_json_schema()
-
-        assert isinstance(schema, dict)
-        assert "$schema" in schema
-        assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-        assert "$id" in schema
-        assert schema["$id"] == (
-            f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/"
-            f"item_sdk_metadata_schema_v{ITEM_SDK_METADATA_SCHEMA_VERSION}.json"
-        )
-        assert "properties" in schema
-        assert "schema_version" in schema["properties"]
-        assert "required" in schema
-        assert "schema_version" in schema["required"]
