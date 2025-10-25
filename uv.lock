@@ -236,7 +236,7 @@ dev = [
     { name = "pip-audit", specifier = ">=2.9.0,<3" },
     { name = "pip-licenses", git = "https://github.com/neXenio/pip-licenses.git?rev=master" },
     { name = "pre-commit", specifier = ">=4.3.0,<5" },
-    { name = "pyright", specifier = ">=1.1.406,<2" },
+    { name = "pyright", specifier = ">=1.1.406,<1.1.407" },
     { name = "pytest", specifier = ">=8.4.2,<9" },
     { name = "pytest-asyncio", specifier = ">=1.2.0,<2" },
     { name = "pytest-cov", specifier = ">=7.0.0,<8" },
