@@ -42,6 +42,8 @@ jobs:
   check-trigger-condition:
     runs-on: ubuntu-latest
     needs: get-commit-message
+    permissions:
+      contents: read
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
     steps:
@@ -49,13 +51,12 @@ jobs:
         id: check
         run: |
           if [[ "${{ contains(needs.get-commit-message.outputs.commit_message, 'build:native:only') }}" == "true" ]] || \
-             [[ "${{ contains(github.event.pull_request.labels.*.name, 'build:native:only') }}" == "true" ]]; then
+            [[ "${{ contains(github.event.pull_request.labels.*.name, 'build:native:only') }}" == "true" ]]; then
             echo "should_run=true" >> $GITHUB_OUTPUT
             echo "✅ Workflow triggered: Found 'build:native:only' in commit message or PR labels"
           else
             echo "should_run=false" >> $GITHUB_OUTPUT
             echo "⏭️  Workflow skipped: 'build:native:only' not found in commit message or PR labels"
-            exit 1
           fi
 
   only_build_native:
