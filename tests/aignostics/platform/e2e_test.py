@@ -163,8 +163,6 @@ def _run_application_test(
         _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
 
-# TODO(Helmut): Currently not scheduled, as it fails on staging
-@pytest.mark.skip(reason="Testing very long running on staging")
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
