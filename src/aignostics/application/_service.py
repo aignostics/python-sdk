@@ -13,11 +13,12 @@ from typing import Any
 
 import google_crc32c
 import requests
-from aignx.codegen.models import ItemOutput, ItemState
 from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
-from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
+from aignostics.constants import (
+    TEST_APP_APPLICATION_ID,
+)
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -27,7 +28,9 @@ from aignostics.platform import (
     Client,
     InputArtifact,
     InputItem,
+    ItemOutput,
     ItemResult,
+    ItemState,
     NotFoundException,
     OutputArtifactElement,
     Run,
@@ -42,7 +45,11 @@ from aignostics.utils import BaseService, Health, get_logger, sanitize_path_comp
 from aignostics.wsi import Service as WSIService
 
 from ._settings import Settings
-from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
+from ._utils import (
+    get_file_extension_for_artifact,
+    get_mime_type_for_artifact,
+    get_supported_extensions_for_application,
+)
 
 has_qupath_extra = find_spec("ijson")
 if has_qupath_extra:
@@ -498,7 +505,8 @@ class Service(BaseService):
         metadata = []
 
         try:
-            for extension in list(WSI_SUPPORTED_FILE_EXTENSIONS):
+            extensions = get_supported_extensions_for_application(application_id)
+            for extension in extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
                     # Generate CRC32C checksum with google_crc32c and encode as base64
                     hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
@@ -657,6 +665,7 @@ class Service(BaseService):
     def application_runs_static(  # noqa: PLR0913, PLR0917
         application_id: str | None = None,
         application_version: str | None = None,
+        external_id: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
@@ -668,6 +677,7 @@ class Service(BaseService):
             application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
             application_version (str | None): The version of the application to filter runs.
                 If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
@@ -693,6 +703,7 @@ class Service(BaseService):
             for run in Service().application_runs(
                 application_id=application_id,
                 application_version=application_version,
+                external_id=external_id,
                 has_output=has_output,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
@@ -704,6 +715,7 @@ class Service(BaseService):
         self,
         application_id: str | None = None,
         application_version: str | None = None,
+        external_id: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
@@ -715,6 +727,7 @@ class Service(BaseService):
             application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
             application_version (str | None): The version of the application to filter runs.
                 If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
@@ -740,6 +753,7 @@ class Service(BaseService):
             run_iterator = self._get_platform_client().runs.list_data(
                 application_id=application_id,
                 application_version=application_version,
+                external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort="-submitted_at",
                 page_size=page_size,
@@ -843,6 +857,29 @@ class Service(BaseService):
                 logger.warning(message)
                 raise ValueError(message)
 
+            item_metadata = {
+                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
+                "height_px": int(row["height_px"]),
+                "width_px": int(row["width_px"]),
+                "media_type": (
+                    "image/tiff"
+                    if row["external_id"].lower().endswith((".tif", ".tiff"))
+                    else "application/dicom"
+                    if row["external_id"].lower().endswith(".dcm")
+                    else "application/octet-stream"
+                ),
+                "resolution_mpp": float(row["resolution_mpp"]),
+            }
+
+            # Only add specimen and staining_method metadata if not test-app
+            # TODO(Helmut): Remove condition when test-app reached input parity with heta
+            if application_id != TEST_APP_APPLICATION_ID:
+                item_metadata["specimen"] = {
+                    "disease": row["disease"],
+                    "tissue": row["tissue"],
+                }
+                item_metadata["staining_method"] = row["staining_method"]
+
             items.append(
                 InputItem(
                     external_id=row["external_id"],
@@ -850,26 +887,18 @@ class Service(BaseService):
                         InputArtifact(
                             name=input_artifact_name,
                             download_url=download_url,
-                            metadata={
-                                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
-                                "height_px": int(row["height_px"]),
-                                "width_px": int(row["width_px"]),
-                                "media_type": (
-                                    "image/tiff"
-                                    if row["external_id"].lower().endswith((".tif", ".tiff"))
-                                    else "application/dicom"
-                                    if row["external_id"].lower().endswith(".dcm")
-                                    else "application/octet-stream"
-                                ),
-                                "resolution_mpp": float(row["resolution_mpp"]),
-                                "specimen": {
-                                    "disease": row["disease"],
-                                    "tissue": row["tissue"],
-                                },
-                                "staining_method": row["staining_method"],
-                            },
+                            metadata=item_metadata,
                         )
                     ],
+                    custom_metadata={
+                        "sdk": {
+                            "platform_bucket": {
+                                "bucket_name": bucket_name,
+                                "object_key": object_key,
+                                "signed_download_url": download_url,
+                            }
+                        }
+                    },
                 )
             )
         logger.debug("Items for application run submission: %s", items)

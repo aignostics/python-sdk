@@ -16,6 +16,7 @@ from aignostics.utils import get_logger, user_agent
 logger = get_logger(__name__)
 
 SDK_METADATA_SCHEMA_VERSION = "0.0.2"
+ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.1"
 
 
 class SubmissionMetadata(BaseModel):
@@ -94,8 +95,8 @@ class SchedulingMetadata(BaseModel):
     )
 
 
-class SdkMetadata(BaseModel):
-    """Complete SDK metadata schema.
+class RunSdkMetadata(BaseModel):
+    """Complete Run SDK metadata schema.
 
     This model defines the structure and validation rules for SDK metadata
     that is attached to application runs. It includes information about:
@@ -121,7 +122,31 @@ class SdkMetadata(BaseModel):
     model_config = {"extra": "forbid"}  # Reject unknown fields
 
 
-def build_sdk_metadata() -> dict[str, Any]:
+class PlatformBucketMetadata(BaseModel):
+    """Platform bucket storage metadata for items."""
+
+    bucket_name: str = Field(..., description="Name of the cloud storage bucket")
+    object_key: str = Field(..., description="Object key/path within the bucket")
+    signed_download_url: str = Field(..., description="Signed URL for downloading the object")
+
+
+class ItemSdkMetadata(BaseModel):
+    """Complete Item SDK metadata schema.
+
+    This model defines the structure and validation rules for SDK metadata
+    that is attached to individual items within application runs. It includes
+    information about where the item is stored in the platform's cloud storage.
+    """
+
+    schema_version: str = Field(
+        ..., description="Schema version for this metadata format", pattern=r"^\d+\.\d+\.\d+-?.*$"
+    )
+    platform_bucket: PlatformBucketMetadata | None = Field(None, description="Platform bucket storage information")
+
+    model_config = {"extra": "forbid"}  # Reject unknown fields
+
+
+def build_run_sdk_metadata() -> dict[str, Any]:
     """Build SDK metadata to attach to runs.
 
     Includes user agent, user information, GitHub CI/CD context when running in GitHub Actions,
@@ -210,11 +235,11 @@ def build_sdk_metadata() -> dict[str, Any]:
     return metadata
 
 
-def validate_sdk_metadata(metadata: dict[str, Any]) -> bool:
-    """Validate the SDK metadata structure against the schema.
+def validate_run_sdk_metadata(metadata: dict[str, Any]) -> bool:
+    """Validate the Run SDK metadata structure against the schema.
 
     Args:
-        metadata (dict[str, Any]): The SDK metadata to validate.
+        metadata (dict[str, Any]): The Run SDK metadata to validate.
 
     Returns:
         bool: True if the metadata is valid, False otherwise.
@@ -223,20 +248,20 @@ def validate_sdk_metadata(metadata: dict[str, Any]) -> bool:
         ValidationError: If the metadata does not conform to the schema.
     """
     try:
-        SdkMetadata.model_validate(metadata)
+        RunSdkMetadata.model_validate(metadata)
         return True
     except ValidationError:
         logger.exception("SDK metadata validation failed")
         raise
 
 
-def get_sdk_metadata_json_schema() -> dict[str, Any]:
-    """Get the JSON Schema for SDK metadata.
+def get_run_sdk_metadata_json_schema() -> dict[str, Any]:
+    """Get the JSON Schema for Run SDK metadata.
 
     Returns:
-        dict[str, Any]: JSON Schema definition for SDK metadata with $schema and $id fields.
+        dict[str, Any]: JSON Schema definition for Run SDK metadata with $schema and $id fields.
     """
-    schema = SdkMetadata.model_json_schema()
+    schema = RunSdkMetadata.model_json_schema()
     schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     schema["$id"] = (
         f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
@@ -244,17 +269,80 @@ def get_sdk_metadata_json_schema() -> dict[str, Any]:
     return schema
 
 
-def validate_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
-    """Validate SDK metadata without raising exceptions.
+def validate_run_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
+    """Validate Run SDK metadata without raising exceptions.
 
     Args:
-        metadata (dict[str, Any]): The SDK metadata to validate.
+        metadata (dict[str, Any]): The Run SDK metadata to validate.
 
     Returns:
         bool: True if valid, False if invalid.
     """
     try:
-        SdkMetadata.model_validate(metadata)
+        RunSdkMetadata.model_validate(metadata)
+        return True
+    except ValidationError:
+        return False
+
+
+def build_item_sdk_metadata() -> dict[str, Any]:
+    """Build SDK metadata to attach to individual items.
+
+    Returns:
+        dict[str, Any]: Dictionary containing item SDK metadata including platform bucket information.
+    """
+    metadata: dict[str, Any] = {
+        "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+    }
+
+    return metadata
+
+
+def validate_item_sdk_metadata(metadata: dict[str, Any]) -> bool:
+    """Validate the Item SDK metadata structure against the schema.
+
+    Args:
+        metadata (dict[str, Any]): The Item SDK metadata to validate.
+
+    Returns:
+        bool: True if the metadata is valid, False otherwise.
+
+    Raises:
+        ValidationError: If the metadata does not conform to the schema.
+    """
+    try:
+        ItemSdkMetadata.model_validate(metadata)
+        return True
+    except ValidationError:
+        logger.exception("Item SDK metadata validation failed")
+        raise
+
+
+def get_item_sdk_metadata_json_schema() -> dict[str, Any]:
+    """Get the JSON Schema for Item SDK metadata.
+
+    Returns:
+        dict[str, Any]: JSON Schema definition for Item SDK metadata with $schema and $id fields.
+    """
+    schema = ItemSdkMetadata.model_json_schema()
+    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
+    schema["$id"] = (
+        f"https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/item_sdk_metadata_schema_v{ITEM_SDK_METADATA_SCHEMA_VERSION}.json"
+    )
+    return schema
+
+
+def validate_item_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
+    """Validate Item SDK metadata without raising exceptions.
+
+    Args:
+        metadata (dict[str, Any]): The Item SDK metadata to validate.
+
+    Returns:
+        bool: True if valid, False if invalid.
+    """
+    try:
+        ItemSdkMetadata.model_validate(metadata)
         return True
     except ValidationError:
         return False

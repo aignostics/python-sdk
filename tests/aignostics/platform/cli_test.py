@@ -521,9 +521,9 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_sdk_metadata_schema_pretty(runner: CliRunner) -> None:
-        """Test sdk-metadata-schema command with pretty output (default)."""
-        result = runner.invoke(cli, ["sdk", "metadata-schema"])
+    def test_sdk_run_metadata_schema_pretty(runner: CliRunner) -> None:
+        """Test run-metadata-schema command with pretty output (default)."""
+        result = runner.invoke(cli, ["sdk", "run-metadata-schema"])
 
         assert result.exit_code == 0
         output = normalize_output(result.output)
@@ -537,9 +537,9 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_sdk_metadata_schema_no_pretty(runner: CliRunner) -> None:
-        """Test sdk-metadata-schema command with --no-pretty flag."""
-        result = runner.invoke(cli, ["sdk", "metadata-schema", "--no-pretty"])
+    def test_sdk_run_metadata_schema_no_pretty(runner: CliRunner) -> None:
+        """Test run-metadata-schema command with --no-pretty flag."""
+        result = runner.invoke(cli, ["sdk", "run-metadata-schema", "--no-pretty"])
 
         assert result.exit_code == 0
         # Don't normalize output for JSON parsing
@@ -548,6 +548,46 @@ class TestPlatformCLI:
         assert "schema_version" in output
         assert "submission" in output
         assert "user_agent" in output
+        # In non-pretty mode, output should still be valid JSON
+        import json
+
+        # Try to parse the output as JSON (should not raise an error)
+        try:
+            # Find JSON in output (skip boot messages)
+            json_start = output.find("{")
+            if json_start >= 0:
+                json.loads(output[json_start:])
+            else:
+                pytest.fail("No JSON found in output")
+        except json.JSONDecodeError:
+            pytest.fail("Output is not valid JSON")
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_sdk_item_metadata_schema_pretty(runner: CliRunner) -> None:
+        """Test item-metadata-schema command with pretty output (default)."""
+        result = runner.invoke(cli, ["sdk", "item-metadata-schema"])
+
+        assert result.exit_code == 0
+        output = normalize_output(result.output)
+        # Check that schema contains expected top-level properties
+        assert "schema_version" in output
+        assert "platform_bucket" in output
+        assert "PlatformBucketMetadata" in output
+        assert "ItemSdkMetadata" in output
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_sdk_item_metadata_schema_no_pretty(runner: CliRunner) -> None:
+        """Test item-metadata-schema command with --no-pretty flag."""
+        result = runner.invoke(cli, ["sdk", "item-metadata-schema", "--no-pretty"])
+
+        assert result.exit_code == 0
+        # Don't normalize output for JSON parsing
+        output = result.output
+        # Check that schema contains expected top-level properties
+        assert "schema_version" in output
+        assert "platform_bucket" in output
         # In non-pretty mode, output should still be valid JSON
         import json
 

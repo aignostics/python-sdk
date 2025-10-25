@@ -369,7 +369,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "Complete SDK metadata schema.\n\nThis model defines the structure and validation rules for SDK metadata\nthat is attached to application runs. It includes information about:\n- SDK version and submission details\n- User information (when available)\n- CI/CD environment context (GitHub Actions, pytest)\n- Workflow control flags\n- Scheduling information\n- Optional user note",
+  "description": "Complete Run SDK metadata schema.\n\nThis model defines the structure and validation rules for SDK metadata\nthat is attached to application runs. It includes information about:\n- SDK version and submission details\n- User information (when available)\n- CI/CD environment context (GitHub Actions, pytest)\n- Workflow control flags\n- Scheduling information\n- Optional user note",
   "properties": {
     "schema_version": {
       "description": "Schema version for this metadata format",
@@ -453,7 +453,7 @@
     "submission",
     "user_agent"
   ],
-  "title": "SdkMetadata",
+  "title": "RunSdkMetadata",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v0.0.2.json"

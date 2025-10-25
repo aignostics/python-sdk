@@ -12,7 +12,7 @@ from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
 from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
-from tests.contants_test import (
+from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     TEST_APPLICATION_ID,
@@ -241,9 +241,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: PENDING" in normalize_output(describe_result.stdout) or "Status: PROCESSING" in normalize_output(
+    assert "Status (Termination Reason): PENDING" in normalize_output(
         describe_result.stdout
-    )
+    ) or "Status (Termination Reason): PROCESSING" in normalize_output(describe_result.stdout)
     assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
         describe_result.stdout
     )
@@ -264,7 +264,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(describe_result.stdout)
+    assert "Status (Termination Reason): TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(
+        describe_result.stdout
+    )
 
     download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, str(tmp_path)])
     assert download_result.exit_code == 0
@@ -299,7 +301,9 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
     assert describe_result.exit_code == 0
     assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status: TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(describe_result.stdout)
+    assert "Status (Termination Reason): TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(
+        describe_result.stdout
+    )
 
 
 # TODO(Helmut): Activate when PAPI fixed
@@ -331,7 +335,7 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     assert result.exit_code == 0
     output = normalize_output(result.stdout)
     assert "Application Runs:" in output
-    assert "Item Statistics:" in output
+    assert "Statistics:" in output
     match = re.search(r"Listed '(\d+)' run\(s\)\.", output)
     assert match, "Expected run count message not found"
     displayed_count = int(match.group(1))

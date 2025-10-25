@@ -24,6 +24,7 @@ from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
+from aignx.codegen.models import RunItemStatistics as RunItemStatistics
 from aignx.codegen.models import RunOutput as RunOutput
 from aignx.codegen.models import RunReadResponse as RunData
 from aignx.codegen.models import RunState as RunState  # TODO(Helmut): Refactor
@@ -121,6 +122,7 @@ __all__ = [
     "OutputArtifactElement",
     "Run",
     "RunData",
+    "RunItemStatistics",
     "RunOutput",
     "RunState",
     "RunState",
