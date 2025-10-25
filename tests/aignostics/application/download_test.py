@@ -6,12 +6,49 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from aignostics.application._download import download_gs_url_to_file_with_progress
+from aignostics.application._download import download_url_to_file_with_progress, extract_filename_from_url
 from aignostics.application._models import DownloadProgress, DownloadProgressState
 
 
 @pytest.mark.unit
-def test_download_gs_url_to_file_with_progress_success(tmp_path: Path) -> None:
+def test_extract_filename_from_url_gs() -> None:
+    """Test filename extraction from gs:// URLs."""
+    assert extract_filename_from_url("gs://bucket/path/to/file.tiff") == "file.tiff"
+    assert extract_filename_from_url("gs://bucket/file.svs") == "file.svs"
+    assert extract_filename_from_url("gs://bucket/path/to/folder/image.dcm") == "image.dcm"
+
+
+@pytest.mark.unit
+def test_extract_filename_from_url_https() -> None:
+    """Test filename extraction from https:// URLs."""
+    assert extract_filename_from_url("https://example.com/slides/sample.svs") == "sample.svs"
+    assert extract_filename_from_url("https://example.com/path/to/image.tiff") == "image.tiff"
+    # URL with query parameters
+    assert extract_filename_from_url("https://example.com/download/file.svs?token=abc123") == "file.svs"
+
+
+@pytest.mark.unit
+def test_extract_filename_from_url_http() -> None:
+    """Test filename extraction from http:// URLs."""
+    assert extract_filename_from_url("http://example.com/image.tiff") == "image.tiff"
+    assert extract_filename_from_url("http://server.com/data/slides/sample.dcm") == "sample.dcm"
+
+
+@pytest.mark.unit
+def test_extract_filename_from_url_edge_cases() -> None:
+    """Test filename extraction from URLs with edge cases."""
+    # Trailing slash
+    assert extract_filename_from_url("https://example.com/folder/") == "folder"
+    # Root path
+    assert extract_filename_from_url("https://example.com/") == "download"
+    # Multiple extensions
+    assert extract_filename_from_url("gs://bucket/file.tar.gz") == "file.tar.gz"
+    # No extension
+    assert extract_filename_from_url("https://example.com/myfile") == "myfile"
+
+
+@pytest.mark.unit
+def test_download_url_to_file_with_progress_gs_url_success(tmp_path: Path) -> None:
     """Test successful download from gs:// URL with progress tracking via callable."""
     gs_url = "gs://test-bucket/path/to/input.tiff"
     signed_url = "https://storage.googleapis.com/signed-url"
@@ -42,7 +79,7 @@ def test_download_gs_url_to_file_with_progress_success(tmp_path: Path) -> None:
             mock_get.return_value = mock_response
 
             # Call the function with progress tracking
-            result = download_gs_url_to_file_with_progress(
+            result = download_url_to_file_with_progress(
                 progress, gs_url, destination, download_progress_callable=progress_callback
             )
 
@@ -70,7 +107,7 @@ def test_download_gs_url_to_file_with_progress_success(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_download_gs_url_to_file_with_progress_queue(tmp_path: Path) -> None:
+def test_download_url_to_file_with_progress_queue(tmp_path: Path) -> None:
     """Test download with progress tracking via queue."""
     gs_url = "gs://test-bucket/input.tiff"
     signed_url = "https://storage.googleapis.com/signed-url"
@@ -92,7 +129,7 @@ def test_download_gs_url_to_file_with_progress_queue(tmp_path: Path) -> None:
             mock_get.return_value = mock_response
 
             # Call with queue
-            download_gs_url_to_file_with_progress(progress, gs_url, destination, download_progress_queue=progress_queue)
+            download_url_to_file_with_progress(progress, gs_url, destination, download_progress_queue=progress_queue)
 
             # Verify queue was called with progress
             assert progress_queue.put_nowait.call_count >= 3
@@ -103,7 +140,7 @@ def test_download_gs_url_to_file_with_progress_queue(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_download_gs_url_to_file_with_progress_chunked(tmp_path: Path) -> None:
+def test_download_url_to_file_with_progress_chunked(tmp_path: Path) -> None:
     """Test progress tracking with multiple chunks."""
     gs_url = "gs://test-bucket/large-input.tiff"
     signed_url = "https://storage.googleapis.com/signed-url"
@@ -128,7 +165,7 @@ def test_download_gs_url_to_file_with_progress_chunked(tmp_path: Path) -> None:
             mock_get.return_value = mock_response
 
             # Call the function
-            download_gs_url_to_file_with_progress(
+            download_url_to_file_with_progress(
                 progress, gs_url, destination, download_progress_callable=progress_callback
             )
 
@@ -143,8 +180,8 @@ def test_download_gs_url_to_file_with_progress_chunked(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_download_gs_url_to_file_with_progress_http_error(tmp_path: Path) -> None:
-    """Test that HTTP errors are propagated with progress tracking."""
+def test_download_url_to_file_with_progress_http_error(tmp_path: Path) -> None:
+    """Test that HTTP errors are wrapped in RuntimeError."""
     gs_url = "gs://test-bucket/missing.tiff"
     signed_url = "https://storage.googleapis.com/signed-url"
     destination = tmp_path / "missing.tiff"
@@ -159,16 +196,16 @@ def test_download_gs_url_to_file_with_progress_http_error(tmp_path: Path) -> Non
             mock_response.raise_for_status = Mock(side_effect=requests.HTTPError("404 Not Found"))
             mock_get.return_value = mock_response
 
-            # Verify that HTTPError is raised
-            with pytest.raises(requests.HTTPError, match="404 Not Found"):
-                download_gs_url_to_file_with_progress(progress, gs_url, destination)
+            # Verify that RuntimeError is raised (wrapping HTTPError)
+            with pytest.raises(RuntimeError, match="HTTP error downloading"):
+                download_url_to_file_with_progress(progress, gs_url, destination)
 
             # Verify file was not created
             assert not destination.exists()
 
 
 @pytest.mark.unit
-def test_download_gs_url_to_file_with_progress_normalized_values(tmp_path: Path) -> None:
+def test_download_url_to_file_with_progress_normalized_values(tmp_path: Path) -> None:
     """Test that DownloadProgress computes normalized progress correctly for input slides."""
     gs_url = "gs://test-bucket/input.tiff"
     signed_url = "https://storage.googleapis.com/signed-url"
@@ -202,7 +239,7 @@ def test_download_gs_url_to_file_with_progress_normalized_values(tmp_path: Path)
             mock_get.return_value = mock_response
 
             # Call the function
-            download_gs_url_to_file_with_progress(
+            download_url_to_file_with_progress(
                 progress, gs_url, destination, download_progress_callable=progress_callback
             )
 
@@ -237,3 +274,126 @@ def test_download_gs_url_to_file_with_progress_normalized_values(tmp_path: Path)
             # After fourth chunk: 1000/1000 = 1.0
             assert sized_updates[4]["artifact_progress"] == 1.0
             assert sized_updates[4]["downloaded"] == 1000
+
+
+@pytest.mark.unit
+def test_download_url_to_file_with_progress_https_url_success(tmp_path: Path) -> None:
+    """Test successful download from https:// URL (no signed URL generation needed)."""
+    https_url = "https://example.com/path/to/input.tiff"
+    destination = tmp_path / "input.tiff"
+    file_content = b"test file content from https"
+
+    progress = DownloadProgress()
+    progress_updates = []
+
+    def progress_callback(p: DownloadProgress) -> None:
+        progress_updates.append({
+            "status": p.status,
+            "input_slide_url": p.input_slide_url,
+            "input_slide_downloaded_size": p.input_slide_downloaded_size,
+        })
+
+    with patch("aignostics.application._download.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.headers = {"content-length": str(len(file_content))}
+        mock_response.iter_content = Mock(return_value=[file_content])
+        mock_get.return_value = mock_response
+
+        # Call the function (should not call generate_signed_url for https://)
+        result = download_url_to_file_with_progress(
+            progress, https_url, destination, download_progress_callable=progress_callback
+        )
+
+        # Verify the result
+        assert result == destination
+        assert destination.exists()
+        assert destination.read_bytes() == file_content
+
+        # Verify requests.get was called with the https URL directly (no signed URL conversion)
+        mock_get.assert_called_once_with(https_url, stream=True, timeout=60)
+
+        # Verify progress updates
+        assert len(progress_updates) >= 3
+        assert progress_updates[0]["status"] == DownloadProgressState.DOWNLOADING_INPUT
+        assert progress_updates[0]["input_slide_url"] == https_url
+
+
+@pytest.mark.unit
+def test_download_url_to_file_with_progress_http_url_success(tmp_path: Path) -> None:
+    """Test successful download from http:// URL (no signed URL generation needed)."""
+    http_url = "http://example.com/input.tiff"
+    destination = tmp_path / "input.tiff"
+    file_content = b"test file content from http"
+
+    progress = DownloadProgress()
+
+    with patch("aignostics.application._download.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.headers = {"content-length": str(len(file_content))}
+        mock_response.iter_content = Mock(return_value=[file_content])
+        mock_get.return_value = mock_response
+
+        # Call the function
+        result = download_url_to_file_with_progress(progress, http_url, destination)
+
+        # Verify the result
+        assert result == destination
+        assert destination.exists()
+        assert destination.read_bytes() == file_content
+
+        # Verify requests.get was called with the http URL directly
+        mock_get.assert_called_once_with(http_url, stream=True, timeout=60)
+
+
+@pytest.mark.unit
+def test_download_url_to_file_with_progress_unsupported_scheme(tmp_path: Path) -> None:
+    """Test that unsupported URL schemes raise ValueError."""
+    ftp_url = "ftp://example.com/file.tiff"
+    destination = tmp_path / "file.tiff"
+    progress = DownloadProgress()
+
+    # Verify that ValueError is raised for unsupported schemes
+    with pytest.raises(ValueError, match="Unsupported URL scheme"):
+        download_url_to_file_with_progress(progress, ftp_url, destination)
+
+    # Verify file was not created
+    assert not destination.exists()
+
+
+@pytest.mark.unit
+def test_download_url_to_file_with_progress_https_with_chunked(tmp_path: Path) -> None:
+    """Test https:// download with multiple chunks and progress tracking."""
+    https_url = "https://example.com/large-file.tiff"
+    destination = tmp_path / "large-file.tiff"
+    chunks = [b"chunk1", b"chunk2", b"chunk3"]
+    total_size = sum(len(c) for c in chunks)
+
+    progress = DownloadProgress()
+    progress_updates = []
+
+    def progress_callback(p: DownloadProgress) -> None:
+        progress_updates.append(p.input_slide_downloaded_size)
+
+    with patch("aignostics.application._download.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.headers = {"content-length": str(total_size)}
+        mock_response.iter_content = Mock(return_value=chunks)
+        mock_get.return_value = mock_response
+
+        # Call the function
+        download_url_to_file_with_progress(
+            progress, https_url, destination, download_progress_callable=progress_callback
+        )
+
+        # Verify progressive size updates
+        assert progress_updates[0] == 0  # Initial
+        assert progress_updates[1] == 0  # After size header
+        assert progress_updates[2] == len(chunks[0])
+        assert progress_updates[3] == len(chunks[0]) + len(chunks[1])
+        assert progress_updates[4] == total_size  # Final
+
+        # Verify direct URL was used (no signed URL generation)
+        mock_get.assert_called_once_with(https_url, stream=True, timeout=60)

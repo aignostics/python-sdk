@@ -37,7 +37,12 @@ from aignostics.platform import (
 from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
-from ._download import download_available_items, download_gs_url_to_file_with_progress, update_progress
+from ._download import (
+    download_available_items,
+    download_url_to_file_with_progress,
+    extract_filename_from_url,
+    update_progress,
+)
 from ._models import DownloadProgress, DownloadProgressState
 from ._settings import Settings
 from ._utils import (
@@ -968,10 +973,10 @@ class Service(BaseService):
         Raises:
             ValueError: If
                 the run ID is invalid
-                or destination directory cannot be created.
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
             NotFoundException: If the application run with the given ID is not found.
-            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
-            requests.HTTPError: If the download fails with an HTTP error.
+            RuntimeError: If run details cannot be retrieved or download fails.
         """
         return Service().application_run_download(
             run_id,
@@ -1016,10 +1021,10 @@ class Service(BaseService):
         Raises:
             ValueError: If
                 the run ID is invalid
-                or destination directory cannot be created.
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
             NotFoundException: If the application run with the given ID is not found.
-            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
-            requests.HTTPError: If the download fails with an HTTP error.
+            RuntimeError: If run details cannot be retrieved or download fails.
         """
         if qupath_project and not has_qupath_extra:
             message = "QuPath project creation requested, but 'qupath' extra is not installed."
@@ -1055,6 +1060,28 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message) from e
 
+        for item_index, item in enumerate(application_run.results()):
+            if item.external_id.startswith(("gs://", "http://", "https://")):
+                # Download URL to local input directory and update external_id
+                try:
+                    filename = extract_filename_from_url(item.external_id)
+                    local_path = final_destination_directory / "input" / filename
+                    if not local_path.exists():
+                        progress.item_index = item_index
+                        progress.item = item
+                        download_url_to_file_with_progress(
+                            progress,
+                            item.external_id,
+                            local_path,
+                            download_progress_queue,
+                            download_progress_callable,
+                        )
+                    item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
+                except Exception as e:  # noqa: BLE001
+                    logger.warning(
+                        "Failed to download input slide from '%s' to '%s': %s", item.external_id, local_path, e
+                    )
+
         if qupath_project:
 
             def update_qupath_add_input_progress(qupath_add_input_progress: QuPathAddProgress) -> None:
@@ -1064,27 +1091,7 @@ class Service(BaseService):
 
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
-            for item_index, item in enumerate(application_run.results()):
-                if item.external_id.startswith("gs://"):
-                    # Download gs:// URL to local input directory and update external_id
-                    try:
-                        filename = item.external_id.split("/")[-1]
-                        local_path = final_destination_directory / "input" / filename
-                        if not local_path.exists():
-                            progress.item_index = item_index
-                            progress.item = item
-                            download_gs_url_to_file_with_progress(
-                                progress,
-                                item.external_id,
-                                local_path,
-                                download_progress_queue,
-                                download_progress_callable,
-                            )
-                        item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
-                    except Exception as e:  # noqa: BLE001
-                        logger.warning(
-                            "Failed to download input slide from '%s' to '%s': %s", item.external_id, local_path, e
-                        )
+            for item in application_run.results():
                 local_path = Path(item.external_id)
                 if not local_path.is_file():
                     logger.warning("Input slide '%s' not found, skipping QuPath addition.", local_path)

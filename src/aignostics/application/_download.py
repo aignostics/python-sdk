@@ -2,8 +2,9 @@
 
 import base64
 from collections.abc import Callable
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import urlparse
 
 import google_crc32c
 import requests
@@ -21,18 +22,52 @@ APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
 APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
-def download_gs_url_to_file_with_progress(
+def extract_filename_from_url(url: str) -> str:
+    """Extract a filename from a URL robustly.
+
+    Args:
+        url (str): The URL to extract filename from.
+
+    Returns:
+        str: The extracted filename, sanitized for use as a path component.
+
+    Examples:
+        >>> extract_filename_from_url("gs://bucket/path/to/file.tiff")
+        'file.tiff'
+        >>> extract_filename_from_url("https://example.com/slides/sample.svs?token=abc")
+        'sample.svs'
+        >>> extract_filename_from_url("https://example.com/download/")
+        'download'
+    """
+    # Parse the URL and extract the path component
+    parsed = urlparse(url)
+    # Use PurePosixPath since URLs always use forward slashes
+    path = PurePosixPath(parsed.path)
+
+    # Get the last component (name) of the path
+    # If path ends with /, .name will be empty, so use the parent's name
+    filename = path.name or path.parent.name
+
+    # If still empty (e.g., root path), use a default
+    if not filename:
+        filename = "download"
+
+    # Sanitize the filename to ensure it's safe for filesystem use
+    return sanitize_path_component(filename)
+
+
+def download_url_to_file_with_progress(
     progress: DownloadProgress,
-    gs_url: str,
+    url: str,
     destination_path: Path,
     download_progress_queue: Any | None = None,  # noqa: ANN401
     download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
 ) -> Path:
-    """Download a file from a gs:// URL with progress tracking.
+    """Download a file from a URL (gs://, http://, or https://) with progress tracking.
 
     Args:
         progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-        gs_url (str): The gs:// URL to download from.
+        url (str): The URL to download from (supports gs://, http://, https://).
         destination_path (Path): The local file path to save to.
         download_progress_queue (Any | None): Queue for GUI progress updates.
         download_progress_callable (Callable | None): Callback for CLI progress updates.
@@ -41,41 +76,57 @@ def download_gs_url_to_file_with_progress(
         Path: The path to the downloaded file.
 
     Raises:
-        ValueError: If the gs:// URL is invalid or the blob doesn't exist.
-        requests.HTTPError: If the download fails.
+        ValueError: If the URL is invalid.
+        RuntimeError: If the download fails.
     """
-    logger.debug("Downloading gs:// URL '%s' to '%s' with progress tracking", gs_url, destination_path)
+    logger.debug("Downloading URL '%s' to '%s' with progress tracking", url, destination_path)
 
     # Initialize progress tracking
     progress.status = DownloadProgressState.DOWNLOADING_INPUT
-    progress.input_slide_url = gs_url
+    progress.input_slide_url = url
     progress.input_slide_path = destination_path
     progress.input_slide_downloaded_size = 0
     progress.input_slide_downloaded_chunk_size = 0
     progress.input_slide_size = None
     update_progress(progress, download_progress_callable, download_progress_queue)
 
-    # Generate signed URL and prepare destination
-    signed_url = generate_signed_url(gs_url)
+    # Generate download URL (convert gs:// to signed URL, use http(s):// directly)
+    if url.startswith("gs://"):
+        download_url = generate_signed_url(url)
+    elif url.startswith(("http://", "https://")):
+        download_url = url
+    else:
+        msg = f"Unsupported URL scheme: {url}. Only gs://, http://, and https:// are supported."
+        raise ValueError(msg)
+
     destination_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Download with progress tracking
-    response = requests.get(signed_url, stream=True, timeout=60)
-    response.raise_for_status()
+    try:
+        response = requests.get(download_url, stream=True, timeout=60)
+        response.raise_for_status()
 
-    progress.input_slide_size = int(response.headers.get("content-length", 0))
-    update_progress(progress, download_progress_callable, download_progress_queue)
+        progress.input_slide_size = int(response.headers.get("content-length", 0))
+        update_progress(progress, download_progress_callable, download_progress_queue)
 
-    with destination_path.open("wb") as f:
-        for chunk in response.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
-            if chunk:
-                f.write(chunk)
-                progress.input_slide_downloaded_chunk_size = len(chunk)
-                progress.input_slide_downloaded_size += progress.input_slide_downloaded_chunk_size
-                update_progress(progress, download_progress_callable, download_progress_queue)
+        with destination_path.open("wb") as f:
+            for chunk in response.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
+                if chunk:
+                    f.write(chunk)
+                    progress.input_slide_downloaded_chunk_size = len(chunk)
+                    progress.input_slide_downloaded_size += progress.input_slide_downloaded_chunk_size
+                    update_progress(progress, download_progress_callable, download_progress_queue)
 
-    logger.info("Downloaded gs:// URL '%s' to '%s'", gs_url, destination_path)
-    return destination_path
+        logger.info("Downloaded URL '%s' to '%s'", url, destination_path)
+        return destination_path
+    except requests.HTTPError as e:
+        msg = f"HTTP error downloading '{url}': {e}"
+        logger.warning(msg)
+        raise RuntimeError(msg) from e
+    except requests.RequestException as e:
+        msg = f"Network error downloading '{url}': {e}"
+        logger.warning(msg)
+        raise RuntimeError(msg) from e
 
 
 def update_progress(
