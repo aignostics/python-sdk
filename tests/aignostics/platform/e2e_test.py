@@ -35,7 +35,7 @@ def _get_single_spot_payload_for_heta_v1_0_0() -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
         platform.InputItem(
-            external_id="1",
+            external_id="gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff",
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
@@ -65,7 +65,7 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
         platform.InputItem(
-            external_id="1",
+            external_id="gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
@@ -84,7 +84,7 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
             ],
         ),
         platform.InputItem(
-            external_id="2",
+            external_id="gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff",
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
@@ -103,7 +103,7 @@ def _get_three_spots_payload_for_test_v0_0_4() -> list[platform.InputItem]:
             ],
         ),
         platform.InputItem(
-            external_id="3",
+            external_id="gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff",
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",

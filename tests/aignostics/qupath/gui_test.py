@@ -142,7 +142,7 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, qupath_teardown: None
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None
 ) -> None:
     """Test installing QuPath, downloading run results, creating QuPath project from it, and inspecting results."""
     # Find run
@@ -153,7 +153,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
 
     run_id = runs[0].run_id
 
-    # Inspect run
+    # Explore run
     run = Service().application_run(run_id).details()
     print(
         f"Found existing run: {run.run_id}\n"
@@ -164,7 +164,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         f"custom_metadata: {run.custom_metadata!r}\n",
     )
 
-    # Inspect results
+    # Explore results
     results = list(Service().application_run(run_id).results())
     assert results, f"No results found for run {run_id}"
     for item in results:
