@@ -557,6 +557,7 @@ class Service(BaseService):
                 "application_id": run.application_id,
                 "version_number": run.version_number,
                 "submitted_at": run.submitted_at,
+                "terminated_at": run.terminated_at,
                 "state": run.state,
                 "termination_reason": run.termination_reason,
                 "item_count": run.statistics.item_count,
