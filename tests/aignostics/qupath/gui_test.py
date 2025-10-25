@@ -150,7 +150,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         external_id=HETA_SINGLE_SPOT_GS_URL,
-        has_output=False,
+        has_output=True,
         limit=1,
     )
     if not runs:
