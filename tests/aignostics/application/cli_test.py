@@ -846,7 +846,7 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner) -> None:
 
 
 # TODO(Andreas): Update item metadata returns 404 always
-@pytest.mark.skip(reason="Waiting for platform API fix to item metadata endpoint")
+@pytest.mark.skip(reason="Waiting for platform API fix to item metadata endpoint which currently returns 404 always")
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=120)
 @pytest.mark.sequential
