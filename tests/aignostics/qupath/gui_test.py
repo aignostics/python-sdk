@@ -22,9 +22,9 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
-    HETA_EXPECTED_RESULT_FILES,
-    HETA_SINGLE_SPOT_GS_FILENAME,
-    HETA_SINGLE_SPOT_GS_FILESIZE,
+    HETA_SINGLE_SPOT_EXPECTED_RESULT_FILES,
+    HETA_SINGLE_SPOT_FILENAME,
+    HETA_SINGLE_SPOT_FILESIZE,
     HETA_SINGLE_SPOT_GS_URL,
 )
 
@@ -242,17 +242,17 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         input_dir = tmp_path / "input"
         assert input_dir.is_dir(), f"Expected input directory {input_dir} not found"
 
-        results_dir = tmp_path / run.run_id / HETA_SINGLE_SPOT_GS_FILENAME.replace(".tiff", "")
+        results_dir = tmp_path / run.run_id / HETA_SINGLE_SPOT_FILENAME.replace(".tiff", "")
         assert results_dir.is_dir(), f"Expected run results directory {results_dir} not found"
 
         qupath_dir = tmp_path / "qupath"
         assert qupath_dir.is_dir(), f"Expected QuPath directory {qupath_dir} not found"
 
         # Check for input file having been downloaded
-        input_file = tmp_path / run.run_id / "input" / HETA_SINGLE_SPOT_GS_FILENAME
+        input_file = tmp_path / run.run_id / "input" / HETA_SINGLE_SPOT_FILENAME
         assert input_file.is_file(), f"Expected input file {input_file} not found"
-        assert input_file.stat().st_size == HETA_SINGLE_SPOT_GS_FILESIZE, (
-            f"Expected input file size {HETA_SINGLE_SPOT_GS_FILESIZE}, but got {input_file.stat().st_size}"
+        assert input_file.stat().st_size == HETA_SINGLE_SPOT_FILESIZE, (
+            f"Expected input file size {HETA_SINGLE_SPOT_FILESIZE}, but got {input_file.stat().st_size}"
         )
 
         # Check for files in the results directory
@@ -263,14 +263,14 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         )
 
         print(f"Found files in {results_dir}:")
-        for filename, expected_size, tolerance_percent in HETA_EXPECTED_RESULT_FILES:
+        for filename, expected_size, tolerance_percent in HETA_SINGLE_SPOT_EXPECTED_RESULT_FILES:
             file_path = results_dir / filename
             if file_path.exists():
                 actual_size = file_path.stat().st_size
                 print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
             else:
                 print(f"  {filename}: NOT FOUND")
-        for filename, expected_size, tolerance_percent in HETA_EXPECTED_RESULT_FILES:
+        for filename, expected_size, tolerance_percent in HETA_SINGLE_SPOT_EXPECTED_RESULT_FILES:
             file_path = results_dir / filename
             assert file_path.exists(), f"Expected file {filename} not found"
             actual_size = file_path.stat().st_size
