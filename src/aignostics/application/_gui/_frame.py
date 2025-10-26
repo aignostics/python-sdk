@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
-RUNS_REFRESH_INTERVAL = 60 * 5  # 5 minutes
+RUNS_REFRESH_INTERVAL = 60 * 15  # 15 minutes
 STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
 service = Service()
@@ -276,7 +276,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 ui.separator()
                 await _runs_list()
 
-                # Auto-refresh runs list every minute
+                # Auto-refresh runs list
                 ui.timer(interval=RUNS_REFRESH_INTERVAL, callback=_runs_list.refresh)
         except Exception as e:  # noqa: BLE001
             ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")
