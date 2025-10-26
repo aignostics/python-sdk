@@ -302,25 +302,32 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         output = normalize_output(result.output, strip_ansi=True)
         print(repr(output))
 
+        # Check for (1) spot added to QuPath project, (2) heatmaps added, (3) spot annotated
         try:
             project_info = json.loads(output)
             annotations_total = 0
-            original_image_found = False
-            width = None
-            height = None
+            spot_found = False
+            spot_width = None
+            spot_height = None
+            qc_segmentation_map_found = False
+            tissue_segmentation_map_found = False
             for image in project_info["images"]:
                 if image.get("name") == SPOT_0_FILENAME:
-                    original_image_found = True
-                    width = image.get("width")
-                    height = image.get("height")
-                hierarchy = image.get("hierarchy", {})
-                total = hierarchy.get("total", 0)
-                if total > 0:
-                    annotations_total += total
-            assert original_image_found, f"Original image '{SPOT_0_FILENAME}' not found in QuPath project"
-            assert width == SPOT_0_WIDTH, f"Expected image width {SPOT_0_WIDTH}, but got {width}"
-            assert height == SPOT_0_HEIGHT, f"Expected image height {SPOT_0_HEIGHT}, but got {height}"
-            assert abs(annotations_total - SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]) <= (
+                    spot_found = True
+                    spot_width = image.get("width")
+                    spot_height = image.get("height")
+                    hierarchy = image.get("hierarchy", {})
+                    spot_annotations = hierarchy.get("total", 0)
+                if image.get("name") == "tissue_qc_segmentation_map_image.tiff":
+                    qc_segmentation_map_found = True
+                if image.get("name") == "tissue_segmentation_segmentation_map_image.tiff":
+                    tissue_segmentation_map_found = True
+            assert spot_found, f"Spot '{SPOT_0_FILENAME}' not found in QuPath project"
+            assert spot_width == SPOT_0_WIDTH, f"Expected width of spot {SPOT_0_WIDTH}, but got {spot_width}"
+            assert spot_height == SPOT_0_HEIGHT, f"Expected height of spot {SPOT_0_HEIGHT}, but got {spot_height}"
+            assert qc_segmentation_map_found, "QC segmentation map image not found in QuPath project"
+            assert tissue_segmentation_map_found, "Tissue segmentation map image not found in QuPath project"
+            assert abs(spot_annotations - SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]) <= (
                 SPOT_0_EXPECTED_CELLS_CLASSIFIED[0] * SPOT_0_EXPECTED_CELLS_CLASSIFIED[1] // 100
             ), (
                 f"Expected approximately {SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]} "
