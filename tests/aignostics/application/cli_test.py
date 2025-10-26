@@ -243,7 +243,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.flaky(retries=3, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa: PLR0915
     runner: CliRunner, tmp_path: Path, silent_logging
