@@ -640,7 +640,7 @@ class Service(BaseService):  # noqa: PLR0904
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
             # Handle query parameter with union semantics (note OR tags)
-            if query is not None:
+            if query:
                 # Search for runs matching query in notes
                 note_runs_dict: dict[str, RunData] = {}
                 flag_case_insensitive = ' flag "i"'
