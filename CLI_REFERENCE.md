@@ -162,7 +162,11 @@ $ aignostics application run [OPTIONS] COMMAND [ARGS]...
 * `submit`: Submit run by referencing the metadata CSV...
 * `list`: List runs.
 * `describe`: Describe run.
+* `dump-metadata`: Dump custom metadata of a run as JSON to...
+* `dump-item-metadata`: Dump custom metadata of an item as JSON to...
 * `cancel`: Cancel run.
+* `update-metadata`: Update custom metadata for a run.
+* `update-item-metadata`: Update custom metadata for an item in a run.
 * `result`: Download or delete run results.
 
 #### `aignostics application run execute`
@@ -200,7 +204,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1761393428019.061]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1761499056785.385]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
@@ -263,7 +267,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 **Options**:
 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1761393428019.1792]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1761499056785.492]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -291,6 +295,7 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 
 * `--application-version TEXT`: Version of the application to generate the metadata for. If not provided, the latest version will be used.
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
+* `--tags TEXT`: Optional comma-separated list of tags to attach to the run for filtering.
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
@@ -311,6 +316,10 @@ $ aignostics application run list [OPTIONS]
 
 * `--verbose / --no-verbose`: Show application details  [default: no-verbose]
 * `--limit INTEGER`: Maximum number of runs to display
+* `--tags TEXT`: Optional comma-separated list of tags to filter runs. All tags must match.
+* `--note-regex TEXT`: Optional regex pattern to filter runs by note metadata.
+* `--query TEXT`: Optional query string to filter runs by note OR tags.
+* `--note-case-insensitive / --no-note-case-insensitive`: Make note regex search case-insensitive.  [default: note-case-insensitive]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run describe`
@@ -331,6 +340,45 @@ $ aignostics application run describe [OPTIONS] RUN_ID
 
 * `--help`: Show this message and exit.
 
+#### `aignostics application run dump-metadata`
+
+Dump custom metadata of a run as JSON to stdout.
+
+**Usage**:
+
+```console
+$ aignostics application run dump-metadata [OPTIONS] RUN_ID
+```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run to dump custom metadata for  [required]
+
+**Options**:
+
+* `--pretty / --no-pretty`: Pretty print JSON output with indentation  [default: no-pretty]
+* `--help`: Show this message and exit.
+
+#### `aignostics application run dump-item-metadata`
+
+Dump custom metadata of an item as JSON to stdout.
+
+**Usage**:
+
+```console
+$ aignostics application run dump-item-metadata [OPTIONS] RUN_ID EXTERNAL_ID
+```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run containing the item  [required]
+* `EXTERNAL_ID`: External ID of the item to dump custom metadata for  [required]
+
+**Options**:
+
+* `--pretty / --no-pretty`: Pretty print JSON output with indentation  [default: no-pretty]
+* `--help`: Show this message and exit.
+
 #### `aignostics application run cancel`
 
 Cancel run.
@@ -344,6 +392,45 @@ $ aignostics application run cancel [OPTIONS] RUN_ID
 **Arguments**:
 
 * `RUN_ID`: Id of the run to cancel  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+#### `aignostics application run update-metadata`
+
+Update custom metadata for a run.
+
+**Usage**:
+
+```console
+$ aignostics application run update-metadata [OPTIONS] RUN_ID METADATA_JSON
+```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run to update  [required]
+* `METADATA_JSON`: Custom metadata as JSON string (e.g., &#x27;{&quot;key&quot;: &quot;value&quot;}&#x27;)  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+#### `aignostics application run update-item-metadata`
+
+Update custom metadata for an item in a run.
+
+**Usage**:
+
+```console
+$ aignostics application run update-item-metadata [OPTIONS] RUN_ID EXTERNAL_ID METADATA_JSON
+```
+
+**Arguments**:
+
+* `RUN_ID`: Id of the run containing the item  [required]
+* `EXTERNAL_ID`: External ID of the item to update  [required]
+* `METADATA_JSON`: Custom metadata as JSON string (e.g., &#x27;{&quot;key&quot;: &quot;value&quot;}&#x27;)  [required]
 
 **Options**:
 
@@ -644,9 +731,6 @@ WHERE
 
 Download from manifest file, identifier, or comma-separate set of identifiers.
 
-Raises:
-    typer.Exit: If the target directory does not exist.
-
 **Usage**:
 
 ```console
@@ -655,7 +739,7 @@ $ aignostics dataset idc download [OPTIONS] SOURCE [TARGET]
 
 **Arguments**:
 
-* `SOURCE`: Identifier or comma-separated set of identifiers. IDs matched against collection_id, PatientId, StudyInstanceUID, SeriesInstanceUID or SOPInstanceUID.  [required]
+* `SOURCE`: Identifier or comma-separated set of identifiers. IDs matched against collection_id, PatientId, StudyInstanceUID, SeriesInstanceUID or SOPInstanceUID. Example: 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0  [required]
 * `[TARGET]`: target directory for download  [default: /Users/helmut/Library/Application Support/aignostics/datasets/idc]
 
 **Options**:
@@ -694,7 +778,7 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 **Arguments**:
 
-* `SOURCE_URL`: URL to download, e.g. gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
+* `SOURCE_URL`: URL to download. Example: gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
 * `[DESTINATION_DIRECTORY]`: Destination directory to download to  [default: /Users/helmut/Library/Application Support/aignostics/datasets/aignostics]
 
 **Options**:

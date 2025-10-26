@@ -630,7 +630,7 @@ class Runs:
             existing_item_sdk_metadata = item_custom_metadata.get("sdk")
             item_sdk_metadata = build_item_sdk_metadata(existing_item_sdk_metadata)
             item_custom_metadata["sdk"].update(item_sdk_metadata)
-            validate_item_sdk_metadata(item_custom_metadata)
+            validate_item_sdk_metadata(item_custom_metadata["sdk"])
             item.custom_metadata = cast("dict[str, Any]", convert_to_json_serializable(item_custom_metadata))
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:

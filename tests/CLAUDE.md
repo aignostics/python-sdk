@@ -159,7 +159,7 @@ class TestBuildSdkMetadata:
         # Set GitHub Actions environment variables
         os.environ["GITHUB_RUN_ID"] = "12345"
         os.environ["GITHUB_REPOSITORY"] = "aignostics/python-sdk"
-        os.environ["GITHUB_SHA"] = "abc123def456"
+        os.environ["GITHUB_SHA"] = "abc123def456" # pragma: allowlist secret
         os.environ["GITHUB_REF"] = "refs/heads/main"
         os.environ["GITHUB_WORKFLOW"] = "CI/CD"
 
@@ -170,7 +170,7 @@ class TestBuildSdkMetadata:
         assert "github" in metadata["ci"]
         assert metadata["ci"]["github"]["run_id"] == "12345"
         assert metadata["ci"]["github"]["repository"] == "aignostics/python-sdk"
-        assert metadata["ci"]["github"]["sha"] == "abc123def456"
+        assert metadata["ci"]["github"]["sha"] == "abc123def456" # pragma: allowlist secret
         assert metadata["ci"]["github"]["run_url"] == (
             "https://github.com/aignostics/python-sdk/actions/runs/12345"
         )
