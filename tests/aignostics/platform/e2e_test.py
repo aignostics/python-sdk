@@ -1,7 +1,7 @@
-"""Scheduled integration tests for the Aignostics client.
+"""Scheduled end-to-end (e2e) tests for the Aignostics client.
 
-This module contains integration tests that run real application workflows
-against the Aignostics platform. These tests verify end-to-end functionality
+This module contains e2e tests that run real application workflows
+against the Aignostics platform. These tests verify e2e functionality
 including creating runs, downloading results, and validating outputs.
 """
 
@@ -23,14 +23,18 @@ from aignostics import platform
 from aignostics.platform.resources.runs import Run
 from tests.constants_test import (
     HETA_APPLICATION_ID,
-    HETA_APPLICATION_TIMEOUT_SECONDS,
     HETA_APPLICATION_VERSION,
     HETA_SINGLE_SPOT_GS_URL,
     TEST_APPLICATION_ID,
-    TEST_APPLICATION_TIMEOUT_SECONDS,
     TEST_APPLICATION_VERSION,
     TEST_THREE_SPOTS_GS_URLS,
 )
+
+TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
+TEST_APPLICATION_DEADLINE_SECONDS = 60 * 45  # 45 minutes
+
+HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hours
+HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
 
 
 def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
@@ -43,7 +47,7 @@ def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         HETA_SINGLE_SPOT_GS_URL,
-                        HETA_APPLICATION_TIMEOUT_SECONDS,
+                        HETA_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "5onqtA==",
@@ -73,7 +77,7 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         TEST_THREE_SPOTS_GS_URLS[0],
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                        TEST_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "9l3NNQ==",
@@ -92,7 +96,7 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         TEST_THREE_SPOTS_GS_URLS[1],
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                        TEST_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "w+ud3g==",
@@ -111,7 +115,7 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         TEST_THREE_SPOTS_GS_URLS[2],
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                        TEST_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "Zmx0wA==",
@@ -126,10 +130,12 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
     ]
 
 
-def _run_application_test(
+def _run_application_test(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
+    due_date_seconds: int,
+    deadline_seconds: int,
     checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
     """Helper function to run an application test.
@@ -139,6 +145,8 @@ def _run_application_test(
     Args:
         application_id (str): The application ID to use for the test.
         application_version (str): The application version to use for the test.
+        due_date_seconds (int): The due date in seconds for the application run.
+        deadline_seconds (int): The deadline in seconds for the application run.
         payload (list[platform.InputItem]): The input items for the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
@@ -152,8 +160,8 @@ def _run_application_test(
         items=payload,
         custom_metadata={
             "sdk": {
-                "due_date": (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
-                "deadline": (datetime.now(tz=UTC) + timedelta(hours=3)).isoformat(),
+                "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
+                "deadline": (datetime.now(tz=UTC) + timedelta(seconds=deadline_seconds)).isoformat(),
                 "note": "_run_application_test",
             }
         },  # Request completion within 1 hour
@@ -168,7 +176,7 @@ def _run_application_test(
 @pytest.mark.skip(reason="v0.0.4 on production balking on whole_slide_image input")
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS)
+@pytest.mark.timeout(timeout=TEST_APPLICATION_DEADLINE_SECONDS + 60 * 30)
 def test_application_runs_test_version() -> None:
     """Test application runs with the test application.
 
@@ -183,13 +191,15 @@ def test_application_runs_test_version() -> None:
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
         payload=_get_three_spots_payload_for_test(),
+        due_date_seconds=TEST_APPLICATION_DUE_DATE_SECONDS,
+        deadline_seconds=TEST_APPLICATION_DEADLINE_SECONDS,
     )
 
 
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_TIMEOUT_SECONDS)
+@pytest.mark.timeout(timeout=HETA_APPLICATION_DEADLINE_SECONDS + 60 * 30)
 def test_application_runs_heta_version() -> None:
     """Test application runs with the HETA application.
 
@@ -204,6 +214,8 @@ def test_application_runs_heta_version() -> None:
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta(),
+        due_date_seconds=HETA_APPLICATION_DUE_DATE_SECONDS,
+        deadline_seconds=HETA_APPLICATION_DEADLINE_SECONDS,
     )
 
 

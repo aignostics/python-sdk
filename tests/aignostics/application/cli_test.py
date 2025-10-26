@@ -21,6 +21,9 @@ from tests.constants_test import (
 
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
 
+HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hours
+HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
+
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
@@ -124,7 +127,18 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(runner: CliRunner
     assert result.exit_code == 0
 
     # Step 3: Submit the run from the metadata file
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(metadata_csv),
+            "--deadline",
+            (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+        ],
+    )
     assert result.exit_code == 2
     assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
@@ -157,7 +171,18 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", "wrong", str(csv_path)])
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            "wrong",
+            str(csv_path),
+            "--deadline",
+            (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+        ],
+    )
 
     assert result.exit_code == 2
     assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
@@ -175,7 +200,18 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+            "--deadline",
+            (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+        ],
+    )
 
     assert result.exit_code == 2
     assert "Invalid platform bucket URL: 'aws://bucket/test'" in normalize_output(result.stdout)
@@ -191,7 +227,18 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path) 
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
 
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(csv_path)])
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+            "--deadline",
+            (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+        ],
+    )
 
     assert result.exit_code == 2
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
@@ -416,7 +463,7 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
 
 @pytest.mark.e2e
 @pytest.mark.very_long_running
-@pytest.mark.timeout(timeout=60 * 60 * 5)
+@pytest.mark.timeout(timeout=HETA_APPLICATION_DEADLINE_SECONDS + 60 * 30)
 def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
     """Check run execution runs e2e."""
     # Step 1: Download the sample file
@@ -451,9 +498,9 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
             ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER",
             "--no-create-subdirectory-for-run",
             "--due-date",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DUE_DATE_SECONDS)).isoformat(),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=3)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DEADLINE_SECONDS)).isoformat(),
             "--validate-only",
         ],
     )

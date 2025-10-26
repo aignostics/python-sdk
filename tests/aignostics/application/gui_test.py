@@ -16,7 +16,7 @@ from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
+from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION, HETA_SINGLE_SPOT_GS_URL
 
 if TYPE_CHECKING:
     from nicegui import ui
@@ -99,7 +99,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
                 "--note",
                 "test_gui_cli_submit_to_run_result_delete",
                 "--deadline",
-                (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
+                (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
                 "--validate-only",
             ],
         )
@@ -251,9 +251,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             await user.should_see("Soft Due Date", retries=100)
             await user.should_see("The platform will try to complete the run before this time", retries=100)
             user.find(marker="BUTTON_SCHEDULING_NEXT").click()
-            await assert_notified(user, "Prepared upload UI.")
+            # TODO(Helmut): Set short deadline
 
             # Now on Submission step
+            await assert_notified(user, "Prepared upload UI.")
             await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
             user.find(marker="CHECKBOX_VALIDATE_ONLY").click()  # only for aignostics' orgs
 
@@ -293,39 +294,43 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 5)
-@pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
+@pytest.mark.sequential
 async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
     """Test that the user can download a run result via the GUI."""
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory",
         return_value=tmp_path,
     ):
-        application = Service().application(HETA_APPLICATION_ID)
-        latest_version_number = application.versions[0].number if application.versions else None
-        assert latest_version_number is not None, f"No versions found for application {HETA_APPLICATION_ID}"
-        # This assumes a successful HETA run is in the last 200 completed runs
-        runs = Service().application_runs(limit=200, has_output=True)
-
+        # Find run
+        runs = Service().application_runs(
+            application_id=HETA_APPLICATION_ID,
+            application_version=HETA_APPLICATION_VERSION,
+            external_id=HETA_SINGLE_SPOT_GS_URL,
+            has_output=True,
+            limit=1,
+        )
         if not runs:
-            pytest.fail("No completed runs found, please run other tests first.")
-        # Find a completed run with the latest application version ID
-        run = None
-        for potential_run in runs:
-            if (
-                potential_run.application_id == application.application_id
-                and potential_run.version_number == latest_version_number
-            ):
-                run = potential_run
-                break
-        if not run:
-            pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
+            message = f"No matching runs found for application {HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION}). "
+            message += "This test requires the scheduled test test_application_runs_heta_version passing first."
+            pytest.skip(message)
+
+        run_id = runs[0].run_id
+        # Explore run
+        run = Service().application_run(run_id).details()
+        print(
+            f"Found existing run: {run.run_id}\n"
+            f"application: {run.application_id} ({run.version_number})\n"
+            f"status: {run.state}, output: {run.output}\n"
+            f"submitted at: {run.submitted_at}, terminated at: {run.terminated_at}\n"
+            f"statistics: {run.statistics!r}\n",
+            f"custom_metadata: {run.custom_metadata!r}\n",
+        )
 
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.run_id}, status: {run.state}")
         await user.open(f"/application/run/{run.run_id}")
         await user.should_see(f"Run {run.run_id}", retries=100)
         await user.should_see(
-            f"Run of {application.application_id} ({latest_version_number})",
+            f"Run of {run.application_id} ({run.version_number})",
             retries=100,
         )
 
