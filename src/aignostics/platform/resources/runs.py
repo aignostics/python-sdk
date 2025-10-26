@@ -226,7 +226,7 @@ class Run:
         # incrementally check for available results
         application_run_state = self.details().state
         while application_run_state in {RunState.PROCESSING, RunState.PENDING}:
-            for item in self.results():
+            for item in self.results():  # We accept this might be cached -> stale for a few seconds
                 if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
             sleep(5)
@@ -234,6 +234,7 @@ class Run:
             print(self)
 
         # check if last results have been downloaded yet and report on errors
+        operation_cache_clear()  # results() might be cached from a previous call or another flow
         for item in self.results():
             match item.output:
                 case ItemOutput.FULL:
