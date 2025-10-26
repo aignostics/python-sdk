@@ -611,7 +611,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             ).bind_value(submit_form, "tags").classes("full-width").mark("INPUT_TAGS")
 
             with ui.stepper_navigation():
-                ui.button("Next", on_click=stepper.next).mark("BUTTON_NOTES_NEXT")
+                ui.button("Next", on_click=stepper.next).mark("BUTTON_NOTES_AND_TAGS_NEXT")
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
         with ui.step("Schedule"):

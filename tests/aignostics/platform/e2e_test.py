@@ -25,10 +25,28 @@ from aignostics.platform.resources.runs import Run
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
-    HETA_SINGLE_SPOT_GS_URL,
+    SPOT_0_CRC32C,
+    SPOT_0_GS_URL,
+    SPOT_0_HEIGHT,
+    SPOT_0_RESOLUTION_MPP,
+    SPOT_0_WIDTH,
+    SPOT_1_CRC32C,
+    SPOT_1_GS_URL,
+    SPOT_1_HEIGHT,
+    SPOT_1_RESOLUTION_MPP,
+    SPOT_1_WIDTH,
+    SPOT_2_CRC32C,
+    SPOT_2_GS_URL,
+    SPOT_2_HEIGHT,
+    SPOT_2_RESOLUTION_MPP,
+    SPOT_2_WIDTH,
+    SPOT_3_CRC32C,
+    SPOT_3_GS_URL,
+    SPOT_3_HEIGHT,
+    SPOT_3_RESOLUTION_MPP,
+    SPOT_3_WIDTH,
     TEST_APPLICATION_ID,
     TEST_APPLICATION_VERSION,
-    TEST_THREE_SPOTS_GS_URLS,
 )
 
 TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 45  # 45 minutes
@@ -48,19 +66,19 @@ def _get_single_spot_payload_for_heta(expires_seconds: int) -> list[platform.Inp
     """Generates a payload using a single spot."""
     return [
         platform.InputItem(
-            external_id=HETA_SINGLE_SPOT_GS_URL,
+            external_id=SPOT_0_GS_URL,
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        url=HETA_SINGLE_SPOT_GS_URL,
+                        url=SPOT_0_GS_URL,
                         expires_seconds=expires_seconds,
                     ),
                     metadata={
-                        "checksum_base64_crc32c": "5onqtA==",
-                        "resolution_mpp": 0.26268186053789266,
-                        "width_px": 7447,
-                        "height_px": 7196,
+                        "checksum_base64_crc32c": SPOT_0_CRC32C,
+                        "resolution_mpp": SPOT_0_RESOLUTION_MPP,
+                        "width_px": SPOT_0_WIDTH,
+                        "height_px": SPOT_0_HEIGHT,
                         "media_type": "image/tiff",
                         "staining_method": "H&E",
                         "specimen": {
@@ -78,57 +96,57 @@ def _get_three_spots_payload_for_test(expires_seconds: int) -> list[platform.Inp
     """Generates a payload using three spots."""
     return [
         platform.InputItem(
-            external_id=TEST_THREE_SPOTS_GS_URLS[0],
+            external_id=SPOT_1_GS_URL,
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        url=TEST_THREE_SPOTS_GS_URLS[0],
+                        url=SPOT_1_GS_URL,
                         expires_seconds=expires_seconds,
                     ),
                     metadata={
-                        "checksum_base64_crc32c": "9l3NNQ==",
-                        "width_px": 3728,
-                        "height_px": 3640,
-                        "resolution_mpp": 0.46499982,
+                        "checksum_base64_crc32c": SPOT_1_CRC32C,
+                        "width_px": SPOT_1_WIDTH,
+                        "height_px": SPOT_1_HEIGHT,
+                        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
                         "media_type": "image/tiff",
                     },
                 )
             ],
         ),
         platform.InputItem(
-            external_id=TEST_THREE_SPOTS_GS_URLS[1],
+            external_id=SPOT_2_GS_URL,
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        url=TEST_THREE_SPOTS_GS_URLS[1],
+                        url=SPOT_2_GS_URL,
                         expires_seconds=expires_seconds,
                     ),
                     metadata={
-                        "checksum_base64_crc32c": "w+ud3g==",
-                        "width_px": 3616,
-                        "height_px": 3400,
-                        "resolution_mpp": 0.46499982,
+                        "checksum_base64_crc32c": SPOT_2_CRC32C,
+                        "width_px": SPOT_2_WIDTH,
+                        "height_px": SPOT_2_HEIGHT,
+                        "resolution_mpp": SPOT_2_RESOLUTION_MPP,
                         "media_type": "image/tiff",
                     },
                 )
             ],
         ),
         platform.InputItem(
-            external_id=TEST_THREE_SPOTS_GS_URLS[2],
+            external_id=SPOT_3_GS_URL,
             input_artifacts=[
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        url=TEST_THREE_SPOTS_GS_URLS[2],
+                        url=SPOT_3_GS_URL,
                         expires_seconds=expires_seconds,
                     ),
                     metadata={
-                        "checksum_base64_crc32c": "Zmx0wA==",
-                        "width_px": 4016,
-                        "height_px": 3952,
-                        "resolution_mpp": 0.46499982,
+                        "checksum_base64_crc32c": SPOT_3_CRC32C,
+                        "width_px": SPOT_3_WIDTH,
+                        "height_px": SPOT_3_HEIGHT,
+                        "resolution_mpp": SPOT_3_RESOLUTION_MPP,
                         "media_type": "image/tiff",
                     },
                 )

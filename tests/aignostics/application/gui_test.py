@@ -19,10 +19,10 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
-    HETA_SINGLE_SPOT_EXPECTED_RESULT_FILES,
-    HETA_SINGLE_SPOT_FILENAME,
-    HETA_SINGLE_SPOT_FILESIZE,
-    HETA_SINGLE_SPOT_GS_URL,
+    SPOT_0_EXPECTED_RESULT_FILES,
+    SPOT_0_FILENAME,
+    SPOT_0_FILESIZE,
+    SPOT_0_GS_URL,
 )
 
 if TYPE_CHECKING:
@@ -167,13 +167,13 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.flaky(retries=1, delay=5)
+# @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
+async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back(  # noqa: PLR0915
     user: User, runner: CliRunner, silent_logging: None
 ) -> None:
-    """Test that the user can download a dataset via the application page and cancel the run."""
+    """Test that the user can download a dataset via the application page and cancel the run, then find it back."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
@@ -246,19 +246,28 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             user.find(marker="BUTTON_METADATA_NEXT").click()
             await assert_notified(user, "Metadata captured.")
 
-            # Navigate through Notes step
+            # Navigate through Notes and Tags step
             await user.should_see("Note (optional)", retries=100)
             user.find("TEXTAREA_NOTE").type("test_gui_download_dataset_via_application_to_run_cancel:note").trigger(
                 "keydown.enter"
             )
 
-            user.find(marker="BUTTON_NOTES_NEXT").click()
+            await user.should_see("Tags (optional, press Enter to add)")
+            tags_input: ui.input_chips = user.find(marker="INPUT_TAGS").elements.pop()
+            tags_input.value = ["test_gui_tag1", "test_gui_tag2"]
+
+            user.find(marker="BUTTON_NOTES_AND_TAGS_NEXT").click()
 
             # Navigate through Scheduling step
             await user.should_see("Soft Due Date", retries=100)
             await user.should_see("The platform will try to complete the run before this time", retries=100)
+
+            await user.should_see("Hard Deadline")
+            await user.should_see("The platform might cancel the run if not completed by this time.", retries=100)
+            time_deadline: ui.time = user.find(marker="TIME_DEADLINE").elements.pop()
+            time_deadline.value = (datetime.now().astimezone() + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M")
+
             user.find(marker="BUTTON_SCHEDULING_NEXT").click()
-            # TODO(Helmut): Set short deadline via GUI
             await assert_notified(user, "Prepared upload UI.")
 
             # Now on Submission step
@@ -284,6 +293,13 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             except AssertionError:
                 await user.should_see("PROCESSING", retries=100)
 
+            code_run_metadata: ui.code = user.find(marker="CODE_RUN_METADATA").elements.pop()
+            metadata_text = code_run_metadata.props["content"]
+            # extract run id, with metadata text containing Run ID: '{run_data.run_id}'
+            run_id_match = re.search(r"Run ID: ([0-9a-f-]+)", metadata_text)
+            assert run_id_match is not None, f"Could not extract run ID from metadata: {metadata_text}"
+            run_id = run_id_match.group(1)
+
             # Check user can cancel run
             await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
             user.find(marker="BUTTON_APPLICATION_RUN_CANCEL").click()
@@ -293,8 +309,21 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             # Check user sees refreshed run page and run is cancelled
             await user.should_see("CANCELED_BY_USER", retries=200)
 
-            # Check the note was saved correctly
+            # Check the tags were saved correctly
             await user.should_see("test_gui_download_dataset_via_application_to_run_cancel:note", retries=100)
+            await user.should_see("test_gui_tag1", retries=100)
+            await user.should_see("test_gui_tag2", retries=100)
+
+            # Click on a tag to go to the homagepage with filtered runs
+            user.find("test_gui_tag1").click()
+            await sleep(10)
+
+            # Check. user is on the homepage and the run filter is set to the tag clicked
+            user.should_see("Welcome to the Aignostics Launchpad")
+            user.should_see("test_gui_tag1", marker="INPUT_RUNS_FILTER_NOTE_OR_TAGS")
+
+            # Check the first run is the one we created
+            user.should_see(marker=f"SIDEBAR_RUN_ITEM:0:{run_id}")
 
 
 @pytest.mark.e2e
@@ -312,7 +341,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         runs = Service().application_runs(
             application_id=HETA_APPLICATION_ID,
             application_version=HETA_APPLICATION_VERSION,
-            external_id=HETA_SINGLE_SPOT_GS_URL,
+            external_id=SPOT_0_GS_URL,
             has_output=True,
             limit=1,
         )
@@ -372,14 +401,14 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         input_dir = run_dir / "input"
         assert input_dir.is_dir(), f"Expected input directory {input_dir} not found"
 
-        results_dir = run_dir / HETA_SINGLE_SPOT_FILENAME.replace(".tiff", "")
+        results_dir = run_dir / SPOT_0_FILENAME.replace(".tiff", "")
         assert results_dir.is_dir(), f"Expected run results directory {results_dir} not found"
 
         # Check for input file having been downloaded
-        input_file = input_dir / HETA_SINGLE_SPOT_FILENAME
-        assert input_file.is_file(), f"Expected input file {input_file} not found"
-        assert input_file.stat().st_size == HETA_SINGLE_SPOT_FILESIZE, (
-            f"Expected input file size {HETA_SINGLE_SPOT_FILESIZE}, but got {input_file.stat().st_size}"
+        input_file = input_dir / SPOT_0_FILENAME
+        assert input_file.exists(), f"Expected input file {input_file} not found"
+        assert input_file.stat().st_size == SPOT_0_FILESIZE, (
+            f"Expected input file size {SPOT_0_FILESIZE}, but got {input_file.stat().st_size}"
         )
 
         # Check for files in the results directory
@@ -390,14 +419,14 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         )
 
         print(f"Found files in {results_dir}:")
-        for filename, expected_size, tolerance_percent in HETA_SINGLE_SPOT_EXPECTED_RESULT_FILES:
+        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
             file_path = results_dir / filename
             if file_path.exists():
                 actual_size = file_path.stat().st_size
                 print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
             else:
                 print(f"  {filename}: NOT FOUND")
-        for filename, expected_size, tolerance_percent in HETA_SINGLE_SPOT_EXPECTED_RESULT_FILES:
+        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
             file_path = results_dir / filename
             assert file_path.exists(), f"Expected file {filename} not found"
             actual_size = file_path.stat().st_size

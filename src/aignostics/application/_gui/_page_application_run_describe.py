@@ -543,7 +543,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
                     """,
                     language="markdown",
-                ).classes("full-width")
+                ).classes("full-width").mark("CODE_RUN_METADATA")
                 if run_data.custom_metadata:
                     properties = {
                         "content": {"json": run_data.custom_metadata},
@@ -613,7 +613,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         if tags and len(tags):
             with ui.row().classes("gap-1 -mt-2 full-width"):
                 for tag in tags[:20]:
-                    ui.chip(tag).props("small outlined disabled").classes("bg-white text-black")
+                    ui.chip(
+                        tag,
+                        on_click=lambda t=tag: ui.navigate.to(f"/?query={quote(str(t))}"),
+                    ).props("small outlined clickable").classes("bg-white text-black")
 
         with ui.list().classes("full-width"):
             results = list(run.results())

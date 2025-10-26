@@ -13,12 +13,12 @@ from aignostics.cli import cli
 from aignostics.utils import sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
-    HETA_ANOTHER_SPOT_EXPECTED_RESULT_FILES,
-    HETA_ANOTHER_SPOT_FILENAME,
-    HETA_ANOTHER_SPOT_FILESIZE,
-    HETA_ANOTHER_SPOT_GS_URL,
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    SPOT_1_EXPECTED_RESULT_FILES,
+    SPOT_1_FILENAME,
+    SPOT_1_FILESIZE,
+    SPOT_1_GS_URL,
     TEST_APPLICATION_ID,
     TEST_APPLICATION_VERSION,
 )
@@ -639,7 +639,7 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
             "dataset",
             "aignostics",
             "download",
-            HETA_ANOTHER_SPOT_GS_URL,
+            SPOT_1_GS_URL,
             str(tmp_path),
         ],
     )
@@ -649,11 +649,11 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
 
     # Validate what was downloaded
     assert "Successfully downloaded" in normalize_output(result.stdout)
-    assert HETA_ANOTHER_SPOT_FILENAME in normalize_output(result.stdout)
-    expected_file = tmp_path / HETA_ANOTHER_SPOT_FILENAME
+    assert SPOT_1_FILENAME in normalize_output(result.stdout)
+    expected_file = tmp_path / SPOT_1_FILENAME
     assert expected_file.exists(), f"Expected file {expected_file} not found"
-    assert expected_file.stat().st_size == HETA_ANOTHER_SPOT_FILESIZE, (
-        f"Expected file size {HETA_ANOTHER_SPOT_FILESIZE}, but got {expected_file.stat().st_size}"
+    assert expected_file.stat().st_size == SPOT_1_FILESIZE, (
+        f"Expected file size {SPOT_1_FILESIZE}, but got {expected_file.stat().st_size}"
     )
 
     # Validate the download command exited successfully
@@ -687,21 +687,21 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
     assert not input_dir.is_dir(), f"Expected input directory {input_dir} not found"
 
     # Validate results generated and downloaded
-    results_dir = tmp_path / HETA_ANOTHER_SPOT_FILENAME.replace(".tiff", "")
+    results_dir = tmp_path / SPOT_1_FILENAME.replace(".tiff", "")
     assert results_dir.is_dir(), f"Expected directory {results_dir} not found"
     files_in_dir = list(results_dir.glob("*"))
     assert len(files_in_dir) == 9, (
         f"Expected 9 files in {results_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
     )
     print(f"Found files in {results_dir}:")
-    for filename, expected_size, tolerance_percent in HETA_ANOTHER_SPOT_EXPECTED_RESULT_FILES:
+    for filename, expected_size, tolerance_percent in SPOT_1_EXPECTED_RESULT_FILES:
         file_path = results_dir / filename
         if file_path.exists():
             actual_size = file_path.stat().st_size
             print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
         else:
             print(f"  {filename}: NOT FOUND")
-    for filename, expected_size, tolerance_percent in HETA_ANOTHER_SPOT_EXPECTED_RESULT_FILES:
+    for filename, expected_size, tolerance_percent in SPOT_1_EXPECTED_RESULT_FILES:
         file_path = results_dir / filename
         assert file_path.exists(), f"Expected file {filename} not found"
         actual_size = file_path.stat().st_size

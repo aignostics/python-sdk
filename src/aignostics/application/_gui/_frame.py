@@ -40,6 +40,12 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 ) -> None:
     if args is None:
         args = {}
+
+    if args.get("query"):
+        search_input.query = args["query"]
+    else:
+        search_input.query = ""
+
     with frame(  # noqa: PLR1702
         navigation_title=navigation_title,
         navigation_icon=navigation_icon,
@@ -145,7 +151,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                             .props("clickable")
                             .classes("w-full")
                             .style("padding-left: 0; padding-right: 0;")
-                            .mark(f"SIDEBAR_RUN_ITEM:{index}")
+                            .mark(f"SIDEBAR_RUN_ITEM:{index}:{run_data['run_id']}")
                         ):
                             with ui.item_section().props("avatar"):
                                 icon, color = run_status_to_icon_and_color(
@@ -181,13 +187,18 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     else "font-normal"
                                 ).mark(f"LABEL_RUN_APPLICATION:{index}")
                                 ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
-                                # if there is tags, show them as immutable chips
-                                # only show the first 3, than "... and tooltip with the rest"
-                                # chips must be very small, white background, black text, outlined, disabled
                                 if run_data.get("tags") and len(run_data["tags"]):
                                     with ui.row().classes("gap-1 mt-1"):
                                         for tag in run_data["tags"][:3]:
-                                            ui.chip(tag).props("disabled").classes("bg-white text-black text-xs")
+
+                                            def _on_tag_click(t: str = tag) -> None:
+                                                search_input.query = t
+                                                _runs_list.refresh()
+
+                                            ui.chip(
+                                                tag,
+                                                on_click=_on_tag_click,
+                                            ).props("clickable").classes("bg-white text-black text-xs")
                                         if len(run_data["tags"]) > 3:  # noqa: PLR2004
                                             ui.tooltip(f"Tags: {', '.join(run_data['tags'][3:])}")
                     if not runs:
