@@ -556,7 +556,9 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner) -> None:
     assert displayed_count == 1, f"Expected listed count to be == 1, but got {displayed_count}"
 
 
-@pytest.mark.integration
+# TODO(Andreas): This previously failed as invalid run id. Is it expected this now calls the API?
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
 def test_cli_run_describe_invalid_uuid(runner: CliRunner) -> None:
     """Check run describe command fails as expected on run not found."""
     result = runner.invoke(cli, ["application", "run", "describe", "4711"])
