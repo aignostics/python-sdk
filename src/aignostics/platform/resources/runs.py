@@ -16,6 +16,7 @@ from typing import Any, cast
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.exceptions import ServiceException
 from aignx.codegen.models import (
+    CustomMetadataUpdateRequest,
     ItemCreationRequest,
     ItemOutput,
     ItemResultReadResponse,
@@ -350,6 +351,69 @@ class Run:
             logger.debug("Results for item: %s already present in %s", item.external_id, item_dir)
             print(f"Results for item: {item.external_id} already present in {item_dir}") if print_status else None
 
+    def update_custom_metadata(
+        self,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for this application run.
+
+        Args:
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+
+        Raises:
+            Exception: If the API request fails.
+        """
+        custom_metadata = custom_metadata or {}
+        custom_metadata.setdefault("sdk", {})
+        existing_sdk_metadata = custom_metadata.get("sdk", {})
+        sdk_metadata = build_run_sdk_metadata(existing_sdk_metadata)
+        custom_metadata["sdk"].update(sdk_metadata)
+        validate_run_sdk_metadata(custom_metadata["sdk"])
+
+        self._api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(
+            self.run_id,
+            custom_metadata_update_request=CustomMetadataUpdateRequest(
+                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata))
+            ),
+            _request_timeout=settings().run_submit_timeout,
+            _headers={"User-Agent": user_agent()},
+        )
+        operation_cache_clear()  # Clear all caches since we updated a run
+
+    # TODO(Andreas): Always returns 404, likely connected with external_id encoding,
+    # see test test_cli_run_dump_and_update_item_custom_metadata
+    def update_item_custom_metadata(
+        self,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for an item in this application run.
+
+        Args:
+            external_id (str): The external ID of the item.
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+
+        Raises:
+            Exception: If the API request fails.
+        """
+        custom_metadata = custom_metadata or {}
+        custom_metadata.setdefault("sdk", {})
+        existing_sdk_metadata = custom_metadata.get("sdk", {})
+        sdk_metadata = build_item_sdk_metadata(existing_sdk_metadata)
+        custom_metadata["sdk"].update(sdk_metadata)
+        validate_item_sdk_metadata(custom_metadata["sdk"])
+
+        self._api.put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put(
+            self.run_id,
+            external_id,
+            custom_metadata_update_request=CustomMetadataUpdateRequest(
+                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata))
+            ),
+            _request_timeout=settings().run_submit_timeout,
+            _headers={"User-Agent": user_agent()},
+        )
+        operation_cache_clear()  # Clear all caches since we updated a run
+
     def __str__(self) -> str:
         """Returns a string representation of the application run.
 
@@ -423,7 +487,8 @@ class Runs:
         """
         custom_metadata = custom_metadata or {}
         custom_metadata.setdefault("sdk", {})
-        sdk_metadata = build_run_sdk_metadata()
+        existing_sdk_metadata = custom_metadata.get("sdk", {})
+        sdk_metadata = build_run_sdk_metadata(existing_sdk_metadata)
         custom_metadata["sdk"].update(sdk_metadata)
         validate_run_sdk_metadata(custom_metadata["sdk"])
         self._amend_input_items_with_sdk_metadata(items)
@@ -560,11 +625,13 @@ class Runs:
             items (builtins.list[ItemCreationRequest]): The list of item creation requests to amend.
         """
         for item in items:
-            item.custom_metadata = item.custom_metadata or {}
-            item.custom_metadata.setdefault("sdk", {})
-            item_sdk_metadata = build_item_sdk_metadata()
-            item.custom_metadata["sdk"].update(item_sdk_metadata)
-            validate_item_sdk_metadata(item.custom_metadata["sdk"])
+            item_custom_metadata = item.custom_metadata or {}
+            item_custom_metadata.setdefault("sdk", {})
+            existing_item_sdk_metadata = item_custom_metadata.get("sdk")
+            item_sdk_metadata = build_item_sdk_metadata(existing_item_sdk_metadata)
+            item_custom_metadata["sdk"].update(item_sdk_metadata)
+            validate_item_sdk_metadata(item_custom_metadata)
+            item.custom_metadata = cast("dict[str, Any]", convert_to_json_serializable(item_custom_metadata))
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.

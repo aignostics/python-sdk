@@ -66,7 +66,7 @@ APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
-class Service(BaseService):
+class Service(BaseService):  # noqa: PLR0904
     """Service of the application module."""
 
     _settings: Settings
@@ -1018,6 +1018,141 @@ class Service(BaseService):
             message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
+
+    def application_run_update_custom_metadata(
+        self,
+        run_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for an existing application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        try:
+            logger.debug("Updating custom metadata for run with ID '%s'", run_id)
+            self._get_platform_client().run(run_id).update_custom_metadata(custom_metadata)
+            logger.debug("Updated custom metadata for run with ID '%s'", run_id)
+        except ValueError as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_custom_metadata_static(
+        run_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Static wrapper for updating custom metadata for an application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        Service().application_run_update_custom_metadata(run_id, custom_metadata)
+
+    def application_run_update_item_custom_metadata(
+        self,
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for an existing item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        try:
+            logger.debug(
+                "Updating custom metadata for item '%s' in run with ID '%s'",
+                external_id,
+                run_id,
+            )
+            self._get_platform_client().run(run_id).update_item_custom_metadata(
+                external_id,
+                custom_metadata,
+            )
+            logger.debug(
+                "Updated custom metadata for item '%s' in run with ID '%s'",
+                external_id,
+                run_id,
+            )
+        except ValueError as e:
+            message = (
+                f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': ValueError {e}"
+            )
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' or item '{external_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' or item external ID '{external_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_item_custom_metadata_static(
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Static wrapper for updating custom metadata for an item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
 
     def application_run_cancel(self, run_id: str) -> None:
         """Cancel a run by its ID.

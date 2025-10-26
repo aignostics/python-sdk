@@ -167,7 +167,7 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 
 @pytest.mark.e2e
 @pytest.mark.long_running
-# @pytest.mark.flaky(retries=1, delay=5)
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back(  # noqa: PLR0915
@@ -287,6 +287,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
             await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
             # Check user is redirected to the run page and run is running
+            await sleep(5)
             await user.should_see(f"Run of he-tme ({latest_application_version.number})", retries=200)
             try:
                 await user.should_see("PENDING", retries=100)

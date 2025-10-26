@@ -15,8 +15,8 @@ from aignostics.utils import get_logger, user_agent
 
 logger = get_logger(__name__)
 
-SDK_METADATA_SCHEMA_VERSION = "0.0.3"
-ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.2"
+SDK_METADATA_SCHEMA_VERSION = "0.0.4"
+ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
 
 
 class SubmissionMetadata(BaseModel):
@@ -100,7 +100,7 @@ class RunSdkMetadata(BaseModel):
 
     This model defines the structure and validation rules for SDK metadata
     that is attached to application runs. It includes information about:
-    - SDK version and submission details
+    - SDK version and timestamps
     - User information (when available)
     - CI/CD environment context (GitHub Actions, pytest)
     - Workflow control flags
@@ -112,6 +112,8 @@ class RunSdkMetadata(BaseModel):
         ..., description="Schema version for this metadata format", pattern=r"^\d+\.\d+\.\d+-?.*$"
     )
 
+    created_at: str = Field(..., description="ISO 8601 timestamp when the metadata was first created")
+    updated_at: str = Field(..., description="ISO 8601 timestamp when the metadata was last updated")
     tags: set[str] | None = Field(None, description="Optional list of tags associated with the run")
     submission: SubmissionMetadata = Field(..., description="Submission context metadata")
     user_agent: str = Field(..., description="User agent string for the SDK client")
@@ -144,17 +146,22 @@ class ItemSdkMetadata(BaseModel):
         ..., description="Schema version for this metadata format", pattern=r"^\d+\.\d+\.\d+-?.*$"
     )
 
+    created_at: str = Field(..., description="ISO 8601 timestamp when the metadata was first created")
+    updated_at: str = Field(..., description="ISO 8601 timestamp when the metadata was last updated")
     tags: set[str] | None = Field(None, description="Optional list of tags associated with the item")
     platform_bucket: PlatformBucketMetadata | None = Field(None, description="Platform bucket storage information")
 
     model_config = {"extra": "forbid"}  # Reject unknown fields
 
 
-def build_run_sdk_metadata() -> dict[str, Any]:
+def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:  # noqa: PLR0914
     """Build SDK metadata to attach to runs.
 
     Includes user agent, user information, GitHub CI/CD context when running in GitHub Actions,
     and test context when running in pytest.
+
+    Args:
+        existing_metadata (dict[str, Any] | None): Existing SDK metadata to preserve created_at and submission.date.
 
     Returns:
         dict[str, Any]: Dictionary containing SDK metadata including user agent,
@@ -175,10 +182,22 @@ def build_run_sdk_metadata() -> dict[str, Any]:
     elif os.getenv("NICEGUI_HOST"):
         submission_interface = "launchpad"
 
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    existing_sdk = existing_metadata or {}
+
+    # Preserve created_at if it exists, otherwise use current time
+    created_at = existing_sdk.get("created_at", now)
+
+    # Preserve submission.date if it exists, otherwise use current time
+    existing_submission = existing_sdk.get("submission", {})
+    submission_date = existing_submission.get("date", now)
+
     metadata: dict[str, Any] = {
         "schema_version": SDK_METADATA_SCHEMA_VERSION,
+        "created_at": created_at,
+        "updated_at": now,
         "submission": {
-            "date": datetime.now(UTC).isoformat(timespec="seconds"),
+            "date": submission_date,
             "interface": submission_interface,
             "initiator": submission_initiator,
         },
@@ -289,14 +308,25 @@ def validate_run_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
         return False
 
 
-def build_item_sdk_metadata() -> dict[str, Any]:
+def build_item_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build SDK metadata to attach to individual items.
+
+    Args:
+        existing_metadata (dict[str, Any] | None): Existing SDK metadata to preserve created_at.
 
     Returns:
         dict[str, Any]: Dictionary containing item SDK metadata including platform bucket information.
     """
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    existing_sdk = existing_metadata or {}
+
+    # Preserve created_at if it exists, otherwise use current time
+    created_at = existing_sdk.get("created_at", now)
+
     metadata: dict[str, Any] = {
         "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+        "created_at": created_at,
+        "updated_at": now,
     }
 
     return metadata

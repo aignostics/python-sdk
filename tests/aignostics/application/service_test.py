@@ -355,3 +355,77 @@ def test_application_runs_query_escapes_special_characters(mock_get_client: Magi
     # Check that double quotes and backslashes are properly escaped
     assert 'test\\"value\\\\path' in note_call_kwargs["custom_metadata"]
     assert 'test\\"value\\\\path' in tag_call_kwargs["custom_metadata"]
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_success(mock_get_client: MagicMock) -> None:
+    """Test successful update of run custom metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    custom_metadata = {"key": "value", "tags": ["tag1", "tag2"]}
+
+    # Should not raise any exception
+    service.application_run_update_custom_metadata("run-123", custom_metadata)
+
+    # Verify the run() method was called with correct run_id
+    mock_client.run.assert_called_once_with("run-123")
+    # Verify the update_custom_metadata method was called with correct arguments
+    mock_run.update_custom_metadata.assert_called_once_with(custom_metadata)
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_not_found(mock_get_client: MagicMock) -> None:
+    """Test update metadata with non-existent run."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_run.update_custom_metadata.side_effect = NotFoundException("Run not found")
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+
+    with pytest.raises(NotFoundException, match="not found"):
+        service.application_run_update_custom_metadata("invalid-run-id", {"key": "value"})
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_success(mock_get_client: MagicMock) -> None:
+    """Test successful update of item custom metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    custom_metadata = {"key": "value", "note": "test note"}
+
+    # Should not raise any exception
+    service.application_run_update_item_custom_metadata("run-123", "item-ext-id", custom_metadata)
+
+    # Verify the run() method was called with correct run_id
+    mock_client.run.assert_called_once_with("run-123")
+    # Verify the update_item_custom_metadata method was called with correct arguments
+    mock_run.update_item_custom_metadata.assert_called_once_with("item-ext-id", custom_metadata)
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_not_found(mock_get_client: MagicMock) -> None:
+    """Test update item metadata with non-existent run or item."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_run.update_item_custom_metadata.side_effect = NotFoundException("Item not found")
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+
+    with pytest.raises(NotFoundException, match="not found"):
+        service.application_run_update_item_custom_metadata("run-123", "invalid-item-id", {"key": "value"})

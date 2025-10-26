@@ -442,6 +442,8 @@ class TestRunSdkMetadataValidation:
         """Test that invalid submission interface fails validation."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "invalid",
@@ -459,6 +461,8 @@ class TestRunSdkMetadataValidation:
         """Test that invalid submission initiator fails validation."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -476,6 +480,8 @@ class TestRunSdkMetadataValidation:
         """Test that missing required fields fail validation."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -493,6 +499,8 @@ class TestRunSdkMetadataValidation:
         """Test that extra unknown fields are rejected."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -511,6 +519,8 @@ class TestRunSdkMetadataValidation:
         """Test validation with tags as a set of strings."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -528,6 +538,8 @@ class TestRunSdkMetadataValidation:
         """Test validation with empty tags set."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -545,6 +557,8 @@ class TestRunSdkMetadataValidation:
         """Test validation with tags as None."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -562,6 +576,8 @@ class TestRunSdkMetadataValidation:
         """Test validation when tags field is omitted entirely."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -578,6 +594,8 @@ class TestRunSdkMetadataValidation:
         """Test that list is automatically converted to set by Pydantic."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -596,6 +614,8 @@ class TestRunSdkMetadataValidation:
         """Test validation fails when tags is a dict instead of set."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -614,6 +634,8 @@ class TestRunSdkMetadataValidation:
         """Test validation fails when tags contains non-string values."""
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "submission": {
                 "date": "2025-10-19T12:00:00+00:00",
                 "interface": "script",
@@ -702,6 +724,8 @@ class TestItemSdkMetadata:
         """Test validation succeeds with platform bucket metadata present."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "platform_bucket": {
                 "bucket_name": "sdk-bucket",
                 "object_key": "runs/123/items/456",
@@ -717,6 +741,8 @@ class TestItemSdkMetadata:
         """Test validation fails when required platform bucket fields are missing."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "platform_bucket": {
                 "bucket_name": "sdk-bucket",
                 "object_key": "runs/123/items/456",
@@ -743,6 +769,8 @@ class TestItemSdkMetadata:
         """Test that extra fields are rejected for item metadata."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "unexpected": "value",
         }
 
@@ -792,6 +820,8 @@ class TestItemSdkMetadata:
         """Test validation of item metadata with tags as a set of strings."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "tags": {"slide", "tumor", "he-stained"},
         }
 
@@ -803,6 +833,8 @@ class TestItemSdkMetadata:
         """Test validation of item metadata with empty tags set."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "tags": set(),
         }
 
@@ -814,6 +846,8 @@ class TestItemSdkMetadata:
         """Test validation of item metadata with tags as None."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "tags": None,
         }
 
@@ -825,6 +859,8 @@ class TestItemSdkMetadata:
         """Test validation of item metadata when tags field is omitted."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
         }
 
         assert validate_item_sdk_metadata(metadata) is True
@@ -835,6 +871,8 @@ class TestItemSdkMetadata:
         """Test that list is automatically converted to set by Pydantic."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "tags": ["tag1", "tag2"],  # List gets converted to set
         }
 
@@ -847,6 +885,8 @@ class TestItemSdkMetadata:
         """Test validation fails when tags contains non-string values."""
         metadata = {
             "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
             "tags": {"valid", 123},  # Mixed types
         }
 

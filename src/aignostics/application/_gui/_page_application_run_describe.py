@@ -3,17 +3,23 @@
 from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 import humanize
 from aiopath import AsyncPath
+from nicegui import (
+    app,
+    ui,  # noq
+)
 from nicegui import run as nicegui_run
-from nicegui import ui  # noq
 
 from aignostics.platform import ItemOutput, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
+
+if TYPE_CHECKING:
+    from aignostics.platform import UserInfo
 
 from .._models import DownloadProgressState  # noqa: TID252
 from .._service import Service  # noqa: TID252
@@ -527,7 +533,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
                 ui.code(
                     f"""
-                    * Run ID: {run_data.run_id}
+                    * Run ID: {run_data.run_id}'
                     * Application: {run_data.application_id} ({run_data.version_number})
                     * Status: {status_str}
                     * Output: {run_data.output.name}
@@ -544,16 +550,40 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     """,
                     language="markdown",
                 ).classes("full-width").mark("CODE_RUN_METADATA")
+                user_info: UserInfo | None = app.storage.tab.get("user_info", None)
                 if run_data.custom_metadata:
+                    is_editable = user_info and user_info.role in {"admin", "super_admin"}
                     properties = {
                         "content": {"json": run_data.custom_metadata},
                         "mode": "tree",
-                        "readOnly": True,
+                        "readOnly": not is_editable,
                         "mainMenuBar": True,
                         "navigationBar": False,
                         "statusBar": False,
                     }
-                    ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
+
+                    async def handle_metadata_change(e: Any) -> None:  # noqa: ANN401
+                        """Handle changes to the custom metadata and update the run."""
+                        if not is_editable:
+                            return
+                        try:
+                            # Extract the new metadata from the event's content attribute
+                            new_metadata = e.content.get("json") if hasattr(e, "content") else None
+                            if new_metadata:
+                                ui.notify("Updating custom metadata...", type="info")
+                                await nicegui_run.io_bound(
+                                    Service.application_run_update_custom_metadata_static,
+                                    run_id=run_id,
+                                    custom_metadata=new_metadata,
+                                )
+                                ui.notify("Custom metadata updated successfully!", type="positive")
+                                ui.navigate.reload()
+                        except Exception as ex:  # noqa: BLE001
+                            ui.notify(f"Failed to update custom metadata: {ex!s}", type="negative")
+
+                    ui.json_editor(properties, on_change=handle_metadata_change).classes("full-width").mark(
+                        "JSON_EDITOR_CUSTOM_METADATA"
+                    )
             ui.space()
             with ui.row().classes("justify-end"):
                 if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:

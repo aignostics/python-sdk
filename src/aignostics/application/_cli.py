@@ -802,6 +802,84 @@ def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to de
         sys.exit(1)
 
 
+@run_app.command("dump-metadata")
+def run_dump_metadata(
+    run_id: Annotated[str, typer.Argument(help="Id of the run to dump custom metadata for")],
+    pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
+) -> None:
+    """Dump custom metadata of a run as JSON to stdout."""
+    logger.debug("Dumping custom metadata for run with ID '%s'", run_id)
+
+    try:
+        run = Service().application_run(run_id).details()
+        custom_metadata = run.custom_metadata if hasattr(run, "custom_metadata") else {}
+
+        # Output JSON to stdout
+        if pretty:
+            print(json.dumps(custom_metadata, indent=2))
+        else:
+            print(json.dumps(custom_metadata))
+
+        logger.info("Dumped custom metadata for run with ID '%s'", run_id)
+    except NotFoundException:
+        logger.warning("Run with ID '%s' not found.", run_id)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to dump custom metadata for run with ID '%s'", run_id)
+        console.print(f"[error]Error:[/error] Failed to dump custom metadata for run with ID '{run_id}': {e}")
+        sys.exit(1)
+
+
+@run_app.command("dump-item-metadata")
+def run_dump_item_metadata(
+    run_id: Annotated[str, typer.Argument(help="Id of the run containing the item")],
+    external_id: Annotated[str, typer.Argument(help="External ID of the item to dump custom metadata for")],
+    pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
+) -> None:
+    """Dump custom metadata of an item as JSON to stdout."""
+    logger.debug("Dumping custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+
+    try:
+        run = Service().application_run(run_id)
+
+        # Find the item with the matching external_id in the results
+        item = None
+        for result_item in run.results():
+            if result_item.external_id == external_id:
+                item = result_item
+                break
+
+        if item is None:
+            logger.warning("Item with external ID '%s' not found in run '%s'.", external_id, run_id)
+            print(
+                f"Warning: Item with external ID '{external_id}' not found in run '{run_id}'.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+
+        custom_metadata = item.custom_metadata if hasattr(item, "custom_metadata") else {}
+
+        # Output JSON to stdout
+        if pretty:
+            print(json.dumps(custom_metadata, indent=2))
+        else:
+            print(json.dumps(custom_metadata))
+
+        logger.info("Dumped custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+    except NotFoundException:
+        logger.warning("Run with ID '%s' not found.", run_id)
+        print(f"Warning: Run with ID '{run_id}' not found.", file=sys.stderr)
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to dump custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+        print(
+            f"Error: Failed to dump custom metadata for item '{external_id}' in run with ID '{run_id}': {e}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
 @run_app.command("cancel")
 def run_cancel(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to cancel")],
@@ -824,6 +902,102 @@ def run_cancel(
     except Exception as e:
         logger.exception("Failed to cancel run with ID '%s'", run_id)
         console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
+        sys.exit(1)
+
+
+@run_app.command("update-metadata")
+def run_update_metadata(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to update")],
+    metadata_json: Annotated[
+        str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
+    ],
+) -> None:
+    """Update custom metadata for a run."""
+    import json  # noqa: PLC0415
+
+    logger.debug("Updating custom metadata for run with ID '%s'", run_id)
+
+    try:
+        # Parse JSON metadata
+        try:
+            custom_metadata = json.loads(metadata_json)
+            if not isinstance(custom_metadata, dict):
+                console.print("[error]Error:[/error] Metadata must be a JSON object (dictionary).")
+                sys.exit(1)
+        except json.JSONDecodeError as e:
+            console.print(f"[error]Error:[/error] Invalid JSON: {e}")
+            sys.exit(1)
+
+        Service().application_run_update_custom_metadata(run_id, custom_metadata)
+        logger.info("Updated custom metadata for run with ID '%s'.", run_id)
+        console.print(f"Successfully updated custom metadata for run with ID '{run_id}'.")
+    except NotFoundException:
+        logger.warning("Run with ID '%s' not found.", run_id)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except ValueError as e:
+        logger.warning("Run ID '%s' invalid or metadata invalid: %s", run_id, e)
+        console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid or metadata invalid: {e}")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to update custom metadata for run with ID '%s'", run_id)
+        console.print(f"[bold red]Error:[/bold red] Failed to update custom metadata for run with ID '{run_id}': {e}")
+        sys.exit(1)
+
+
+@run_app.command("update-item-metadata")
+def run_update_item_metadata(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run containing the item")],
+    external_id: Annotated[str, typer.Argument(..., help="External ID of the item to update")],
+    metadata_json: Annotated[
+        str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
+    ],
+) -> None:
+    """Update custom metadata for an item in a run."""
+    import json  # noqa: PLC0415
+
+    logger.debug("Updating custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+
+    try:
+        # Parse JSON metadata
+        try:
+            custom_metadata = json.loads(metadata_json)
+            if not isinstance(custom_metadata, dict):
+                console.print("[error]Error:[/error] Metadata must be a JSON object (dictionary).")
+                sys.exit(1)
+        except json.JSONDecodeError as e:
+            console.print(f"[error]Error:[/error] Invalid JSON: {e}")
+            sys.exit(1)
+
+        Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
+        logger.info("Updated custom metadata for item '%s' in run with ID '%s'.", external_id, run_id)
+        console.print(f"Successfully updated custom metadata for item '{external_id}' in run with ID '{run_id}'.")
+    except NotFoundException:
+        logger.warning("Run with ID '%s' or item '%s' not found.", run_id, external_id)
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' or item '{external_id}' not found.")
+        sys.exit(2)
+    except ValueError as e:
+        logger.warning(
+            "Run ID '%s' or item external ID '%s' invalid or metadata invalid: %s",
+            run_id,
+            external_id,
+            e,
+        )
+        console.print(
+            f"[warning]Warning:[/warning] Run ID '{run_id}' or item external ID '{external_id}' "
+            f"invalid or metadata invalid: {e}"
+        )
+        sys.exit(2)
+    except Exception as e:
+        logger.exception(
+            "Failed to update custom metadata for item '%s' in run with ID '%s'",
+            external_id,
+            run_id,
+        )
+        console.print(
+            f"[bold red]Error:[/bold red] Failed to update custom metadata for item '{external_id}' "
+            f"in run with ID '{run_id}': {e}"
+        )
         sys.exit(1)
 
 

@@ -714,3 +714,242 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
 
     # Validate the execute command exited successfully
     assert result.exit_code == 0
+
+
+@pytest.mark.integration
+def test_cli_run_update_metadata_invalid_json(runner: CliRunner) -> None:
+    """Check run update-metadata command fails with invalid JSON."""
+    result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", "{invalid json}"])
+    assert result.exit_code == 1
+    assert "Invalid JSON" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_update_metadata_not_dict(runner: CliRunner) -> None:
+    """Check run update-metadata command fails with non-dict JSON."""
+    result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '["array", "not", "dict"]'])
+    assert result.exit_code == 1
+    assert "Metadata must be a JSON object" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_update_item_metadata_invalid_json(runner: CliRunner) -> None:
+    """Check run update-item-metadata command fails with invalid JSON."""
+    result = runner.invoke(
+        cli, ["application", "run", "update-item-metadata", "run-123", "item-ext-id", "{invalid json}"]
+    )
+    assert result.exit_code == 1
+    assert "Invalid JSON" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_update_item_metadata_not_dict(runner: CliRunner) -> None:
+    """Check run update-item-metadata command fails with non-dict JSON."""
+    result = runner.invoke(
+        cli, ["application", "run", "update-item-metadata", "run-123", "item-ext-id", '["array", "not", "dict"]']
+    )
+    assert result.exit_code == 1
+    assert "Metadata must be a JSON object" in result.output
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=120)
+@pytest.mark.sequential
+def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner) -> None:
+    """Test dumping and updating custom metadata via CLI commands."""
+    import json
+    import random
+
+    # Step 1: List runs, limit to 1
+    result = runner.invoke(cli, ["application", "run", "list", "--limit", "1"])
+    assert result.exit_code == 0
+
+    # Check if any runs exist
+    if "You did not yet create a run" in result.output:
+        pytest.skip("No runs available. Please run tests that submit runs first.")
+
+    # Extract run ID from the output (format: "- <run_id> of <app>...")
+    normalized_output = normalize_output(result.output)
+    run_id_match = re.search(r"-\s+([a-f0-9\-]{36})\s+of\s+", normalized_output)
+    assert run_id_match is not None, f"Could not extract run ID from list output:\n{normalized_output}"
+    run_id = run_id_match.group(1)
+
+    # Step 2: Dump custom metadata of run
+    result = runner.invoke(cli, ["application", "run", "dump-metadata", run_id])
+    assert result.exit_code == 0
+    initial_metadata = json.loads(result.stdout)
+    # If metadata is None/null, start with empty dict
+    if initial_metadata is None:
+        initial_metadata = {}
+    assert isinstance(initial_metadata, dict), "Custom metadata should be a dictionary"
+
+    # Store initial SDK metadata timestamps for comparison
+    initial_created_at = initial_metadata.get("sdk", {}).get("created_at")
+    initial_submission_date = initial_metadata.get("sdk", {}).get("submission", {}).get("date")
+    initial_updated_at = initial_metadata.get("sdk", {}).get("updated_at")
+
+    # Step 3: Add "random" node with a random number
+    random_value = random.randint(1000, 9999)
+    updated_metadata = initial_metadata.copy()
+    updated_metadata["random"] = random_value
+
+    # Update the custom metadata
+    result = runner.invoke(cli, ["application", "run", "update-metadata", run_id, json.dumps(updated_metadata)])
+    assert result.exit_code == 0
+    assert "Successfully updated custom metadata" in result.output
+
+    # Step 4: Dump metadata again and verify random number appeared
+    result = runner.invoke(cli, ["application", "run", "dump-metadata", run_id, "--pretty"])
+    assert result.exit_code == 0
+    metadata_with_random = json.loads(result.stdout)
+    assert "random" in metadata_with_random, "Random field should be present in metadata"
+    assert metadata_with_random["random"] == random_value, f"Random value should be {random_value}"
+
+    # Verify SDK metadata timestamps behavior after update
+    updated_created_at = metadata_with_random.get("sdk", {}).get("created_at")
+    updated_submission_date = metadata_with_random.get("sdk", {}).get("submission", {}).get("date")
+    updated_updated_at = metadata_with_random.get("sdk", {}).get("updated_at")
+
+    # created_at and submission.date should NOT change
+    assert updated_created_at == initial_created_at, (
+        f"sdk.created_at should not change: {initial_created_at} -> {updated_created_at}"
+    )
+    assert updated_submission_date == initial_submission_date, (
+        f"sdk.submission.date should not change: {initial_submission_date} -> {updated_submission_date}"
+    )
+
+    # updated_at SHOULD change (be more recent)
+    assert updated_updated_at != initial_updated_at, (
+        f"sdk.updated_at should change after update: {initial_updated_at} -> {updated_updated_at}"
+    )
+    assert updated_updated_at > initial_updated_at, (
+        f"sdk.updated_at should be more recent: {initial_updated_at} -> {updated_updated_at}"
+    )
+
+    # Step 5: Remove the random number
+    del updated_metadata["random"]
+    result = runner.invoke(cli, ["application", "run", "update-metadata", run_id, json.dumps(updated_metadata)])
+    assert result.exit_code == 0
+    assert "Successfully updated custom metadata" in result.output
+
+    # Step 6: Dump metadata and validate random element has been removed
+    result = runner.invoke(cli, ["application", "run", "dump-metadata", run_id])
+    assert result.exit_code == 0
+    final_metadata = json.loads(result.stdout)
+    assert "random" not in final_metadata, "Random field should have been removed from metadata"
+
+    # Note: We can't compare final_metadata == initial_metadata because the SDK
+    # automatically updates some fields (e.g., submission.date, ci.pytest.current_test)
+    # when operations are performed. Instead, verify the random field was removed
+    # and the structure remains consistent.
+    assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
+
+
+# TODO(Andreas): Update item metadata returns 404 always
+@pytest.mark.skip(reason="Waiting for platform API fix to item metadata endpoint")
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=120)
+@pytest.mark.sequential
+def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None:  # noqa: PLR0914, PLR0915  # noqa: PLR0914, PLR0915
+    """Test dumping and updating item custom metadata via CLI commands."""
+    import json
+    import random
+
+    # Step 1: List runs, limit to 1
+    result = runner.invoke(cli, ["application", "run", "list", "--limit", "1"])
+    assert result.exit_code == 0
+
+    # Check if any runs exist
+    if "You did not yet create a run" in result.output:
+        pytest.skip("No runs available. Please run tests that submit runs first.")
+
+    # Extract run ID from the output (format: "- <run_id> of <app>...")
+    normalized_output = normalize_output(result.output)
+    run_id_match = re.search(r"-\s+([a-f0-9\-]{36})\s+of\s+", normalized_output)
+    assert run_id_match is not None, f"Could not extract run ID from list output:\n{normalized_output}"
+    run_id = run_id_match.group(1)
+
+    # Get run details to extract an item's external_id
+    result = runner.invoke(cli, ["application", "run", "describe", run_id])
+    assert result.exit_code == 0
+
+    normalized_describe = normalize_output(result.output)
+    # Match the line after "Item External ID:"
+    external_id_match = re.search(r"Item External ID:\s*\n\s*([^\s]+)", normalized_describe)
+
+    if not external_id_match:
+        # Try single line format as fallback
+        external_id_match = re.search(r"Item External ID:\s*([^\n\s]+)", normalized_describe)
+
+    if not external_id_match:
+        pytest.skip("Could not extract item external_id from run. Run may not have items yet.")
+
+    external_id = external_id_match.group(1).strip()
+    print(external_id)
+
+    # Step 2: Dump custom metadata of item
+    result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id])
+    assert result.exit_code == 0
+    initial_metadata = json.loads(result.output)
+    # If metadata is None/null, start with empty dict
+    if initial_metadata is None:
+        initial_metadata = {}
+    assert isinstance(initial_metadata, dict), "Custom metadata should be a dictionary"
+
+    # Store initial SDK metadata timestamps for comparison
+    initial_created_at = initial_metadata.get("sdk", {}).get("created_at")
+    initial_updated_at = initial_metadata.get("sdk", {}).get("updated_at")
+
+    # Step 3: Add "random" node with a random number
+    random_value = random.randint(1000, 9999)
+    updated_metadata = initial_metadata.copy()
+    updated_metadata["random"] = random_value
+
+    # Update the custom metadata
+    result = runner.invoke(
+        cli, ["application", "run", "update-item-metadata", run_id, external_id, json.dumps(updated_metadata)]
+    )
+    assert result.exit_code == 0
+    assert "Successfully updated custom metadata" in result.output
+
+    # Step 4: Dump metadata again and verify random number appeared
+    result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id, "--pretty"])
+    assert result.exit_code == 0
+    metadata_with_random = json.loads(result.output)
+    assert "random" in metadata_with_random, "Random field should be present in metadata"
+    assert metadata_with_random["random"] == random_value, f"Random value should be {random_value}"
+
+    # Verify SDK metadata timestamps behavior after update
+    updated_created_at = metadata_with_random.get("sdk", {}).get("created_at")
+    updated_updated_at = metadata_with_random.get("sdk", {}).get("updated_at")
+
+    # created_at should NOT change
+    assert updated_created_at == initial_created_at, (
+        f"sdk.created_at should not change: {initial_created_at} -> {updated_created_at}"
+    )
+
+    # updated_at SHOULD change (be more recent)
+    assert updated_updated_at != initial_updated_at, (
+        f"sdk.updated_at should change after update: {initial_updated_at} -> {updated_updated_at}"
+    )
+    # Step 5: Remove the random numberresult.output)
+    assert "random" in metadata_with_random, "Random field should be present in metadata"
+    assert metadata_with_random["random"] == random_value, f"Random value should be {random_value}"
+
+    # Step 5: Remove the random number
+    del updated_metadata["random"]
+    result = runner.invoke(
+        cli, ["application", "run", "update-item-metadata", run_id, external_id, json.dumps(updated_metadata)]
+    )
+    assert result.exit_code == 0
+    assert "Successfully updated custom metadata" in result.output
+
+    # Step 6: Dump metadata and validate random element has been removed
+    result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id])
+    assert result.exit_code == 0
+    final_metadata = json.loads(result.output)
+    assert "random" not in final_metadata, "Random field should have been removed from metadata"
+
+    # Note: Similar to run metadata, we verify the structure remains consistent
+    # rather than doing exact equality comparison due to dynamic fields
+    assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
