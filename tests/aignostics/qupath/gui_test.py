@@ -149,7 +149,7 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0914, PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None
+    user: User, runner: CliRunner, tmp_path: Path, qupath_teardown: None
 ) -> None:
     """Test installing QuPath, downloading run results, creating QuPath project from it, and inspecting results."""
     # Find run

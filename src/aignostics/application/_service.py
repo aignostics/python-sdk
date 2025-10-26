@@ -1334,6 +1334,7 @@ class Service(BaseService):
 
                 image_path = Path(item.external_id)
                 if not image_path.is_file():
+                    logger.warning("Input slide '%s' not found, skipping QuPath annotation.", image_path)
                     continue
                 for artifact in item.output_artifacts:
                     if (
