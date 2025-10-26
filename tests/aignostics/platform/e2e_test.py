@@ -23,14 +23,18 @@ from aignostics import platform
 from aignostics.platform.resources.runs import Run
 from tests.constants_test import (
     HETA_APPLICATION_ID,
-    HETA_APPLICATION_TIMEOUT_SECONDS,
     HETA_APPLICATION_VERSION,
     HETA_SINGLE_SPOT_GS_URL,
     TEST_APPLICATION_ID,
-    TEST_APPLICATION_TIMEOUT_SECONDS,
     TEST_APPLICATION_VERSION,
     TEST_THREE_SPOTS_GS_URLS,
 )
+
+TEST_APPLICATION_DEADLINE_SECONDS = 60 * 45  # 45 minutes
+TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
+
+HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
+HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
 
 
 def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
@@ -43,7 +47,7 @@ def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         HETA_SINGLE_SPOT_GS_URL,
-                        HETA_APPLICATION_TIMEOUT_SECONDS,
+                        HETA_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "5onqtA==",
@@ -73,7 +77,7 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         TEST_THREE_SPOTS_GS_URLS[0],
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                        TEST_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "9l3NNQ==",
@@ -92,7 +96,7 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         TEST_THREE_SPOTS_GS_URLS[1],
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                        TEST_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "w+ud3g==",
@@ -111,7 +115,7 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
                         TEST_THREE_SPOTS_GS_URLS[2],
-                        TEST_APPLICATION_TIMEOUT_SECONDS,
+                        TEST_APPLICATION_DEADLINE_SECONDS,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "Zmx0wA==",
@@ -130,9 +134,9 @@ def _run_application_test(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
+    due_date_seconds: int,
+    deadline_seconds: int,
     checksum_attribute_key: str = "checksum_base64_crc32c",
-    due_date_seconds: int = 60 * 60,
-    deadline_seconds: int = 60 * 60 * 3,
 ) -> None:
     """Helper function to run an application test.
 
@@ -142,9 +146,9 @@ def _run_application_test(  # noqa: PLR0913, PLR0917
         application_id (str): The application ID to use for the test.
         application_version (str): The application version to use for the test.
         payload (list[platform.InputItem]): The input items for the application run.
-        checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
         due_date_seconds (int): The due date in seconds from now for the application run.
         deadline_seconds (int): The deadline in seconds from now for the application run.
+        checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
     Raises:
         AssertionError: If any of the validation checks fail.
@@ -173,7 +177,7 @@ def _run_application_test(  # noqa: PLR0913, PLR0917
 @pytest.mark.skip(reason="v0.0.4 on production balking on whole_slide_image input")
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=TEST_APPLICATION_TIMEOUT_SECONDS + 60 * 10)
+@pytest.mark.timeout(timeout=TEST_APPLICATION_DEADLINE_SECONDS + 60 * 30)
 def test_application_runs_test_version() -> None:
     """Test application runs with the test application.
 
@@ -188,14 +192,15 @@ def test_application_runs_test_version() -> None:
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
         payload=_get_three_spots_payload_for_test(),
-        deadline_seconds=TEST_APPLICATION_TIMEOUT_SECONDS,
+        deadline_seconds=TEST_APPLICATION_DEADLINE_SECONDS,
+        due_date_seconds=TEST_APPLICATION_DUE_DATE_SECONDS,
     )
 
 
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_TIMEOUT_SECONDS + 60 * 10)
+@pytest.mark.timeout(timeout=HETA_APPLICATION_DEADLINE_SECONDS + 60 * 30)
 def test_application_runs_heta_version() -> None:
     """Test application runs with the HETA application.
 
@@ -210,7 +215,8 @@ def test_application_runs_heta_version() -> None:
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta(),
-        deadline_seconds=HETA_APPLICATION_TIMEOUT_SECONDS,
+        deadline_seconds=HETA_APPLICATION_DEADLINE_SECONDS,
+        due_date_seconds=HETA_APPLICATION_DUE_DATE_SECONDS,
     )
 
 
