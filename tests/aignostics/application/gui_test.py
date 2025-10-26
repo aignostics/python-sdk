@@ -372,7 +372,7 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
         input_dir = run_dir / "input"
         assert input_dir.is_dir(), f"Expected input directory {input_dir} not found"
 
-        results_dir = run_dir / run.run_id / HETA_SINGLE_SPOT_FILENAME.replace(".tiff", "")
+        results_dir = run_dir / HETA_SINGLE_SPOT_FILENAME.replace(".tiff", "")
         assert results_dir.is_dir(), f"Expected run results directory {results_dir} not found"
 
         # Check for input file having been downloaded

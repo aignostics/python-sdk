@@ -55,6 +55,7 @@ from aignostics.platform._sdk_metadata import (
 from aignostics.platform._settings import settings
 from aignostics.platform._utils import (
     calculate_file_crc32c,
+    convert_to_json_serializable,
     download_file,
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
@@ -66,7 +67,7 @@ from aignostics.utils import get_logger, user_agent
 logger = get_logger(__name__)
 
 RETRYABLE_EXCEPTIONS = (
-    ServiceException,
+    ServiceException,  # TODO(Helmut): Do we want this down the road?
     Urllib3TimeoutError,
     PoolError,
     IncompleteRead,
@@ -155,13 +156,12 @@ class Run:
         Raises:
             Exception: If the API request fails.
         """
-        # Clear all caches since run state is changing
-        operation_cache_clear()
         self._api.cancel_run_v1_runs_run_id_cancel_post(
             self.run_id,
             _request_timeout=settings().run_cancel_timeout,
             _headers={"User-Agent": user_agent()},
         )
+        operation_cache_clear()  # Clear all caches since we added a new run
 
     def delete(self) -> None:
         """Delete the application run.
@@ -169,13 +169,12 @@ class Run:
         Raises:
             Exception: If the API request fails.
         """
-        # Clear all caches since run is being deleted
-        operation_cache_clear()
         self._api.delete_run_items_v1_runs_run_id_artifacts_delete(
             self.run_id,
             _request_timeout=settings().run_delete_timeout,
             _headers={"User-Agent": user_agent()},
         )
+        operation_cache_clear()  # Clear all caches since we added a new run
 
     def results(self, nocache: bool = False) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
@@ -431,21 +430,27 @@ class Runs:
         payload = RunCreationRequest(
             application_id=application_id,
             version_number=application_version,
-            custom_metadata=custom_metadata,
+            custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
             items=items,
         )
         self._validate_input_items(payload)
-        # Clear all caches since we added a new run
-        operation_cache_clear()
         res: RunCreationResponse = self._api.create_run_v1_runs_post(
             payload,
             _request_timeout=settings().run_submit_timeout,
             _headers={"User-Agent": user_agent()},
         )
+        operation_cache_clear()  # Clear all caches since we added a new run
         return Run(self._api, str(res.run_id))
 
-    def list(
-        self, application_id: str | None = None, application_version: str | None = None, nocache: bool = False
+    def list(  # noqa: PLR0913, PLR0917
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        custom_metadata: str | None = None,
+        sort: str | None = None,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+        nocache: bool = False,
     ) -> Iterator[Run]:
         """Find application runs, optionally filtered by application id and/or version.
 
@@ -454,41 +459,32 @@ class Runs:
         Args:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version to filter by.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
+            custom_metadata (str | None): Optional metadata filter in JSONPath format.
+            sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
+            page_size (int): Number of items per page, defaults to max
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
-            Iterator[Run]: An iterator yielding application runs.
+            Iterator[Run]: An iterator yielding application run handles.
 
         Raises:
+            ValueError: If page_size is greater than 100.
             Exception: If the API request fails.
         """
-
-        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
-        def list_with_retry(**kwargs: object) -> list[RunData]:
-            return Retrying(
-                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().run_retry_attempts),
-                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
-                reraise=True,
-            )(
-                lambda: self._api.list_runs_v1_runs_get(
-                    _request_timeout=settings().run_timeout,
-                    _headers={"User-Agent": user_agent()},
-                    **kwargs,  # pyright: ignore[reportArgumentType]
-                )
-            )
-
-        res = paginate(
-            lambda **kwargs: list_with_retry(
+        return (
+            Run(self._api, response.run_id)
+            for response in self.list_data(
                 application_id=application_id,
                 application_version=application_version,
+                external_id=external_id,
+                custom_metadata=custom_metadata,
+                sort=sort,
+                page_size=page_size,
                 nocache=nocache,
-                **kwargs,
             )
         )
-        return (Run(self._api, response.run_id) for response in res)
 
     def list_data(  # noqa: PLR0913, PLR0917
         self,

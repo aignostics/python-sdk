@@ -10,7 +10,7 @@ HETA_SINGLE_SPOT_GS_URL = (
     "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 )
 HETA_SINGLE_SPOT_FILENAME = "8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
-HETA_SINGLE_SPOT_FILESIZE = 14681750  # in bytes
+HETA_SINGLE_SPOT_FILESIZE = 10562338  # in bytes
 HETA_SINGLE_SPOT_EXPECTED_RESULT_FILES = [
     ("tissue_segmentation_csv_class_information.csv", 342, 10),
     ("cell_classification_geojson_polygons.json", 16054058, 10),
@@ -27,7 +27,7 @@ HETA_ANOTHER_SPOT_GS_URL = (
     "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
 )
 HETA_ANOTHER_SPOT_FILENAME = "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
-HETA_ANOTHER_SPOT_FILESIZE = 10562338  # in bytes
+HETA_ANOTHER_SPOT_FILESIZE = 14681750  # in bytes
 HETA_ANOTHER_SPOT_EXPECTED_RESULT_FILES = [
     ("tissue_segmentation_csv_class_information.csv", 361, 10),
     ("cell_classification_geojson_polygons.json", 9915953, 10),

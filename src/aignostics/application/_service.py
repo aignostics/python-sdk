@@ -574,7 +574,7 @@ class Service(BaseService):
             )
         ]
 
-    def application_runs(  # noqa: PLR0913, PLR0917
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0917
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -582,6 +582,7 @@ class Service(BaseService):
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
         limit: int | None = None,
     ) -> list[RunData]:
         """Get a list of all application runs.
@@ -594,6 +595,8 @@ class Service(BaseService):
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                If None, no filtering is applied.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
@@ -607,12 +610,30 @@ class Service(BaseService):
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
+            custom_metadata = None
+            client_side_note_filter = None
+
+            # Handle note_regex filter
             if note_regex:
                 flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
-                custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
-            else:
-                custom_metadata = None
+                # If we also have tags, we'll need to do note filtering client-side
+                if tags:
+                    # Store for client-side filtering
+                    client_side_note_filter = (note_regex, note_query_case_insensitive)
+                else:
+                    # No tags, so we can filter note on backend
+                    custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
 
+            # Handle tags filter
+            if tags:
+                # JSONPath filter to match all of the provided tags in the sdk.tags array
+                # PostgreSQL limitation: Cannot use && between separate path expressions as backend crashes with 500
+                # Workaround: Filter on backend for ANY tag match, then filter client-side for ALL
+                # Use regex alternation to match any of the tags
+                escaped_tags = [tag.replace('"', '\\"').replace("\\", "\\\\") for tag in tags]
+                # Create regex pattern: ^(tag1|tag2|tag3)$
+                regex_pattern = "^(" + "|".join(escaped_tags) + ")$"
+                custom_metadata = f'$.sdk.tags ? (@ like_regex "{regex_pattern}")'
             run_iterator = self._get_platform_client().runs.list_data(
                 application_id=application_id,
                 application_version=application_version,
@@ -624,6 +645,38 @@ class Service(BaseService):
             for run in run_iterator:
                 if has_output and run.output == RunOutput.NONE:
                     continue
+
+                # Client-side filtering when combining multiple criteria
+                # 1. If multiple tags specified, ensure ALL are present
+                if tags and len(tags) > 1:
+                    # Backend filter with regex alternation matches ANY tag
+                    # Now verify ALL tags are present in run metadata
+                    run_tags = set()
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        if "tags" in sdk_metadata:
+                            run_tags = set(sdk_metadata.get("tags", []))
+
+                    # Check if all required tags are present
+                    if not tags.issubset(run_tags):
+                        continue  # Skip this run, not all tags match
+
+                # 2. If note filter is applied client-side (when combined with tags)
+                if client_side_note_filter:
+                    note_pattern, case_insensitive = client_side_note_filter
+                    run_note = None
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        run_note = sdk_metadata.get("note")
+
+                    # Check if note matches the regex pattern
+                    if run_note:
+                        flags = re.IGNORECASE if case_insensitive else 0
+                        if not re.search(note_pattern, run_note, flags):
+                            continue  # Skip this run, note doesn't match
+                    else:
+                        continue  # Skip this run, no note present
+
                 runs.append(run)
                 if limit is not None and len(runs) >= limit:
                     break
@@ -659,6 +712,7 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
+        tags: set[str] | None = None,
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
@@ -671,6 +725,7 @@ class Service(BaseService):
             metadata (list[dict[str, Any]]): The metadata for the run.
             custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
             note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
             due_date (str | None): An optional requested completion time for the run, ISO8601 format.
                 The scheduler will try to complete the run before this time, taking
                 the subscription tier and available GPU resources into account.
@@ -773,6 +828,7 @@ class Service(BaseService):
                 application_version=app_version.version_number,
                 custom_metadata=custom_metadata,
                 note=note,
+                tags=tags,
                 due_date=due_date,
                 deadline=deadline,
                 onboard_to_aignostics_portal=onboard_to_aignostics_portal,
@@ -807,6 +863,7 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
+        tags: set[str] | None = None,
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
@@ -820,6 +877,7 @@ class Service(BaseService):
             application_version (str | None): The version of the application to run.
             custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
             note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
             due_date (str | None): An optional requested completion time for the run, ISO8601 format.
                 The scheduler will try to complete the run before this time, taking
                 the subscription tier and available GPU resources into account.
@@ -844,18 +902,26 @@ class Service(BaseService):
         try:
             if custom_metadata is None:
                 custom_metadata = {}
-            custom_metadata["sdk"] = {
-                "note": note,
-                "workflow": {
+
+            sdk_metadata: dict[str, Any] = {}
+            if note:
+                sdk_metadata["note"] = note
+            if tags:
+                sdk_metadata["tags"] = tags
+            if onboard_to_aignostics_portal or validate_only:
+                sdk_metadata["workflow"] = {
                     "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
                     "validate_only": validate_only,
-                },
-                "scheduling": {
-                    "due_date": due_date,
-                    "deadline": deadline,
-                },
-            }
-            custom_metadata["sdk"]["note"] = note
+                }
+            if due_date or deadline:
+                sdk_metadata["scheduling"] = {}
+                if due_date:
+                    sdk_metadata["scheduling"]["due_date"] = due_date
+                if deadline:
+                    sdk_metadata["scheduling"]["deadline"] = deadline
+
+            custom_metadata["sdk"] = sdk_metadata
+
             return self._get_platform_client().runs.submit(
                 application_id=application_id,
                 items=items,

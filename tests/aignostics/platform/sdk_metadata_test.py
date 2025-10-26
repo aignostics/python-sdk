@@ -507,6 +507,127 @@ class TestRunSdkMetadataValidation:
 
     @pytest.mark.unit
     @staticmethod
+    def test_validate_with_tags_set() -> None:
+        """Test validation with tags as a set of strings."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "test-agent/1.0",
+            "tags": {"experiment", "production", "v2"},
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_with_empty_tags_set() -> None:
+        """Test validation with empty tags set."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "test-agent/1.0",
+            "tags": set(),
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_with_tags_none() -> None:
+        """Test validation with tags as None."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "test-agent/1.0",
+            "tags": None,
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_without_tags_field() -> None:
+        """Test validation when tags field is omitted entirely."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "test-agent/1.0",
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_with_tags_list_converted_to_set() -> None:
+        """Test that list is automatically converted to set by Pydantic."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "test-agent/1.0",
+            "tags": ["tag1", "tag2"],  # List gets converted to set
+        }
+
+        # Validation should succeed as Pydantic converts list to set
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_with_tags_invalid_type_dict() -> None:
+        """Test validation fails when tags is a dict instead of set."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "test-agent/1.0",
+            "tags": {"key": "value"},  # Dict instead of set
+        }
+
+        with pytest.raises(ValidationError):
+            validate_run_sdk_metadata(metadata)
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_with_tags_non_string_values() -> None:
+        """Test validation fails when tags contains non-string values."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "test-agent/1.0",
+            "tags": {"valid", 123, None},  # Mixed types
+        }
+
+        with pytest.raises(ValidationError):
+            validate_run_sdk_metadata(metadata)
+
+    @pytest.mark.unit
+    @staticmethod
     def test_validate_sdk_metadata_silent_valid(clean_env: None) -> None:
         """Test silent validation with valid metadata."""
         with patch("aignostics.platform._client.Client") as mock_client:
@@ -664,3 +785,70 @@ class TestItemSdkMetadata:
         assert "schema_version" in schema["properties"]
         assert "required" in schema
         assert "schema_version" in schema["required"]
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_with_tags() -> None:
+        """Test validation of item metadata with tags as a set of strings."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "tags": {"slide", "tumor", "he-stained"},
+        }
+
+        assert validate_item_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_with_empty_tags() -> None:
+        """Test validation of item metadata with empty tags set."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "tags": set(),
+        }
+
+        assert validate_item_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_with_tags_none() -> None:
+        """Test validation of item metadata with tags as None."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "tags": None,
+        }
+
+        assert validate_item_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_without_tags() -> None:
+        """Test validation of item metadata when tags field is omitted."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+        }
+
+        assert validate_item_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_tags_list_converted() -> None:
+        """Test that list is automatically converted to set by Pydantic."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "tags": ["tag1", "tag2"],  # List gets converted to set
+        }
+
+        # Validation should succeed as Pydantic converts list to set
+        assert validate_item_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_validate_item_metadata_tags_non_string() -> None:
+        """Test validation fails when tags contains non-string values."""
+        metadata = {
+            "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+            "tags": {"valid", 123},  # Mixed types
+        }
+
+        with pytest.raises(ValidationError):
+            validate_item_sdk_metadata(metadata)

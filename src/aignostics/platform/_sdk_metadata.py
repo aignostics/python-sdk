@@ -15,8 +15,8 @@ from aignostics.utils import get_logger, user_agent
 
 logger = get_logger(__name__)
 
-SDK_METADATA_SCHEMA_VERSION = "0.0.2"
-ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.1"
+SDK_METADATA_SCHEMA_VERSION = "0.0.3"
+ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.2"
 
 
 class SubmissionMetadata(BaseModel):
@@ -111,6 +111,8 @@ class RunSdkMetadata(BaseModel):
     schema_version: str = Field(
         ..., description="Schema version for this metadata format", pattern=r"^\d+\.\d+\.\d+-?.*$"
     )
+
+    tags: set[str] | None = Field(None, description="Optional list of tags associated with the run")
     submission: SubmissionMetadata = Field(..., description="Submission context metadata")
     user_agent: str = Field(..., description="User agent string for the SDK client")
     user: UserMetadata | None = Field(None, description="User information (when authenticated)")
@@ -141,6 +143,8 @@ class ItemSdkMetadata(BaseModel):
     schema_version: str = Field(
         ..., description="Schema version for this metadata format", pattern=r"^\d+\.\d+\.\d+-?.*$"
     )
+
+    tags: set[str] | None = Field(None, description="Optional list of tags associated with the item")
     platform_bucket: PlatformBucketMetadata | None = Field(None, description="Platform bucket storage information")
 
     model_config = {"extra": "forbid"}  # Reject unknown fields

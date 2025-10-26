@@ -624,6 +624,10 @@ def run_submit(  # noqa: PLR0913, PLR0917
         str | None,
         typer.Option(help="Optional note to include with the run submission via custom metadata."),
     ] = None,
+    tags: Annotated[
+        str | None,
+        typer.Option(help="Optional comma-separated list of tags to attach to the run for filtering."),
+    ] = None,
     due_date: Annotated[
         str | None,
         typer.Option(
@@ -703,6 +707,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
             application_version=application_version,
             custom_metadata=None,  # TODO(Helmut): Add support for custom metadata
             note=note,
+            tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
             due_date=due_date,
             deadline=deadline,
             onboard_to_aignostics_portal=onboard_to_aignostics_portal,
@@ -740,12 +745,31 @@ def run_submit(  # noqa: PLR0913, PLR0917
 def run_list(
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
     limit: Annotated[int | None, typer.Option(help="Maximum number of runs to display")] = None,
+    tags: Annotated[
+        str | None,
+        typer.Option(help="Optional comma-separated list of tags to filter runs. All tags must match."),
+    ] = None,
+    note_regex: Annotated[
+        str | None,
+        typer.Option(help="Optional regex pattern to filter runs by note metadata."),
+    ] = None,
+    note_case_insensitive: Annotated[bool, typer.Option(help="Make note regex search case-insensitive.")] = True,
 ) -> None:
     """List runs."""
     try:
-        runs = Service().application_runs(limit=limit)
+        runs = Service().application_runs(
+            limit=limit,
+            tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
+            note_regex=note_regex,
+            note_query_case_insensitive=note_case_insensitive,
+        )
         if len(runs) == 0:
-            message = "You did not yet create a run."
+            if tags:
+                message = f"You did not yet create a run matching tags: {tags!r}."
+            elif note_regex:
+                message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+            else:
+                message = "You did not yet create a run."
             logger.warning(message)
             console.print(message, style="warning")
         else:

@@ -591,7 +591,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.metadata_exclude_button.disable()
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
-        with ui.step("Leave Note"):
+        with ui.step("Leave Note and Tags"):
             with ui.column(align_items="start").classes("w-full"):
                 ui.textarea(
                     label="Note (optional)",

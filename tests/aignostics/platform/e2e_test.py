@@ -137,12 +137,13 @@ def _get_three_spots_payload_for_test(expires_seconds: int) -> list[platform.Inp
     ]
 
 
-def _submit_and_validate(
+def _submit_and_validate(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
     due_date_seconds: int,
     deadline_seconds: int,
+    tags: set[str] | None = None,
 ) -> Run:
     """Submit application run and validate its details.
 
@@ -152,6 +153,7 @@ def _submit_and_validate(
         payload (list[platform.InputItem]): The input items for the application run.
         due_date_seconds (int): The due date in seconds from now for the application run.
         deadline_seconds (int): The deadline in seconds from now for the application run.
+        tags (set[str] | None): A set of tags to attach to the application run.
 
     Raises:
         AssertionError: If any of the validation checks fail.
@@ -163,7 +165,7 @@ def _submit_and_validate(
         items=payload,
         custom_metadata={
             "sdk": {
-                "note": "_run_application_test",
+                "tags": tags or set(),
                 "scheduling": {
                     "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
                     "deadline": (datetime.now(tz=UTC) + timedelta(seconds=deadline_seconds)).isoformat(),
@@ -178,6 +180,26 @@ def _submit_and_validate(
     assert details.state in {RunState.PENDING, RunState.PROCESSING}, (
         f"Unexpected run state `{details.state}` after submission"
     )
+
+    # Build JSONPath filter for tags if provided
+    tags_filter = None
+    if tags:
+        # JSONPath filter to match all of the provided tags in the sdk.tags array
+        # PostgreSQL JSONPath: Use equality operator for exact match
+        for tag in tags:
+            tag_condition = f'$.sdk.tags ? (@ == "{tag}")'
+            tags_filter = f"({tags_filter}) && ({tag_condition})" if tags_filter else tag_condition
+
+    runs = client.runs.list(
+        application_id=application_id,
+        application_version=application_version,
+        custom_metadata=tags_filter,
+    )
+
+    # Find the submitted run in the list
+    matched_runs = [r for r in runs if r.run_id == run.run_id]
+    assert len(matched_runs) == 1, f"Submitted run `{run.run_id}` not found in run listing"
+
     return run
 
 
@@ -187,6 +209,7 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
     payload: list[platform.InputItem],
     due_date_seconds: int,
     deadline_seconds: int,
+    tags: set[str] | None = None,
     checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
     """Helper function to run an application test.
@@ -200,6 +223,7 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
         payload (list[platform.InputItem]): The input items for the application run.
         due_date_seconds (int): The due date in seconds from now for the application run.
         deadline_seconds (int): The deadline in seconds from now for the application run.
+        tags (set[str] | None): A set of tags to attach to the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
     Raises:
@@ -211,6 +235,7 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
         payload=payload,
         due_date_seconds=due_date_seconds,
         deadline_seconds=deadline_seconds,
+        tags=tags,
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -264,6 +289,7 @@ def test_platform_test_app_submit_and_wait() -> None:
         payload=_get_three_spots_payload_for_test(),
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+        tags=["test_platform_test_app_submit_and_wait"],
     )
 
 
@@ -290,6 +316,7 @@ def test_platform_heta_app_submit_and_wait() -> None:
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
+        tags=["test_platform_heta_app_submit_and_wait"],
     )
 
 
@@ -313,6 +340,7 @@ def test_platform_test_app_submit() -> None:
         ),
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
+        tags=["test_platform_heta_app_submit_and_wait"],
     )
 
 
@@ -362,6 +390,7 @@ def test_platform_heta_app_submit() -> None:
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+        tags=["test_platform_heta_app_submit_and_find"],
     )
 
 

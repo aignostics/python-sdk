@@ -295,7 +295,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
             pytest.fail(f"Failed to kill QuPath process: {e}")
 
         # Step 7: Inspect QuPath results
-        result = runner.invoke(cli, ["qupath", "inspect", str(run_dir / "qupath")])
+        result = runner.invoke(cli, ["qupath", "inspect", str(qupath_dir)])
         output = normalize_output(result.output, strip_ansi=True)
         print(repr(output))
 
