@@ -1,6 +1,61 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.195](https://github.com/aignostics/python-sdk/compare/v0.2.194..0.2.195) - 2025-10-23
+# [0.2.196](https://github.com/aignostics/python-sdk/compare/v0.2.195..0.2.196) - 2025-10-26
+
+### ⛰️  Features
+
+- *(application)* Custom run and item metadata can be dumped as JSON via the CLI - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(application)* Custom run metadata can be updated via the CLI - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(application)* Custom run metadata can be edited via the GUI (admins only) - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(application)* Allow to submit tags via CLI and find back runs via tags - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(application)* Support download of results for input items where external_ids points to GCP bucket or webserver. - ([79875f3](https://github.com/aignostics/python-sdk/commit/79875f3a4f8245a14545ccca1005772419f611f2))
+- *(application)* Scrollable runs in sidebar with auto-refresh and notifier on run terminated - ([79875f3](https://github.com/aignostics/python-sdk/commit/79875f3a4f8245a14545ccca1005772419f611f2))
+- *(application)* Generate, show and validate custom metadata for input items - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(application)* Support for test-app in GUI - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(application)* Show error code on failed items - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(application)* Show more more details in CLI commands applicaton run list and application run describe - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(platform)* Support for tags in custom sdk metadata, run and item-level - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Support created_at and updated_at in custom sdk metadata, run and item-level - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Support nocache=True on cached operations - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Custom run and item metadata can be updated - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+
+### 🚜 Refactor
+
+- *(application)* Improve dryness - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(dataset)* Move business logic to from CLI to service. ([#204](https://github.com/orhun/git-cliff/issues/204)) - ([79875f3](https://github.com/aignostics/python-sdk/commit/79875f3a4f8245a14545ccca1005772419f611f2))
+- *(dataset)* Move business logic to from CLI to service. - ([79875f3](https://github.com/aignostics/python-sdk/commit/79875f3a4f8245a14545ccca1005772419f611f2))
+
+### 📚 Documentation
+
+- *(AI)* Update - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(application)* Auto-generate json schema from pydantic models for sdk specific custom metadata of input items - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+
+### 🧪 Testing
+
+- *(application)* Re-classified test_cli_run_describe_invalid_uuid as e2e - ([d600904](https://github.com/aignostics/python-sdk/commit/d60090434a1131d98ddbd43a51b4ccd73c258a74))
+- *(application)* Fix race condition in test - ([21febad](https://github.com/aignostics/python-sdk/commit/21febad65feab1155b875c985d474d04a4a06ece))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(ai)* Improve vscode/agent guidance - ([fdc7b01](https://github.com/aignostics/python-sdk/commit/fdc7b0154c0038b85e754fc2769f49b7d95cb186))
+- *(deps)* Bump - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Fix race condition in e2e test due to caching ([#206](https://github.com/orhun/git-cliff/issues/206)) - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Improved depth of tests - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Fix race condition in e2e test due to caching by using nocache - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Start with submit-and-find e2e tests later replacing submit-and-wait - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(platform)* Fix test - ([6dee520](https://github.com/aignostics/python-sdk/commit/6dee52010b9399024da95f1014c55ea977809c32))
+- *(qupath)* Enable complex automated test scenario covering creating QuPath projects - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- *(qupath)* Reenable E2E Test Scenario (Download -> Create Project -> Inspect) - ([fdc7b01](https://github.com/aignostics/python-sdk/commit/fdc7b0154c0038b85e754fc2769f49b7d95cb186))
+- *(tests)* Strip ansi codes by default when normalizing output, reducing flakiness of tests in rare scenarios - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(tests)* Significantly improve daily scheduled test now called flow tests, including beating heart on - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(tests)* PLATFORM_ENVIRONMENT dependent app versions in tests - ([fdc7b01](https://github.com/aignostics/python-sdk/commit/fdc7b0154c0038b85e754fc2769f49b7d95cb186))
+- Chore(deps); bump - ([fdc7b01](https://github.com/aignostics/python-sdk/commit/fdc7b0154c0038b85e754fc2769f49b7d95cb186))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.195](https://github.com/aignostics/python-sdk/compare/v0.2.194..v0.2.195) - 2025-10-23
 
 ### 🛡️ Security
 
@@ -1762,3 +1817,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
