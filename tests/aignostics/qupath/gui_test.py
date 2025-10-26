@@ -245,7 +245,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         results_dir = run_dir / HETA_SINGLE_SPOT_FILENAME.replace(".tiff", "")
         assert results_dir.is_dir(), f"Expected run results directory {results_dir} not found"
 
-        qupath_dir = tmp_path / "qupath"
+        qupath_dir = run_dir / "qupath"
         assert qupath_dir.is_dir(), f"Expected QuPath directory {qupath_dir} not found"
 
         # Check for input file having been downloaded
