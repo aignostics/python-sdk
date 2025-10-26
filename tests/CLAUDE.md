@@ -101,7 +101,7 @@ def test_application_version_formats():
 
 ### SDK Metadata Testing (`platform/sdk_metadata_test.py`)
 
-**NEW FEATURE TESTS (v1.0.0-beta.7):** Comprehensive testing of the SDK metadata system ensuring robust tracking and validation.
+**ENHANCED FEATURE TESTS (Run v0.0.4, Item v0.0.3):** Comprehensive testing of the SDK metadata system with separate Run and Item metadata schemas, tags support, and timestamps.
 
 **Test Coverage:**
 
@@ -159,7 +159,7 @@ class TestBuildSdkMetadata:
         # Set GitHub Actions environment variables
         os.environ["GITHUB_RUN_ID"] = "12345"
         os.environ["GITHUB_REPOSITORY"] = "aignostics/python-sdk"
-        os.environ["GITHUB_SHA"] = "abc123def456"
+        os.environ["GITHUB_SHA"] = "abc123def456" # pragma: allowlist secret
         os.environ["GITHUB_REF"] = "refs/heads/main"
         os.environ["GITHUB_WORKFLOW"] = "CI/CD"
 
@@ -170,7 +170,7 @@ class TestBuildSdkMetadata:
         assert "github" in metadata["ci"]
         assert metadata["ci"]["github"]["run_id"] == "12345"
         assert metadata["ci"]["github"]["repository"] == "aignostics/python-sdk"
-        assert metadata["ci"]["github"]["sha"] == "abc123def456"
+        assert metadata["ci"]["github"]["sha"] == "abc123def456" # pragma: allowlist secret
         assert metadata["ci"]["github"]["run_url"] == (
             "https://github.com/aignostics/python-sdk/actions/runs/12345"
         )
@@ -348,7 +348,255 @@ Tested in `application/service_test.py` and `application/cli_test.py` to ensure 
 6. **Optional Fields**: Verify system works with missing optional fields
 7. **Error Cases**: Test validation catches all invalid inputs
 
+### Cache Bypass Testing (`platform/nocache_test.py` - NEW in v1.0.0-beta.7)
+
+**Comprehensive testing of the nocache parameter** for cache bypass functionality across all cached operations.
+
+**Test Coverage:**
+
+1. **Decorator Behavior Tests** - Verify @cached_operation decorator handles nocache correctly
+2. **Client Method Tests** - Test nocache on Client.me(), Client.application(), Client.application_version()
+3. **Resource Method Tests** - Test nocache on Runs.list(), Run.details(), Applications.list()
+4. **Edge Case Tests** - Expired cache entries, multiple consecutive nocache calls, interleaved usage
+5. **Cache Clear Integration** - Test interaction between nocache and cache clearing
+
+**Core Testing Principles:**
+
+```python
+class TestNocacheDecoratorBehavior:
+    """Test the nocache parameter handling in the cached_operation decorator."""
+
+    def test_decorator_without_nocache_uses_cache() -> None:
+        """Verify default behavior uses cache."""
+        call_count = 0
+
+        @cached_operation(ttl=60, use_token=False)
+        def test_func() -> int:
+            nonlocal call_count
+            call_count += 1
+            return call_count
+
+        # First call - executes function
+        result1 = test_func()
+        assert result1 == 1
+        assert call_count == 1
+
+        # Second call - uses cache
+        result2 = test_func()
+        assert result2 == 1  # Same value from cache
+        assert call_count == 1  # Function NOT called again
+
+    def test_decorator_with_nocache_true_skips_reading_cache() -> None:
+        """Verify nocache=True skips cache read."""
+        call_count = 0
+
+        @cached_operation(ttl=60, use_token=False)
+        def test_func() -> int:
+            nonlocal call_count
+            call_count += 1
+            return call_count
+
+        # First call - populates cache
+        result1 = test_func()
+        assert result1 == 1
+
+        # Second call with nocache=True - skips cache, executes function
+        result2 = test_func(nocache=True)
+        assert result2 == 2  # NEW value, not from cache
+        assert call_count == 2  # Function called again
+
+    def test_decorator_with_nocache_true_still_writes_to_cache() -> None:
+        """Verify nocache=True still writes result to cache."""
+        call_count = 0
+
+        @cached_operation(ttl=60, use_token=False)
+        def test_func() -> int:
+            nonlocal call_count
+            call_count += 1
+            return call_count
+
+        # First call - populates cache
+        result1 = test_func()
+        assert result1 == 1
+
+        # Second call with nocache=True - skips read, writes new value
+        result2 = test_func(nocache=True)
+        assert result2 == 2
+
+        # Third call without nocache - uses value cached by second call
+        result3 = test_func()
+        assert result3 == 2  # Uses value from second call
+        assert call_count == 2  # Function NOT called again
+
+    def test_decorator_nocache_parameter_not_passed_to_function() -> None:
+        """Verify nocache is intercepted and not passed to decorated function."""
+        received_kwargs = {}
+
+        @cached_operation(ttl=60, use_token=False)
+        def test_func(**kwargs: bool) -> dict:
+            nonlocal received_kwargs
+            received_kwargs = kwargs
+            return {"called": True}
+
+        # Call with nocache=True
+        test_func(nocache=True)
+
+        # The decorated function should NOT receive nocache in kwargs
+        assert "nocache" not in received_kwargs
 ```
+
+**Client Method Testing:**
+
+```python
+class TestClientMeNocache:
+    """Test nocache parameter for Client.me() method."""
+
+    def test_me_default_uses_cache(
+        client_with_mock_api: Client, mock_api_client: MagicMock
+    ) -> None:
+        """Verify me() uses cache by default."""
+        mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
+        mock_api_client.get_me_v1_me_get.return_value = mock_me_response
+
+        # First call
+        result1 = client_with_mock_api.me()
+        assert result1 == mock_me_response
+        assert mock_api_client.get_me_v1_me_get.call_count == 1
+
+        # Second call - should use cache
+        result2 = client_with_mock_api.me()
+        assert result2 == mock_me_response
+        assert mock_api_client.get_me_v1_me_get.call_count == 1  # No additional call
+
+    def test_me_nocache_true_fetches_fresh_data(
+        client_with_mock_api: Client, mock_api_client: MagicMock
+    ) -> None:
+        """Verify me(nocache=True) fetches fresh data."""
+        mock_me_response_1 = {"user_id": "user-1"}
+        mock_me_response_2 = {"user_id": "user-2"}
+
+        # First call - populates cache
+        mock_api_client.get_me_v1_me_get.return_value = mock_me_response_1
+        result1 = client_with_mock_api.me()
+        assert result1 == mock_me_response_1
+
+        # Change API response
+        mock_api_client.get_me_v1_me_get.return_value = mock_me_response_2
+
+        # Second call with nocache=True - fetches fresh data
+        result2 = client_with_mock_api.me(nocache=True)
+        assert result2 == mock_me_response_2
+        assert mock_api_client.get_me_v1_me_get.call_count == 2  # Additional call made
+
+    def test_me_nocache_true_updates_cache(
+        client_with_mock_api: Client, mock_api_client: MagicMock
+    ) -> None:
+        """Verify me(nocache=True) updates cache with fresh data."""
+        mock_me_response_1 = {"user_id": "user-1"}
+        mock_me_response_2 = {"user_id": "user-2"}
+
+        # First call - populates cache
+        mock_api_client.get_me_v1_me_get.return_value = mock_me_response_1
+        result1 = client_with_mock_api.me()
+
+        # Change API response
+        mock_api_client.get_me_v1_me_get.return_value = mock_me_response_2
+
+        # Second call with nocache=True - fetches and caches new data
+        result2 = client_with_mock_api.me(nocache=True)
+        assert result2 == mock_me_response_2
+
+        # Third call without nocache - uses updated cache
+        result3 = client_with_mock_api.me()
+        assert result3 == mock_me_response_2  # Uses new cached value
+        assert mock_api_client.get_me_v1_me_get.call_count == 2  # No additional call
+```
+
+**Edge Case Testing:**
+
+```python
+class TestNocacheEdgeCases:
+    """Test edge cases and special scenarios."""
+
+    def test_nocache_with_expired_cache_entry() -> None:
+        """Test nocache behavior when cache entry expired."""
+        @cached_operation(ttl=1, use_token=False)  # 1 second TTL
+        def test_func() -> int:
+            return time.time_ns()
+
+        # First call - populates cache
+        result1 = test_func()
+
+        # Wait for cache to expire
+        time.sleep(1.1)
+
+        # Call with nocache=True on expired entry
+        result2 = test_func(nocache=True)
+        assert result2 != result1  # Different value
+
+    def test_multiple_consecutive_nocache_calls() -> None:
+        """Test multiple consecutive calls with nocache=True."""
+        call_count = 0
+
+        @cached_operation(ttl=60, use_token=False)
+        def test_func() -> int:
+            nonlocal call_count
+            call_count += 1
+            return call_count
+
+        # Multiple calls with nocache=True
+        assert test_func(nocache=True) == 1
+        assert test_func(nocache=True) == 2
+        assert test_func(nocache=True) == 3
+        assert call_count == 3
+
+        # Last call without nocache uses cached value from third call
+        assert test_func() == 3
+        assert call_count == 3
+
+    def test_nocache_interleaved_with_normal_calls() -> None:
+        """Test interleaving nocache=True with normal cached calls."""
+        call_count = 0
+
+        @cached_operation(ttl=60, use_token=False)
+        def test_func() -> int:
+            nonlocal call_count
+            call_count += 1
+            return call_count
+
+        # Normal call - populates cache
+        assert test_func() == 1
+        assert call_count == 1
+
+        # Normal call - uses cache
+        assert test_func() == 1
+        assert call_count == 1
+
+        # Nocache call - skips cache, updates it
+        assert test_func(nocache=True) == 2
+        assert call_count == 2
+
+        # Normal call - uses updated cache
+        assert test_func() == 2
+        assert call_count == 2
+```
+
+**Key Testing Principles:**
+
+1. **Cache Read Bypass**: nocache=True skips reading from cache
+2. **Cache Write Preserved**: nocache=True still writes to cache
+3. **Parameter Interception**: nocache parameter intercepted by decorator, not passed to function
+4. **Cache Key Isolation**: nocache respects different cache keys (different function args)
+5. **Edge Case Coverage**: Expired entries, multiple consecutive calls, interleaved usage
+6. **Integration Testing**: Test across all cached Client and Resource methods
+7. **Signature Verification**: Test method signatures include nocache parameter with correct type hints
+
+**Use Cases Tested:**
+
+* **Testing**: Avoid race conditions from stale cached data
+* **Real-time Monitoring**: Ensure latest status in dashboards
+* **After Mutations**: Get fresh data immediately after updates
+* **Cache Refresh**: Force cache update without full cache clear
 
 ### Process Management Testing (`dataset/service_test.py`)
 

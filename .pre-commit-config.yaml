@@ -52,7 +52,7 @@ repos:
         args: ["--baseline", ".secrets.baseline"]
         additional_dependencies: ["gibberish-detector"]
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.8.9
+    rev: 0.9.5
     hooks:
       - id: uv-lock
   - repo: local

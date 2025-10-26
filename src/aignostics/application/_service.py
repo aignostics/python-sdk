@@ -66,7 +66,7 @@ APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
-class Service(BaseService):
+class Service(BaseService):  # noqa: PLR0904
     """Service of the application module."""
 
     _settings: Settings
@@ -531,6 +531,8 @@ class Service(BaseService):
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
         limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
@@ -542,13 +544,20 @@ class Service(BaseService):
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
             RuntimeError: If the application run list cannot be retrieved.
         """
         return [
@@ -562,6 +571,7 @@ class Service(BaseService):
                 "termination_reason": run.termination_reason,
                 "item_count": run.statistics.item_count,
                 "item_succeeded_count": run.statistics.item_succeeded_count,
+                "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
             }
             for run in Service().application_runs(
                 application_id=application_id,
@@ -570,11 +580,13 @@ class Service(BaseService):
                 has_output=has_output,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
+                tags=tags,
+                query=query,
                 limit=limit,
             )
         ]
 
-    def application_runs(  # noqa: PLR0913, PLR0917
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -582,6 +594,8 @@ class Service(BaseService):
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
         limit: int | None = None,
     ) -> list[RunData]:
         """Get a list of all application runs.
@@ -593,25 +607,115 @@ class Service(BaseService):
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                If None, no filtering is applied. Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
             RuntimeError: If the application run list cannot be retrieved.
         """
+        # Validate that query is not used with other metadata filters
+        if query is not None:
+            if note_regex is not None:
+                message = "Cannot use 'query' parameter together with 'note_regex' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+            if tags is not None:
+                message = "Cannot use 'query' parameter together with 'tags' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+
         if limit is not None and limit <= 0:
             return []
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
+            # Handle query parameter with union semantics (note OR tags)
+            if query is not None:
+                # Search for runs matching query in notes
+                note_runs_dict: dict[str, RunData] = {}
+                flag_case_insensitive = ' flag "i"'
+                escaped_query = query.replace("\\", "\\\\").replace('"', '\\"')
+                custom_metadata_note = f'$.sdk.note ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                note_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_note,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                )
+                for run in note_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    note_runs_dict[run.run_id] = run
+                    if limit is not None and len(note_runs_dict) >= limit:
+                        break
+
+                # Search for runs matching query in tags
+                tag_runs_dict: dict[str, RunData] = {}
+                custom_metadata_tags = f'$.sdk.tags ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                tag_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_tags,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                )
+                for run in tag_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    # Add to dict if not already present from note search
+                    if run.run_id not in note_runs_dict:
+                        tag_runs_dict[run.run_id] = run
+                    if limit is not None and len(note_runs_dict) + len(tag_runs_dict) >= limit:
+                        break
+
+                # Union of results from both searches
+                runs = list(note_runs_dict.values()) + list(tag_runs_dict.values())
+
+                # Apply limit after union
+                if limit is not None and len(runs) > limit:
+                    runs = runs[:limit]
+
+                return runs
+
+            custom_metadata = None
+            client_side_note_filter = None
+
+            # Handle note_regex filter
             if note_regex:
                 flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
-                custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
-            else:
-                custom_metadata = None
+                # If we also have tags, we'll need to do note filtering client-side
+                if tags:
+                    # Store for client-side filtering
+                    client_side_note_filter = (note_regex, note_query_case_insensitive)
+                else:
+                    # No tags, so we can filter note on backend
+                    custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
+
+            # Handle tags filter
+            if tags:
+                # JSONPath filter to match all of the provided tags in the sdk.tags array
+                # PostgreSQL limitation: Cannot use && between separate path expressions as backend crashes with 500
+                # Workaround: Filter on backend for ANY tag match, then filter client-side for ALL
+                # Use regex alternation to match any of the tags
+                escaped_tags = [tag.replace('"', '\\"').replace("\\", "\\\\") for tag in tags]
+                # Create regex pattern: ^(tag1|tag2|tag3)$
+                regex_pattern = "^(" + "|".join(escaped_tags) + ")$"
+                custom_metadata = f'$.sdk.tags ? (@ like_regex "{regex_pattern}")'
 
             run_iterator = self._get_platform_client().runs.list_data(
                 application_id=application_id,
@@ -624,6 +728,37 @@ class Service(BaseService):
             for run in run_iterator:
                 if has_output and run.output == RunOutput.NONE:
                     continue
+                # Client-side filtering when combining multiple criteria
+                # 1. If multiple tags specified, ensure ALL are present
+                if tags and len(tags) > 1:
+                    # Backend filter with regex alternation matches ANY tag
+                    # Now verify ALL tags are present in run metadata
+                    run_tags = set()
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        if "tags" in sdk_metadata:
+                            run_tags = set(sdk_metadata.get("tags", []))
+
+                    # Check if all required tags are present
+                    if not tags.issubset(run_tags):
+                        continue  # Skip this run, not all tags match
+
+                # 2. If note filter is applied client-side (when combined with tags)
+                if client_side_note_filter:
+                    note_pattern, case_insensitive = client_side_note_filter
+                    run_note = None
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        run_note = sdk_metadata.get("note")
+
+                    # Check if note matches the regex pattern
+                    if run_note:
+                        flags = re.IGNORECASE if case_insensitive else 0
+                        if not re.search(note_pattern, run_note, flags):
+                            continue  # Skip this run, note doesn't match
+                    else:
+                        continue  # Skip this run, no note present
+
                 runs.append(run)
                 if limit is not None and len(runs) >= limit:
                     break
@@ -659,6 +794,7 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
+        tags: set[str] | None = None,
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
@@ -671,6 +807,7 @@ class Service(BaseService):
             metadata (list[dict[str, Any]]): The metadata for the run.
             custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
             note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
             due_date (str | None): An optional requested completion time for the run, ISO8601 format.
                 The scheduler will try to complete the run before this time, taking
                 the subscription tier and available GPU resources into account.
@@ -773,6 +910,7 @@ class Service(BaseService):
                 application_version=app_version.version_number,
                 custom_metadata=custom_metadata,
                 note=note,
+                tags=tags,
                 due_date=due_date,
                 deadline=deadline,
                 onboard_to_aignostics_portal=onboard_to_aignostics_portal,
@@ -807,6 +945,7 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
+        tags: set[str] | None = None,
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
@@ -820,6 +959,7 @@ class Service(BaseService):
             application_version (str | None): The version of the application to run.
             custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
             note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
             due_date (str | None): An optional requested completion time for the run, ISO8601 format.
                 The scheduler will try to complete the run before this time, taking
                 the subscription tier and available GPU resources into account.
@@ -844,18 +984,26 @@ class Service(BaseService):
         try:
             if custom_metadata is None:
                 custom_metadata = {}
-            custom_metadata["sdk"] = {
-                "note": note,
-                "workflow": {
+
+            sdk_metadata: dict[str, Any] = {}
+            if note:
+                sdk_metadata["note"] = note
+            if tags:
+                sdk_metadata["tags"] = tags
+            if onboard_to_aignostics_portal or validate_only:
+                sdk_metadata["workflow"] = {
                     "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
                     "validate_only": validate_only,
-                },
-                "scheduling": {
-                    "due_date": due_date,
-                    "deadline": deadline,
-                },
-            }
-            custom_metadata["sdk"]["note"] = note
+                }
+            if due_date or deadline:
+                sdk_metadata["scheduling"] = {}
+                if due_date:
+                    sdk_metadata["scheduling"]["due_date"] = due_date
+                if deadline:
+                    sdk_metadata["scheduling"]["deadline"] = deadline
+
+            custom_metadata["sdk"] = sdk_metadata
+
             return self._get_platform_client().runs.submit(
                 application_id=application_id,
                 items=items,
@@ -870,6 +1018,141 @@ class Service(BaseService):
             message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
+
+    def application_run_update_custom_metadata(
+        self,
+        run_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for an existing application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        try:
+            logger.debug("Updating custom metadata for run with ID '%s'", run_id)
+            self._get_platform_client().run(run_id).update_custom_metadata(custom_metadata)
+            logger.debug("Updated custom metadata for run with ID '%s'", run_id)
+        except ValueError as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_custom_metadata_static(
+        run_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Static wrapper for updating custom metadata for an application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        Service().application_run_update_custom_metadata(run_id, custom_metadata)
+
+    def application_run_update_item_custom_metadata(
+        self,
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for an existing item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        try:
+            logger.debug(
+                "Updating custom metadata for item '%s' in run with ID '%s'",
+                external_id,
+                run_id,
+            )
+            self._get_platform_client().run(run_id).update_item_custom_metadata(
+                external_id,
+                custom_metadata,
+            )
+            logger.debug(
+                "Updated custom metadata for item '%s' in run with ID '%s'",
+                external_id,
+                run_id,
+            )
+        except ValueError as e:
+            message = (
+                f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': ValueError {e}"
+            )
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' or item '{external_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' or item external ID '{external_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_item_custom_metadata_static(
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Static wrapper for updating custom metadata for an item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
 
     def application_run_cancel(self, run_id: str) -> None:
         """Cancel a run by its ID.
@@ -1061,7 +1344,8 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message) from e
 
-        for item_index, item in enumerate(application_run.results()):
+        results = list(application_run.results())
+        for item_index, item in enumerate(results):
             if item.external_id.startswith(("gs://", "http://", "https://")):
                 # Download URL to local input directory and update external_id
                 try:
@@ -1092,7 +1376,7 @@ class Service(BaseService):
 
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
-            for item in application_run.results():
+            for item in results:
                 local_path = Path(item.external_id)
                 if not local_path.is_file():
                     logger.warning("Input slide '%s' not found, skipping QuPath addition.", local_path)
@@ -1178,14 +1462,14 @@ class Service(BaseService):
                 update_progress(progress, download_progress_callable, download_progress_queue)
 
             total_annotations = 0
-            results = list(application_run.results())
             progress.item_count = len(results)
-            for item_index, item in enumerate(application_run.results()):
+            for item_index, item in enumerate(results):
                 progress.item_index = item_index
                 update_progress(progress, download_progress_callable, download_progress_queue)
 
                 image_path = Path(item.external_id)
                 if not image_path.is_file():
+                    logger.warning("Input slide '%s' not found, skipping QuPath annotation.", image_path)
                     continue
                 for artifact in item.output_artifacts:
                     if (

@@ -57,13 +57,15 @@ class Versions:
         """
         self._api = api
 
-    def list(self, application: Application | str) -> list[VersionTuple]:
+    def list(self, application: Application | str, nocache: bool = False) -> list[VersionTuple]:
         """Find all versions for a specific application.
 
         Retries on network and server errors.
 
         Args:
             application (Application | str): The application to find versions for, either object or id
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             list[VersionTuple]: List of the available application versions.
@@ -91,10 +93,12 @@ class Versions:
                 )
             )
 
-        app = list_with_retry(application_id)
+        app = list_with_retry(application_id, nocache=nocache)  # type: ignore[call-arg]
         return app.versions if app.versions is not None else []
 
-    def details(self, application_id: str, application_version: VersionTuple | str | None = None) -> ApplicationVersion:
+    def details(
+        self, application_id: str, application_version: VersionTuple | str | None = None, nocache: bool = False
+    ) -> ApplicationVersion:
         """Retrieves details for a specific application version.
 
         Retries on network and server errors.
@@ -103,6 +107,8 @@ class Versions:
             application_id (str): The ID of the application.
             application_version (VersionTuple | str | None): The version of the application.
                 If None, the latest version will be retrieved.
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             ApplicationVersion: The version details.
@@ -146,20 +152,22 @@ class Versions:
                 )
             )
 
-        return details_with_retry(application_id, application_version)
+        return details_with_retry(application_id, application_version, nocache=nocache)  # type: ignore[call-arg]
 
     # TODO(Helmut): Refactor given new API capabilities
-    def list_sorted(self, application: Application | str) -> builtins.list[VersionTuple]:
+    def list_sorted(self, application: Application | str, nocache: bool = False) -> builtins.list[VersionTuple]:
         """Get application versions sorted by semver, descending.
 
         Args:
             application (Application | str): The application to find versions for, either object or id
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             list[VersionTuple]: List of version objects sorted by semantic versioning (latest first),
                 or empty list if no versions are found
         """
-        versions = builtins.list(self.list(application=application))
+        versions = builtins.list(self.list(application=application, nocache=nocache))
 
         # If no versions available
         if not versions:
@@ -184,16 +192,18 @@ class Versions:
         # If we couldn't parse any versions, return all versions as is
         return versions
 
-    def latest(self, application: Application | str) -> VersionTuple | None:
+    def latest(self, application: Application | str, nocache: bool = False) -> VersionTuple | None:
         """Get latest version.
 
         Args:
             application (Application | str): The application to find versions for, either object or id
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             VersionTuple | None: The latest version, or None if no versions found.
         """
-        sorted_versions = self.list_sorted(application=application)
+        sorted_versions = self.list_sorted(application=application, nocache=nocache)
         return sorted_versions[0] if sorted_versions else None
 
 
@@ -212,13 +222,15 @@ class Applications:
         self._api = api
         self.versions: Versions = Versions(self._api)
 
-    def details(self, application_id: str) -> Application:
+    def details(self, application_id: str, nocache: bool = False) -> Application:
         """Find application by id.
 
         Retries on network and server errors.
 
         Args:
             application_id (str): The ID of the application.
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             Application: The application object
@@ -246,15 +258,17 @@ class Applications:
                 )
             )
 
-        return details_with_retry(application_id)
+        return details_with_retry(application_id, nocache=nocache)  # type: ignore[call-arg]
 
-    def list(self) -> t.Iterator[ApplicationSummary]:
+    def list(self, nocache: bool = False) -> t.Iterator[ApplicationSummary]:
         """Find all available applications.
 
         Retries on network and server errors for each page.
 
         Returns:
             Iterator[ApplicationSummary]: An iterator over the available applications.
+            notcache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Raises:
             aignx.codegen.exceptions.ApiException: If the API request fails.
@@ -280,4 +294,9 @@ class Applications:
                 )
             )
 
-        return paginate(list_with_retry)
+        return paginate(
+            lambda **kwargs: list_with_retry(
+                nocache=nocache,
+                **kwargs,
+            )
+        )

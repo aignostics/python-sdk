@@ -46,6 +46,7 @@ class SubmitForm:
     metadata_next_button: ui.button | None = None
     upload_and_submit_button: ui.button | None = None
     note: str | None = None
+    tags: list[str] | None = None
     due_date: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
     deadline: str = (datetime.now().astimezone() + timedelta(hours=24)).strftime("%Y-%m-%d %H:%M")
     validate_only: bool = False
@@ -591,7 +592,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.metadata_exclude_button.disable()
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
-        with ui.step("Leave Note"):
+        with ui.step("Notes and Tags"):
             with ui.column(align_items="start").classes("w-full"):
                 ui.textarea(
                     label="Note (optional)",
@@ -602,8 +603,15 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     ),
                 ).bind_value(submit_form, "note").mark("TEXTAREA_NOTE").classes("full-width")
 
+            ui.input_chips(
+                "Tags (optional, press Enter to add)",
+                value=submit_form.tags,
+                new_value_mode="add-unique",
+                clearable=True,
+            ).bind_value(submit_form, "tags").classes("full-width").mark("INPUT_TAGS")
+
             with ui.stepper_navigation():
-                ui.button("Next", on_click=stepper.next).mark("BUTTON_NOTES_NEXT")
+                ui.button("Next", on_click=stepper.next).mark("BUTTON_NOTES_AND_TAGS_NEXT")
                 ui.button("Back", on_click=stepper.previous).props("flat")
 
         with ui.step("Schedule"):
@@ -701,6 +709,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     application_version=str(submit_form.application_version),
                     custom_metadata=None,  # TODO(Helmut): Allow user to edit custom metadata
                     note=submit_form.note,
+                    tags=set(submit_form.tags) if submit_form.tags else None,
                     due_date=datetime.strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
                     .astimezone()
                     .astimezone(UTC)

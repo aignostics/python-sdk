@@ -20,15 +20,20 @@ else:
     pyi_splash = None
 
 
-async def _page_index(client: Client) -> None:
-    """Homepage of Applications."""
+async def _page_index(client: Client, query: str | None = None) -> None:
+    """Homepage of Applications.
+
+    Args:
+        client: The NiceGUI client.
+        query: Optional query parameter for filtering runs.
+    """
     client.content.classes(remove="nicegui-content")
     client.content.classes(add="pl-5 pt-5")
 
     if pyi_splash and pyi_splash.is_alive():
         pyi_splash.update_text("Connecting with API ...")
 
-    await _frame("Analyze your Whole Slide Images with AI", left_sidebar=True)
+    await _frame("Analyze your Whole Slide Images with AI", left_sidebar=True, args={"query": query})
 
     if pyi_splash and pyi_splash.is_alive():
         pyi_splash.close()
