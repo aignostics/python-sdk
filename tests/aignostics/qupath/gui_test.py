@@ -239,17 +239,17 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         subdirs = [d for d in run_dir.iterdir() if d.is_dir()]
         assert len(subdirs) == 3, f"Expected three subdirectories in {run_dir}, but found {len(subdirs)}"
 
-        input_dir = tmp_path / "input"
+        input_dir = run_dir / "input"
         assert input_dir.is_dir(), f"Expected input directory {input_dir} not found"
 
-        results_dir = tmp_path / run.run_id / HETA_SINGLE_SPOT_FILENAME.replace(".tiff", "")
+        results_dir = run_dir / HETA_SINGLE_SPOT_FILENAME.replace(".tiff", "")
         assert results_dir.is_dir(), f"Expected run results directory {results_dir} not found"
 
         qupath_dir = tmp_path / "qupath"
         assert qupath_dir.is_dir(), f"Expected QuPath directory {qupath_dir} not found"
 
         # Check for input file having been downloaded
-        input_file = tmp_path / run.run_id / "input" / HETA_SINGLE_SPOT_FILENAME
+        input_file = input_dir / HETA_SINGLE_SPOT_FILENAME
         assert input_file.is_file(), f"Expected input file {input_file} not found"
         assert input_file.stat().st_size == HETA_SINGLE_SPOT_FILESIZE, (
             f"Expected input file size {HETA_SINGLE_SPOT_FILESIZE}, but got {input_file.stat().st_size}"

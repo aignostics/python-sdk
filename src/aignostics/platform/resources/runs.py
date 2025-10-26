@@ -6,6 +6,7 @@ It includes functionality for starting runs, monitoring status, and downloading 
 
 import builtins
 import logging
+import time
 import typing as t
 from collections.abc import Iterator
 from pathlib import Path
@@ -75,6 +76,10 @@ RETRYABLE_EXCEPTIONS = (
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
+
+
+class DownloadTimeoutError(RuntimeError):
+    """Exception raised when the download operation exceeds its timeout."""
 
 
 class Run:
@@ -209,8 +214,13 @@ class Run:
 
         return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **kwargs))
 
-    def download_to_folder(
-        self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c"
+    def download_to_folder(  # noqa: C901
+        self,
+        download_base: Path | str,
+        checksum_attribute_key: str = "checksum_base64_crc32c",
+        sleep_interval: int = 5,
+        timeout_seconds: int | None = None,
+        print_status: bool = True,
     ) -> None:
         """Downloads all result artifacts to a folder.
 
@@ -219,43 +229,73 @@ class Run:
         Args:
             download_base (Path | str): Base directory to download results to.
             checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
+            sleep_interval (int): Time in seconds to wait between checks for new results.
+            timeout_seconds (int | None): Optional timeout in seconds for the entire download operation.
+            print_status (bool): If True, prints status updates to the console, otherwise just logs.
 
         Raises:
             ValueError: If the provided path is not a directory.
-            Exception: If downloads or API requests fail.
+            DownloadTimeoutError: If the timeout is exceeded while waiting for the run to terminate.
+            RuntimeError: If downloads or API requests fail.
         """
-        # create application run base folder
-        download_base = Path(download_base)
-        if not download_base.is_dir():
-            msg = f"{download_base} is not a directory"
-            raise ValueError(msg)
-        application_run_dir = Path(download_base) / self.run_id
+        try:
+            # create application run base folder
+            download_base = Path(download_base)
+            if not download_base.is_dir():
+                msg = f"{download_base} is not a directory"
+                raise ValueError(msg)  # noqa: TRY301
+            application_run_dir = Path(download_base) / self.run_id
 
-        # incrementally check for available results
-        application_run_state = self.details().state
-        while application_run_state in {RunState.PROCESSING, RunState.PENDING}:
-            for item in self.results():  # we accept this might be stale for a bit
-                if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
-                    self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
-            sleep(5)
-            application_run_state = self.details().state
-            print(self)
+            # track timeout if specified
+            start_time = time.time() if timeout_seconds is not None else None
 
-        # check if last results have been downloaded yet and report on errors
-        for item in self.results(nocache=True):  # no cache to get fresh results
-            match item.output:
-                case ItemOutput.FULL:
-                    self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
-                case ItemOutput.NONE:
-                    print(
-                        f"{item.external_id} failed with `{item.state.value}`.\n"
-                        f"Termination reason `{item.termination_reason}`, "
-                        f"error_code:`{item.error_code}`, message `{item.error_message}`."
-                    )
+            # incrementally check for available results
+            application_run_state = self.details(nocache=True).state  # no cache to get fresh results
+            while application_run_state in {RunState.PROCESSING, RunState.PENDING}:
+                # check timeout
+                if start_time is not None and timeout_seconds is not None:
+                    elapsed = time.time() - start_time
+                    if elapsed >= timeout_seconds:
+                        msg = (
+                            f"Timeout of {timeout_seconds} seconds exceeded while waiting for run {self.run_id} "
+                            f"to terminate. Run state: {application_run_state.value}"
+                        )
+                        raise DownloadTimeoutError(msg)  # noqa: TRY301
+                for item in self.results(nocache=True):
+                    if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
+                        self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
+                sleep(sleep_interval)
+                application_run_state = self.details(nocache=True).state
+                logger.debug("Continuing to wait for run %s, current state: %r", self.run_id, self)
+                print(self) if print_status else None
+
+            # check if last results have been downloaded yet and report on errors
+            for item in self.results(nocache=True):
+                match item.output:
+                    case ItemOutput.FULL:
+                        self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
+                    case ItemOutput.NONE:
+                        message = (
+                            f"{item.external_id} failed with `{item.state.value}`.\n"
+                            f"Termination reason `{item.termination_reason}`, "
+                            f"error_code:`{item.error_code}`, message `{item.error_message}`."
+                        )
+                        logger.error(message)
+                        print(message) if print_status else None
+        except (ValueError, DownloadTimeoutError):
+            # Re-raise ValueError and DownloadTimeoutError as-is
+            raise
+        except Exception as e:
+            # Wrap all other exceptions in RuntimeError
+            msg = f"Download operation failed for run {self.run_id}: {e}"
+            raise RuntimeError(msg) from e
 
     @staticmethod
     def ensure_artifacts_downloaded(
-        base_folder: Path, item: ItemResultReadResponse, checksum_attribute_key: str = "checksum_base64_crc32c"
+        base_folder: Path,
+        item: ItemResultReadResponse,
+        checksum_attribute_key: str = "checksum_base64_crc32c",
+        print_status: bool = True,
     ) -> None:
         """Ensures all artifacts for an item are downloaded.
 
@@ -265,6 +305,7 @@ class Run:
             base_folder (Path): Base directory to download artifacts to.
             item (ItemResultReadResponse): The item result containing the artifacts to download.
             checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
+            print_status (bool): If True, prints status updates to the console, otherwise just logs.
 
         Raises:
             ValueError: If checksums don't match.
@@ -279,28 +320,36 @@ class Run:
                 file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
                 file_path = item_dir / f"{artifact.name}{file_ending}"
                 if not artifact.metadata:
-                    message = f"Skipping artifact {artifact.name} for item {item.external_id}, no metadata present"
-                    logger.error(message)
+                    logger.error(
+                        "Skipping artifact %s for item %s, no metadata present", artifact.name, item.external_id
+                    )
+                    print(
+                        f"> Skipping artifact {artifact.name} for item {item.external_id}, no metadata present"
+                    ) if print_status else None
                     continue
                 checksum = artifact.metadata[checksum_attribute_key]
 
                 if file_path.exists():
                     file_checksum = calculate_file_crc32c(file_path)
                     if file_checksum != checksum:
-                        print(f"> Resume download for {artifact.name} to {file_path}")
+                        logger.debug("Resume download for %s to %s", artifact.name, file_path)
+                        print(f"> Resume download for {artifact.name} to {file_path}") if print_status else None
                     else:
                         continue
                 else:
                     downloaded_at_least_one_artifact = True
-                    print(f"> Download for {artifact.name} to {file_path}")
+                    logger.debug("Download for %s to %s", artifact.name, file_path)
+                    print(f"> Download for {artifact.name} to {file_path}") if print_status else None
 
                 # if file is not there at all or only partially downloaded yet
                 download_file(artifact.download_url, str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
-            print(f"Downloaded results for item: {item.external_id} to {item_dir}")
+            logger.debug("Downloaded results for item: %s to %s", item.external_id, item_dir)
+            print(f"Downloaded results for item: {item.external_id} to {item_dir}") if print_status else None
         else:
-            print(f"Results for item: {item.external_id} already present in {item_dir}")
+            logger.debug("Results for item: %s already present in %s", item.external_id, item_dir)
+            print(f"Results for item: {item.external_id} already present in {item_dir}") if print_status else None
 
     def __str__(self) -> str:
         """Returns a string representation of the application run.

@@ -3,6 +3,7 @@
 This module contains e2e tests that run real application workflows
 against the Aignostics platform. These tests verify e2e functionality
 including creating runs, downloading results, and validating outputs.
+
 """
 
 import tempfile
@@ -30,14 +31,20 @@ from tests.constants_test import (
     TEST_THREE_SPOTS_GS_URLS,
 )
 
-TEST_APPLICATION_DEADLINE_SECONDS = 60 * 45  # 45 minutes
-TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
+TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 45  # 45 minutes
+TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
 
-HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
-HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
+TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
+TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
+
+HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
+HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
+
+HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
 
 
-def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
+def _get_single_spot_payload_for_heta(expires_seconds: int) -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
         platform.InputItem(
@@ -46,8 +53,8 @@ def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        HETA_SINGLE_SPOT_GS_URL,
-                        HETA_APPLICATION_DEADLINE_SECONDS,
+                        url=HETA_SINGLE_SPOT_GS_URL,
+                        expires_seconds=expires_seconds,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "5onqtA==",
@@ -67,7 +74,7 @@ def _get_single_spot_payload_for_heta() -> list[platform.InputItem]:
     ]
 
 
-def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
+def _get_three_spots_payload_for_test(expires_seconds: int) -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
         platform.InputItem(
@@ -76,8 +83,8 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        TEST_THREE_SPOTS_GS_URLS[0],
-                        TEST_APPLICATION_DEADLINE_SECONDS,
+                        url=TEST_THREE_SPOTS_GS_URLS[0],
+                        expires_seconds=expires_seconds,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "9l3NNQ==",
@@ -95,8 +102,8 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        TEST_THREE_SPOTS_GS_URLS[1],
-                        TEST_APPLICATION_DEADLINE_SECONDS,
+                        url=TEST_THREE_SPOTS_GS_URLS[1],
+                        expires_seconds=expires_seconds,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "w+ud3g==",
@@ -114,8 +121,8 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
                 platform.InputArtifact(
                     name="whole_slide_image",
                     download_url=platform.generate_signed_url(
-                        TEST_THREE_SPOTS_GS_URLS[2],
-                        TEST_APPLICATION_DEADLINE_SECONDS,
+                        url=TEST_THREE_SPOTS_GS_URLS[2],
+                        expires_seconds=expires_seconds,
                     ),
                     metadata={
                         "checksum_base64_crc32c": "Zmx0wA==",
@@ -130,17 +137,14 @@ def _get_three_spots_payload_for_test() -> list[platform.InputItem]:
     ]
 
 
-def _run_application_test(  # noqa: PLR0913, PLR0917
+def _submit_and_validate(
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
     due_date_seconds: int,
     deadline_seconds: int,
-    checksum_attribute_key: str = "checksum_base64_crc32c",
-) -> None:
-    """Helper function to run an application test.
-
-    This function creates an application run, downloads results, and validates outputs.
+) -> Run:
+    """Submit application run and validate its details.
 
     Args:
         application_id (str): The application ID to use for the test.
@@ -148,13 +152,12 @@ def _run_application_test(  # noqa: PLR0913, PLR0917
         payload (list[platform.InputItem]): The input items for the application run.
         due_date_seconds (int): The due date in seconds from now for the application run.
         deadline_seconds (int): The deadline in seconds from now for the application run.
-        checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
     client = platform.Client()
-    application_run = client.runs.submit(
+    run = client.runs.submit(
         application_id=application_id,
         application_version=application_version,
         items=payload,
@@ -168,55 +171,222 @@ def _run_application_test(  # noqa: PLR0913, PLR0917
             }
         },
     )
+    details = run.details()
+    assert details.run_id == run.run_id, "Run ID mismatch after submission"
+    assert details.application_id == application_id, "Application ID mismatch after submission"
+    assert details.application_version == application_version, "Application version mismatch after submission"
+    assert details.state in {RunState.PENDING, RunState.PROCESSING}, (
+        f"Unexpected run state `{details.state}` after submission"
+    )
+    return run
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        application_run.download_to_folder(temp_dir, checksum_attribute_key)
-        _validate_output(application_run, Path(temp_dir), checksum_attribute_key)
 
+def _submit_and_wait(  # noqa: PLR0913, PLR0917
+    application_id: str,
+    application_version: str,
+    payload: list[platform.InputItem],
+    due_date_seconds: int,
+    deadline_seconds: int,
+    checksum_attribute_key: str = "checksum_base64_crc32c",
+) -> None:
+    """Helper function to run an application test.
 
-@pytest.mark.skip(reason="v0.0.4 on production balking on whole_slide_image input")
-@pytest.mark.e2e
-@pytest.mark.long_running
-@pytest.mark.timeout(timeout=TEST_APPLICATION_DEADLINE_SECONDS + 60 * 30)
-def test_application_runs_test_version() -> None:
-    """Test application runs with the test application.
+    This function creates an application run, waits for results to become available,
+        downloads results, and validates outputs.
 
-    This test creates an application run using the test application and three spots.
-    It then downloads the results to a temporary directory and performs various checks to ensure
-    the application run completed successfully and the results are valid.
+    Args:
+        application_id (str): The application ID to use for the test.
+        application_version (str): The application version to use for the test.
+        payload (list[platform.InputItem]): The input items for the application run.
+        due_date_seconds (int): The due date in seconds from now for the application run.
+        deadline_seconds (int): The deadline in seconds from now for the application run.
+        checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    _run_application_test(
+    run = _submit_and_validate(
+        application_id=application_id,
+        application_version=application_version,
+        payload=payload,
+        due_date_seconds=due_date_seconds,
+        deadline_seconds=deadline_seconds,
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        run.download_to_folder(temp_dir, checksum_attribute_key, timeout_seconds=deadline_seconds)
+        _validate_output(run, Path(temp_dir), checksum_attribute_key)
+
+
+def _find_and_validate(
+    application_id: str,
+    application_version: str,
+    payload: list[platform.InputItem],
+    due_date_seconds: int,
+    deadline_seconds: int,
+) -> Run:
+    """Find application run submitted earlier and validate its details.
+
+    Args:
+        application_id (str): The application ID to use for the test.
+        application_version (str): The application version to use for the test.
+        payload (list[platform.InputItem]): The input items for the application run.
+        due_date_seconds (int): The due date in seconds from now for the application run.
+        deadline_seconds (int): The deadline in seconds from now for the application run.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    client = platform.Client()
+    assert client is not None, "Failed to create platform client"
+    # TODO(Helmut): Build logic to find the run based on metadata once supported
+
+
+@pytest.mark.skip(
+    reason="v0.0.4 on production balking on whole_slide_image input while identical version accepting on staging"
+)
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+def test_platform_test_app_submit_and_wait() -> None:
+    """Test application runs with the test application.
+
+    This test creates an application run using the test application and three spots.
+    It then waits for results to become available, downloads the results to a temporary directory
+    and performs various checks to ensure the application run completed successfully and the results are valid.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _submit_and_wait(
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
         payload=_get_three_spots_payload_for_test(),
-        deadline_seconds=TEST_APPLICATION_DEADLINE_SECONDS,
-        due_date_seconds=TEST_APPLICATION_DUE_DATE_SECONDS,
+        deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
+        due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
     )
 
 
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_DEADLINE_SECONDS + 60 * 30)
-def test_application_runs_heta_version() -> None:
+@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+def test_platform_heta_app_submit_and_wait() -> None:
     """Test application runs with the HETA application.
 
     This test creates an application run using the HETA application and a single spot.
-    It then downloads the results to a temporary directory and performs various checks to ensure
-    the application run completed successfully and the results are valid.
+    It then waits for the results to become available, downloads the results to a
+    temporary directory and performs various checks to ensure the application run completed successfully
+    and the results are valid.
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
-    _run_application_test(
+    _submit_and_wait(
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
-        payload=_get_single_spot_payload_for_heta(),
-        deadline_seconds=HETA_APPLICATION_DEADLINE_SECONDS,
-        due_date_seconds=HETA_APPLICATION_DUE_DATE_SECONDS,
+        payload=_get_single_spot_payload_for_heta(
+            expires_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5
+        ),
+        deadline_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
+        due_date_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
+    )
+
+
+@pytest.mark.skip(reason="Waits for change in scheduler")
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+def test_platform_test_app_submit() -> None:
+    """Test application submission with the test application.
+
+    This test submits an application run with the test application and validates the submission.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _submit_and_validate(
+        application_id=TEST_APPLICATION_ID,
+        application_version=TEST_APPLICATION_VERSION,
+        payload=_get_three_spots_payload_for_test(
+            expires_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5
+        ),
+        deadline_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
+        due_date_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
+    )
+
+
+@pytest.mark.skip(reason="Waits for change in scheduler")
+@pytest.mark.e2e
+@pytest.mark.very_long_running
+@pytest.mark.scheduled_only
+@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5)
+def test_platform_test_app_find() -> None:
+    """Test application runs with the test application.
+
+    This test finds an application run with the test application submitted earlier and
+    validates it completed successfully and in time.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _find_and_validate(
+        application_id=TEST_APPLICATION_ID,
+        application_version=TEST_APPLICATION_VERSION,
+        payload=_get_three_spots_payload_for_test(
+            expires_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+        ),
+        deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
+        due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+    )
+
+
+@pytest.mark.skip(reason="Waits for change in scheduler")
+@pytest.mark.e2e
+@pytest.mark.very_long_running
+@pytest.mark.scheduled_only
+@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+def test_platform_heta_app_submit() -> None:
+    """Test application runs with the HETA application.
+
+    This test submits an application run with the HETA application and validates the submission.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _submit_and_validate(
+        application_id=HETA_APPLICATION_ID,
+        application_version=HETA_APPLICATION_VERSION,
+        payload=_get_single_spot_payload_for_heta(
+            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+        ),
+        deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
+        due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+    )
+
+
+@pytest.mark.skip(reason="Waits for change in scheduler")
+@pytest.mark.e2e
+@pytest.mark.very_long_running
+@pytest.mark.scheduled_only
+@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+def test_platform_heta_app_find() -> None:
+    """Test application runs with the HETA application.
+
+    This test finds an application run with the HETA application submitted earlier and
+    validates it completed successfully and in time.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _find_and_validate(
+        application_id=HETA_APPLICATION_ID,
+        application_version=HETA_APPLICATION_VERSION,
+        payload=_get_single_spot_payload_for_heta(
+            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+        ),
+        deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
+        due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
     )
 
 

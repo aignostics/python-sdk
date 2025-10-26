@@ -514,8 +514,8 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
     print_directory_structure(tmp_path, "execute")
 
     # Validate no input dir, given we used an external id pointing to a local file
-    input_file = tmp_path / "input"
-    assert not input_file.is_dir(), f"Expected input directory {input_file} not found"
+    input_dir = tmp_path / "input"
+    assert not input_dir.is_dir(), f"Expected input directory {input_dir} not found"
 
     # Validate results generated and downloaded
     results_dir = tmp_path / HETA_ANOTHER_SPOT_FILENAME.replace(".tiff", "")
