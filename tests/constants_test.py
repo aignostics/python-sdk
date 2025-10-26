@@ -9,6 +9,19 @@ import os
 HETA_SINGLE_SPOT_GS_URL = (
     "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 )
+HETA_SINGLE_SPOT_GS_FILENAME = "8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
+HETA_SINGLE_SPOT_GS_FILESIZE = 14681750  # in bytes
+HETA_EXPECTED_RESULT_FILES = [
+    ("tissue_segmentation_csv_class_information.csv", 342, 10),
+    ("cell_classification_geojson_polygons.json", 16054058, 10),
+    ("readout_generation_cell_readouts.csv", 2228907, 10),
+    ("tissue_qc_csv_class_information.csv", 232, 10),
+    ("tissue_segmentation_geojson_polygons.json", 270931, 10),
+    ("tissue_qc_geojson_polygons.json", 180522, 10),
+    ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
+    ("readout_generation_slide_readouts.csv", 295268, 10),
+    ("tissue_segmentation_segmentation_map_image.tiff", 581258, 10),
+]
 
 TEST_THREE_SPOTS_GS_URLS = [
     "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",

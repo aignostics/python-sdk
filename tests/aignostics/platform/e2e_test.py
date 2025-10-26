@@ -1,7 +1,7 @@
-"""Scheduled integration tests for the Aignostics client.
+"""Scheduled end-to-end (e2e) tests for the Aignostics client.
 
-This module contains integration tests that run real application workflows
-against the Aignostics platform. These tests verify end-to-end functionality
+This module contains e2e tests that run real application workflows
+against the Aignostics platform. These tests verify e2e functionality
 including creating runs, downloading results, and validating outputs.
 """
 

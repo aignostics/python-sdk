@@ -108,10 +108,14 @@ class Run:
 
         return cls(Client.get_api_client(cache_token=cache_token), run_id)
 
-    def details(self) -> RunData:
+    def details(self, nocache: bool = False) -> RunData:
         """Retrieves the current status of the application run.
 
         Retries on network and server errors.
+
+        Args:
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             RunData: The run data.
@@ -136,7 +140,7 @@ class Run:
                 )
             )
 
-        return details_with_retry(self.run_id)
+        return details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
 
     # TODO(Andreas): Low Prio / existed prior to API migration: Please check if this still fails with
     #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.
@@ -168,10 +172,14 @@ class Run:
             _headers={"User-Agent": user_agent()},
         )
 
-    def results(self) -> t.Iterator[ItemResultData]:
+    def results(self, nocache: bool = False) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
 
         Retries on network and server errors.
+
+        Args:
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             list[ItemResultData]: A list of item results.
@@ -199,7 +207,7 @@ class Run:
                 )
             )
 
-        return paginate(lambda **kwargs: results_with_retry(self.run_id, **kwargs))
+        return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **kwargs))
 
     def download_to_folder(
         self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c"
@@ -234,8 +242,7 @@ class Run:
             print(self)
 
         # check if last results have been downloaded yet and report on errors
-        operation_cache_clear()  # clear cache to get fresh results
-        for item in self.results():
+        for item in self.results(nocache=True):  # no cache to get fresh results
             match item.output:
                 case ItemOutput.FULL:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
@@ -388,7 +395,9 @@ class Runs:
         )
         return Run(self._api, str(res.run_id))
 
-    def list(self, application_id: str | None = None, application_version: str | None = None) -> Iterator[Run]:
+    def list(
+        self, application_id: str | None = None, application_version: str | None = None, nocache: bool = False
+    ) -> Iterator[Run]:
         """Find application runs, optionally filtered by application id and/or version.
 
         Retries on network and server errors.
@@ -396,6 +405,8 @@ class Runs:
         Args:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version to filter by.
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             Iterator[Run]: An iterator yielding application runs.
@@ -424,6 +435,7 @@ class Runs:
             lambda **kwargs: list_with_retry(
                 application_id=application_id,
                 application_version=application_version,
+                nocache=nocache,
                 **kwargs,
             )
         )
@@ -437,6 +449,7 @@ class Runs:
         custom_metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+        nocache: bool = False,
     ) -> t.Iterator[RunData]:
         """Fetch application runs, optionally filtered by application version.
 
@@ -449,6 +462,8 @@ class Runs:
             custom_metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             Iterator[RunData]: Iterator yielding application run data.
@@ -486,6 +501,7 @@ class Runs:
                 external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=[sort] if sort else None,
+                nocache=nocache,
                 **kwargs,
             ),
             page_size=page_size,

@@ -19,7 +19,14 @@ from aignostics.cli import cli
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION, HETA_SINGLE_SPOT_GS_URL
+from tests.constants_test import (
+    HETA_APPLICATION_ID,
+    HETA_APPLICATION_VERSION,
+    HETA_EXPECTED_RESULT_FILES,
+    HETA_SINGLE_SPOT_GS_FILENAME,
+    HETA_SINGLE_SPOT_GS_FILESIZE,
+    HETA_SINGLE_SPOT_GS_URL,
+)
 
 if TYPE_CHECKING:
     from nicegui import ui
@@ -137,11 +144,11 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.long_running
 @pytest.mark.skipif(
     (platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"}) or platform.system() == "Windows",
-    reason="QuPath is not supported on ARM64 Linux; Windows support is not implemented yet",
+    reason="QuPath is not supported on ARM64 Linux; Windows support is not fully tested yet",
 )
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
-async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
+async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None
 ) -> None:
     """Test installing QuPath, downloading run results, creating QuPath project from it, and inspecting results."""
@@ -224,22 +231,55 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
         # Step 6: Check download completes, QuPath project created, and QuPath launched
         await assert_notified(user, "Download and QuPath project creation completed.", 60 * 5)
         print_directory_structure(tmp_path, "execute")
-        run_out_dir = tmp_path / run.run_id
-        assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
-        # Find any subdirectory in the run_out_dir that is not qupath
-        subdirs = [d for d in run_out_dir.iterdir() if d.is_dir() and d.name != "qupath"]
-        assert len(subdirs) > 0, f"Expected at least one non-qupath subdirectory in {run_out_dir}, but found none"
 
-        # Take the first subdirectory found (item_out_dir)
-        item_out_dir = subdirs[0]
-        print(f"Found subdirectory: {item_out_dir.name}")
+        # Check for directory layout as expected
+        run_dir = tmp_path / run.run_id
+        assert run_dir.is_dir(), f"Expected run directory {run_dir} not found"
 
-        # Check for files in the item directory
-        files_in_item_dir = list(item_out_dir.glob("*"))
-        assert len(files_in_item_dir) == 9, (
-            f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: "
-            f"{[f.name for f in files_in_item_dir]}"
+        subdirs = [d for d in run_dir.iterdir() if d.is_dir()]
+        assert len(subdirs) == 3, f"Expected three subdirectories in {run_dir}, but found {len(subdirs)}"
+
+        input_dir = tmp_path / "input"
+        assert input_dir.is_dir(), f"Expected input directory {input_dir} not found"
+
+        results_dir = tmp_path / run.run_id / HETA_SINGLE_SPOT_GS_FILENAME.replace(".tiff", "")
+        assert results_dir.is_dir(), f"Expected run results directory {results_dir} not found"
+
+        qupath_dir = tmp_path / "qupath"
+        assert qupath_dir.is_dir(), f"Expected QuPath directory {qupath_dir} not found"
+
+        # Check for input file having been downloaded
+        input_file = tmp_path / run.run_id / "input" / HETA_SINGLE_SPOT_GS_FILENAME
+        assert input_file.is_file(), f"Expected input file {input_file} not found"
+        assert input_file.stat().st_size == HETA_SINGLE_SPOT_GS_FILESIZE, (
+            f"Expected input file size {HETA_SINGLE_SPOT_GS_FILESIZE}, but got {input_file.stat().st_size}"
         )
+
+        # Check for files in the results directory
+        files_in_results_dir = list(results_dir.glob("*"))
+        assert len(files_in_results_dir) == 9, (
+            f"Expected 9 files in {results_dir}, but found {len(files_in_results_dir)}: "
+            f"{[f.name for f in files_in_results_dir]}"
+        )
+
+        print(f"Found files in {results_dir}:")
+        for filename, expected_size, tolerance_percent in HETA_EXPECTED_RESULT_FILES:
+            file_path = results_dir / filename
+            if file_path.exists():
+                actual_size = file_path.stat().st_size
+                print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
+            else:
+                print(f"  {filename}: NOT FOUND")
+        for filename, expected_size, tolerance_percent in HETA_EXPECTED_RESULT_FILES:
+            file_path = results_dir / filename
+            assert file_path.exists(), f"Expected file {filename} not found"
+            actual_size = file_path.stat().st_size
+            min_size = expected_size * (100 - tolerance_percent) // 100
+            max_size = expected_size * (100 + tolerance_percent) // 100
+            assert min_size <= actual_size <= max_size, (
+                f"File size for {filename} ({actual_size} bytes) is outside allowed range "
+                f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
+            )
 
         # Check QuPath is running
         notification = await assert_notified(user, "QuPath opened successfully", 30)
@@ -255,10 +295,9 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
             pytest.fail(f"Failed to kill QuPath process: {e}")
 
         # Step 7: Inspect QuPath results
-        result = runner.invoke(cli, ["qupath", "inspect", str(run_out_dir / "qupath")])
+        result = runner.invoke(cli, ["qupath", "inspect", str(run_dir / "qupath")])
         output = normalize_output(result.output, strip_ansi=True)
         print(repr(output))
-        assert result.exit_code == 0, f"QuPath inspect command failed with exit code {result.exit_code}"
 
         try:
             project_info = json.loads(output)
@@ -268,10 +307,12 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0914, PLR0915
                 total = hierarchy.get("total", 0)
                 if total > 0:
                     annotations_total += total
-            # TODO(Helmut): More detailed checks on the annotations when improved above
-            assert annotations_total >= 0, "Expected at least 0 annotations in the QuPath results"
+            assert annotations_total >= 10000, "Expected at least 10000 annotations in the QuPath results"
         except json.JSONDecodeError as e:
             pytest.fail(f"Failed to parse QuPath inspect output as JSON: {e}\nOutput: {output!r}\n")
+
+        # Validate the inspect command exited successfully
+        assert result.exit_code == 0, f"QuPath inspect command failed with exit code {result.exit_code}"
 
         if not was_installed:
             result = runner.invoke(cli, ["qupath", "uninstall"])

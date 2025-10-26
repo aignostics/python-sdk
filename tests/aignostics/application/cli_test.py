@@ -15,6 +15,10 @@ from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    HETA_EXPECTED_RESULT_FILES,
+    HETA_SINGLE_SPOT_GS_FILENAME,
+    HETA_SINGLE_SPOT_GS_FILESIZE,
+    HETA_SINGLE_SPOT_GS_URL,
     TEST_APPLICATION_ID,
     TEST_APPLICATION_VERSION,
 )
@@ -453,6 +457,7 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner) -> None:
     assert result.exit_code == 2
 
 
+# TODO (Helmut): Schedule this run
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.timeout(timeout=HETA_APPLICATION_DEADLINE_SECONDS + 60 * 30)
@@ -465,17 +470,25 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
             "dataset",
             "aignostics",
             "download",
-            "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+            HETA_SINGLE_SPOT_GS_URL,
             str(tmp_path),
         ],
     )
+
+    # Explore what was download
     print_directory_structure(tmp_path, "download")
-    assert result.exit_code == 0
+
+    # Validate what was downloaded
     assert "Successfully downloaded" in normalize_output(result.stdout)
-    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
-    expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+    assert HETA_SINGLE_SPOT_GS_FILENAME in normalize_output(result.stdout)
+    expected_file = tmp_path / HETA_SINGLE_SPOT_GS_FILENAME
     assert expected_file.exists(), f"Expected file {expected_file} not found"
-    assert expected_file.stat().st_size == 14681750
+    assert expected_file.stat().st_size == HETA_SINGLE_SPOT_GS_FILESIZE, (
+        f"Expected file size {HETA_SINGLE_SPOT_GS_FILESIZE}, but got {expected_file.stat().st_size}"
+    )
+
+    # Validate the download command exited successfully
+    assert result.exit_code == 0
 
     # Step 2: Execute the run, i.e. prepare, amend, upload, submit and download the results
     result = runner.invoke(
@@ -496,35 +509,31 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
             "--validate-only",
         ],
     )
+
+    # Explore what was download
     print_directory_structure(tmp_path, "execute")
-    assert result.exit_code == 0
-    item_out_dir = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627"
-    assert item_out_dir.is_dir(), f"Expected directory {item_out_dir} not found"
-    files_in_dir = list(item_out_dir.glob("*"))
+
+    # Validate no input dir, given we used an external id pointing to a local file
+    input_file = tmp_path / "input"
+    assert not input_file.is_dir(), f"Expected input directory {input_file} not found"
+
+    # Validate results generated and downloaded
+    results_dir = tmp_path / HETA_SINGLE_SPOT_GS_FILENAME.replace(".tiff", "")
+    assert results_dir.is_dir(), f"Expected directory {results_dir} not found"
+    files_in_dir = list(results_dir.glob("*"))
     assert len(files_in_dir) == 9, (
-        f"Expected 9 files in {item_out_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
+        f"Expected 9 files in {results_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
     )
-    expected_files = [
-        ("tissue_segmentation_csv_class_information.csv", 342, 10),
-        ("cell_classification_geojson_polygons.json", 16054058, 10),
-        ("readout_generation_cell_readouts.csv", 2228907, 10),
-        ("tissue_qc_csv_class_information.csv", 232, 10),
-        ("tissue_segmentation_geojson_polygons.json", 270931, 10),
-        ("tissue_qc_geojson_polygons.json", 180522, 10),
-        ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
-        ("readout_generation_slide_readouts.csv", 295268, 10),
-        ("tissue_segmentation_segmentation_map_image.tiff", 581258, 10),
-    ]
-    print(f"Found files in {item_out_dir}:")
-    for filename, expected_size, tolerance_percent in expected_files:
-        file_path = item_out_dir / filename
+    print(f"Found files in {results_dir}:")
+    for filename, expected_size, tolerance_percent in HETA_EXPECTED_RESULT_FILES:
+        file_path = results_dir / filename
         if file_path.exists():
             actual_size = file_path.stat().st_size
             print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
         else:
             print(f"  {filename}: NOT FOUND")
-    for filename, expected_size, tolerance_percent in expected_files:
-        file_path = item_out_dir / filename
+    for filename, expected_size, tolerance_percent in HETA_EXPECTED_RESULT_FILES:
+        file_path = results_dir / filename
         assert file_path.exists(), f"Expected file {filename} not found"
         actual_size = file_path.stat().st_size
         min_size = expected_size * (100 - tolerance_percent) // 100
@@ -533,3 +542,6 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path) -> None:
             f"File size for {filename} ({actual_size} bytes) is outside allowed range "
             f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
         )
+
+    # Validate the execute command exited successfully
+    assert result.exit_code == 0
