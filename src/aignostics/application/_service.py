@@ -1209,7 +1209,8 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message) from e
 
-        for item_index, item in enumerate(application_run.results()):
+        results = list(application_run.results())
+        for item_index, item in enumerate(results):
             if item.external_id.startswith(("gs://", "http://", "https://")):
                 # Download URL to local input directory and update external_id
                 try:
@@ -1240,7 +1241,7 @@ class Service(BaseService):
 
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
-            for item in application_run.results():
+            for item in results:
                 local_path = Path(item.external_id)
                 if not local_path.is_file():
                     logger.warning("Input slide '%s' not found, skipping QuPath addition.", local_path)
@@ -1326,9 +1327,8 @@ class Service(BaseService):
                 update_progress(progress, download_progress_callable, download_progress_queue)
 
             total_annotations = 0
-            results = list(application_run.results())
             progress.item_count = len(results)
-            for item_index, item in enumerate(application_run.results()):
+            for item_index, item in enumerate(results):
                 progress.item_index = item_index
                 update_progress(progress, download_progress_callable, download_progress_queue)
 

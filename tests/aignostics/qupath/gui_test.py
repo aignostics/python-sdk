@@ -22,10 +22,13 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    SPOT_0_EXPECTED_CELLS_CLASSIFIED,
     SPOT_0_EXPECTED_RESULT_FILES,
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
+    SPOT_0_HEIGHT,
+    SPOT_0_WIDTH,
 )
 
 if TYPE_CHECKING:
@@ -303,16 +306,27 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
             project_info = json.loads(output)
             annotations_total = 0
             original_image_found = False
+            width = None
+            height = None
             for image in project_info["images"]:
                 if image.get("name") == SPOT_0_FILENAME:
                     original_image_found = True
+                    width = image.get("width")
+                    height = image.get("height")
                 hierarchy = image.get("hierarchy", {})
                 total = hierarchy.get("total", 0)
                 if total > 0:
                     annotations_total += total
             assert original_image_found, f"Original image '{SPOT_0_FILENAME}' not found in QuPath project"
-            # TODO(helmut): Fix
-            assert annotations_total >= 0, "Expected at least 10000 annotations in the QuPath results"
+            assert width == SPOT_0_WIDTH, f"Expected image width {SPOT_0_WIDTH}, but got {width}"
+            assert height == SPOT_0_HEIGHT, f"Expected image height {SPOT_0_HEIGHT}, but got {height}"
+            assert abs(annotations_total - SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]) <= (
+                SPOT_0_EXPECTED_CELLS_CLASSIFIED[0] * SPOT_0_EXPECTED_CELLS_CLASSIFIED[1] // 100
+            ), (
+                f"Expected approximately {SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]} "
+                f"({SPOT_0_EXPECTED_CELLS_CLASSIFIED[1]}% tolerance) annotations in the QuPath results, "
+                f"but found {annotations_total}"
+            )
         except json.JSONDecodeError as e:
             pytest.fail(f"Failed to parse QuPath inspect output as JSON: {e}\nOutput: {output!r}\n")
 

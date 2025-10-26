@@ -20,6 +20,7 @@ SPOT_0_EXPECTED_RESULT_FILES = [
     ("tissue_segmentation_csv_class_information.csv", 361, 10),
     ("tissue_qc_csv_class_information.csv", 236, 10),
 ]
+SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
 SPOT_0_CRC32C = "5onqtA=="
 SPOT_0_RESOLUTION_MPP = 0.26268186053789266
 SPOT_0_WIDTH = 7447
