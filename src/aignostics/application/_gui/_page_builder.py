@@ -13,11 +13,11 @@ class PageBuilder(BasePageBuilder):
         app.add_static_files("/application_assets", Path(__file__).parent / "assets")
 
         @ui.page("/")
-        async def page_index(client: Client) -> None:
+        async def page_index(client: Client, query: str | None = None) -> None:
             """Index page of application module, serving as the homepage of Aignostics Launchpad."""
             from ._page_index import _page_index  # noqa: PLC0415
 
-            await _page_index(client)
+            await _page_index(client, query=query)
 
         @ui.page("/application/{application_id}")
         async def page_application_describe(application_id: str) -> None:

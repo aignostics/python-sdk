@@ -231,7 +231,7 @@ class Runs:
 
 ### SDK Metadata System (`_sdk_metadata.py`)
 
-**NEW FEATURE (as of v1.0.0-beta.7):** The SDK now automatically attaches structured metadata to every application run, providing comprehensive tracking of execution context, user information, and CI/CD environment details.
+**ENHANCED FEATURE:** The SDK now automatically attaches structured metadata to every application run and item, providing comprehensive tracking of execution context, user information, CI/CD environment details, tags, and timestamps.
 
 **Architecture:**
 
@@ -240,27 +240,38 @@ class Runs:
 │           SDK Metadata System                      │
 ├────────────────────────────────────────────────────┤
 │  Pydantic Models (Validation + Schema Generation) │
-│  ├─ SdkMetadata (root model)                      │
-│  ├─ SubmissionMetadata (how/when submitted)       │
-│  ├─ UserMetadata (organization/user info)         │
-│  ├─ CIMetadata (GitHub Actions + pytest)          │
-│  ├─ WorkflowMetadata (control flags)              │
-│  └─ SchedulingMetadata (due dates/deadlines)      │
+│  ├─ RunSdkMetadata (run-level metadata)          │
+│  │   ├─ SubmissionMetadata (how/when submitted)   │
+│  │   ├─ UserMetadata (organization/user info)     │
+│  │   ├─ CIMetadata (GitHub Actions + pytest)      │
+│  │   ├─ WorkflowMetadata (control flags)          │
+│  │   ├─ SchedulingMetadata (due dates/deadlines)  │
+│  │   ├─ tags (set[str]) - NEW                     │
+│  │   ├─ created_at (timestamp) - NEW              │
+│  │   └─ updated_at (timestamp) - NEW              │
+│  └─ ItemSdkMetadata (item-level metadata) - NEW   │
+│      ├─ PlatformBucketMetadata (storage info)     │
+│      ├─ tags (set[str])                           │
+│      ├─ created_at (timestamp)                    │
+│      └─ updated_at (timestamp)                    │
 ├────────────────────────────────────────────────────┤
 │  Runtime Functions                                 │
-│  ├─ build_sdk_metadata() → dict                   │
-│  ├─ validate_sdk_metadata(metadata) → bool        │
-│  ├─ validate_sdk_metadata_silent(metadata) → bool │
-│  └─ get_sdk_metadata_json_schema() → dict         │
+│  ├─ build_run_sdk_metadata() → dict               │
+│  ├─ validate_run_sdk_metadata() → bool            │
+│  ├─ get_run_sdk_metadata_json_schema() → dict     │
+│  ├─ build_item_sdk_metadata() → dict - NEW        │
+│  ├─ validate_item_sdk_metadata() → bool - NEW     │
+│  └─ get_item_sdk_metadata_json_schema() → dict    │
 ├────────────────────────────────────────────────────┤
 │  JSON Schema (Versioned)                           │
-│  └─ Schema version: 0.0.1                          │
+│  ├─ Run schema version: 0.0.4                     │
+│  └─ Item schema version: 0.0.3                    │
 │     Published at: docs/source/_static/             │
-│     URL: github.com/.../sdk_metadata_schema_*.json │
+│     URLs: sdk_{run|item}_custom_metadata_schema_* │
 └────────────────────────────────────────────────────┘
 ```
 
-**Schema Version:** `0.0.1`
+**Schema Versions:** Run `0.0.4`, Item `0.0.3`
 
 **Core Pydantic Models:**
 
@@ -318,9 +329,12 @@ class SchedulingMetadata(BaseModel):
     due_date: str | None  # ISO 8601, requested completion time
     deadline: str | None  # ISO 8601, hard deadline
 
-class SdkMetadata(BaseModel):
-    """Complete SDK metadata schema."""
-    schema_version: str  # Currently "0.0.1"
+class RunSdkMetadata(BaseModel):
+    """Complete Run SDK metadata schema."""
+    schema_version: str  # Currently "0.0.4"
+    created_at: str  # ISO 8601 timestamp - NEW
+    updated_at: str  # ISO 8601 timestamp - NEW
+    tags: set[str] | None  # Optional tags - NEW
     submission: SubmissionMetadata
     user_agent: str  # Enhanced user agent from utils module
     user: UserMetadata | None  # Present if authenticated
@@ -330,12 +344,28 @@ class SdkMetadata(BaseModel):
     scheduling: SchedulingMetadata | None  # Optional scheduling info
 
     model_config = {"extra": "forbid"}  # Strict validation
+
+class PlatformBucketMetadata(BaseModel):
+    """Platform bucket storage metadata for items - NEW"""
+    bucket_name: str  # Name of the cloud storage bucket
+    object_key: str  # Object key/path within the bucket
+    signed_download_url: str  # Signed URL for downloading
+
+class ItemSdkMetadata(BaseModel):
+    """Complete Item SDK metadata schema - NEW"""
+    schema_version: str  # Currently "0.0.3"
+    created_at: str  # ISO 8601 timestamp
+    updated_at: str  # ISO 8601 timestamp
+    tags: set[str] | None  # Optional item-level tags
+    platform_bucket: PlatformBucketMetadata | None  # Storage location
+
+    model_config = {"extra": "forbid"}  # Strict validation
 ```
 
 **Automatic Metadata Generation:**
 
 ```python
-def build_sdk_metadata() -> dict[str, Any]:
+def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build SDK metadata automatically attached to runs.
 
     Detection Logic:
@@ -344,9 +374,13 @@ def build_sdk_metadata() -> dict[str, Any]:
     - User info: Fetches from Client().me() if authenticated
     - GitHub CI: Reads GITHUB_* environment variables
     - Pytest: Reads PYTEST_CURRENT_TEST environment variable
+    - Preserves created_at and submission.date from existing metadata
+
+    Args:
+        existing_metadata: Existing SDK metadata to preserve timestamps
 
     Returns:
-        dict with complete metadata structure
+        dict with complete metadata structure including timestamps
     """
     # Interface detection
     if "typer" in sys.argv[0] or "aignostics" in sys.argv[0]:
@@ -356,21 +390,32 @@ def build_sdk_metadata() -> dict[str, Any]:
     else:
         interface = "script"
 
-    # Source detection
+    # Source detection (initiator)
     if os.environ.get("AIGNOSTICS_BRIDGE_VERSION"):
-        source = "bridge"
+        initiator = "bridge"
     elif os.environ.get("PYTEST_CURRENT_TEST"):
-        source = "test"
+        initiator = "test"
     else:
-        source = "user"
+        initiator = "user"
+
+    # Handle timestamps - preserve created_at, always update updated_at
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    existing_sdk = existing_metadata or {}
+    created_at = existing_sdk.get("created_at", now)
+
+    # Preserve submission.date from existing metadata
+    existing_submission = existing_sdk.get("submission", {})
+    submission_date = existing_submission.get("date", now)
 
     # Build metadata structure
     metadata = {
-        "schema_version": "0.0.1",
+        "schema_version": "0.0.4",
+        "created_at": created_at,  # NEW
+        "updated_at": now,  # NEW
         "submission": {
-            "date": datetime.now(UTC).isoformat(timespec="seconds"),
+            "date": submission_date,  # Preserved from existing
             "interface": interface,
-            "source": source,
+            "initiator": initiator,  # Changed from "source"
         },
         "user_agent": user_agent(),  # From utils module
     }
@@ -476,44 +521,79 @@ def _generate_sdk_metadata_schema(session: nox.Session) -> None:
 **Validation Functions:**
 
 ```python
-def validate_sdk_metadata(metadata: dict[str, Any]) -> bool:
-    """Validate SDK metadata and raise ValidationError if invalid."""
+def validate_run_sdk_metadata(metadata: dict[str, Any]) -> bool:
+    """Validate Run SDK metadata and raise ValidationError if invalid."""
     try:
-        SdkMetadata.model_validate(metadata)
+        RunSdkMetadata.model_validate(metadata)
         return True
     except ValidationError:
         logger.exception("SDK metadata validation failed")
         raise
 
-def validate_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
-    """Validate SDK metadata without raising exceptions."""
+def validate_run_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
+    """Validate Run SDK metadata without raising exceptions."""
     try:
-        SdkMetadata.model_validate(metadata)
+        RunSdkMetadata.model_validate(metadata)
         return True
     except ValidationError:
         return False
 
-def get_sdk_metadata_json_schema() -> dict[str, Any]:
-    """Get JSON Schema for SDK metadata with $schema and $id fields."""
-    schema = SdkMetadata.model_json_schema()
+def get_run_sdk_metadata_json_schema() -> dict[str, Any]:
+    """Get JSON Schema for Run SDK metadata with $schema and $id fields."""
+    schema = RunSdkMetadata.model_json_schema()
     schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     schema["$id"] = (
         f"https://raw.githubusercontent.com/aignostics/python-sdk/main/"
-        f"docs/source/_static/sdk_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
+        f"docs/source/_static/sdk_run_custom_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
+    )
+    return schema
+
+def build_item_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Build SDK metadata to attach to individual items - NEW"""
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    existing_sdk = existing_metadata or {}
+    created_at = existing_sdk.get("created_at", now)
+
+    return {
+        "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
+        "created_at": created_at,
+        "updated_at": now,
+    }
+
+def validate_item_sdk_metadata(metadata: dict[str, Any]) -> bool:
+    """Validate Item SDK metadata - NEW"""
+    try:
+        ItemSdkMetadata.model_validate(metadata)
+        return True
+    except ValidationError:
+        logger.exception("Item SDK metadata validation failed")
+        raise
+
+def get_item_sdk_metadata_json_schema() -> dict[str, Any]:
+    """Get JSON Schema for Item SDK metadata - NEW"""
+    schema = ItemSdkMetadata.model_json_schema()
+    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
+    schema["$id"] = (
+        f"https://raw.githubusercontent.com/aignostics/python-sdk/main/"
+        f"docs/source/_static/sdk_item_custom_metadata_schema_v{ITEM_SDK_METADATA_SCHEMA_VERSION}.json"
     )
     return schema
 ```
 
 **Key Features:**
 
-1. **Automatic Attachment** - SDK metadata added to every run submission without user action
+1. **Automatic Attachment** - SDK metadata added to every run and item submission without user action
 2. **Environment Detection** - Automatically detects script/CLI/GUI, user/test/bridge contexts
 3. **CI/CD Integration** - Captures GitHub Actions workflow details and pytest test context
 4. **User Agent Integration** - Uses enhanced user_agent() from utils module
 5. **Strict Validation** - Pydantic models with `extra="forbid"` ensure data quality
-6. **Versioned Schema** - JSON Schema published with semantic versioning
+6. **Versioned Schema** - JSON Schema published with semantic versioning (Run: v0.0.4, Item: v0.0.3)
 7. **Silent Fallback** - User info and CI data are optional, won't fail if unavailable
 8. **Custom Metadata Support** - Users can add custom fields alongside SDK metadata
+9. **Tags Support** (NEW) - Associate runs and items with searchable tags (`set[str]`)
+10. **Timestamps** (NEW) - Track `created_at` (first submission) and `updated_at` (last modification)
+11. **Item Metadata** (NEW) - Separate schema for item-level metadata with platform bucket information
+12. **Metadata Updates** (NEW) - Update metadata via CLI (`aignostics application run custom-metadata update`)
 
 **Testing:**
 
@@ -716,6 +796,27 @@ def delete(self) -> None:
 - ✅ `Runs.details()` - Run details (15 sec TTL)
 - ✅ `Runs.results()` - Run results (15 sec TTL)
 - ✅ `Runs.list()` - Run list (15 sec TTL)
+
+**Cache Bypass (NEW):**
+
+All cached operations now support a `nocache=True` parameter to force fresh API calls:
+
+```python
+# Bypass cache for specific operations
+run = client.runs.details(run_id, nocache=True)  # Force API call
+applications = client.applications.list(nocache=True)  # Bypass cache
+me = client.me(nocache=True)  # Fresh user info
+
+# Useful in tests to avoid race conditions
+def test_run_update():
+    run = client.runs.details(run_id, nocache=True)  # Always fresh
+    assert run.output.state == RunState.PROCESSING
+```
+
+The `nocache` parameter is particularly useful in:
+- **Testing**: Avoid race conditions from stale cached data
+- **Real-time monitoring**: Ensure latest status in dashboards
+- **After mutations**: Get fresh data immediately after updates
 
 **Operations That Clear Cache:**
 

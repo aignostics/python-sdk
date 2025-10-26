@@ -16,7 +16,14 @@ from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
-from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
+from tests.constants_test import (
+    HETA_APPLICATION_ID,
+    HETA_APPLICATION_VERSION,
+    SPOT_0_EXPECTED_RESULT_FILES,
+    SPOT_0_FILENAME,
+    SPOT_0_FILESIZE,
+    SPOT_0_GS_URL,
+)
 
 if TYPE_CHECKING:
     from nicegui import ui
@@ -163,10 +170,10 @@ async def test_gui_cli_submit_to_run_result_delete(user: User, runner: CliRunner
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0915
+async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back(  # noqa: PLR0915
     user: User, runner: CliRunner, silent_logging: None
 ) -> None:
-    """Test that the user can download a dataset via the application page and cancel the run."""
+    """Test that the user can download a dataset via the application page and cancel the run, then find it back."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
 
@@ -239,17 +246,27 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             user.find(marker="BUTTON_METADATA_NEXT").click()
             await assert_notified(user, "Metadata captured.")
 
-            # Navigate through Notes step
+            # Navigate through Notes and Tags step
             await user.should_see("Note (optional)", retries=100)
             user.find("TEXTAREA_NOTE").type("test_gui_download_dataset_via_application_to_run_cancel:note").trigger(
                 "keydown.enter"
             )
 
-            user.find(marker="BUTTON_NOTES_NEXT").click()
+            await user.should_see("Tags (optional, press Enter to add)")
+            tags_input: ui.input_chips = user.find(marker="INPUT_TAGS").elements.pop()
+            tags_input.value = ["test_gui_tag1", "test_gui_tag2"]
+
+            user.find(marker="BUTTON_NOTES_AND_TAGS_NEXT").click()
 
             # Navigate through Scheduling step
             await user.should_see("Soft Due Date", retries=100)
             await user.should_see("The platform will try to complete the run before this time", retries=100)
+
+            await user.should_see("Hard Deadline")
+            await user.should_see("The platform might cancel the run if not completed by this time.", retries=100)
+            time_deadline: ui.time = user.find(marker="TIME_DEADLINE").elements.pop()
+            time_deadline.value = (datetime.now().astimezone() + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M")
+
             user.find(marker="BUTTON_SCHEDULING_NEXT").click()
             await assert_notified(user, "Prepared upload UI.")
 
@@ -270,11 +287,19 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             await assert_notified(user, "Application run submitted with id", wait_seconds=30)
 
             # Check user is redirected to the run page and run is running
+            await sleep(5)
             await user.should_see(f"Run of he-tme ({latest_application_version.number})", retries=200)
             try:
                 await user.should_see("PENDING", retries=100)
             except AssertionError:
                 await user.should_see("PROCESSING", retries=100)
+
+            code_run_metadata: ui.code = user.find(marker="CODE_RUN_METADATA").elements.pop()
+            metadata_text = code_run_metadata.props["content"]
+            # extract run id, with metadata text containing Run ID: '{run_data.run_id}'
+            run_id_match = re.search(r"Run ID: ([0-9a-f-]+)", metadata_text)
+            assert run_id_match is not None, f"Could not extract run ID from metadata: {metadata_text}"
+            run_id = run_id_match.group(1)
 
             # Check user can cancel run
             await user.should_see(marker="BUTTON_APPLICATION_RUN_CANCEL", retries=100)
@@ -285,8 +310,21 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
             # Check user sees refreshed run page and run is cancelled
             await user.should_see("CANCELED_BY_USER", retries=200)
 
-            # Check the note was saved correctly
+            # Check the tags were saved correctly
             await user.should_see("test_gui_download_dataset_via_application_to_run_cancel:note", retries=100)
+            await user.should_see("test_gui_tag1", retries=100)
+            await user.should_see("test_gui_tag2", retries=100)
+
+            # Click on a tag to go to the homagepage with filtered runs
+            user.find("test_gui_tag1").click()
+            await sleep(10)
+
+            # Check. user is on the homepage and the run filter is set to the tag clicked
+            user.should_see("Welcome to the Aignostics Launchpad")
+            user.should_see("test_gui_tag1", marker="INPUT_RUNS_FILTER_NOTE_OR_TAGS")
+
+            # Check the first run is the one we created
+            user.should_see(marker=f"SIDEBAR_RUN_ITEM:0:{run_id}")
 
 
 @pytest.mark.e2e
@@ -294,38 +332,42 @@ async def test_gui_download_dataset_via_application_to_run_cancel(  # noqa: PLR0
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
-async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:  # noqa: PLR0915
     """Test that the user can download a run result via the GUI."""
     with patch(
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory",
         return_value=tmp_path,
     ):
-        application = Service().application(HETA_APPLICATION_ID)
-        latest_version_number = application.versions[0].number if application.versions else None
-        assert latest_version_number is not None, f"No versions found for application {HETA_APPLICATION_ID}"
-        # This assumes a successful HETA run is in the last 200 completed runs
-        runs = Service().application_runs(limit=200, has_output=True)
-
+        # Find run
+        runs = Service().application_runs(
+            application_id=HETA_APPLICATION_ID,
+            application_version=HETA_APPLICATION_VERSION,
+            external_id=SPOT_0_GS_URL,
+            has_output=True,
+            limit=1,
+        )
         if not runs:
-            pytest.fail("No completed runs found, please run other tests first.")
-        # Find a completed run with the latest application version ID
-        run = None
-        for potential_run in runs:
-            if (
-                potential_run.application_id == application.application_id
-                and potential_run.version_number == latest_version_number
-            ):
-                run = potential_run
-                break
-        if not run:
-            pytest.skip(f"No completed runs found with {application.application_id} ({latest_version_number})")
+            message = f"No matching runs found for application {HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION}). "
+            message += "This test requires the scheduled test test_application_runs_heta_version passing first."
+            pytest.skip(message)
 
+        run_id = runs[0].run_id
+
+        # Explore run
+        run = Service().application_run(run_id).details()
+        print(
+            f"Found existing run: {run.run_id}\n"
+            f"application: {run.application_id} ({run.version_number})\n"
+            f"status: {run.state}, output: {run.output}\n"
+            f"submitted at: {run.submitted_at}, terminated at: {run.terminated_at}\n"
+            f"statistics: {run.statistics!r}\n",
+            f"custom_metadata: {run.custom_metadata!r}\n",
+        )
         # Step 1: Go to latest completed run
-        print(f"Found existing run: {run.run_id}, status: {run.state}")
         await user.open(f"/application/run/{run.run_id}")
         await user.should_see(f"Run {run.run_id}", retries=100)
         await user.should_see(
-            f"Run of {application.application_id} ({latest_version_number})",
+            f"Run of {run.application_id} ({run.version_number})",
             retries=100,
         )
 
@@ -348,20 +390,50 @@ async def test_gui_run_download(user: User, runner: CliRunner, tmp_path: Path, s
 
         # Check: Download completed
         await assert_notified(user, "Download completed.", 60 * 4)
-        print_directory_structure(tmp_path, "execute")
-        run_out_dir = tmp_path / run.run_id
-        assert run_out_dir.is_dir(), f"Expected run directory {run_out_dir} not found"
-        # Find any subdirectory in the run_out_dir
-        subdirs = [d for d in run_out_dir.iterdir() if d.is_dir()]
-        assert len(subdirs) > 0, f"Expected at least one subdirectory in {run_out_dir}, but found none"
+        print_directory_structure(tmp_path, "downloaded_run")
 
-        # Take the first subdirectory found (item_out_dir)
-        item_out_dir = subdirs[0]
-        print(f"Found subdirectory: {item_out_dir.name}")
+        # Check for directory layout as expected
+        run_dir = tmp_path / run.run_id
+        assert run_dir.is_dir(), f"Expected run directory {run_dir} not found"
 
-        # Check for files in the item directory
-        files_in_item_dir = list(item_out_dir.glob("*"))
-        assert len(files_in_item_dir) == 9, (
-            f"Expected 9 files in {item_out_dir}, but found {len(files_in_item_dir)}: "
-            f"{[f.name for f in files_in_item_dir]}"
+        subdirs = [d for d in run_dir.iterdir() if d.is_dir()]
+        assert len(subdirs) == 2, f"Expected two subdirectories in {run_dir}, but found {len(subdirs)}"
+
+        input_dir = run_dir / "input"
+        assert input_dir.is_dir(), f"Expected input directory {input_dir} not found"
+
+        results_dir = run_dir / SPOT_0_FILENAME.replace(".tiff", "")
+        assert results_dir.is_dir(), f"Expected run results directory {results_dir} not found"
+
+        # Check for input file having been downloaded
+        input_file = input_dir / SPOT_0_FILENAME
+        assert input_file.exists(), f"Expected input file {input_file} not found"
+        assert input_file.stat().st_size == SPOT_0_FILESIZE, (
+            f"Expected input file size {SPOT_0_FILESIZE}, but got {input_file.stat().st_size}"
         )
+
+        # Check for files in the results directory
+        files_in_results_dir = list(results_dir.glob("*"))
+        assert len(files_in_results_dir) == 9, (
+            f"Expected 9 files in {results_dir}, but found {len(files_in_results_dir)}: "
+            f"{[f.name for f in files_in_results_dir]}"
+        )
+
+        print(f"Found files in {results_dir}:")
+        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
+            file_path = results_dir / filename
+            if file_path.exists():
+                actual_size = file_path.stat().st_size
+                print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
+            else:
+                print(f"  {filename}: NOT FOUND")
+        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
+            file_path = results_dir / filename
+            assert file_path.exists(), f"Expected file {filename} not found"
+            actual_size = file_path.stat().st_size
+            min_size = expected_size * (100 - tolerance_percent) // 100
+            max_size = expected_size * (100 + tolerance_percent) // 100
+            assert min_size <= actual_size <= max_size, (
+                f"File size for {filename} ({actual_size} bytes) is outside allowed range "
+                f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
+            )
