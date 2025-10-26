@@ -262,7 +262,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             HETA_APPLICATION_ID,
             str(csv_path),
             "--note",
-            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+            "note_of_this_complex_test",
             "--tags",
             "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
             "--deadline",
@@ -282,6 +282,51 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
     assert run_id_match, f"Failed to extract run ID from output '{output}'"
     run_id = run_id_match.group(1)
 
+    # Test that we can find this run by it's note via the query parameter
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--query",
+            "note_of_this_complex_test",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note via query"
+
+    # Test that we can find this run by it's tag via the query parameter
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--query",
+            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by tag via query"
+
+    # Test that we cannot find this run by another tag via the query parameter
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--query",
+            "another_tag",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by another tag via query"
+
     # Test that we can find this run by it's note
     list_result = runner.invoke(
         cli,
@@ -290,7 +335,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             "run",
             "list",
             "--note-regex",
-            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+            "note_of_this_complex_test",
         ],
     )
     assert list_result.exit_code == 0
@@ -395,7 +440,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             "run",
             "list",
             "--note-regex",
-            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+            "note_of_this_complex_test",
             "--tags",
             "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
         ],

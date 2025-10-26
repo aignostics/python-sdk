@@ -609,6 +609,12 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 ui.label("Note:").classes("text-italic text-sm text-gray-500")
                 ui.label(str(note)).classes("-mt-4")
 
+        tags = run_data.custom_metadata.get("sdk", {}).get("tags") if run_data.custom_metadata else None
+        if tags and len(tags):
+            with ui.row().classes("gap-1 -mt-2 full-width"):
+                for tag in tags[:20]:
+                    ui.chip(tag).props("small outlined disabled").classes("bg-white text-black")
+
         with ui.list().classes("full-width"):
             results = list(run.results())
             if not results:

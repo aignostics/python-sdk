@@ -90,8 +90,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
                         logger.exception("Could not load applications")
 
-        async def application_runs_load_and_render(
-            runs_column: ui.column, has_output: bool = False, note_query: str | None = None
+        async def application_runs_load_and_render(  # noqa: C901
+            runs_column: ui.column, has_output: bool = False, query: str | None = None
         ) -> None:
             global _runs_last_refresh_time  # noqa: PLW0603
 
@@ -104,8 +104,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         Service.application_runs_static,
                         limit=RUNS_LIMIT,
                         has_output=has_output,
-                        note_regex=f".*{note_query}.*" if note_query else None,
-                        note_query_case_insensitive=True,
+                        query=query,
                     )
                     if runs is None:
                         message = (  # type: ignore[unreachable]
@@ -182,6 +181,15 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     else "font-normal"
                                 ).mark(f"LABEL_RUN_APPLICATION:{index}")
                                 ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
+                                # if there is tags, show them as immutable chips
+                                # only show the first 3, than "... and tooltip with the rest"
+                                # chips must be very small, white background, black text, outlined, disabled
+                                if run_data.get("tags") and len(run_data["tags"]):
+                                    with ui.row().classes("gap-1 mt-1"):
+                                        for tag in run_data["tags"][:3]:
+                                            ui.chip(tag).props("disabled").classes("bg-white text-black text-xs")
+                                        if len(run_data["tags"]) > 3:  # noqa: PLR2004
+                                            ui.tooltip(f"Tags: {', '.join(run_data['tags'][3:])}")
                     if not runs:
                         with ui.item():
                             with ui.item_section().props("avatar"):
@@ -204,7 +212,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 ui.scroll_area()
                 .props('id="runs-list-container"')
                 .classes("w-full")
-                .style("height: calc(100vh - 300px);")
+                .style("height: calc(100vh - 250px);")
                 .props("content-style='padding-right: 0;'"),
                 ui.column().classes("full-width justify-center") as runs_column,
             ):
@@ -215,7 +223,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     coroutine=application_runs_load_and_render(
                         runs_column=runs_column,
                         has_output=app.storage.tab.get(STORAGE_TAB_RUNS_HAS_OUTPUT, False),
-                        note_query=search_input.query,
+                        query=search_input.query,
                     ),
                     name="_runs_list",
                 )
@@ -247,11 +255,11 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     ui.item_label("Runs").props("header")
                     await ui.context.client.connected()
                     ui.input(
-                        placeholder="Filter by note",
+                        placeholder="Filter by note or tags",
                         on_change=_runs_list.refresh,
                     ).bind_value(search_input, "query").props("rounded outlined dense clearable").style(
-                        "max-width: 15ch;"
-                    ).classes("text-xs").mark("INPUT_RUNS_FILTER_NOTE")
+                        "max-width: 16ch;"
+                    ).classes("text-xs").mark("INPUT_RUNS_FILTER_NOTE_OR_TAGS")
                     with RunFilterButton("done_all", size="sm").classes("mr-3").mark("BUTTON_RUNS_FILTER_COMPLETED"):
                         ui.tooltip("Show completed runs only")
                 ui.separator()

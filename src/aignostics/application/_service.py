@@ -531,6 +531,8 @@ class Service(BaseService):
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
         limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
@@ -542,13 +544,20 @@ class Service(BaseService):
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
             RuntimeError: If the application run list cannot be retrieved.
         """
         return [
@@ -562,6 +571,7 @@ class Service(BaseService):
                 "termination_reason": run.termination_reason,
                 "item_count": run.statistics.item_count,
                 "item_succeeded_count": run.statistics.item_succeeded_count,
+                "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
             }
             for run in Service().application_runs(
                 application_id=application_id,
@@ -570,11 +580,13 @@ class Service(BaseService):
                 has_output=has_output,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
+                tags=tags,
+                query=query,
                 limit=limit,
             )
         ]
 
-    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0917
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -583,6 +595,7 @@ class Service(BaseService):
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
         tags: set[str] | None = None,
+        query: str | None = None,
         limit: int | None = None,
     ) -> list[RunData]:
         """Get a list of all application runs.
@@ -594,22 +607,91 @@ class Service(BaseService):
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
             tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
-                If None, no filtering is applied.
+                If None, no filtering is applied. Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
             RuntimeError: If the application run list cannot be retrieved.
         """
+        # Validate that query is not used with other metadata filters
+        if query is not None:
+            if note_regex is not None:
+                message = "Cannot use 'query' parameter together with 'note_regex' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+            if tags is not None:
+                message = "Cannot use 'query' parameter together with 'tags' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+
         if limit is not None and limit <= 0:
             return []
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
+            # Handle query parameter with union semantics (note OR tags)
+            if query is not None:
+                # Search for runs matching query in notes
+                note_runs_dict: dict[str, RunData] = {}
+                flag_case_insensitive = ' flag "i"'
+                escaped_query = query.replace("\\", "\\\\").replace('"', '\\"')
+                custom_metadata_note = f'$.sdk.note ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                note_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_note,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                )
+                for run in note_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    note_runs_dict[run.run_id] = run
+                    if limit is not None and len(note_runs_dict) >= limit:
+                        break
+
+                # Search for runs matching query in tags
+                tag_runs_dict: dict[str, RunData] = {}
+                custom_metadata_tags = f'$.sdk.tags ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                tag_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_tags,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                )
+                for run in tag_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    # Add to dict if not already present from note search
+                    if run.run_id not in note_runs_dict:
+                        tag_runs_dict[run.run_id] = run
+                    if limit is not None and len(note_runs_dict) + len(tag_runs_dict) >= limit:
+                        break
+
+                # Union of results from both searches
+                runs = list(note_runs_dict.values()) + list(tag_runs_dict.values())
+
+                # Apply limit after union
+                if limit is not None and len(runs) > limit:
+                    runs = runs[:limit]
+
+                return runs
+
             custom_metadata = None
             client_side_note_filter = None
 
@@ -634,6 +716,7 @@ class Service(BaseService):
                 # Create regex pattern: ^(tag1|tag2|tag3)$
                 regex_pattern = "^(" + "|".join(escaped_tags) + ")$"
                 custom_metadata = f'$.sdk.tags ? (@ like_regex "{regex_pattern}")'
+
             run_iterator = self._get_platform_client().runs.list_data(
                 application_id=application_id,
                 application_version=application_version,
@@ -645,7 +728,6 @@ class Service(BaseService):
             for run in run_iterator:
                 if has_output and run.output == RunOutput.NONE:
                     continue
-
                 # Client-side filtering when combining multiple criteria
                 # 1. If multiple tags specified, ensure ALL are present
                 if tags and len(tags) > 1:

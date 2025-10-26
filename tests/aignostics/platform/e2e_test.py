@@ -157,6 +157,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
 
     Raises:
         AssertionError: If any of the validation checks fail.
+        ValueError: If more than one tag is provided.
     """
     client = platform.Client()
     run = client.runs.submit(
@@ -181,19 +182,13 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
         f"Unexpected run state `{details.state}` after submission"
     )
 
-    # Build JSONPath filter for tags if provided
-    tags_filter = None
-    if tags:
-        # JSONPath filter to match all of the provided tags in the sdk.tags array
-        # PostgreSQL JSONPath: Use equality operator for exact match
-        for tag in tags:
-            tag_condition = f'$.sdk.tags ? (@ == "{tag}")'
-            tags_filter = f"({tags_filter}) && ({tag_condition})" if tags_filter else tag_condition
-
+    if tags and len(tags) > 1:
+        message = "Only single tag filtering is supported in this test code."
+        raise ValueError(message)
     runs = client.runs.list(
         application_id=application_id,
         application_version=application_version,
-        custom_metadata=tags_filter,
+        custom_metadata=f'$.sdk.tags[*] ? (@ == "{tags[0]}")' if tags else None,
     )
 
     # Find the submitted run in the list

@@ -742,7 +742,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
 
 
 @run_app.command("list")
-def run_list(
+def run_list(  # noqa: PLR0913, PLR0917
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
     limit: Annotated[int | None, typer.Option(help="Maximum number of runs to display")] = None,
     tags: Annotated[
@@ -753,6 +753,7 @@ def run_list(
         str | None,
         typer.Option(help="Optional regex pattern to filter runs by note metadata."),
     ] = None,
+    query: Annotated[str | None, typer.Option(help="Optional query string to filter runs by note OR tags.")] = None,
     note_case_insensitive: Annotated[bool, typer.Option(help="Make note regex search case-insensitive.")] = True,
 ) -> None:
     """List runs."""
@@ -762,6 +763,7 @@ def run_list(
             tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
             note_regex=note_regex,
             note_query_case_insensitive=note_case_insensitive,
+            query=query,
         )
         if len(runs) == 0:
             if tags:
