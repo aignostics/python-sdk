@@ -754,6 +754,11 @@ def test_cli_run_update_item_metadata_not_dict(runner: CliRunner) -> None:
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=120)
+@pytest.mark.skipif(
+    (platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"})
+    or (platform.system() in {"Darwin", "Windows"}),
+    reason="No parallel runners, otherwise race condition on metadata updates",
+)
 @pytest.mark.sequential
 def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner) -> None:
     """Test dumping and updating custom metadata via CLI commands."""
@@ -849,6 +854,11 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner) -> None:
 @pytest.mark.skip(reason="Waiting for platform API fix to item metadata endpoint which currently returns 404 always")
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=120)
+@pytest.mark.skipif(
+    (platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"})
+    or (platform.system() in {"Darwin", "Windows"}),
+    reason="No parallel runners, otherwise race condition on metadata updates",
+)
 @pytest.mark.sequential
 def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None:  # noqa: PLR0914, PLR0915  # noqa: PLR0914, PLR0915
     """Test dumping and updating item custom metadata via CLI commands."""
