@@ -1,4 +1,4 @@
-name: Claude Code / Automation / PR Review
+name: "+ Claude Code / Automation / PR Review"
 
 on:
   pull_request:

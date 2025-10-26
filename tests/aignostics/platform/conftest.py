@@ -23,6 +23,21 @@ def mock_settings() -> MagicMock:
         settings.me_retry_wait_max = 5.0
         settings.me_timeout = 10.0
         settings.me_cache_ttl = 60  # 60 seconds for testing
+        settings.application_retry_attempts = 3
+        settings.application_retry_wait_min = 0.1
+        settings.application_retry_wait_max = 5.0
+        settings.application_timeout = 10.0
+        settings.application_cache_ttl = 300  # 5 minutes
+        settings.application_version_retry_attempts = 3
+        settings.application_version_retry_wait_min = 0.1
+        settings.application_version_retry_wait_max = 5.0
+        settings.application_version_timeout = 10.0
+        settings.application_version_cache_ttl = 300  # 5 minutes
+        settings.run_retry_attempts = 3
+        settings.run_retry_wait_min = 0.1
+        settings.run_retry_wait_max = 5.0
+        settings.run_timeout = 10.0
+        settings.run_cache_ttl = 15  # 15 seconds
         settings.api_root = "https://test.api.com"
         mock_settings.return_value = settings
         yield mock_settings

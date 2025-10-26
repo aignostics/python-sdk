@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "0.2.193"
+version = "0.2.195"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -74,10 +74,10 @@ requires-python = ">=3.11, <3.14"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.119.1,<1",
+    "fastapi[standard,all]>=0.120.0,<1",
     "humanize>=4.14.0,<5",
-    "logfire[system-metrics]>=4.13.2,<5",
-    "nicegui[native]>=3.0.4,<4",
+    "logfire[system-metrics]>=4.14.2,<5",
+    "nicegui[native]>=3.1.0,<4",
     "opentelemetry-instrumentation-fastapi>=0.53b0,<1",
     "opentelemetry-instrumentation-httpx>=0.53b0,<1",
     "opentelemetry-instrumentation-jinja2>=0.53b0,<1",
@@ -88,7 +88,7 @@ dependencies = [
     "opentelemetry-instrumentation-urllib3>=0.53b0,<1",
     "packaging>=25.0,<26",
     "platformdirs>=4.5.0,<5",
-    "psutil>=7.1.1,<8",
+    "psutil>=7.1.2,<8",
     "pydantic-settings>=2.11.0,<3",
     "pywin32>=310,<311 ; sys_platform == 'win32'",
     "pyyaml>=6.0.3,<7",
@@ -97,7 +97,7 @@ dependencies = [
     "uptime>=3.0.1,<4",
     # Custom
     "aiopath>=0.6.11,<1",
-    "boto3>=1.40.55,<2",
+    "boto3>=1.40.59,<2",
     "certifi>=2025.10.5,<2026",
     "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
@@ -137,7 +137,7 @@ jupyter = ["jupyter>=1.1.1,<2"]
 marimo = [
     "cloudpathlib>=0.23.0,<1",
     "ipython>=9.6.0,<10",
-    "marimo>=0.17.0,<1",
+    "marimo>=0.17.2,<1",
     "matplotlib>=3.10.7,<4",
     "shapely>=2.1.0,<3",
 ]
@@ -156,7 +156,7 @@ dev = [
     "pip-audit>=2.9.0,<3",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.3.0,<5",
-    "pyright>=1.1.406,<2",
+    "pyright>=1.1.406,<1.1.407", # Regression in 1.1.407, see https://github.com/microsoft/pyright/issues/11060
     "pytest>=8.4.2,<9",
     "pytest-asyncio>=1.2.0,<2",
     "pytest-cov>=7.0.0,<8",
@@ -171,7 +171,7 @@ dev = [
     "pytest-timeout>=2.4.0,<3",
     "pytest-watcher>=0.4.3,<1",
     "pytest-xdist[psutil]>=3.8.0,<4",
-    "ruff>=0.14.1,<1",
+    "ruff>=0.14.2,<1",
     "scalene>=1.5.55,<2",
     "sphinx>=8.2.3,<9",
     "sphinx-autobuild>=2025.8.25,<2026",
@@ -214,7 +214,7 @@ packages = ["src/aignostics", "codegen/out/aignx", "examples"]
 allow-direct-references = true
 
 [tool.uv]
-required-version = ">=0.8.9" # CVE-2025-54368
+required-version = ">=0.9.5" # CVE-2025-54368, GHSA-w476-p2h3-79g9
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
@@ -224,7 +224,7 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pillow>=11.3.0",                   # CVE-2025-48379,
     "aiohttp>=3.12.14",                 # CVE-2025-53643
     "starlette>=0.47.2",                # CVE-2025-54121
-    "uv>=0.8.9",                        # CVE-2025-54368
+    "uv>=0.9.5",                        # CVE-2025-54368
     "jupyterlab>=4.4.9",                # CVE-2025-59842
     "pip>=5.3",                         # CVE-2025-8869  
 ]
@@ -373,7 +373,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "0.2.193"
+current_version = "0.2.195"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
@@ -531,16 +531,16 @@ commit_preprocessors = [
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
-    { message = "^feat", group = "<!-- 0 -->⛰️  Features" },
+    { message = "^feat|^feature", group = "<!-- 0 -->⛰️  Features" },
     { message = ".*security.*", group = "<!-- 8 -->🛡️ Security" },
     { message = "^sec", group = "<!-- 8 -->🛡️ Security" },
     { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
-    { message = "^doc", group = "<!-- 3 -->📚 Documentation" },
-    { message = "^perf", group = "<!-- 4 -->⚡ Performance" },
+    { message = "^doc|^documentation", group = "<!-- 3 -->📚 Documentation" },
+    { message = "^perf|^performance", group = "<!-- 4 -->⚡ Performance" },
     { message = "^refactor\\(clippy\\)", skip = true },
     { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
     { message = "^style", group = "<!-- 5 -->🎨 Styling" },
-    { message = "^test", group = "<!-- 6 -->🧪 Testing" },
+    { message = "^test|^testing", group = "<!-- 6 -->🧪 Testing" },
     { message = "^chore\\(release\\): prepare for", skip = true },
     { message = "^chore\\(pr\\)", skip = true },
     { message = "^chore\\(pull\\)", skip = true },

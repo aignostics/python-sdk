@@ -1,4 +1,4 @@
-name: "Scheduled Test"
+name: "> Scheduled Test (Hourly)"
 
 on:
   workflow_call:
@@ -30,6 +30,11 @@ on:
         required: false
       BETTERSTACK_HEARTBEAT_URL_PRODUCTION:
         required: false
+
+env:
+  # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
+  PYTHONIOENCODING: "utf8"
+  AIGNOSTICS_PLATFORM_ENVIRONMENT: ${{ inputs.platform_environment }}
 
 jobs:
   test-scheduled:

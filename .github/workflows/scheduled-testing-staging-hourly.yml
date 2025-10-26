@@ -1,4 +1,4 @@
-name: "Scheduled Testing / Staging"
+name: "+ Scheduled Testing / Staging (Hourly)"
 
 on:
   schedule:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   test-scheduled:
-    uses: ./.github/workflows/_scheduled-test.yml
+    uses: ./.github/workflows/_scheduled-test-hourly.yml
     with:
       platform_environment: "staging"
     permissions:

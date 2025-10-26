@@ -239,7 +239,7 @@ def test_aignostics_download_error_handling(runner: CliRunner, tmp_path: Path) -
     error_message = "Mock error: Failed to download from bucket"
     test_url = "gs://test-bucket/test-file.tiff"
 
-    with patch("aignostics.dataset._cli.platform_generate_signed_url") as mock_generate_url:
+    with patch("aignostics.dataset._service.platform_generate_signed_url") as mock_generate_url:
         mock_generate_url.side_effect = RuntimeError(error_message)
 
         result = runner.invoke(

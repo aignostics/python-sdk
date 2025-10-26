@@ -106,7 +106,7 @@ class Client:
             logger.exception("Failed to initialize client.")
             raise
 
-    def me(self) -> Me:
+    def me(self, nocache: bool = False) -> Me:
         """Retrieves info about the current user and their organisation.
 
         Retries on network and server errors.
@@ -114,6 +114,10 @@ class Client:
         Note:
         - We are not using urllib3s retry class as it does not support fine grained definition when to retry,
             exponential backoff with jitter, logging before retry, and is difficult to configure.
+
+        Args:
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Returns:
             Me: User and organization information.
@@ -136,15 +140,17 @@ class Client:
                 )
             )  # Retryer will pass down arguments
 
-        return me_with_retry()
+        return me_with_retry(nocache=nocache)  # type: ignore[call-arg]
 
-    def application(self, application_id: str) -> Application:
+    def application(self, application_id: str, nocache: bool = False) -> Application:
         """Find application by id.
 
         Retries on network and server errors.
 
         Args:
             application_id (str): The ID of the application.
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Raises:
             NotFoundException: If the application with the given ID is not found.
@@ -172,9 +178,11 @@ class Client:
                 )
             )
 
-        return application_with_retry(application_id)
+        return application_with_retry(application_id, nocache=nocache)  # type: ignore[call-arg]
 
-    def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
+    def application_version(
+        self, application_id: str, version_number: str | None = None, nocache: bool = False
+    ) -> ApplicationVersion:
         """Find application version by id.
 
         Retries on network and server errors.
@@ -183,6 +191,8 @@ class Client:
             application_id (str): The ID of the application.
             version_number (str | None): The version number of the application.
                 If None, the latest version will be retrieved.
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Raises:
             NotFoundException: If the application with the given ID and version number is not found.
@@ -227,7 +237,7 @@ class Client:
                 )
             )
 
-        return application_version_with_retry(application_id, version_number)
+        return application_version_with_retry(application_id, version_number, nocache=nocache)  # type: ignore[call-arg]
 
     def run(self, run_id: str) -> Run:
         """Finds run by id.

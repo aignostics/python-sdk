@@ -6,10 +6,14 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Callable
 from multiprocessing import Queue
 from pathlib import Path
 from typing import Any
 
+import requests
+
+from aignostics.platform import generate_signed_url as platform_generate_signed_url
 from aignostics.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health, get_logger
 
 logger = get_logger(__name__)
@@ -203,10 +207,10 @@ class Service(BaseService):
         def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
             if column_name != "SOPInstanceUID":
                 matches = index_df[column_name].isin(item_ids)
-                matched_ids = index_df[column_name][matches].unique().tolist()
+                matched_ids = index_df[column_name][matches].unique().tolist()  # pyright: ignore[reportAttributeAccessIssue]
             else:
-                matches = sm_instance_index_df[column_name].isin(item_ids)  # type: ignore
-                matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()  # type: ignore
+                matches = sm_instance_index_df[column_name].isin(item_ids)  # type: ignore[index]
+                matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()  # type: ignore[index]  # pyright: ignore[reportAttributeAccessIssue]
             if not matched_ids:
                 return False
             unmatched_ids = list(set(item_ids) - set(matched_ids))
@@ -307,3 +311,141 @@ client.download_from_selection(
             message += "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
             logger.warning(message)
             raise ValueError(message)
+
+    @staticmethod
+    def download_idc(
+        source: str,
+        target: Path,
+        target_layout: str = TARGET_LAYOUT_DEFAULT,
+        dry_run: bool = False,
+    ) -> int:
+        """Download from IDC using identifier or comma-separated set of identifiers.
+
+        Args:
+            source (str): Identifier or comma-separated set of identifiers.
+                IDs matched against collection_id, PatientId, StudyInstanceUID, SeriesInstanceUID or SOPInstanceUID.
+            target (Path): Target directory for download.
+            target_layout (str): Layout of the target directory.
+            dry_run (bool): If True, perform a dry run.
+
+        Returns:
+            int: Number of matched identifier types.
+
+        Raises:
+            ValueError: If target directory does not exist or no valid IDs provided.
+            RuntimeError: If download fails.
+        """
+        from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
+
+        client = IDCClient.client()
+        logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
+
+        target_directory = Path(target)
+        if not target_directory.is_dir():
+            message = f"Target directory does not exist: {target_directory}"
+            logger.error(message)
+            raise ValueError(message)
+
+        item_ids = [item for item in source.split(",") if item]
+
+        if not item_ids:
+            message = "No valid IDs provided."
+            logger.error(message)
+            raise ValueError(message)
+
+        index_df = client.index
+        client.fetch_index("sm_instance_index")
+        logger.info("Downloaded instance index")
+        sm_instance_index_df = client.sm_instance_index
+
+        def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
+            if column_name != "SOPInstanceUID":
+                matches = index_df[column_name].isin(item_ids)
+                matched_ids = index_df[column_name][matches].unique().tolist()  # pyright: ignore[reportAttributeAccessIssue]
+            else:
+                matches = sm_instance_index_df[column_name].isin(item_ids)  # type: ignore[index]
+                matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()  # type: ignore[index]  # pyright: ignore[reportAttributeAccessIssue]
+            if not matched_ids:
+                return False
+            unmatched_ids = list(set(item_ids) - set(matched_ids))
+            if unmatched_ids:
+                logger.debug("Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids)
+            logger.info("Identified matching %s: %s", column_name, matched_ids)
+            client.download_from_selection(**{  # type: ignore[no-untyped-call]
+                kwarg_name: matched_ids,
+                "downloadDir": target_directory,
+                "dirTemplate": target_layout,
+                "quiet": False,
+                "show_progress_bar": True,
+                "use_s5cmd_sync": True,
+                "dry_run": dry_run,
+            })
+            return True
+
+        matches_found = 0
+        matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")
+        matches_found += check_and_download("PatientID", item_ids, target_directory, "patientId")
+        matches_found += check_and_download("StudyInstanceUID", item_ids, target_directory, "studyInstanceUID")
+        matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
+        matches_found += check_and_download("SOPInstanceUID", item_ids, target_directory, "sopInstanceUID")
+
+        if not matches_found:
+            message = (
+                "None of the values passed matched any of the identifiers: "
+                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
+            )
+            logger.error(message)
+            raise ValueError(message)
+
+        return matches_found
+
+    @staticmethod
+    def download_aignostics(
+        source_url: str,
+        destination_directory: Path,
+        download_progress_callable: Callable[[int, int, str], None] | None = None,
+    ) -> Path:
+        """Download from bucket to folder via a bucket URL.
+
+        Args:
+            source_url (str): URL to download, e.g. gs://aignx-storage-service-dev/sample_data_formatted/...
+            destination_directory (Path): Destination directory to download to.
+            download_progress_callable (Callable[[int, int, str], None] | None): Optional callback for progress updates.
+                Called with (bytes_downloaded, total_size, filename).
+
+        Returns:
+            Path: The path to the downloaded file.
+
+        Raises:
+            ValueError: If the source URL is invalid.
+            RuntimeError: If the download fails.
+        """
+        try:
+            # Get filename from URL
+            filename = source_url.rsplit("/", maxsplit=1)[-1]
+
+            source_url_signed = platform_generate_signed_url(source_url)
+
+            output_path = Path(destination_directory) / filename
+
+            logger.info("Downloading from %s to %s", source_url, output_path)
+
+            Path(destination_directory).mkdir(parents=True, exist_ok=True)
+
+            # Start the request to get content length
+            response = requests.get(source_url_signed, stream=True, timeout=60)
+            total_size = int(response.headers.get("content-length", 0))
+
+            with open(output_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+                        if download_progress_callable:
+                            download_progress_callable(len(chunk), total_size, filename)
+
+            logger.info("Successfully downloaded to %s", output_path)
+            return output_path
+        except Exception as e:
+            message = f"Failed to download data from '{source_url}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
