@@ -143,6 +143,12 @@ jobs:
 
         ## Step 3: Analyze Architectural Impact of Code Changes
 
+        **CRITICAL PRINCIPLE**: This validation checks **ALL MODULES EQUALLY**. 
+        - Do NOT filter by module name, file type, or perceived importance
+        - Every module (platform, application, wsi, dataset, bucket, utils, system, gui, notebook, qupath, etc.) is architecturally significant
+        - Changes to ANY module may require documentation updates
+        - Treat all code changes as potentially impacting architecture
+
         Based on the code diff and your reading of `SOFTWARE_ARCHITECTURE.md`, identify:
 
         ### Check 1: New Modules Added?
@@ -164,8 +170,10 @@ jobs:
         fi
         ```
 
-        **For each new module**, check if it's documented in `SOFTWARE_ARCHITECTURE.md` Section 1.5.
-        If NOT documented, you MUST report it as a BLOCKING ISSUE.
+        **For EVERY module in the list above**, check if it's properly documented in `SOFTWARE_ARCHITECTURE.md` Section 1.5:
+        - If the module is NEW (not in Section 1.5), you MUST report it as a BLOCKING ISSUE
+        - If the module EXISTS but has significant changes, verify its description is still accurate
+        - ALL modules are equal - don't skip any based on name or perceived importance
 
         ### Check 2: New Dependencies Added?
 
@@ -214,26 +222,51 @@ jobs:
         
         Check if Section 3 "Integration Patterns" documents these.
 
-        ### Check 5: Architecture Pattern Changes?
+        ### Check 5: All Module Changes (Architecture Impact Analysis)
 
         ```bash
-        echo "=== Checking Pattern Changes ==="
+        echo "=== Analyzing ALL Module Changes ==="
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
-        # Look for changes to core architectural files (utils, _service, _cli, _gui)
+        # Get ALL Python files changed in src/aignostics/ - NO FILTERING
+        # Every module is equally important for architecture validation
         if [ -n "$PR_NUMBER" ]; then
-          PATTERN_FILES=$(gh pr diff "$PR_NUMBER" --name-only | grep -E "(utils/.*\.py|.*/_service\.py|.*/_cli\.py|.*/_gui\.py)" || echo "")
+          ALL_CHANGED_FILES=$(gh pr diff "$PR_NUMBER" --name-only | grep "^src/aignostics/.*\.py$" || echo "")
         else
-          PATTERN_FILES=$(git diff origin/main...HEAD --name-only | grep -E "(utils/.*\.py|.*/_service\.py|.*/_cli\.py|.*/_gui\.py)" || echo "")
+          ALL_CHANGED_FILES=$(git diff origin/main...HEAD --name-only | grep "^src/aignostics/.*\.py$" || echo "")
         fi
         
-        if [ -n "$PATTERN_FILES" ]; then
-          echo "Pattern files modified:"
-          echo "$PATTERN_FILES"
+        if [ -n "$ALL_CHANGED_FILES" ]; then
+          echo "ALL Python files modified (analyze each for architecture impact):"
+          echo "$ALL_CHANGED_FILES"
+          
+          # Group by module to make analysis easier
+          echo ""
+          echo "=== Changes by Module ==="
+          echo "$ALL_CHANGED_FILES" | cut -d/ -f1-3 | sort -u | while read module_path; do
+            module_name=$(basename "$module_path")
+            echo "Module: $module_name"
+            echo "$ALL_CHANGED_FILES" | grep "^$module_path/" | sed 's/^/  - /'
+          done
+        else
+          echo "No Python files changed in src/aignostics/"
         fi
         ```
 
-        **If core patterns changed**, check if Section 2 "Design Principles" or Section 1.2 diagrams need updates.
+        **CRITICAL**: Analyze EVERY file in the output above for architectural impact:
+        - **New files**: May indicate new functionality that needs documentation
+        - **Modified _service.py**: Business logic changes may affect architecture description
+        - **Modified _cli.py or _gui.py**: New commands/interfaces should be documented
+        - **Modified _settings.py**: New configuration options may be architecturally significant
+        - **Modified utils/ files**: Changes to shared infrastructure affect ALL modules
+        - **Modified models/ or other files**: May represent new patterns or data structures
+        
+        **For EACH changed file**, check if it requires updates to:
+        - Section 1.2 "General Architecture and Patterns" (for pattern changes)
+        - Section 1.5 "Layers and Modules" (for module functionality changes)
+        - Section 2 "Design Principles" (for architectural principle changes)
+        
+        **DO NOT skip or filter** - treat all module changes as potentially significant!
 
         ## Step 4: Generate PR Comment with SOFTWARE_ARCHITECTURE.md Updates
 
