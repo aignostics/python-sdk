@@ -4,10 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - 'src/aignostics/**/*.py'
-      - 'pyproject.toml'
-      - '.github/workflows/**/*.yml'
-      - 'SOFTWARE_ARCHITECTURE.md'
+      - 'src/**'                          # Any source code changes
+      - 'pyproject.toml'                  # Dependency changes
+      - '.github/workflows/**'            # CI/CD workflow changes
+      - 'SOFTWARE_ARCHITECTURE.md'        # Direct doc changes
   workflow_dispatch:
     inputs:
       platform_environment:
@@ -36,9 +36,9 @@ jobs:
       platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'automation'
       track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
-      allowed_tools: 'Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(cat:*),Bash(echo:*)'
+      allowed_tools: 'Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(cat:*),Bash(echo:*),Bash(grep:*),Bash(cut:*),Bash(sed:*),Bash(sort:*),Bash(head:*),Bash(test:*),Bash([*)'
       prompt: |
-        # SOFTWARE ARCHITECTURE VALIDATION FOR PULL REQUEST
+        # SOFTWARE_ARCHITECTURE.md VALIDATION FOR PULL REQUEST
 
         **REPO**: ${{ github.repository }}
         **PR**: ${{ github.event.pull_request.number && format('#{0}', github.event.pull_request.number) || inputs.pr_number || 'Manual Run' }}
@@ -46,26 +46,51 @@ jobs:
 
         ## Your Mission
 
-        You are an architecture documentation validator. Your task is to:
+        You are an architecture documentation validator. Your **SOLE PURPOSE** is to:
 
-        1. **Analyze** the code changes in this PR to understand their architectural impact
-        2. **Validate** that `SOFTWARE_ARCHITECTURE.md` accurately reflects the current codebase after these changes
-        3. **Identify** any discrepancies between the code and the documentation
-        4. **Suggest** specific, actionable updates to `SOFTWARE_ARCHITECTURE.md` with exact text to add/modify
-        5. **Comment** on the PR with your findings and recommendations for human review
+        1. **Read** `SOFTWARE_ARCHITECTURE.md` to understand what is currently documented
+        2. **Analyze** the code changes in this PR to identify architectural impacts
+        3. **Compare** the code changes against the current architecture documentation
+        4. **Report** ONLY what needs to be updated in `SOFTWARE_ARCHITECTURE.md`
+        5. **Provide** specific sections, line references, and exact text suggestions for updates
 
         ## CRITICAL: You MUST use tools to gather information
 
-        - Use the **Bash** tool to execute all git/gh commands shown below
-        - Use the **Read** tool to read files
-        - Use the **Grep** tool to search for patterns
-        - Use the **Glob** tool to find files
+        **Required Actions:**
+        - Use **Read** tool to read `SOFTWARE_ARCHITECTURE.md` FIRST
+        - Use **Bash** tool to execute all git/gh commands to analyze code changes
+        - Use **Grep** tool to search for specific patterns in code and docs
+        - Use **Glob** tool to find files
 
+        **Output Focus:**
+        - Comment ONLY on what needs to change in `SOFTWARE_ARCHITECTURE.md`
+        - Provide specific section numbers and exact text to add/modify/remove
+        - DO NOT comment on code quality, testing, or non-architectural issues
+        
         Do NOT just acknowledge these commands - you must ACTUALLY EXECUTE them.
 
-        ## Step 1: Understand PR Changes
+        ## Step 1: Read Current SOFTWARE_ARCHITECTURE.md
 
-        Execute these commands using the Bash tool to understand what changed:
+        **CRITICAL**: Before analyzing code changes, you MUST understand what's currently documented.
+
+        Use the Read tool to read `SOFTWARE_ARCHITECTURE.md` completely. Pay special attention to:
+        - Section 1.2: General Architecture and Patterns Applied
+        - Section 1.3: Language and Frameworks (Key Dependencies)
+        - Section 1.4: Build Chain and CI/CD
+        - Section 1.5: Layers and Modules (all module descriptions)
+        - Section 2: Design Principles
+        - Section 3: Integration Patterns
+        - Section 4: Application Ecosystem
+
+        Take notes on:
+        - Which modules are currently documented
+        - Which dependencies are listed
+        - Which workflows/CI processes are described
+        - Which integration patterns are mentioned
+
+        ## Step 2: Understand PR Code Changes
+
+        Execute these commands using the Bash tool to see what changed:
 
         ```bash
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
@@ -75,94 +100,72 @@ jobs:
           gh pr view "$PR_NUMBER" --json files --jq '.files[].path' | sort
         else
           echo "=== Changed files (comparing with main) ==="
-          git diff --name-only origin/main...HEAD | sort
+          git diff --name-only origin/main...HEAD 2>/dev/null || \
+          git diff --name-only HEAD^..HEAD | sort
         fi
         ```
 
-        After seeing the file list, get the detailed changes for architectural files:
+        Get the detailed code diff:
 
         ```bash
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
         if [ -n "$PR_NUMBER" ]; then
-          gh pr diff "$PR_NUMBER" | head -500
+          gh pr diff "$PR_NUMBER" | head -1000
         else
-          git diff origin/main...HEAD | head -500
+          git diff origin/main...HEAD | head -1000
         fi
         ```
 
-        ## Step 2: Read Current Architecture Document
+        ## Step 3: Analyze Architectural Impact of Code Changes
 
-        Use the Read tool to read `SOFTWARE_ARCHITECTURE.md` and understand its current structure.
+        ## Step 3: Analyze Architectural Impact of Code Changes
 
-        ## Step 3: Validate Architecture Accuracy
+        Based on the code diff and your reading of `SOFTWARE_ARCHITECTURE.md`, identify:
 
-        For each change in the PR, check if the architecture document needs updates:
-
-        ### Check 1: New Modules or Files
+        ### Check 1: New Modules Added?
 
         ```bash
-        # Look for new modules
         echo "=== Checking for New Modules ==="
-        
-        PR_NUMBER="${{ github.event.pull_request.number }}"
-        
-        # Check if new directories were added in src/aignostics/
+        PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+
         if [ -n "$PR_NUMBER" ]; then
-          NEW_MODULES=$(gh pr diff "$PR_NUMBER" | grep "^+++ b/src/aignostics/" | cut -d/ -f3 | sort -u)
+          NEW_MODULES=$(gh pr diff "$PR_NUMBER" --name-only | grep "^src/aignostics/" | cut -d/ -f3 | sort -u)
         else
           NEW_MODULES=$(git diff origin/main...HEAD --name-only | grep "^src/aignostics/" | cut -d/ -f3 | sort -u)
         fi
         
         if [ -n "$NEW_MODULES" ]; then
-          echo "New modules detected:"
+          echo "Modules with changes:"
           echo "$NEW_MODULES"
-          
-          # Check if these are documented in SOFTWARE_ARCHITECTURE.md
-          for module in $NEW_MODULES; do
-            if grep -q "$module" SOFTWARE_ARCHITECTURE.md; then
-              echo "  ✅ $module is documented"
-            else
-              echo "  ❌ BLOCKING: $module NOT documented in architecture"
-            fi
-          done
         fi
         ```
 
-        ### Check 2: Dependency Changes
+        **For each new module**, check if it's documented in `SOFTWARE_ARCHITECTURE.md` Section 1.5.
+        If NOT documented, you MUST report it as a BLOCKING ISSUE.
+
+        ### Check 2: New Dependencies Added?
 
         ```bash
         echo "=== Checking Dependency Changes ==="
-        
-        PR_NUMBER="${{ github.event.pull_request.number }}"
-        
-        # Check if pyproject.toml was modified
+        PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+
         if [ -n "$PR_NUMBER" ]; then
-          PYPROJECT_CHANGED=$(gh pr diff "$PR_NUMBER" --name-only | grep -q "pyproject.toml" && echo "yes" || echo "no")
+          gh pr diff "$PR_NUMBER" -- pyproject.toml | grep "^+" | grep -v "^+++" || echo "No dependency changes"
         else
-          PYPROJECT_CHANGED=$(git diff origin/main...HEAD --name-only | grep -q "pyproject.toml" && echo "yes" || echo "no")
-        fi
-        
-        if [ "$PYPROJECT_CHANGED" = "yes" ]; then
-          echo "⚠️  pyproject.toml was modified - check if dependencies section needs update"
-          
-          # Extract new dependencies from diff
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr diff "$PR_NUMBER" -- pyproject.toml | grep "^+" | grep -E "(dependencies|extras)" || echo "No dependency changes detected"
-          else
-            git diff origin/main...HEAD -- pyproject.toml | grep "^+" | grep -E "(dependencies|extras)" || echo "No dependency changes detected"
-          fi
+          git diff origin/main...HEAD -- pyproject.toml | grep "^+" | grep -v "^+++" || echo "No dependency changes"
         fi
         ```
 
-        ### Check 3: Workflow/CI Changes
+        **For each new dependency**, check if major/important ones are listed in Section 1.3 "Key Dependencies".
+        Report suggestions for adding them if they're architecturally significant.
+
+        ### Check 3: New Workflows/CI Changes?
 
         ```bash
         echo "=== Checking CI/CD Changes ==="
-        
-        PR_NUMBER="${{ github.event.pull_request.number }}"
-        
-        # Check if workflows were added/modified
+        PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+
         if [ -n "$PR_NUMBER" ]; then
           WORKFLOW_FILES=$(gh pr diff "$PR_NUMBER" --name-only | grep ".github/workflows/" || echo "")
         else
@@ -170,251 +173,245 @@ jobs:
         fi
         
         if [ -n "$WORKFLOW_FILES" ]; then
-          echo "⚠️  GitHub workflows modified - check if CI/CD section needs update"
+          echo "Workflows modified:"
           echo "$WORKFLOW_FILES"
         fi
         ```
 
-        ### Check 4: Architecture Pattern Changes
+        **For new workflows**, check if Section 1.4 "Build Chain and CI/CD" needs updates.
+
+        ### Check 4: New Integration Patterns?
+
+        Look for:
+        - New API integrations in code
+        - New external service calls
+        - New third-party library integrations
+        
+        Check if Section 3 "Integration Patterns" documents these.
+
+        ### Check 5: Architecture Pattern Changes?
 
         ```bash
-        echo "=== Checking Architecture Patterns ==="
-        
-        PR_NUMBER="${{ github.event.pull_request.number }}"
-        
-        # Look for significant structural changes
+        echo "=== Checking Pattern Changes ==="
+        PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+
         if [ -n "$PR_NUMBER" ]; then
-          SIGNIFICANT_CHANGES=$(gh pr diff "$PR_NUMBER" --name-only | grep -E "(src/aignostics/.*/_service.py|src/aignostics/.*/_cli.py|src/aignostics/.*/_gui.py|src/aignostics/utils/)" || echo "")
+          PATTERN_FILES=$(gh pr diff "$PR_NUMBER" --name-only | grep -E "(utils/.*\.py|.*/_service\.py|.*/_cli\.py|.*/_gui\.py)" || echo "")
         else
-          SIGNIFICANT_CHANGES=$(git diff origin/main...HEAD --name-only | grep -E "(src/aignostics/.*/_service.py|src/aignostics/.*/_cli.py|src/aignostics/.*/_gui.py|src/aignostics/utils/)" || echo "")
+          PATTERN_FILES=$(git diff origin/main...HEAD --name-only | grep -E "(utils/.*\.py|.*/_service\.py|.*/_cli\.py|.*/_gui\.py)" || echo "")
         fi
         
-        if [ -n "$SIGNIFICANT_CHANGES" ]; then
-          echo "Significant architectural files changed:"
-          echo "$SIGNIFICANT_CHANGES"
-          
-          # Read these files to understand the changes
-          for file in $SIGNIFICANT_CHANGES; do
-            echo ""
-            echo "=== Reading: $file ==="
-            cat "$file" 2>/dev/null || echo "File not found or deleted"
-          done
+        if [ -n "$PATTERN_FILES" ]; then
+          echo "Pattern files modified:"
+          echo "$PATTERN_FILES"
         fi
         ```
 
-        ### Check 5: Module Structure Validation
+        **If core patterns changed**, check if Section 2 "Design Principles" or Section 1.2 diagrams need updates.
+
+        ## Step 4: Generate PR Comment with SOFTWARE_ARCHITECTURE.md Updates
+
+        **CRITICAL**: Your comment MUST focus ONLY on updates needed in `SOFTWARE_ARCHITECTURE.md`.
+
+        **DO NOT include:**
+        - Code review comments
+        - Suggestions for code changes
+        - Test coverage comments
+        - General observations
+
+        **DO include:**
+        - Specific section numbers that need updates
+        - Exact text to add/modify/remove
+        - Line number references when possible
+        - Markdown code blocks with suggested content
+
+        Generate the comment:
 
         ```bash
-        echo "=== Validating Module Structure ==="
-        
-        # List current modules
-        CURRENT_MODULES=$(find src/aignostics -maxdepth 1 -type d -not -name "__pycache__" -not -name "aignostics" | sed 's|src/aignostics/||' | sort)
-        
-        echo "Current modules in codebase:"
-        echo "$CURRENT_MODULES"
-        echo ""
-        
-        # Check which modules are documented in SOFTWARE_ARCHITECTURE.md
-        echo "Checking documentation coverage:"
-        for module in $CURRENT_MODULES; do
-          if [ -n "$module" ]; then
-            if grep -qi "$module" SOFTWARE_ARCHITECTURE.md; then
-              echo "  ✅ $module - documented"
-            else
-              echo "  ⚠️  $module - not found in architecture doc"
-            fi
-          fi
-        done
-        ```
-
-        ## Step 4: Generate PR Comment
-
-        After validation, post findings as a PR comment:
-
-        ```bash
-        PR_NUMBER="${{ github.event.pull_request.number }}"
+        PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
         BRANCH_NAME="${{ github.event.pull_request.head.ref || github.ref_name }}"
         
-        # Build the comment with actual values
-        cat > /tmp/architecture-validation.md << EOF
-        # 🏗️ Software Architecture Validation
+        cat > /tmp/architecture-validation.md << 'COMMENT_EOF'
+        # 🏗️ SOFTWARE_ARCHITECTURE.md Update Requirements
 
-        **PR**: $([ -n "$PR_NUMBER" ] && echo "#$PR_NUMBER" || echo "Manual Run")
-        **Branch**: $BRANCH_NAME
-        **Architecture Doc**: \`SOFTWARE_ARCHITECTURE.md\`
-
-        ---
-
-        ## ❌ BLOCKING ISSUES
-
-        [List any critical discrepancies that must be fixed before merge]
-
-        ### Example: New Module Not Documented
-
-        **Issue**: New module `example_module` added but not documented in architecture
-
-        - **Location**: `src/aignostics/example_module/`
-        - **Missing from**: `SOFTWARE_ARCHITECTURE.md` Section 1.5
-        - **Current State**: Module exists with `_service.py`, `_cli.py`, `_gui.py`
-        - **Required Action**: Add module description to Section 1.5 "Layers and Modules"
-        - **Suggested Content**:
-          ```markdown
-          **Example Module (`example_module/`)**
-          - **Service**: [Brief description of what this module does]
-          - **CLI**: [Command-line operations provided]
-          - **GUI**: [GUI interface features]
-          - **Settings**: [Configuration options]
-          ```
+        **PR**: #PR_NUMBER_PLACEHOLDER
+        **Branch**: BRANCH_NAME_PLACEHOLDER
+        **Target Document**: `SOFTWARE_ARCHITECTURE.md`
 
         ---
 
-        ## ⚠️ SUGGESTIONS
+        ## ❌ REQUIRED UPDATES (Blocking)
 
-        [List recommended but non-critical updates]
+        > **These updates MUST be made before merging this PR**
 
-        ### Example: Dependency Update
+        ### [YOUR ACTUAL FINDINGS HERE - DELETE THIS LINE AND EXAMPLES BELOW IF NONE FOUND]
 
-        **Suggestion**: Update dependency list in Section 1.3
+        #### Update Required: New Module `module_name` Not Documented
 
-        - **Change**: `pyproject.toml` shows new dependency `new-library==1.0.0`
-        - **Current Doc**: Section 1.3 "Language and Frameworks" doesn't mention this
-        - **Recommendation**: Add to "Key Dependencies" section
-        - **Priority**: Medium (nice-to-have for completeness)
+        **Location in Code**: `src/aignostics/module_name/`
+        
+        **Required Change**: Add module documentation to Section 1.5 "Layers and Modules"
+        
+        **Insert After**: [Specify which module section]
+        
+        **Suggested Text to Add**:
+        ```markdown
+        **Module Name (`module_name/`)**
 
-        ### Example: Diagram Update
+        [Brief description of what this module does]
 
-        **Suggestion**: Update architecture diagram
-
-        - **Change**: New integration with external service
-        - **Current Doc**: Diagram in Section 1.2 doesn't show this integration
-        - **Recommendation**: Add connection to "External Services" layer in Mermaid diagram
-        - **Priority**: Low (diagram still conceptually accurate)
-
-        ---
-
-        ## ✅ VALIDATED SUCCESSFULLY
-
-        ### Code Changes That Don't Require Doc Updates
-
-        - ✅ **Bug fix in `application/_service.py`** - Internal implementation detail, no architectural impact
-        - ✅ **Test updates** - Test coverage improvements don't affect architecture
-        - ✅ **Minor refactoring** - Code organization changes within existing patterns
-
-        ### Architecture Doc Accuracy
-
-        - ✅ **Module structure** - All existing modules properly documented
-        - ✅ **Layer separation** - Presentation/Domain/Platform layers correctly described
-        - ✅ **Design principles** - Section 2 accurately reflects implementation patterns
-
-        ---
-
-        ## 📊 Summary
-
-        - **Files Changed**: X
-        - **New Modules Added**: Y
-        - **Blocking Issues**: N
-        - **Suggestions**: M
-        - **Architecture Doc Status**: [Accurate / Needs Updates]
-
-        ---
-
-        ## 🎯 Action Required
-
-        **Before merging this PR:**
-
-        1. Update `SOFTWARE_ARCHITECTURE.md` Section X.Y with [specific changes]
-        2. Add Mermaid diagram update for [new component/integration]
-        3. Update dependency list in Section 1.3
-
-        **Commands to verify current structure:**
-
-        ```bash
-        # List all modules
-        find src/aignostics -maxdepth 1 -type d
-
-        # Check dependencies
-        cat pyproject.toml | grep -A 50 "dependencies ="
-
-        # View architecture doc sections
-        grep "^##" SOFTWARE_ARCHITECTURE.md
+        - **Service** (`_service.py`): [Core business logic description]
+        - **CLI** (`_cli.py`): [Command-line operations provided]
+        - **GUI** (`_gui.py`): [GUI interface features] 
+        - **Settings** (`_settings.py`): [Configuration options]
         ```
 
         ---
 
-        **Remember**: Architecture documentation is the blueprint for understanding and 
-        maintaining this codebase. Keeping it accurate helps onboarding, compliance, and 
+        ## ⚠️ RECOMMENDED UPDATES (Suggestions)
+
+        > **These updates would improve documentation accuracy but are not blocking**
+
+        ### [YOUR ACTUAL FINDINGS HERE - DELETE THIS LINE AND EXAMPLES BELOW IF NONE FOUND]
+
+        #### Suggestion: Update Dependency List
+
+        **Code Change**: New dependency `library-name==1.0.0` added to `pyproject.toml`
+        
+        **Recommended Update**: Section 1.3 "Key Dependencies"
+        
+        **Suggested Addition**:
+        ```markdown
+        - **[Library Name](https://url.com/)**: Brief description of what it's used for
+        ```
+
+        **Priority**: Medium - keeps dependency list current
+
+        ---
+
+        #### Suggestion: Update CI/CD Workflow Description
+
+        **Code Change**: New workflow `.github/workflows/new-workflow.yml`
+        
+        **Recommended Update**: Section 1.4 "Build Chain and CI/CD"
+        
+        **Suggested Addition**: Add description of new workflow to the pipeline diagram or workflow list
+        
+        **Priority**: Low - diagram still conceptually accurate
+
+        ---
+
+        ## ✅ NO UPDATES NEEDED
+
+        > **These code changes do NOT require architecture doc updates**
+
+        - ✅ Bug fixes in `module/_service.py` - Internal implementation, no architectural impact
+        - ✅ Test file updates - Test coverage doesn't affect architecture
+        - ✅ Code refactoring within existing module - Pattern unchanged
+
+        ---
+
+        ## � Summary
+
+        - **Required Updates**: [N] blocking issues
+        - **Recommended Updates**: [M] suggestions  
+        - **Architecture Doc Status**: [Needs Updates / Accurate]
+
+        ---
+
+        ## 🎯 Action Items for PR Author
+
+        **Before merging:**
+
+        1. [ ] Update `SOFTWARE_ARCHITECTURE.md` Section X.Y with new module documentation
+        2. [ ] Add new dependency to Section 1.3 key dependencies list
+        3. [ ] Update Section 1.4 if new CI/CD workflows added
+
+        **How to verify:**
+
+        ```bash
+        # Check module structure
+        find src/aignostics -maxdepth 1 -type d | sort
+
+        # Review architecture doc sections
+        grep "^##" SOFTWARE_ARCHITECTURE.md
+        
+        # Verify module is now documented
+        grep "module_name" SOFTWARE_ARCHITECTURE.md
+        ```
+
+        ---
+
+        **Note**: This validation focuses solely on keeping `SOFTWARE_ARCHITECTURE.md` synchronized 
+        with the codebase. Architecture documentation is critical for onboarding, compliance, and 
         long-term maintainability.
 
-        *Generated by Claude Code Architecture Validation*
-        EOF
+        *Generated by Claude Code Architecture Documentation Validator*
+        COMMENT_EOF
 
-        # Post comment if this is a PR, otherwise just output to logs
+        # Replace placeholders with actual values
+        sed -i.bak "s/PR_NUMBER_PLACEHOLDER/$([ -n \"$PR_NUMBER\" ] && echo \"#$PR_NUMBER\" || echo \"Manual Run\")/g" /tmp/architecture-validation.md
+        sed -i.bak "s/BRANCH_NAME_PLACEHOLDER/$BRANCH_NAME/g" /tmp/architecture-validation.md
+        rm -f /tmp/architecture-validation.md.bak
+
+        # Post comment if this is a PR
         if [ -n "$PR_NUMBER" ]; then
-          echo "Posting comment to PR #$PR_NUMBER"
+          echo "Posting SOFTWARE_ARCHITECTURE.md validation comment to PR #$PR_NUMBER"
           gh pr comment "$PR_NUMBER" --body-file /tmp/architecture-validation.md
         else
-          echo "Manual run - validation results:"
+          echo "=== SOFTWARE_ARCHITECTURE.md Validation Results ==="
           cat /tmp/architecture-validation.md
         fi
         ```
 
-        ## Validation Criteria
+        ## Validation Focus
 
-        ### BLOCKING Issues (Must Fix):
-        - New modules not documented in Section 1.5
-        - Major architectural pattern changes not reflected in Section 1.2
-        - New external integrations missing from Section 3
-        - Significant dependency additions not listed in Section 1.3
+        **What to Report as REQUIRED UPDATES (Blocking):**
+        
+        1. **New modules** not documented in Section 1.5 "Layers and Modules"
+        2. **Major architectural changes** not reflected in Section 1.2 patterns/diagrams
+        3. **New external integrations** missing from Section 3 "Integration Patterns"
+        4. **Critical new dependencies** not listed in Section 1.3 "Key Dependencies"
 
-        ### SUGGESTIONS (Nice-to-Have):
-        - Diagram updates for new components
-        - Minor dependency additions
-        - Updated version numbers
-        - Enhanced descriptions for existing components
-        - Formatting improvements
+        **What to Report as RECOMMENDED UPDATES (Suggestions):**
+        
+        1. Minor dependency additions worth documenting
+        2. New CI/CD workflows for Section 1.4
+        3. Diagram enhancements for new components
+        4. Enhanced descriptions for existing sections
 
-        ### VALIDATED (No Action Needed):
-        - Internal implementation changes within existing patterns
-        - Bug fixes that don't change architecture
-        - Test coverage improvements
-        - Documentation fixes in other files
-        - Minor refactoring within same module
+        **What NOT to Report (No Architecture Impact):**
+        
+        1. Internal implementation changes within existing patterns
+        2. Bug fixes that don't change architecture
+        3. Test coverage improvements  
+        4. Documentation fixes in other files (README, CONTRIBUTING, etc.)
+        5. Minor refactoring within same module
+        6. Code style/formatting changes
 
-        ## Important Guidelines
+        ## Output Format Requirements
 
-        1. **Understand the changes** - Read the actual PR diff thoroughly
-        2. **Read the architecture doc** - Don't assume what's documented
-        3. **Be practical** - Not every code change requires doc updates
-        4. **Be specific** - Provide exact sections and suggested content
-        5. **Be helpful** - Suggest actual text to add, not just "update section X"
-        6. **Check current state** - Verify modules exist before claiming they're undocumented
+        **Your PR comment MUST:**
+        
+        1. ✅ **Focus ONLY on `SOFTWARE_ARCHITECTURE.md`** - no code review comments
+        2. ✅ **Provide specific section numbers** (e.g., "Section 1.5", "Section 2.1")
+        3. ✅ **Include exact text to add** - use markdown code blocks
+        4. ✅ **Delete template examples** - only include your real findings
+        5. ✅ **Use the template structure** - Required/Recommended/No Updates sections
+        6. ✅ **Be actionable** - tell them exactly what to add/change/remove
 
-        ## What to Look For
-
-        ### New Modules
-        - Any new directory under `src/aignostics/` with `_service.py`, `_cli.py`, or `_gui.py`
-        - Check if documented in Section 1.5 "Layers and Modules"
-
-        ### Dependency Changes
-        - New entries in `pyproject.toml` dependencies or optional-dependencies
-        - Check if major dependencies are listed in Section 1.3
-
-        ### CI/CD Changes
-        - New or modified workflows in `.github/workflows/`
-        - Check if Section 1.4 "Build Chain and CI/CD" is accurate
-
-        ### Integration Changes
-        - New external API integrations
-        - Check if documented in Section 3 "Integration Patterns"
-
-        ### Pattern Changes
-        - Changes to core patterns in `utils/` or base classes
-        - Check if Section 2 "Design Principles" needs updates
+        **DO NOT:**
+        
+        - ❌ Post template examples as-is
+        - ❌ Comment on code quality or test coverage
+        - ❌ Suggest code refactoring
+        - ❌ Include generic "update section X" without specific text
+        - ❌ Report issues with files other than `SOFTWARE_ARCHITECTURE.md`
 
         ---
 
-        **Focus**: Keep the architecture document as a living, accurate representation 
-        of the codebase structure and design decisions.
+        **Remember**: Your sole purpose is to keep `SOFTWARE_ARCHITECTURE.md` synchronized 
+        with the codebase. Report ONLY what needs to change in that specific documentation file.
     secrets:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
