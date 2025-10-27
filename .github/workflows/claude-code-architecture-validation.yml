@@ -3,6 +3,11 @@ name: "+ Claude Code / Architecture Doc Validation"
 on:
   pull_request:
     types: [opened, synchronize]
+    paths:
+      - 'src/aignostics/**/*.py'
+      - 'pyproject.toml'
+      - '.github/workflows/**/*.yml'
+      - 'SOFTWARE_ARCHITECTURE.md'
   workflow_dispatch:
     inputs:
       platform_environment:
@@ -13,66 +18,82 @@ on:
         options:
           - staging
           - production
+      pr_number:
+        description: 'PR number (for manual runs)'
+        required: false
+        type: string
 
 jobs:
   architecture-validation:
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/_claude-code.yml
     with:
       platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'automation'
       track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
-      allowed_tools: 'Read,Glob,Grep,LS,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(diff:*),Bash(uv:*)'
+      allowed_tools: 'Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(cat:*),Bash(echo:*)'
       prompt: |
         # SOFTWARE ARCHITECTURE VALIDATION FOR PULL REQUEST
 
         **REPO**: ${{ github.repository }}
-        **PR**: ${{ github.event.pull_request.number && format('#{0}', github.event.pull_request.number) || 'Manual Run' }}
+        **PR**: ${{ github.event.pull_request.number && format('#{0}', github.event.pull_request.number) || inputs.pr_number || 'Manual Run' }}
         **BRANCH**: ${{ github.event.pull_request.head.ref || github.ref_name }}
-
-        ## Context
-
-        This PR validation checks if `SOFTWARE_ARCHITECTURE.md` accurately reflects 
-        the current codebase structure, dependencies, and architectural patterns after 
-        the proposed changes in this PR.
 
         ## Your Mission
 
-        Analyze the changes in this PR and validate that the Software Architecture 
-        document remains accurate, complete, and up-to-date.
+        You are an architecture documentation validator. Your task is to:
+
+        1. **Analyze** the code changes in this PR to understand their architectural impact
+        2. **Validate** that `SOFTWARE_ARCHITECTURE.md` accurately reflects the current codebase after these changes
+        3. **Identify** any discrepancies between the code and the documentation
+        4. **Suggest** specific, actionable updates to `SOFTWARE_ARCHITECTURE.md` with exact text to add/modify
+        5. **Comment** on the PR with your findings and recommendations for human review
+
+        ## CRITICAL: You MUST use tools to gather information
+
+        - Use the **Bash** tool to execute all git/gh commands shown below
+        - Use the **Read** tool to read files
+        - Use the **Grep** tool to search for patterns
+        - Use the **Glob** tool to find files
+
+        Do NOT just acknowledge these commands - you must ACTUALLY EXECUTE them.
 
         ## Step 1: Understand PR Changes
 
+        Execute these commands using the Bash tool to understand what changed:
+
         ```bash
-        echo "=== Analyzing PR Changes ==="
-        echo ""
-        
-        # Check if this is a PR or manual run
-        PR_NUMBER="${{ github.event.pull_request.number }}"
-        
+        PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+
         if [ -n "$PR_NUMBER" ]; then
-          echo "Changed files in this PR:"
+          echo "=== Changed files in PR #$PR_NUMBER ==="
           gh pr view "$PR_NUMBER" --json files --jq '.files[].path' | sort
-          echo ""
-          echo "Detailed diff:"
-          gh pr diff "$PR_NUMBER"
         else
-          echo "Manual run - comparing with main branch"
-          echo "Changed files:"
+          echo "=== Changed files (comparing with main) ==="
           git diff --name-only origin/main...HEAD | sort
-          echo ""
-          echo "Detailed diff:"
-          git diff origin/main...HEAD
+        fi
+        ```
+
+        After seeing the file list, get the detailed changes for architectural files:
+
+        ```bash
+        PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
+
+        if [ -n "$PR_NUMBER" ]; then
+          gh pr diff "$PR_NUMBER" | head -500
+        else
+          git diff origin/main...HEAD | head -500
         fi
         ```
 
         ## Step 2: Read Current Architecture Document
 
-        ```bash
-        echo "=== Reading Architecture Document ==="
-        echo ""
-        # Read the current SOFTWARE_ARCHITECTURE.md
-        cat SOFTWARE_ARCHITECTURE.md
-        ```
+        Use the Read tool to read `SOFTWARE_ARCHITECTURE.md` and understand its current structure.
 
         ## Step 3: Validate Architecture Accuracy
 
