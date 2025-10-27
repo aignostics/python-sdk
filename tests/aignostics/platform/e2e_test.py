@@ -195,7 +195,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
     details = run.details()
     assert details.run_id == run.run_id, "Run ID mismatch after submission"
     assert details.application_id == application_id, "Application ID mismatch after submission"
-    assert details.application_version == application_version, "Application version mismatch after submission"
+    assert details.version_number == application_version, "Application version mismatch after submission"
     assert details.state in {RunState.PENDING, RunState.PROCESSING}, (
         f"Unexpected run state `{details.state}` after submission"
     )
