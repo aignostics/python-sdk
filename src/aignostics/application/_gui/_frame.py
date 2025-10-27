@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from nicegui import app, background_tasks, context, ui  # noq
@@ -13,6 +14,7 @@ logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
+RUNS_REFRESH_INTERVAL = 60 * 15  # 15 minutes
 STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
 service = Service()
@@ -23,6 +25,9 @@ class SearchInput:
 
 
 search_input = SearchInput()
+
+# Module-level state for auto-refresh and notifications (reset on page reload)
+_runs_last_refresh_time: datetime | None = None
 
 
 async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
@@ -35,6 +40,12 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 ) -> None:
     if args is None:
         args = {}
+
+    if args.get("query"):
+        search_input.query = args["query"]
+    else:
+        search_input.query = ""
+
     with frame(  # noqa: PLR1702
         navigation_title=navigation_title,
         navigation_icon=navigation_icon,
@@ -85,17 +96,21 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
                         logger.exception("Could not load applications")
 
-        async def application_runs_load_and_render(
-            runs_column: ui.column, has_output: bool = False, note_query: str | None = None
+        async def application_runs_load_and_render(  # noqa: C901
+            runs_column: ui.column, has_output: bool = False, query: str | None = None
         ) -> None:
+            global _runs_last_refresh_time  # noqa: PLW0603
+
             with runs_column:
                 try:
+                    # Store previous refresh time for detecting newly terminated runs
+                    previous_refresh_time = _runs_last_refresh_time
+
                     runs = await nicegui_run.io_bound(
                         Service.application_runs_static,
                         limit=RUNS_LIMIT,
                         has_output=has_output,
-                        note_regex=f".*{note_query}.*" if note_query else None,
-                        note_query_case_insensitive=True,
+                        query=query,
                     )
                     if runs is None:
                         message = (  # type: ignore[unreachable]
@@ -104,6 +119,29 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         )
                         logger.error(message)
                         raise RuntimeError(message)  # noqa: TRY301
+
+                    # Update refresh timestamp before checking for new terminations
+                    _runs_last_refresh_time = datetime.now(UTC)
+
+                    # Check for newly terminated runs and show notifications
+                    if previous_refresh_time is not None and runs:
+                        newly_terminated = [
+                            r
+                            for r in runs
+                            if r.get("terminated_at") is not None and r["terminated_at"] > previous_refresh_time
+                        ]
+
+                        # Show notifications for newly completed runs (limit to 3 to avoid spam)
+                        for run in newly_terminated[:3]:
+                            ui.notify(
+                                f"🎉 Run {run['application_id']} completed!",
+                                type="positive",
+                                position="top",
+                                timeout=60 * 60 * 24 * 7,
+                                progress=True,
+                                close_button=True,
+                            )
+
                     runs_column.clear()
                     for index, run_data in enumerate(runs):
                         with (
@@ -112,7 +150,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                             )
                             .props("clickable")
                             .classes("w-full")
-                            .mark(f"SIDEBAR_RUN_ITEM:{index}")
+                            .style("padding-left: 0; padding-right: 0;")
+                            .mark(f"SIDEBAR_RUN_ITEM:{index}:{run_data['run_id']}")
                         ):
                             with ui.item_section().props("avatar"):
                                 icon, color = run_status_to_icon_and_color(
@@ -148,12 +187,27 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     else "font-normal"
                                 ).mark(f"LABEL_RUN_APPLICATION:{index}")
                                 ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
+                                if run_data.get("tags") and len(run_data["tags"]):
+                                    with ui.row().classes("gap-1 mt-1"):
+                                        for tag in run_data["tags"][:3]:
+
+                                            def _on_tag_click(t: str = tag) -> None:
+                                                search_input.query = t
+                                                _runs_list.refresh()
+
+                                            ui.chip(
+                                                tag,
+                                                on_click=_on_tag_click,
+                                            ).props("clickable").classes("bg-white text-black text-xs")
+                                        if len(run_data["tags"]) > 3:  # noqa: PLR2004
+                                            ui.tooltip(f"Tags: {', '.join(run_data['tags'][3:])}")
                     if not runs:
                         with ui.item():
                             with ui.item_section().props("avatar"):
                                 ui.icon("info")
                             with ui.item_section():
                                 ui.label("You did not yet create a run.")
+
                 except Exception as e:
                     runs_column.clear()
                     with ui.item():
@@ -165,7 +219,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
         @ui.refreshable
         async def _runs_list() -> None:
-            with ui.column().classes("full-width justify-center") as runs_column:
+            with (
+                ui.scroll_area()
+                .props('id="runs-list-container"')
+                .classes("w-full")
+                .style("height: calc(100vh - 250px);")
+                .props("content-style='padding-right: 0;'"),
+                ui.column().classes("full-width justify-center") as runs_column,
+            ):
                 with ui.row().classes("w-full justify-center"):
                     ui.spinner(size="lg").classes("m-5")
                 await ui.context.client.connected()
@@ -173,7 +234,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     coroutine=application_runs_load_and_render(
                         runs_column=runs_column,
                         has_output=app.storage.tab.get(STORAGE_TAB_RUNS_HAS_OUTPUT, False),
-                        note_query=search_input.query,
+                        query=search_input.query,
                     ),
                     name="_runs_list",
                 )
@@ -205,14 +266,17 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     ui.item_label("Runs").props("header")
                     await ui.context.client.connected()
                     ui.input(
-                        placeholder="Filter by note",
+                        placeholder="Filter by note or tags",
                         on_change=_runs_list.refresh,
                     ).bind_value(search_input, "query").props("rounded outlined dense clearable").style(
-                        "max-width: 15ch;"
-                    ).classes("text-xs").mark("INPUT_RUNS_FILTER_NOTE")
+                        "max-width: 16ch;"
+                    ).classes("text-xs").mark("INPUT_RUNS_FILTER_NOTE_OR_TAGS")
                     with RunFilterButton("done_all", size="sm").classes("mr-3").mark("BUTTON_RUNS_FILTER_COMPLETED"):
                         ui.tooltip("Show completed runs only")
                 ui.separator()
                 await _runs_list()
+
+                # Auto-refresh runs list
+                ui.timer(interval=RUNS_REFRESH_INTERVAL, callback=_runs_list.refresh)
         except Exception as e:  # noqa: BLE001
             ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")

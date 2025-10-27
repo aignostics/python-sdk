@@ -3,22 +3,31 @@
 1. Printing of application resources
 2. Reading/writing metadata CSV files
 3. Mime type handling.
+4. Date/time validation.
 """
 
 import csv
 import mimetypes
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 import humanize
 
+from aignostics.constants import (
+    HETA_APPLICATION_ID,
+    TEST_APP_APPLICATION_ID,
+    WSI_SUPPORTED_FILE_EXTENSIONS,
+    WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
+)
 from aignostics.platform import (
     InputArtifactData,
     OutputArtifactData,
     OutputArtifactElement,
     Run,
     RunData,
+    RunItemStatistics,
     RunState,
 )
 from aignostics.utils import console, get_logger
@@ -26,6 +35,53 @@ from aignostics.utils import console, get_logger
 logger = get_logger(__name__)
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
+
+
+def validate_due_date(due_date: str | None) -> None:
+    """Validate that due_date is in ISO 8601 format and in the future.
+
+    Args:
+        due_date (str | None): The datetime string to validate.
+
+    Raises:
+        ValueError: If
+            the format is invalid
+            or the due_date is not in the future.
+    """
+    if due_date is None:
+        return
+
+    # Try parsing with fromisoformat (handles most ISO 8601 formats)
+    try:
+        # Handle 'Z' suffix by replacing with '+00:00'
+        normalized = due_date.replace("Z", "+00:00")
+        parsed_dt = datetime.fromisoformat(normalized)
+    except (ValueError, TypeError) as e:
+        message = (
+            f"Invalid ISO 8601 format for due_date. "
+            f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+            f"but got: '{due_date}' (error: {e})"
+        )
+        raise ValueError(message) from e
+
+    # Ensure the datetime is timezone-aware (reject naive datetimes)
+    if parsed_dt.tzinfo is None:
+        message = (
+            f"Invalid ISO 8601 format for due_date. "
+            f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+            f"but got: '{due_date}' (missing timezone information)"
+        )
+        raise ValueError(message)
+
+    # Check that the datetime is in the future
+    now = datetime.now(UTC)
+    if parsed_dt <= now:
+        message = (
+            f"due_date must be in the future. "
+            f"Got '{due_date}' ({parsed_dt.isoformat()}), "
+            f"but current UTC time is {now.isoformat()}"
+        )
+        raise ValueError(message)
 
 
 class OutputFormat(StrEnum):
@@ -41,94 +97,137 @@ class OutputFormat(StrEnum):
     JSON = "json"
 
 
-def retrieve_and_print_run_details(run: Run) -> None:
+def _format_status_string(state: RunState, termination_reason: str | None = None) -> str:
+    """Format status string with optional termination reason.
+
+    Args:
+        state (RunState): The run state
+        termination_reason (str | None): Optional termination reason
+
+    Returns:
+        str: Formatted status string
+    """
+    if state is RunState.TERMINATED and termination_reason:
+        return f"{state.value} ({termination_reason})"
+    return f"{state.value}"
+
+
+def _format_duration_string(submitted_at: datetime | None, terminated_at: datetime | None) -> str:
+    """Format duration string for a run.
+
+    Args:
+        submitted_at: Submission timestamp
+        terminated_at: Termination timestamp
+
+    Returns:
+        str: Formatted duration string
+    """
+    if terminated_at and submitted_at:
+        duration = terminated_at - submitted_at
+        return humanize.precisedelta(duration)
+    return "still processing"
+
+
+def _format_run_statistics(statistics: RunItemStatistics) -> str:
+    """Format run statistics as a multi-line string.
+
+    Args:
+        statistics: Run statistics object
+
+    Returns:
+        str: Formatted statistics string
+    """
+    return (
+        f"  - {statistics.item_count} items\n"
+        f"  - {statistics.item_pending_count} pending\n"
+        f"  - {statistics.item_processing_count} processing\n"
+        f"  - {statistics.item_skipped_count} skipped\n"
+        f"  - {statistics.item_succeeded_count} succeeded\n"
+        f"  - {statistics.item_user_error_count} user errors\n"
+        f"  - {statistics.item_system_error_count} system errors"
+    )
+
+
+def _format_run_details(run: RunData) -> str:
+    """Format detailed run information as a single string.
+
+    Args:
+        run (RunData): Run data to format
+
+    Returns:
+        str: Formatted run details
+    """
+    status_str = _format_status_string(run.state, run.termination_reason)
+    duration_str = _format_duration_string(run.submitted_at, run.terminated_at)
+
+    output = (
+        f"[bold]Run ID:[/bold] {run.run_id}\n"
+        f"[bold]Application (Version):[/bold] {run.application_id} ({run.version_number})\n"
+        f"[bold]Status (Termination Reason):[/bold] {status_str}\n"
+        f"[bold]Output:[/bold] {run.output.value}\n"
+    )
+
+    if run.error_message or run.error_code:
+        output += f"[bold]Error Message (Code):[/bold] {run.error_message or 'N/A'} ({run.error_code or 'N/A'})\n"
+
+    output += (
+        f"[bold]Statistics:[/bold]\n"
+        f"{_format_run_statistics(run.statistics)}\n"
+        f"[bold]Submitted (by):[/bold] {run.submitted_at} ({run.submitted_by})\n"
+        f"[bold]Terminated (duration):[/bold] {run.terminated_at} ({duration_str})\n"
+        f"[bold]Custom Metadata:[/bold] {run.custom_metadata or 'None'}"
+    )
+
+    return output
+
+
+def retrieve_and_print_run_details(run_handle: Run) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
-        run (Run): The Run object
+        run_handle (Run): The Run handle
 
     """
-    run_data = run.details()
-    console.print(f"[bold]Run Details for {run.run_id}[/bold]")
-    console.print("=" * 80)
-    console.print(f"[bold]Application (Version):[/bold] {run_data.application_id} ({run_data.version_number})   ")
-    if run_data.state is RunState.TERMINATED and run_data.termination_reason:
-        status_str = f"{run_data.state.value} ({run_data.termination_reason})"
-    else:
-        status_str = f"{run_data.state.value}"
-    console.print(f"[bold]Status:[/bold] {status_str}")
-    console.print(
-        f"  - {run_data.statistics.item_count} items\n"
-        f"  - {run_data.statistics.item_pending_count} pending\n"
-        f"  - {run_data.statistics.item_processing_count} processing\n"
-        f"  - {run_data.statistics.item_skipped_count} skipped\n"
-        f"  - {run_data.statistics.item_succeeded_count} succeeded\n"
-        f"  - {run_data.statistics.item_user_error_count} user errors\n"
-        f"  - {run_data.statistics.item_system_error_count} system errors\n"
-    )
-    console.print(f"[bold]Error:[/bold] {run_data.error_message or 'N/A'} ({run_data.error_code or 'N/A'})")
-    if run_data.terminated_at and run_data.submitted_at:
-        duration = run_data.terminated_at - run_data.submitted_at
-        duration_str = humanize.precisedelta(duration)
-        console.print(f"[bold]Duration:[/bold] {duration_str}")
-    else:
-        duration_str = "still processing"
-    console.print(f"[bold]Submitted:[/bold] {run_data.submitted_at} ({run_data.submitted_by})")
-    console.print(f"[bold]Terminated:[/bold] {run_data.terminated_at} ({duration_str})")
+    run = run_handle.details()
 
-    console.print(f"[bold]Custom Metadata:[/bold] {run_data.custom_metadata or 'None'}")
+    output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{_format_run_details(run)}\n\n[bold]Items:[/bold]"
 
-    # Get and display detailed item status
-    console.print()
-    console.print("[bold]Items:[/bold]")
-
-    _retrieve_and_print_run_items(run)
-    _print_run_statistics(run)
+    console.print(output)
+    _retrieve_and_print_run_items(run_handle)
 
 
-def _retrieve_and_print_run_items(run: Run) -> None:
+def _retrieve_and_print_run_items(run_handle: Run) -> None:
     """Retrieve and print information about items in a run.
 
     Args:
-        run (Run): The Run object
+        run_handle (Run): The Run handle
     """
-    # Get results with detailed information
-    results = run.results()
+    results = run_handle.results()
     if not results:
         console.print("  No item results available.")
         return
 
     for item in results:
-        console.print(f"  [bold]Item ID:[/bold] {item.item_id}")
-        console.print(f"  [bold]Item External ID:[/bold] {item.external_id}")
-        console.print(f"  [bold]Status (Termination Reason):[/bold] {item.state.value} ({item.termination_reason})")
-        console.print(f"  [bold]Error Message (Code):[/bold] {item.error_message} ({item.error_code})")
-
-        # TODO(Andreas): error_code is missing on item model; should be printed here as well.
-        # Please add in the openapi.json and regenerate the SDK, and add line here.
-        # Can be set to generic code initially so we have a stable API at last.
-        if item.error_message:
-            console.print(f"  [error]Error:[/error] {item.error_message}")
+        item_output = (
+            f"  [bold]Item ID:[/bold] {item.item_id}\n"
+            f"  [bold]Item External ID:[/bold] {item.external_id}\n"
+            f"  [bold]Status (Termination Reason):[/bold] {item.state.value} ({item.termination_reason})\n"
+            f"  [bold]Error Message (Code):[/bold] {item.error_message} ({item.error_code})\n"
+            f"  [bold]Custom Metadata:[/bold] {item.custom_metadata or 'None'}"
+        )
 
         if item.output_artifacts:
-            console.print("  [bold]Output Artifacts:[/bold]")
+            artifacts_output = "\n  [bold]Output Artifacts:[/bold]"
             for artifact in item.output_artifacts:
-                console.print(f"    - Name: {artifact.name}")
-                console.print(f"      MIME Type: {get_mime_type_for_artifact(artifact)}")
-                console.print(f"      Artifact ID: {artifact.output_artifact_id}")
-                console.print(f"      Download URL: {artifact.download_url}")
+                artifacts_output += (
+                    f"\n    - Name: {artifact.name}"
+                    f"\n      MIME Type: {get_mime_type_for_artifact(artifact)}"
+                    f"\n      Artifact ID: {artifact.output_artifact_id}"
+                    f"\n      Download URL: {artifact.download_url}"
+                )
+            item_output += artifacts_output
 
-        console.print()
-
-
-def _print_run_statistics(run: Run) -> None:
-    """Print statistics of items in a run.
-
-    Args:
-        run (Run): The Run object
-    """
-    console.print("[bold]Item Statistics:[/bold]")
-    console.print(run.details().statistics)
+        console.print(f"{item_output}\n")
 
 
 def print_runs_verbose(runs: list[RunData]) -> None:
@@ -138,28 +237,12 @@ def print_runs_verbose(runs: list[RunData]) -> None:
         runs (list[RunData]): List of run data
 
     """
-    from ._service import Service  # noqa: PLC0415
-
-    console.print("[bold]Application Runs:[/bold]")
-    console.print("=" * 80)
+    output = f"[bold]Application Runs:[/bold]\n{'=' * 80}"
 
     for run in runs:
-        console.print(f"[bold]Run ID:[/bold] {run.run_id}")
-        console.print(f"[bold]Application:[/bold] {run.application_id} ({run.version_number})")
-        console.print(f"[bold]Status:[/bold] {run.state.value}")
-        console.print(
-            f"[bold]Submitted:[/bold] "
-            f"{run.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')} "
-            f"({run.submitted_by})"
-        )
+        output += f"\n{_format_run_details(run)}\n{'-' * 80}"
 
-        try:
-            _print_run_statistics(Service().application_run(run.run_id))
-        except Exception as e:
-            logger.exception("Failed to retrieve  statistics for run with ID '%s'", run.run_id)
-            console.print(f"[error]Error:[/error] Failed to retrieve statistics for run with ID '{run.run_id}': {e}")
-            continue
-        console.print("-" * 80)
+    console.print(output)
 
 
 def print_runs_non_verbose(runs: list[RunData]) -> None:
@@ -169,15 +252,23 @@ def print_runs_non_verbose(runs: list[RunData]) -> None:
         runs (list[RunData]): List of runs
 
     """
-    console.print("[bold]Application Run IDs:[/bold]")
+    output = "[bold]Application Run IDs:[/bold]"
 
-    for run_status in runs:
-        console.print(
-            f"- [bold]{run_status.run_id}[/bold] of "
-            f"[bold]{run_status.application_id} ({run_status.version_number})[/bold] "
-            f"(submitted: {run_status.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
-            f"status: {run_status.state.value})"
+    for run in runs:
+        status_str = _format_status_string(run.state, run.termination_reason)
+
+        if run.error_message or run.error_code:
+            status_str += f" | error: {run.error_message or 'N/A'} ({run.error_code or 'N/A'})"
+
+        output += (
+            f"\n- [bold]{run.run_id}[/bold] of "
+            f"[bold]{run.application_id} ({run.version_number})[/bold] "
+            f"(submitted: {run.submitted_at.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}, "
+            f"status: {status_str}, "
+            f"output: {run.output.value})"
         )
+
+    console.print(output)
 
 
 def write_metadata_dict_to_csv(
@@ -291,3 +382,25 @@ def get_file_extension_for_artifact(artifact: OutputArtifactData) -> str:
         file_extension = ".bin"
     logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
     return file_extension
+
+
+def get_supported_extensions_for_application(application_id: str) -> set[str]:
+    """Get the list of supported file extensions for a given application.
+
+    Args:
+        application_id (str): The application ID
+
+    Returns:
+        set[str]: List of supported file extensions
+
+    Raises:
+        RuntimeError: If the application ID is not supported
+    """
+    if application_id == HETA_APPLICATION_ID:
+        return WSI_SUPPORTED_FILE_EXTENSIONS
+    if application_id == TEST_APP_APPLICATION_ID:
+        return WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP
+
+    message = f"Unsupported application {application_id}"
+    logger.critical(message)
+    raise RuntimeError(message)

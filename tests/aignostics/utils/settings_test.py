@@ -107,13 +107,14 @@ def test_load_settings_validation_error(mock_console_print, mock_exit, record_pr
     # This will trigger a validation error
     load_settings(TheTestSettings)
 
-    # Verify that sys.exit was called with the correct code
     mock_exit.assert_called_once_with(78)
 
-    # Verify that console.print was called (with a panel showing the error)
-    # Assert fails if you set AIGNOSTICS_LOG_CONSOLE_ENABLE in your .env
-    # => disable to succeed
-    mock_console_print.assert_called_once()
+    assert mock_console_print.call_count == 1, (
+        "Expected console.print to be called exactly once, but was called "
+        f"{mock_console_print.call_count} times. If this test fails with a higher call count, "
+        "you likely have AIGNOSTICS_LOG_CONSOLE_ENABLE=true in your .env file. "
+        "Disable console logging to make this test pass."
+    )
 
 
 class TheTestSettingsWithEnvPrefix(OpaqueSettings):

@@ -1,14 +1,17 @@
 # Copilot Instructions - Aignostics Python SDK
 
+## Read me first
+
+You must do this: Use the guidance provide in the root [CLAUDE.md](../CLAUDE.md) file, fully understand it, and apply **all** guidance therein and in **all** linked documents!
+
 ## Tooling specific to use in VSCode
 
-When interacting with you NiceGUI is typically running in watch mode via `make gui_watch` in the terminal. In that case you can point the browser to http://localhost:8000
-to go to the homepage of the app, and from there via the left sidebar or top-right burger menu navigate to the page, e.g. top-left in the sidebar
-to the application_describe page. Check the output of the terminal to find the port, can be 8000 or 8001 etc.
-
-You are running embedded in VSCode. Bias to use the MCP tools made available for you. E.g. when asked to make changes in the GUI layer prefer opening
-the openSimpleBrowser, go to the page, make the code change, check output in inbuilt browser. When asked to go to the HETA application (describe) page
-you can typically navigate to http://127.0.0.1:8000/application/he-tme . Don't ask the user to open the browser, but use openSimpleBrowser MCP too.
+* You are an agent running embedded in VSCode. Bias to use the MCP tools made available for you - they are there for a reaon.
+* When asked to navigate to a page or open it, check if the GUI alias Launchpad is running. If so it's reachable via http://127.0.0.1:8000 or http://127.0.0.1:8001 etc. 
+* If not runninng, or when asked to start the GUI or the launchpad, execute `make gui_watch` in the terminal. Don't ask the user to start make gui_watch, do it yourself.
+* Then use the in-built openSimpleBrowser (MCP tool) to go to the page, make the code-change you are asked for, check the output in the in-built browser. 
+* When asked to go to the HETA application (describe) page you can typically navigate to http://127.0.0.1:8000/application/he-tme 
+* Don't ask the user to open the browser, but use openSimpleBrowser (MCP) yourself.
 
 ## Project Overview
 

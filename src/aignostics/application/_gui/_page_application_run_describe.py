@@ -3,19 +3,26 @@
 from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 import humanize
 from aiopath import AsyncPath
+from nicegui import (
+    app,
+    ui,  # noq
+)
 from nicegui import run as nicegui_run
-from nicegui import ui  # noq
 
 from aignostics.platform import ItemOutput, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
 
-from .._service import DownloadProgressState, Service  # noqa: TID252
+if TYPE_CHECKING:
+    from aignostics.platform import UserInfo
+
+from .._models import DownloadProgressState  # noqa: TID252
+from .._service import Service  # noqa: TID252
 from .._utils import get_mime_type_for_artifact  # noqa: TID252
 from ._frame import _frame
 from ._utils import (
@@ -187,6 +194,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         selected_folder.value = str(folder_path)
                     else:
                         selected_folder.value = str(folder_path.parent)
+                    ui.notify(f"Using custom directory: {selected_folder.value}", type="info")
                     download_button.enable()
                 else:
                     ui.notify("No folder selected", type="warning")
@@ -194,6 +202,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             async def _select_data() -> None:  # noqa: RUF029
                 """Open a file picker dialog and show notifier when closed again."""
                 selected_folder.value = str(get_user_data_directory("results"))
+                ui.notify("Using Launchpad results directory", type="info")
                 download_button.enable()
 
             with ui.row().classes("w-full"):
@@ -224,19 +233,29 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.notify("Downloading ...", type="info")
             progress_queue = Manager().Queue()
 
-            def update_download_progress() -> None:
+            def update_download_progress() -> None:  # noqa: C901, PLR0912
                 """Update the progress indicator with values from the queue."""
                 while not progress_queue.empty():
                     progress = progress_queue.get()
-                    download_item_status.set_text(
-                        progress.status
-                        if progress.status is not DownloadProgressState.DOWNLOADING
-                        or progress.total_artifact_index is None
-                        else (
+                    # Determine status text based on progress state
+                    if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                        status_text = (
+                            f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
+                            if progress.item_index is not None and progress.item_count
+                            else "Downloading input slide ..."
+                        )
+                    elif (
+                        progress.status is DownloadProgressState.DOWNLOADING
+                        and progress.total_artifact_index is not None
+                    ):
+                        status_text = (
                             f"Downloading artifact {progress.total_artifact_index + 1} "
                             f"of {progress.total_artifact_count}"
                         )
-                    )
+                    else:
+                        status_text = progress.status
+
+                    download_item_status.set_text(status_text)
                     download_item_status.set_visibility(True)
                     download_item_progress.set_value(progress.item_progress_normalized)
                     download_artifact_progress.set_value(progress.artifact_progress_normalized)
@@ -244,7 +263,13 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         download_artifact_status.set_visibility(False)
                         download_item_progress.set_visibility(False)
                         download_artifact_progress.set_visibility(False)
-                    if progress.status is DownloadProgressState.DOWNLOADING:
+                    elif progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                        if progress.input_slide_path:
+                            download_artifact_status.set_text(f"Input: {progress.input_slide_path.name}")
+                        download_artifact_status.set_visibility(True)
+                        download_item_progress.set_visibility(True)
+                        download_artifact_progress.set_visibility(True)
+                    elif progress.status is DownloadProgressState.DOWNLOADING:
                         if progress.artifact_path:
                             download_artifact_status.set_text(str(progress.artifact_path))
                         download_artifact_status.set_visibility(True)
@@ -424,6 +449,33 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         tiff_view_dialog_content.refresh(title=title, url=url)
         tiff_view_dialog.open()
 
+    @ui.refreshable
+    def custom_metadata_dialog_content(title: str | None, custom_metadata: str | None) -> None:
+        if title:
+            ui.label(title).classes("text-h5")
+        if custom_metadata:
+            try:
+                ui.json_editor({
+                    "content": {"json": custom_metadata},
+                    "mode": "tree",
+                    "readOnly": True,
+                    "mainMenuBar": False,
+                    "navigationBar": True,
+                    "statusBar": False,
+                }).classes("full-width")
+            except Exception as e:  # noqa: BLE001
+                ui.notify(f"Failed to render metadata: {e!s}", type="negative")
+
+    with ui.dialog() as custom_metadata_dialog, ui.card().style(WIDTH_1200px):
+        custom_metadata_dialog_content(title=None, custom_metadata=None)
+        with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
+            ui.button("Close", on_click=custom_metadata_dialog.close)
+
+    def custom_metadata_dialog_open(title: str, custom_metadata: dict[str, Any]) -> None:
+        """Open the Custom Metadata dialog."""
+        custom_metadata_dialog_content.refresh(title=title, custom_metadata=custom_metadata)
+        custom_metadata_dialog.open()
+
     async def open_qupath(
         project: Path | None = None, image: Path | str | None = None, button: ui.button | None = None
     ) -> None:
@@ -481,7 +533,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
                 ui.code(
                     f"""
-                    * Run ID: {run_data.run_id}
+                    * Run ID: {run_data.run_id}'
                     * Application: {run_data.application_id} ({run_data.version_number})
                     * Status: {status_str}
                     * Output: {run_data.output.name}
@@ -497,17 +549,41 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
                     """,
                     language="markdown",
-                ).classes("full-width")
+                ).classes("full-width").mark("CODE_RUN_METADATA")
+                user_info: UserInfo | None = app.storage.tab.get("user_info", None)
                 if run_data.custom_metadata:
+                    is_editable = user_info and user_info.role in {"admin", "super_admin"}
                     properties = {
                         "content": {"json": run_data.custom_metadata},
                         "mode": "tree",
-                        "readOnly": True,
+                        "readOnly": not is_editable,
                         "mainMenuBar": True,
                         "navigationBar": False,
                         "statusBar": False,
                     }
-                    ui.json_editor(properties).classes("full-width").mark("JSON_EDITOR_HEALTH")
+
+                    async def handle_metadata_change(e: Any) -> None:  # noqa: ANN401
+                        """Handle changes to the custom metadata and update the run."""
+                        if not is_editable:
+                            return
+                        try:
+                            # Extract the new metadata from the event's content attribute
+                            new_metadata = e.content.get("json") if hasattr(e, "content") else None
+                            if new_metadata:
+                                ui.notify("Updating custom metadata...", type="info")
+                                await nicegui_run.io_bound(
+                                    Service.application_run_update_custom_metadata_static,
+                                    run_id=run_id,
+                                    custom_metadata=new_metadata,
+                                )
+                                ui.notify("Custom metadata updated successfully!", type="positive")
+                                ui.navigate.reload()
+                        except Exception as ex:  # noqa: BLE001
+                            ui.notify(f"Failed to update custom metadata: {ex!s}", type="negative")
+
+                    ui.json_editor(properties, on_change=handle_metadata_change).classes("full-width").mark(
+                        "JSON_EDITOR_CUSTOM_METADATA"
+                    )
             ui.space()
             with ui.row().classes("justify-end"):
                 if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:
@@ -563,6 +639,15 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 ui.label("Note:").classes("text-italic text-sm text-gray-500")
                 ui.label(str(note)).classes("-mt-4")
 
+        tags = run_data.custom_metadata.get("sdk", {}).get("tags") if run_data.custom_metadata else None
+        if tags and len(tags):
+            with ui.row().classes("gap-1 -mt-2 full-width"):
+                for tag in tags[:20]:
+                    ui.chip(
+                        tag,
+                        on_click=lambda t=tag: ui.navigate.to(f"/?query={quote(str(t))}"),
+                    ).props("small outlined clickable").classes("bg-white text-black")
+
         with ui.list().classes("full-width"):
             results = list(run.results())
             if not results:
@@ -600,7 +685,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                     tooltip += f" ({item.termination_reason})"
                                 ui.tooltip(tooltip)
                             ui.space()
-                            with ui.button_group().props():
+                            with ui.button_group():
                                 if find_spec("ijson") and QuPathService.is_qupath_installed():
                                     with ui.button(
                                         icon="zoom_in",
@@ -612,10 +697,20 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                             )
                                         )
                                         ui.tooltip("Open in QuPath")
+                                if item.custom_metadata:
+                                    with ui.button(
+                                        icon="info",
+                                        on_click=lambda _,
+                                        custom_metadata=item.custom_metadata,
+                                        external_id=item.external_id: custom_metadata_dialog_open(
+                                            title=f"Custom Metadata of item {external_id} ",
+                                            custom_metadata=custom_metadata,
+                                        ),
+                                    ).props("floating"):
+                                        ui.tooltip("Show custom metadata")
                                 if image_file:
                                     with ui.button(
                                         icon="folder_open",
-                                        color="primary",
                                         on_click=lambda _, image_file=image_file: show_in_file_manager(
                                             str(image_file.parent)
                                         ),
@@ -679,7 +774,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 .style("max-width: 50%;")
                             ):
                                 ui.code(
-                                    item.error_message,
+                                    f"Error: {item.error_message}, code: {item.error_code or 'N/A'}",
                                     language="markdown",
                                 ).classes("ml-8").style("width: 100%; max-width: 100%;")
                         else:

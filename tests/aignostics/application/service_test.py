@@ -1,20 +1,22 @@
 """Tests to verify the service functionality of the application module."""
 
 from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
-from aignostics.platform import NotFoundException
-from tests.contants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
+from aignostics.application._utils import validate_due_date
+from aignostics.platform import NotFoundException, RunData, RunOutput
+from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
 
 
 @pytest.mark.unit
 def test_validate_due_date_none() -> None:
     """Test that None is accepted (optional parameter)."""
     # Should not raise any exception
-    ApplicationService._validate_due_date(None)
+    validate_due_date(None)
 
 
 @pytest.mark.unit
@@ -33,7 +35,7 @@ def test_validate_due_date_valid_formats() -> None:
     for time_str in valid_formats:
         # Should not raise any exception
         try:
-            ApplicationService._validate_due_date(time_str)
+            validate_due_date(time_str)
         except ValueError as e:
             pytest.fail(f"Valid ISO 8601 format '{time_str}' was rejected: {e}")
 
@@ -52,7 +54,7 @@ def test_validate_due_date_invalid_format() -> None:
 
     for time_str in invalid_formats:
         with pytest.raises(ValueError, match=r"Invalid ISO 8601 format"):
-            ApplicationService._validate_due_date(time_str)
+            validate_due_date(time_str)
 
 
 @pytest.mark.unit
@@ -68,7 +70,7 @@ def test_validate_due_date_past_datetime() -> None:
 
     for time_str in past_formats:
         with pytest.raises(ValueError, match=r"due_date must be in the future"):
-            ApplicationService._validate_due_date(time_str)
+            validate_due_date(time_str)
 
 
 @pytest.mark.unit
@@ -79,7 +81,7 @@ def test_validate_due_date_current_time() -> None:
     current_time_str = current_time.isoformat()
 
     with pytest.raises(ValueError, match=r"due_date must be in the future"):
-        ApplicationService._validate_due_date(current_time_str)
+        validate_due_date(current_time_str)
 
 
 @pytest.mark.unit
@@ -91,7 +93,7 @@ def test_validate_due_date_edge_case_one_second_future() -> None:
 
     # Should not raise any exception
     try:
-        ApplicationService._validate_due_date(future_time_str)
+        validate_due_date(future_time_str)
     except ValueError as e:
         pytest.fail(f"Future datetime '{future_time_str}' was rejected: {e}")
 
@@ -189,3 +191,243 @@ def test_application_versions_are_unique(runner: CliRunner) -> None:
             f"Application '{app.application_id}' has duplicate versions. "
             f"Found {len(version_numbers)} versions but only {len(unique_versions)} unique: {version_numbers}"
         )
+
+
+@pytest.mark.unit
+def test_application_runs_query_with_note_regex_raises() -> None:
+    """Test that using query with note_regex raises ValueError."""
+    service = ApplicationService()
+
+    with pytest.raises(ValueError, match=r"Cannot use 'query' parameter together with 'note_regex' parameter"):
+        service.application_runs(query="test", note_regex="test.*")
+
+
+@pytest.mark.unit
+def test_application_runs_query_with_tags_raises() -> None:
+    """Test that using query with tags raises ValueError."""
+    service = ApplicationService()
+
+    with pytest.raises(ValueError, match=r"Cannot use 'query' parameter together with 'tags' parameter"):
+        service.application_runs(query="test", tags={"tag1", "tag2"})
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_query_searches_note_and_tags(mock_get_client: MagicMock) -> None:
+    """Test that query parameter searches both note and tags with union semantics."""
+    # Create mock runs
+    run_from_note = MagicMock(spec=RunData)
+    run_from_note.run_id = "run-note-123"
+    run_from_note.output = RunOutput.FULL
+
+    run_from_tag = MagicMock(spec=RunData)
+    run_from_tag.run_id = "run-tag-456"
+    run_from_tag.output = RunOutput.FULL
+
+    run_from_both = MagicMock(spec=RunData)
+    run_from_both.run_id = "run-both-789"
+    run_from_both.output = RunOutput.FULL
+
+    # Mock the platform client to return different runs for note and tag searches
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+
+    # First call returns runs matching note, second call returns runs matching tags
+    mock_runs.list_data.side_effect = [
+        iter([run_from_note, run_from_both]),  # Note search results
+        iter([run_from_tag]),  # Tag search results (run_from_both already in note results, so not added)
+    ]
+
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    results = service.application_runs(query="test")
+
+    # Verify we got union of both searches (3 unique runs)
+    assert len(results) == 3
+    assert run_from_note in results
+    assert run_from_tag in results
+    assert run_from_both in results
+
+    # Verify that list_data was called twice (once for note, once for tags)
+    assert mock_runs.list_data.call_count == 2
+
+    # Verify the custom_metadata parameters contain the escaped query with case insensitive flag
+    calls = mock_runs.list_data.call_args_list
+    note_call_kwargs = calls[0][1]
+    tag_call_kwargs = calls[1][1]
+
+    assert "custom_metadata" in note_call_kwargs
+    assert "$.sdk.note" in note_call_kwargs["custom_metadata"]
+    assert 'like_regex "test"' in note_call_kwargs["custom_metadata"]
+    assert 'flag "i"' in note_call_kwargs["custom_metadata"]
+
+    assert "custom_metadata" in tag_call_kwargs
+    assert "$.sdk.tags" in tag_call_kwargs["custom_metadata"]
+    assert 'like_regex "test"' in tag_call_kwargs["custom_metadata"]
+    assert 'flag "i"' in tag_call_kwargs["custom_metadata"]
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_query_deduplicates_results(mock_get_client: MagicMock) -> None:
+    """Test that query parameter deduplicates runs that match both note and tags."""
+    # Create mock run that matches both searches
+    run_from_both = MagicMock(spec=RunData)
+    run_from_both.run_id = "run-both-123"
+    run_from_both.output = RunOutput.FULL
+
+    # Mock the platform client to return the same run from both searches
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+
+    # Both searches return the same run
+    mock_runs.list_data.side_effect = [
+        iter([run_from_both]),  # Note search results
+        iter([run_from_both]),  # Tag search results (should be deduplicated)
+    ]
+
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    results = service.application_runs(query="test")
+
+    # Verify we only got one run (deduplicated)
+    assert len(results) == 1
+    assert results[0].run_id == "run-both-123"
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_query_respects_limit(mock_get_client: MagicMock) -> None:
+    """Test that query parameter respects the limit parameter."""
+    # Create mock runs
+    runs = []
+    for i in range(10):
+        run = MagicMock(spec=RunData)
+        run.run_id = f"run-{i}"
+        run.output = RunOutput.FULL
+        runs.append(run)
+
+    # Mock the platform client to return many runs
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+
+    # Note search returns 5 runs, tag search returns 5 runs
+    mock_runs.list_data.side_effect = [
+        iter(runs[:5]),  # Note search results
+        iter(runs[5:]),  # Tag search results
+    ]
+
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    results = service.application_runs(query="test", limit=3)
+
+    # Verify we only got 3 runs despite having 10 total
+    assert len(results) == 3
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_query_escapes_special_characters(mock_get_client: MagicMock) -> None:
+    """Test that query parameter properly escapes special regex characters."""
+    # Mock the platform client
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+    mock_runs.list_data.side_effect = [
+        iter([]),  # Note search results
+        iter([]),  # Tag search results
+    ]
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    # Use query with special characters that need escaping
+    service.application_runs(query='test"value\\path')
+
+    # Verify the custom_metadata parameters contain properly escaped query
+    calls = mock_runs.list_data.call_args_list
+    note_call_kwargs = calls[0][1]
+    tag_call_kwargs = calls[1][1]
+
+    # Check that double quotes and backslashes are properly escaped
+    assert 'test\\"value\\\\path' in note_call_kwargs["custom_metadata"]
+    assert 'test\\"value\\\\path' in tag_call_kwargs["custom_metadata"]
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_success(mock_get_client: MagicMock) -> None:
+    """Test successful update of run custom metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    custom_metadata = {"key": "value", "tags": ["tag1", "tag2"]}
+
+    # Should not raise any exception
+    service.application_run_update_custom_metadata("run-123", custom_metadata)
+
+    # Verify the run() method was called with correct run_id
+    mock_client.run.assert_called_once_with("run-123")
+    # Verify the update_custom_metadata method was called with correct arguments
+    mock_run.update_custom_metadata.assert_called_once_with(custom_metadata)
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_not_found(mock_get_client: MagicMock) -> None:
+    """Test update metadata with non-existent run."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_run.update_custom_metadata.side_effect = NotFoundException("Run not found")
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+
+    with pytest.raises(NotFoundException, match="not found"):
+        service.application_run_update_custom_metadata("invalid-run-id", {"key": "value"})
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_success(mock_get_client: MagicMock) -> None:
+    """Test successful update of item custom metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    custom_metadata = {"key": "value", "note": "test note"}
+
+    # Should not raise any exception
+    service.application_run_update_item_custom_metadata("run-123", "item-ext-id", custom_metadata)
+
+    # Verify the run() method was called with correct run_id
+    mock_client.run.assert_called_once_with("run-123")
+    # Verify the update_item_custom_metadata method was called with correct arguments
+    mock_run.update_item_custom_metadata.assert_called_once_with("item-ext-id", custom_metadata)
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_not_found(mock_get_client: MagicMock) -> None:
+    """Test update item metadata with non-existent run or item."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_run.update_item_custom_metadata.side_effect = NotFoundException("Item not found")
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+
+    with pytest.raises(NotFoundException, match="not found"):
+        service.application_run_update_item_custom_metadata("run-123", "invalid-item-id", {"key": "value"})

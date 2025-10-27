@@ -1,0 +1,35 @@
+name: "+ Scheduled Testing / Staging (Daily)"
+
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test (leave empty for main)'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+
+  test:
+    uses: ./.github/workflows/_scheduled-test-daily.yml
+    with:
+      platform_environment: "staging"
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
+      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
+      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
+      BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING }}
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
+      BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

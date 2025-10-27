@@ -1,4 +1,4 @@
-name: "Report build to Ketryx and check for approval"
+name: "> Ketryx Report and Check"
 
 on:
   workflow_call:
