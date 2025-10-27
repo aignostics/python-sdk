@@ -15,23 +15,25 @@ from aignostics.utils._gui import (
 
 
 @pytest.mark.unit
-def test_base_page_builder_is_abstract() -> None:
+def test_base_page_builder_is_abstract(record_property) -> None:
     """Test that BasePageBuilder is an abstract class.
 
     Args:
-        None
+        record_property: pytest record_property fixture
     """
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE, SPEC-GUI-SERVICE")
     with pytest.raises(TypeError):
         BasePageBuilder()  # type: ignore # Cannot instantiate abstract class
 
 
 @pytest.mark.unit
-def test_register_pages_is_abstract() -> None:
+def test_register_pages_is_abstract(record_property) -> None:
     """Test that register_pages is an abstract method.
 
     Args:
-        None
+        record_property: pytest record_property fixture
     """
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE, SPEC-GUI-SERVICE")
 
     class IncompletePageBuilder(BasePageBuilder):
         pass
@@ -42,12 +44,14 @@ def test_register_pages_is_abstract() -> None:
 
 @pytest.mark.unit
 @mock.patch("aignostics.utils._gui.locate_subclasses")
-def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMock) -> None:
+def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMock, record_property) -> None:
     """Test that gui_register_pages calls register_pages on all builders.
 
     Args:
         mock_locate_subclasses: Mock for locate_subclasses function
+        record_property: pytest record_property fixture
     """
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE, SPEC-GUI-SERVICE")
     # Create mock page builders
     mock_builder1 = mock.MagicMock()
     mock_builder2 = mock.MagicMock()
@@ -66,13 +70,15 @@ def test_register_pages_calls_all_builders(mock_locate_subclasses: mock.MagicMoc
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui")
-def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock) -> None:
+def test_gui_run_default_params(record_property, mock_ui: mock.MagicMock, mock_register_pages: mock.MagicMock) -> None:
     """Test gui_run with default parameters.
 
     Args:
         mock_ui: Mock for nicegui UI
         mock_register_pages: Mock for gui_register_pages function
+        record_property: pytest record_property fixture
     """
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE, SPEC-GUI-SERVICE")
     with mock.patch("nicegui.native.find_open_port", return_value=8000):
         os.environ["NICEGUI_SCREEN_TEST_PORT"] = "3392"
         gui_run()
@@ -90,13 +96,17 @@ def test_gui_run_default_params(mock_ui: mock.MagicMock, mock_register_pages: mo
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", False)
 @mock.patch("aignostics.utils._gui.gui_register_pages")
 @mock.patch("nicegui.ui.run")
-def test_gui_run_custom_params(mock_ui_run: mock.MagicMock, mock_register_pages: mock.MagicMock) -> None:
+def test_gui_run_custom_params(
+    mock_ui_run: mock.MagicMock, mock_register_pages: mock.MagicMock, record_property
+) -> None:
     """Test gui_run with custom parameters.
 
     Args:
         mock_ui_run: Mock for nicegui UI run
         mock_register_pages: Mock for gui_register_pages function
+        record_property: pytest record_property fixture
     """
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE, SPEC-GUI-SERVICE")
     os.environ["NICEGUI_SCREEN_TEST_PORT"] = "3392"
     gui_run(
         native=False,
@@ -121,12 +131,14 @@ def test_gui_run_custom_params(mock_ui_run: mock.MagicMock, mock_register_pages:
 @pytest.mark.unit
 @mock.patch("aignostics.utils._gui.__is_running_in_container__", True)
 @mock.patch("nicegui.ui.run")
-def test_gui_run_in_container_with_native(mock_ui_run: mock.MagicMock) -> None:
+def test_gui_run_in_container_with_native(mock_ui_run: mock.MagicMock, record_property) -> None:
     """Test that gui_run raises ValueError when running native in container.
 
     Args:
         mock_ui_run: Mock for nicegui UI run
+        record_property: pytest record_property fixture
     """
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE, SPEC-GUI-SERVICE")
     with pytest.raises(ValueError) as excinfo:
         gui_run(native=True)
     assert "Native GUI cannot be run in a container" in str(excinfo.value)
