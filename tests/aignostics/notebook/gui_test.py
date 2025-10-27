@@ -7,8 +7,10 @@ from typer.testing import CliRunner
 
 @pytest.mark.integration
 @pytest.mark.timeout(timeout=60)
-async def test_gui_marimo_extension(user: User, runner: CliRunner, silent_logging: None) -> None:
+async def test_gui_marimo_extension(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
     """Test that the user can install and launch Marimo via the GUI."""
+    record_property("tested-item-id", "SPEC-GUI-SERVICE")
+
     # Step 1: Check we are on the Notebook page
     await user.open("/notebook")
     await user.should_see("Manage your Marimo Extension")

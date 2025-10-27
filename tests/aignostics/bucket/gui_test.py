@@ -26,15 +26,18 @@ async def test_gui_bucket_shows(user: User) -> None:
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 15)
-async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging: None) -> None:
+async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, silent_logging, record_property) -> None:  # noqa: PLR0915
     """E2E flow testing all bucket CLI commands.
 
+    Steps:
     1. Creates 1 file in a subdir of size 100kb
     2. Uploads tmpdir to bucket using bucket upload command, prefix is {username}/test/
     3. Checks the file is there using find comand
     5. Deletes the files using the GUI
     6. Checks the file is no longer there using the find command
     """
+    record_property("tested-item-id", "TC-BUCKET-GUI-01, SPEC-GUI-SERVICE")
+
     # Step 1: Create file
     test_prefix = "{username}/test-gui-" + "".join(random.choices(string.ascii_letters + string.digits, k=3))
     dir1 = tmp_path / "dir1"

@@ -46,8 +46,9 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_logging: None) -> None:
+async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
+    record_property("tested-item-id", "TC-QUPATH-01, SPEC-GUI-SERVICE")
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code
@@ -88,9 +89,11 @@ async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_log
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 async def test_gui_qupath_install_and_launch(
-    user: User, runner: CliRunner, silent_logging: None, qupath_teardown
+    user: User, runner: CliRunner, silent_logging: None, qupath_teardown, record_property
 ) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
+    record_property("tested-item-id", "TC-QUPATH-01, SPEC-GUI-SERVICE")
+
     result = runner.invoke(cli, ["qupath", "uninstall"])
     assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
     was_installed = not result.exit_code
@@ -151,10 +154,12 @@ async def test_gui_qupath_install_and_launch(
 )
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
-async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0914, PLR0915
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None
+async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
+    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None, record_property
 ) -> None:
     """Test installing QuPath, downloading run results, creating QuPath project from it, and inspecting results."""
+    record_property("tested-item-id", "TC-QUPATH-01, SPEC-GUI-SERVICE")
+
     # Find run
     runs = Service().application_runs(
         application_id=HETA_APPLICATION_ID,

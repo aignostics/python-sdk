@@ -14,8 +14,10 @@ from aignostics.utils import __project_name__
 
 
 @pytest.mark.integration
-async def test_gui_system_alive(user: User) -> None:
+async def test_gui_system_alive(user: User, record_property) -> None:
     """Test that the user sees the info page with the mask secrets switch on by default."""
+    record_property("tested-item-id", "SPEC-SYSTEM-SERVICE, SPEC-GUI-SERVICE")
+
     await user.open("/alive")
     await user.should_see("Yes")
 
@@ -26,7 +28,7 @@ async def test_gui_system_alive(user: User) -> None:
 @pytest.mark.sequential
 async def test_gui_system_switch_right(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the info page with the mask secrets switch on by default."""
-    record_property("tested-item-id", "TEST-SYSTEM-GUI-SETTINGS-MASKING-DEFAULT")
+    record_property("tested-item-id", "TEST-SYSTEM-GUI-SETTINGS-MASKING-DEFAULT, SPEC-GUI-SERVICE")
     await user.open("/system")
     await user.should_see(__project_name__)
     await user.should_see("Health")

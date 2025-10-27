@@ -220,6 +220,7 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
+    record_property,
     due_date_seconds: int,
     deadline_seconds: int,
     tags: set[str] | None = None,
@@ -238,10 +239,12 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
         deadline_seconds (int): The deadline in seconds from now for the application run.
         tags (set[str] | None): A set of tags to attach to the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
+        record_property: Function to record test properties.
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     run = _submit_and_validate(
         application_id=application_id,
         application_version=application_version,
@@ -286,7 +289,7 @@ def _find_and_validate(
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
-def test_platform_test_app_submit_and_wait() -> None:
+def test_platform_test_app_submit_and_wait(record_property) -> None:
     """Test application runs with the test application.
 
     This test creates an application run using the test application and three spots.
@@ -302,6 +305,7 @@ def test_platform_test_app_submit_and_wait() -> None:
         payload=_get_three_spots_payload_for_test(
             expires_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
         ),
+        record_property=record_property,
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
         tags=["test_platform_test_app_submit_and_wait"],
@@ -312,7 +316,7 @@ def test_platform_test_app_submit_and_wait() -> None:
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
-def test_platform_heta_app_submit_and_wait() -> None:
+def test_platform_heta_app_submit_and_wait(record_property) -> None:
     """Test application runs with the HETA application.
 
     This test creates an application run using the HETA application and a single spot.
@@ -329,6 +333,7 @@ def test_platform_heta_app_submit_and_wait() -> None:
         payload=_get_single_spot_payload_for_heta(
             expires_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5
         ),
+        record_property=record_property,
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
         tags=["test_platform_heta_app_submit_and_wait"],
