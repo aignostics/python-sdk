@@ -660,6 +660,7 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner, record_propert
 def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check run execution runs e2e."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-03")
+
     # Step 1: Download the sample file
     result = runner.invoke(
         cli,
