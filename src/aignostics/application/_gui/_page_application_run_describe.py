@@ -533,7 +533,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
                 ui.code(
                     f"""
-                    * Run ID: {run_data.run_id}'
+                    * Run ID: {run_data.run_id}
                     * Application: {run_data.application_id} ({run_data.version_number})
                     * Status: {status_str}
                     * Output: {run_data.output.name}
