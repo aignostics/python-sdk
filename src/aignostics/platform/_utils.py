@@ -33,6 +33,35 @@ EIGHT_MB = 8_388_608
 SIGNED_DOWNLOAD_URL_EXPIRES_SECONDS_DEFAULT = 6 * 60 * 60  # 6 hours
 
 
+def convert_to_json_serializable(obj: object) -> object:
+    """Recursively convert non-JSON-serializable types to serializable equivalents.
+
+    Handles common Python types that are not directly JSON-serializable:
+    - set → sorted list (for consistency and deterministic output)
+    - Recursively processes nested dict, list, and tuple structures
+
+    Args:
+        obj: The object to convert.
+
+    Returns:
+        The converted object with all non-serializable types replaced.
+
+    Examples:
+        >>> convert_to_json_serializable({"tags": {"a", "c", "b"}})
+        {"tags": ["a", "b", "c"]}
+
+        >>> convert_to_json_serializable({"nested": {"items": {1, 2, 3}}})
+        {"nested": {"items": [1, 2, 3]}}
+    """
+    if isinstance(obj, set):
+        return sorted(obj)  # Convert set to sorted list for consistency
+    if isinstance(obj, dict):
+        return {key: convert_to_json_serializable(value) for key, value in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [convert_to_json_serializable(item) for item in obj]
+    return obj
+
+
 def mime_type_to_file_ending(mime_type: str) -> str:
     """Converts a MIME type to an appropriate file extension.
 

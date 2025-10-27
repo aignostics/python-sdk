@@ -1,0 +1,60 @@
+{
+  "$defs": {
+    "PlatformBucketMetadata": {
+      "description": "Platform bucket storage metadata for items.",
+      "properties": {
+        "bucket_name": {
+          "description": "Name of the cloud storage bucket",
+          "title": "Bucket Name",
+          "type": "string"
+        },
+        "object_key": {
+          "description": "Object key/path within the bucket",
+          "title": "Object Key",
+          "type": "string"
+        },
+        "signed_download_url": {
+          "description": "Signed URL for downloading the object",
+          "title": "Signed Download Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket_name",
+        "object_key",
+        "signed_download_url"
+      ],
+      "title": "PlatformBucketMetadata",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete Item SDK metadata schema.\n\nThis model defines the structure and validation rules for SDK metadata\nthat is attached to individual items within application runs. It includes\ninformation about where the item is stored in the platform's cloud storage.",
+  "properties": {
+    "schema_version": {
+      "description": "Schema version for this metadata format",
+      "pattern": "^\\d+\\.\\d+\\.\\d+-?.*$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "platform_bucket": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PlatformBucketMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Platform bucket storage information"
+    }
+  },
+  "required": [
+    "schema_version"
+  ],
+  "title": "ItemSdkMetadata",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/item_sdk_metadata_schema_v0.0.1.json"
+}

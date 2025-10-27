@@ -108,10 +108,18 @@ def cached_operation(
 
     Returns:
         Callable: A decorator that caches the function result.
+
+    Note:
+        The decorated function can accept a 'nocache' keyword argument (bool) to bypass
+        reading from the cache. When nocache=True, the function is executed directly
+        and the result is still cached for subsequent calls.
     """
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            # Check if nocache is requested and remove it from kwargs before passing to func
+            nocache = kwargs.pop("nocache", False)
+
             # Build cache key components
             cache_args: tuple[object, ...] = args
 
@@ -129,7 +137,8 @@ def cached_operation(
             else:
                 key = cache_key(func_qualified_name, *cache_args, **kwargs)
 
-            if key in _operation_cache:
+            # If nocache=True, skip cache lookup but still cache the result
+            if not nocache and key in _operation_cache:
                 result, expiry = _operation_cache[key]
                 if time.time() < expiry:
                     return t.cast("T", result)

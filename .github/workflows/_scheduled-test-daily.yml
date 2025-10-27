@@ -1,4 +1,4 @@
-name: "> Test"
+name: "> Scheduled Test (Daily)"
 
 on:
   workflow_call:
@@ -8,10 +8,6 @@ on:
         required: false
         default: 'staging'
         type: string
-      commit_message:
-        description: 'Commit message to check for skip/enable markers'
-        required: false
-        type: string
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
         required: false
@@ -19,11 +15,15 @@ on:
         required: false
       GCP_CREDENTIALS_STAGING:
         required: false
+      BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING:
+        required: false
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
         required: false
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
         required: false
       GCP_CREDENTIALS_PRODUCTION:
+        required: false
+      BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION:
         required: false
       CODECOV_TOKEN:
         required: false
@@ -37,32 +37,8 @@ env:
 
 jobs:
 
-  generate-matrix:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Set matrix based on commit message and PR labels
-        id: set-matrix
-        env:
-          COMMIT_MESSAGE: ${{ inputs.commit_message }}
-          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
-        run: |
-          if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]] || [[ "$PR_LABELS" == *"skip:test:matrix-runner"* ]]; then
-            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
-          else
-            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-13","experimental":true},{"runner":"windows-latest","experimental":true}]}' >> $GITHUB_OUTPUT
-          fi
-
   test:
-    needs: generate-matrix
-    runs-on: ${{ matrix.runner }}
-    continue-on-error: ${{ matrix.experimental }}
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    runs-on: "ubuntu-latest"
     permissions:
       attestations: write
       contents: read
@@ -94,17 +70,6 @@ jobs:
       # Need xdisplay for testing QuPath app integration
       - name: Setup display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
-  
-      - name: Release version check
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
-        run: |
-          TAG_VERSION=${GITHUB_REF#refs/tags/v}
-          TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
-          if [ "$TAG_VERSION" != "$TOML_VERSION" ]; then
-            echo "Release version mismatch: Tag $TAG_VERSION != pyproject.toml $TOML_VERSION"
-            exit 1
-          fi
 
       - name: Print development version info
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
@@ -131,6 +96,8 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Validate installation (single Python version)
+        id: validate
+        continue-on-error: true
         shell: bash
         run: |
             OUTPUT=$(uv run --no-dev aignostics --help)
@@ -140,6 +107,8 @@ jobs:
             fi
 
       - name: Test / Smoke (single Python version)
+        id: smoke
+        continue-on-error: true
         shell: bash
         run: |
           uv run --no-dev aignostics --help
@@ -150,6 +119,8 @@ jobs:
           uv run --all-extras aignostics application run list --verbose --limit 1
 
       - name: Test / Unit (multiple Python versions)
+        id: unit
+        continue-on-error: true
         uses: ./.github/actions/run-tests
         with:
           test-type: unit
@@ -159,6 +130,8 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / Integration (multiple Python versions)
+        id: integration
+        continue-on-error: true
         uses: ./.github/actions/run-tests
         with:
           test-type: integration
@@ -168,6 +141,8 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / regular (multiple Python versions)
+        id: e2e-regular
+        continue-on-error: true
         uses: ./.github/actions/run-tests
         with:
           test-type: e2e
@@ -177,6 +152,8 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / long running (single Python version)
+        id: e2e-long-running
+        continue-on-error: true
         if: |
           !github.event.pull_request.draft
         uses: ./.github/actions/run-tests
@@ -188,16 +165,14 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / very long running (single Python version)
-        if: |
-          contains(inputs.commit_message, 'enable:test:very_long_running') || 
-          contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
+        id: e2e-very-long-running
+        continue-on-error: true
         uses: ./.github/actions/run-tests
         with:
           test-type: very-long-running
           make-target: test_very_long_running
           summary-title: All very long running e2e tests passed
-          commit-message: ${{ inputs.commit_message }}
-
+ 
       - name: Upload test artifacts for inspection
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
@@ -210,6 +185,132 @@ jobs:
             reports/coverage.md
             reports/coverage_html
           retention-days: 7
+      - name: Determine overall test status
+        id: test-status
+        if: always()
+        shell: bash
+        run: |
+          # Track which test types failed
+          FAILED_TESTS=()
+          EXIT_CODE=0
+          
+          if [ "${{ steps.validate.outcome }}" == "failure" ]; then
+            FAILED_TESTS+=("validation")
+            EXIT_CODE=1
+          fi
+          
+          if [ "${{ steps.smoke.outcome }}" == "failure" ]; then
+            FAILED_TESTS+=("smoke")
+            EXIT_CODE=1
+          fi
+          
+          if [ "${{ steps.unit.outcome }}" == "failure" ]; then
+            FAILED_TESTS+=("unit")
+            EXIT_CODE=1
+          fi
+          
+          if [ "${{ steps.integration.outcome }}" == "failure" ]; then
+            FAILED_TESTS+=("integration")
+            EXIT_CODE=1
+          fi
+          
+          if [ "${{ steps.e2e-regular.outcome }}" == "failure" ]; then
+            FAILED_TESTS+=("e2e-regular")
+            EXIT_CODE=1
+          fi
+          
+          if [ "${{ steps.e2e-long-running.outcome }}" == "failure" ]; then
+            FAILED_TESTS+=("e2e-long-running")
+            EXIT_CODE=1
+          fi
+          
+          if [ "${{ steps.e2e-very-long-running.outcome }}" == "failure" ]; then
+            FAILED_TESTS+=("e2e-very-long-running")
+            EXIT_CODE=1
+          fi
+          
+          # Export for next steps
+          echo "exit_code=${EXIT_CODE}" >> $GITHUB_OUTPUT
+          echo "failed_tests=${FAILED_LIST}" >> $GITHUB_OUTPUT
+          if [ ${#FAILED_TESTS[@]} -eq 0 ]; then
+            echo "failed_tests=none" >> $GITHUB_OUTPUT
+            echo "✅ All test types passed" >> $GITHUB_STEP_SUMMARY
+          else
+            FAILED_LIST=$(IFS=,; echo "${FAILED_TESTS[*]}")
+            echo "failed_tests=${FAILED_LIST}" >> $GITHUB_OUTPUT
+            echo "❌ Failed test types: ${FAILED_LIST}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Heartbeat
+        if: always()
+        env:
+          BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION }}"
+        shell: bash
+        run: |
+          EXIT_CODE=${{ steps.test-status.outputs.exit_code }}
+          FAILED_TESTS="${{ steps.test-status.outputs.failed_tests }}"
+          
+          # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
+          if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
+            BETTERSTACK_METADATA_PAYLOAD=$(jq -n \
+              --arg github_workflow "${{ github.workflow }}" \
+              --arg github_run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --arg github_run_id "${{ github.run_id }}" \
+              --arg github_job "${{ github.job }}" \
+              --arg github_sha "${{ github.sha }}" \
+              --arg github_actor "${{ github.actor }}" \
+              --arg github_repository "${{ github.repository }}" \
+              --arg github_ref "${{ github.ref }}" \
+              --arg job_status "${{ job.status }}" \
+              --arg github_event_name "${{ github.event_name }}" \
+              --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+              --arg failed_tests "${FAILED_TESTS}" \
+              --arg validate_status "${{ steps.validate.outcome }}" \
+              --arg smoke_status "${{ steps.smoke.outcome }}" \
+              --arg unit_status "${{ steps.unit.outcome }}" \
+              --arg integration_status "${{ steps.integration.outcome }}" \
+              --arg e2e_regular_status "${{ steps.e2e-regular.outcome }}" \
+              --arg e2e_long_running_status "${{ steps.e2e-long-running.outcome }}" \
+              --arg e2e_very_long_running_status "${{ steps.e2e-very-long-running.outcome }}" \
+              '{
+                github: {
+                  workflow: $github_workflow,
+                  run_url: $github_run_url,
+                  run_id: $github_run_id,
+                  job: $github_job,
+                  sha: $github_sha,
+                  actor: $github_actor,
+                  repository: $github_repository,
+                  ref: $github_ref,
+                  event_name: $github_event_name
+                },
+                job: {
+                  status: $job_status,
+                },
+                tests: {
+                  failed: $failed_tests,
+                  validation: $validate_status,
+                  smoke: $smoke_status,
+                  unit: $unit_status,
+                  integration: $integration_status,
+                  e2e: $e2e_status,
+                  e2e_long_running: $e2e_long_status,
+                  e2e_very_long_running: $e2e_very_long_status
+                },
+                timestamp: $timestamp,
+              }'
+            )
+            curl \
+              --fail-with-body \
+              --silent \
+              --request POST \
+              --header "Content-Type: application/json" \
+              --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
+              "${BETTERSTACK_HEARTBEAT_URL}/${EXIT_CODE}"
+            echo "INFO: Sent heartbeat to betterstack with exit code '${EXIT_CODE}' and failed tests: '${FAILED_TESTS}'"
+          else
+            echo "WARNING: No BetterStack heartbeat URL configured, skipped heartbeat notification."
+          fi
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
@@ -230,3 +331,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Fail workflow if any tests failed
+        if: always()
+        shell: bash
+        run: |
+          EXIT_CODE=${{ steps.test-status.outputs.exit_code }}
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "❌ Workflow failed due to test failures: ${{ steps.test-status.outputs.failed_tests }}"
+            exit $EXIT_CODE
+          fi

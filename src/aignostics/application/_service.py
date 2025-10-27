@@ -4,8 +4,6 @@ import base64
 import re
 import time
 from collections.abc import Callable, Generator
-from datetime import UTC, datetime
-from enum import StrEnum
 from http import HTTPStatus
 from importlib.util import find_spec
 from pathlib import Path
@@ -13,11 +11,11 @@ from typing import Any
 
 import google_crc32c
 import requests
-from aignx.codegen.models import ItemOutput, ItemState
-from pydantic import BaseModel, computed_field
 
 from aignostics.bucket import Service as BucketService
-from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
+from aignostics.constants import (
+    TEST_APP_APPLICATION_ID,
+)
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -27,9 +25,7 @@ from aignostics.platform import (
     Client,
     InputArtifact,
     InputItem,
-    ItemResult,
     NotFoundException,
-    OutputArtifactElement,
     Run,
     RunData,
     RunOutput,
@@ -41,8 +37,19 @@ from aignostics.platform import (
 from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
+from ._download import (
+    download_available_items,
+    download_url_to_file_with_progress,
+    extract_filename_from_url,
+    update_progress,
+)
+from ._models import DownloadProgress, DownloadProgressState
 from ._settings import Settings
-from ._utils import get_file_extension_for_artifact, get_mime_type_for_artifact
+from ._utils import (
+    get_mime_type_for_artifact,
+    get_supported_extensions_for_application,
+    validate_due_date,
+)
 
 has_qupath_extra = find_spec("ijson")
 if has_qupath_extra:
@@ -59,98 +66,7 @@ APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
-class DownloadProgressState(StrEnum):
-    """Enum for download progress states."""
-
-    INITIALIZING = "Initializing ..."
-    QUPATH_ADD_INPUT = "Adding input slides to QuPath project ..."
-    CHECKING = "Checking run status ..."
-    WAITING = "Waiting for item completing ..."
-    DOWNLOADING = "Downloading artifact ..."
-    QUPATH_ADD_RESULTS = "Adding result images to QuPath project ..."
-    QUPATH_ANNOTATE_INPUT_WITH_RESULTS = "Annotating input slides in QuPath project with results ..."
-    COMPLETED = "Completed."
-
-
-class DownloadProgress(BaseModel):
-    status: DownloadProgressState = DownloadProgressState.INITIALIZING
-    run: RunData | None = None
-    item: ItemResult | None = None
-    item_count: int | None = None
-    item_index: int | None = None
-    item_external_id: str | None = None
-    artifact: OutputArtifactElement | None = None
-    artifact_count: int | None = None
-    artifact_index: int | None = None
-    artifact_path: Path | None = None
-    artifact_download_url: str | None = None
-    artifact_size: int | None = None
-    artifact_downloaded_chunk_size: int = 0
-    artifact_downloaded_size: int = 0
-    if has_qupath_extra:
-        qupath_add_input_progress: QuPathAddProgress | None = None
-        qupath_add_results_progress: QuPathAddProgress | None = None
-        qupath_annotate_input_with_results_progress: QuPathAnnotateProgress | None = None
-
-    @computed_field  # type: ignore
-    @property
-    def total_artifact_count(self) -> int | None:
-        if self.item_count and self.artifact_count:
-            return self.item_count * self.artifact_count
-        return None
-
-    @computed_field  # type: ignore
-    @property
-    def total_artifact_index(self) -> int | None:
-        if self.item_count and self.artifact_count and self.item_index is not None and self.artifact_index is not None:
-            return self.item_index * self.artifact_count + self.artifact_index
-        return None
-
-    @computed_field  # type: ignore
-    @property
-    def item_progress_normalized(self) -> float:  # noqa: PLR0911
-        """Compute normalized item progress in range 0..1.
-
-        Returns:
-            float: The normalized item progress in range 0..1.
-        """
-        if self.status == DownloadProgressState.DOWNLOADING:
-            if (not self.total_artifact_count) or self.total_artifact_index is None:
-                return 0.0
-            return min(1, float(self.total_artifact_index + 1) / float(self.total_artifact_count))
-        if has_qupath_extra:
-            if self.status == DownloadProgressState.QUPATH_ADD_INPUT and self.qupath_add_input_progress:
-                return self.qupath_add_input_progress.progress_normalized
-            if self.status == DownloadProgressState.QUPATH_ADD_RESULTS and self.qupath_add_results_progress:
-                return self.qupath_add_results_progress.progress_normalized
-            if self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS:
-                if (not self.item_count) or (not self.item_index):
-                    return 0.0
-                return min(1, float(self.item_index + 1) / float(self.item_count))
-        return 0.0
-
-    @computed_field  # type: ignore
-    @property
-    def artifact_progress_normalized(self) -> float:
-        """Compute normalized artifact progress in range 0..1.
-
-        Returns:
-            float: The normalized artifact progress in range 0..1.
-        """
-        if self.status == DownloadProgressState.DOWNLOADING:
-            if not self.artifact_size:
-                return 0.0
-            return min(1, float(self.artifact_downloaded_size) / float(self.artifact_size))
-        if (
-            has_qupath_extra
-            and self.status == DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
-            and self.qupath_annotate_input_with_results_progress
-        ):
-            return self.qupath_annotate_input_with_results_progress.progress_normalized
-        return 0.0
-
-
-class Service(BaseService):
+class Service(BaseService):  # noqa: PLR0904
     """Service of the application module."""
 
     _settings: Settings
@@ -213,53 +129,6 @@ class Service(BaseService):
         else:
             logger.debug("Reusing platform service.")
         return self._platform_service
-
-    @staticmethod
-    def _validate_due_date(due_date: str | None) -> None:
-        """Validate that due_date is in ISO 8601 format and in the future.
-
-        Args:
-            due_date (str | None): The datetime string to validate.
-
-        Raises:
-            ValueError: If
-                the format is invalid
-                or the due_date is not in the future.
-        """
-        if due_date is None:
-            return
-
-        # Try parsing with fromisoformat (handles most ISO 8601 formats)
-        try:
-            # Handle 'Z' suffix by replacing with '+00:00'
-            normalized = due_date.replace("Z", "+00:00")
-            parsed_dt = datetime.fromisoformat(normalized)
-        except (ValueError, TypeError) as e:
-            message = (
-                f"Invalid ISO 8601 format for due_date. "
-                f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-                f"but got: '{due_date}' (error: {e})"
-            )
-            raise ValueError(message) from e
-
-        # Ensure the datetime is timezone-aware (reject naive datetimes)
-        if parsed_dt.tzinfo is None:
-            message = (
-                f"Invalid ISO 8601 format for due_date. "
-                f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-                f"but got: '{due_date}' (missing timezone information)"
-            )
-            raise ValueError(message)
-
-        # Check that the datetime is in the future
-        now = datetime.now(UTC)
-        if parsed_dt <= now:
-            message = (
-                f"due_date must be in the future. "
-                f"Got '{due_date}' ({parsed_dt.isoformat()}), "
-                f"but current UTC time is {now.isoformat()}"
-            )
-            raise ValueError(message)
 
     @staticmethod
     def applications_static() -> list[ApplicationSummary]:
@@ -498,7 +367,8 @@ class Service(BaseService):
         metadata = []
 
         try:
-            for extension in list(WSI_SUPPORTED_FILE_EXTENSIONS):
+            extensions = get_supported_extensions_for_application(application_id)
+            for extension in extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
                     # Generate CRC32C checksum with google_crc32c and encode as base64
                     hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
@@ -653,26 +523,41 @@ class Service(BaseService):
         logger.info("Upload completed successfully.")
         return True
 
-    # TODO(Helmut): Refactor to find runs with succeeded items
     @staticmethod
-    def application_runs_static(
-        limit: int | None = None,
+    def application_runs_static(  # noqa: PLR0913, PLR0917
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
+        limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
 
         Args:
-            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
+            application_version (str | None): The version of the application to filter runs.
+                If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
             RuntimeError: If the application run list cannot be retrieved.
         """
         return [
@@ -681,57 +566,199 @@ class Service(BaseService):
                 "application_id": run.application_id,
                 "version_number": run.version_number,
                 "submitted_at": run.submitted_at,
+                "terminated_at": run.terminated_at,
                 "state": run.state,
                 "termination_reason": run.termination_reason,
                 "item_count": run.statistics.item_count,
                 "item_succeeded_count": run.statistics.item_succeeded_count,
+                "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
             }
             for run in Service().application_runs(
-                limit=limit,
+                application_id=application_id,
+                application_version=application_version,
+                external_id=external_id,
                 has_output=has_output,
                 note_regex=note_regex,
                 note_query_case_insensitive=note_query_case_insensitive,
+                tags=tags,
+                query=query,
+                limit=limit,
             )
         ]
 
-    def application_runs(
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
         self,
-        limit: int | None = None,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
         has_output: bool = False,
         note_regex: str | None = None,
         note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
+        limit: int | None = None,
     ) -> list[RunData]:
         """Get a list of all application runs.
 
         Args:
-            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
+            application_version (str | None): The version of the application to filter runs.
+                If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             has_output (bool): If True, only runs with partial or full output are retrieved.
             note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
             note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                If None, no filtering is applied. Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
             RuntimeError: If the application run list cannot be retrieved.
         """
+        # Validate that query is not used with other metadata filters
+        if query is not None:
+            if note_regex is not None:
+                message = "Cannot use 'query' parameter together with 'note_regex' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+            if tags is not None:
+                message = "Cannot use 'query' parameter together with 'tags' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+
         if limit is not None and limit <= 0:
             return []
         runs = []
         page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
         try:
+            # Handle query parameter with union semantics (note OR tags)
+            if query:
+                # Search for runs matching query in notes
+                note_runs_dict: dict[str, RunData] = {}
+                flag_case_insensitive = ' flag "i"'
+                escaped_query = query.replace("\\", "\\\\").replace('"', '\\"')
+                custom_metadata_note = f'$.sdk.note ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                note_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_note,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                )
+                for run in note_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    note_runs_dict[run.run_id] = run
+                    if limit is not None and len(note_runs_dict) >= limit:
+                        break
+
+                # Search for runs matching query in tags
+                tag_runs_dict: dict[str, RunData] = {}
+                custom_metadata_tags = f'$.sdk.tags ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                tag_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_tags,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                )
+                for run in tag_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    # Add to dict if not already present from note search
+                    if run.run_id not in note_runs_dict:
+                        tag_runs_dict[run.run_id] = run
+                    if limit is not None and len(note_runs_dict) + len(tag_runs_dict) >= limit:
+                        break
+
+                # Union of results from both searches
+                runs = list(note_runs_dict.values()) + list(tag_runs_dict.values())
+
+                # Apply limit after union
+                if limit is not None and len(runs) > limit:
+                    runs = runs[:limit]
+
+                return runs
+
+            custom_metadata = None
+            client_side_note_filter = None
+
+            # Handle note_regex filter
             if note_regex:
                 flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
-                custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
-            else:
-                custom_metadata = None
+                # If we also have tags, we'll need to do note filtering client-side
+                if tags:
+                    # Store for client-side filtering
+                    client_side_note_filter = (note_regex, note_query_case_insensitive)
+                else:
+                    # No tags, so we can filter note on backend
+                    custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
+
+            # Handle tags filter
+            if tags:
+                # JSONPath filter to match all of the provided tags in the sdk.tags array
+                # PostgreSQL limitation: Cannot use && between separate path expressions as backend crashes with 500
+                # Workaround: Filter on backend for ANY tag match, then filter client-side for ALL
+                # Use regex alternation to match any of the tags
+                escaped_tags = [tag.replace('"', '\\"').replace("\\", "\\\\") for tag in tags]
+                # Create regex pattern: ^(tag1|tag2|tag3)$
+                regex_pattern = "^(" + "|".join(escaped_tags) + ")$"
+                custom_metadata = f'$.sdk.tags ? (@ like_regex "{regex_pattern}")'
 
             run_iterator = self._get_platform_client().runs.list_data(
-                sort="-submitted_at", page_size=page_size, custom_metadata=custom_metadata
+                application_id=application_id,
+                application_version=application_version,
+                external_id=external_id,
+                custom_metadata=custom_metadata,
+                sort="-submitted_at",
+                page_size=page_size,
             )
             for run in run_iterator:
                 if has_output and run.output == RunOutput.NONE:
                     continue
+                # Client-side filtering when combining multiple criteria
+                # 1. If multiple tags specified, ensure ALL are present
+                if tags and len(tags) > 1:
+                    # Backend filter with regex alternation matches ANY tag
+                    # Now verify ALL tags are present in run metadata
+                    run_tags = set()
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        if "tags" in sdk_metadata:
+                            run_tags = set(sdk_metadata.get("tags", []))
+
+                    # Check if all required tags are present
+                    if not tags.issubset(run_tags):
+                        continue  # Skip this run, not all tags match
+
+                # 2. If note filter is applied client-side (when combined with tags)
+                if client_side_note_filter:
+                    note_pattern, case_insensitive = client_side_note_filter
+                    run_note = None
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        run_note = sdk_metadata.get("note")
+
+                    # Check if note matches the regex pattern
+                    if run_note:
+                        flags = re.IGNORECASE if case_insensitive else 0
+                        if not re.search(note_pattern, run_note, flags):
+                            continue  # Skip this run, note doesn't match
+                    else:
+                        continue  # Skip this run, no note present
+
                 runs.append(run)
                 if limit is not None and len(runs) >= limit:
                     break
@@ -767,6 +794,7 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
+        tags: set[str] | None = None,
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
@@ -779,6 +807,7 @@ class Service(BaseService):
             metadata (list[dict[str, Any]]): The metadata for the run.
             custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
             note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
             due_date (str | None): An optional requested completion time for the run, ISO8601 format.
                 The scheduler will try to complete the run before this time, taking
                 the subscription tier and available GPU resources into account.
@@ -802,7 +831,7 @@ class Service(BaseService):
                 or if due_date not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
-        self._validate_due_date(due_date)
+        validate_due_date(due_date)
         logger.debug("Submitting application run with metadata: %s", metadata)
         app_version = self.application_version(application_id, application_version=application_version)
         if len(app_version.input_artifacts) != 1:
@@ -828,6 +857,29 @@ class Service(BaseService):
                 logger.warning(message)
                 raise ValueError(message)
 
+            item_metadata = {
+                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
+                "height_px": int(row["height_px"]),
+                "width_px": int(row["width_px"]),
+                "media_type": (
+                    "image/tiff"
+                    if row["external_id"].lower().endswith((".tif", ".tiff"))
+                    else "application/dicom"
+                    if row["external_id"].lower().endswith(".dcm")
+                    else "application/octet-stream"
+                ),
+                "resolution_mpp": float(row["resolution_mpp"]),
+            }
+
+            # Only add specimen and staining_method metadata if not test-app
+            # TODO(Helmut): Remove condition when test-app reached input parity with heta
+            if application_id != TEST_APP_APPLICATION_ID:
+                item_metadata["specimen"] = {
+                    "disease": row["disease"],
+                    "tissue": row["tissue"],
+                }
+                item_metadata["staining_method"] = row["staining_method"]
+
             items.append(
                 InputItem(
                     external_id=row["external_id"],
@@ -835,26 +887,18 @@ class Service(BaseService):
                         InputArtifact(
                             name=input_artifact_name,
                             download_url=download_url,
-                            metadata={
-                                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
-                                "height_px": int(row["height_px"]),
-                                "width_px": int(row["width_px"]),
-                                "media_type": (
-                                    "image/tiff"
-                                    if row["external_id"].lower().endswith((".tif", ".tiff"))
-                                    else "application/dicom"
-                                    if row["external_id"].lower().endswith(".dcm")
-                                    else "application/octet-stream"
-                                ),
-                                "resolution_mpp": float(row["resolution_mpp"]),
-                                "specimen": {
-                                    "disease": row["disease"],
-                                    "tissue": row["tissue"],
-                                },
-                                "staining_method": row["staining_method"],
-                            },
+                            metadata=item_metadata,
                         )
                     ],
+                    custom_metadata={
+                        "sdk": {
+                            "platform_bucket": {
+                                "bucket_name": bucket_name,
+                                "object_key": object_key,
+                                "signed_download_url": download_url,
+                            }
+                        }
+                    },
                 )
             )
         logger.debug("Items for application run submission: %s", items)
@@ -866,6 +910,7 @@ class Service(BaseService):
                 application_version=app_version.version_number,
                 custom_metadata=custom_metadata,
                 note=note,
+                tags=tags,
                 due_date=due_date,
                 deadline=deadline,
                 onboard_to_aignostics_portal=onboard_to_aignostics_portal,
@@ -900,6 +945,7 @@ class Service(BaseService):
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         note: str | None = None,
+        tags: set[str] | None = None,
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
@@ -913,6 +959,7 @@ class Service(BaseService):
             application_version (str | None): The version of the application to run.
             custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
             note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
             due_date (str | None): An optional requested completion time for the run, ISO8601 format.
                 The scheduler will try to complete the run before this time, taking
                 the subscription tier and available GPU resources into account.
@@ -933,22 +980,30 @@ class Service(BaseService):
                 or due_date not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
-        self._validate_due_date(due_date)
+        validate_due_date(due_date)
         try:
             if custom_metadata is None:
                 custom_metadata = {}
-            custom_metadata["sdk"] = {
-                "note": note,
-                "workflow": {
+
+            sdk_metadata: dict[str, Any] = {}
+            if note:
+                sdk_metadata["note"] = note
+            if tags:
+                sdk_metadata["tags"] = tags
+            if onboard_to_aignostics_portal or validate_only:
+                sdk_metadata["workflow"] = {
                     "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
                     "validate_only": validate_only,
-                },
-                "scheduling": {
-                    "due_date": due_date,
-                    "deadline": deadline,
-                },
-            }
-            custom_metadata["sdk"]["note"] = note
+                }
+            if due_date or deadline:
+                sdk_metadata["scheduling"] = {}
+                if due_date:
+                    sdk_metadata["scheduling"]["due_date"] = due_date
+                if deadline:
+                    sdk_metadata["scheduling"]["deadline"] = deadline
+
+            custom_metadata["sdk"] = sdk_metadata
+
             return self._get_platform_client().runs.submit(
                 application_id=application_id,
                 items=items,
@@ -963,6 +1018,141 @@ class Service(BaseService):
             message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
+
+    def application_run_update_custom_metadata(
+        self,
+        run_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for an existing application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        try:
+            logger.debug("Updating custom metadata for run with ID '%s'", run_id)
+            self._get_platform_client().run(run_id).update_custom_metadata(custom_metadata)
+            logger.debug("Updated custom metadata for run with ID '%s'", run_id)
+        except ValueError as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_custom_metadata_static(
+        run_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Static wrapper for updating custom metadata for an application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        Service().application_run_update_custom_metadata(run_id, custom_metadata)
+
+    def application_run_update_item_custom_metadata(
+        self,
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Update custom metadata for an existing item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        try:
+            logger.debug(
+                "Updating custom metadata for item '%s' in run with ID '%s'",
+                external_id,
+                run_id,
+            )
+            self._get_platform_client().run(run_id).update_item_custom_metadata(
+                external_id,
+                custom_metadata,
+            )
+            logger.debug(
+                "Updated custom metadata for item '%s' in run with ID '%s'",
+                external_id,
+                run_id,
+            )
+        except ValueError as e:
+            message = (
+                f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': ValueError {e}"
+            )
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' or item '{external_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' or item external ID '{external_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_item_custom_metadata_static(
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+    ) -> None:
+        """Static wrapper for updating custom metadata for an item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
 
     def application_run_cancel(self, run_id: str) -> None:
         """Cancel a run by its ID.
@@ -1067,10 +1257,10 @@ class Service(BaseService):
         Raises:
             ValueError: If
                 the run ID is invalid
-                or destination directory cannot be created.
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
             NotFoundException: If the application run with the given ID is not found.
-            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
-            requests.HTTPError: If the download fails with an HTTP error.
+            RuntimeError: If run details cannot be retrieved or download fails.
         """
         return Service().application_run_download(
             run_id,
@@ -1115,10 +1305,10 @@ class Service(BaseService):
         Raises:
             ValueError: If
                 the run ID is invalid
-                or destination directory cannot be created.
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
             NotFoundException: If the application run with the given ID is not found.
-            RuntimeError: If run details cannot be retrieved or download fails unexpectedly.
-            requests.HTTPError: If the download fails with an HTTP error.
+            RuntimeError: If run details cannot be retrieved or download fails.
         """
         if qupath_project and not has_qupath_extra:
             message = "QuPath project creation requested, but 'qupath' extra is not installed."
@@ -1126,7 +1316,7 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message)
         progress = DownloadProgress()
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+        update_progress(progress, download_progress_callable, download_progress_queue)
 
         application_run = self.application_run(run_id)
         final_destination_directory = destination_directory
@@ -1154,19 +1344,44 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message) from e
 
+        results = list(application_run.results())
+        for item_index, item in enumerate(results):
+            if item.external_id.startswith(("gs://", "http://", "https://")):
+                # Download URL to local input directory and update external_id
+                try:
+                    filename = extract_filename_from_url(item.external_id)
+                    local_path = final_destination_directory / "input" / filename
+                    if not local_path.exists():
+                        progress.item_index = item_index
+                        progress.item = item
+                        download_url_to_file_with_progress(
+                            progress,
+                            item.external_id,
+                            local_path,
+                            download_progress_queue,
+                            download_progress_callable,
+                        )
+                    item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
+                except Exception as e:  # noqa: BLE001
+                    logger.warning(
+                        "Failed to download input slide from '%s' to '%s': %s", item.external_id, local_path, e
+                    )
+
         if qupath_project:
 
             def update_qupath_add_input_progress(qupath_add_input_progress: QuPathAddProgress) -> None:
                 progress.status = DownloadProgressState.QUPATH_ADD_INPUT
                 progress.qupath_add_input_progress = qupath_add_input_progress
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
             logger.debug("Adding input slides to QuPath project ...")
             image_paths = []
-            for item in application_run.results():
-                image_path = Path(item.external_id)
-                if image_path.is_file():
-                    image_paths.append(image_path.resolve())
+            for item in results:
+                local_path = Path(item.external_id)
+                if not local_path.is_file():
+                    logger.warning("Input slide '%s' not found, skipping QuPath addition.", local_path)
+                    continue
+                image_paths.append(local_path.resolve())
             added = QuPathService.add(
                 final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
             )
@@ -1176,15 +1391,15 @@ class Service(BaseService):
         logger.debug("Downloading results for run '%s' to '%s'", run_id, final_destination_directory)
 
         progress.status = DownloadProgressState.CHECKING
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+        update_progress(progress, download_progress_callable, download_progress_queue)
 
         downloaded_items: set[str] = set()  # Track downloaded items to avoid re-downloading
         while True:
             run_details = application_run.details()  # (Re)load current run details
             progress.run = run_details
-            Service._update_progress(progress, download_progress_callable, download_progress_queue)
+            update_progress(progress, download_progress_callable, download_progress_queue)
 
-            self._download_available_items(
+            download_available_items(
                 progress,
                 application_run,
                 final_destination_directory,
@@ -1194,7 +1409,6 @@ class Service(BaseService):
                 download_progress_callable,
             )
 
-            # TODO(Helmut): More info
             if run_details.state == RunState.TERMINATED:
                 logger.debug(
                     "Run '%s' reached final status '%s' with message '%s' (%s).",
@@ -1220,7 +1434,7 @@ class Service(BaseService):
                 "Run '%s' is in progress with status '%s', waiting for completion ...", run_id, run_details.state
             )
             progress.status = DownloadProgressState.WAITING
-            Service._update_progress(progress, download_progress_callable, download_progress_queue)
+            update_progress(progress, download_progress_callable, download_progress_queue)
             time.sleep(APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS)
 
         if qupath_project:
@@ -1229,7 +1443,7 @@ class Service(BaseService):
             def update_qupath_add_results_progress(qupath_add_results_progress: QuPathAddProgress) -> None:
                 progress.status = DownloadProgressState.QUPATH_ADD_RESULTS
                 progress.qupath_add_results_progress = qupath_add_results_progress
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
             added = QuPathService.add(
                 final_destination_directory / "qupath",
@@ -1245,17 +1459,17 @@ class Service(BaseService):
             ) -> None:
                 progress.status = DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
                 progress.qupath_annotate_input_with_results_progress = qupath_annotate_input_with_results_progress
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
             total_annotations = 0
-            results = list(application_run.results())
             progress.item_count = len(results)
-            for item_index, item in enumerate(application_run.results()):
+            for item_index, item in enumerate(results):
                 progress.item_index = item_index
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
+                update_progress(progress, download_progress_callable, download_progress_queue)
 
                 image_path = Path(item.external_id)
                 if not image_path.is_file():
+                    logger.warning("Input slide '%s' not found, skipping QuPath annotation.", image_path)
                     continue
                 for artifact in item.output_artifacts:
                     if (
@@ -1290,199 +1504,6 @@ class Service(BaseService):
             logger.info(message)
 
         progress.status = DownloadProgressState.COMPLETED
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
+        update_progress(progress, download_progress_callable, download_progress_queue)
 
         return final_destination_directory
-
-    @staticmethod
-    def _update_progress(
-        progress: DownloadProgress,
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-    ) -> None:
-        if download_progress_callable:
-            download_progress_callable(progress)
-        if download_progress_queue:
-            download_progress_queue.put_nowait(progress)
-
-    def _download_available_items(  # noqa: PLR0913, PLR0917
-        self,
-        progress: DownloadProgress,
-        application_run: Run,
-        destination_directory: Path,
-        downloaded_items: set[str],
-        create_subdirectory_per_item: bool = False,
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    ) -> None:
-        """Download items that are available and not yet downloaded.
-
-        Args:
-            progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-            application_run (Run): The application run object.
-            destination_directory (Path): Directory to save files.
-            downloaded_items (set): Set of already downloaded item external ids.
-            create_subdirectory_per_item (bool): Whether to create a subdirectory for each item.
-            download_progress_queue (Queue | None): Queue for GUI progress updates.
-            download_progress_callable (Callable | None): Callback for CLI progress updates.
-        """
-        items = list(application_run.results())
-        progress.item_count = len(items)
-        for item_index, item in enumerate(items):
-            if item.external_id in downloaded_items:
-                continue
-
-            if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
-                progress.status = DownloadProgressState.DOWNLOADING
-                progress.item_index = item_index
-                progress.item = item
-                progress.item_external_id = item.external_id
-
-                progress.artifact_count = len(item.output_artifacts)
-                Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-                if create_subdirectory_per_item:
-                    path = Path(item.external_id)
-                    stem_name = path.stem
-                    try:
-                        # Handle case where path might be relative to destination
-                        rel_path = path.relative_to(destination_directory)
-                        stem_name = rel_path.stem
-                    except ValueError:
-                        # Not a subfolder - just use the stem
-                        pass
-                    item_directory = destination_directory / stem_name
-                else:
-                    item_directory = destination_directory
-                item_directory.mkdir(exist_ok=True)
-
-                for artifact_index, artifact in enumerate(item.output_artifacts):
-                    progress.artifact_index = artifact_index
-                    progress.artifact = artifact
-                    Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-                    self._download_item_artifact(
-                        progress,
-                        artifact,
-                        item_directory,
-                        item.external_id if not create_subdirectory_per_item else "",
-                        download_progress_queue,
-                        download_progress_callable,
-                    )
-
-                downloaded_items.add(item.external_id)
-
-    def _download_item_artifact(  # noqa: PLR0913, PLR0917
-        self,
-        progress: DownloadProgress,
-        artifact: Any,  # noqa: ANN401
-        destination_directory: Path,
-        prefix: str = "",
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    ) -> None:
-        """Download a an artifact of a result item with progress tracking.
-
-        Args:
-            progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-            artifact (Any): The artifact to download.
-            destination_directory (Path): Directory to save the file.
-            prefix (str): Prefix for the file name, if needed.
-            download_progress_queue (Queue | None): Queue for GUI progress updates.
-            download_progress_callable (Callable | None): Callback for CLI progress updates.
-
-        Raises:
-            ValueError: If
-                no checksum metadata is found for the artifact.
-            requests.HTTPError: If the download fails.
-        """
-        metadata = artifact.metadata or {}
-        metadata_checksum = metadata.get("checksum_base64_crc32c", "") or metadata.get("checksum_crc32c", "")
-        if not metadata_checksum:
-            message = f"No checksum metadata found for artifact {artifact.name}"
-            logger.error(message)
-            raise ValueError(message)
-
-        artifact_path = (
-            destination_directory
-            / f"{prefix}{sanitize_path_component(artifact.name)}{get_file_extension_for_artifact(artifact)}"
-        )
-
-        if artifact_path.exists():
-            checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
-            with open(artifact_path, "rb") as f:
-                while chunk := f.read(APPLICATION_RUN_FILE_READ_CHUNK_SIZE):
-                    checksum.update(chunk)  # type: ignore[no-untyped-call]
-            existing_checksum = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
-            if existing_checksum == metadata_checksum:
-                logger.debug("File %s already exists with correct checksum", artifact_path)
-                return
-
-        self._download_file_with_progress(
-            progress,
-            artifact.download_url,
-            artifact_path,
-            metadata_checksum,
-            download_progress_queue,
-            download_progress_callable,
-        )
-
-    @staticmethod
-    def _download_file_with_progress(  # noqa: PLR0913, PLR0917
-        progress: DownloadProgress,
-        signed_url: str,
-        artifact_path: Path,
-        metadata_checksum: str,
-        download_progress_queue: Any | None = None,  # noqa: ANN401
-        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    ) -> None:
-        """Download a file with progress tracking support.
-
-        Args:
-            progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-            signed_url (str): The signed URL to download from.
-            artifact_path (Path): Path to save the file.
-            metadata_checksum (str): Expected CRC32C checksum in base64.
-            download_progress_queue (Any | None): Queue for GUI progress updates.
-            download_progress_callable (Callable | None): Callback for CLI progress updates.
-
-        Raises:
-            ValueError: If
-                checksum verification fails.
-            requests.HTTPError: If download fails.
-        """
-        logger.debug(
-            "Downloading artifact '%s' to '%s' with expected checksum '%s' for item with external id '%s'",
-            progress.artifact.name if progress.artifact else "unknown",
-            artifact_path,
-            metadata_checksum,
-            progress.item_external_id or "unknown",
-        )
-        progress.artifact_download_url = signed_url
-        progress.artifact_path = artifact_path
-        progress.artifact_downloaded_size = 0
-        progress.artifact_downloaded_chunk_size = 0
-        progress.artifact_size = None
-        Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-        checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
-
-        with requests.get(signed_url, stream=True, timeout=60) as stream:
-            stream.raise_for_status()
-            progress.artifact_size = int(stream.headers.get("content-length", 0))
-            Service._update_progress(progress, download_progress_callable, download_progress_queue)
-            with open(artifact_path, mode="wb") as file:
-                for chunk in stream.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
-                    if chunk:
-                        file.write(chunk)
-                        checksum.update(chunk)  # type: ignore[no-untyped-call]
-                        progress.artifact_downloaded_chunk_size = len(chunk)
-                        progress.artifact_downloaded_size += progress.artifact_downloaded_chunk_size
-                        Service._update_progress(progress, download_progress_callable, download_progress_queue)
-
-        downloaded_checksum = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
-        if downloaded_checksum != metadata_checksum:
-            artifact_path.unlink()  # Remove corrupted file
-            msg = f"Checksum mismatch for {artifact_path}: {downloaded_checksum} != {metadata_checksum}"
-            logger.error(msg)
-            raise ValueError(msg)

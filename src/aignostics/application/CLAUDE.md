@@ -48,6 +48,25 @@ Core application operations:
 
 ## Architecture & Design Patterns
 
+### Module Structure (NEW in v1.0.0-beta.7)
+
+The application module is organized into focused submodules:
+
+```
+application/
+├── _service.py      # High-level orchestration and API integration
+├── _models.py       # Data models (DownloadProgress, DownloadProgressState) [NEW]
+├── _download.py     # Download helpers with progress tracking [NEW]
+├── _utils.py        # Shared utilities
+├── _cli.py          # CLI commands
+└── _gui/            # GUI components
+```
+
+**Key Separation:**
+- **_models.py**: Pydantic models for progress tracking with computed fields
+- **_download.py**: Pure download logic (URLs, artifacts, progress callbacks)
+- **_service.py**: High-level business logic and module integration
+
 ### Service Layer Architecture
 
 ```
@@ -56,6 +75,7 @@ Core application operations:
 │         (High-Level Orchestration)         │
 ├────────────────────────────────────────────┤
 │    Progress Tracking & State Management    │
+│         (_models.py - NEW)                 │
 ├────────────────────────────────────────────┤
 │         Integration Layer                  │
 │  ┌──────────┬───────────┬──────────┐      │
@@ -65,6 +85,7 @@ Core application operations:
 ├────────────────────────────────────────────┤
 │         File Processing Layer              │
 │    (Upload, Download, Verification)        │
+│         (_download.py - NEW)               │
 └────────────────────────────────────────────┘
 ```
 
@@ -143,10 +164,12 @@ APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5  # Wait between status checks
 
 ### Progress State Management
 
-**Actual DownloadProgress Model:**
+**Actual DownloadProgress Model (`_models.py`):**
 
 ```python
 class DownloadProgress(BaseModel):
+    """Model for tracking download progress with computed progress metrics."""
+
     # Core state
     status: DownloadProgressState = DownloadProgressState.INITIALIZING
 
@@ -167,6 +190,13 @@ class DownloadProgress(BaseModel):
     artifact_downloaded_chunk_size: int = 0  # Last chunk size
     artifact_downloaded_size: int = 0  # Total downloaded
 
+    # Input slide tracking (NEW in v1.0.0-beta.7)
+    input_slide_path: Path | None = None
+    input_slide_url: str | None = None
+    input_slide_size: int | None = None
+    input_slide_downloaded_chunk_size: int = 0
+    input_slide_downloaded_size: int = 0
+
     # QuPath integration (conditional)
     if has_qupath_extra:
         qupath_add_input_progress: QuPathAddProgress | None = None
@@ -176,15 +206,42 @@ class DownloadProgress(BaseModel):
     @computed_field
     @property
     def total_artifact_count(self) -> int | None:
+        """Calculate total number of artifacts across all items."""
         if self.item_count and self.artifact_count:
             return self.item_count * self.artifact_count
         return None
 
     @computed_field
     @property
+    def total_artifact_index(self) -> int | None:
+        """Calculate the current artifact index across all items."""
+        if self.item_count and self.artifact_count and self.item_index is not None and self.artifact_index is not None:
+            return self.item_index * self.artifact_count + self.artifact_index
+        return None
+
+    @computed_field
+    @property
     def item_progress_normalized(self) -> float:
-        """Normalized progress 0..1 across all items."""
-        # Implementation details...
+        """Normalized progress 0..1 across all items.
+
+        Handles different progress states:
+        - DOWNLOADING_INPUT: Progress through items being downloaded
+        - DOWNLOADING: Progress through artifacts being downloaded
+        - QUPATH_*: QuPath-specific progress tracking
+        """
+        # Implementation varies by state...
+
+    @computed_field
+    @property
+    def artifact_progress_normalized(self) -> float:
+        """Normalized progress 0..1 for current artifact/input download.
+
+        Handles different download types:
+        - DOWNLOADING_INPUT: Input slide download progress
+        - DOWNLOADING: Artifact download progress
+        - QUPATH_ANNOTATE: QuPath annotation progress
+        """
+        # Implementation varies by state...
 ```
 
 ### QuPath Integration (Conditional Loading)
@@ -209,11 +266,13 @@ def process_with_qupath(self, ...):
     # QuPath processing...
 ```
 
-**Download Progress States:**
+**Download Progress States (`_models.py`):**
 
 ```python
 class DownloadProgressState(StrEnum):
+    """Enum for download progress states."""
     INITIALIZING = "Initializing ..."
+    DOWNLOADING_INPUT = "Downloading input slide ..."  # NEW in v1.0.0-beta.7
     QUPATH_ADD_INPUT = "Adding input slides to QuPath project ..."
     CHECKING = "Checking run status ..."
     WAITING = "Waiting for item completing ..."
@@ -221,6 +280,146 @@ class DownloadProgressState(StrEnum):
     QUPATH_ADD_RESULTS = "Adding result images to QuPath project ..."
     QUPATH_ANNOTATE_INPUT_WITH_RESULTS = "Annotating input slides in QuPath project with results ..."
     COMPLETED = "Completed."
+```
+
+### Download Module (`_download.py` - NEW in v1.0.0-beta.7)
+
+The download module provides reusable download helper functions with comprehensive progress tracking.
+
+**Key Functions:**
+
+```python
+def extract_filename_from_url(url: str) -> str:
+    """Extract a filename from a URL robustly.
+
+    Supports:
+    - gs:// (Google Cloud Storage)
+    - http:// and https:// URLs
+    - Handles query parameters and trailing slashes
+    - Sanitizes filenames for filesystem use
+
+    Examples:
+        >>> extract_filename_from_url("gs://bucket/path/to/file.tiff")
+        'file.tiff'
+        >>> extract_filename_from_url("https://example.com/slides/sample.svs?token=abc")
+        'sample.svs'
+    """
+
+def download_url_to_file_with_progress(
+    progress: DownloadProgress,
+    url: str,
+    destination_path: Path,
+    download_progress_queue: Any | None = None,
+    download_progress_callable: Callable | None = None,
+) -> Path:
+    """Download a file from a URL (gs://, http://, or https://) with progress tracking.
+
+    Features:
+    - Converts gs:// URLs to signed URLs automatically
+    - Streams downloads with 1MB chunks (APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE)
+    - Updates progress on every chunk
+    - Supports both queue and callback progress updates
+    - Creates parent directories automatically
+
+    Args:
+        progress: Progress tracking object (updated in place)
+        url: URL to download (gs://, http://, https://)
+        destination_path: Local file path to save to
+        download_progress_queue: Optional queue for GUI progress updates
+        download_progress_callable: Optional callback for CLI progress updates
+
+    Returns:
+        Path: The path to the downloaded file
+
+    Raises:
+        ValueError: If URL scheme is unsupported
+        RuntimeError: If download fails
+    """
+
+def download_available_items(
+    progress: DownloadProgress,
+    application_run: Run,
+    destination_directory: Path,
+    downloaded_items: set[str],
+    create_subdirectory_per_item: bool = False,
+    download_progress_queue: Any | None = None,
+    download_progress_callable: Callable | None = None,
+) -> None:
+    """Download items that are available and not yet downloaded.
+
+    Features:
+    - Only downloads TERMINATED items with FULL output
+    - Skips already downloaded items (tracked via external_id)
+    - Optional subdirectory per item
+    - Progress tracking for each item and artifact
+
+    Args:
+        progress: Progress tracking object
+        application_run: Run object with results
+        destination_directory: Directory to save files
+        downloaded_items: Set of already downloaded external_ids
+        create_subdirectory_per_item: Create item subdirectories
+        download_progress_queue: Optional queue for GUI updates
+        download_progress_callable: Optional callback for CLI updates
+    """
+
+def download_item_artifact(
+    progress: DownloadProgress,
+    artifact: Any,
+    destination_directory: Path,
+    prefix: str = "",
+    download_progress_queue: Any | None = None,
+    download_progress_callable: Callable | None = None,
+) -> None:
+    """Download an artifact of a result item with progress tracking.
+
+    Features:
+    - CRC32C checksum verification
+    - Skips download if file exists with correct checksum
+    - Automatic file extension detection
+    - Chunked downloads with progress updates
+
+    Raises:
+        ValueError: If no checksum metadata found or checksum mismatch
+        requests.HTTPError: If download fails
+    """
+```
+
+**Constants:**
+
+```python
+# From _download.py
+APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB (for checksum calculation)
+APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB (for streaming downloads)
+```
+
+**URL Support:**
+
+The download module supports three URL schemes:
+1. **gs://** - Google Cloud Storage (converted to signed URLs via `platform.generate_signed_url()`)
+2. **http://** - HTTP URLs (used directly)
+3. **https://** - HTTPS URLs (used directly)
+
+**Progress Update Pattern:**
+
+```python
+def update_progress(
+    progress: DownloadProgress,
+    download_progress_callable: Callable | None = None,
+    download_progress_queue: Any | None = None,
+) -> None:
+    """Update download progress via callback or queue.
+
+    Dual update mechanism:
+    - Callback: Synchronous update (CLI, blocking)
+    - Queue: Asynchronous update (GUI, non-blocking)
+
+    Both can be used simultaneously.
+    """
+    if download_progress_callable:
+        download_progress_callable(progress)
+    if download_progress_queue:
+        download_progress_queue.put_nowait(progress)
 ```
 
 ## Usage Patterns & Best Practices
@@ -292,29 +491,73 @@ def upload_file(self, file_path: Path, signed_url: str):
 
 ### Download with Progress (Actual Pattern)
 
+**Basic download with progress callback:**
+
 ```python
-def download_artifact(self, url: str, output_path: Path, progress_callback):
-    """Download with progress tracking."""
+from aignostics.application._download import download_url_to_file_with_progress
+from aignostics.application._models import DownloadProgress
+from pathlib import Path
 
-    response = requests.get(url, stream=True)
-    total_size = int(response.headers.get("Content-Length", 0))
+# Create progress object
+progress = DownloadProgress()
 
-    downloaded = 0
-    with output_path.open("wb") as f:
-        for chunk in response.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
-            f.write(chunk)
-            downloaded += len(chunk)
+# Define progress callback
+def on_progress(p: DownloadProgress):
+    if p.input_slide_size:
+        percent = (p.input_slide_downloaded_size / p.input_slide_size) * 100
+        print(f"Downloaded: {percent:.1f}%")
 
-            # Update progress
-            progress = DownloadProgress(
-                status=DownloadProgressState.DOWNLOADING,
-                artifact_downloaded_chunk_size=len(chunk),
-                artifact_downloaded_size=downloaded,
-                artifact_size=total_size
-            )
+# Download from gs://, http://, or https://
+downloaded_file = download_url_to_file_with_progress(
+    progress=progress,
+    url="gs://my-bucket/slides/sample.svs",
+    destination_path=Path("./downloads/sample.svs"),
+    download_progress_callable=on_progress
+)
 
-            if progress_callback:
-                progress_callback(progress)
+print(f"Downloaded to: {downloaded_file}")
+```
+
+**Download with GUI queue (non-blocking):**
+
+```python
+from queue import Queue
+from aignostics.application._download import download_url_to_file_with_progress
+
+# Create queue for GUI updates
+progress_queue = Queue()
+
+# Download in background thread
+download_url_to_file_with_progress(
+    progress=DownloadProgress(),
+    url="https://example.com/slide.tiff",
+    destination_path=Path("./slide.tiff"),
+    download_progress_queue=progress_queue  # Non-blocking updates
+)
+
+# In GUI thread, poll queue
+while not progress_queue.empty():
+    progress = progress_queue.get()
+    ui.update(progress.artifact_progress_normalized)
+```
+
+**Download application run results:**
+
+```python
+from aignostics.application._download import download_available_items
+
+# Track downloaded items to avoid re-downloading
+downloaded_items = set()
+
+# Download all available items
+download_available_items(
+    progress=DownloadProgress(),
+    application_run=run,
+    destination_directory=Path("./results"),
+    downloaded_items=downloaded_items,
+    create_subdirectory_per_item=True,  # Create dirs per item
+    download_progress_callable=lambda p: print(f"Item {p.item_index}/{p.item_count}")
+)
 ```
 
 ## Testing Strategies (Actual Test Patterns)
@@ -480,31 +723,44 @@ with open(file_path, 'rb') as f:
 
 ## Module Dependencies
 
-### Internal Dependencies
+### Internal Module Organization (NEW in v1.0.0-beta.7)
 
-- `platform` - Client, API operations, and **SDK metadata system** (automatic attachment to all runs)
+The application module is organized into focused submodules:
+
+- **`_service.py`** - High-level orchestration, API integration, run lifecycle management
+- **`_models.py`** - Data models (DownloadProgress, DownloadProgressState)
+- **`_download.py`** - Download helpers with progress tracking and checksum verification
+- **`_utils.py`** - Shared utilities
+- **`_cli.py`** - CLI commands
+- **`_gui/`** - GUI components (page builders, reactive components)
+
+### Internal SDK Dependencies
+
+- `platform` - Client, API operations, **SDK metadata system** (automatic attachment to all runs), signed URLs
 - `wsi` - WSI file validation
 - `bucket` - Cloud storage operations
 - `qupath` - Analysis integration (optional, requires ijson)
-- `utils` - Logging and utilities
+- `utils` - Logging, sanitization, and base utilities
 
 **SDK Metadata Integration:**
 
-Every run submitted through the application module automatically includes SDK metadata from `platform._sdk_metadata.build_sdk_metadata()`. This provides:
-- Execution context (script vs CLI vs GUI)
-- User and organization information (when authenticated)
-- CI/CD environment details (GitHub Actions, pytest)
-- Workflow control flags and scheduling information
-- User agent with test/CI context
+Every run submitted through the application module automatically includes SDK metadata:
+- **Run metadata** (v0.0.4): Execution context, user info, CI/CD details, tags, timestamps
+- **Item metadata** (v0.0.3): Platform bucket location, tags, timestamps
+- Automatic attachment via `platform._sdk_metadata.build_run_sdk_metadata()`
 
 See `platform/CLAUDE.md` for detailed SDK metadata documentation and schema.
+
+**Signed URL Generation:**
+
+The `_download.py` module uses `platform.generate_signed_url()` to convert `gs://` URLs to time-limited signed URLs for downloads.
 
 ### External Dependencies
 
 - `semver` - Semantic version validation (using `Version.is_valid()`)
-- `google-crc32c` - File integrity checking
-- `requests` - HTTP operations
-- `pydantic` - Data models with validation
+- `google-crc32c` - File integrity checking (CRC32C checksums)
+- `requests` - HTTP operations (streaming downloads)
+- `pydantic` - Data models with validation and computed fields
 - `ijson` - Required for QuPath features (optional)
 
 ## Performance Notes

@@ -5,15 +5,13 @@ import webbrowser
 from pathlib import Path
 from typing import Annotated
 
-import requests
 import typer
 
-from aignostics.platform import generate_signed_url as platform_generate_signed_url
 from aignostics.utils import console, get_logger, get_user_data_directory
 
 logger = get_logger(__name__)
 
-PATH_LENFTH_MAX = 260
+PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"
 
 cli = typer.Typer(
@@ -131,6 +129,7 @@ def idc_download(
         typer.Argument(
             help="Identifier or comma-separated set of identifiers."
             " IDs matched against collection_id, PatientId, StudyInstanceUID, SeriesInstanceUID or SOPInstanceUID."
+            " Example: 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
         ),
     ],
     target: Annotated[
@@ -150,67 +149,21 @@ def idc_download(
     ] = TARGET_LAYOUT_DEFAULT,
     dry_run: Annotated[bool, typer.Option(help="dry run")] = False,
 ) -> None:
-    """Download from manifest file, identifier, or comma-separate set of identifiers.
-
-    Raises:
-        typer.Exit: If the target directory does not exist.
-    """
-    from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
+    """Download from manifest file, identifier, or comma-separate set of identifiers."""
+    from ._service import Service  # noqa: PLC0415
 
     try:
-        client = IDCClient.client()
-        logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
-
-        target_directory = Path(target)
-        if not target_directory.is_dir():
-            logger.error("Target directory does not exist: %s", target_directory)
-            sys.exit(1)
-
-        item_ids = [item for item in source.split(",") if item]
-
-        if not item_ids:
-            logger.error("No valid IDs provided.")
-
-        index_df = client.index
-        client.fetch_index("sm_instance_index")
-        logger.info("Downloaded instance index")
-        sm_instance_index_df = client.sm_instance_index
-
-        def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
-            if column_name != "SOPInstanceUID":
-                matches = index_df[column_name].isin(item_ids)
-                matched_ids = index_df[column_name][matches].unique().tolist()
-            else:
-                matches = sm_instance_index_df[column_name].isin(item_ids)  # type: ignore
-                matched_ids = sm_instance_index_df[column_name][matches].unique().tolist()  # type: ignore
-            if not matched_ids:
-                return False
-            unmatched_ids = list(set(item_ids) - set(matched_ids))
-            if unmatched_ids:
-                logger.debug("Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids)
-            logger.info("Identified matching %s: %s", column_name, matched_ids)
-            client.download_from_selection(**{  # type: ignore[no-untyped-call]
-                kwarg_name: matched_ids,
-                "downloadDir": target_directory,
-                "dirTemplate": target_layout,
-                "quiet": False,
-                "show_progress_bar": True,
-                "use_s5cmd_sync": True,
-                "dry_run": dry_run,
-            })
-            return True
-
-        matches_found = 0
-        matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")
-        matches_found += check_and_download("PatientID", item_ids, target_directory, "patientId")
-        matches_found += check_and_download("StudyInstanceUID", item_ids, target_directory, "studyInstanceUID")
-        matches_found += check_and_download("SeriesInstanceUID", item_ids, target_directory, "seriesInstanceUID")
-        matches_found += check_and_download("SOPInstanceUID", item_ids, target_directory, "sopInstanceUID")
-        if not matches_found:
-            logger.error(
-                "None of the values passed matched any of the identifiers: "
-                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
-            )
+        matches_found = Service.download_idc(
+            source=source,
+            target=target,
+            target_layout=target_layout,
+            dry_run=dry_run,
+        )
+        console.print(f"[green]Successfully downloaded {matches_found} identifier type(s) to {target}[/green]")
+    except ValueError as e:
+        logger.warning("Bad input to download from IDC for IDs '%s': %s", source, e)
+        console.print(f"[warning]Warning:[/warning] {e}")
+        sys.exit(2)
     except Exception as e:
         message = f"Error downloading data for IDs '{source}': {e!s}"
         logger.exception(message)
@@ -223,7 +176,8 @@ def aignostics_download(
     source_url: Annotated[
         str,
         typer.Argument(
-            help="URL to download, e.g. gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+            help="URL to download."
+            " Example: gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
         ),
     ],
     destination_directory: Annotated[
@@ -251,23 +205,11 @@ def aignostics_download(
         TransferSpeedColumn,
     )
 
+    from ._service import Service  # noqa: PLC0415
+
     try:
-        # Get filename from URL
+        # Get filename for progress display
         filename = source_url.split("/")[-1]
-
-        # Generate a signed URL
-        source_url_signed = platform_generate_signed_url(source_url)
-
-        output_path = Path(destination_directory) / filename
-
-        console.print(f"Downloading from {source_url} to {output_path}")
-
-        # Make sure the destination directory exists
-        Path(destination_directory).mkdir(parents=True, exist_ok=True)
-
-        # Start the request to get content length
-        response = requests.get(source_url_signed, stream=True, timeout=60)
-        total_size = int(response.headers.get("content-length", 0))
 
         with Progress(
             TextColumn("[progress.description]Downloading"),
@@ -279,17 +221,22 @@ def aignostics_download(
             TransferSpeedColumn(),
             TextColumn("[progress.description]{task.description}"),
         ) as progress:
-            # Create a task for overall progress
-            task = progress.add_task(f"Downloading {filename}", total=total_size)
+            task = progress.add_task(f"Downloading {filename}", total=0)
 
-            # Write the file
-            with open(output_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:  # filter out keep-alive new chunks
-                        f.write(chunk)
-                        progress.update(task, advance=len(chunk))
+            def update_progress(bytes_downloaded: int, total_size: int, _filename: str) -> None:
+                progress.update(task, advance=bytes_downloaded, total=total_size)
+
+            output_path = Service.download_aignostics(
+                source_url=source_url,
+                destination_directory=destination_directory,
+                download_progress_callable=update_progress,
+            )
 
         console.print(f"[green]Successfully downloaded to {output_path}[/green]")
+    except ValueError as e:
+        logger.warning("Bad input to download from '%s': %s", source_url, e)
+        console.print(f"[warning]Warning:[/warning] Bad input: {e}")
+        sys.exit(2)
     except Exception as e:
         message = f"Error downloading data from '{source_url}': {e!s}"
         logger.exception(message)

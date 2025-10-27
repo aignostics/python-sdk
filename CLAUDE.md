@@ -509,20 +509,24 @@ Some modules have conditional loading based on dependencies:
 * 5-minute refresh buffer before expiry
 * OAuth 2.0 device flow
 
-### SDK Metadata System (NEW in v1.0.0-beta.7)
+### SDK Metadata System (ENHANCED - Run v0.0.4, Item v0.0.3)
 
-**Automatic Run Tracking**: Every application run submitted through the SDK automatically includes comprehensive metadata about the execution context.
+**Automatic Run & Item Tracking**: Every application run and item submitted through the SDK automatically includes comprehensive metadata about the execution context, with support for tags and timestamps.
 
 **Key Features:**
 
-* **Automatic Attachment**: SDK metadata added to every run without user action
+* **Automatic Attachment**: SDK metadata added to every run and item without user action
 * **Environment Detection**: Automatically detects script/CLI/GUI and user/test/bridge contexts
 * **CI/CD Integration**: Captures GitHub Actions workflow information and pytest test context
 * **User Information**: Includes authenticated user and organization details
-* **Schema Validation**: Pydantic-based validation with JSON Schema (v0.0.1)
-* **Versioned Schema**: Published JSON Schema at `docs/source/_static/sdk_metadata_schema_*.json`
+* **Schema Validation**: Pydantic-based validation with JSON Schema (Run: v0.0.4, Item: v0.0.3)
+* **Versioned Schema**: Published JSON Schema at `docs/source/_static/sdk_{run|item}_custom_metadata_schema_*.json`
+* **Tags Support** (NEW): Associate runs and items with searchable tags
+* **Timestamps** (NEW): Track creation and update times (`created_at`, `updated_at`)
+* **Metadata Updates** (NEW): Update custom metadata via CLI and GUI
+* **Item Metadata** (NEW): Separate schema for item-level metadata including platform bucket information
 
-**What's Tracked:**
+**What's Tracked (Run Level):**
 
 * Submission metadata (date, interface, initiator)
 * Enhanced user agent with platform and CI/CD context
@@ -532,21 +536,41 @@ Some modules have conditional loading based on dependencies:
 * Workflow control flags (validate_only, onboard_to_portal)
 * Scheduling information (due dates, deadlines)
 * Optional user notes
+* **Tags** (NEW): Set of tags for filtering (`set[str]`)
+* **Timestamps** (NEW): `created_at`, `updated_at`
 
-**CLI Command:**
+**What's Tracked (Item Level - NEW):**
+
+* **Platform Bucket Metadata**: Cloud storage location (bucket name, object key, signed URL)
+* **Tags**: Item-level tags (`set[str]`)
+* **Timestamps**: `created_at`, `updated_at`
+
+**CLI Commands:**
 
 ```bash
-# Export SDK metadata JSON Schema
-aignostics sdk metadata-schema --pretty > schema.json
+# Export SDK run metadata JSON Schema
+aignostics sdk metadata-schema --pretty > run_schema.json
+
+# Update run custom metadata (including tags)
+aignostics application run custom-metadata update RUN_ID \
+  --custom-metadata '{"sdk": {"tags": ["experiment-1", "batch-A"]}}'
+
+# Dump run custom metadata as JSON
+aignostics application run custom-metadata dump RUN_ID --pretty
+
+# Find runs by tags
+aignostics application run list --tags experiment-1,batch-A
 ```
 
 **Implementation:**
 
 * Module: `platform._sdk_metadata`
-* Functions: `build_sdk_metadata()`, `validate_sdk_metadata()`, `get_sdk_metadata_json_schema()`
+* **Run Functions**: `build_run_sdk_metadata()`, `validate_run_sdk_metadata()`, `get_run_sdk_metadata_json_schema()`
+* **Item Functions** (NEW): `build_item_sdk_metadata()`, `validate_item_sdk_metadata()`, `get_item_sdk_metadata_json_schema()`
 * Integration: Automatic in `platform.resources.runs.submit()`
 * User Agent: Enhanced `utils.user_agent()` with CI/CD context
 * Tests: Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`
+* **Schema Files**: `sdk_run_custom_metadata_schema_v0.0.4.json` and `sdk_item_custom_metadata_schema_v0.0.3.json`
 
 See `platform/CLAUDE.md` for detailed documentation.
 
@@ -616,10 +640,19 @@ AIGNOSTICS_RUN_TIMEOUT=30.0
 AIGNOSTICS_RUN_CACHE_TTL=15
 ```
 
+**Cache Control:**
+
+```python
+# Bypass cache for specific operations (useful in tests or when fresh data is required)
+run = client.runs.details(run_id, nocache=True)  # Force API call
+applications = client.applications.list(nocache=True)  # Bypass cache
+```
+
 **Design Decisions:**
 
 * ✅ **Read-Only Retries**: Only safe, idempotent read operations retry
 * ✅ **Global Cache Clearing**: Simple consistency model - clear everything on writes
+* ✅ **Cache Bypass** (NEW): `nocache=True` parameter forces fresh API calls
 * ✅ **Logging**: Warnings logged before retry sleeps for observability
 * ✅ **Re-raise**: Original exception re-raised after exhausting retries
 
