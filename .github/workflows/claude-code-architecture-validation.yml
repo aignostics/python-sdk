@@ -1,3 +1,16 @@
+# This workflow validates that SOFTWARE_ARCHITECTURE.md stays synchronized with code changes.
+# It analyzes PRs and reports what documentation updates are needed.
+#
+# What it does:
+# 1. Reads SOFTWARE_ARCHITECTURE.md to understand current documentation
+# 2. Analyzes code changes in the PR
+# 3. Identifies architectural impacts (new modules, dependencies, workflows, etc.)
+# 4. Posts a PR comment with specific updates needed in SOFTWARE_ARCHITECTURE.md
+#
+# When it runs:
+# - Automatically on PR open/update when files in src/, pyproject.toml, workflows, or SOFTWARE_ARCHITECTURE.md change
+# - Manually via workflow_dispatch for testing or specific PR validation
+
 name: "+ Claude Code / Architecture Doc Validation"
 
 on:
@@ -25,18 +38,25 @@ on:
 
 jobs:
   architecture-validation:
+    # Permissions required for Claude to read code, post comments, and access secrets
     permissions:
       actions: read
       contents: write
       issues: write
       pull-requests: write
       id-token: write
+    # Uses the reusable Claude Code workflow defined in _claude-code.yml
     uses: ./.github/workflows/_claude-code.yml
     with:
       platform_environment: ${{ inputs.platform_environment || 'staging' }}
-      mode: 'automation'
+      mode: 'automation'  # Runs autonomously without interactive prompts
       track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
-      allowed_tools: 'Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(cat:*),Bash(echo:*),Bash(grep:*),Bash(cut:*),Bash(sed:*),Bash(sort:*),Bash(head:*),Bash(test:*),Bash([*)'
+      # Tools Claude can use: Read files, run bash commands (git, gh, find, grep, etc.)
+      allowed_tools: 'Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(cat:*),Bash(echo:*),Bash(grep:*),Bash(cut:*),Bash(sed:*),Bash(sort:*),Bash(head:*),Bash(test:*)'
+      
+      # ===================================================================
+      # PROMPT: Instructions for Claude on how to validate the architecture
+      # ===================================================================
       prompt: |
         # SOFTWARE_ARCHITECTURE.md VALIDATION FOR PULL REQUEST
 
@@ -93,6 +113,7 @@ jobs:
         Execute these commands using the Bash tool to see what changed:
 
         ```bash
+        # Get the PR number (either from PR event or manual input)
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
         if [ -n "$PR_NUMBER" ]; then
@@ -100,6 +121,7 @@ jobs:
           gh pr view "$PR_NUMBER" --json files --jq '.files[].path' | sort
         else
           echo "=== Changed files (comparing with main) ==="
+          # Fallback to HEAD^ if origin/main doesn't exist
           git diff --name-only origin/main...HEAD 2>/dev/null || \
           git diff --name-only HEAD^..HEAD | sort
         fi
@@ -111,13 +133,13 @@ jobs:
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
         if [ -n "$PR_NUMBER" ]; then
+          # For PRs: use gh pr diff to get clean diff
           gh pr diff "$PR_NUMBER" | head -1000
         else
+          # For manual runs: compare with main branch
           git diff origin/main...HEAD | head -1000
         fi
         ```
-
-        ## Step 3: Analyze Architectural Impact of Code Changes
 
         ## Step 3: Analyze Architectural Impact of Code Changes
 
@@ -129,6 +151,7 @@ jobs:
         echo "=== Checking for New Modules ==="
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
+        # Extract unique module names from changed files in src/aignostics/
         if [ -n "$PR_NUMBER" ]; then
           NEW_MODULES=$(gh pr diff "$PR_NUMBER" --name-only | grep "^src/aignostics/" | cut -d/ -f3 | sort -u)
         else
@@ -150,6 +173,7 @@ jobs:
         echo "=== Checking Dependency Changes ==="
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
+        # Look for new lines added to pyproject.toml (lines starting with +)
         if [ -n "$PR_NUMBER" ]; then
           gh pr diff "$PR_NUMBER" -- pyproject.toml | grep "^+" | grep -v "^+++" || echo "No dependency changes"
         else
@@ -166,6 +190,7 @@ jobs:
         echo "=== Checking CI/CD Changes ==="
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
+        # Find workflow files that were modified
         if [ -n "$PR_NUMBER" ]; then
           WORKFLOW_FILES=$(gh pr diff "$PR_NUMBER" --name-only | grep ".github/workflows/" || echo "")
         else
@@ -195,6 +220,7 @@ jobs:
         echo "=== Checking Pattern Changes ==="
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
 
+        # Look for changes to core architectural files (utils, _service, _cli, _gui)
         if [ -n "$PR_NUMBER" ]; then
           PATTERN_FILES=$(gh pr diff "$PR_NUMBER" --name-only | grep -E "(utils/.*\.py|.*/_service\.py|.*/_cli\.py|.*/_gui\.py)" || echo "")
         else
@@ -231,6 +257,8 @@ jobs:
         PR_NUMBER="${{ github.event.pull_request.number || inputs.pr_number }}"
         BRANCH_NAME="${{ github.event.pull_request.head.ref || github.ref_name }}"
         
+        # Use single-quoted heredoc to prevent variable expansion in template
+        # We'll replace placeholders with sed after
         cat > /tmp/architecture-validation.md << 'COMMENT_EOF'
         # 🏗️ SOFTWARE_ARCHITECTURE.md Update Requirements
 
@@ -349,12 +377,12 @@ jobs:
         *Generated by Claude Code Architecture Documentation Validator*
         COMMENT_EOF
 
-        # Replace placeholders with actual values
+        # Replace placeholders with actual values using sed
         sed -i.bak "s/PR_NUMBER_PLACEHOLDER/$([ -n \"$PR_NUMBER\" ] && echo \"#$PR_NUMBER\" || echo \"Manual Run\")/g" /tmp/architecture-validation.md
         sed -i.bak "s/BRANCH_NAME_PLACEHOLDER/$BRANCH_NAME/g" /tmp/architecture-validation.md
         rm -f /tmp/architecture-validation.md.bak
 
-        # Post comment if this is a PR
+        # Post comment if this is a PR, otherwise just output to logs
         if [ -n "$PR_NUMBER" ]; then
           echo "Posting SOFTWARE_ARCHITECTURE.md validation comment to PR #$PR_NUMBER"
           gh pr comment "$PR_NUMBER" --body-file /tmp/architecture-validation.md
@@ -368,6 +396,8 @@ jobs:
 
         **What to Report as REQUIRED UPDATES (Blocking):**
         
+        These are changes that MUST be documented before the PR can be merged:
+        
         1. **New modules** not documented in Section 1.5 "Layers and Modules"
         2. **Major architectural changes** not reflected in Section 1.2 patterns/diagrams
         3. **New external integrations** missing from Section 3 "Integration Patterns"
@@ -375,12 +405,16 @@ jobs:
 
         **What to Report as RECOMMENDED UPDATES (Suggestions):**
         
+        These are nice-to-have improvements that enhance documentation quality:
+        
         1. Minor dependency additions worth documenting
         2. New CI/CD workflows for Section 1.4
         3. Diagram enhancements for new components
         4. Enhanced descriptions for existing sections
 
         **What NOT to Report (No Architecture Impact):**
+        
+        These code changes don't affect the architecture documentation:
         
         1. Internal implementation changes within existing patterns
         2. Bug fixes that don't change architecture
