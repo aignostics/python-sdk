@@ -299,7 +299,9 @@ def test_platform_test_app_submit_and_wait() -> None:
     _submit_and_wait(
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
-        payload=_get_three_spots_payload_for_test(),
+        payload=_get_three_spots_payload_for_test(
+            expires_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+        ),
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
         tags=["test_platform_test_app_submit_and_wait"],
