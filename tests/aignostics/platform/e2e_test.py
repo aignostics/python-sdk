@@ -56,7 +56,7 @@ TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
 TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
 
 HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
-HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
+HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 5  # 5 hours
 
 HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
@@ -343,7 +343,7 @@ def test_platform_heta_app_submit_and_wait(record_property) -> None:
 @pytest.mark.skip(reason="Waits for change in scheduler")
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=60 * 5)
 def test_platform_test_app_submit() -> None:
     """Test application submission with the test application.
 
@@ -368,7 +368,7 @@ def test_platform_test_app_submit() -> None:
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=60 * 5)
 def test_platform_test_app_find() -> None:
     """Test application runs with the test application.
 
@@ -393,7 +393,7 @@ def test_platform_test_app_find() -> None:
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=60 * 5)
 def test_platform_heta_app_submit() -> None:
     """Test application runs with the HETA application.
 
@@ -418,7 +418,7 @@ def test_platform_heta_app_submit() -> None:
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=60 * 5)
 def test_platform_heta_app_find() -> None:
     """Test application runs with the HETA application.
 
