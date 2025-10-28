@@ -8,7 +8,7 @@ FROM base AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /bin/uv
 
 # We use the system interpreter managed by uv
-ENV UV_PYTHON_DOWNLOADS=1
+ENV UV_PYTHON_DOWNLOADS=0
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -124,6 +124,10 @@ FROM target AS all
 
 # Copy fat app, i.e. with all extras, make it immutable
 COPY --from=builder-all --chown=root:root --chmod=755  /app /app
+
+# Provide writeable .cache folder for python sdk, used for token storage
+RUN mkdir -p /app/.cache
+RUN chmod 777 /app/.cache
 
 # Run as nonroot
 USER app
