@@ -63,10 +63,10 @@ def _get_test_python_versions() -> list[str]:
     Returns:
         list[str]: List of Python version strings to test against
     """
-    versions = ["3.11.9", "3.12.12", "3.13.7"]
+    versions = ["3.11.9", "3.12.12", PYTHON_VERSION]
     if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
-        versions = ["3.13.7"]
-        # Only test with 3.13.7 on Windows ARM due to:
+        versions = [PYTHON_VERSION]
+        # Only test with 3.13.x on Windows ARM due to:
         # 1. Access denied errors when uv >= 0.9.4 tries to recreate venv directories (all Python versions)
         # 2. Instability of Python 3.12.x on Windows ARM platform
     return versions
