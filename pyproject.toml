@@ -190,6 +190,25 @@ dev = [
     "watchdog>=6.0.0,<7",
 ]
 
+[tool.uv]
+required-version = ">=0.9.5" # CVE-2025-54368, GHSA-w476-p2h3-79g9
+override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
+    "rfc3987; sys_platform == 'never'", # GPLv3
+    "h11>=0.16.0",                      # CVE-2025-43859
+    "tornado>=6.5.0",                   # CVE-2025-47287
+    "jupyter-core>=5.8.1",              # CVE-2025-30167
+    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182,
+    "pillow>=11.3.0",                   # CVE-2025-48379,
+    "aiohttp>=3.12.14",                 # CVE-2025-53643
+    "starlette>=0.47.2",                # CVE-2025-54121
+    "uv>=0.9.5",                        # CVE-2025-54368
+    "jupyterlab>=4.4.9",                # CVE-2025-59842
+    "pip>=5.3",                         # CVE-2025-8869  
+]
+
+[tool.uv.sources]
+# No additional sources outside of src/ yet
+
 [project.scripts]
 aignostics = "aignostics.cli:cli"
 
@@ -212,22 +231,6 @@ packages = ["src/aignostics", "codegen/out/aignx", "examples"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
-
-[tool.uv]
-required-version = ">=0.9.5" # CVE-2025-54368, GHSA-w476-p2h3-79g9
-override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
-    "rfc3987; sys_platform == 'never'", # GPLv3
-    "h11>=0.16.0",                      # CVE-2025-43859
-    "tornado>=6.5.0",                   # CVE-2025-47287
-    "jupyter-core>=5.8.1",              # CVE-2025-30167
-    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182,
-    "pillow>=11.3.0",                   # CVE-2025-48379,
-    "aiohttp>=3.12.14",                 # CVE-2025-53643
-    "starlette>=0.47.2",                # CVE-2025-54121
-    "uv>=0.9.5",                        # CVE-2025-54368
-    "jupyterlab>=4.4.9",                # CVE-2025-59842
-    "pip>=5.3",                         # CVE-2025-8869  
-]
 
 [tool.ruff]
 target-version = "py311"
@@ -340,11 +343,11 @@ markers = [
     "skip_with_act: Don't run with act.",
     "docker: That require Docker.",
     "long_running: Tests with a test timeout >=5 min and < 60 min. CI/CD will run long running tests with one Python version only. When calling `make` long running tests are excluded - use `make test_long_running` instead.",
+    "very_long_running: Tests with a test timeout >= 60 min. CI/CD will run very long running tests with one Python version only. When calling `make` very long runing tests are excluded - use `make test_very_long_running` instead.",
     # Test Categories (following Martin Fowler's Solitary vs Sociable unit test distinction)
     "unit: Solitary unit tests - test a layer of a module in isolation with all dependencies mocked, except interaction with shared utils and the systems module. Unit tests must be able to pass offline, i.e. not calls to external services. The timeout should not be bigger than the default 10s, and must be <5 min.",
     "integration: Sociable integration tests - test interactions across architectural layers (e.g. CLI/GUI→Service, Service→Utils) or between modules (e.g. Application→Platform), using real SDK collaborators, real file I/O, real subprocesses, and real Docker containers. Integration test must be able to pass offline, i.e. mock external services (Aignostics Platform API, Auth0, S3/GCS buckets, IDC). The timeout should not be bigger than the default 10s, and must be <5 min.",
     "e2e: End-to-end tests - test complete workflows with real external network services (Aignostics Platform API, cloud storage, IDC, etc). If the test timeout is >= 5 min and < 60 min, additionally mark as `long_running`, if >= 60min mark as 'very_long_running'.",
-    "very_long_running: Tests with a test timeout >= 60 min. CI/CD will run very long running tests with one Python version only. When calling `make` very long runing tests are excluded - use `make test_very_long_running` instead.",
 ]
 md_report = true
 md_report_output = "reports/pytest.md"
