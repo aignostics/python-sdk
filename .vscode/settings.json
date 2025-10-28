@@ -49,7 +49,6 @@
     "github.copilot.chat.edits.temporalContext.enabled": true,
     "github.copilot.chat.codesearch.enabled": true,
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
-    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "github.copilot.chat.generateTests.codeLens": true,
     "github.copilot.chat.languageContext.typescript.enabled": true,
     "github.copilot.chat.reviewSelection.instructions": [],
@@ -58,26 +57,5 @@
         "connectionId": "aignostics",
         "projectKey": "aignostics_python-sdk"
     },
-    "makefile.configureOnOpen": false,
-    "yaml.schemas": {
-        "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
-    },
-    "yaml.customTags": [
-        "!And scalar",
-        "!If sequence",
-        "!Not scalar",
-        "!Equals sequence",
-        "!Or sequence",
-        "!FindInMap sequence",
-        "!Base64 scalar",
-        "!Cidr sequence",
-        "!Ref scalar",
-        "!Sub scalar",
-        "!GetAtt sequence",
-        "!GetAZs scalar",
-        "!ImportValue scalar",
-        "!Select sequence",
-        "!Split sequence",
-        "!Join sequence"
-    ]
+    "makefile.configureOnOpen": false
 }

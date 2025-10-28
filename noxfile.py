@@ -161,6 +161,7 @@ def audit(session: nox.Session) -> None:
 
     pip_licenses_base_args.extend([
         "--ignore-packages",
+        "aignostics",
         "pyinstaller",  # https://pyinstaller.org/en/stable/license.html
     ])
 
