@@ -126,8 +126,7 @@ FROM target AS all
 COPY --from=builder-all --chown=root:root --chmod=755  /app /app
 
 # Provide writeable .cache folder for python sdk, used for token storage
-RUN mkdir -p /app/.cache
-RUN chmod 777 /app/.cache
+RUN mkdir -p /app/.cache && chown app:app /app/.cache && chmod 700 /app/.cache
 
 # Run as nonroot
 USER app
