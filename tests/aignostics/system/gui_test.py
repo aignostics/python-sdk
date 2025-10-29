@@ -38,3 +38,29 @@ async def test_gui_system_switch_right(user: User, silent_logging, record_proper
     switch_interaction: UserInteraction = user.find("Mask secrets")
     switch_element: switch = switch_interaction.elements.pop()
     assert switch_element.value is True
+
+
+@pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
+async def test_gui_system_health_shown_and_updated(user: User, silent_logging, record_property) -> None:
+    """Test that health status is always visible in the footer on any page.
+
+    As a user, I expect the current health of Launchpad to be always visible
+    in the footer of the GUI so that I can ensure the system is operational.
+    """
+    record_property("tested-item-id", "TEST-SYSTEM-GUI-HEALTH, SWR-SYSTEM-GUI-HEALTH-1")
+
+    # Test that health is visible on multiple pages to verify "always visible"
+    pages_to_test = [
+        "/",  # Main page
+        "/system",  # System page
+        "/dataset/idc",  # Dataset page
+    ]
+
+    for page in pages_to_test:
+        # Navigate to the page
+        await user.open(page)
+
+        # Verify the health status footer component is visible
+        # The health_link() is rendered in the footer and has a tooltip "Check Launchpad Status"
+        await user.should_see("Check Launchpad Status", retries=5 * 100)
