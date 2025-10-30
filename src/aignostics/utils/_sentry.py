@@ -3,13 +3,16 @@
 import re
 import urllib.parse
 from importlib.util import find_spec
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from ._constants import __env__, __env_file__, __project_name__, __version__
 from ._settings import OpaqueSettings, load_settings, strip_to_none_before_validator
+
+if TYPE_CHECKING:
+    from sentry_sdk.integrations import Integration
 
 _ERR_MSG_MISSING_SCHEME = "Sentry DSN is missing URL scheme (protocol)"
 _ERR_MSG_MISSING_NETLOC = "Sentry DSN is missing network location (domain)"
@@ -165,6 +168,7 @@ class SentrySettings(OpaqueSettings):
             default=1.0,
         ),
     ]
+
     traces_sample_rate: Annotated[
         float,
         Field(
@@ -173,6 +177,7 @@ class SentrySettings(OpaqueSettings):
             default=0.1,
         ),
     ]
+
     profiles_sample_rate: Annotated[
         float,
         Field(
@@ -182,9 +187,37 @@ class SentrySettings(OpaqueSettings):
         ),
     ]
 
+    profile_session_sample_rate: Annotated[
+        float,
+        Field(
+            ge=0.0,
+            description="Profile Session Sample Rate (https://docs.sentry.io/platforms/python/tracing/#configure)",
+            default=0.1,
+        ),
+    ]
 
-def sentry_initialize() -> bool:
+    profile_lifecycle: Annotated[
+        Literal["manual", "trace"],
+        Field(
+            description="Profile Lifecycle (https://docs.sentry.io/platforms/python/tracing/#configure)",
+            default="trace",
+        ),
+    ]
+
+    enable_logs: Annotated[
+        bool,
+        Field(
+            description="Enable Sentry log integration (https://docs.sentry.io/platforms/python/logging/)",
+            default=True,
+        ),
+    ]
+
+
+def sentry_initialize(integrations: "list[Integration] | None") -> bool:
     """Initialize Sentry integration.
+
+    Args:
+        integrations (list[Integration] | None): List of Sentry integrations to use
 
     Returns:
         bool: True if initialized successfully, False otherwise
@@ -195,7 +228,6 @@ def sentry_initialize() -> bool:
         return False
 
     import sentry_sdk  # noqa: PLC0415
-    from sentry_sdk.integrations.typer import TyperIntegration  # noqa: PLC0415
 
     sentry_sdk.init(
         release=f"{__project_name__}@{__version__}",  # https://docs.sentry.io/platforms/python/configuration/releases/,
@@ -207,7 +239,10 @@ def sentry_initialize() -> bool:
         sample_rate=settings.sample_rate,
         traces_sample_rate=settings.traces_sample_rate,
         profiles_sample_rate=settings.profiles_sample_rate,
-        integrations=[TyperIntegration()],
+        profile_session_sample_rate=settings.profiles_sample_rate,
+        profile_lifecycle=settings.profile_lifecycle,
+        enable_logs=settings.enable_logs,
+        integrations=integrations if integrations is not None else [],
     )
 
     return True

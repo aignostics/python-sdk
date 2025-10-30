@@ -4,7 +4,8 @@ import os
 
 from .constants import (
     HETA_APPLICATION_ID,
-    MODULES_TO_INSTRUMENT,
+    LOGFIRE_MODULES_TO_INSTRUMENT,
+    SENTRY_INTEGRATIONS,
     TEST_APP_APPLICATION_ID,
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
@@ -17,7 +18,7 @@ for proxy_var in ["HTTP_PROXY", "HTTPS_PROXY"]:
     if proxy_url and not proxy_url.startswith(("http://", "https://")):
         os.environ[proxy_var] = f"http://{proxy_url}"
 
-boot(modules_to_instrument=MODULES_TO_INSTRUMENT)
+boot(logfire_modules_to_instrument=LOGFIRE_MODULES_TO_INSTRUMENT, sentry_integrations=SENTRY_INTEGRATIONS)
 
 __all__ = [
     "HETA_APPLICATION_ID",

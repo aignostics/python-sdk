@@ -1,11 +1,26 @@
 """Static configuration of Aignostics Python SDK."""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sentry_sdk.integrations import Integration
 
 # Configuration required by oe-python-template
 API_VERSIONS: dict[str, str] = {"v1": "1.0.0"}
-MODULES_TO_INSTRUMENT: list[str] = ["aignostics.qupath"]
+LOGFIRE_MODULES_TO_INSTRUMENT: list[str] = ["aignostics.qupath"]
+
+SENTRY_INTEGRATIONS: list[Integration] | None = None
+try:
+    from sentry_sdk.integrations.typer import TyperIntegration
+
+    SENTRY_INTEGRATIONS = [TyperIntegration()]
+except ImportError:
+    pass  # sentry_sdk not installed
+
 NOTEBOOK_DEFAULT = Path(__file__).parent / "notebook" / "_notebook.py"
 
 # Project specific configuration

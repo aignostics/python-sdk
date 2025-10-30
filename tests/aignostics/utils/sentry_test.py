@@ -11,7 +11,6 @@ if find_spec("sentry_sdk"):
     import pytest
     from pydantic import SecretStr
 
-    from aignostics.utils import get_logger
     from aignostics.utils._sentry import (
         _ERR_MSG_INVALID_DOMAIN,
         _ERR_MSG_MISSING_NETLOC,
@@ -25,12 +24,10 @@ if find_spec("sentry_sdk"):
         sentry_initialize,
     )
 
-    log = get_logger(__name__)
-
     VALID_DSN = "https://abcdef1234567890@o12345.ingest.us.sentry.io/1234567890"
 
     @pytest.fixture
-    def mock_environment() -> Generator[None, None, None]:
+    def mock_environment() -> Generator[None]:
         """Fixture to set up the environment for testing."""
         with mock.patch.dict(
             os.environ,
@@ -153,7 +150,7 @@ if find_spec("sentry_sdk"):
             mock_settings.dsn = None
             mock_load_settings.return_value = mock_settings
 
-            result = sentry_initialize()
+            result = sentry_initialize(integrations=None)
             assert result is False  # Should return False when no DSN is provided
 
     @pytest.mark.unit
@@ -166,9 +163,117 @@ if find_spec("sentry_sdk"):
         ):
             mock_settings = mock.MagicMock()
             mock_settings.dsn = SecretStr(VALID_DSN)
+            mock_settings.enabled = True
+            mock_settings.debug = False
+            mock_settings.send_default_pii = False
+            mock_settings.max_breadcrumbs = 50
+            mock_settings.sample_rate = 1.0
+            mock_settings.traces_sample_rate = 0.1
+            mock_settings.profiles_sample_rate = 0.1
+            mock_settings.enable_logs = True
             mock_load_settings.return_value = mock_settings
 
-            result = sentry_initialize()
+            result = sentry_initialize(integrations=None)
 
             assert result is True  # Should return True when initialization is successful
             mock_sentry_init.assert_called_once()  # Should call sentry_sdk.init
+
+            # Verify that enable_logs was passed to sentry_sdk.init
+            call_kwargs = mock_sentry_init.call_args[1]
+            assert "enable_logs" in call_kwargs
+            assert call_kwargs["enable_logs"] is True
+
+    @pytest.mark.unit
+    def test_sentry_initialize_with_custom_integrations(record_property, mock_environment: None) -> None:
+        """Test sentry_initialize with custom integrations list."""
+        record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+        with (
+            mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings,
+            mock.patch("sentry_sdk.init") as mock_sentry_init,
+        ):
+            mock_settings = mock.MagicMock()
+            mock_settings.dsn = SecretStr(VALID_DSN)
+            mock_settings.enabled = True
+            mock_settings.debug = False
+            mock_settings.send_default_pii = False
+            mock_settings.max_breadcrumbs = 50
+            mock_settings.sample_rate = 1.0
+            mock_settings.traces_sample_rate = 0.1
+            mock_settings.profiles_sample_rate = 0.1
+            mock_settings.enable_logs = True
+            mock_load_settings.return_value = mock_settings
+
+            # Create mock integrations
+            mock_integration1 = mock.MagicMock()
+            mock_integration2 = mock.MagicMock()
+            custom_integrations = [mock_integration1, mock_integration2]
+
+            result = sentry_initialize(integrations=custom_integrations)
+
+            assert result is True
+            mock_sentry_init.assert_called_once()
+
+            # Verify that custom integrations were passed to sentry_sdk.init
+            call_kwargs = mock_sentry_init.call_args[1]
+            assert "integrations" in call_kwargs
+            assert call_kwargs["integrations"] == custom_integrations
+
+    @pytest.mark.unit
+    def test_sentry_initialize_with_enable_logs_disabled(record_property, mock_environment: None) -> None:
+        """Test sentry_initialize with enable_logs set to False."""
+        record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+        with (
+            mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings,
+            mock.patch("sentry_sdk.init") as mock_sentry_init,
+        ):
+            mock_settings = mock.MagicMock()
+            mock_settings.dsn = SecretStr(VALID_DSN)
+            mock_settings.enabled = True
+            mock_settings.debug = False
+            mock_settings.send_default_pii = False
+            mock_settings.max_breadcrumbs = 50
+            mock_settings.sample_rate = 1.0
+            mock_settings.traces_sample_rate = 0.1
+            mock_settings.profiles_sample_rate = 0.1
+            mock_settings.enable_logs = False  # Disabled
+            mock_load_settings.return_value = mock_settings
+
+            result = sentry_initialize(integrations=None)
+
+            assert result is True
+            mock_sentry_init.assert_called_once()
+
+            # Verify that enable_logs=False was passed to sentry_sdk.init
+            call_kwargs = mock_sentry_init.call_args[1]
+            assert "enable_logs" in call_kwargs
+            assert call_kwargs["enable_logs"] is False
+
+    @pytest.mark.unit
+    def test_sentry_initialize_with_empty_integrations_list(record_property, mock_environment: None) -> None:
+        """Test sentry_initialize with empty integrations list."""
+        record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+        with (
+            mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings,
+            mock.patch("sentry_sdk.init") as mock_sentry_init,
+        ):
+            mock_settings = mock.MagicMock()
+            mock_settings.dsn = SecretStr(VALID_DSN)
+            mock_settings.enabled = True
+            mock_settings.debug = False
+            mock_settings.send_default_pii = False
+            mock_settings.max_breadcrumbs = 50
+            mock_settings.sample_rate = 1.0
+            mock_settings.traces_sample_rate = 0.1
+            mock_settings.profiles_sample_rate = 0.1
+            mock_settings.enable_logs = True
+            mock_load_settings.return_value = mock_settings
+
+            result = sentry_initialize(integrations=[])
+
+            assert result is True
+            mock_sentry_init.assert_called_once()
+
+            # Verify that empty integrations list was passed to sentry_sdk.init
+            call_kwargs = mock_sentry_init.call_args[1]
+            assert "integrations" in call_kwargs
+            assert call_kwargs["integrations"] == []

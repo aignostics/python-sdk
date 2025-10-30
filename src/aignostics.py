@@ -21,10 +21,10 @@ if pyi_splash and pyi_splash.is_alive():
 
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
-from aignostics.constants import MODULES_TO_INSTRUMENT  # noqa: E402
+from aignostics.constants import LOGFIRE_MODULES_TO_INSTRUMENT, SENTRY_INTEGRATIONS  # noqa: E402
 from aignostics.utils import boot, get_logger, gui_run  # noqa: E402
 
-boot(MODULES_TO_INSTRUMENT)
+boot(logfire_modules_to_instrument=LOGFIRE_MODULES_TO_INSTRUMENT, sentry_integrations=SENTRY_INTEGRATIONS)
 
 logger = get_logger(__name__)
 

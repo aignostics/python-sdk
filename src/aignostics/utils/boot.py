@@ -1,12 +1,18 @@
 """Boot sequence."""
 
+from __future__ import annotations
+
 import os
 import ssl
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import certifi
 import truststore
+
+if TYPE_CHECKING:
+    from sentry_sdk.integrations import Integration
 
 from ._log import logging_initialize
 
@@ -26,11 +32,12 @@ from ._process import get_process_info  # noqa: E402
 _boot_called = False
 
 
-def boot(modules_to_instrument: list[str]) -> None:
+def boot(logfire_modules_to_instrument: list[str] | None, sentry_integrations: list[Integration] | None) -> None:
     """Boot the application.
 
     Args:
-        modules_to_instrument (list): List of modules to be instrumented.
+        logfire_modules_to_instrument (list[str]|None): List of modules to be instrumented.
+        sentry_integrations (list[Integration] | None): List of Sentry integrations to use
     """
     global _boot_called  # noqa: PLW0603
     if _boot_called:
@@ -41,12 +48,12 @@ def boot(modules_to_instrument: list[str]) -> None:
 
     from ._sentry import sentry_initialize  # noqa: PLC0415
 
-    sentry_initialize()
+    sentry_initialize(integrations=sentry_integrations)
 
     log_to_logfire = False
     from ._logfire import logfire_initialize  # noqa: PLC0415
 
-    log_to_logfire = logfire_initialize(modules_to_instrument)
+    log_to_logfire = logfire_initialize(modules_to_instrument=logfire_modules_to_instrument)
 
     _parse_env_args()
     logging_initialize(log_to_logfire)

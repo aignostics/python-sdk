@@ -42,11 +42,11 @@ class LogfireSettings(OpaqueSettings):
     ]
 
 
-def logfire_initialize(modules: list["str"]) -> bool:
+def logfire_initialize(modules_to_instrument: list["str"] | None) -> bool:
     """Initialize Logfire integration.
 
     Args:
-        modules(list["str"]): List of modules to be instrumented.
+        modules_to_instrument(list["str"] | None): List of modules to be instrumented.
 
     Returns:
         bool: True if initialized successfully False otherwise
@@ -77,6 +77,7 @@ def logfire_initialize(modules: list["str"]) -> bool:
 
     logfire.instrument_pydantic()
 
-    logfire.install_auto_tracing(modules=modules, min_duration=0.0)
+    if (modules_to_instrument is not None) and len(modules_to_instrument) > 0:
+        logfire.install_auto_tracing(modules=modules_to_instrument, min_duration=0.0)
 
     return True

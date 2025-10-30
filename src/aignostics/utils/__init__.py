@@ -76,10 +76,10 @@ if find_spec("logfire"):
 
     __all__ += ["LogfireSettings", "logfire_initialize"]
 
-if find_spec("sentry"):
-    from ._sentry import SentrySettings
+if find_spec("sentry_sdk"):
+    from ._sentry import SentrySettings, sentry_initialize
 
-    __all__ += ["SentrySettings"]
+    __all__ += ["SentrySettings", "sentry_initialize"]
 
 if find_spec("nicegui"):
     from ._gui import BasePageBuilder, GUILocalFilePicker, gui_register_pages, gui_run
