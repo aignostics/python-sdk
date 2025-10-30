@@ -653,7 +653,7 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner, record_propert
     assert result.exit_code == 2
 
 
-# TODO (Helmut): Schedule this run
+# TODO (Helmut): Run this test on a schedule when the GPU ressourcing situation and PAPI pipeline reliabilty improved
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.timeout(timeout=HETA_APPLICATION_DEADLINE_SECONDS + 60 * 30)
