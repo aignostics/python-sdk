@@ -293,9 +293,9 @@ jobs:
                   smoke: $smoke_status,
                   unit: $unit_status,
                   integration: $integration_status,
-                  e2e: $e2e_status,
-                  e2e_long_running: $e2e_long_status,
-                  e2e_very_long_running: $e2e_very_long_status
+                  e2e_regular: $e2e_regular_status,
+                  e2e_long_runnin: $e2e_long_running_status,
+                  e2e_very_long_running: $e2e_very_long_running_status
                 },
                 timestamp: $timestamp,
               }'
