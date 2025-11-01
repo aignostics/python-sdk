@@ -1,6 +1,62 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.196](https://github.com/aignostics/python-sdk/compare/v0.2.195..0.2.196) - 2025-10-26
+# [0.2.197](https://github.com/aignostics/python-sdk/compare/v0.2.196..0.2.197) - 2025-11-01
+
+### ⛰️  Features
+
+- *(ketryx)* Integrate Ketryx compliance framework with requirements traceability - ([780a7cf](https://github.com/aignostics/python-sdk/commit/780a7cf0434ad40524d158ee3453809383dec2e1))
+
+### 🐛 Bug Fixes
+
+- *(application)* Superfluous character rendered - ([dfdf057](https://github.com/aignostics/python-sdk/commit/dfdf057bffc8687af14a6f439d8620d804ab2d47))
+- *(gha)* Daily scheduled test - ([164d68f](https://github.com/aignostics/python-sdk/commit/164d68f4c9cc991e819f86198a46005de9201a4f))
+- *(ox)* Remove files - ([cdbceea](https://github.com/aignostics/python-sdk/commit/cdbceeaf973dd6dcfee6d4f70fa5a546806f5fe7))
+- Add missing expires_seconds argument to _get_three_spots_payload_for_test ([#213](https://github.com/orhun/git-cliff/issues/213)) - ([d62a27f](https://github.com/aignostics/python-sdk/commit/d62a27f75d2b429f7d0023d930ddc842ec8c48cf))
+- Claude[bot] <41898282+claude[bot]@users.noreply.github.com> - ([d62a27f](https://github.com/aignostics/python-sdk/commit/d62a27f75d2b429f7d0023d930ddc842ec8c48cf))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut-hoffer-von-ankershoffen@users.noreply.github.com> - ([d62a27f](https://github.com/aignostics/python-sdk/commit/d62a27f75d2b429f7d0023d930ddc842ec8c48cf))
+
+### 🚜 Refactor
+
+- *(Docker)* Use exact version of Python we test with - ([143e84b](https://github.com/aignostics/python-sdk/commit/143e84bc96f61532abe0ec178153b8a8c23ca07c))
+- *(ai)* Be more critical in OE audit - ([164d68f](https://github.com/aignostics/python-sdk/commit/164d68f4c9cc991e819f86198a46005de9201a4f))
+- Cleanup - ([143e84b](https://github.com/aignostics/python-sdk/commit/143e84bc96f61532abe0ec178153b8a8c23ca07c))
+
+### 📚 Documentation
+
+- *(application)* Better information why a test_cli_run_execute is not yet marked as scheduled - ([90b6c4f](https://github.com/aignostics/python-sdk/commit/90b6c4f623c07628b4fbd3312ae51a02c1b0e19d))
+- *(specs)* Link SPEC files to their fulfilling SWR and SHR requirements - ([06a207f](https://github.com/aignostics/python-sdk/commit/06a207f73d928b3c3df63123aa40e2665c69f7e7))
+
+### 🧪 Testing
+
+- *(application)* Deactivate part of test_cli_run_submit_and_describe_and_cancel_and_download_and_delete as this causes internal server errors for some runs - ([cc17c18](https://github.com/aignostics/python-sdk/commit/cc17c183d7c58dc92911a804bb8a0f1176af2c66))
+- *(platform)* Bump wait and download timeout for test_platform_heta_app_submit_and_wait from 3h to 5h - ([df9e9f4](https://github.com/aignostics/python-sdk/commit/df9e9f474d9e483b72b558c58504955a8f8a2055))
+- *(platform)* Fix regression in e2e test - ([201ab3d](https://github.com/aignostics/python-sdk/commit/201ab3d18635c90f74258eb69ccc888c190aaa63))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(CODEOWNERS)* Move and change to be compliant - ([041bc18](https://github.com/aignostics/python-sdk/commit/041bc18b8a3421e5e7714e41a46020da294590bf))
+- *(Docker)* Fix - ([073c6c4](https://github.com/aignostics/python-sdk/commit/073c6c4f19778c325177368333ca10e1df136700))
+- *(audit)* Allow to trigger audit workflow manually - ([3e0be86](https://github.com/aignostics/python-sdk/commit/3e0be86c5c363507d06e59b7e1b9d3c7854c602e))
+- *(core)* UV >= 0.9.6 given GHSA-pqhf-p39g-3x64 - ([66a08f6](https://github.com/aignostics/python-sdk/commit/66a08f66e778815a39836eaf2ef294d1d4aac022))
+- *(deps)* Bump - ([4f7c0f0](https://github.com/aignostics/python-sdk/commit/4f7c0f018759bc167d48afceb20737b7bf998936))
+- *(deps)* Update anthropics/claude-code-action action to v1.0.15 ([#219](https://github.com/orhun/git-cliff/issues/219)) - ([92ea0a5](https://github.com/aignostics/python-sdk/commit/92ea0a5788401cab2a65d0dc2be0b0b606109b7f))
+- *(gha)* Install sentry cli - ([adeef7c](https://github.com/aignostics/python-sdk/commit/adeef7c29792781687429650901476f6686ae27c))
+- *(gha)* Inform sentry on new release - ([adeef7c](https://github.com/aignostics/python-sdk/commit/adeef7c29792781687429650901476f6686ae27c))
+- *(ketryx)* Remove duplicated spec files - ([021d25b](https://github.com/aignostics/python-sdk/commit/021d25b978bdbd6d9ffa09c35c4362ee963ec067))
+- *(ketryx)* Remove duplicated spec files skip:ci - ([2fdd6aa](https://github.com/aignostics/python-sdk/commit/2fdd6aa96ee0a9aa696278f53835d6d2a61f810a))
+- *(ketryx)* Remove duplicated spec files skip:test:long_running - ([0c59ac4](https://github.com/aignostics/python-sdk/commit/0c59ac4486844089ade9e034571ac7522c87f493))
+- *(test,ketryx)* Link missing tests with test cases and add missing test for gui health footer - ([3852778](https://github.com/aignostics/python-sdk/commit/38527787a22a0275084f7cf209f852ca8a1046c8))
+- *(uv)* Bump ([#227](https://github.com/orhun/git-cliff/issues/227)) - ([cdbceea](https://github.com/aignostics/python-sdk/commit/cdbceeaf973dd6dcfee6d4f70fa5a546806f5fe7))
+- Don't use brackets in CODEOWNERS for Github - ([4f7c0f0](https://github.com/aignostics/python-sdk/commit/4f7c0f018759bc167d48afceb20737b7bf998936))
+- Bump the staging version of he-tme - ([2dad66d](https://github.com/aignostics/python-sdk/commit/2dad66d03099384fe7d7a14e6d03298089477f4f))
+
+### 🛡️ Security
+
+- *(dep)* Starlette - ([073c6c4](https://github.com/aignostics/python-sdk/commit/073c6c4f19778c325177368333ca10e1df136700))
+- *(oxsecurity)* Fix the badge again - where does this come from? - ([408d1b1](https://github.com/aignostics/python-sdk/commit/408d1b14839b5ea65c1c9c355c6ae7fcae4a52bc))
+
+
+# [v0.2.196](https://github.com/aignostics/python-sdk/compare/v0.2.195..v0.2.196) - 2025-10-26
 
 ### ⛰️  Features
 
@@ -14,10 +70,18 @@
 - *(application)* Support for test-app in GUI - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
 - *(application)* Show error code on failed items - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
 - *(application)* Show more more details in CLI commands applicaton run list and application run describe - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(ketryx)* Integrate Ketryx CI/CD workflow and reporting - ([4cf6a97](https://github.com/aignostics/python-sdk/commit/4cf6a976932accf6f2895bb23aaa86a8094c6dbe))
 - *(platform)* Support for tags in custom sdk metadata, run and item-level - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
 - *(platform)* Support created_at and updated_at in custom sdk metadata, run and item-level - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
 - *(platform)* Support nocache=True on cached operations - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
 - *(platform)* Custom run and item metadata can be updated - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
+- Test:long-running] - ([4cf6a97](https://github.com/aignostics/python-sdk/commit/4cf6a976932accf6f2895bb23aaa86a8094c6dbe))
+
+### 🐛 Bug Fixes
+
+- *(ci-cd)* Yml file conflicts - ([766c614](https://github.com/aignostics/python-sdk/commit/766c614ba20c6a93ad9f0f8928ee54093b54566c))
+- *(tests)* Resolve linter issues and update source code - ([13c795a](https://github.com/aignostics/python-sdk/commit/13c795affcac9568f38cb180e56378feca1313a3))
+- Test:long-running] - ([13c795a](https://github.com/aignostics/python-sdk/commit/13c795affcac9568f38cb180e56378feca1313a3))
 
 ### 🚜 Refactor
 
@@ -29,11 +93,19 @@
 
 - *(AI)* Update - ([d237220](https://github.com/aignostics/python-sdk/commit/d237220284a1cbc6b46f464af7f2f84bb5fd3150))
 - *(application)* Auto-generate json schema from pydantic models for sdk specific custom metadata of input items - ([b0b0c48](https://github.com/aignostics/python-sdk/commit/b0b0c4876986787877c3a21ee7ef199f9a44f877))
+- *(ketryx)* Fix SPEC_SYSTEM_SERVICE.md & SPEC-BUILD-CHAIN-CICD-SERVICE.md itemFulfills section - ([cb969a1](https://github.com/aignostics/python-sdk/commit/cb969a191172a6a86634980817d10b1c39dbd210))
+- *(req)* Add stakeholder and software requirements (SHRs and SWRs) - ([cecd5d7](https://github.com/aignostics/python-sdk/commit/cecd5d7ba29b97b7b130a102e4938ce307349dbd))
+- *(spec)* Add software item specifications for all modules - ([6a97892](https://github.com/aignostics/python-sdk/commit/6a978920673f09aeab960fc84a5976252e239790))
+- Ci] - ([6a97892](https://github.com/aignostics/python-sdk/commit/6a978920673f09aeab960fc84a5976252e239790))
 
 ### 🧪 Testing
 
 - *(application)* Re-classified test_cli_run_describe_invalid_uuid as e2e - ([d600904](https://github.com/aignostics/python-sdk/commit/d60090434a1131d98ddbd43a51b4ccd73c258a74))
 - *(application)* Fix race condition in test - ([21febad](https://github.com/aignostics/python-sdk/commit/21febad65feab1155b875c985d474d04a4a06ece))
+- *(ketryx)* Link verification tests with specifications - ([86ce90e](https://github.com/aignostics/python-sdk/commit/86ce90ed4c2e7bf412d246921e72f8a1f4223cc3))
+- *(ketryx)* Add Gherkin test cases for requirements traceability - ([dab0a5a](https://github.com/aignostics/python-sdk/commit/dab0a5ad9d1e09f9d4cbb6a75babaea822820842))
+- Test:long-running, skip:test:matrix-runner] - ([86ce90e](https://github.com/aignostics/python-sdk/commit/86ce90ed4c2e7bf412d246921e72f8a1f4223cc3))
+- Ci] - ([dab0a5a](https://github.com/aignostics/python-sdk/commit/dab0a5ad9d1e09f9d4cbb6a75babaea822820842))
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -51,9 +123,16 @@
 - *(tests)* PLATFORM_ENVIRONMENT dependent app versions in tests - ([fdc7b01](https://github.com/aignostics/python-sdk/commit/fdc7b0154c0038b85e754fc2769f49b7d95cb186))
 - Chore(deps); bump - ([fdc7b01](https://github.com/aignostics/python-sdk/commit/fdc7b0154c0038b85e754fc2769f49b7d95cb186))
 
+### Task
+
+- *(req)* Links missing gui Module Specification with tests [skip:ci] - ([48af4c0](https://github.com/aignostics/python-sdk/commit/48af4c07ca8053464297b4cff153223d49064fcf))
+- *(req)* Links missing wsi Module Specification with tests [skip:ci] - ([1018505](https://github.com/aignostics/python-sdk/commit/1018505e4fd179eb59f61cb28e6b99ed1f3fcb71))
+- *(req)* Links missing system Module Specification with tests [skip:ci] - ([b188084](https://github.com/aignostics/python-sdk/commit/b188084406c4ec2a4e4b0236ab83eaf1f1822ceb))
 
 
-* @helmut-hoffer-von-ankershoffen made their first contribution
+
+* @muhabalwan-aginx made their first contribution
+* @na66im made their first contribution
 
 # [v0.2.195](https://github.com/aignostics/python-sdk/compare/v0.2.194..v0.2.195) - 2025-10-23
 
@@ -1817,3 +1896,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+

@@ -156,6 +156,7 @@ jobs:
       UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
       SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT }}
       SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
   docker_publish:
     needs: [get-commit-message, ketryx_report_and_check]
