@@ -13,7 +13,7 @@ on:
 
 jobs:
 
-  test:
+  scheduled-testing-staging-daily:
     uses: ./.github/workflows/_scheduled-test-daily.yml
     with:
       platform_environment: "staging"
@@ -33,3 +33,4 @@ jobs:
       BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For heartbeat only
