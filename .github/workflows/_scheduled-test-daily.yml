@@ -10,25 +10,27 @@ on:
         type: string
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
-        required: false
+        required: true
       AIGNOSTICS_REFRESH_TOKEN_STAGING:
-        required: false
+        required: true
       GCP_CREDENTIALS_STAGING:
-        required: false
+        required: true
       BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING:
-        required: false
+        required: true
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
-        required: false
+        required: true
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
-        required: false
+        required: true
       GCP_CREDENTIALS_PRODUCTION:
-        required: false
+        required: true
       BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION:
-        required: false
+        required: true
       CODECOV_TOKEN:
-        required: false
+        required: true
       SONAR_TOKEN:
-        required: false
+        required: true
+      SENTRY_DSN:
+        required: true
   
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -250,6 +252,9 @@ jobs:
           EXIT_CODE=${{ steps.test-status.outputs.exit_code }}
           FAILED_TESTS="${{ steps.test-status.outputs.failed_tests }}"
           
+          # Send heartbeat to Sentry, defining the schedule on the fly
+          sentry-cli monitors run --schedule "0 12 * * *" --check-in-margin 30 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-hourly --timezone "Europe/Berlin" -- exit $EXIT_CODE
+
           # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
           if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
             BETTERSTACK_METADATA_PAYLOAD=$(jq -n \
