@@ -39,7 +39,7 @@ env:
   AIGNOSTICS_PLATFORM_ENVIRONMENT: ${{ inputs.platform_environment }}
 
 jobs:
-  test-scheduled:
+  test-scheduled-hourly:
     runs-on: ubuntu-latest
     permissions:
       contents: read

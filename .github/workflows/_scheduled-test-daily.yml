@@ -39,7 +39,7 @@ env:
 
 jobs:
 
-  test:
+  test-scheduled-daily:
     runs-on: "ubuntu-latest"
     permissions:
       attestations: write
