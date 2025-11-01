@@ -12,6 +12,6 @@ log "Starting installation of development tools specific to Aignostics Python SD
 
 # Add your project specific installation commands below
 # sudo apt-get install --no-install-recommends -y YOUR_PACKAGE
-sudo apt-get install --no-install-recommends -y p7zip-rar
+sudo apt-get install --no-install-recommends -y p7zip-rar imagemagick
 
 log "Completed installation of development tools specific to Aignostics Python SDK."

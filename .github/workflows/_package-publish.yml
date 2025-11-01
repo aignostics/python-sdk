@@ -9,11 +9,13 @@ on:
         type: string
     secrets:
       UV_PUBLISH_TOKEN:
-        required: false
+        required: true
       SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT:
-        required: false
+        required: true
       SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT:
-        required: false
+        required: true
+      SENTRY_AUTH_TOKEN:
+        required: true
 
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -220,6 +222,16 @@ jobs:
           gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./audit-results/*   \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
             
+      - name: Inform Sentry about release
+        uses: getsentry/action-release@4f502acc1df792390abe36f2dcb03612ef144818 # v3.3.0
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        with:
+          environment: production
+          release: ${{ github.ref_name }}
+
       - name: Release Announcement
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:

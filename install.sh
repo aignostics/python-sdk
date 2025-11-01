@@ -54,6 +54,7 @@ BREW_TOOLS=(
     "uv;uv;https://docs.astral.sh/uv/;local"
     "xmllint;libxml2;https://en.wikipedia.org/wiki/Libxml2;"
     "7z;p7zip;https://github.com/p7zip-project/p7zip;"
+    "sentry-cli;sentry-cli;https://docs.sentry.io/cli/;"
 )
 
 MAC_BREW_TOOLS=(
