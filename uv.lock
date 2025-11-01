@@ -184,7 +184,7 @@ requires-dist = [
     { name = "logfire", extras = ["system-metrics"], specifier = ">=4.14.2,<5" },
     { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.17.2,<1" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
-    { name = "nicegui", extras = ["native"], specifier = ">=3.2.0,<4" },
+    { name = "nicegui", extras = ["native"], specifier = ">=3.1.0,<3.2.0" },
     { name = "openslide-bin", specifier = ">=4.0.0.8,<5" },
     { name = "openslide-python", specifier = ">=1.4.2,<2" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.53b0,<1" },
@@ -3369,7 +3369,7 @@ wheels = [
 
 [[package]]
 name = "nicegui"
-version = "3.2.0"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -3393,9 +3393,9 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/b0/f87402ea053a619e3c48166f086d169cb276ddf93783c7a78aa0c416c24d/nicegui-3.2.0.tar.gz", hash = "sha256:886a9e2498a423c81b6ad5097f687a5819207aae439aa283966d57f9492ca14c", size = 20347752, upload-time = "2025-10-28T13:13:27.501Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/23/1a709ac5ae3b91674b7fb75b7eb2db851cf09b55a809936c106efa46c52f/nicegui-3.1.0.tar.gz", hash = "sha256:1496b9719292cdd64fb89a9e560a197f517347e8808c829fae9ba28a294d78ae", size = 20342929, upload-time = "2025-10-22T08:33:07.869Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/c3/4c42b72f940be5bc3f9f7549d17a273e2ece0f8aad0a1d04026e89e0889c/nicegui-3.2.0-py3-none-any.whl", hash = "sha256:17d8ec94cfa0417846598c269162ae3f2b0a9e75f0f841bd5aa9fc6b7c0edcc4", size = 21001227, upload-time = "2025-10-28T13:13:24.311Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/4e/ce491f04b07d2530a441f01fa028c936c353ee92e0ad153bf6b7cf2c3e9d/nicegui-3.1.0-py3-none-any.whl", hash = "sha256:c5ad4ac120eaec138bee71514e9cba2f9d27384b7e9201c11f309a90a128a96f", size = 20996176, upload-time = "2025-10-22T08:33:05.178Z" },
 ]
 
 [package.optional-dependencies]
