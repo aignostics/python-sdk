@@ -246,6 +246,7 @@ jobs:
         if: always()
         env:
           BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION }}"
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         shell: bash
         run: |
           EXIT_CODE=${{ steps.test-status.outputs.exit_code }}

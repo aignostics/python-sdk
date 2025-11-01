@@ -13,7 +13,7 @@ on:
 
 jobs:
 
-  test:
+  scheduled-testing-production-daily:
     uses: ./.github/workflows/_scheduled-test-daily.yml
     with:
       platform_environment: "production"

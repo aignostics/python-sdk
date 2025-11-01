@@ -86,6 +86,7 @@ jobs:
       - name: Test / scheduled
         env:
           BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}"
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         shell: bash
         run: |
           set +e

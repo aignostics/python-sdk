@@ -12,7 +12,7 @@ on:
         default: ''
 
 jobs:
-  test-scheduled:
+  scheduled-testing-production-hourly:
     uses: ./.github/workflows/_scheduled-test-hourly.yml
     with:
       platform_environment: "production"
