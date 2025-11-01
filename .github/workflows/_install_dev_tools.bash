@@ -13,11 +13,16 @@ log "Starting installation of development tools..."
 # Disable man-db updates to speed up package installation
 sudo rm /var/lib/man-db/auto-update
 
+# Install APT packages
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
 echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
 sudo apt-get update
-sudo apt-get install --no-install-recommends -y curl gnupg2 imagemagick jq trivy xsltproc
+sudo apt-get install --no-install-recommends -y curl gnupg2 jq trivy xsltproc
 
+# Install further tools not project specific
+curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.57.0" sh
+
+# Install project specific tools
 .github/workflows/_install_dev_tools_project.bash
 
 log "Completed installation of development tools."

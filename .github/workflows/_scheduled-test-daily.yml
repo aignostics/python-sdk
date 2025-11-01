@@ -10,25 +10,27 @@ on:
         type: string
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
-        required: false
+        required: true
       AIGNOSTICS_REFRESH_TOKEN_STAGING:
-        required: false
+        required: true
       GCP_CREDENTIALS_STAGING:
-        required: false
+        required: true
       BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING:
-        required: false
+        required: true
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
-        required: false
+        required: true
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
-        required: false
+        required: true
       GCP_CREDENTIALS_PRODUCTION:
-        required: false
+        required: true
       BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION:
-        required: false
+        required: true
       CODECOV_TOKEN:
-        required: false
+        required: true
       SONAR_TOKEN:
-        required: false
+        required: true
+      SENTRY_DSN:
+        required: true
   
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -37,7 +39,7 @@ env:
 
 jobs:
 
-  test:
+  test-scheduled-daily:
     runs-on: "ubuntu-latest"
     permissions:
       attestations: write
@@ -59,7 +61,6 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Install dev tools
-        if: ${{ matrix.runner == 'ubuntu-latest' || matrix.runner == 'ubuntu-24.04-arm' }}
         shell: bash
         run: .github/workflows/_install_dev_tools.bash
 
@@ -177,7 +178,7 @@ jobs:
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:
-          name: test-results-${{ matrix.runner }}
+          name: test-results-ubuntu-latest
           path: |
             reports/mypy_junit.xml
             reports/junit_*.xml
@@ -245,11 +246,15 @@ jobs:
         if: always()
         env:
           BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION }}"
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         shell: bash
         run: |
           EXIT_CODE=${{ steps.test-status.outputs.exit_code }}
           FAILED_TESTS="${{ steps.test-status.outputs.failed_tests }}"
           
+          # Send heartbeat to Sentry, defining the schedule on the fly
+          SENTRY_EXIT_CODE=$(sentry-cli monitors run -e CI --schedule "0 12 * * *" --check-in-margin 30 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-hourly --timezone "Europe/Berlin" -- sh -c "exit $EXIT_CODE")
+
           # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
           if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
             BETTERSTACK_METADATA_PAYLOAD=$(jq -n \
@@ -293,9 +298,9 @@ jobs:
                   smoke: $smoke_status,
                   unit: $unit_status,
                   integration: $integration_status,
-                  e2e: $e2e_status,
-                  e2e_long_running: $e2e_long_status,
-                  e2e_very_long_running: $e2e_very_long_status
+                  e2e_regular: $e2e_regular_status,
+                  e2e_long_runnin: $e2e_long_running_status,
+                  e2e_very_long_running: $e2e_very_long_running_status
                 },
                 timestamp: $timestamp,
               }'
@@ -314,19 +319,19 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT')}}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: aignostics/python-sdk
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: SonarQube Scan
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

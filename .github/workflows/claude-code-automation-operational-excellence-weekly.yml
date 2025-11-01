@@ -22,7 +22,7 @@ jobs:
       platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'automation'
       track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
-      allowed_tools: 'Read,Write,Edit,Glob,Grep,LS,Bash(git:*),Bash(gh:*)'
+      allowed_tools: 'Read,Write,Edit,Glob,Grep,LS,,WebFetch,WebSearch,Bash(git:*),Bash(gh:*)'
       prompt: |
         # 🎯 AI-POWERED OPERATIONAL EXCELLENCE AUDIT
 
@@ -35,9 +35,18 @@ jobs:
         tools (Ruff, MyPy, PyRight, Codecov, SonarQube, etc.) cannot assess.
 
         Read and apply standards from:
-        - **CODE_STYLE.md** - Coding standards for humans and AI
+        - **CODE_STYLE.md** - Coding standards for humans and AI assistants
         - **CONTRIBUTING.md** - Development workflow
         - **OPERATIONAL_EXCELLENCE.md** - Toolchain overview
+        - **Best practices** - Research independently, using web search and loading web pages as needed
+
+        Be critical, do never just rubber-stamp. 
+        - Getting 5 stars must be challenging; look for subtle issues.
+        - Insist to raise the bar; aim for excellence in every aspect.
+        - Provide clear examples to illustrate your points; don't just state opinions.
+        - Apply radical candor in your feedback; care personally while challenging directly.
+        - Prioritize findings by impact on customer experience, maintainability, and security
+        - Ultrathink to find patterns and learnings; don't settle for surface-level observations.
 
         ## Audit Areas
 
