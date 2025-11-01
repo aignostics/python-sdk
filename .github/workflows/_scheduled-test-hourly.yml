@@ -114,7 +114,7 @@ jobs:
           fi
 
           # Send heartbeat to Sentry, defining the schedule on the fly
-          sentry-cli monitors run --schedule "0 * * * *" --check-in-margin 30 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-hourly --timezone "Europe/Berlin" -- exit $EXIT_CODE
+          sentry-cli monitors run -e CI --schedule "0 * * * *" --check-in-margin 30 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-hourly --timezone "Europe/Berlin" --log-level debug -- exit $EXIT_CODE
 
           # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
           if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
