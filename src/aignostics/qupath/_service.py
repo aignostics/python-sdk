@@ -707,7 +707,7 @@ class Service(BaseService):
                             f"cat '{payload_path.resolve()!s}' | gunzip -dc | cpio -i",
                         ]
                         if platform.system() == "Darwin"
-                        else ["7z", "x", str(payload_path.resolve()), "-o" + str(payload_extract_dir.resolve())]
+                        else ["7z", "x", str(payload_path.resolve()), f"-o{payload_extract_dir.resolve()!s}"]
                     )
                     subprocess.run(  # noqa: S603
                         command,
