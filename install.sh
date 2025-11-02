@@ -55,6 +55,7 @@ BREW_TOOLS=(
     "xmllint;libxml2;https://en.wikipedia.org/wiki/Libxml2;"
     "7z;p7zip;https://github.com/p7zip-project/p7zip;"
     "sentry-cli;sentry-cli;https://docs.sentry.io/cli/;"
+    "git-filter-repo;git-filter-repo;https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository"
 )
 
 MAC_BREW_TOOLS=(
