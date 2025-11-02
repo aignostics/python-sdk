@@ -15,6 +15,10 @@ on:
           - staging
           - production
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   operational-excellence:
     uses: ./.github/workflows/_claude-code.yml
