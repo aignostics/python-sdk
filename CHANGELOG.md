@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.198](https://github.com/aignostics/python-sdk/compare/v0.2.197..0.2.198) - 2025-11-02
+# [0.2.199](https://github.com/aignostics/python-sdk/compare/v0.2.198..0.2.199) - 2025-11-02
+
+### ⚙️ Miscellaneous Tasks
+
+- *(GHA)* Limit workflow concurrency - ([f6032f5](https://github.com/aignostics/python-sdk/commit/f6032f522cb2a02412c34be252e1b2676e4aaa10))
+
+
+# [v0.2.198](https://github.com/aignostics/python-sdk/compare/v0.2.197..v0.2.198) - 2025-11-02
 
 ### ⛰️  Features
 
