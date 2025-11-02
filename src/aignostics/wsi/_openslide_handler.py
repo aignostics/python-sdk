@@ -109,9 +109,9 @@ class OpenSlideHandler:
                 value_type = value_elem.get("type", "")
 
                 if value_type == "gint":
-                    value = int(value)  # type: ignore[assignment]
+                    value = int(value)
                 elif value_type == "gdouble":
-                    value = float(value)  # type: ignore[assignment]
+                    value = float(value)
                 elif value_type == "VipsRefString":
                     # Handle special libvips string properties
                     if name == "aix-libVips-version":
