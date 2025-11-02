@@ -182,8 +182,9 @@ def calculate_file_crc32c(file: Path) -> str:
     """
     checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
     with open(file, mode="rb") as f:
+        # Iterate through file chunks - checksum is calculated as side effect of consume()
         for _ in checksum.consume(f, EIGHT_MB):  # type: ignore[no-untyped-call]
-            pass
+            continue  # Consume all chunks; checksum accumulates internally
     return base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
 
 
