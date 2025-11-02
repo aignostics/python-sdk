@@ -343,7 +343,12 @@ def show_in_file_manager(
         for d in directories:
             if verbose:
                 print("Executing Windows shell to open", d)
-            os.startfile(d)
+            # Validate path exists and is a directory before opening
+            path_obj = Path(d)
+            if path_obj.exists() and path_obj.is_dir():
+                os.startfile(d)  # noqa: S606
+            elif verbose:
+                print(f"Skipping invalid or non-directory path: {d}", file=sys.stderr)
     else:
         if uris_and_paths:
             # Some file managers must be passed only one or zero paths / URIs

@@ -1,9 +1,9 @@
 """Handler for wsi files using OpenSlide."""
 
-import xml.etree.ElementTree as ET  # noqa: S405
 from pathlib import Path
 from typing import Any
 
+import defusedxml.ElementTree as ET  # noqa: N817
 import openslide
 from openslide import ImageSlide, OpenSlide, open_slide
 from PIL.Image import Image
@@ -44,11 +44,10 @@ class OpenSlideHandler:
             str: The detected format of the TIFF file.
         """
         props = dict(self.slide.properties)
-
         # Check for libvips signature in XML metadata
         if TIFF_IMAGE_DESCRIPTION in props:
             try:
-                root = ET.fromstring(props[TIFF_IMAGE_DESCRIPTION])  # noqa: S314
+                root = ET.fromstring(props[TIFF_IMAGE_DESCRIPTION])
                 if root.get("xmlns") == "http://www.vips.ecs.soton.ac.uk//dzsave":
                     return "pyramidal-tiff (libvips)"
             except ET.ParseError:
@@ -87,7 +86,7 @@ class OpenSlideHandler:
             dict[str, Any]: Parsed image description as a dictionary with metadata properties.
         """
         try:
-            root = ET.fromstring(xml_string)  # noqa: S314
+            root = ET.fromstring(xml_string)
             namespace = {"ns": "http://www.vips.ecs.soton.ac.uk//dzsave"}
             image_desc: dict[str, Any] = {
                 "date": root.get("date"),
