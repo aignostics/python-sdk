@@ -174,7 +174,6 @@ class Service(BaseService):
         Returns:
             bool: True if the token is valid, False otherwise.
         """
-        logger.info(token)
         if not self._settings.token:
             logger.warning("Token is not set in settings.")
             return False
