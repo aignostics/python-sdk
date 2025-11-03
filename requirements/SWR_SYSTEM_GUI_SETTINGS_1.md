@@ -1,6 +1,6 @@
 ---
 itemId: SWR-SYSTEM-GUI-SETTINGS-1
-itemHasParent: SHR-PRIVACY-1
+itemHasParent: SHR-SYSTEM-2
 itemType: Requirement
 Module: System
 Layer: GUI

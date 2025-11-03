@@ -2,7 +2,7 @@
 itemId: SPEC-GUI-SERVICE
 itemTitle: GUI Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-SYSTEM-GUI-HEALTH-1, SWR-SYSTEM-GUI-SETTINGS-1
+itemFulfills: SHR-APPLICATION-1, SHR-SYSTEM-1, SHR-SYSTEM-2
 itemIsRelatedTo: SPEC-APPLICATION-SERVICE,  SPEC-BUCKET-SERVICE, SPEC-DATASET-SERVICE, SPEC-NOTEBOOK-SERVICE, SPEC-QUPATH-SERVICE, SPEC-SYSTEM-SERVICE
 Module: GUI _(Graphical User Interface Framework)_
 Layer: Presentation Interface

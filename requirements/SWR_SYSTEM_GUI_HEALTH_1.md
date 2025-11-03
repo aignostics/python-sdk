@@ -1,6 +1,6 @@
 ---
 itemId: SWR-SYSTEM-GUI-HEALTH-1
-itemHasParent: SHR-USABILITY-1
+itemHasParent: SHR-SYSTEM-1
 itemType: Requirement
 Module: System
 Layer: GUI

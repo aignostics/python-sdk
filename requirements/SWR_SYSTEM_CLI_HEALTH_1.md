@@ -1,6 +1,6 @@
 ---
 itemId: SWR-SYSTEM-CLI-HEALTH-1
-itemHasParent: SHR-USABILITY-1
+itemHasParent: SHR-SYSTEM-1
 itemType: Requirement
 Module: System
 Layer: CLI
