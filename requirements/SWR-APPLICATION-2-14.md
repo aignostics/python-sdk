@@ -3,7 +3,8 @@ itemId: SWR-APPLICATION-2-14
 itemTitle: Accept Optional Custom Item Names and Descriptions
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
-Requirement type: FUNCTIONAL # Software requirement (user)
+# Software requirement (user)
+Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 

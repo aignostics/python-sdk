@@ -3,7 +3,8 @@ itemId: SWR-DATASET-1-2
 itemTitle: Verify Downloaded File Integrity
 itemHasParent: SHR-DATASET-1
 itemType: Requirement
-Requirement type: FUNCTIONAL # Software requirement (user)
+# Software requirement (user)
+Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 

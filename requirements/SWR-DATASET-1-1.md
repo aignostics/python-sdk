@@ -3,7 +3,8 @@ itemId: SWR-DATASET-1-1
 itemTitle: Download Dataset Instance via CLI Command
 itemHasParent: SHR-DATASET-1
 itemType: Requirement
-Requirement type: FUNCTIONAL # Software requirement (user)
+# Software requirement (user)
+Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 

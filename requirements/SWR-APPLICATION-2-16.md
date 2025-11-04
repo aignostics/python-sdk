@@ -3,7 +3,8 @@ itemId: SWR-APPLICATION-2-16
 itemTitle: Display Run Items with Metadata
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
-Requirement type: FUNCTIONAL # Software requirement (user)
+# Software requirement (user)
+Requirement type: FUNCTIONAL
 Layer: User Interface (frontend)
 ---
 
