@@ -2,7 +2,7 @@
 itemId: SHR-NOTEBOOK-1
 itemTitle: Notebook Environment Management
 itemType: Requirement
-Requirement type: ENVIRONMENT
+Requirement type: ENVIRONMENT # Stakeholder requirement (user)
 ---
 
 ## Description

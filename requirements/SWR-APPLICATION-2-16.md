@@ -3,7 +3,8 @@ itemId: SWR-APPLICATION-2-16
 itemTitle: Display Run Items with Metadata
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: User Interface (frontend)
 ---
+
 System shall display all items included in an application run showing thumbnail images, custom item names when provided otherwise filenames, custom item descriptions when provided, and file paths.

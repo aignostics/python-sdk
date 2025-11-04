@@ -3,7 +3,7 @@ itemId: SWR-APPLICATION-1-2
 itemTitle: List Available Application Versions
 itemHasParent: SHR-APPLICATION-1
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: System (backend logic)
 ---
 

@@ -2,7 +2,7 @@
 itemId: SHR-SYSTEM-1
 itemTitle: System Health Monitoring and Observability
 itemType: Requirement
-Requirement type: ENVIRONMENT
+Requirement type: ENVIRONMENT # Stakeholder requirement (user)
 ---
 
 ## Description
