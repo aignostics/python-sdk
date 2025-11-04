@@ -37,6 +37,8 @@ def boot(modules_to_instrument: list[str]) -> None:
         return
     _boot_called = True
 
+    _parse_env_args()
+
     _amend_ssl_trust_chain()
 
     from ._sentry import sentry_initialize  # noqa: PLC0415
@@ -48,7 +50,6 @@ def boot(modules_to_instrument: list[str]) -> None:
 
     log_to_logfire = logfire_initialize(modules_to_instrument)
 
-    _parse_env_args()
     logging_initialize(log_to_logfire)
 
     _log_boot_message()
