@@ -2,7 +2,7 @@
 itemId: SHR-APPLICATION-3
 itemTitle: Application Results Management
 itemType: Requirement
-Requirement type: ENVIRONMENT
+Requirement type: ENVIRONMENT # Stakeholder requirement (user)
 ---
 
 ## Description

@@ -2,7 +2,7 @@
 itemId: SHR-BUCKET-1
 itemTitle: Cloud Storage File Management
 itemType: Requirement
-Requirement type: ENVIRONMENT
+Requirement type: ENVIRONMENT # Stakeholder requirement (user)
 ---
 
 ## Description

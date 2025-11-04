@@ -3,7 +3,7 @@ itemId: SWR-BUCKET-1-9
 itemTitle: Confirm File Download Completion
 itemHasParent: SHR-BUCKET-1
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: User Interface (frontend)
 ---
 

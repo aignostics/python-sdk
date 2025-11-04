@@ -3,7 +3,7 @@ itemId: SWR-BUCKET-1-6
 itemTitle: Remove Selected Files from Bucket Storage
 itemHasParent: SHR-BUCKET-1
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: System (backend logic)
 ---
 

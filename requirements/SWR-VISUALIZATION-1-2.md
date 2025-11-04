@@ -3,7 +3,7 @@ itemId: SWR-VISUALIZATION-1-2
 itemTitle: Launch QuPath Application
 itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: System (backend logic)
 ---
 

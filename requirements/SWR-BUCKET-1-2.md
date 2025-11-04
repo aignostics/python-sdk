@@ -3,7 +3,7 @@ itemId: SWR-BUCKET-1-2
 itemTitle: List Bucket Files
 itemHasParent: SHR-BUCKET-1
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: System (backend logic)
 ---
 

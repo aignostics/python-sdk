@@ -3,7 +3,7 @@ itemId: SWR-APPLICATION-3-1
 itemTitle: Download Application Run Results
 itemHasParent: SHR-APPLICATION-3
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: System (backend logic)
 ---
 

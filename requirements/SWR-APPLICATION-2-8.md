@@ -3,7 +3,7 @@ itemId: SWR-APPLICATION-2-8
 itemTitle: Generate Metadata from Slide Files
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: System (backend logic)
 ---
 

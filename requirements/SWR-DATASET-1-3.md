@@ -3,7 +3,7 @@ itemId: SWR-DATASET-1-3
 itemTitle: Provide Download Completion Confirmation
 itemHasParent: SHR-DATASET-1
 itemType: Requirement
-Requirement type: FUNCTIONAL
+Requirement type: FUNCTIONAL # Software requirement (user)
 Layer: User Interface (frontend)
 ---
 
