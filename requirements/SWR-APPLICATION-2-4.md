@@ -3,7 +3,8 @@ itemId: SWR-APPLICATION-2-4
 itemTitle: Submit Application Run with Validation Error Handling
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
-Requirement type: FUNCTIONAL # Software requirement (user)
+# Software requirement (user)
+Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 

@@ -3,7 +3,8 @@ itemId: SWR-APPLICATION-3-3
 itemTitle: Download Partial Results from Cancelled Runs
 itemHasParent: SHR-APPLICATION-3
 itemType: Requirement
-Requirement type: FUNCTIONAL # Software requirement (user)
+# Software requirement (user)
+Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 

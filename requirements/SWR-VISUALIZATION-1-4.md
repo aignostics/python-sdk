@@ -3,7 +3,8 @@ itemId: SWR-VISUALIZATION-1-4
 itemTitle: Create QuPath Projects with Segmentation Polygons
 itemHasParent: SHR-VISUALIZATION-1
 itemType: Requirement
-Requirement type: FUNCTIONAL # Software requirement (user)
+# Software requirement (user)
+Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 
