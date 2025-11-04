@@ -2,7 +2,7 @@
 itemId: SPEC-SYSTEM-SERVICE
 itemTitle: System Module Specification
 itemType: Software Item Spec
-itemFulfills: SHR-SYSTEM-1, SHR-SYSTEM-2
+itemFulfills: SWR-SYSTEM-CLI-HEALTH-1
 itemIsRelatedTo: SPEC-UTILS-SERVICE, SPEC-GUI-SERVICE
 Module: System
 Layer: Platform Service
