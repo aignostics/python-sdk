@@ -1,5 +1,6 @@
 ---
 itemId: SWR-SYSTEM-GUI-SETTINGS-1
+itemTitle: GUI Secret Masking Control
 itemHasParent: SHR-SYSTEM-2
 itemType: Requirement
 Requirement type: FUNCTIONAL # Software requirement (user)
