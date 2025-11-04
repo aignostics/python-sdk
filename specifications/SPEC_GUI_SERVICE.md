@@ -2,8 +2,8 @@
 itemId: SPEC-GUI-SERVICE
 itemTitle: GUI Module Specification
 itemType: Software Item Spec
-itemFulfills: SHR-SYSTEM-1, SHR-SYSTEM-2
-itemIsRelatedTo: SPEC-APPLICATION-SERVICE,  SPEC-BUCKET-SERVICE, SPEC-DATASET-SERVICE, SPEC-NOTEBOOK-SERVICE, SPEC-QUPATH-SERVICE, SPEC-SYSTEM-SERVICE
+itemFulfills: SWR-SYSTEM-GUI-HEALTH-1, SWR-SYSTEM-GUI-SETTINGS-1
+itemIsRelatedTo: SPEC-APPLICATION-SERVICE, SPEC-BUCKET-SERVICE, SPEC-DATASET-SERVICE, SPEC-NOTEBOOK-SERVICE, SPEC-QUPATH-SERVICE, SPEC-SYSTEM-SERVICE
 Module: GUI _(Graphical User Interface Framework)_
 Layer: Presentation Interface
 Version: 1.0.0
@@ -27,6 +27,7 @@ The GUI Module shall:
 - **[FR-05]** Provide error page handling through ErrorPageBuilder with fallback mechanisms for failed operations
 - **[FR-06]** Enable health monitoring integration with periodic system health updates in the navigation frame
 - **[FR-07]** Support user authentication status display with profile integration and authentication state management
+- **[FR-08]** Enable user control of secret masking in settings GUI through interactive toggle for visibility of sensitive information
 
 ### 1.3 Non-Functional Requirements
 
@@ -94,6 +95,7 @@ For detailed implementation, refer to the source code in the `src/aignostics/gui
 | Layout Configuration | Function   | `bool`           | Boolean flags for sidebar display      | Controls page layout structure          |
 | Static Asset Files   | Filesystem | Binary files     | Valid file paths, readable permissions | Font, image, and animation files        |
 | Module PageBuilders  | Code       | Class instances  | Must inherit from BasePageBuilder      | Auto-discovered through service pattern |
+| Secret Masking State | User Input | `bool`           | Boolean toggle for visibility control  | Controls display of sensitive data      |
 
 ### 3.2 Outputs
 
@@ -104,6 +106,7 @@ For detailed implementation, refer to the source code in the `src/aignostics/gui
 | Static Assets    | Web Browser   | Binary responses | Correct MIME types, efficient serving | File not found, permission denied     |
 | Error Pages      | Web Browser   | HTML content     | User-friendly error display           | Critical system failures              |
 | Health Updates   | Web Interface | JSON data        | Real-time service status display      | Health monitoring service unavailable |
+| Masked Secrets   | Web Interface | JSON data        | Sensitive data visibility controlled  | Display based on user toggle setting  |
 
 ### 3.3 Data Schemas
 
@@ -289,6 +292,7 @@ For exact version requirements, refer to `pyproject.toml` and dependency lock fi
 - **Icon Parameters**: Optional string validation against known icon set
 - **Asset Paths**: Path validation for security, restricted to module directories
 - **Boolean Flags**: Type validation with default fallbacks
+- **Secret Masking Toggle**: Boolean validation with default value (masked) for security
 
 ### 7.3 Graceful Degradation
 
@@ -305,6 +309,7 @@ For exact version requirements, refer to `pyproject.toml` and dependency lock fi
 - **Authentication**: Secure display of user authentication status without exposing sensitive data
 - **Data Encryption**: In-transit encryption through HTTPS for web interface
 - **Access Control**: Module-based permission system for GUI component access
+- **Secret Masking**: User-controlled toggle for sensitive information visibility with secure default (masked)
 
 ### 8.2 Security Measures [Optional]
 
@@ -321,6 +326,7 @@ For exact version requirements, refer to `pyproject.toml` and dependency lock fi
 - **Auto-Discovery Algorithm**: Uses `locate_subclasses()` to find all `BasePageBuilder` implementations across modules and automatically register their pages
 - **Conditional Loading Algorithm**: Uses `find_spec()` to detect available dependencies and conditionally load features
 - **Theme Application Algorithm**: CSS injection and font loading with fallback mechanisms for consistent styling
+- **Secret Masking Algorithm**: Interactive toggle control that reloads service information with `mask_secrets` parameter, defaulting to masked state for security
 
 ### 9.2 State Management and Data Flow
 
