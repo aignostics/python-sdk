@@ -51,7 +51,7 @@ jobs:
 
       - name: "(all target): Extract metadata (tags, labels) for Docker"
         id: meta-all
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
+        uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 # v5.9.0
         with:
           images: |
             ${{ env.DOCKER_IO_IMAGE_NAME_ALL }}
@@ -66,7 +66,7 @@ jobs:
 
       - name: "(slim target): Extract metadata (tags, labels) for Docker"
         id: meta-slim
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
+        uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 # v5.9.0
         with:
           images: |
             ${{ env.DOCKER_IO_IMAGE_NAME_SLIM }}
