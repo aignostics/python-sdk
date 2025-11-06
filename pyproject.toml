@@ -117,6 +117,7 @@ dependencies = [
     "openslide-python>=1.4.2,<2",
     "pandas>=2.3.3,<3",
     "platformdirs>=4.3.8,<5",
+    "procrastinate>=3.5.3",
     "pyjwt[crypto]>=2.10.1,<3",
     "python-dateutil>=2.9.0.post0,<3",
     # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
