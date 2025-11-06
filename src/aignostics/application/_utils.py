@@ -210,7 +210,7 @@ def _retrieve_and_print_run_items(run_handle: Run) -> None:
     for item in results:
         item_output = (
             f"  [bold]Item ID:[/bold] {item.item_id}\n"
-            f"  [bold]Item External ID:[/bold] {item.external_id}\n"
+            f"  [bold]Item External ID:[/bold] `{item.external_id}`\n"
             f"  [bold]Status (Termination Reason):[/bold] {item.state.value} ({item.termination_reason})\n"
             f"  [bold]Error Message (Code):[/bold] {item.error_message} ({item.error_code})\n"
             f"  [bold]Custom Metadata:[/bold] {item.custom_metadata or 'None'}"

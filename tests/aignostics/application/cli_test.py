@@ -296,174 +296,172 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
     assert run_id_match, f"Failed to extract run ID from output '{output}'"
     run_id = run_id_match.group(1)
 
-    # TODO (Andreas): Causes internal server errors on some runs
-    if False:
-        # Test that we can find this run by it's note via the query parameter
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--query",
-                "note_of_this_complex_test",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note via query"
+    # Test that we can find this run by it's note via the query parameter
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--query",
+            "note_of_this_complex_test",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note via query"
 
-        # Test that we can find this run by it's tag via the query parameter
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--query",
-                "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by tag via query"
+    # Test that we can find this run by it's tag via the query parameter
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--query",
+            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by tag via query"
 
-        # Test that we cannot find this run by another tag via the query parameter
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--query",
-                "another_tag",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by another tag via query"
+    # Test that we cannot find this run by another tag via the query parameter
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--query",
+            "another_tag",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by another tag via query"
 
-        # Test that we can find this run by it's note
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--note-regex",
-                "note_of_this_complex_test",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note"
+    # Test that we can find this run by it's note
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--note-regex",
+            "note_of_this_complex_test",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note"
 
-        # but not another note
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--note-regex",
-                "other_note",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other note"
+    # but not another note
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--note-regex",
+            "other_note",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other note"
 
-        # Test that we can find this run by one of its tags
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--tags",
-                "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by one tag"
+    # Test that we can find this run by one of its tags
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--tags",
+            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by one tag"
 
-        # but not another tag
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--tags",
-                "other-tag",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other tag"
+    # but not another tag
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--tags",
+            "other-tag",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other tag"
 
-        # Test that we can find this run by two of its tags
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--tags",
-                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by two tags"
+    # Test that we can find this run by two of its tags
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--tags",
+            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by two tags"
 
-        # Test that we can find this run by all of its tags
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--tags",
-                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags"
+    # Test that we can find this run by all of its tags
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--tags",
+            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags"
 
-        # Test that we cannot find this run by all of its tags and a non-existent tag
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--tags",
-                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag,non-existing-tag",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by all tags"
+    # Test that we cannot find this run by all of its tags and a non-existent tag
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--tags",
+            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag,non-existing-tag",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by all tags"
 
-        # Test that we can find this run by all of its tags and it's note
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--note-regex",
-                "note_of_this_complex_test",
-                "--tags",
-                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
-            ],
-        )
-        assert list_result.exit_code == 0
-        list_output = normalize_output(list_result.stdout)
-        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags and note"
+    # Test that we can find this run by all of its tags and it's note
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--note-regex",
+            "note_of_this_complex_test",
+            "--tags",
+            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
+        ],
+    )
+    assert list_result.exit_code == 0
+    list_output = normalize_output(list_result.stdout)
+    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags and note"
 
     # Test the describe command with the extracted run ID
     describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
@@ -920,27 +918,24 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
     assert result.exit_code == 0
 
     normalized_describe = normalize_output(result.output)
-    # Match the line after "Item External ID:"
-    external_id_match = re.search(r"Item External ID:\s*\n\s*([^\s]+)", normalized_describe)
-
-    if not external_id_match:
-        # Try single line format as fallback
-        external_id_match = re.search(r"Item External ID:\s*([^\n\s]+)", normalized_describe)
+    # Match the external ID wrapped in backticks - external ID can contain spaces
+    external_id_match = re.search(r"Item External ID:\s*`([^`]+)`", normalized_describe)
 
     if not external_id_match:
         pytest.skip("Could not extract item external_id from run. Run may not have items yet.")
 
     external_id = external_id_match.group(1).strip()
+    print(run_id)
     print(external_id)
 
     # Step 2: Dump custom metadata of item
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id])
-    assert result.exit_code == 0
     initial_metadata = json.loads(result.output)
     # If metadata is None/null, start with empty dict
     if initial_metadata is None:
         initial_metadata = {}
     assert isinstance(initial_metadata, dict), "Custom metadata should be a dictionary"
+    assert result.exit_code == 0
 
     # Store initial SDK metadata timestamps for comparison
     initial_created_at = initial_metadata.get("sdk", {}).get("created_at")
@@ -963,10 +958,10 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
 
     # Step 4: Dump metadata again and verify random number appeared
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id, "--pretty"])
-    assert result.exit_code == 0
     metadata_with_random = json.loads(result.output)
     assert "random" in metadata_with_random, "Random field should be present in metadata"
     assert metadata_with_random["random"] == random_value, f"Random value should be {random_value}"
+    assert result.exit_code == 0
 
     # Verify SDK metadata timestamps behavior after update
     updated_created_at = metadata_with_random.get("sdk", {}).get("created_at")
