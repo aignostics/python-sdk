@@ -72,7 +72,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         TEST_APPLICATION_VERSION = "0.0.5"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "1.0.0-sl+3"
+        HETA_APPLICATION_VERSION = "1.0.0-sl+4"
     case _:
         message = f"Unsupported AIGNOSTICS_PLATFORM_ENVIRONMENT value: {os.getenv('AIGNOSTICS_PLATFORM_ENVIRONMENT')}"
         raise ValueError(message)
