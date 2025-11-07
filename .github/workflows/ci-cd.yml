@@ -11,6 +11,16 @@ on:
     types: [opened, synchronize, reopened]
   release:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      platform_environment:
+        description: 'Environment to test against'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
@@ -84,7 +94,7 @@ jobs:
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
     with:
-      platform_environment: "staging"
+      platform_environment: ${{ inputs.platform_environment || 'staging' }}
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
       attestations: write
