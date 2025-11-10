@@ -25,25 +25,44 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            Review this PR and check if requirements/specs need updates.
+            Review this PR and analyze impact on requirements and specifications documentation.
 
             **Your task:**
 
-            1. Run git diff to see what changed
-            2. Identify which modules changed (application, platform, wsi, etc.)
-            3. Read relevant files from requirements/ and specifications/ directories
-            4. Report which docs might need updates
+            1. Run git diff to see what code changed
+            2. Identify which modules were affected (application, platform, wsi, bucket, dataset, etc.)
+            3. Read relevant files from:
+               - requirements/ directory (SHR-*.md and SWR-*.md files)
+               - specifications/ directory (SPEC-*.md files)
+            4. Analyze if existing docs need updates OR if new docs need to be created
 
-            **Output format:**
+            **IMPORTANT Rules:**
+            - ONLY analyze files in requirements/ and specifications/ directories
+            - SKIP template files like SPEC-MODULE-SERVICE-TEMPLATE.md
+            - SKIP any other documentation outside these directories
+            - If new documentation is needed, specify what file should be created following the existing naming pattern
+            - Follow the same structure/format as existing files in those directories
 
-            ## Changed Files
+            **Post a PR comment with this format:**
+
+            ## 📋 Requirements & Specifications Review
+
+            ### Changed Code
             - List changed files
-            - Identify affected modules
+            - Affected modules: [list]
 
-            ## Requirements/Specs to Update
-            - filename: 1-sentence why it needs updating
+            ### 📝 Existing Docs to Update
+            - `requirements/SHR-MODULE-X.md`: [1-sentence why it needs updating]
+            - `specifications/SPEC-MODULE-SERVICE.md`: [1-sentence why it needs updating]
 
-            Keep it simple and concise.
+            ### ➕ New Docs Needed
+            - **`requirements/SWR-MODULE-X-Y.md`**: [1-sentence describing what this new requirement should cover]
+            - **`specifications/SPEC-NEWMODULE-SERVICE.md`**: [1-sentence describing what this new spec should cover]
+
+            ### ✅ Docs Still Accurate
+            - List requirements/specs that don't need changes
+
+            Keep it concise and actionable.
           claude_args: >-
             --max-turns 20
             --model claude-sonnet-4-5-20250929
