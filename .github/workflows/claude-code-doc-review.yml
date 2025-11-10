@@ -1,0 +1,49 @@
+name: "+ Claude Code / Documentation Review"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  documentation-review:
+    name: Review doc changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze requirements impact
+        uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this PR and check if requirements/specs need updates.
+
+            **Your task:**
+
+            1. Run git diff to see what changed
+            2. Identify which modules changed (application, platform, wsi, etc.)
+            3. Read relevant files from requirements/ and specifications/ directories
+            4. Report which docs might need updates
+
+            **Output format:**
+
+            ## Changed Files
+            - List changed files
+            - Identify affected modules
+
+            ## Requirements/Specs to Update
+            - filename: 1-sentence why it needs updating
+
+            Keep it simple and concise.
+          claude_args: >-
+            --max-turns 20
+            --model claude-sonnet-4-5-20250929
