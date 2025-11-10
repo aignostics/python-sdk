@@ -25,44 +25,56 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            Review this PR and analyze impact on requirements and specifications documentation.
+            You are reviewing a pull request to ensure requirements and specifications documentation stays synchronized with code changes.
 
-            **Your task:**
+            **Analysis Process:**
 
-            1. Run git diff to see what code changed
-            2. Identify which modules were affected (application, platform, wsi, bucket, dataset, etc.)
-            3. Read relevant files from:
-               - requirements/ directory (SHR-*.md and SWR-*.md files)
-               - specifications/ directory (SPEC-*.md files)
-            4. Analyze if existing docs need updates OR if new docs need to be created
+            1. Run `git diff origin/${{ github.base_ref }}...HEAD` to identify all changed files
+            2. For each changed file, determine:
+               - Which module/component it belongs to
+               - What functionality was added, modified, or removed
+            3. Read ALL existing files in:
+               - `requirements/` (SHR-*.md for stakeholder requirements, SWR-*.md for software requirements)
+               - `specifications/` (SPEC-*.md for software item specifications)
+            4. Cross-reference code changes against documentation to identify:
+               - Docs that describe changed functionality (needs update)
+               - New functionality lacking documentation (needs new doc)
+               - Documentation that remains accurate (no action needed)
 
-            **IMPORTANT Rules:**
-            - ONLY analyze files in requirements/ and specifications/ directories
-            - SKIP template files like SPEC-MODULE-SERVICE-TEMPLATE.md
-            - SKIP any other documentation outside these directories
-            - If new documentation is needed, specify what file should be created following the existing naming pattern
-            - Follow the same structure/format as existing files in those directories
+            **Requirements:**
+            - Analyze ONLY `requirements/` and `specifications/` directories
+            - Ignore template files (files with "TEMPLATE" in the name)
+            - For new docs, follow existing naming conventions exactly
+            - Be specific about WHY each doc needs updating (cite the code change)
 
-            **Post a PR comment with this format:**
+            **Output Format:**
+
+            Post a single PR comment using this exact structure:
 
             ## 📋 Requirements & Specifications Review
 
-            ### Changed Code
-            - List changed files
-            - Affected modules: [list]
+            ### 🔍 Code Changes Summary
+            **Modified files:** [list each file]
+            **Affected modules:** [comma-separated list]
 
-            ### 📝 Existing Docs to Update
-            - `requirements/SHR-MODULE-X.md`: [1-sentence why it needs updating]
-            - `specifications/SPEC-MODULE-SERVICE.md`: [1-sentence why it needs updating]
+            ### 📝 Documentation Updates Required
+            
+            #### Files Needing Updates:
+            - **`requirements/SHR-XXX.md`** - Reason: [specific code change that invalidates current doc]
+            - **`specifications/SPEC-YYY.md`** - Reason: [specific code change that invalidates current doc]
 
-            ### ➕ New Docs Needed
-            - **`requirements/SWR-MODULE-X-Y.md`**: [1-sentence describing what this new requirement should cover]
-            - **`specifications/SPEC-NEWMODULE-SERVICE.md`**: [1-sentence describing what this new spec should cover]
+            #### New Documentation Needed:
+            - **`requirements/SWR-[MODULE]-[FEATURE].md`** - Coverage: [what new requirement this addresses]
+            - **`specifications/SPEC-[MODULE]-[SERVICE].md`** - Coverage: [what new implementation this describes]
 
-            ### ✅ Docs Still Accurate
-            - List requirements/specs that don't need changes
+            ### ✅ Documentation Still Accurate
+            - `requirements/SHR-ZZZ.md` - Covers [feature], unaffected by changes
+            - `specifications/SPEC-AAA.md` - Covers [component], unaffected by changes
 
-            Keep it concise and actionable.
+            ### 💡 Recommendations
+            [If applicable: suggest priority order for updates or note if changes are traceability-critical]
+
+            **Note:** If no documentation changes are needed, state: "✅ All requirements and specifications remain accurate."
           claude_args: >-
             --max-turns 20
             --model claude-sonnet-4-5-20250929
