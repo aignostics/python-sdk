@@ -159,7 +159,7 @@ dev = [
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.3.0,<5",
     "pyright>=1.1.406,<1.1.407", # Regression in 1.1.407, see https://github.com/microsoft/pyright/issues/11060
-    "pytest>=8.4.2,<9",
+    "pytest>=8.4.2,<10",
     "pytest-asyncio>=1.2.0,<2",
     "pytest-cov>=7.0.0,<8",
     "pytest-docker>=3.2.3,<4",
