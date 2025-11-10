@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   documentation-review:
-    name: Review doc changes
+    name: Review requirements impact
     runs-on: ubuntu-latest
 
     steps:
@@ -25,56 +25,47 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            You are reviewing a pull request to ensure requirements and specifications documentation stays synchronized with code changes.
+            **IMPORTANT: Your ONLY job is to analyze documentation impact in requirements/ and specifications/ directories. Do NOT review code quality, do NOT comment on implementation details.**
 
-            **Analysis Process:**
+            **Task:**
+            1. Run: git diff origin/${{ github.base_ref }}...HEAD
+            2. Identify which modules changed (e.g., application, wsi, platform)
+            3. Use Glob to find docs for those modules:
+               - requirements/SHR-{MODULE}*.md
+               - requirements/SWR-{MODULE}*.md
+               - specifications/SPEC-{MODULE}*.md
+            4. Read those docs and check if they describe the changed functionality
+            5. Report ONLY documentation changes needed
 
-            1. Run `git diff origin/${{ github.base_ref }}...HEAD` to identify all changed files
-            2. For each changed file, determine:
-               - Which module/component it belongs to
-               - What functionality was added, modified, or removed
-            3. Read ALL existing files in:
-               - `requirements/` (SHR-*.md for stakeholder requirements, SWR-*.md for software requirements)
-               - `specifications/` (SPEC-*.md for software item specifications)
-            4. Cross-reference code changes against documentation to identify:
-               - Docs that describe changed functionality (needs update)
-               - New functionality lacking documentation (needs new doc)
-               - Documentation that remains accurate (no action needed)
+            **RULES:**
+            - DO NOT comment on code quality or bugs
+            - DO NOT review implementation
+            - ONLY report which .md files in requirements/ or specifications/ need updates
+            - Skip files with "TEMPLATE" in name
+            - If new docs are needed, specify the filename following existing naming patterns
 
-            **Requirements:**
-            - Analyze ONLY `requirements/` and `specifications/` directories
-            - Ignore template files (files with "TEMPLATE" in the name)
-            - For new docs, follow existing naming conventions exactly
-            - Be specific about WHY each doc needs updating (cite the code change)
+            **Post this exact format:**
 
-            **Output Format:**
+            ## 📋 Requirements & Specifications Impact
 
-            Post a single PR comment using this exact structure:
+            **Changed modules:** [comma-separated list]
 
-            ## 📋 Requirements & Specifications Review
+            ### 📝 Existing Docs to Update
+            - **requirements/SHR-APPLICATION-X.md**: [1 sentence why - cite specific code change]
+            - **specifications/SPEC-PLATFORM-SERVICE.md**: [1 sentence why - cite specific code change]
 
-            ### 🔍 Code Changes Summary
-            **Modified files:** [list each file]
-            **Affected modules:** [comma-separated list]
+            ### ➕ New Docs Needed
+            - **requirements/SWR-MODULE-X-Y.md**: [what requirement this should document]
+            - **specifications/SPEC-NEWMODULE-SERVICE.md**: [what spec this should cover]
 
-            ### 📝 Documentation Updates Required
-            
-            #### Files Needing Updates:
-            - **`requirements/SHR-XXX.md`** - Reason: [specific code change that invalidates current doc]
-            - **`specifications/SPEC-YYY.md`** - Reason: [specific code change that invalidates current doc]
+            ### ✅ Docs Already Accurate
+            - requirements/SHR-BUCKET-1.md: Covers existing functionality, unchanged
+            - specifications/SPEC-DATASET-SERVICE.md: Still accurate
 
-            #### New Documentation Needed:
-            - **`requirements/SWR-[MODULE]-[FEATURE].md`** - Coverage: [what new requirement this addresses]
-            - **`specifications/SPEC-[MODULE]-[SERVICE].md`** - Coverage: [what new implementation this describes]
+            **If no doc changes needed, just say: "✅ All requirements and specifications are up to date."**
 
-            ### ✅ Documentation Still Accurate
-            - `requirements/SHR-ZZZ.md` - Covers [feature], unaffected by changes
-            - `specifications/SPEC-AAA.md` - Covers [component], unaffected by changes
-
-            ### 💡 Recommendations
-            [If applicable: suggest priority order for updates or note if changes are traceability-critical]
-
-            **Note:** If no documentation changes are needed, state: "✅ All requirements and specifications remain accurate."
+            Keep it SHORT - only list impacted documentation files.
           claude_args: >-
-            --max-turns 20
+            --max-turns 30
+            --allowed-tools Read,Glob,Grep,Bash(git:*)
             --model claude-sonnet-4-5-20250929
