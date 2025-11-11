@@ -884,8 +884,6 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner) -> None:
     assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
 
 
-# TODO(Andreas): Update item metadata returns 404 always
-@pytest.mark.skip(reason="Waiting for platform API fix to item metadata endpoint which currently returns 404 always")
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=120)
 @pytest.mark.skipif(
@@ -912,6 +910,7 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
     run_id_match = re.search(r"-\s+([a-f0-9\-]{36})\s+of\s+", normalized_output)
     assert run_id_match is not None, f"Could not extract run ID from list output:\n{normalized_output}"
     run_id = run_id_match.group(1)
+    print(run_id)
 
     # Get run details to extract an item's external_id
     result = runner.invoke(cli, ["application", "run", "describe", run_id])
@@ -925,7 +924,6 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
         pytest.skip("Could not extract item external_id from run. Run may not have items yet.")
 
     external_id = external_id_match.group(1).strip()
-    print(run_id)
     print(external_id)
 
     # Step 2: Dump custom metadata of item
