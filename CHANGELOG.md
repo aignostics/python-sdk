@@ -1,6 +1,56 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.199](https://github.com/aignostics/python-sdk/compare/v0.2.198..0.2.199) - 2025-11-02
+# [0.2.200](https://github.com/aignostics/python-sdk/compare/v0.2.199..0.2.200) - 2025-11-13
+
+### 🚜 Refactor
+
+- *(utils)* Introduce library mode inc. auto-detection - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+- *(utils)* Don't initialize sentry, logfire, ssl trust store or certifi in library mode - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+- *(utils)* Lower log level of boot message - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+- *(utils)* Introduce loguru - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+- *(utils)* Remove logfire - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+
+### 📚 Documentation
+
+- *(requirements)* Move requirement type comment to separate line - ([949ccf1](https://github.com/aignostics/python-sdk/commit/949ccf12fb2268509585be33218b57dd5fe19212))
+- *(requirements)* Add missing itemTitle to system health and settings requirements - ([386c2bf](https://github.com/aignostics/python-sdk/commit/386c2bfa60c5fc0f71362a2db415d958797865a5))
+- *(requirements)* Create missing system stakeholder requirements an… - ([f2a8628](https://github.com/aignostics/python-sdk/commit/f2a862893a3096ec66a88d35ad5e788da0ad2792))
+- *(requirements)* Create missing system stakeholder requirements and establish traceability - ([84f28d8](https://github.com/aignostics/python-sdk/commit/84f28d89b93ce551b481c210f1c674132dd47684))
+- *(specifications)* Update specifications to improve traceability - ([178b9cc](https://github.com/aignostics/python-sdk/commit/178b9cc646d8ed4f7d6d116053940569e9cf6018))
+- Fix requirements documentation traceability - ([9e3fa3a](https://github.com/aignostics/python-sdk/commit/9e3fa3aff82f5b5f69ef8fafc0762ae96c196fd3))
+- Annotate requirement type in requirement files with the actual mapped value - ([243323b](https://github.com/aignostics/python-sdk/commit/243323bf093cb934bcfbd43e0522e9bb76ad186c))
+- Add missing "Requirement Type" to some requirements - ([9e04703](https://github.com/aignostics/python-sdk/commit/9e047039dc34043dd7ea81856d5e92326c9c2707))
+
+### 🧪 Testing
+
+- *(application)* Reenable part of test_cli_run_submit_and_describe_and_cancel_and_download_and_delete that finds runs by tags, notes and combinations - ([88cba59](https://github.com/aignostics/python-sdk/commit/88cba599488498c5fec42f859f79370cbe4b408d))
+- *(utils)* Add missing unit test marker - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+- Reactivate test_cli_run_dump_and_update_item_custom_metadata - ([e11b2a6](https://github.com/aignostics/python-sdk/commit/e11b2a653454aa56435fe25ba0b42e5b983ff155))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+- *(gha)* Target staging with CI/CD workflow - ([f59390f](https://github.com/aignostics/python-sdk/commit/f59390f5d0668d9d9261e813452e580d89d9a747))
+- *(release)* Adapt to heta expected results - ([51ee52d](https://github.com/aignostics/python-sdk/commit/51ee52d5a3ac45c5ebe5f3f098d646a9e8d1b746))
+- *(release)* Start to adapt expected output for heta update - ([510e7d8](https://github.com/aignostics/python-sdk/commit/510e7d8581e9160cfe6547decf4107c96359ac96))
+- Constants dep on version of app, which depends on environment - ([3af645f](https://github.com/aignostics/python-sdk/commit/3af645ff288720c862d0b19bf7a7c9124a51defa))
+- Update to the softlaunch patch release 4 - ([3eddfe4](https://github.com/aignostics/python-sdk/commit/3eddfe49ec8e1c780e90677d1ad92fbf36380648))
+- Update to the softlaunch patch release - ([0577445](https://github.com/aignostics/python-sdk/commit/0577445a98d5272599785d5dd7736329682f8565))
+- Chore/parameterise platform environment - ([fe80fef](https://github.com/aignostics/python-sdk/commit/fe80fef3e1359ee2840c242c5caaaa1c15d4ac51))
+- Parameterize platform_environment in CI/CD workflow - ([9286acb](https://github.com/aignostics/python-sdk/commit/9286acb0c623fbd694f0e315ac66716d868536b2))
+- Switch on scheduled tests again - ([e6f741f](https://github.com/aignostics/python-sdk/commit/e6f741fc94f9336b67900c3315a0d8278aa3c932))
+- Deactivate scheduled tests - ([8f1cecf](https://github.com/aignostics/python-sdk/commit/8f1cecfea13b836c1cb4a7e8206e1718a1c330df))
+
+### 🛡️ Security
+
+- *(specifications)* Update specifications to improve traceability - ([a3b6d39](https://github.com/aignostics/python-sdk/commit/a3b6d39bced19dab67d3f34face5f3b04ab9eb84))
+
+
+
+* @olivermeyer made their first contribution in [#248](https://github.com/aignostics/python-sdk/pull/248)
+* @santi698 made their first contribution in [#245](https://github.com/aignostics/python-sdk/pull/245)
+
+# [v0.2.199](https://github.com/aignostics/python-sdk/compare/v0.2.198..v0.2.199) - 2025-11-02
 
 ### ⚙️ Miscellaneous Tasks
 
