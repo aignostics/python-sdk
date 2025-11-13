@@ -10,16 +10,17 @@ SPOT_0_GS_URL = "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5
 SPOT_0_FILENAME = "8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 SPOT_0_FILESIZE = 10562338
 SPOT_0_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_segmentation_map_image.tiff", 1698570, 10),
-    ("tissue_qc_geojson_polygons.json", 315019, 10),
-    ("tissue_segmentation_geojson_polygons.json", 927599, 10),
-    ("readout_generation_slide_readouts.csv", 299865, 10),
-    ("readout_generation_cell_readouts.csv", 1470036, 10),
-    ("cell_classification_geojson_polygons.json", 9915953, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 2989980, 10),
-    ("tissue_segmentation_csv_class_information.csv", 361, 10),
-    ("tissue_qc_csv_class_information.csv", 236, 10),
+    ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
+    ("tissue_qc_geojson_polygons.json", 160668, 10),
+    ("tissue_segmentation_geojson_polygons.json", 853784, 10),
+    ("readout_generation_slide_readouts.csv", 302252, 10),
+    ("readout_generation_cell_readouts.csv", 1472661, 10),
+    ("cell_classification_geojson_polygons.json", 9939791, 10),
+    ("tissue_segmentation_segmentation_map_image.tiff", 2807584, 10),
+    ("tissue_segmentation_csv_class_information.csv", 451, 10),
+    ("tissue_qc_csv_class_information.csv", 284, 10),
 ]
+
 SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
 SPOT_0_CRC32C = "5onqtA=="
 SPOT_0_RESOLUTION_MPP = 0.26268186053789266
@@ -63,16 +64,16 @@ SPOT_3_RESOLUTION_MPP = 0.46499982
 match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
     case "production":
         TEST_APPLICATION_ID = "test-app"
-        TEST_APPLICATION_VERSION = "0.0.4"
+        TEST_APPLICATION_VERSION = "0.0.5"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "1.0.0-beta.8"
+        HETA_APPLICATION_VERSION = "1.0.0-sl.1"
     case "staging":
         TEST_APPLICATION_ID = "test-app"
         TEST_APPLICATION_VERSION = "0.0.5"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "1.0.0-sl+4"
+        HETA_APPLICATION_VERSION = "1.0.0-sl.1"
     case _:
         message = f"Unsupported AIGNOSTICS_PLATFORM_ENVIRONMENT value: {os.getenv('AIGNOSTICS_PLATFORM_ENVIRONMENT')}"
         raise ValueError(message)
