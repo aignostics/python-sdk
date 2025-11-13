@@ -84,7 +84,7 @@ class InterceptHandler(logging.Handler):
             if record.threadName and record.thread:
                 record_dict["thread"].id = record.thread
                 record_dict["thread"].name = record.threadName
-            if record.taskName:
+            if hasattr(record, "taskName") and record.taskName:
                 record_dict["extra"]["logging.taskName"] = record.taskName
             record_dict["name"] = record.name
             record_dict["function"] = record.funcName
