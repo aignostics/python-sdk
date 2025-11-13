@@ -176,10 +176,10 @@ def logging_initialize(filter_func: Callable[["Record"], bool] | None = None) ->
     )
 
     if settings.stderr_enabled:
-        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func, enqueue=True)
+        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func)
 
     if settings.file_enabled:
-        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func, enqueue=True)
+        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func)
 
     if settings.redirect_logging:
         logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
