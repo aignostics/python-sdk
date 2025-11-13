@@ -814,6 +814,7 @@ def test_run_update():
 ```
 
 The `nocache` parameter is particularly useful in:
+
 - **Testing**: Avoid race conditions from stale cached data
 - **Real-time monitoring**: Ensure latest status in dashboards
 - **After mutations**: Get fresh data immediately after updates
@@ -1415,10 +1416,10 @@ def test_runs_list_with_pagination(runs, mock_api):
 **Logging (Actual Pattern from Code):**
 
 ```python
-logger = get_logger(__name__)
 
-logger.debug("Initializing client with cache_token=%s", cache_token)
-logger.debug("Client initialized successfully.")
+
+logger.trace("Initializing client with cache_token=%s", cache_token)
+logger.trace("Client initialized successfully.")
 logger.exception("Failed to initialize client.")
 logger.warning("Application with ID '%s' not found.", application_id)
 ```

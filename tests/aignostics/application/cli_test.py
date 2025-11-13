@@ -928,7 +928,7 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
 
     # Step 2: Dump custom metadata of item
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id])
-    initial_metadata = json.loads(result.output)
+    initial_metadata = json.loads(result.stdout)
     # If metadata is None/null, start with empty dict
     if initial_metadata is None:
         initial_metadata = {}
@@ -956,7 +956,7 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
 
     # Step 4: Dump metadata again and verify random number appeared
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id, "--pretty"])
-    metadata_with_random = json.loads(result.output)
+    metadata_with_random = json.loads(result.stdout)
     assert "random" in metadata_with_random, "Random field should be present in metadata"
     assert metadata_with_random["random"] == random_value, f"Random value should be {random_value}"
     assert result.exit_code == 0
@@ -990,7 +990,7 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
     # Step 6: Dump metadata and validate random element has been removed
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id])
     assert result.exit_code == 0
-    final_metadata = json.loads(result.output)
+    final_metadata = json.loads(result.stdout)
     assert "random" not in final_metadata, "Random field should have been removed from metadata"
 
     # Note: Similar to run metadata, we verify the structure remains consistent

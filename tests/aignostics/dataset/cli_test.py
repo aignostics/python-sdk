@@ -209,6 +209,7 @@ def test_idc_query_error_handling(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_idc_download_error_handling(runner: CliRunner, tmp_path: Path) -> None:
     """Test that idc download command properly displays error messages."""
     error_message = "Mock error: Download failed"
@@ -236,6 +237,7 @@ def test_idc_download_error_handling(runner: CliRunner, tmp_path: Path) -> None:
 
 
 @pytest.mark.integration
+@pytest.mark.timeout(timeout=60)
 def test_aignostics_download_error_handling(runner: CliRunner, tmp_path: Path) -> None:
     """Test that aignostics download command properly displays error messages."""
     error_message = "Mock error: Failed to download from bucket"

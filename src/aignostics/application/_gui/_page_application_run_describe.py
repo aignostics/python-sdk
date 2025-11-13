@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 import humanize
 from aiopath import AsyncPath
+from loguru import logger
 from nicegui import (
     app,
     ui,  # noq
@@ -16,7 +17,7 @@ from nicegui import run as nicegui_run
 
 from aignostics.platform import ItemOutput, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
-from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
+from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
     from aignostics.platform import UserInfo
@@ -30,8 +31,6 @@ from ._utils import (
     run_item_status_and_termination_reason_to_icon_and_color,
     run_status_to_icon_and_color,
 )
-
-logger = get_logger(__name__)
 
 WIDTH_1200px = "width: 1200px; max-width: none"
 
@@ -127,7 +126,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.navigate.reload()
             ui.notify("Application run cancelled!", type="positive")
             return True
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             cancel_button.enable()
             cancel_button.props(remove="loading")
             ui.notify(f"Failed to cancel application run: {e}.", type="warning")
@@ -151,7 +150,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.navigate.to("/")
             ui.notify("Application run deleted!", type="positive")
             return True
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             delete_button.enable()
             delete_button.props(remove="loading")
             ui.notify(f"Failed to delete results of application run: {e}.", type="warning")
@@ -380,7 +379,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         if url:
             try:
                 csv_df = pd.read_csv(url, comment="#")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to load CSV: {e!s}", type="negative")
                 csv_df = pd.DataFrame()  # Empty dataframe as fallback
             ui.aggrid.from_pandas(csv_df)
@@ -409,7 +408,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     "navigationBar": True,
                     "statusBar": False,
                 }).classes("full-width")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
     with ui.dialog() as metadata_dialog, ui.card().style(WIDTH_1200px):
@@ -430,7 +429,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             try:
                 with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
                     ui.image("/tiff?url=" + quote(url))
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to load CSV: {e!s}", type="negative")
 
     with ui.dialog() as tiff_view_dialog, ui.card().style(WIDTH_1200px):
@@ -463,7 +462,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     "navigationBar": True,
                     "statusBar": False,
                 }).classes("full-width")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
     with ui.dialog() as custom_metadata_dialog, ui.card().style(WIDTH_1200px):
@@ -488,7 +487,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             pid = await nicegui_run.cpu_bound(QuPathService.execute_qupath, project=project, image=image)
             if pid:
                 message = f"QuPath opened successfully with process id '{pid}'."
-                logger.info(message)
+                logger.debug(message)
                 ui.notify(message, type="positive")
             else:
                 message = "Failed to launch QuPath."
@@ -578,7 +577,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 )
                                 ui.notify("Custom metadata updated successfully!", type="positive")
                                 ui.navigate.reload()
-                        except Exception as ex:  # noqa: BLE001
+                        except Exception as ex:
                             ui.notify(f"Failed to update custom metadata: {ex!s}", type="negative")
 
                     ui.json_editor(properties, on_change=handle_metadata_change).classes("full-width").mark(

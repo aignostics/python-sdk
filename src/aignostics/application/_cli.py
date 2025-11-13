@@ -8,10 +8,11 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from loguru import logger
 
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import NotFoundException, RunState
-from aignostics.utils import console, get_logger, get_user_data_directory, sanitize_path
+from aignostics.utils import console, get_user_data_directory, sanitize_path
 
 from ._models import DownloadProgress, DownloadProgressState
 from ._service import Service
@@ -27,7 +28,6 @@ from ._utils import (
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 
-logger = get_logger(__name__)
 
 cli = typer.Typer(name="application", help="List and inspect applications on Aignostics Platform.")
 
@@ -65,7 +65,7 @@ def application_list(
             try:
                 details = Service().application(app.application_id)
             except Exception as e:
-                logger.exception("Failed to get application details for application '%s'", app.application_id)
+                logger.exception(f"Failed to get application details for application '{app.application_id}'")
                 console.print(
                     f"[error]Error:[/error] Failed to get application details for application "
                     f"'{app.application_id}': {e}"
@@ -96,7 +96,7 @@ def application_list(
             )
 
     if app_count == 0:
-        logger.info("No applications available.")
+        logger.debug("No applications available.")
         console.print("No applications available.")
 
 
@@ -216,11 +216,11 @@ def application_describe(
     try:
         app = Service().application(application_id)
     except NotFoundException:
-        logger.warning("Application with ID '%s' not found.", application_id)
+        logger.warning(f"Application with ID '{application_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to describe application with ID '%s'", application_id)
+        logger.exception(f"Failed to describe application with ID '{application_id}'")
         console.print(f"[error]Error:[/error] Failed to describe application: {e}")
         sys.exit(1)
 
@@ -243,7 +243,7 @@ def application_describe(
             try:
                 app_version = Service().application_version(app.application_id, version.number)
             except Exception as e:
-                logger.exception("Failed to get application version for '%s', '%s'", application_id, version.number)
+                logger.exception(f"Failed to get application version for '{application_id}', '{version.number}'")
                 console.print(
                     f"[error]Error:[/error] Failed to get application version for "
                     f"'{application_id}', '{version.number}': {e}"
@@ -484,7 +484,7 @@ def run_prepare(
         ),
     )
     console.print(f"Generated metadata file [bold]{metadata_csv}[/bold]")
-    logger.info("Generated metadata file: '%s'", metadata_csv)
+    logger.debug("Generated metadata file: '{}'", metadata_csv)
 
 
 @run_app.command(name="upload")
@@ -550,7 +550,7 @@ def run_upload(
         source = entry["external_id"]
         source_file_path = Path(source)
         if not source_file_path.is_file():
-            logger.warning("Source file '%s' (row %d) does not exist", source_file_path, i)
+            logger.warning(f"Source file '{source_file_path}' (row {i}) does not exist")
             console.print(f"[warning]Warning:[/warning] Source file '{source_file_path}' (row {i}) does not exist")
             sys.exit(2)
 
@@ -591,7 +591,7 @@ def run_upload(
             upload_progress_callable=update_progress,
         )
 
-    logger.info("Upload completed.")
+    logger.debug("Upload completed.")
     console.print("Upload completed.", style="info")
 
 
@@ -695,7 +695,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         if not metadata_dict:
             console.print("Could mot read metadata file '%s'", metadata_csv_file)
             sys.exit(2)
-        logger.debug(
+        logger.trace(
             "Submitting run for application '%s' (version: '%s') with metadata: %s",
             application_id,
             app_version.version_number,
@@ -778,7 +778,7 @@ def run_list(  # noqa: PLR0913, PLR0917
             print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
             message = f"Listed '{len(runs)}' run(s)."
             console.print(message, style="info")
-            logger.info(message)
+            logger.debug(message)
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
@@ -787,17 +787,17 @@ def run_list(  # noqa: PLR0913, PLR0917
 @run_app.command("describe")
 def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to describe")]) -> None:
     """Describe run."""
-    logger.debug("Describing run with ID '%s'", run_id)
+    logger.trace("Describing run with ID '{}'", run_id)
 
     try:
         retrieve_and_print_run_details(Service().application_run(run_id))
-        logger.info("Described run with ID '%s'", run_id)
+        logger.debug("Described run with ID '{}'", run_id)
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
+        logger.exception(f"Failed to retrieve and print run details for ID '{run_id}'")
         console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
         sys.exit(1)
 
@@ -808,7 +808,7 @@ def run_dump_metadata(
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
 ) -> None:
     """Dump custom metadata of a run as JSON to stdout."""
-    logger.debug("Dumping custom metadata for run with ID '%s'", run_id)
+    logger.trace("Dumping custom metadata for run with ID '{}'", run_id)
 
     try:
         run = Service().application_run(run_id).details()
@@ -820,13 +820,13 @@ def run_dump_metadata(
         else:
             print(json.dumps(custom_metadata))
 
-        logger.info("Dumped custom metadata for run with ID '%s'", run_id)
+        logger.debug("Dumped custom metadata for run with ID '{}'", run_id)
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to dump custom metadata for run with ID '%s'", run_id)
+        logger.exception(f"Failed to dump custom metadata for run with ID '{run_id}'")
         console.print(f"[error]Error:[/error] Failed to dump custom metadata for run with ID '{run_id}': {e}")
         sys.exit(1)
 
@@ -838,7 +838,7 @@ def run_dump_item_metadata(
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
 ) -> None:
     """Dump custom metadata of an item as JSON to stdout."""
-    logger.debug("Dumping custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+    logger.trace("Dumping custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
     try:
         run = Service().application_run(run_id)
@@ -851,7 +851,7 @@ def run_dump_item_metadata(
                 break
 
         if item is None:
-            logger.warning("Item with external ID '%s' not found in run '%s'.", external_id, run_id)
+            logger.warning(f"Item with external ID '{external_id}' not found in run '{run_id}'.")
             print(
                 f"Warning: Item with external ID '{external_id}' not found in run '{run_id}'.",
                 file=sys.stderr,
@@ -866,13 +866,13 @@ def run_dump_item_metadata(
         else:
             print(json.dumps(custom_metadata))
 
-        logger.info("Dumped custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+        logger.debug("Dumped custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         print(f"Warning: Run with ID '{run_id}' not found.", file=sys.stderr)
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to dump custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+        logger.exception(f"Failed to dump custom metadata for item '{external_id}' in run with ID '{run_id}'")
         print(
             f"Error: Failed to dump custom metadata for item '{external_id}' in run with ID '{run_id}': {e}",
             file=sys.stderr,
@@ -885,22 +885,22 @@ def run_cancel(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to cancel")],
 ) -> None:
     """Cancel run."""
-    logger.debug("Canceling run with ID '%s'", run_id)
+    logger.trace("Canceling run with ID '{}'", run_id)
 
     try:
         Service().application_run_cancel(run_id)
-        logger.info("Canceled run with ID '%s'.", run_id)
+        logger.debug("Canceled run with ID '{}'.", run_id)
         console.print(f"Run with ID '{run_id}' has been canceled.")
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ValueError:
-        logger.warning("Run ID '%s' invalid", run_id)
+        logger.warning(f"Run ID '{run_id}' invalid")
         console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to cancel run with ID '%s'", run_id)
+        logger.exception(f"Failed to cancel run with ID '{run_id}'")
         console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
         sys.exit(1)
 
@@ -915,7 +915,7 @@ def run_update_metadata(
     """Update custom metadata for a run."""
     import json  # noqa: PLC0415
 
-    logger.debug("Updating custom metadata for run with ID '%s'", run_id)
+    logger.trace("Updating custom metadata for run with ID '{}'", run_id)
 
     try:
         # Parse JSON metadata
@@ -929,18 +929,18 @@ def run_update_metadata(
             sys.exit(1)
 
         Service().application_run_update_custom_metadata(run_id, custom_metadata)
-        logger.info("Updated custom metadata for run with ID '%s'.", run_id)
+        logger.debug("Updated custom metadata for run with ID '{}'.", run_id)
         console.print(f"Successfully updated custom metadata for run with ID '{run_id}'.")
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ValueError as e:
-        logger.warning("Run ID '%s' invalid or metadata invalid: %s", run_id, e)
+        logger.warning(f"Run ID '{run_id}' invalid or metadata invalid: {e}")
         console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid or metadata invalid: {e}")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to update custom metadata for run with ID '%s'", run_id)
+        logger.exception(f"Failed to update custom metadata for run with ID '{run_id}'")
         console.print(f"[bold red]Error:[/bold red] Failed to update custom metadata for run with ID '{run_id}': {e}")
         sys.exit(1)
 
@@ -956,7 +956,7 @@ def run_update_item_metadata(
     """Update custom metadata for an item in a run."""
     import json  # noqa: PLC0415
 
-    logger.debug("Updating custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+    logger.trace("Updating custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
     try:
         # Parse JSON metadata
@@ -970,10 +970,10 @@ def run_update_item_metadata(
             sys.exit(1)
 
         Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
-        logger.info("Updated custom metadata for item '%s' in run with ID '%s'.", external_id, run_id)
+        logger.debug("Updated custom metadata for item '{}' in run with ID '{}'.", external_id, run_id)
         console.print(f"Successfully updated custom metadata for item '{external_id}' in run with ID '{run_id}'.")
     except NotFoundException:
-        logger.warning("Run with ID '%s' or item '%s' not found.", run_id, external_id)
+        logger.warning(f"Run with ID '{run_id}' or item '{external_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' or item '{external_id}' not found.")
         sys.exit(2)
     except ValueError as e:
@@ -1047,7 +1047,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
     ] = False,
 ) -> None:
     """Download results of a run."""
-    logger.debug(
+    logger.trace(
         "Downloading results for run with ID '%s' to '%s' with options: "
         "create_subdirectory_for_run=%s, create_subdirectory_per_item=%s, wait_for_completion=%s, qupath_project=%r",
         run_id,
@@ -1197,18 +1197,18 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
             main_download_progress_ui.update(main_task, completed=100, total=100)
 
         message = f"Downloaded results of run '{run_id}' to '{destination_directory}'"
-        logger.info(message)
+        logger.debug(message)
         console.print(message, style="info")
     except NotFoundException as e:
-        logger.warning("Run with ID '%s' not found: %s", run_id, e)
+        logger.warning(f"Run with ID '{run_id}' not found: {e}")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ValueError as e:
-        logger.warning("Bad input to download results of run with ID '%s': %s", run_id, e)
+        logger.warning(f"Bad input to download results of run with ID '{run_id}': {e}")
         console.print(f"[warning]Warning:[/warning] Bad input to download results of run with ID '{run_id}': {e}")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to download results of run with ID '%s'", run_id)
+        logger.exception(f"Failed to download results of run with ID '{run_id}'")
         console.print(
             f"[error]Error:[/error] Failed to download results of run with ID '{run_id}': {type(e).__name__}: {e}"
         )
@@ -1220,17 +1220,17 @@ def result_delete(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to delete results for")],
 ) -> None:
     """Delete results of run."""
-    logger.debug("Deleting results for run with ID '%s'", run_id)
+    logger.trace("Deleting results for run with ID '{}'", run_id)
 
     try:
         Service().application_run_delete(run_id)
-        logger.info("Deleted run with ID '%s'.", run_id)
+        logger.debug("Deleted run with ID '{}'.", run_id)
         console.print(f"Results for run with ID '{run_id}' have been deleted.")
     except NotFoundException:
-        logger.warning("Results for with ID '%s' not found.", run_id)
+        logger.warning(f"Results for with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to delete run with ID '%s'", run_id)
+        logger.exception(f"Failed to delete run with ID '{run_id}'")
         console.print(f"[bold red]Error:[/bold red] Failed to delete results for with ID '{run_id}': {e}")
         sys.exit(1)

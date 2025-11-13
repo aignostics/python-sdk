@@ -1,6 +1,5 @@
 """Tests for logging configuration and utilities."""
 
-import logging
 import platform
 import tempfile
 from pathlib import Path
@@ -8,10 +7,7 @@ from unittest import mock
 
 import pytest
 
-from aignostics.utils import get_logger
 from aignostics.utils._log import _validate_file_name, logging_initialize
-
-log = get_logger(__name__)
 
 
 @pytest.mark.unit
@@ -106,52 +102,35 @@ def test_validate_file_name_invalid_path(record_property) -> None:
 
 
 @pytest.mark.unit
-def test_get_logger_with_name(record_property) -> None:
-    """Test get_logger with a specific name."""
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    logger = get_logger("test_module")
-    assert logger.name == "aignostics.test_module"
-
-
-@pytest.mark.unit
-def test_get_logger_none(record_property) -> None:
-    """Test get_logger with None name."""
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    logger = get_logger(None)
-    assert logger.name == "aignostics"
-
-
-@pytest.mark.unit
-def test_get_logger_project_name(record_property) -> None:
-    """Test get_logger with the project name."""
-    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    logger = get_logger("aignostics")
-    assert logger.name == "aignostics"
-
-
-@pytest.mark.unit
-def test_logging_initialize_with_defaults(record_property) -> None:
+def test_logging_initialize_with_defaults(record_property, caplog: pytest.LogCaptureFixture) -> None:
     """Test logging_initialize with default settings."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    from aignostics.utils._log import logger
+
     with (
         mock.patch("aignostics.utils._log.load_settings") as mock_load_settings,
+        mock.patch.object(logger, "remove") as mock_remove,
+        mock.patch.object(logger, "configure") as mock_configure,
+        mock.patch.object(logger, "add") as mock_add,
         mock.patch("logging.basicConfig") as mock_basic_config,
     ):
-        # Mock settings with defaults
+        # Mock settings with defaults (stderr_enabled=True, file_enabled=False, redirect_logging=True)
         mock_settings = mock.MagicMock()
+        mock_settings.stderr_enabled = True
         mock_settings.file_enabled = False
-        mock_settings.console_enabled = False
+        mock_settings.redirect_logging = True
         mock_settings.level = "INFO"
         mock_load_settings.return_value = mock_settings
 
         # Call the function
         logging_initialize()
 
-        # Verify basicConfig was called with empty handlers list
+        # Verify logger was reset and configured
+        mock_remove.assert_called_once()
+        mock_configure.assert_called_once()
+
+        # Verify logger.add was called for stderr (since stderr_enabled=True by default)
+        assert mock_add.call_count == 1
+
+        # Verify logging.basicConfig was called (since redirect_logging=True)
         mock_basic_config.assert_called_once()
-        call_kwargs = mock_basic_config.call_args.kwargs
-        assert call_kwargs["level"] == "INFO"
-        # Check that handlers contains exactly one NullHandler
-        handlers = call_kwargs["handlers"]
-        assert len(handlers) == 1
-        assert isinstance(handlers[0], logging.NullHandler)

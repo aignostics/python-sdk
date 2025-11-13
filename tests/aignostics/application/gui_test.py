@@ -14,7 +14,6 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
-from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
@@ -27,8 +26,6 @@ from tests.constants_test import (
 
 if TYPE_CHECKING:
     from nicegui import ui
-
-logger = get_logger(__name__)
 
 
 @pytest.mark.e2e

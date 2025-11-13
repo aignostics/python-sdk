@@ -7,10 +7,10 @@ from subprocess import PIPE, STDOUT, Popen
 from threading import Event, Thread
 from typing import Any
 
-from aignostics.constants import NOTEBOOK_DEFAULT
-from aignostics.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health, get_logger, get_user_data_directory
+from loguru import logger
 
-logger = get_logger(__name__)
+from aignostics.constants import NOTEBOOK_DEFAULT
+from aignostics.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health, get_user_data_directory
 
 MARIMO_SERVER_STARTUP_TIMEOUT = 60
 
@@ -62,7 +62,7 @@ class _Runner:
         Raises:
             RuntimeError: If the Marimo server fails to start or if the URL isn't detected within given timeout.
         """
-        logger.debug("Checking if Marimo server is running...")
+        logger.trace("Checking if Marimo server is running...")
         self._started = True
         if self.is_marimo_server_running():
             logger.warning("Marimo server is already running.")
@@ -76,14 +76,14 @@ class _Runner:
         directory = get_user_data_directory("notebooks")
         notebook_path = directory / "notebook.py"
         if not notebook_path.exists():
-            logger.debug("Copying notebook to user data directory '%s'...", notebook_path)
+            logger.trace("Copying notebook to user data directory '{}'...", notebook_path)
             notebook_path.write_bytes(NOTEBOOK_DEFAULT.read_bytes())
 
         # Reset server state
         self._server_url = None
         self._server_ready.clear()
 
-        logger.debug("Starting Marimo server with notebook at '%s'...", notebook_path)
+        logger.trace("Starting Marimo server with notebook at '{}'...", notebook_path)
 
         if getattr(sys, "frozen", False):
             self._marimo_server = Popen(  # noqa: S603
@@ -147,7 +147,7 @@ class _Runner:
             raise RuntimeError(message)
 
         message = f"Marimo server started successfully with URL '{self._server_url}'."  # type: ignore[unreachable]
-        logger.info(message)
+        logger.debug(message)
         return self._server_url
 
     def _capture_output(self, process: Popen[str]) -> None:
@@ -175,16 +175,16 @@ class _Runner:
             captured_line += char
 
             if char == "\n":
-                logger.debug(captured_line.rstrip())
+                logger.trace(captured_line.rstrip())
                 url_match = url_pattern.search(captured_line)
                 if url_match:
                     self._server_url = url_match.group(1)
-                    logger.info("Found URL: '%s'", self._server_url)
+                    logger.debug("Found URL: '{}'", self._server_url)
                     self._server_ready.set()
 
                 captured_line = ""
 
-        logger.debug("Marimo server process completed.")
+        logger.trace("Marimo server process completed.")
 
     def is_marimo_server_running(self) -> bool:
         """Check if the marimo server is running.
@@ -205,23 +205,23 @@ class _Runner:
     def stop(self) -> None:
         """Stop the Marimo server."""
         if self._marimo_server is not None:
-            logger.debug("Stopping Marimo server...")
+            logger.trace("Stopping Marimo server...")
             self._marimo_server.terminate()
             self._marimo_server.wait(2)
             if self._marimo_server.returncode is None:
-                logger.debug("Marimo server did not terminate in time, killing it...")
+                logger.trace("Marimo server did not terminate in time, killing it...")
                 self._marimo_server.kill()
             self._marimo_server = None
-            logger.info("Marimo server stopped.")
+            logger.debug("Marimo server stopped.")
         else:
-            logger.debug("Marimo server is not running.")
+            logger.trace("Marimo server is not running.")
         if self._monitor_thread is not None:
             self._monitor_thread.join()
             self._monitor_thread = None
-            logger.info("Monitor thread stopped.")
+            logger.debug("Monitor thread stopped.")
         else:
-            logger.debug("Monitor thread is not running.")
-        logger.info("Service stopped.")
+            logger.trace("Monitor thread is not running.")
+        logger.debug("Service stopped.")
 
 
 # Singleton instance of Runner

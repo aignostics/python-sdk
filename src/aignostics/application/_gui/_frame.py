@@ -1,16 +1,14 @@
 from datetime import UTC, datetime
 from typing import Any
 
+from loguru import logger
 from nicegui import app, background_tasks, context, ui  # noq
 from nicegui import run as nicegui_run
 
 from aignostics.gui import frame
-from aignostics.utils import get_logger
 
 from .._service import Service  # noqa: TID252
 from ._utils import application_id_to_icon, run_status_to_icon_and_color
-
-logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
@@ -278,5 +276,5 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
                 # Auto-refresh runs list
                 ui.timer(interval=RUNS_REFRESH_INTERVAL, callback=_runs_list.refresh)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")

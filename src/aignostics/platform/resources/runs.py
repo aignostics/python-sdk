@@ -5,7 +5,6 @@ It includes functionality for starting runs, monitoring status, and downloading 
 """
 
 import builtins
-import logging
 import time
 import typing as t
 from collections.abc import Iterator
@@ -36,9 +35,10 @@ from aignx.codegen.models import (
 )
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
+from loguru import logger
 from tenacity import (
+    RetryCallState,
     Retrying,
-    before_sleep_log,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
@@ -63,9 +63,7 @@ from aignostics.platform._utils import (
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
-from aignostics.utils import get_logger, user_agent
-
-logger = get_logger(__name__)
+from aignostics.utils import user_agent
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,  # TODO(Helmut): Do we want this down the road?
@@ -75,6 +73,26 @@ RETRYABLE_EXCEPTIONS = (
     ProtocolError,
     ProxyError,
 )
+
+
+def _log_retry_attempt(retry_state: RetryCallState) -> None:
+    """Custom callback for logging retry attempts with loguru.
+
+    Args:
+        retry_state: The retry state from tenacity.
+    """
+    fn = retry_state.fn
+    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
+    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
+    logger.warning(
+        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
+        fn_module,
+        fn_name,
+        retry_state.next_action.sleep if retry_state.next_action else 0,
+        retry_state.attempt_number,
+        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
+    )
+
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
@@ -137,7 +155,7 @@ class Run:
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.get_run_v1_runs_run_id_get(
@@ -201,7 +219,7 @@ class Run:
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.list_run_items_v1_runs_run_id_items_get(
@@ -266,7 +284,7 @@ class Run:
                         self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 sleep(sleep_interval)
                 application_run_state = self.details(nocache=True).state
-                logger.debug("Continuing to wait for run %s, current state: %r", self.run_id, self)
+                logger.trace("Continuing to wait for run {}, current state: {!r}", self.run_id, self)
                 print(self) if print_status else None
 
             # check if last results have been downloaded yet and report on errors
@@ -332,23 +350,23 @@ class Run:
                 if file_path.exists():
                     file_checksum = calculate_file_crc32c(file_path)
                     if file_checksum != checksum:
-                        logger.debug("Resume download for %s to %s", artifact.name, file_path)
+                        logger.trace("Resume download for {} to {}", artifact.name, file_path)
                         print(f"> Resume download for {artifact.name} to {file_path}") if print_status else None
                     else:
                         continue
                 else:
                     downloaded_at_least_one_artifact = True
-                    logger.debug("Download for %s to %s", artifact.name, file_path)
+                    logger.trace("Download for {} to {}", artifact.name, file_path)
                     print(f"> Download for {artifact.name} to {file_path}") if print_status else None
 
                 # if file is not there at all or only partially downloaded yet
                 download_file(artifact.download_url, str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
-            logger.debug("Downloaded results for item: %s to %s", item.external_id, item_dir)
+            logger.trace("Downloaded results for item: {} to {}", item.external_id, item_dir)
             print(f"Downloaded results for item: {item.external_id} to {item_dir}") if print_status else None
         else:
-            logger.debug("Results for item: %s already present in %s", item.external_id, item_dir)
+            logger.trace("Results for item: {} already present in {}", item.external_id, item_dir)
             print(f"Results for item: {item.external_id} already present in {item_dir}") if print_status else None
 
     def update_custom_metadata(
@@ -594,7 +612,7 @@ class Runs:
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.list_runs_v1_runs_get(

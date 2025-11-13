@@ -9,11 +9,10 @@ import sys
 from datetime import UTC, datetime
 from typing import Any, Literal
 
+from loguru import logger
 from pydantic import BaseModel, Field, ValidationError
 
-from aignostics.utils import get_logger, user_agent
-
-logger = get_logger(__name__)
+from aignostics.utils import user_agent
 
 SDK_METADATA_SCHEMA_VERSION = "0.0.4"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
@@ -212,7 +211,7 @@ def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> d
             "user_email": me.user.email,
             "user_id": me.user.id,
         }
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.warning("Failed to fetch user information for SDK metadata")
 
     ci_metadata: dict[str, Any] = {}
