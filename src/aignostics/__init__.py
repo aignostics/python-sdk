@@ -1,5 +1,6 @@
 """Python SDK providing access to Aignostics AI services."""
 
+import logging
 import os
 from typing import Any
 
@@ -33,13 +34,15 @@ def _log_filter(record: Any) -> bool:  # noqa: ANN401
         or (record["name"] == "matplotlib.font_manager" and record["function"] == "_findfont_cached")
         or (record["name"] == "PIL.PngImagePlugin" and record["function"] == "call")
         or (record["name"] == "PIL.PngImagePlugin" and record["function"] == "_open")
-        or record["name"].startswith("botocore")
     )
 
 
-import logging  # noqa: E402
-
-logging.getLogger("boto").setLevel(logging.WARNING)
+logger = logging.getLogger("botocore")
+logger.setLevel(logging.CRITICAL)
+logger = logging.getLogger("boto3")
+logger.setLevel(logging.CRITICAL)
+logger = logging.getLogger("boto3.resources")
+logger.setLevel(logging.CRITICAL)
 
 
 boot(sentry_integrations=SENTRY_INTEGRATIONS, log_filter=_log_filter)
