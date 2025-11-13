@@ -60,15 +60,15 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
 
         SPOT_1_EXPECTED_RESULT_FILES = [
-            ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
-            ("tissue_qc_geojson_polygons.json", 180522, 10),
-            ("tissue_segmentation_geojson_polygons.json", 270931, 10),
-            ("readout_generation_slide_readouts.csv", 295268, 10),
-            ("readout_generation_cell_readouts.csv", 2228907, 10),
-            ("cell_classification_geojson_polygons.json", 16054058, 10),
-            ("tissue_segmentation_segmentation_map_image.tiff", 581258, 10),
-            ("tissue_segmentation_csv_class_information.csv", 342, 10),
-            ("tissue_qc_csv_class_information.csv", 232, 10),
+            ("tissue_qc_segmentation_map_image.tiff", 440122, 10),
+            ("tissue_qc_geojson_polygons.json", 139943, 10),
+            ("tissue_segmentation_geojson_polygons.json", 175419, 10),
+            ("readout_generation_slide_readouts.csv", 300408, 10),
+            ("readout_generation_cell_readouts.csv", 2384271, 10),
+            ("cell_classification_geojson_polygons.json", 16384866, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 508552, 10),
+            ("tissue_segmentation_csv_class_information.csv", 443, 10),
+            ("tissue_qc_csv_class_information.csv", 284, 10),
         ]
 
     case "staging":
