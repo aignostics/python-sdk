@@ -117,7 +117,6 @@ class TestUserInfo:
                 aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
                 aignostics_bucket_name="test-bucket",
                 aignostics_bucket_protocol="gs",
-                aignostics_logfire_token="logfire_token",  # noqa: S106
                 aignostics_sentry_dsn="sentry_dsn",
             ),
         )
@@ -163,7 +162,6 @@ class TestUserInfo:
                 aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
                 aignostics_bucket_name="test-bucket",
                 aignostics_bucket_protocol="gs",
-                aignostics_logfire_token="logfire_token",  # noqa: S106
                 aignostics_sentry_dsn="sentry_dsn",
             ),
         )
@@ -312,7 +310,6 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -358,7 +355,6 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -427,7 +423,6 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -471,7 +466,6 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="very_secret_access_key_456",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="the_logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -492,7 +486,6 @@ class TestPlatformCLI:
             assert "***MASKED(26)***" in output
             # Check that original secrets are not in output
             assert "nospam@aignostics.com" not in output
-            assert "the_logfire_token" not in output
             assert "very_secret_access_key_456" not in output
 
     @pytest.mark.integration
@@ -518,7 +511,6 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="very_secret_access_key_456",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(

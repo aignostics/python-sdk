@@ -105,7 +105,6 @@ class UserInfo(BaseModel):
         sensitive_fields_mapping = {
             "organization": [
                 "aignostics_bucket_hmac_secret_access_key",
-                "aignostics_logfire_token",
                 "aignostics_sentry_dsn",
             ],
             "user": ["email"],
