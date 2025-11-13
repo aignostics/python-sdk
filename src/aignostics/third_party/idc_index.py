@@ -378,7 +378,7 @@ class IDCClient:
                 f"Index {index_name} already installed and will not be fetched again."
             )
         else:
-            logger.debug("Fetching index %s", index_name)
+            logger.debug("Fetching index {}", index_name)
             response = requests.get(
                 self.indices_overview[index_name]["url"], timeout=30
             )
@@ -538,7 +538,7 @@ class IDCClient:
             else:
                 response = patient_df
 
-        logger.trace("Get patient response: %s", str(response))
+        logger.trace("Get patient response: {}", str(response))
 
         return response
 
@@ -592,7 +592,7 @@ class IDCClient:
             else:
                 response = studies_df
 
-        logger.trace("Get patient study response: %s", str(response))
+        logger.trace("Get patient study response: {}", str(response))
 
         return response
 
@@ -666,7 +666,7 @@ class IDCClient:
                 response = series_df.to_dict(orient="records")
             else:
                 response = series_df
-        logger.trace("Get series response: %s", str(response))
+        logger.trace("Get series response: {}", str(response))
 
         return response
 
@@ -1600,7 +1600,7 @@ Destination folder is not empty and sync size is less than total size.
                         f"Download process return non-zero exit code: {process.returncode}"
                     )
                 else:
-                    logger.debug("Successfully downloaded files to %s", str(downloadDir))
+                    logger.debug("Successfully downloaded files to {}", str(downloadDir))
 
     @staticmethod
     def _format_size(size, size_in_bytes: bool = False):

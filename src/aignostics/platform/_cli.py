@@ -5,6 +5,7 @@ import sys
 from typing import Annotated
 
 import typer
+from loguru import logger
 
 from aignostics.utils import console
 

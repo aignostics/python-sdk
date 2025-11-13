@@ -219,7 +219,7 @@ class OpenSlideHandler:
             "properties": dict(self.slide.properties),
         }
 
-        logger.trace("Slide metadata extracted: %s", metadata)
+        logger.trace("Slide metadata extracted: {}", metadata)
         # Parse image description if available
         if TIFF_IMAGE_DESCRIPTION in props:
             image_desc = self._parse_xml_image_description(props[TIFF_IMAGE_DESCRIPTION])

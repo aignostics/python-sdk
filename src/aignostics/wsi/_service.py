@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from loguru import logger
 
 from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.utils import BaseService, Health

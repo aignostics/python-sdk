@@ -9,6 +9,7 @@ import urllib3
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import UserReadResponse as User
+from loguru import logger
 from pydantic import BaseModel, computed_field
 
 from aignostics.utils import BaseService, Health, user_agent

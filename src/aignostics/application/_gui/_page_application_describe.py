@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from aiopath import AsyncPath
+from loguru import logger
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
@@ -719,7 +720,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     validate_only=submit_form.validate_only,
                     onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(
                     f"Failed to submit application run: {e}.",
                     type="negative",

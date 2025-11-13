@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from loguru import logger
 
 from aignostics.utils import console, get_user_data_directory
 
@@ -159,7 +160,7 @@ def idc_download(
         )
         console.print(f"[green]Successfully downloaded {matches_found} identifier type(s) to {target}[/green]")
     except ValueError as e:
-        logger.warning("Bad input to download from IDC for IDs '{}': {}", source, e)
+        logger.warning(f"Bad input to download from IDC for IDs '{source}': {e}")
         console.print(f"[warning]Warning:[/warning] {e}")
         sys.exit(2)
     except Exception as e:
@@ -232,7 +233,7 @@ def aignostics_download(
 
         console.print(f"[green]Successfully downloaded to {output_path}[/green]")
     except ValueError as e:
-        logger.warning("Bad input to download from '{}': {}", source_url, e)
+        logger.warning(f"Bad input to download from '{source_url}': {e}")
         console.print(f"[warning]Warning:[/warning] Bad input: {e}")
         sys.exit(2)
     except Exception as e:

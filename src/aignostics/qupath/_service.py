@@ -311,7 +311,7 @@ class Service(BaseService):
             )
 
             output = result.stdout.strip()
-            logger.trace("QuPath version output: %s", output)
+            logger.trace("QuPath version output: {}", output)
 
             version_match = re.search(r"Version:\s+([0-9]+\.[0-9]+\.[0-9]+(?:-rc[0-9]+)?)", output)
 
@@ -329,7 +329,7 @@ class Service(BaseService):
 
                 return QuPathVersion(version=version, build_time=build_time, commit_tag=commit_tag)
         except (subprocess.SubprocessError, subprocess.TimeoutExpired) as e:
-            logger.warning("Failed to get QuPath version from executable: %s", e)
+            logger.warning(f"Failed to get QuPath version from executable: {e}")
         except Exception:
             logger.exception("Unexpected error getting QuPath version")
 
@@ -403,7 +403,7 @@ class Service(BaseService):
 
         if not app_exe or not app_exe.is_file():
             if app_exe:
-                logger.warning("Expected to find file at %s.", app_exe)
+                logger.warning(f"Expected to find file at {app_exe}.")
             return None
 
         return app_exe
@@ -455,7 +455,7 @@ class Service(BaseService):
         """
         system = platform.system() if platform_system is None else platform_system
         machine = platform.machine() if platform_machine is None else platform_machine
-        logger.trace("Downloading QuPath version %s for system %s and machine %s", version, system, machine)
+        logger.trace("Downloading QuPath version {} for system {} and machine {}", version, system, machine)
 
         if system == "Linux":
             sys = "Linux"
@@ -488,7 +488,7 @@ class Service(BaseService):
 
         url = f"https://github.com/qupath/qupath/releases/download/{version}/{name}.{ext}"
 
-        logger.trace("Downloading QuPath from %s", url)
+        logger.trace("Downloading QuPath from {}", url)
 
         filename = Path(urlsplit(url).path).name
         filepath = path / filename
@@ -515,13 +515,13 @@ class Service(BaseService):
                                     archive_download_chunk_size=len(chunk),
                                 )
                                 install_progress_queue.put_nowait(progress)
-            logger.trace("Downloaded QuPath archive to '%s'", filepath)
+            logger.trace("Downloaded QuPath archive to '{}'", filepath)
         except requests.RequestException as e:
             message = f"Failed to download QuPath from {url}="
             logger.exception(message)
             raise RuntimeError(message) from e
         except Exception:
-            logger.exception("Error downloading QuPath from %s", url)
+            logger.exception(f"Error downloading QuPath from {url}")
             with contextlib.suppress(OSError):
                 filepath.unlink(missing_ok=True)
             raise
@@ -600,7 +600,7 @@ class Service(BaseService):
             Path: The path to the extracted QuPath application directory.
         """
         system = platform.system() if platform_system is None else platform_system
-        logger.trace("Extracting QuPath archive '%s' to '%s' for system %s", archive_path, installation_path, system)
+        logger.trace("Extracting QuPath archive '{}' to '{}' for system {}", archive_path, installation_path, system)
 
         destination = Service.get_app_dir(
             version=QUPATH_VERSION,
@@ -902,7 +902,7 @@ class Service(BaseService):
             raise NotImplementedError(message)
 
         try:
-            logger.trace("Launching QuPath with command: %s", " ".join(command))
+            logger.trace("Launching QuPath with command: {}", " ".join(command))
             process = subprocess.Popen(  # noqa: S603
                 command,
                 stdout=subprocess.PIPE,
@@ -991,14 +991,14 @@ class Service(BaseService):
             try:
                 p.terminate()
             except psutil.NoSuchProcess:
-                logger.trace("Process %s already terminated.", p.pid)
+                logger.trace("Process {} already terminated.", p.pid)
                 continue
         _, alive = wait_procs(procs, timeout=wait_before_kill)
         for p in alive:
             try:
                 p.kill()
             except psutil.NoSuchProcess:
-                logger.trace("Process %s already terminated.", p.pid)
+                logger.trace("Process {} already terminated.", p.pid)
                 continue
         return len(procs)
 
@@ -1037,13 +1037,13 @@ class Service(BaseService):
             removed = False
             for qupath in path.glob("QuPath*"):
                 if qupath.is_dir():
-                    logger.trace("Removing QuPath directory '%s'", qupath)
+                    logger.trace("Removing QuPath directory '{}'", qupath)
                 else:
-                    logger.trace("Removing QuPath archive '%s'", qupath)
+                    logger.trace("Removing QuPath archive '{}'", qupath)
                 try:
                     shutil.rmtree(qupath, ignore_errors=False)
                     removed = True
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     message = f"Failed to remove '{qupath!s}': {e!s}"
                     logger.warning(message)
             return removed
@@ -1063,10 +1063,10 @@ class Service(BaseService):
             logger.error(message)
             raise ValueError(message)
         try:
-            logger.trace("Removing '%s'", app_dir)
+            logger.trace("Removing '{}'", app_dir)
             shutil.rmtree(app_dir, ignore_errors=False)
             return True
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             message = f"Failed to remove '{app_dir!s}': {e!s}"
             logger.warning(message)
         return False
@@ -1147,7 +1147,7 @@ class Service(BaseService):
                 added_count = int(result_data.get("added_count", 0))
                 errors = result_data.get("errors", [])
                 for error in errors:
-                    logger.warning("QuPath add script error: %s", error)
+                    logger.warning(f"QuPath add script error: {error}")
 
                 if progress_callable:
                     progress.status = AddProgressState.COMPLETED

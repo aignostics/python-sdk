@@ -276,5 +276,5 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
 
                 # Auto-refresh runs list
                 ui.timer(interval=RUNS_REFRESH_INTERVAL, callback=_runs_list.refresh)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             ui.label(f"Failed to list application runs: {e!s}").mark("LABEL_ERROR")

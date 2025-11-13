@@ -1,4 +1,3 @@
-import logging
 import os
 from collections.abc import Callable
 from typing import ClassVar
@@ -14,8 +13,8 @@ from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 from loguru import logger
 from tenacity import (
+    RetryCallState,
     Retrying,
-    before_sleep_log,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
@@ -39,6 +38,25 @@ RETRYABLE_EXCEPTIONS = (
     ProtocolError,
     ProxyError,
 )
+
+
+def _log_retry_attempt(retry_state: RetryCallState) -> None:
+    """Custom callback for logging retry attempts with loguru.
+
+    Args:
+        retry_state: The retry state from tenacity.
+    """
+    fn = retry_state.fn
+    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
+    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
+    logger.warning(
+        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
+        fn_module,
+        fn_name,
+        retry_state.next_action.sleep if retry_state.next_action else 0,
+        retry_state.attempt_number,
+        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
+    )
 
 
 class _OAuth2TokenProviderConfiguration(Configuration):
@@ -131,7 +149,7 @@ class Client:
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().me_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().me_retry_wait_min, max=settings().me_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.get_me_v1_me_get(
@@ -167,7 +185,7 @@ class Client:
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.read_application_by_id_v1_applications_application_id_get(
@@ -225,7 +243,7 @@ class Client:
                     initial=settings().application_version_retry_wait_min,
                     max=settings().application_version_retry_wait_max,
                 ),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.application_version_details_v1_applications_application_id_versions_version_get(

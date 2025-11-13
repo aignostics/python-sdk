@@ -10,6 +10,8 @@ from aignostics.utils import BasePageBuilder
 if TYPE_CHECKING:
     from fastapi import Response
 
+from loguru import logger
+
 from ._service import Service
 
 

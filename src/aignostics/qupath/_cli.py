@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from loguru import logger
 from rich.table import Table
 
 from aignostics.utils import console

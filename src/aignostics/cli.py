@@ -5,6 +5,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 import typer
+from loguru import logger
 
 from .constants import NOTEBOOK_DEFAULT
 from .utils import (
@@ -67,7 +68,7 @@ prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love i
 if __name__ == "__main__":  # pragma: no cover
     try:
         cli()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         message = f"An error occurred while running the CLI: {e!s}"
         logger.critical(message)
         console.print(message, style="error")

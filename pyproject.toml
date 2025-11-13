@@ -276,6 +276,7 @@ ignore = [
     "PTH123",   # use of open to be replaced with Path.open,
     "T201",     # Remove `print`
     "INP001",   # Checks for packages that are missing an __init__.py file.
+    "BLE001",   # Accept for now TODO(Helmut): Add proper exception handling later
 ]
 
 [tool.ruff.lint.per-file-ignores]

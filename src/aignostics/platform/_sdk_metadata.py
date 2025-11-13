@@ -211,7 +211,7 @@ def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> d
             "user_email": me.user.email,
             "user_id": me.user.id,
         }
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.warning("Failed to fetch user information for SDK metadata")
 
     ci_metadata: dict[str, Any] = {}

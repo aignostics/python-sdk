@@ -5,6 +5,7 @@ from multiprocessing import Manager
 from pathlib import Path
 
 import humanize
+from loguru import logger
 
 from aignostics.gui import frame
 from aignostics.utils import BasePageBuilder

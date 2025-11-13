@@ -410,7 +410,7 @@ class Service(BaseService):  # noqa: PLR0904
                             Service._apply_mappings_to_entry(entry, mappings)
 
                         metadata.append(entry)
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
                         message = f"Failed to process file '{file_path}': {e}"
                         logger.warning(message)
                         continue
@@ -1361,7 +1361,7 @@ class Service(BaseService):  # noqa: PLR0904
                             download_progress_callable,
                         )
                     item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     logger.warning(
                         "Failed to download input slide from '%s' to '%s': %s", item.external_id, local_path, e
                     )

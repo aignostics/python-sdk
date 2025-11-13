@@ -246,8 +246,6 @@ def test_stop_nonrunning_server(caplog: pytest.LogCaptureFixture) -> None:
     runner.stop()
 
     # Verify that the final log message was produced
-    # Note: "Marimo server is not running" and "Monitor thread is not running"
-    # are logged at TRACE level which caplog doesn't capture by default
     assert "Service stopped." in caplog.text
 
 

@@ -114,7 +114,7 @@ def open_user_data_directory(scope: str | None = None) -> Path:
             error,
             directory,
         )
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         # Catch any other unexpected exceptions to ensure function still returns directory path
         logger.warning(
             "Unexpected error opening user data directory in file manager: %s. Directory path: %s",

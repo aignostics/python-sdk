@@ -935,7 +935,7 @@ def setup(session: nox.Session) -> None:
         session.run("git", "add", ".", external=True)
         try:
             session.run("pre-commit", external=True)
-        except Exception:  # noqa: BLE001
+        except Exception:
             session.log("pre-commit run failed, continuing anyway")
         session.run("git", "add", ".", external=True)
 

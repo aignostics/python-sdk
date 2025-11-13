@@ -121,7 +121,7 @@ class Service(BaseService):
             )
 
             if response.status != HTTPStatus.OK:
-                logger.error("'%s' returned '%s'", IPIFY_URL, response.status)
+                logger.error(f"'{IPIFY_URL}' returned '{response.status}'")
                 return Health(
                     status=Health.Code.DOWN,
                     reason=f"'{IPIFY_URL}' returned status '{response.status}'",
@@ -195,7 +195,7 @@ class Service(BaseService):
                 timeout=urllib3.Timeout(total=timeout),
             )
             if response.status != HTTPStatus.OK:
-                logger.error("Failed to get public IP: HTTP %s", response.status)
+                logger.error(f"Failed to get public IP: HTTP {response.status}")
                 return None
             return response.data.decode("utf-8")
         except Exception as e:
@@ -419,7 +419,7 @@ class Service(BaseService):
                 service = service_class()
                 result_dict[service.key()] = service.info(mask_secrets=mask_secrets)
 
-        logger.debug("Service info: %s", result_dict)
+        logger.debug("Service info: {}", result_dict)
         return result_dict
 
     @staticmethod

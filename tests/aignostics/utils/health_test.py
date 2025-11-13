@@ -197,4 +197,4 @@ def test_health_manually_set_components_validated(record_property) -> None:
             "bad_component": Health(status=Health.Code.DOWN),  # Missing reason
         }
         # Accessing any attribute triggers validation
-        log.info(str(health))
+        _ = str(health)

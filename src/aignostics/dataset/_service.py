@@ -31,7 +31,7 @@ def _terminate_process(process: subprocess.Popen[str]) -> None:
         process: The subprocess to terminate.
     """
     try:
-        logger.warning("Terminating orphaned subprocess with PID {}", process.pid)
+        logger.warning(f"Terminating orphaned subprocess with PID {process.pid}")
         process.terminate()
         # Give it a moment to terminate gracefully
         for _ in range(5):
@@ -40,7 +40,7 @@ def _terminate_process(process: subprocess.Popen[str]) -> None:
             time.sleep(0.1)
         # If still running, force kill
         if process.poll() is None:
-            logger.warning("Forcefully killing subprocess with PID {}", process.pid)
+            logger.warning(f"Forcefully killing subprocess with PID {process.pid}")
             process.kill()
     except Exception:
         message = f"Error terminating subprocess with PID {process.pid}"
@@ -186,7 +186,7 @@ class Service(BaseService):
 
         target_directory = Path(target)
         if not target_directory.is_dir():
-            logger.warning("Target directory does not exist: {}", target_directory)
+            logger.warning(f"Target directory does not exist: {target_directory}")
             message = f"Target directory does not exist: {target_directory}"
             raise ValueError(message)
 
