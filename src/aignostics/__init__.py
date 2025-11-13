@@ -33,6 +33,7 @@ def _log_filter(record: Any) -> bool:  # noqa: ANN401
         or (record["name"] == "matplotlib.font_manager" and record["function"] == "_findfont_cached")
         or (record["name"] == "PIL.PngImagePlugin" and record["function"] == "call")
         or (record["name"] == "PIL.PngImagePlugin" and record["function"] == "_open")
+        or record["name"].startswith("botocore")
     )
 
 
