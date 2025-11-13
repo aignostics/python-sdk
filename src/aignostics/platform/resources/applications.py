@@ -16,6 +16,7 @@ from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import ApplicationVersion as VersionTuple
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
+from loguru import logger
 from tenacity import (
     Retrying,
     before_sleep_log,
@@ -29,9 +30,7 @@ from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform._settings import settings
 from aignostics.platform.resources.utils import paginate
-from aignostics.utils import get_logger, user_agent
-
-logger = get_logger(__name__)
+from aignostics.utils import user_agent
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,

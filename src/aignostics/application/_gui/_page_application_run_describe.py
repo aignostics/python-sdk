@@ -16,7 +16,7 @@ from nicegui import run as nicegui_run
 
 from aignostics.platform import ItemOutput, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
-from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
+from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
     from aignostics.platform import UserInfo
@@ -30,8 +30,6 @@ from ._utils import (
     run_item_status_and_termination_reason_to_icon_and_color,
     run_status_to_icon_and_color,
 )
-
-logger = get_logger(__name__)
 
 WIDTH_1200px = "width: 1200px; max-width: none"
 
@@ -488,7 +486,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             pid = await nicegui_run.cpu_bound(QuPathService.execute_qupath, project=project, image=image)
             if pid:
                 message = f"QuPath opened successfully with process id '{pid}'."
-                logger.info(message)
+                logger.debug(message)
                 ui.notify(message, type="positive")
             else:
                 message = "Failed to launch QuPath."

@@ -5,14 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from aignostics.utils import BasePageBuilder, get_logger
+from aignostics.utils import BasePageBuilder
 
 if TYPE_CHECKING:
     from fastapi import Response
 
 from ._service import Service
-
-logger = get_logger(__name__)
 
 
 class PageBuilder(BasePageBuilder):

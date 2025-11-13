@@ -24,7 +24,7 @@ from ._constants import (
 from ._di import load_modules, locate_implementations, locate_subclasses
 from ._fs import get_user_data_directory, open_user_data_directory, sanitize_path, sanitize_path_component
 from ._health import Health
-from ._log import LogSettings, get_logger
+from ._log import LogSettings
 from ._process import SUBPROCESS_CREATION_FLAGS, ProcessInfo, get_process_info
 from ._service import BaseService
 from ._settings import UNHIDE_SENSITIVE_INFO, OpaqueSettings, load_settings, strip_to_none_before_validator
@@ -58,7 +58,6 @@ __all__ = [
     "__version_full__",
     "boot",
     "console",
-    "get_logger",
     "get_process_info",
     "get_user_data_directory",
     "load_modules",
@@ -74,11 +73,6 @@ __all__ = [
 ]
 
 from importlib.util import find_spec
-
-if find_spec("logfire"):
-    from ._logfire import LogfireSettings, logfire_initialize
-
-    __all__ += ["LogfireSettings", "logfire_initialize"]
 
 if find_spec("sentry"):
     from ._sentry import SentrySettings

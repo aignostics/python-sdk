@@ -232,43 +232,42 @@ def test_missing_url() -> None:
 
 
 @pytest.mark.unit
-def test_stop_nonrunning_server() -> None:
+def test_stop_nonrunning_server(caplog: pytest.LogCaptureFixture) -> None:
     """Test stopping a server that isn't running.
 
     Verifies that stopping a non-running server doesn't cause errors
     and logs the appropriate messages.
     """
-    with patch("aignostics.notebook._service.logger") as mock_logger:
-        runner = _Runner()
-        runner._marimo_server = None
-        runner._monitor_thread = None
+    runner = _Runner()
+    runner._marimo_server = None
+    runner._monitor_thread = None
 
-        # This should not raise any exceptions
-        runner.stop()
+    # This should not raise any exceptions
+    runner.stop()
 
-        # Verify that appropriate log messages were produced
-        mock_logger.debug.assert_any_call("Marimo server is not running.")
-        mock_logger.debug.assert_any_call("Monitor thread is not running.")
-        mock_logger.info.assert_called_with("Service stopped.")
+    # Verify that the final log message was produced
+    # Note: "Marimo server is not running" and "Monitor thread is not running"
+    # are logged at TRACE level which caplog doesn't capture by default
+    assert "Service stopped." in caplog.text
 
 
 @pytest.mark.unit
-def test_capture_output_no_stdout() -> None:
+def test_capture_output_no_stdout(caplog: pytest.LogCaptureFixture) -> None:
     """Test _capture_output method with None stdout.
 
     This tests the case where process.stdout is None, which should
     log a warning and return early.
     """
-    with patch("aignostics.notebook._service.logger") as mock_logger:
-        runner = _Runner()
-        process = MagicMock()
-        process.stdout = None
+    runner = _Runner()
+    process = MagicMock()
+    process.stdout = None
 
-        # This should not raise any exceptions
-        runner._capture_output(process)
+    # This should not raise any exceptions
+    runner._capture_output(process)
 
-        # Verify that a warning was logged
-        mock_logger.warning.assert_called_once_with("Cannot capture stdout")
+    # Verify that a warning was logged
+    assert "Cannot capture stdout" in caplog.text
+    assert any(record.levelname == "WARNING" for record in caplog.records)
 
 
 @pytest.mark.unit

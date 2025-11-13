@@ -85,10 +85,10 @@ ua = user_agent()
 **Logging:**
 
 ```python
-from aignostics.utils import get_logger
+from loguru import logger
 
-logger = get_logger(__name__)
-logger.info("Application started", extra={"correlation_id": "123"})
+
+logger.debug("Application started", extra={"correlation_id": "123"})
 ```
 
 **Settings Management:**

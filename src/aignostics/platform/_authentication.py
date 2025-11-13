@@ -13,6 +13,7 @@ from urllib import parse
 
 import jwt
 import requests
+from loguru import logger
 from pydantic import BaseModel, SecretStr
 from requests.exceptions import HTTPError, JSONDecodeError, RequestException
 from requests_oauthlib import OAuth2Session
@@ -31,9 +32,6 @@ from aignostics.platform._messages import (
     INVALID_REDIRECT_URI,
 )
 from aignostics.platform._settings import settings
-from aignostics.utils import get_logger
-
-logger = get_logger(__name__)
 
 CALLBACK_PORT_RETRY_COUNT = 20
 CALLBACK_PORT_BACKOFF_DELAY = 1

@@ -7,11 +7,9 @@ from pathlib import Path
 import humanize
 
 from aignostics.gui import frame
-from aignostics.utils import BasePageBuilder, get_logger
+from aignostics.utils import BasePageBuilder
 
 from ._service import InstallProgress, InstallProgressState, Service
-
-logger = get_logger(__name__)
 
 
 class PageBuilder(BasePageBuilder):
@@ -99,7 +97,7 @@ class PageBuilder(BasePageBuilder):
                     pid = await run.cpu_bound(Service.execute_qupath)
                     if pid:
                         message = f"QuPath launched successfully with process id '{pid}'."
-                        logger.info(message)
+                        logger.debug(message)
                         ui.notify(message, type="positive")
                     else:
                         message = "Failed to launch QuPath."

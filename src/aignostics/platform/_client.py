@@ -12,6 +12,7 @@ from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
+from loguru import logger
 from tenacity import (
     Retrying,
     before_sleep_log,
@@ -26,11 +27,9 @@ from aignostics.platform._authentication import get_token
 from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform.resources.applications import Applications, Versions
 from aignostics.platform.resources.runs import Run, Runs
-from aignostics.utils import get_logger, user_agent
+from aignostics.utils import user_agent
 
 from ._settings import settings
-
-logger = get_logger(__name__)
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,
@@ -96,12 +95,12 @@ class Client:
         Sets up resource accessors for applications, versions, and runs.
         """
         try:
-            logger.debug("Initializing client with cache_token=%s", cache_token)
+            logger.trace("Initializing client with cache_token={}", cache_token)
             self._api = Client.get_api_client(cache_token=cache_token)
             self.applications: Applications = Applications(self._api)
             self.runs: Runs = Runs(self._api)
             self.versions: Versions = Versions(self._api)
-            logger.debug("Client initialized successfully.")
+            logger.trace("Client initialized successfully.")
         except Exception:
             logger.exception("Failed to initialize client.")
             raise

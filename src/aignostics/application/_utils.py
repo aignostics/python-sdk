@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import humanize
+from loguru import logger
 
 from aignostics.constants import (
     HETA_APPLICATION_ID,
@@ -30,9 +31,7 @@ from aignostics.platform import (
     RunItemStatistics,
     RunState,
 )
-from aignostics.utils import console, get_logger
-
-logger = get_logger(__name__)
+from aignostics.utils import console
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
 
@@ -310,7 +309,7 @@ def read_metadata_csv_to_dict(
         with metadata_csv_file.open("r", encoding="utf-8") as f:
             return list(csv.DictReader(f, delimiter=";", quotechar='"'))
     except (csv.Error, UnicodeDecodeError, KeyError) as e:
-        logger.warning("Failed to parse metadata CSV file '%s': %s", metadata_csv_file, e)
+        logger.warning("Failed to parse metadata CSV file '{}': {}", metadata_csv_file, e)
         console.print(f"[warning]Warning:[/warning] Failed to parse metadata CSV file '{metadata_csv_file}': {e}")
         return None
 
@@ -380,7 +379,7 @@ def get_file_extension_for_artifact(artifact: OutputArtifactData) -> str:
         file_extension = ".json"
     if not file_extension:
         file_extension = ".bin"
-    logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
+    logger.trace("Guessed file extension: '{}' for artifact '{}'", file_extension, artifact.name)
     return file_extension
 
 

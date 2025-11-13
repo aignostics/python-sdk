@@ -36,6 +36,7 @@ from aignx.codegen.models import (
 )
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
+from loguru import logger
 from tenacity import (
     Retrying,
     before_sleep_log,
@@ -63,9 +64,7 @@ from aignostics.platform._utils import (
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
-from aignostics.utils import get_logger, user_agent
-
-logger = get_logger(__name__)
+from aignostics.utils import user_agent
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,  # TODO(Helmut): Do we want this down the road?
@@ -266,7 +265,7 @@ class Run:
                         self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 sleep(sleep_interval)
                 application_run_state = self.details(nocache=True).state
-                logger.debug("Continuing to wait for run %s, current state: %r", self.run_id, self)
+                logger.trace("Continuing to wait for run {}, current state: {!r}", self.run_id, self)
                 print(self) if print_status else None
 
             # check if last results have been downloaded yet and report on errors
@@ -332,23 +331,23 @@ class Run:
                 if file_path.exists():
                     file_checksum = calculate_file_crc32c(file_path)
                     if file_checksum != checksum:
-                        logger.debug("Resume download for %s to %s", artifact.name, file_path)
+                        logger.trace("Resume download for %s to %s", artifact.name, file_path)
                         print(f"> Resume download for {artifact.name} to {file_path}") if print_status else None
                     else:
                         continue
                 else:
                     downloaded_at_least_one_artifact = True
-                    logger.debug("Download for %s to %s", artifact.name, file_path)
+                    logger.trace("Download for %s to %s", artifact.name, file_path)
                     print(f"> Download for {artifact.name} to {file_path}") if print_status else None
 
                 # if file is not there at all or only partially downloaded yet
                 download_file(artifact.download_url, str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
-            logger.debug("Downloaded results for item: %s to %s", item.external_id, item_dir)
+            logger.trace("Downloaded results for item: %s to %s", item.external_id, item_dir)
             print(f"Downloaded results for item: {item.external_id} to {item_dir}") if print_status else None
         else:
-            logger.debug("Results for item: %s already present in %s", item.external_id, item_dir)
+            logger.trace("Results for item: %s already present in %s", item.external_id, item_dir)
             print(f"Results for item: {item.external_id} already present in {item_dir}") if print_status else None
 
     def update_custom_metadata(

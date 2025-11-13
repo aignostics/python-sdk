@@ -1,37 +1,25 @@
 """Logging configuration and utilities."""
 
 import contextlib
-import logging as python_logging
+import logging
 import os
-from logging import Filter as LogggingFilter
-from logging import Handler
+import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
-import click
 import platformdirs
-from pydantic import Field, ValidationInfo, field_validator
+from loguru import logger
+from pydantic import Field
+
+if TYPE_CHECKING:
+    from loguru import Record
+
+from pydantic import ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from rich.console import Console
-from rich.logging import RichHandler
 
-from ._constants import __env_file__, __is_running_in_read_only_environment__, __project_name__
+from ._constants import __env_file__, __is_library_mode__, __project_name__
 from ._settings import load_settings
-
-
-def get_logger(name: str | None) -> python_logging.Logger:
-    """
-    Get a logger instance with the given name or project name as default.
-
-    Args:
-        name(str): The name for the logger. If None, uses project name.
-
-    Returns:
-        Logger: Configured logger instance.
-    """
-    if (name is None) or (name == __project_name__):
-        return python_logging.getLogger(__project_name__)
-    return python_logging.getLogger(f"{__project_name__}.{name}")
 
 
 def _validate_file_name(file_name: str | None) -> str | None:
@@ -76,6 +64,38 @@ def _validate_file_name(file_name: str | None) -> str | None:
     return file_name
 
 
+class InterceptHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:  # noqa: PLR6301
+        # Ignore Sentry-related log messages
+        if "sentry.io" in record.getMessage():
+            return
+
+        try:
+            level: str | int = logger.level(record.levelname).name
+        except ValueError:
+            level = "DEBUG"
+
+        # Patch the record to use the original logger name, function, and line from standard logging
+        def patcher(record_dict: "Record") -> None:
+            record_dict["module"] = record.module
+            if record.processName and record.process:
+                record_dict["process"].id = record.process
+                record_dict["process"].name = record.processName
+            if record.threadName and record.thread:
+                record_dict["thread"].id = record.thread
+                record_dict["thread"].name = record.threadName
+            if record.taskName:
+                record_dict["extra"]["logging.taskName"] = record.taskName
+            record_dict["name"] = record.name
+            record_dict["function"] = record.funcName
+            record_dict["line"] = record.lineno
+            record_dict["file"].path = record.pathname
+            record_dict["file"].name = record.filename
+
+        # Don't use depth parameter - let it use the patched function/line info instead
+        logger.patch(patcher).opt(exception=record.exc_info).log(level, record.getMessage())
+
+
 class LogSettings(BaseSettings):
     """Settings for configuring logging behavior."""
 
@@ -87,8 +107,12 @@ class LogSettings(BaseSettings):
     )
 
     level: Annotated[
-        Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
-        Field(description="Logging level", default="INFO"),
+        Literal["CRITICAL", "ERROR", "WARNING", "SUCCESS", "INFO", "DEBUG", "TRACE"],
+        Field(description="Log level, see https://loguru.readthedocs.io/en/stable/api/logger.html", default="INFO"),
+    ]
+    stderr_enabled: Annotated[
+        bool,
+        Field(description="Enable logging to stderr", default=True),
     ]
     file_enabled: Annotated[
         bool,
@@ -98,14 +122,12 @@ class LogSettings(BaseSettings):
         str,
         Field(
             description="Name of the log file",
-            default="/dev/stdout"
-            if __is_running_in_read_only_environment__
-            else platformdirs.user_data_dir(__project_name__) + f"/{__project_name__}.log",
+            default=platformdirs.user_data_dir(__project_name__) + f"/{__project_name__}.log",
         ),
     ]
-    console_enabled: Annotated[
+    redirect_logging: Annotated[
         bool,
-        Field(description="Enable logging to console", default=False),
+        Field(description="Redirect standard logging", default=True),
     ]
 
     @field_validator("file_name")
@@ -127,73 +149,39 @@ class LogSettings(BaseSettings):
         return file_name
 
 
-class CustomFilter(LogggingFilter):
-    """Filter to exclude specific dependencies or their messages from logging."""
+def logging_initialize(filter_func: Callable[["Record"], bool] | None = None) -> None:
+    """Initialize logging configuration.
 
-    def filter(self, record: python_logging.LogRecord) -> bool:  # noqa: PLR6301
-        """
-        Filter out log records from specific dependencies.
-
-        Args:
-            record: The log record to filter.
-
-        Returns:
-            bool: True if the record should be logged, False otherwise.
-        """
-        excluded_dependencies: set[str] | dict[str, str] = {"bla"}
-        if record.name in excluded_dependencies:
-            return False
-        return not (record.name == "dotenv.main" and record.getMessage().endswith("key doesn't exist."))
-
-
-def logging_initialize(log_to_logfire: bool = False) -> None:
-    """Initialize logging configuration."""
-    log_filter = CustomFilter()
-
-    handlers: list[Handler] = []
+    Args:
+        filter_func: Optional filter function to apply to all loggers.
+                    Should accept a Record and return True to log the message, False to filter it out.
+    """
+    if __is_library_mode__:
+        return
 
     settings = load_settings(LogSettings)
 
-    if settings.file_enabled:
-        file_handler = python_logging.FileHandler(settings.file_name)
-        file_formatter = python_logging.Formatter(
-            fmt="%(asctime)s %(levelname)s [%(name)s] [%(process)d] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        file_handler.setFormatter(file_formatter)
-        file_handler.addFilter(log_filter)
-        handlers.append(file_handler)
+    logger.remove()  # Remove all default loggers
 
-    if settings.console_enabled:
-        rich_handler = RichHandler(
-            console=Console(stderr=True),
-            markup=True,
-            rich_tracebacks=True,
-            tracebacks_suppress=[click],
-            show_time=True,
-            omit_repeated_times=True,
-            show_path=True,
-            show_level=True,
-            enable_link_path=True,
-        )
-        rich_handler.addFilter(log_filter)
-        handlers.append(rich_handler)
+    k_service = os.getenv("K_SERVICE", "")  # GCP specific
+    logger.configure(extra={"__project__name__": __project_name__, "K_SERVICE": k_service})  # Add as extras
 
-    if log_to_logfire:
-        from importlib.util import find_spec  # noqa: PLC0415
-
-        if find_spec("logfire"):
-            import logfire  # noqa: PLC0415
-
-            logfire_handler = logfire.LogfireLoggingHandler()
-            logfire_handler.addFilter(log_filter)
-            handlers.append(logfire_handler)
-
-    if not handlers:
-        handlers = [python_logging.NullHandler()]
-    python_logging.basicConfig(
-        level=settings.level,
-        format=r"\[%(name)s] [%(process)d] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=handlers,
+    log_format = (
+        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+        "<yellow>{process: <6}</yellow> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+        "<level>{message}</level> | "
+        "{extra}"
     )
+
+    if settings.stderr_enabled:
+        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func)
+
+    if settings.file_enabled:
+        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func)
+
+    if settings.redirect_logging:
+        logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+    logger.trace("Logging initialized with level: {}", settings.level)

@@ -2,12 +2,9 @@
 
 import pytest
 
-from aignostics.utils import get_logger
 from aignostics.utils._health import Health
 
 DB_FAILURE = "DB failure"
-
-log = get_logger(__name__)
 
 
 @pytest.mark.unit

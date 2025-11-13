@@ -52,13 +52,14 @@ import requests
 from packaging.version import Version
 from tqdm import tqdm
 
-from aignostics.utils import get_logger, SUBPROCESS_CREATION_FLAGS
+from loguru import logger
+from aignostics.utils import SUBPROCESS_CREATION_FLAGS
 
 aws_endpoint_url = "https://s3.amazonaws.com"
 gcp_endpoint_url = "https://storage.googleapis.com"
 asset_endpoint_url = f"https://github.com/ImagingDataCommons/idc-index-data/releases/download/{idc_index_data.__version__}"
 
-logger = get_logger(__name__)
+
 
 # TODO(Helmut): Clean solution for no-verify-ssl
  
@@ -98,7 +99,7 @@ class IDCClient:
 
         # Read main index file
         file_path = idc_index_data.IDC_INDEX_PARQUET_FILEPATH
-        logger.debug(f"Reading index file v{idc_index_data.__version__}")
+        logger.trace(f"Reading index file v{idc_index_data.__version__}")
         self.index = pd.read_parquet(file_path)
 
         # initialize crdc_series_uuid for the index
@@ -178,7 +179,7 @@ class IDCClient:
         if self.s5cmdPath is None:
             # Workaround to support environment without a properly setup PATH
             # See https://github.com/Slicer/Slicer/pull/7587
-            logger.debug("Falling back to looking up s5cmd along side the package")
+            logger.trace("Falling back to looking up s5cmd along side the package")
             for script in distribution("s5cmd").files:
                 if str(script).startswith("s5cmd/bin/s5cmd"):
                     self.s5cmdPath = script.locate().resolve(strict=True)
@@ -188,7 +189,7 @@ class IDCClient:
                 "s5cmd executable not found. Please install s5cmd from https://github.com/peak/s5cmd#installation"
             )
         self.s5cmdPath = str(self.s5cmdPath)
-        logger.debug(f"Found s5cmd executable: {self.s5cmdPath}")
+        logger.trace(f"Found s5cmd executable: {self.s5cmdPath}")
         # ... and check it can be executed
         subprocess.check_call([self.s5cmdPath, "--help"], stdout=subprocess.DEVNULL)
 
@@ -354,8 +355,8 @@ class IDCClient:
 
     def _check_disk_size_and_warn(self, download_dir, disk_size_needed):
         disk_free_space_MB = psutil.disk_usage(download_dir).free / (1000 * 1000)
-        logger.info("Disk size needed: " + self._format_size(disk_size_needed))
-        logger.info("Disk size available: " + self._format_size(disk_free_space_MB))
+        logger.debug("Disk size needed: " + self._format_size(disk_size_needed))
+        logger.debug("Disk size available: " + self._format_size(disk_free_space_MB))
         if disk_free_space_MB < disk_size_needed:
             logger.error("Not enough free space on disk to download the files.")
             return False
@@ -377,7 +378,7 @@ class IDCClient:
                 f"Index {index_name} already installed and will not be fetched again."
             )
         else:
-            logger.info("Fetching index %s", index_name)
+            logger.debug("Fetching index %s", index_name)
             response = requests.get(
                 self.indices_overview[index_name]["url"], timeout=30
             )
@@ -409,7 +410,7 @@ class IDCClient:
         # if clinical_index is requested, likely the user will need clinical data
         # download it here, given that the size is small (<2MB as of IDC v19)
         if index_name == "clinical_index":
-            logger.info(
+            logger.debug(
                 "Since clinical_index was fetched, also installing corresponding tables."
             )
             # create clinical_data folder under self.idc_data_dir, if it does not exist
@@ -432,7 +433,7 @@ class IDCClient:
             if result.stderr and result.stdout.startswith("ERROR"):
                 logger.error("Failed to download IDC clinical data.")
             else:
-                logger.info(
+                logger.debug(
                     "IDC clinical data downloaded successfully to %s",
                     self.clinical_data_dir,
                 )
@@ -537,7 +538,7 @@ class IDCClient:
             else:
                 response = patient_df
 
-        logger.debug("Get patient response: %s", str(response))
+        logger.trace("Get patient response: %s", str(response))
 
         return response
 
@@ -591,7 +592,7 @@ class IDCClient:
             else:
                 response = studies_df
 
-        logger.debug("Get patient study response: %s", str(response))
+        logger.trace("Get patient study response: %s", str(response))
 
         return response
 
@@ -665,7 +666,7 @@ class IDCClient:
                 response = series_df.to_dict(orient="records")
             else:
                 response = series_df
-        logger.debug("Get series response: %s", str(response))
+        logger.trace("Get series response: %s", str(response))
 
         return response
 
@@ -914,9 +915,9 @@ class IDCClient:
         import pandas as pd
         import duckdb
         
-        logger.debug("manifest validation is requested: " + str(validate_manifest))
+        logger.trace("manifest validation is requested: " + str(validate_manifest))
 
-        logger.debug("Parsing the manifest. Please wait..")
+        logger.trace("Parsing the manifest. Please wait..")
         # Read the manifest as a csv file
         manifest_df = pd.read_csv(
             manifestFile, comment="#", skip_blank_lines=True, header=None
@@ -1028,7 +1029,7 @@ class IDCClient:
                 f"different from {self.get_idc_version()} used in this version of idc-index. Prior data releases will be checked next."
             )
 
-            logger.debug(
+            logger.trace(
                 "Checking if the requested data is available in other idc versions "
             )
 
@@ -1098,7 +1099,7 @@ class IDCClient:
                 )
                 logger.error("\n" + "\n".join(missing_manifest_cp_cmds.tolist()))
             else:
-                logger.info("All of the identifiers from manifest have been resolved!")
+                logger.debug("All of the identifiers from manifest have been resolved!")
 
         # `idc-open-data` bucket is present in both AWS and GCP, this is why we skip checking endpoint
         # for the URLs that contain `idc-open-data`
@@ -1141,7 +1142,7 @@ class IDCClient:
                         creationflags=SUBPROCESS_CREATION_FLAGS,
                     )
                     if process.stderr and process.stdout.startswith("ERROR"):
-                        logger.debug(
+                        logger.trace(
                             "Folder not available in GCP. Manifest appears to be invalid."
                         )
                         if validate_manifest:
@@ -1194,14 +1195,14 @@ class IDCClient:
 
             temp_manifest_file.write(commands)
 
-            logger.info("Parsing the manifest is finished. Download will begin soon")
+            logger.debug("Parsing the manifest is finished. Download will begin soon")
 
         if dirTemplate is not None:
             list_of_directories = merged_df.path.to_list()
         else:
             list_of_directories = [downloadDir]
 
-        logger.debug(f"list of directories:{list_of_directories}")
+        logger.trace(f"list of directories:{list_of_directories}")
         return (
             total_size,
             endpoint_to_use,
@@ -1265,10 +1266,10 @@ class IDCClient:
         show_progress_bar: bool = True,
         list_of_directories=None,
     ):
-        logger.debug("Inputs received for tracking download:")
-        logger.debug(f"size_MB: {size_MB}")
-        logger.debug(f"downloadDir: {downloadDir}")
-        logger.debug(f"show_progress_bar: {show_progress_bar}")
+        logger.trace("Inputs received for tracking download:")
+        logger.trace(f"size_MB: {size_MB}")
+        logger.trace(f"downloadDir: {downloadDir}")
+        logger.trace(f"show_progress_bar: {show_progress_bar}")
 
         runtime_errors = []
 
@@ -1279,11 +1280,11 @@ class IDCClient:
             for directory in list_of_directories:
                 initial_size_bytes = IDCClient._get_dir_sum_file_size(directory)
 
-            logger.info(
+            logger.debug(
                 "Initial size of the directory: %s",
                 IDCClient._format_size(initial_size_bytes, size_in_bytes=True),
             )
-            logger.info(
+            logger.debug(
                 "Approximate size of the files that need to be downloaded: %s",
                 IDCClient._format_size(size_MB),
             )
@@ -1348,7 +1349,7 @@ class IDCClient:
         import pandas as pd
         import duckdb
 
-        logger.info("Parsing the s5cmd sync dry run output...")
+        logger.debug("Parsing the s5cmd sync dry run output...")
 
         stdout_df = pd.DataFrame(stdout.splitlines(), columns=["s5cmd_output"])
 
@@ -1392,7 +1393,7 @@ class IDCClient:
         sync_size = synced_df["series_size_MB"].sum()
         sync_size_rounded = round(sync_size, 2)
 
-        logger.debug(f"sync_size_rounded: {sync_size_rounded}")
+        logger.trace(f"sync_size_rounded: {sync_size_rounded}")
 
         # Write a temporary manifest file
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as synced_manifest:
@@ -1400,7 +1401,7 @@ class IDCClient:
             commands = "\n".join(synced_df["s5cmd_cmd"])
             synced_manifest.write(commands)
 
-            logger.info("Parsing the s5cmd sync dry run output finished")
+            logger.debug("Parsing the s5cmd sync dry run output finished")
         return Path(synced_manifest.name), sync_size_rounded, list_of_directories
 
     def _s5cmd_run(
@@ -1442,15 +1443,15 @@ class IDCClient:
         Returns:
             None
         """
-        logger.debug("running self._s5cmd_run. Inputs received:")
-        logger.debug(f"endpoint_to_use: {endpoint_to_use}")
-        logger.debug(f"manifest_file: {manifest_file}")
-        logger.debug(f"total_size: {total_size}")
-        logger.debug(f"downloadDir: {downloadDir}")
-        logger.debug(f"quiet: {quiet}")
-        logger.debug(f"show_progress_bar: {show_progress_bar}")
-        logger.debug(f"use_s5cmd_sync: {use_s5cmd_sync}")
-        logger.debug(f"dirTemplate: {dirTemplate}")
+        logger.trace("running self._s5cmd_run. Inputs received:")
+        logger.trace(f"endpoint_to_use: {endpoint_to_use}")
+        logger.trace(f"manifest_file: {manifest_file}")
+        logger.trace(f"total_size: {total_size}")
+        logger.trace(f"downloadDir: {downloadDir}")
+        logger.trace(f"quiet: {quiet}")
+        logger.trace(f"show_progress_bar: {show_progress_bar}")
+        logger.trace(f"use_s5cmd_sync: {use_s5cmd_sync}")
+        logger.trace(f"dirTemplate: {dirTemplate}")
 
         if quiet:
             stdout = subprocess.DEVNULL
@@ -1460,7 +1461,7 @@ class IDCClient:
             stderr = None
 
         if use_s5cmd_sync and len(os.listdir(downloadDir)) != 0:
-            logger.debug(
+            logger.trace(
                 "Requested progress bar along with s5cmd sync dry run.\
                         Using s5cmd sync dry run as the destination folder is not empty"
             )
@@ -1482,7 +1483,7 @@ class IDCClient:
 
             if process.stdout:
                 # Some files need to be downloaded
-                logger.info(
+                logger.debug(
                     """
 stoud from s5cmd sync dry run is not empty. Parsing the output to
 evaluate what to download and corresponding size with only series level precision
@@ -1496,7 +1497,7 @@ evaluate what to download and corresponding size with only series level precisio
                     stdout=process.stdout,
                     s5cmd_sync_helper_df=s5cmd_sync_helper_df,
                 )
-                logger.info(f"sync_size (MB): {sync_size}")
+                logger.debug(f"sync_size (MB): {sync_size}")
 
                 cmd = [
                     self.s5cmdPath,
@@ -1511,13 +1512,13 @@ evaluate what to download and corresponding size with only series level precisio
                     cmd, stdout=stdout, stderr=stderr, universal_newlines=True
                 ) as process:
                     if sync_size < total_size:
-                        logger.info(
+                        logger.debug(
                             """
 Destination folder is not empty and sync size is less than total size.
 """
                         )
                         existing_data_size = round(total_size - sync_size, 2)
-                        logger.info(
+                        logger.debug(
                             f"Requested total download size is {total_size} MB, \
                                     however at least {existing_data_size} MB is already present,\
                                     so downloading only remaining up to {sync_size} MB\n\
@@ -1541,11 +1542,11 @@ Destination folder is not empty and sync size is less than total size.
                             list_of_directories,
                         )
             else:
-                logger.info(
+                logger.debug(
                     "It appears that all requested DICOM files are already present in destination folder"
                 )
         else:
-            logger.info(
+            logger.debug(
                 "Not using s5cmd sync as the destination folder is empty or sync or progress bar is not requested"
             )
             cmd = [
@@ -1581,7 +1582,7 @@ Destination folder is not empty and sync size is less than total size.
                 with open(stderr_log_file.name) as stderr_log_file:
                     for line in stderr_log_file.readlines():
                         if not quiet:
-                            logger.info(line)
+                            logger.debug(line)
                         if line.startswith("ERROR"):
                             runtime_errors.append(line)
 
@@ -1599,7 +1600,7 @@ Destination folder is not empty and sync size is less than total size.
                         f"Download process return non-zero exit code: {process.returncode}"
                     )
                 else:
-                    logger.info("Successfully downloaded files to %s", str(downloadDir))
+                    logger.debug("Successfully downloaded files to %s", str(downloadDir))
 
     @staticmethod
     def _format_size(size, size_in_bytes: bool = False):
@@ -1770,18 +1771,18 @@ Destination folder is not empty and sync size is less than total size.
             for doi in distinct_dois:
                 url = "https://dx.doi.org/" + doi
 
-                logger.debug(f"Requesting citation for DOI: {doi}")
+                logger.trace(f"Requesting citation for DOI: {doi}")
 
                 response = requests.get(url, headers=headers, timeout=timeout)
 
-                logger.debug("Received response: " + str(response.status_code))
+                logger.trace("Received response: " + str(response.status_code))
 
                 if response.status_code == 200:
                     if citation_format == self.CITATION_FORMAT_JSON:
                         citations.append(response.json())
                     else:
                         citations.append(response.text)
-                    logger.debug("Received citation: " + citations[-1])
+                    logger.trace("Received citation: " + citations[-1])
 
                 else:
                     logger.error(f"Failed to get citation for DOI: {url}")
@@ -1905,7 +1906,7 @@ Destination folder is not empty and sync size is less than total size.
             return
 
         if dry_run:
-            logger.info(
+            logger.debug(
                 "Dry run. Not downloading files. Rerun with dry_run=False to download the files."
             )
             return
@@ -2004,7 +2005,7 @@ Destination folder is not empty and sync size is less than total size.
                 list_of_directories = result_df.path.to_list()
             else:
                 list_of_directories = [downloadDir]
-        logger.debug(
+        logger.trace(
             """
 Temporary download manifest is generated and is passed to self._s5cmd_run
 """
@@ -2251,7 +2252,7 @@ Temporary download manifest is generated and is passed to self._s5cmd_run
         """
         import duckdb
 
-        logger.debug("Executing SQL query: " + sql_query)
+        logger.trace("Executing SQL query: " + sql_query)
         # TODO: find a more elegant way to automate the following:  https://www.perplexity.ai/search/write-python-code-that-iterate-XY9ppywbQFSRnOpgbwx_uQ
         index = self.index
         if self.sm_index is not None:

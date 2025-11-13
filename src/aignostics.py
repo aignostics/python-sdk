@@ -22,11 +22,9 @@ if pyi_splash and pyi_splash.is_alive():
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
 from aignostics.constants import MODULES_TO_INSTRUMENT  # noqa: E402
-from aignostics.utils import boot, get_logger, gui_run  # noqa: E402
+from aignostics.utils import boot, gui_run  # noqa: E402
 
 boot(MODULES_TO_INSTRUMENT)
-
-logger = get_logger(__name__)
 
 
 EXEC_SCRIPT_FLAG = "--exec-script"

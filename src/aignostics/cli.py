@@ -11,11 +11,8 @@ from .utils import (
     __is_running_in_container__,
     __version__,
     console,
-    get_logger,
     prepare_cli,
 )
-
-logger = get_logger(__name__)
 
 cli = typer.Typer(
     help="Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.",

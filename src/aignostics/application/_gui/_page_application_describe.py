@@ -11,7 +11,7 @@ from aiopath import AsyncPath
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
-from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
+from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
     from aignostics.platform import UserInfo
@@ -23,8 +23,6 @@ from ._utils import (
     application_id_to_icon,
     mime_type_to_icon,
 )
-
-logger = get_logger(__name__)
 
 WIDTH_1200px = "width: 1200px; max-width: none"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
@@ -434,7 +432,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                 if "pytest" in sys.modules:
                     message = f"Captured metadata '{submit_form.metadata}' for pytest."
-                    logger.debug(message)
+                    logger.trace(message)
                     ui.notify("Metadata captured.", type="info")
                 stepper.next()
 
@@ -743,7 +741,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 logger.error("Submission submit button is not initialized.")
                 return
             message = "Uploading whole slide images to Aignostics Platform ..."
-            logger.debug(message)
+            logger.trace(message)
             ui.notify(message, type="info")
             submit_form.upload_and_submit_button.disable()
             await nicegui_run.io_bound(
@@ -756,7 +754,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 upload_message_queue,
             )
             message = "Upload to Aignostics Platform completed."
-            logger.debug(message)
+            logger.trace(message)
             ui.notify(message, type="positive")
             _submit()
 

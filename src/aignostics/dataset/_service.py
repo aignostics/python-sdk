@@ -12,11 +12,10 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from loguru import logger
 
 from aignostics.platform import generate_signed_url as platform_generate_signed_url
-from aignostics.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health, get_logger
-
-logger = get_logger(__name__)
+from aignostics.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health
 
 PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"
@@ -32,7 +31,7 @@ def _terminate_process(process: subprocess.Popen[str]) -> None:
         process: The subprocess to terminate.
     """
     try:
-        logger.warning("Terminating orphaned subprocess with PID %d", process.pid)
+        logger.warning("Terminating orphaned subprocess with PID {}", process.pid)
         process.terminate()
         # Give it a moment to terminate gracefully
         for _ in range(5):
@@ -41,7 +40,7 @@ def _terminate_process(process: subprocess.Popen[str]) -> None:
             time.sleep(0.1)
         # If still running, force kill
         if process.poll() is None:
-            logger.warning("Forcefully killing subprocess with PID %d", process.pid)
+            logger.warning("Forcefully killing subprocess with PID {}", process.pid)
             process.kill()
     except Exception:
         message = f"Error terminating subprocess with PID {process.pid}"
@@ -124,7 +123,7 @@ class Service(BaseService):
                         # Scale the progress
                         adjusted_progress = base_progress + (percentage / 100.0) * (1.0 - base_progress)
                         queue.put_nowait(min(adjusted_progress, 0.99))  # Cap at 99% until complete
-                        logger.debug("Updated progress: %.2f", adjusted_progress)
+                        logger.trace("Updated progress: %.2f", adjusted_progress)
 
                 # Reset buffer after processing carriage return
                 buffer = ""
@@ -137,10 +136,10 @@ class Service(BaseService):
                         last_percentage = percentage
                         adjusted_progress = base_progress + (percentage / 100.0) * (1.0 - base_progress)
                         queue.put_nowait(min(adjusted_progress, 0.99))
-                        logger.debug("Updated progress: %.2f", adjusted_progress)
+                        logger.trace("Updated progress: %.2f", adjusted_progress)
 
                 # For debug purposes, log the complete line
-                logger.debug("Process output: %s", buffer)
+                logger.trace("Process output: {}", buffer)
                 buffer = ""
             else:
                 # Add character to buffer
@@ -156,7 +155,7 @@ class Service(BaseService):
 
         # Process has finished, set progress to 100%
         queue.put_nowait(1.0)
-        logger.debug("Process completed, setting progress to 100%")
+        logger.trace("Process completed, setting progress to 100%")
 
     @staticmethod
     def download_with_queue(  # noqa: PLR0915, C901
@@ -187,7 +186,7 @@ class Service(BaseService):
 
         target_directory = Path(target)
         if not target_directory.is_dir():
-            logger.warning("Target directory does not exist: %s", target_directory)
+            logger.warning("Target directory does not exist: {}", target_directory)
             message = f"Target directory does not exist: {target_directory}"
             raise ValueError(message)
 
@@ -200,7 +199,7 @@ class Service(BaseService):
 
         index_df = client.index
         client.fetch_index("sm_instance_index")
-        logger.info("Downloaded instance index")
+        logger.debug("Downloaded instance index")
         sm_instance_index_df = client.sm_instance_index
         queue.put_nowait(0.03)
 
@@ -215,8 +214,8 @@ class Service(BaseService):
                 return False
             unmatched_ids = list(set(item_ids) - set(matched_ids))
             if unmatched_ids:
-                logger.debug("Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids)
-            logger.info("Identified matching %s: %s", column_name, matched_ids)
+                logger.trace("Partial match for {}: matched {}, unmatched {}", column_name, matched_ids, unmatched_ids)
+            logger.debug("Identified matching {}: {}", column_name, matched_ids)
             queue.put_nowait(0.04)
 
             # Properly handle Windows paths - convert to raw string format
@@ -245,7 +244,7 @@ client.download_from_selection(
                 # When running under PyInstaller, sys.executable points to the PyInstaller executable.
                 # We use a special flag to execute the script without launching the GUI.
                 # See src/aignostics.py
-                logger.debug("Running under PyInstaller - using --exec-script flag")
+                logger.trace("Running under PyInstaller - using --exec-script flag")
                 process = subprocess.Popen(  # noqa: S603
                     [sys.executable, "--exec-script", script_content],
                     stdout=subprocess.PIPE,
@@ -255,7 +254,7 @@ client.download_from_selection(
                     creationflags=SUBPROCESS_CREATION_FLAGS,
                 )
             else:
-                logger.debug(
+                logger.trace(
                     "Starting download subprocess with executable '%s' and script:\n%s", sys.executable, script_content
                 )
                 process = subprocess.Popen(  # noqa: S603
@@ -292,7 +291,7 @@ client.download_from_selection(
                     )
                     return False
 
-                logger.info("Download completed successfully")
+                logger.debug("Download completed successfully")
                 queue.put_nowait(1.0)
                 return True
             finally:
@@ -338,7 +337,7 @@ client.download_from_selection(
         from aignostics.third_party.idc_index import IDCClient  # noqa: PLC0415
 
         client = IDCClient.client()
-        logger.info("Downloading instance index from IDC version: %s", client.get_idc_version())  # type: ignore[no-untyped-call]
+        logger.debug("Downloading instance index from IDC version: {}", client.get_idc_version())  # type: ignore[no-untyped-call]
 
         target_directory = Path(target)
         if not target_directory.is_dir():
@@ -355,7 +354,7 @@ client.download_from_selection(
 
         index_df = client.index
         client.fetch_index("sm_instance_index")
-        logger.info("Downloaded instance index")
+        logger.debug("Downloaded instance index")
         sm_instance_index_df = client.sm_instance_index
 
         def check_and_download(column_name: str, item_ids: list[str], target_directory: Path, kwarg_name: str) -> bool:
@@ -369,8 +368,8 @@ client.download_from_selection(
                 return False
             unmatched_ids = list(set(item_ids) - set(matched_ids))
             if unmatched_ids:
-                logger.debug("Partial match for %s: matched %s, unmatched %s", column_name, matched_ids, unmatched_ids)
-            logger.info("Identified matching %s: %s", column_name, matched_ids)
+                logger.trace("Partial match for {}: matched {}, unmatched {}", column_name, matched_ids, unmatched_ids)
+            logger.debug("Identified matching {}: {}", column_name, matched_ids)
             client.download_from_selection(**{  # type: ignore[no-untyped-call]
                 kwarg_name: matched_ids,
                 "downloadDir": target_directory,
@@ -428,7 +427,7 @@ client.download_from_selection(
 
             output_path = Path(destination_directory) / filename
 
-            logger.info("Downloading from %s to %s", source_url, output_path)
+            logger.debug("Downloading from {} to {}", source_url, output_path)
 
             Path(destination_directory).mkdir(parents=True, exist_ok=True)
 
@@ -443,7 +442,7 @@ client.download_from_selection(
                         if download_progress_callable:
                             download_progress_callable(len(chunk), total_size, filename)
 
-            logger.info("Successfully downloaded to %s", output_path)
+            logger.debug("Successfully downloaded to {}", output_path)
             return output_path
         except Exception as e:
             message = f"Failed to download data from '{source_url}': {e}"

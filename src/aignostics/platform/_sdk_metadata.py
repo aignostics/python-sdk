@@ -9,11 +9,10 @@ import sys
 from datetime import UTC, datetime
 from typing import Any, Literal
 
+from loguru import logger
 from pydantic import BaseModel, Field, ValidationError
 
-from aignostics.utils import get_logger, user_agent
-
-logger = get_logger(__name__)
+from aignostics.utils import user_agent
 
 SDK_METADATA_SCHEMA_VERSION = "0.0.4"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"

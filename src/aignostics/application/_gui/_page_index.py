@@ -5,11 +5,7 @@ from importlib.util import find_spec
 
 from nicegui import Client, app, ui  # noq
 
-from aignostics.utils import get_logger
-
 from ._frame import _frame
-
-logger = get_logger(__name__)
 
 if platform.system() != "Darwin":
     try:

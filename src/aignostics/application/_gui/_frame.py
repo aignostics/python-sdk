@@ -1,16 +1,14 @@
 from datetime import UTC, datetime
 from typing import Any
 
+from loguru import logger
 from nicegui import app, background_tasks, context, ui  # noq
 from nicegui import run as nicegui_run
 
 from aignostics.gui import frame
-from aignostics.utils import get_logger
 
 from .._service import Service  # noqa: TID252
 from ._utils import application_id_to_icon, run_status_to_icon_and_color
-
-logger = get_logger(__name__)
 
 BORDERED_SEPARATOR = "bordered separator"
 RUNS_LIMIT = 100
