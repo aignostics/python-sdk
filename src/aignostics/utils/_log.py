@@ -127,7 +127,7 @@ class LogSettings(BaseSettings):
     ]
     redirect_logging: Annotated[
         bool,
-        Field(description="Redirect standard logging", default=True),
+        Field(description="Redirect standard logging", default=False),
     ]
 
     @field_validator("file_name")
