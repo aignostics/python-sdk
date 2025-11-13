@@ -37,12 +37,11 @@ def _log_filter(record: Any) -> bool:  # noqa: ANN401
     )
 
 
-logger = logging.getLogger("botocore")
-logger.setLevel(logging.CRITICAL)
-logger = logging.getLogger("boto3")
-logger.setLevel(logging.CRITICAL)
-logger = logging.getLogger("boto3.resources")
-logger.setLevel(logging.CRITICAL)
+# Note: We no longer need to disable botocore/boto3 logging completely.
+# Instead, InterceptHandler filters these loggers to prevent re-entrancy deadlocks.
+# They will use standard logging.basicConfig handler which is thread-safe.
+# If you need to see botocore debug logs, configure standard logging separately:
+#   logging.getLogger('botocore').setLevel(logging.DEBUG)
 
 
 boot(sentry_integrations=SENTRY_INTEGRATIONS, log_filter=_log_filter)

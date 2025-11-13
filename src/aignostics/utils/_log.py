@@ -70,6 +70,13 @@ class InterceptHandler(logging.Handler):
         if "sentry.io" in record.getMessage():
             return
 
+        # Prevent re-entrancy deadlock: Don't intercept logs from botocore/boto3
+        # These libraries log from within handlers, which can cause circular calls:
+        # Logger -> Handler -> Botocore -> Logger -> DEADLOCK
+        # Let them use standard logging instead of loguru to avoid the lock issue
+        if record.name.startswith(("botocore", "boto3")):
+            return
+
         try:
             level: str | int = logger.level(record.levelname).name
         except ValueError:
@@ -176,10 +183,11 @@ def logging_initialize(filter_func: Callable[["Record"], bool] | None = None) ->
     )
 
     if settings.stderr_enabled:
-        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func)
+        # Use enqueue=True to prevent deadlocks when logging from within signal handlers or other loggers
+        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func, enqueue=True)
 
     if settings.file_enabled:
-        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func)
+        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func, enqueue=True)
 
     if settings.redirect_logging:
         logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
