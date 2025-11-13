@@ -37,6 +37,11 @@ def _log_filter(record: Any) -> bool:  # noqa: ANN401
     )
 
 
+import logging  # noqa: E402
+
+logging.getLogger("boto").setLevel(logging.WARNING)
+
+
 boot(sentry_integrations=SENTRY_INTEGRATIONS, log_filter=_log_filter)
 
 __all__ = [
