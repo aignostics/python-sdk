@@ -408,8 +408,8 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
     Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
 
     formats = {
-        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", "AIGNOSTICS_LOG_CONSOLE_ENABLED=false"]},
-        "json": {"ext": "json", "args": ["--output-format=json", "--env", "AIGNOSTICS_LOG_CONSOLE_ENABLED=false"]},
+        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
+        "json": {"ext": "json", "args": ["--output-format=json", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
     }
 
     for version in API_VERSIONS:
@@ -443,7 +443,7 @@ def _generate_sdk_metadata_schema(session: nox.Session, schema_type: str) -> Non
             f"{schema_type}-metadata-schema",
             "--no-pretty",
             "--env",
-            "AIGNOSTICS_LOG_CONSOLE_ENABLED=false",
+            "AIGNOSTICS_LOG_STDERR_ENABLED=false",
             stdout=f,
             external=True,
         )
