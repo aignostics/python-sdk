@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 
 from .constants_test import TEST_SUITE
@@ -47,7 +48,7 @@ def pytest_xdist_auto_num_workers(config) -> int:
         num_workers = max(1, int(logical_cpu_count * factor))
         print(f"xdist_num_workers: {num_workers}")
         logger.info(
-            "Set number of xdist workers to '%s' based on logical CPU count of %d.", num_workers, logical_cpu_count
+            "Set number of xdist workers to '{}' based on logical CPU count of {}.", num_workers, logical_cpu_count
         )
         return num_workers
     return config.getoption("numprocesses")
@@ -262,8 +263,9 @@ def caplog_loguru_integration(caplog) -> Generator[None, None, None]:
 
     yield
 
-    # Remove the handler after test
-    logger.remove(handler_id)
+    # Remove the handler after test - ignore if already removed (e.g., by logging_initialize())
+    with contextlib.suppress(ValueError):
+        logger.remove(handler_id)
 
 
 @pytest.fixture
