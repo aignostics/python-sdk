@@ -117,7 +117,7 @@ class TestUserInfo:
                 aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
                 aignostics_bucket_name="test-bucket",
                 aignostics_bucket_protocol="gs",
-                aignostics_logfire_token="logfire_token",
+                aignostics_logfire_token="logfire_token",  # noqa: S106
                 aignostics_sentry_dsn="sentry_dsn",
             ),
         )
@@ -163,7 +163,7 @@ class TestUserInfo:
                 aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
                 aignostics_bucket_name="test-bucket",
                 aignostics_bucket_protocol="gs",
-                aignostics_logfire_token="logfire_token",
+                aignostics_logfire_token="logfire_token",  # noqa: S106
                 aignostics_sentry_dsn="sentry_dsn",
             ),
         )
@@ -312,7 +312,7 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -358,7 +358,7 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -427,7 +427,7 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -471,6 +471,7 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="very_secret_access_key_456",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
@@ -516,6 +517,7 @@ class TestPlatformCLI:
             aignostics_bucket_hmac_secret_access_key="very_secret_access_key_456",  # noqa: S106
             aignostics_bucket_name="test-bucket",
             aignostics_bucket_protocol="gs",
+            aignostics_logfire_token="logfire_token",  # noqa: S106
             aignostics_sentry_dsn="sentry_dsn",
         )
         mock_user_info = UserInfo(
