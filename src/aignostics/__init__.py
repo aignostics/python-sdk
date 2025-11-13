@@ -1,6 +1,5 @@
 """Python SDK providing access to Aignostics AI services."""
 
-import logging
 import os
 from typing import Any
 
@@ -35,13 +34,6 @@ def _log_filter(record: Any) -> bool:  # noqa: ANN401
         or (record["name"] == "PIL.PngImagePlugin" and record["function"] == "call")
         or (record["name"] == "PIL.PngImagePlugin" and record["function"] == "_open")
     )
-
-
-# Note: We no longer need to disable botocore/boto3 logging completely.
-# Instead, InterceptHandler filters these loggers to prevent re-entrancy deadlocks.
-# They will use standard logging.basicConfig handler which is thread-safe.
-# If you need to see botocore debug logs, configure standard logging separately:
-#   logging.getLogger('botocore').setLevel(logging.DEBUG)
 
 
 boot(sentry_integrations=SENTRY_INTEGRATIONS, log_filter=_log_filter)

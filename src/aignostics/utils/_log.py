@@ -183,11 +183,11 @@ def logging_initialize(filter_func: Callable[["Record"], bool] | None = None) ->
     )
 
     if settings.stderr_enabled:
-        # Use enqueue=True to prevent deadlocks when logging from within signal handlers or other loggers
-        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func, enqueue=True)
+        # Use catch=True to suppress errors when stderr is closed during test teardown
+        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func, catch=True)
 
     if settings.file_enabled:
-        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func, enqueue=True)
+        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func, catch=True)
 
     if settings.redirect_logging:
         logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
