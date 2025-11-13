@@ -259,7 +259,8 @@ def caplog_loguru_integration(caplog) -> Generator[None, None, None]:
             logging.getLogger(record.name).handle(record)
 
     # Add handler to propagate loguru logs to Python's logging
-    handler_id = logger.add(PropagateHandler(), format="{message}")
+    # Use enqueue=True to prevent deadlocks in multi-threaded contexts (e.g., botocore)
+    handler_id = logger.add(PropagateHandler(), format="{message}", enqueue=True)
 
     yield
 
