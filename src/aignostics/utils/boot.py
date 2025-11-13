@@ -5,9 +5,18 @@ import ssl
 import sys
 from pathlib import Path
 
-import certifi
-import truststore
+# Optional SSL certificate modules - gracefully degrade if not available
+try:
+    import certifi
+except ImportError:
+    certifi = None  # type: ignore[assignment]
 
+try:
+    import truststore  # pyright: ignore[reportMissingImports]
+except ImportError:
+    truststore = None  # type: ignore[assignment]
+
+from ._constants import __is_library_mode__
 from ._log import logging_initialize
 
 # Import third party dependencies.
@@ -60,9 +69,6 @@ def _parse_env_args() -> None:
 
     - Last but not least removes those args so typer does not complain about them.
     """
-    logger = get_logger(__name__)
-    logger.debug("_parse_env_args called with sys.argv: %s", sys.argv)
-
     i = 1  # Start after script name
     to_remove = []
     prefix = f"{__project_name__.upper()}_"
@@ -89,6 +95,8 @@ def _parse_env_args() -> None:
 
 
 def _amend_ssl_trust_chain() -> None:
+    if __is_library_mode__:
+        return
     truststore.inject_into_ssl()
 
     if ssl.get_default_verify_paths().cafile is None and os.environ.get("SSL_CERT_FILE") is None:
@@ -99,12 +107,14 @@ def _log_boot_message() -> None:
     """Log boot message with version and process information."""
     logger = get_logger(__name__)
     process_info = get_process_info()
-    logger.info(
-        "⭐ Booting %s v%s (project root %s, pid %s), parent '%s' (pid %s)",
+    mode_suffix = ", library-mode" if __is_library_mode__ else ""
+    logger.debug(
+        "⭐ Booting %s v%s (project root %s, pid %s), parent '%s' (pid %s)%s",
         __project_name__,
         __version__,
         process_info.project_root,
         process_info.pid,
         process_info.parent.name,
         process_info.parent.pid,
+        mode_suffix,
     )

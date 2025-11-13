@@ -19,6 +19,12 @@ __version_full__ = f"{__version__}+{__build_number__}" if __build_number__ else 
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
 __is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
 
+# Detect if we're runnning as CLI (not during doc generation or testing)
+# Check if sys.argv[0] ends with project name (the actual CLI executable)
+__is_cli_execution__ = sys.argv[0].endswith(__project_name__) or (len(sys.argv) > 1 and sys.argv[1] == __project_name__)
+__is_library_mode__ = not __is_cli_execution__ and not os.getenv("PYTEST_RUNNING_AIGNOSTICS")
+__is_testing_mode__ = "pytest" in sys.modules and os.getenv("PYTEST_RUNNING_AIGNOSTICS")
+
 # Determine if we're running in a read-only runtime environment
 READ_ONLY_ENV_INDICATORS = [
     f"{__project_name__.upper()}_RUNNING_IN_CONTAINER",

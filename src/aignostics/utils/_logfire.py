@@ -7,7 +7,7 @@ from typing import Annotated
 from pydantic import BeforeValidator, Field, PlainSerializer, SecretStr
 from pydantic_settings import SettingsConfigDict
 
-from ._constants import __env__, __env_file__, __project_name__, __repository_url__, __version__
+from ._constants import __env__, __env_file__, __is_library_mode__, __project_name__, __repository_url__, __version__
 from ._settings import OpaqueSettings, load_settings, strip_to_none_before_validator
 
 
@@ -51,6 +51,9 @@ def logfire_initialize(modules: list["str"]) -> bool:
     Returns:
         bool: True if initialized successfully False otherwise
     """
+    if __is_library_mode__:
+        return False
+
     settings = load_settings(LogfireSettings)
 
     if not find_spec("logfire") or not settings.enabled or settings.token is None:

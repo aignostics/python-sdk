@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 import os
+
+from .constants_test import TEST_SUITE
+
+os.environ[f"PYTEST_RUNNING_{TEST_SUITE}"] = "1"  # Doing this at the top ensures aignostics src code sees it early
+
+import logging
 from asyncio import sleep
 from importlib.util import find_spec
 from pathlib import Path
