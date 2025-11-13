@@ -9,19 +9,6 @@ import os
 SPOT_0_GS_URL = "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 SPOT_0_FILENAME = "8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 SPOT_0_FILESIZE = 10562338
-SPOT_0_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
-    ("tissue_qc_geojson_polygons.json", 160668, 10),
-    ("tissue_segmentation_geojson_polygons.json", 853784, 10),
-    ("readout_generation_slide_readouts.csv", 302252, 10),
-    ("readout_generation_cell_readouts.csv", 1472661, 10),
-    ("cell_classification_geojson_polygons.json", 9939791, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 2807584, 10),
-    ("tissue_segmentation_csv_class_information.csv", 451, 10),
-    ("tissue_qc_csv_class_information.csv", 284, 10),
-]
-
-SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
 SPOT_0_CRC32C = "5onqtA=="
 SPOT_0_RESOLUTION_MPP = 0.26268186053789266
 SPOT_0_WIDTH = 7447
@@ -30,17 +17,6 @@ SPOT_0_HEIGHT = 7196
 SPOT_1_GS_URL = "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
 SPOT_1_FILENAME = "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
 SPOT_1_FILESIZE = 14681750
-SPOT_1_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
-    ("tissue_qc_geojson_polygons.json", 180522, 10),
-    ("tissue_segmentation_geojson_polygons.json", 270931, 10),
-    ("readout_generation_slide_readouts.csv", 295268, 10),
-    ("readout_generation_cell_readouts.csv", 2228907, 10),
-    ("cell_classification_geojson_polygons.json", 16054058, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 581258, 10),
-    ("tissue_segmentation_csv_class_information.csv", 342, 10),
-    ("tissue_qc_csv_class_information.csv", 232, 10),
-]
 SPOT_1_CRC32C = "9l3NNQ=="
 SPOT_1_WIDTH = 3728
 SPOT_1_HEIGHT = 3640
@@ -68,12 +44,66 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
         HETA_APPLICATION_ID = "he-tme"
         HETA_APPLICATION_VERSION = "1.0.0-sl.1"
+
+        SPOT_0_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
+            ("tissue_qc_geojson_polygons.json", 160668, 10),
+            ("tissue_segmentation_geojson_polygons.json", 853784, 10),
+            ("readout_generation_slide_readouts.csv", 302252, 10),
+            ("readout_generation_cell_readouts.csv", 1472661, 10),
+            ("cell_classification_geojson_polygons.json", 9939791, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 2807584, 10),
+            ("tissue_segmentation_csv_class_information.csv", 451, 10),
+            ("tissue_qc_csv_class_information.csv", 284, 10),
+        ]
+
+        SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
+
+        SPOT_1_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
+            ("tissue_qc_geojson_polygons.json", 180522, 10),
+            ("tissue_segmentation_geojson_polygons.json", 270931, 10),
+            ("readout_generation_slide_readouts.csv", 295268, 10),
+            ("readout_generation_cell_readouts.csv", 2228907, 10),
+            ("cell_classification_geojson_polygons.json", 16054058, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 581258, 10),
+            ("tissue_segmentation_csv_class_information.csv", 342, 10),
+            ("tissue_qc_csv_class_information.csv", 232, 10),
+        ]
+
     case "staging":
         TEST_APPLICATION_ID = "test-app"
         TEST_APPLICATION_VERSION = "0.0.5"
 
         HETA_APPLICATION_ID = "he-tme"
         HETA_APPLICATION_VERSION = "1.0.0-sl.1"
+
+        SPOT_0_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
+            ("tissue_qc_geojson_polygons.json", 160668, 10),
+            ("tissue_segmentation_geojson_polygons.json", 853784, 10),
+            ("readout_generation_slide_readouts.csv", 302252, 10),
+            ("readout_generation_cell_readouts.csv", 1472661, 10),
+            ("cell_classification_geojson_polygons.json", 9939791, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 2807584, 10),
+            ("tissue_segmentation_csv_class_information.csv", 451, 10),
+            ("tissue_qc_csv_class_information.csv", 284, 10),
+        ]
+
+        SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
+
+        SPOT_1_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 464908, 10),
+            ("tissue_qc_geojson_polygons.json", 180522, 10),
+            ("tissue_segmentation_geojson_polygons.json", 270931, 10),
+            ("readout_generation_slide_readouts.csv", 295268, 10),
+            ("readout_generation_cell_readouts.csv", 2228907, 10),
+            ("cell_classification_geojson_polygons.json", 16054058, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 581258, 10),
+            ("tissue_segmentation_csv_class_information.csv", 342, 10),
+            ("tissue_qc_csv_class_information.csv", 232, 10),
+        ]
+
     case _:
         message = f"Unsupported AIGNOSTICS_PLATFORM_ENVIRONMENT value: {os.getenv('AIGNOSTICS_PLATFORM_ENVIRONMENT')}"
         raise ValueError(message)
