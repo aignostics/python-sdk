@@ -51,12 +51,18 @@ from tests.constants_test import (
 
 TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 45  # 45 minutes
 TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
+TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
+    60 * 60
+)  # 1 hour - timeout should never happen if cancel on deadline exceeded works
 
 TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
 TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
 
 HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
-HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 5  # 5 hours
+HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 2  # 2 hours
+HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
+    60 * 60 * 3
+)  # 3 hours - timeout should never happen if cancel on deadline exceeded works
 
 HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
@@ -223,6 +229,7 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
     record_property,
     due_date_seconds: int,
     deadline_seconds: int,
+    timeout_seconds: int,
     tags: set[str] | None = None,
     checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> None:
@@ -237,6 +244,7 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
         payload (list[platform.InputItem]): The input items for the application run.
         due_date_seconds (int): The due date in seconds from now for the application run.
         deadline_seconds (int): The deadline in seconds from now for the application run.
+        timeout_seconds (int): The timeout in seconds to wait for the application run to complete.
         tags (set[str] | None): A set of tags to attach to the application run.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
         record_property: Function to record test properties.
@@ -255,7 +263,7 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        run.download_to_folder(temp_dir, checksum_attribute_key, timeout_seconds=deadline_seconds)
+        run.download_to_folder(temp_dir, checksum_attribute_key, timeout_seconds=timeout_seconds)
         _validate_output(run, Path(temp_dir), checksum_attribute_key)
 
 
@@ -283,12 +291,9 @@ def _find_and_validate(
     # TODO(Helmut): Build logic to find the run based on metadata once supported
 
 
-@pytest.mark.skip(
-    reason="v0.0.4 on production balking on whole_slide_image input while identical version accepting on staging"
-)
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS + 60 * 5)
 def test_platform_test_app_submit_and_wait(record_property) -> None:
     """Test application runs with the test application.
 
@@ -308,6 +313,7 @@ def test_platform_test_app_submit_and_wait(record_property) -> None:
         record_property=record_property,
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+        timeout_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS,
         tags=["test_platform_test_app_submit_and_wait"],
     )
 
@@ -315,7 +321,7 @@ def test_platform_test_app_submit_and_wait(record_property) -> None:
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS + 60 * 5)
 def test_platform_heta_app_submit_and_wait(record_property) -> None:
     """Test application runs with the HETA application.
 
@@ -336,6 +342,7 @@ def test_platform_heta_app_submit_and_wait(record_property) -> None:
         record_property=record_property,
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
+        timeout_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS,
         tags=["test_platform_heta_app_submit_and_wait"],
     )
 
