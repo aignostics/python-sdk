@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.200](https://github.com/aignostics/python-sdk/compare/v0.2.199..0.2.200) - 2025-11-13
+# [0.2.201](https://github.com/aignostics/python-sdk/compare/v0.2.200..0.2.201) - 2025-11-14
+
+### ⚙️ Miscellaneous Tasks
+
+- *(utils)* Disable default of redirecting std logging of other modules into loguru from on to off - ([71aa5d3](https://github.com/aignostics/python-sdk/commit/71aa5d330274e5447a0f3d446e72e11624676852))
+
+
+# [v0.2.200](https://github.com/aignostics/python-sdk/compare/v0.2.199..v0.2.200) - 2025-11-13
 
 ### 🚜 Refactor
 
