@@ -41,7 +41,7 @@ SPOT_3_HEIGHT = 3952
 match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
     case "production":
         TEST_APPLICATION_ID = "test-app"
-        TEST_APPLICATION_VERSION = "0.0.5"
+        TEST_APPLICATION_VERSION = "0.0.6"
 
         HETA_APPLICATION_ID = "he-tme"
         HETA_APPLICATION_VERSION = "1.0.0-sl.1"
@@ -73,7 +73,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
     case "staging":
         TEST_APPLICATION_ID = "test-app"
-        TEST_APPLICATION_VERSION = "0.0.5"
+        TEST_APPLICATION_VERSION = "0.0.6"
 
         HETA_APPLICATION_ID = "he-tme"
         HETA_APPLICATION_VERSION = "1.0.0-sl.1"
