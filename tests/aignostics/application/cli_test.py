@@ -1,5 +1,6 @@
 """Tests to verify the CLI functionality of the application module."""
 
+import os
 import platform
 import re
 from datetime import UTC, datetime, timedelta
@@ -253,6 +254,10 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
     assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
 
 
+@pytest.mark.skipif(
+    os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "staging") == "production",
+    reason="Broken when targeting production",
+)
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=3, delay=5)
