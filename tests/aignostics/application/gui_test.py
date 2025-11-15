@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=30)
-async def test_gui_index(user: User, record_property) -> None:
+async def test_gui_index(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
     # hello world
