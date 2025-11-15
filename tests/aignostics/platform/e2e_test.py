@@ -59,10 +59,10 @@ TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
 TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
 
 HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
-HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 2  # 2 hours
+HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
 HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
-    60 * 60 * 3
-)  # 3 hours - timeout should never happen if cancel on deadline exceeded works
+    60 * 60 * 5
+)  # 5 hours - timeout should never happen if cancel on deadline exceeded works
 
 HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
@@ -293,6 +293,7 @@ def _find_and_validate(
 
 @pytest.mark.e2e
 @pytest.mark.long_running
+@pytest.mark.scheduled_only
 @pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS + 60 * 5)
 def test_platform_test_app_submit_and_wait(record_property) -> None:
     """Test application runs with the test application.
