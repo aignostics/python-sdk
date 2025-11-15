@@ -45,7 +45,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
         HETA_APPLICATION_ID = "he-tme"
         HETA_APPLICATION_VERSION = "1.0.0-sl.1"
-        TEST_APPLICATION_VERSION_USE_LATEST_SKIP = True
+        TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = False
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
@@ -78,7 +78,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
         HETA_APPLICATION_ID = "he-tme"
         HETA_APPLICATION_VERSION = "1.0.0-sl.1"
-        TEST_APPLICATION_VERSION_USE_LATEST_SKIP = False
+        TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
