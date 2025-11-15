@@ -9,7 +9,7 @@ from typer.testing import CliRunner
 from aignostics.application import Service as ApplicationService
 from aignostics.application._utils import validate_due_date
 from aignostics.platform import NotFoundException, RunData, RunOutput
-from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION
+from tests.constants_test import HETA_APPLICATION_ID, HETA_APPLICATION_VERSION, TEST_APPLICATION_VERSION_USE_LATEST_SKIP
 
 
 @pytest.mark.unit
@@ -151,6 +151,10 @@ def test_application_version_invalid_semver_formats(runner: CliRunner, record_pr
 
 
 @pytest.mark.e2e
+@pytest.mark.skipif(
+    TEST_APPLICATION_VERSION_USE_LATEST_SKIP,
+    reason="Skipping test that uses 'latest' application version if so configured for given platform environment.",
+)
 def test_application_version_use_latest_fallback(runner: CliRunner, record_property) -> None:
     """Test that latest version works and tested."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
