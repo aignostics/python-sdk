@@ -19,7 +19,12 @@ __version_full__ = f"{__version__}+{__build_number__}" if __build_number__ else 
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
 __is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
 
-__is_cli_mode__ = sys.argv[0].endswith(__project_name__) or (len(sys.argv) > 1 and sys.argv[1] == __project_name__)
+__is_cli_mode__ = (
+    sys.argv[0].endswith(__project_name__)
+    or (len(sys.argv) > 1 and sys.argv[1] == __project_name__)
+    or sys.argv[0].endswith("gui_watch.py")
+    or (len(sys.argv) > 1 and sys.argv[1] == "gui_watch.py")
+)
 __is_library_mode__ = not __is_cli_mode__ and not os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
 __is_test_mode__ = "pytest" in sys.modules and os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
 
