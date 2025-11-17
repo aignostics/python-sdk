@@ -55,8 +55,10 @@ TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
     60 * 60
 )  # 1 hour - timeout should never happen if cancel on deadline exceeded works
 
-TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
-TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
+TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 12  # 24 hours
+TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 12  # 24 hours
+TEST_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
+TEST_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
 
 HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
 HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
@@ -64,8 +66,10 @@ HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
     60 * 60 * 5
 )  # 5 hours - timeout should never happen if cancel on deadline exceeded works
 
-HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
-HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 12  # 24 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 12  # 24 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
+HETA_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
 
 
 def _get_single_spot_payload_for_heta(expires_seconds: int) -> list[platform.InputItem]:
@@ -183,6 +187,12 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
         AssertionError: If any of the validation checks fail.
         ValueError: If more than one tag is provided.
     """
+    tags = tags or set()
+    deadline = datetime.now(tz=UTC) + timedelta(seconds=deadline_seconds)
+    tags.add(
+        f"find_and_validate:{deadline.month}_{deadline.day}_{deadline.hour}"
+    )  # Add a tag indicating when this run has to be found and validated for completion
+
     client = platform.Client()
     run = client.runs.submit(
         application_id=application_id,
@@ -193,11 +203,13 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                 "tags": tags or set(),
                 "scheduling": {
                     "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
-                    "deadline": (datetime.now(tz=UTC) + timedelta(seconds=deadline_seconds)).isoformat(),
+                    "deadline": deadline.isoformat(),
                 },
             }
         },
     )
+
+    # Let's validate we can fiond the run by id
     details = run.details()
     assert details.run_id == run.run_id, "Run ID mismatch after submission"
     assert details.application_id == application_id, "Application ID mismatch after submission"
@@ -206,18 +218,17 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
         f"Unexpected run state `{details.state}` after submission"
     )
 
-    if tags and len(tags) > 1:
-        message = "Only single tag filtering is supported in this test code."
-        raise ValueError(message)
-    runs = client.runs.list(
-        application_id=application_id,
-        application_version=application_version,
-        custom_metadata=f'$.sdk.tags[*] ? (@ == "{tags[0]}")' if tags else None,
-    )
-
-    # Find the submitted run in the list
-    matched_runs = [r for r in runs if r.run_id == run.run_id]
-    assert len(matched_runs) == 1, f"Submitted run `{run.run_id}` not found in run listing"
+    # ... and by tags, as otherwise the 2nd leg of the test won't be able to find it
+    for tag in tags:
+        runs = client.runs.list(
+            application_id=application_id,
+            application_version=application_version,
+            custom_metadata=f'$.sdk.tags[*] ? (@ == "{tag}")',
+        )
+        matched_runs = [r for r in runs if r.run_id == run.run_id]
+        assert len(matched_runs) == 1, (
+            f"Submitted run `{run.run_id}` not found in run listing by filtering for tag `{tag}`"
+        )
 
     return run
 
@@ -319,6 +330,7 @@ def test_platform_test_app_submit_and_wait(record_property) -> None:
     )
 
 
+@pytest.mark.skip(reason="Switching to submit and find approach")
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
@@ -348,10 +360,10 @@ def test_platform_heta_app_submit_and_wait(record_property) -> None:
     )
 
 
-@pytest.mark.skip(reason="Waits for change in scheduler")
+@pytest.mark.skip(reason="Trialing post having moved HETA to submit and find approach")
 @pytest.mark.e2e
 @pytest.mark.long_running
-@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_test_app_submit() -> None:
     """Test application submission with the test application.
 
@@ -368,16 +380,16 @@ def test_platform_test_app_submit() -> None:
         ),
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
-        tags=["test_platform_heta_app_submit_and_wait"],
+        tags={"test_platform_heta_app_submit_and_wait"},
     )
 
 
-@pytest.mark.skip(reason="Waits for change in scheduler")
+@pytest.mark.skip(reason="To be implemented by Helmut EOD")
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=60 * 5)
-def test_platform_test_app_find() -> None:
+@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
+def test_platform_test_app_find_and_validate() -> None:
     """Test application runs with the test application.
 
     This test finds an application run with the test application submitted earlier and
@@ -397,11 +409,10 @@ def test_platform_test_app_find() -> None:
     )
 
 
-@pytest.mark.skip(reason="Waits for change in scheduler")
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_heta_app_submit() -> None:
     """Test application runs with the HETA application.
 
@@ -418,16 +429,16 @@ def test_platform_heta_app_submit() -> None:
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
-        tags=["test_platform_heta_app_submit_and_find"],
+        tags={"test_platform_heta_app_submit_and_find"},
     )
 
 
-@pytest.mark.skip(reason="Waits for change in scheduler")
+@pytest.mark.skip(reason="To be implemented by Helmut EOD")
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=60 * 5)
-def test_platform_heta_app_find() -> None:
+@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
+def test_platform_heta_app_find_and_validate() -> None:
     """Test application runs with the HETA application.
 
     This test finds an application run with the HETA application submitted earlier and
