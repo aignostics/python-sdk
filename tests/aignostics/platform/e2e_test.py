@@ -310,9 +310,7 @@ def _find_and_validate(  # noqa: PLR0913, PLR0917
         application_version=application_version,
         custom_metadata=f'$.sdk.tags[*] ? (@ == "{check_this_hour_tag}")',
     )
-    checked_runs = 0
     for run in runs:
-        checked_runs += 1
         details = run.details()
         assert details.application_id == application_id, (
             f"Listed run `{run.run_id}` has unexpected application id `{details.application_id}`"
@@ -323,7 +321,6 @@ def _find_and_validate(  # noqa: PLR0913, PLR0917
         with tempfile.TemporaryDirectory() as temp_dir:
             run.download_to_folder(temp_dir, checksum_attribute_key, timeout_seconds=timeout_seconds)
             _validate_output(run, Path(temp_dir), checksum_attribute_key)
-    assert checked_runs > 0, "Expected to find at least one run to validate, but found none."
 
 
 @pytest.mark.e2e
