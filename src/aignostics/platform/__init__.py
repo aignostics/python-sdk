@@ -61,6 +61,7 @@ from ._constants import (
     TOKEN_URL_STAGING,
 )
 from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
+from ._sdk_metadata import RunSdkMetadata
 from ._service import Service, TokenInfo, UserInfo
 from ._settings import Settings, settings
 from ._utils import (
@@ -124,6 +125,7 @@ __all__ = [
     "RunData",
     "RunItemStatistics",
     "RunOutput",
+    "RunSdkMetadata",
     "RunState",
     "RunState",
     "RunTerminationReason",

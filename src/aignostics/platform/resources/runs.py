@@ -36,6 +36,7 @@ from aignx.codegen.models import (
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 from loguru import logger
+from sentry_sdk import metrics
 from tenacity import (
     RetryCallState,
     Retrying,
@@ -530,6 +531,24 @@ class Runs:
             payload,
             _request_timeout=settings().run_submit_timeout,
             _headers={"User-Agent": user_agent()},
+        )
+        metrics.count(
+            "aignostics.platform.run.submitted",
+            1,
+            attributes={
+                "api_root": settings().api_root,
+                "application_id": application_id,
+                "application_version": application_version or "latest",
+            },
+        )
+        metrics.count(
+            "aignostics.platform.items.submitted",
+            len(items),
+            attributes={
+                "api_root": settings().api_root,
+                "application_id": application_id,
+                "application_version": application_version or "latest",
+            },
         )
         operation_cache_clear()  # Clear all caches since we added a new run
         return Run(self._api, str(res.run_id))

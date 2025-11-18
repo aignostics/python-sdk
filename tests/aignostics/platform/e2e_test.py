@@ -6,6 +6,7 @@ including creating runs, downloading results, and validating outputs.
 
 """
 
+import os
 import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -20,9 +21,10 @@ from aignx.codegen.models import (
     RunState,
 )
 from loguru import logger
+from sentry_sdk import metrics
 
 from aignostics import platform
-from aignostics.platform.resources.runs import Run
+from aignostics.platform import Run, RunSdkMetadata
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
@@ -313,8 +315,8 @@ def _find_and_validate(
             f"Listed run `{run.run_id}` has unexpected application version `{details.version_number}`"
         )
         run_handle = Run.for_run_id(run.run_id)
-        print(run_handle)
         logger.trace(run_handle)
+        print(run_handle)
         for item in run_handle.results(nocache=True):
             message = (
                 f"Output of item `{item.external_id}` is `{item.output}`, state `{item.state}`, "
@@ -323,10 +325,55 @@ def _find_and_validate(
             )
             logger.trace(message)
             print(message)
-        meta = run_handle.details(nocache=True).custom_metadata
-        logger.trace(f"Custom metadata: {meta}")
-        print(f"Custom metadata: {meta}")
-        assert details.state == RunState.TERMINATED, f"Run `{run.run_id}` breached deadline: {run_handle}"
+        sdk_metadata = RunSdkMetadata.model_validate(details.custom_metadata.get("sdk", {}))
+        logger.trace(sdk_metadata.model_dump_json(indent=2))
+        print(sdk_metadata.model_dump_json(indent=2))
+        allowed_duration = datetime.fromisoformat(sdk_metadata.scheduling.deadline) - datetime.fromisoformat(
+            sdk_metadata.submission.date
+        )
+        allowed_hours = round(allowed_duration.total_seconds() / (60 * 60))
+        deadline_met = details.state is RunState.TERMINATED
+        metrics_run_attributes = {
+            "platform_environment": os.environ.get("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"),
+            "application_id": application_id,
+            "application_version": application_version,
+            "allowed_hours": allowed_hours,
+            "submitted_at": sdk_metadata.submission.date,
+            "deadline": sdk_metadata.scheduling.deadline,
+            "state": details.state.value,
+            "error_message": details.error_message,
+            "error_code": details.error_code,
+        }
+        logger.trace(f"metrics_run_attributes: {metrics_run_attributes}")
+        print(f"metrics_run_attributes: {metrics_run_attributes}")
+        if deadline_met:
+            metrics.count(
+                name="aignostics.platform.tests.run.deadline.met",
+                value=1,
+                attributes=metrics_run_attributes,
+            )
+            completed_duration_seconds = (
+                details.terminated_at - datetime.fromisoformat(sdk_metadata.submission.date)
+            ).total_seconds()
+            message = f"Run completed in {completed_duration_seconds} seconds"
+            logger.trace(message)
+            print(message)
+            if details.terminated_at:
+                metrics.distribution(
+                    name="aignostics.platform.tests.run.completed.duration",
+                    value=completed_duration_seconds,
+                    unit="seconds",
+                    attributes=metrics_run_attributes,
+                )
+        else:
+            metrics.count(
+                name="aignostics.platform.tests.runs.deadline.breached",
+                value=1,
+                attributes=metrics_run_attributes,
+            )
+        assert deadline_met, (
+            f"{run_handle}, submitted at {sdk_metadata.submission.date}, breached {allowed_hours} hour deadline."
+        )
         with tempfile.TemporaryDirectory() as temp_dir:
             run.download_to_folder(temp_dir, checksum_attribute_key, timeout_seconds=0)
             _validate_output(run, Path(temp_dir), checksum_attribute_key)
