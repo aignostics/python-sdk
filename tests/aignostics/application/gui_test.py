@@ -107,6 +107,8 @@ async def test_gui_cli_submit_to_run_result_delete(
                 str(csv_path),
                 "--note",
                 "test_gui_cli_submit_to_run_result_delete",
+                "--tags",
+                "test_gui_cli_submit_to_run_result_delete",
                 "--deadline",
                 (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
                 "--validate-only",
