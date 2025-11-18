@@ -19,6 +19,7 @@ from aignx.codegen.models import (
     RunOutput,
     RunState,
 )
+from loguru import logger
 
 from aignostics import platform
 from aignostics.platform.resources.runs import Run
@@ -58,7 +59,7 @@ TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
 TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 1  # 1 hours
 TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hours
 TEST_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
-TEST_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
+TEST_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 
 HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
 HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
@@ -69,7 +70,7 @@ HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
 HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 12  # 12 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 12  # 12 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
-HETA_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
+HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 
 
 def _get_single_spot_payload_for_heta(expires_seconds: int) -> list[platform.InputItem]:
@@ -189,8 +190,9 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
     """
     tags = tags or set()
     deadline = datetime.now(tz=UTC) + timedelta(seconds=deadline_seconds)
+    find_and_validate_at = deadline + timedelta(hours=1)
     tags.add(
-        f"find_and_validate:{deadline.month}_{deadline.day}_{deadline.hour}"
+        f"find_and_validate:{find_and_validate_at.month}_{find_and_validate_at.day}_{find_and_validate_at.hour}"
     )  # Add a tag indicating when this run has to be found and validated for completion
 
     client = platform.Client()
@@ -278,13 +280,9 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
         _validate_output(run, Path(temp_dir), checksum_attribute_key)
 
 
-def _find_and_validate(  # noqa: PLR0913, PLR0917
+def _find_and_validate(
     application_id: str,
     application_version: str,
-    payload: list[platform.InputItem],
-    due_date_seconds: int,
-    deadline_seconds: int,
-    timeout_seconds: int,
     checksum_attribute_key: str = "checksum_base64_crc32c",
 ) -> Run:
     """Find application run submitted earlier and validate its details.
@@ -292,10 +290,6 @@ def _find_and_validate(  # noqa: PLR0913, PLR0917
     Args:
         application_id (str): The application ID to use for the test.
         application_version (str): The application version to use for the test.
-        payload (list[platform.InputItem]): The input items for the application run.
-        due_date_seconds (int): The due date in seconds from now for the application run.
-        deadline_seconds (int): The deadline in seconds from now for the application run.
-        timeout_seconds (int): The timeout in seconds to wait for the application run to complete.
         checksum_attribute_key (str): The key used to validate the checksum of the output artifacts.
 
     Raises:
@@ -311,15 +305,30 @@ def _find_and_validate(  # noqa: PLR0913, PLR0917
         custom_metadata=f'$.sdk.tags[*] ? (@ == "{check_this_hour_tag}")',
     )
     for run in runs:
-        details = run.details()
+        details = run.details(nocache=True)
         assert details.application_id == application_id, (
             f"Listed run `{run.run_id}` has unexpected application id `{details.application_id}`"
         )
         assert details.version_number == application_version, (
             f"Listed run `{run.run_id}` has unexpected application version `{details.version_number}`"
         )
+        run_handle = Run.for_run_id(run.run_id)
+        print(run_handle)
+        logger.trace(run_handle)
+        for item in run_handle.results(nocache=True):
+            message = (
+                f"Output of item `{item.external_id}` is `{item.output}`, state `{item.state}`, "
+                f"error `{item.error_message}` ({item.error_code}), "
+                f"termination reason `{item.termination_reason}`."
+            )
+            logger.trace(message)
+            print(message)
+        meta = run_handle.details(nocache=True).custom_metadata
+        logger.trace(f"Custom metadata: {meta}")
+        print(f"Custom metadata: {meta}")
+        assert details.state == RunState.TERMINATED, f"Run `{run.run_id}` breached deadline: {run_handle}"
         with tempfile.TemporaryDirectory() as temp_dir:
-            run.download_to_folder(temp_dir, checksum_attribute_key, timeout_seconds=timeout_seconds)
+            run.download_to_folder(temp_dir, checksum_attribute_key, timeout_seconds=0)
             _validate_output(run, Path(temp_dir), checksum_attribute_key)
 
 
@@ -408,7 +417,7 @@ def test_platform_test_app_submit() -> None:
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=TEST_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
 def test_platform_test_app_find_and_validate() -> None:
     """Test application runs with the test application.
 
@@ -421,12 +430,6 @@ def test_platform_test_app_find_and_validate() -> None:
     _find_and_validate(
         application_id=TEST_APPLICATION_ID,
         application_version=TEST_APPLICATION_VERSION,
-        payload=_get_three_spots_payload_for_test(
-            expires_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
-        ),
-        deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
-        due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
-        timeout_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS,
     )
 
 
@@ -457,7 +460,7 @@ def test_platform_heta_app_submit() -> None:
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS + 60 * 5)
+@pytest.mark.timeout(timeout=HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
 def test_platform_heta_app_find_and_validate() -> None:
     """Test application runs with the HETA application.
 
@@ -470,12 +473,6 @@ def test_platform_heta_app_find_and_validate() -> None:
     _find_and_validate(
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
-        payload=_get_single_spot_payload_for_heta(
-            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
-        ),
-        deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
-        due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
-        timeout_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_FIND_AND_VALIDATE_TIMEOUT_SECONDS,
     )
 
 

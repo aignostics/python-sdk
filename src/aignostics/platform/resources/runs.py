@@ -458,7 +458,10 @@ class Run:
             f"{details.statistics.item_succeeded_count}"
             " [pending/processing/user-error/system-error/skipped/succeeded]"
         )
-        return f"Run `{self.run_id}`: {app_status}{error_status}, {items}"
+        return (
+            f"Run `{self.run_id}` ({details.application_id}:{details.version_number}): "
+            f"{app_status}{error_status}, {items}"
+        )
 
 
 class Runs:
