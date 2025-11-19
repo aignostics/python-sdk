@@ -28,6 +28,9 @@ from ._utils import (
 WIDTH_1200px = "width: 1200px; max-width: none"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 
+CLASS_SUBSECTION_HEADER = "text-h6 mb-0 pb-0"
+CLASS_WIDTH_ONE_THIRD = "w-1/3"
+
 
 @binding.bindable_dataclass
 class SubmitForm:
@@ -623,7 +626,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 today = now.strftime("%Y/%m/%d")
                 min_hour = (now + timedelta(hours=1)).hour
                 min_minute = (now + timedelta(hours=1)).minute
-                ui.label("Soft Due Date").classes("text-h6 mb-0 pb-0")
+                ui.label("Soft Due Date").classes("class_subsection_header")
                 ui.label(
                     "The platform will try to complete the run before this time, "
                     "given your subscription tier and available GPU resources."
@@ -676,7 +679,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         }}
                     """
                     )
-                ui.label("Hard Deadline").classes("text-h6 mb-0 pb-0")
+                ui.label("Hard Deadline").classes("class_subsection_header")
                 ui.label("The platform might cancel the run if not completed by this time.").classes(
                     "text-sm mt-0 pt-0"
                 )
@@ -845,7 +848,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
 
             if can_configure_pipeline:
                 with ui.column(align_items="start").classes("w-full"):
-                    ui.label("GPU Configuration").classes("text-h6 mb-0 pb-0")
+                    ui.label("GPU Configuration").classes("class_subsection_header")
                     ui.label(
                         "Configure GPU resources for processing your whole slide images. "
                         "These settings control the type and provisioning mode of GPUs used during AI analysis."
@@ -856,7 +859,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             label="GPU Type",
                             options={"L4": "L4", "A100": "A100"},
                             value=submit_form.gpu_type,
-                        ).bind_value(submit_form, "gpu_type").mark("SELECT_GPU_TYPE").classes("w-1/3")
+                        ).bind_value(submit_form, "gpu_type").mark("SELECT_GPU_TYPE").classes(CLASS_WIDTH_ONE_THIRD)
 
                         ui.number(
                             label="Max GPUs per Slide",
@@ -865,7 +868,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             max=8,
                             step=1,
                         ).bind_value(submit_form, "max_gpus_per_slide").mark("NUMBER_MAX_GPUS_PER_SLIDE").classes(
-                            "w-1/3"
+                            CLASS_WIDTH_ONE_THIRD
                         )
 
                         ui.select(
@@ -878,12 +881,12 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             },
                             value=submit_form.gpu_provisioning_mode,
                         ).bind_value(submit_form, "gpu_provisioning_mode").mark("SELECT_GPU_PROVISIONING_MODE").classes(
-                            "w-1/3"
+                            CLASS_WIDTH_ONE_THIRD
                         )
 
                     ui.separator().classes("my-4")
 
-                    ui.label("CPU Configuration").classes("text-h6 mb-0 pb-0")
+                    ui.label("CPU Configuration").classes("class_subsection_header")
                     ui.label("Configure CPU resources for algorithms that do not require GPU acceleration.").classes(
                         "text-sm mt-0 pt-0 mb-4"
                     )
