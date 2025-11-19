@@ -916,7 +916,7 @@ class Service(BaseService):  # noqa: PLR0904
                 validate_only=validate_only,
             )
             logger.debug(
-                "Submitted application run with items: %s, application run id %s, custom metadata: %s",
+                "Submitted application run with items: {}, application run id {}, custom metadata: {}",
                 items,
                 run.run_id,
                 custom_metadata,

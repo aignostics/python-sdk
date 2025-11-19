@@ -30,7 +30,7 @@ TEST_APPLICATION_DEADLINE_SECONDS = 60 * 45  # 45 minutes
 TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
 
 HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
-HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
+HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
 
 
 @pytest.mark.e2e
@@ -705,6 +705,9 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             "--validate-only",
         ],
     )
+
+    # Validate the download command exited successfully
+    assert result.exit_code == 0
 
     # Explore what was download
     print_directory_structure(tmp_path, "execute")
