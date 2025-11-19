@@ -76,7 +76,7 @@ dependencies = [
     # From Template
     "fastapi[standard,all]>=0.121.3,<1",
     "humanize>=4.14.0,<5",
-    "nicegui[native]>=3.1.0,<3.2.0", # Regression in 3.2.0
+    "nicegui[native]>=3.3.1,<4", # Regression in 3.2.0
     "packaging>=25.0,<26",
     "platformdirs>=4.5.0,<5",
     "psutil>=7.1.3,<8",
