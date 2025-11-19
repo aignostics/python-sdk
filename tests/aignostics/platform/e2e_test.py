@@ -28,6 +28,10 @@ from aignostics.platform import Run, RunSdkMetadata
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    PIPELINE_CPU_PROVISIONING_MODE,
+    PIPELINE_GPU_PROVISIONING_MODE,
+    PIPELINE_GPU_TYPE,
+    PIPELINE_MAX_GPUS_PER_SLIDE,
     SPOT_0_CRC32C,
     SPOT_0_GS_URL,
     SPOT_0_HEIGHT,
@@ -208,6 +212,16 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                 "scheduling": {
                     "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
                     "deadline": deadline.isoformat(),
+                },
+                "pipeline": {
+                    "gpu": {
+                        "gpu_type": PIPELINE_GPU_TYPE,
+                        "provisioning_mode": PIPELINE_GPU_PROVISIONING_MODE,
+                        "max_gpus_per_slide": PIPELINE_MAX_GPUS_PER_SLIDE,
+                    },
+                    "cpu": {
+                        "provisioning_mode": PIPELINE_CPU_PROVISIONING_MODE,
+                    },
                 },
             }
         },
