@@ -366,6 +366,22 @@ def run_execute(  # noqa: PLR0913, PLR0917
     validate_only: Annotated[
         bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
     ] = False,
+    gpu_type: Annotated[
+        str,
+        typer.Option(help="GPU type to use for processing (L4 or A100)."),
+    ] = "A100",
+    gpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = "ON_DEMAND",
+    max_gpus_per_slide: Annotated[
+        int,
+        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
+    ] = 1,
+    cpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = "ON_DEMAND",
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -401,10 +417,15 @@ def run_execute(  # noqa: PLR0913, PLR0917
         metadata_csv_file=metadata_csv_file,
         application_version=application_version,
         note=note,
+        tags=None,
         due_date=due_date,
         deadline=deadline,
         onboard_to_aignostics_portal=onboard_to_aignostics_portal,
         validate_only=validate_only,
+        gpu_type=gpu_type,
+        gpu_provisioning_mode=gpu_provisioning_mode,
+        max_gpus_per_slide=max_gpus_per_slide,
+        cpu_provisioning_mode=cpu_provisioning_mode,
     )
     result_download(
         run_id=run_id,
@@ -652,6 +673,22 @@ def run_submit(  # noqa: PLR0913, PLR0917
     validate_only: Annotated[
         bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
     ] = False,
+    gpu_type: Annotated[
+        str,
+        typer.Option(help="GPU type to use for processing (L4 or A100)."),
+    ] = "A100",
+    gpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = "ON_DEMAND",
+    max_gpus_per_slide: Annotated[
+        int,
+        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
+    ] = 1,
+    cpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = "ON_DEMAND",
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -701,11 +738,26 @@ def run_submit(  # noqa: PLR0913, PLR0917
             app_version.version_number,
             metadata_dict,
         )
+
+        # Build custom metadata with pipeline configuration
+        custom_metadata = {
+            "pipeline": {
+                "gpu": {
+                    "gpu_type": gpu_type,
+                    "provisioning_mode": gpu_provisioning_mode,
+                    "max_gpus_per_slide": max_gpus_per_slide,
+                },
+                "cpu": {
+                    "provisioning_mode": cpu_provisioning_mode,
+                },
+            },
+        }
+
         application_run = Service().application_run_submit_from_metadata(
             application_id=application_id,
             metadata=metadata_dict,
             application_version=application_version,
-            custom_metadata=None,  # TODO(Helmut): Add support for custom metadata
+            custom_metadata=custom_metadata,
             note=note,
             tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
             due_date=due_date,
