@@ -59,7 +59,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 if applications is None:
                     message = (  # type: ignore[unreachable]
                         "nicegui_run.io_bound(Service.applications_static) returned None, "
-                        "likely canceled by appliction shutdown."
+                        "likely canceled by application shutdown."
                     )
                     logger.error(message)
                     raise RuntimeError(message)  # noqa: TRY301

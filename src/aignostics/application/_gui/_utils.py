@@ -1,5 +1,7 @@
 """Utility functions for the application GUI."""
 
+from tkinter import NONE
+
 from aignostics.platform import ItemState, ItemTerminationReason, RunState, RunTerminationReason
 
 
@@ -36,24 +38,21 @@ def run_status_to_icon_and_color(
     """
     match run_status:
         case RunState.PENDING:
-            return "schedule", "info"
+            return "schedule", "secondary"
         case RunState.PROCESSING:
             return "directions_run", "info"
         case RunState.TERMINATED:
             icon = "bug_report"
+            color = NONE
             if termination_reason == RunTerminationReason.CANCELED_BY_USER:
                 icon = "cancel"
+                color = "warning"
             if termination_reason == RunTerminationReason.CANCELED_BY_SYSTEM:
                 icon = "error"
+                color = "error"
             if termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
                 icon = "sports_score"
-            color = "negative"
-            if item_succeeded_count <= 0:
-                color = "negative"
-            elif item_succeeded_count < item_count:
-                color = "warning"
-            elif item_succeeded_count == item_count:
-                color = "positive"
+                color = "success" if item_succeeded_count == item_count else "error"
             return (icon, color)
     return "bug_report", "negative"
 
@@ -72,19 +71,19 @@ def run_item_status_and_termination_reason_to_icon_and_color(  # noqa: PLR0911
     """
     match item_status:
         case ItemState.PENDING:
-            return "schedule", "info"
+            return "schedule", "secondary"
         case ItemState.PROCESSING:
             return "directions_run", "info"
         case ItemState.TERMINATED:
             if termination_reason == ItemTerminationReason.SKIPPED:
                 return "next_plan", "warning"
             if termination_reason == ItemTerminationReason.SUCCEEDED:
-                return "check_circle", "positive"
+                return "check_circle", "success"
             if termination_reason == ItemTerminationReason.SYSTEM_ERROR:
-                return "error", "negative"
+                return "error", "error"
             if termination_reason == ItemTerminationReason.USER_ERROR:
-                return "warning", "negative"
-    return "bug_report", "negative"
+                return "warning", "warning"
+    return "bug_report", "error"
 
 
 def mime_type_to_icon(mime_type: str) -> str:
