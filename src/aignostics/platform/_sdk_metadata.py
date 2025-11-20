@@ -15,14 +15,15 @@ from pydantic import BaseModel, Field, PositiveInt, ValidationError
 
 from aignostics.utils import user_agent
 
+from ._constants import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+)
+
 SDK_METADATA_SCHEMA_VERSION = "0.0.4"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
-
-# Pipeline orchestration defaults
-DEFAULT_GPU_TYPE = "L4"
-DEFAULT_MAX_GPUS_PER_SLIDE = 1
-DEFAULT_GPU_PROVISIONING_MODE = "SPOT"
-DEFAULT_CPU_PROVISIONING_MODE = "SPOT"
 
 
 class GPUType(StrEnum):

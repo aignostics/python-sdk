@@ -12,6 +12,12 @@ from loguru import logger
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
+from aignostics.platform import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+)
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
@@ -53,10 +59,10 @@ class SubmitForm:
     deadline: str = (datetime.now().astimezone() + timedelta(hours=24)).strftime("%Y-%m-%d %H:%M")
     validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
-    gpu_type: str = "A100"
-    gpu_provisioning_mode: str = "ON_DEMAND"
-    max_gpus_per_slide: int = 1
-    cpu_provisioning_mode: str = "ON_DEMAND"
+    gpu_type: str = DEFAULT_GPU_TYPE
+    gpu_provisioning_mode: str = DEFAULT_GPU_PROVISIONING_MODE
+    max_gpus_per_slide: int = DEFAULT_MAX_GPUS_PER_SLIDE
+    cpu_provisioning_mode: str = DEFAULT_CPU_PROVISIONING_MODE
 
 
 submit_form = SubmitForm()

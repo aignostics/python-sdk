@@ -11,7 +11,14 @@ import typer
 from loguru import logger
 
 from aignostics.bucket import Service as BucketService
-from aignostics.platform import NotFoundException, RunState
+from aignostics.platform import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+    NotFoundException,
+    RunState,
+)
 from aignostics.utils import console, get_user_data_directory, sanitize_path
 
 from ._models import DownloadProgress, DownloadProgressState
@@ -369,19 +376,19 @@ def run_execute(  # noqa: PLR0913, PLR0917
     gpu_type: Annotated[
         str,
         typer.Option(help="GPU type to use for processing (L4 or A100)."),
-    ] = "A100",
+    ] = DEFAULT_GPU_TYPE,
     gpu_provisioning_mode: Annotated[
         str,
         typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = "ON_DEMAND",
+    ] = DEFAULT_GPU_PROVISIONING_MODE,
     max_gpus_per_slide: Annotated[
         int,
         typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
-    ] = 1,
+    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
     cpu_provisioning_mode: Annotated[
         str,
         typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = "ON_DEMAND",
+    ] = DEFAULT_CPU_PROVISIONING_MODE,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -676,19 +683,19 @@ def run_submit(  # noqa: PLR0913, PLR0917
     gpu_type: Annotated[
         str,
         typer.Option(help="GPU type to use for processing (L4 or A100)."),
-    ] = "A100",
+    ] = DEFAULT_GPU_TYPE,
     gpu_provisioning_mode: Annotated[
         str,
         typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = "ON_DEMAND",
+    ] = DEFAULT_GPU_PROVISIONING_MODE,
     max_gpus_per_slide: Annotated[
         int,
         typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
-    ] = 1,
+    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
     cpu_provisioning_mode: Annotated[
         str,
         typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = "ON_DEMAND",
+    ] = DEFAULT_CPU_PROVISIONING_MODE,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 

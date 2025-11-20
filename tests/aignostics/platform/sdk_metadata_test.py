@@ -901,7 +901,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_pipeline_config_defaults() -> None:
         """Test that pipeline configuration uses correct defaults."""
-        from aignostics.platform._sdk_metadata import (
+        from aignostics.platform import (
             DEFAULT_CPU_PROVISIONING_MODE,
             DEFAULT_GPU_PROVISIONING_MODE,
             DEFAULT_GPU_TYPE,
