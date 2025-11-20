@@ -1,6 +1,27 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.202](https://github.com/aignostics/python-sdk/compare/v0.2.201..0.2.202) - 2025-11-19
+# [0.2.203](https://github.com/aignostics/python-sdk/compare/v0.2.202..0.2.203) - 2025-11-20
+
+### ⛰️  Features
+
+- *(application)* Better colors for runs and items, e.g. orange for canceled by user - ([182da63](https://github.com/aignostics/python-sdk/commit/182da631aaebf574d837057f1f4774696e5f7890))
+- *(application)* Highlight runs which exceeded deadline while not yet having terminated yet in orange - ([182da63](https://github.com/aignostics/python-sdk/commit/182da631aaebf574d837057f1f4774696e5f7890))
+
+### 🚜 Refactor
+
+- *(application)* Bump runs shown in sidebar from 100 to 500 - ([182da63](https://github.com/aignostics/python-sdk/commit/182da631aaebf574d837057f1f4774696e5f7890))
+
+### 🧪 Testing
+
+- *(application)* 4h for test_cli_run_execute, and check exit - ([822bc6b](https://github.com/aignostics/python-sdk/commit/822bc6b6ba167c29cb6bd119361644ed071c6169))
+- *(platform)* Tag test runs with "scheduled" if being so, for easier discoverability - ([182da63](https://github.com/aignostics/python-sdk/commit/182da631aaebf574d837057f1f4774696e5f7890))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump - ([182da63](https://github.com/aignostics/python-sdk/commit/182da631aaebf574d837057f1f4774696e5f7890))
+
+
+# [v0.2.202](https://github.com/aignostics/python-sdk/compare/v0.2.201..v0.2.202) - 2025-11-19
 
 ### ⛰️  Features
 
