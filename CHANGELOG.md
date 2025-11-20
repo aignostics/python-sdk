@@ -1,6 +1,17 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.203](https://github.com/aignostics/python-sdk/compare/v0.2.202..0.2.203) - 2025-11-20
+# [0.2.204](https://github.com/aignostics/python-sdk/compare/v0.2.203..0.2.204) - 2025-11-20
+
+### 🧪 Testing
+
+- *(platform)* Config for staging now L4, SPOT, 1 GPU - was L4, Spot, 2 GPU; Config for production now L4, Spot, 1 GPU - was A100, ON-DEMAND, 1 GPU) - ([f2cc0bd](https://github.com/aignostics/python-sdk/commit/f2cc0bd712afe73a7ff891b469849060c5aec872))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(platform)* Default config outside of tests now L4, SPOT, 1 GPU - was A100, ON-DEMAND, 1 GPU - ([f2cc0bd](https://github.com/aignostics/python-sdk/commit/f2cc0bd712afe73a7ff891b469849060c5aec872))
+
+
+# [v0.2.203](https://github.com/aignostics/python-sdk/compare/v0.2.202..v0.2.203) - 2025-11-20
 
 ### ⛰️  Features
 
