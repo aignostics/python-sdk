@@ -83,6 +83,44 @@ def validate_due_date(due_date: str | None) -> None:
         raise ValueError(message)
 
 
+def is_not_terminated_with_deadline_exceeded(
+    run_state: RunState,
+    custom_metadata: dict[str, Any] | None,
+) -> bool | None:
+    """Check if the run is not terminated and the deadline has been exceeded.
+
+    Only returns True if the run is still in PENDING or PROCESSING state and the deadline has passed.
+    This is useful for identifying runs that are overdue and still active.
+
+    Args:
+        run_state (RunState): The current state of the run.
+        custom_metadata (dict[str, Any] | None): The custom metadata containing optional deadline information.
+
+    Returns:
+        bool | None: True if run is not terminated and deadline exceeded,
+                     False if run is not terminated but deadline not exceeded,
+                     None if run is terminated, no deadline set, or invalid deadline format.
+    """
+    # If run is already terminated, return None (deadline is no longer relevant)
+    if run_state == RunState.TERMINATED:
+        return None
+
+    if not custom_metadata:
+        return None
+
+    deadline_str = custom_metadata.get("sdk", {}).get("scheduling", {}).get("deadline")
+    if not deadline_str:
+        return None
+
+    try:
+        now = datetime.now(tz=UTC)
+        deadline_dt = datetime.fromisoformat(deadline_str)
+        return now > deadline_dt
+    except (ValueError, TypeError, AttributeError):
+        # Invalid deadline format, return None
+        return None
+
+
 class OutputFormat(StrEnum):
     """
     Enum representing the supported output formats.

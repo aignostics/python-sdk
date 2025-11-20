@@ -11,7 +11,7 @@ from .._service import Service  # noqa: TID252
 from ._utils import application_id_to_icon, run_status_to_icon_and_color
 
 BORDERED_SEPARATOR = "bordered separator"
-RUNS_LIMIT = 100
+RUNS_LIMIT = 500
 RUNS_REFRESH_INTERVAL = 60 * 15  # 15 minutes
 STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
@@ -59,7 +59,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                 if applications is None:
                     message = (  # type: ignore[unreachable]
                         "nicegui_run.io_bound(Service.applications_static) returned None, "
-                        "likely canceled by appliction shutdown."
+                        "likely canceled by application shutdown."
                     )
                     logger.error(message)
                     raise RuntimeError(message)  # noqa: TRY301
@@ -157,6 +157,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     run_data["termination_reason"],
                                     run_data["item_count"],
                                     run_data["item_succeeded_count"],
+                                    run_data["is_not_terminated_with_deadline_exceeded"],
                                 )
                                 with (
                                     ui.circular_progress(

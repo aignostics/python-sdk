@@ -49,6 +49,7 @@ from ._settings import Settings
 from ._utils import (
     get_mime_type_for_artifact,
     get_supported_extensions_for_application,
+    is_not_terminated_with_deadline_exceeded,
     validate_due_date,
 )
 
@@ -571,6 +572,9 @@ class Service(BaseService):  # noqa: PLR0904
                 "item_count": run.statistics.item_count,
                 "item_succeeded_count": run.statistics.item_succeeded_count,
                 "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
+                "is_not_terminated_with_deadline_exceeded": is_not_terminated_with_deadline_exceeded(
+                    run.state, run.custom_metadata
+                ),
             }
             for run in Service().application_runs(
                 application_id=application_id,
