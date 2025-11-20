@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from loguru import logger
-from pydantic import BaseModel, Field, PositiveInt, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from aignostics.utils import user_agent
 
@@ -60,9 +60,11 @@ class GPUConfig(BaseModel):
         default_factory=lambda: ProvisioningMode(DEFAULT_GPU_PROVISIONING_MODE),
         description="The provisioning mode for GPU resources (SPOT or ON_DEMAND)",
     )
-    max_gpus_per_slide: PositiveInt = Field(
+    max_gpus_per_slide: int = Field(
         default=DEFAULT_MAX_GPUS_PER_SLIDE,
-        description="The maximum number of GPUs to allocate per slide",
+        ge=1,
+        le=8,
+        description="The maximum number of GPUs to allocate per slide (1-8)",
     )
 
 

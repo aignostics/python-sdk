@@ -746,31 +746,22 @@ def run_submit(  # noqa: PLR0913, PLR0917
             metadata_dict,
         )
 
-        # Build custom metadata with pipeline configuration
-        custom_metadata = {
-            "pipeline": {
-                "gpu": {
-                    "gpu_type": gpu_type,
-                    "provisioning_mode": gpu_provisioning_mode,
-                    "max_gpus_per_slide": max_gpus_per_slide,
-                },
-                "cpu": {
-                    "provisioning_mode": cpu_provisioning_mode,
-                },
-            },
-        }
-
+        # Submit run with pipeline configuration
         application_run = Service().application_run_submit_from_metadata(
             application_id=application_id,
             metadata=metadata_dict,
             application_version=application_version,
-            custom_metadata=custom_metadata,
+            custom_metadata=None,
             note=note,
             tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
             due_date=due_date,
             deadline=deadline,
             onboard_to_aignostics_portal=onboard_to_aignostics_portal,
             validate_only=validate_only,
+            gpu_type=gpu_type,
+            gpu_provisioning_mode=gpu_provisioning_mode,
+            max_gpus_per_slide=max_gpus_per_slide,
+            cpu_provisioning_mode=cpu_provisioning_mode,
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "
