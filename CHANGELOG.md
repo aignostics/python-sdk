@@ -1,6 +1,14 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.206](https://github.com/aignostics/python-sdk/compare/v0.2.205..0.2.206) - 2025-11-20
+# [0.2.207](https://github.com/aignostics/python-sdk/compare/v0.2.206..0.2.207) - 2025-11-20
+
+### 🧪 Testing
+
+- *(application)* Auto-cancel custom pipeline tests - ([987d025](https://github.com/aignostics/python-sdk/commit/987d025a839f74429fbe3a2cd2aa6234df4d9ff8))
+- *(system)* Mark test as sequential - ([0b90d06](https://github.com/aignostics/python-sdk/commit/0b90d066fae002b217eeb79af525b49d224b741d))
+
+
+# [v0.2.206](https://github.com/aignostics/python-sdk/compare/v0.2.205..v0.2.206) - 2025-11-20
 
 ### 🐛 Bug Fixes
 
