@@ -157,6 +157,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     run_data["termination_reason"],
                                     run_data["item_count"],
                                     run_data["item_succeeded_count"],
+                                    run_data["is_not_terminated_with_deadline_exceeded"],
                                 )
                                 with (
                                     ui.circular_progress(

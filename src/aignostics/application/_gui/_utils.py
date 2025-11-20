@@ -23,7 +23,11 @@ def application_id_to_icon(application_id: str) -> str:
 
 
 def run_status_to_icon_and_color(
-    run_status: str, termination_reason: str | None, item_count: int, item_succeeded_count: int
+    run_status: str,
+    termination_reason: str | None,
+    item_count: int,
+    item_succeeded_count: int,
+    is_not_terminated_with_deadline_exceeded: bool = False,
 ) -> tuple[str, str]:
     """Convert run status and termination reason to icon and color.
 
@@ -32,10 +36,13 @@ def run_status_to_icon_and_color(
         termination_reason (str): The termination reason.
         item_count (int): The total number of items in the run.
         item_succeeded_count (int): The number of items that succeeded in the run.
+        is_not_terminated_with_deadline_exceeded (bool): Whether the run is not terminated with deadline exceeded.
 
     Returns:
         tuple[str, str]: The icon name and color.
     """
+    if is_not_terminated_with_deadline_exceeded:  # This should never happen
+        return "alarm_off", "orange"
     match run_status:
         case RunState.PENDING:
             return "schedule", "secondary"
