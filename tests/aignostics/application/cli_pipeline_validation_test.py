@@ -1,5 +1,6 @@
 """Integration tests for CLI pipeline configuration validation."""
 
+import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -30,9 +31,11 @@ def test_cli_run_submit_fails_on_invalid_gpu_type(runner: CliRunner, tmp_path: P
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=5)).isoformat(),
             "--gpu-type",
             "INVALID_GPU",
+            "--tags",
+            "test_cli_run_submit_fails_on_invalid_gpu_type",
         ],
     )
 
@@ -61,9 +64,11 @@ def test_cli_run_submit_fails_on_invalid_gpu_provisioning_mode(runner: CliRunner
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=5)).isoformat(),
             "--gpu-provisioning-mode",
             "INVALID_MODE",
+            "--tags",
+            "test_cli_run_submit_fails_on_invalid_gpu_provisioning_mode",
         ],
     )
 
@@ -92,9 +97,11 @@ def test_cli_run_submit_fails_on_invalid_cpu_provisioning_mode(runner: CliRunner
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=5)).isoformat(),
             "--cpu-provisioning-mode",
             "RESERVED",
+            "--tags",
+            "test_cli_run_submit_fails_on_invalid_cpu_provisioning_modes",
         ],
     )
 
@@ -123,9 +130,11 @@ def test_cli_run_submit_fails_on_max_gpus_per_slide_zero(runner: CliRunner, tmp_
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=5)).isoformat(),
             "--max-gpus-per-slide",
             "0",
+            "--tags",
+            "test_cli_run_submit_fails_on_max_gpus_per_slide_zero",
         ],
     )
 
@@ -154,9 +163,11 @@ def test_cli_run_submit_fails_on_max_gpus_per_slide_too_high(runner: CliRunner, 
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=5)).isoformat(),
             "--max-gpus-per-slide",
             "9",
+            "--tags",
+            "test_cli_run_submit_fails_on_max_gpus_per_slide_too_highs",
         ],
     )
 
@@ -166,7 +177,7 @@ def test_cli_run_submit_fails_on_max_gpus_per_slide_too_high(runner: CliRunner, 
     assert "invalid" in output.lower() or "range" in output.lower() or "smaller" in output.lower()
 
 
-@pytest.mark.integration
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_succeeds_with_valid_pipeline_config(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command succeeds with valid pipeline configuration (validation only)."""
@@ -186,7 +197,7 @@ def test_cli_run_submit_succeeds_with_valid_pipeline_config(runner: CliRunner, t
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=0)).isoformat(),
             "--gpu-type",
             "L4",
             "--gpu-provisioning-mode",
@@ -196,6 +207,8 @@ def test_cli_run_submit_succeeds_with_valid_pipeline_config(runner: CliRunner, t
             "--cpu-provisioning-mode",
             "ON_DEMAND",
             "--validate-only",  # Don't actually run the analysis
+            "--tags",
+            "test_cli_run_submit_succeeds_with_valid_pipeline_config",
         ],
     )
 
@@ -205,8 +218,25 @@ def test_cli_run_submit_succeeds_with_valid_pipeline_config(runner: CliRunner, t
     # Should NOT have validation errors about GPU type, provisioning mode, or max GPUs
     assert "validation error" not in output.lower() or "gpu" not in output.lower()
 
+    output = normalize_output(result.stdout)
+    assert re.search(
+        r"Submitted run with id '[0-9a-f-]+' for '",
+        output,
+    ), f"Output '{output}' doesn't match expected pattern"
+    assert result.exit_code == 0
 
-@pytest.mark.integration
+    # Extract run ID from the output
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+    assert run_id_match, f"Failed to extract run ID from output '{output}'"
+    run_id = run_id_match.group(1)
+
+    # Cancel the run to clean up
+    cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
+    assert cancel_result.exit_code == 0
+    assert f"Run with ID '{run_id}' has been canceled." in normalize_output(cancel_result.stdout)
+
+
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_submit_succeeds_with_valid_a100_config(runner: CliRunner, tmp_path: Path) -> None:
     """Check run submit command succeeds with valid A100 configuration (validation only)."""
@@ -226,7 +256,7 @@ def test_cli_run_submit_succeeds_with_valid_a100_config(runner: CliRunner, tmp_p
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(hours=1)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=5)).isoformat(),
             "--gpu-type",
             "A100",
             "--gpu-provisioning-mode",
@@ -236,9 +266,28 @@ def test_cli_run_submit_succeeds_with_valid_a100_config(runner: CliRunner, tmp_p
             "--cpu-provisioning-mode",
             "SPOT",
             "--validate-only",
+            "--tags",
+            "test_cli_run_submit_succeeds_with_valid_a100_config",
         ],
     )
 
     # Should fail on bucket validation, not pipeline config
     output = normalize_output(result.output)
     assert "validation error" not in output.lower() or "gpu" not in output.lower()
+
+    output = normalize_output(result.stdout)
+    assert re.search(
+        r"Submitted run with id '[0-9a-f-]+' for '",
+        output,
+    ), f"Output '{output}' doesn't match expected pattern"
+    assert result.exit_code == 0
+
+    # Extract run ID from the output
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+    assert run_id_match, f"Failed to extract run ID from output '{output}'"
+    run_id = run_id_match.group(1)
+
+    # Cancel the run to clean up
+    cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
+    assert cancel_result.exit_code == 0
+    assert f"Run with ID '{run_id}' has been canceled." in normalize_output(cancel_result.stdout)
