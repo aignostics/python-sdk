@@ -1,6 +1,22 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.205](https://github.com/aignostics/python-sdk/compare/v0.2.204..0.2.205) - 2025-11-20
+# [0.2.206](https://github.com/aignostics/python-sdk/compare/v0.2.205..0.2.206) - 2025-11-20
+
+### 🐛 Bug Fixes
+
+- *(application)* Pipeline settings in GUI and CLI ([#271](https://github.com/orhun/git-cliff/issues/271)) - ([feaa047](https://github.com/aignostics/python-sdk/commit/feaa047d2608a302e162260606045b8c026e20fe))
+
+### 🚜 Refactor
+
+- *(application)* Reduce max items in sidebar from 500 to 200 - ([e8f07a9](https://github.com/aignostics/python-sdk/commit/e8f07a9659a009cf814930aafd4b32671354d680))
+
+### 🧪 Testing
+
+- *(application)* Proper integration tests for pipeline settings in GUI and CLI - ([feaa047](https://github.com/aignostics/python-sdk/commit/feaa047d2608a302e162260606045b8c026e20fe))
+- *(platform,staging)* Switch to A100, ON_DEMAND, 1 (was L4, SPOT, 1) - ([4b8be3d](https://github.com/aignostics/python-sdk/commit/4b8be3d17527a8de71342a1fb693e73ce2aa7197))
+
+
+# [v0.2.205](https://github.com/aignostics/python-sdk/compare/v0.2.204..v0.2.205) - 2025-11-20
 
 ### ⛰️  Features
 
