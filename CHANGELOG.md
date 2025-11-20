@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.204](https://github.com/aignostics/python-sdk/compare/v0.2.203..0.2.204) - 2025-11-20
+# [0.2.205](https://github.com/aignostics/python-sdk/compare/v0.2.204..0.2.205) - 2025-11-20
+
+### ⛰️  Features
+
+- *(application)* GUI and CLI now use L4, SPOT, max=gpu=1 as defaults - ([37873c7](https://github.com/aignostics/python-sdk/commit/37873c72f39688300b63b06188f14e3a53daaf76))
+
+
+# [v0.2.204](https://github.com/aignostics/python-sdk/compare/v0.2.203..v0.2.204) - 2025-11-20
 
 ### 🧪 Testing
 
