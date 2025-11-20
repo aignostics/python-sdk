@@ -11,7 +11,7 @@ from .._service import Service  # noqa: TID252
 from ._utils import application_id_to_icon, run_status_to_icon_and_color
 
 BORDERED_SEPARATOR = "bordered separator"
-RUNS_LIMIT = 500
+RUNS_LIMIT = 200
 RUNS_REFRESH_INTERVAL = 60 * 15  # 15 minutes
 STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
