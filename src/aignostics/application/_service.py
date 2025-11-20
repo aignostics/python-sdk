@@ -802,6 +802,10 @@ class Service(BaseService):  # noqa: PLR0904
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
         validate_only: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        cpu_provisioning_mode: str | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -820,6 +824,10 @@ class Service(BaseService):  # noqa: PLR0904
                 If not given latest version is used.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
             validate_only (bool): If True, cancel the run post validation, before analysis.
+            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources (SPOT or ON_DEMAND).
+            max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
 
         Returns:
             Run: The submitted run.
@@ -918,6 +926,10 @@ class Service(BaseService):  # noqa: PLR0904
                 deadline=deadline,
                 onboard_to_aignostics_portal=onboard_to_aignostics_portal,
                 validate_only=validate_only,
+                gpu_type=gpu_type,
+                gpu_provisioning_mode=gpu_provisioning_mode,
+                max_gpus_per_slide=max_gpus_per_slide,
+                cpu_provisioning_mode=cpu_provisioning_mode,
             )
             logger.debug(
                 "Submitted application run with items: {}, application run id {}, custom metadata: {}",
@@ -941,7 +953,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(  # noqa: PLR0913, PLR0917
+    def application_run_submit(  # noqa: PLR0913, PLR0917, PLR0912, C901
         self,
         application_id: str,
         items: list[InputItem],
@@ -953,6 +965,10 @@ class Service(BaseService):  # noqa: PLR0904
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
         validate_only: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        cpu_provisioning_mode: str | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -970,6 +986,10 @@ class Service(BaseService):  # noqa: PLR0904
                 If processing exceeds this deadline, the run can be aborted.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
             validate_only (bool): If True, cancel the run post validation, before analysis.
+            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources (SPOT or ON_DEMAND).
+            max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
 
         Returns:
             Run: The submitted run.
@@ -1004,6 +1024,30 @@ class Service(BaseService):  # noqa: PLR0904
                     sdk_metadata["scheduling"]["due_date"] = due_date
                 if deadline:
                     sdk_metadata["scheduling"]["deadline"] = deadline
+
+            if gpu_type or gpu_provisioning_mode or max_gpus_per_slide or cpu_provisioning_mode:
+                sdk_metadata["pipeline"] = {}
+                if gpu_type or gpu_provisioning_mode or max_gpus_per_slide:
+                    sdk_metadata["pipeline"]["gpu"] = {}
+                    if gpu_type:
+                        sdk_metadata["pipeline"]["gpu"]["gpu_type"] = gpu_type
+                    if gpu_provisioning_mode:
+                        sdk_metadata["pipeline"]["gpu"]["provisioning_mode"] = gpu_provisioning_mode
+                    if max_gpus_per_slide:
+                        sdk_metadata["pipeline"]["gpu"]["max_gpus_per_slide"] = max_gpus_per_slide
+                if cpu_provisioning_mode:
+                    sdk_metadata["pipeline"]["cpu"] = {"provisioning_mode": cpu_provisioning_mode}
+
+            # Validate pipeline configuration if present
+            if "pipeline" in sdk_metadata:
+                from aignostics.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
+
+                try:
+                    PipelineConfig.model_validate(sdk_metadata["pipeline"])
+                except Exception as e:
+                    message = f"Invalid pipeline configuration: {e}"
+                    logger.warning(message)
+                    raise ValueError(message) from e
 
             custom_metadata["sdk"] = sdk_metadata
 

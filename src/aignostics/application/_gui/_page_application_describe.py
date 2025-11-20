@@ -715,25 +715,12 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Submit the application run."""
             ui.notify("Submitting application run ...", type="info")
             try:
-                # Build custom metadata with pipeline configuration
-                custom_metadata = {
-                    "pipeline": {
-                        "gpu": {
-                            "gpu_type": submit_form.gpu_type,
-                            "provisioning_mode": submit_form.gpu_provisioning_mode,
-                            "max_gpus_per_slide": submit_form.max_gpus_per_slide,
-                        },
-                        "cpu": {
-                            "provisioning_mode": submit_form.cpu_provisioning_mode,
-                        },
-                    },
-                }
-
+                # Submit run with pipeline configuration
                 run = service.application_run_submit_from_metadata(
                     application_id=str(submit_form.application_id),
                     metadata=submit_form.metadata or [],
                     application_version=str(submit_form.application_version),
-                    custom_metadata=custom_metadata,
+                    custom_metadata=None,
                     note=submit_form.note,
                     tags=set(submit_form.tags) if submit_form.tags else None,
                     due_date=datetime.strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
@@ -746,6 +733,10 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     .isoformat(),
                     validate_only=submit_form.validate_only,
                     onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
+                    gpu_type=submit_form.gpu_type,
+                    gpu_provisioning_mode=submit_form.gpu_provisioning_mode,
+                    max_gpus_per_slide=submit_form.max_gpus_per_slide,
+                    cpu_provisioning_mode=submit_form.cpu_provisioning_mode,
                 )
             except Exception as e:
                 ui.notify(
