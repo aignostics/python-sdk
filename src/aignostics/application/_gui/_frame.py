@@ -95,7 +95,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
                         logger.exception("Could not load applications")
 
-        async def application_runs_load_and_render(  # noqa: C901
+        async def application_runs_load_and_render(  # noqa: C901, PLR0915
             runs_column: ui.column, has_output: bool = False, query: str | None = None
         ) -> None:
             global _runs_last_refresh_time  # noqa: PLW0603
