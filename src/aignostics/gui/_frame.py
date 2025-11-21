@@ -314,7 +314,7 @@ def frame(  # noqa: C901, PLR0915
             ui.html(
                 '🔬<a style="color: black; text-decoration: underline" target="_blank" href="https://github.com/aignostics/python-sdk/">'
                 f"Aignostics Python SDK v{__version__}{flavor}</a>"
-                ' - built with love in <a style="color: black; text-decoration: underline" target="_blank"'
+                ' - built with liebe in <a style="color: black; text-decoration: underline" target="_blank"'
                 ' href="https://www.aignostics.com/company/about">Berlin</A> 🐻',
                 sanitize=Sanitizer().sanitize,
             ).style("color: black")

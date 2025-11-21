@@ -222,4 +222,4 @@ help:
 	@echo "  test_coverage_reset   - Reset test coverage data"
 	@echo "  update_from_template  - Update from template using copier"
 	@echo ""
-	@echo "Built with love in Berlin 🐻"
+	@echo "Built with liebe in Berlin 🐻"

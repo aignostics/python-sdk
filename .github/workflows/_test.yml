@@ -143,8 +143,8 @@ jobs:
         shell: bash
         run: |
             OUTPUT=$(uv run --no-dev aignostics --help)
-            if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
-            echo "Output does not contain 'built with love in Berlin'"
+            if [[ "$OUTPUT" != *"built with liebe in Berlin"* ]]; then
+            echo "Output does not contain 'built with liebe in Berlin'"
             exit 1
             fi
 

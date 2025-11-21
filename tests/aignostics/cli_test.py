@@ -15,7 +15,7 @@ from aignostics.utils import (
 )
 from tests.conftest import normalize_output
 
-BUILT_WITH_LOVE = "built with love in Berlin"
+BUILT_WITH_LOVE = "built with liebe in Berlin"
 THE_VALUE = "THE_VALUE"
 
 

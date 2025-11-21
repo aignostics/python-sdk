@@ -5,7 +5,7 @@ import platform
 
 import pytest
 
-BUILT_WITH_LOVE = "built with love in Berlin"
+BUILT_WITH_LOVE = "built with liebe in Berlin"
 
 
 @pytest.mark.e2e  # Calls container registry (ghcr.io)
@@ -25,4 +25,4 @@ def test_core_docker_cli_help_with_love(docker_services) -> None:
     """Test the CLI help command with docker services returns expected output."""
     out = docker_services._docker_compose.execute("run aignostics --help")
     out_str = out.decode("utf-8")
-    assert "built with love in Berlin" in out_str
+    assert "built with liebe in Berlin" in out_str

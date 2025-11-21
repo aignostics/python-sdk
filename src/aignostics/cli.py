@@ -62,7 +62,7 @@ if find_spec("marimo"):
         uvicorn.run(create_marimo_app(notebook=notebook, override_if_exists=override_if_exists), host=host, port=port)
 
 
-prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")
+prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with liebe in Berlin 🐻")
 
 
 if __name__ == "__main__":  # pragma: no cover
