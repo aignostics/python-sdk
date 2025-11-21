@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.207](https://github.com/aignostics/python-sdk/compare/v0.2.206..0.2.207) - 2025-11-20
+# [0.2.208](https://github.com/aignostics/python-sdk/compare/v0.2.207..0.2.208) - 2025-11-21
+
+### ⛰️  Features
+
+- *(application)* Show duration in run sidebar - ([ed583fd](https://github.com/aignostics/python-sdk/commit/ed583fd5a15e404ba5d3cf8296d0bde8280d90e6))
+
+
+# [v0.2.207](https://github.com/aignostics/python-sdk/compare/v0.2.206..v0.2.207) - 2025-11-20
 
 ### 🧪 Testing
 
