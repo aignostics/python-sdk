@@ -337,6 +337,7 @@ markers = [
     "scheduled_only: Tests to run on a schedule only.",
     "sequential: Exclude from parallel test execution.",
     "skip_with_act: Don't run with act.",
+    "stress: Stress tests to run on a 5 minute schedule.",
     "docker: That require Docker.",
     "long_running: Tests with a test timeout >=5 min and < 60 min. CI/CD will run long running tests with one Python version only. When calling `make` long running tests are excluded - use `make test_long_running` instead.",
     "very_long_running: Tests with a test timeout >= 60 min. CI/CD will run very long running tests with one Python version only. When calling `make` very long runing tests are excluded - use `make test_very_long_running` instead.",

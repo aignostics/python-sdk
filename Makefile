@@ -21,7 +21,7 @@ $(error Python version validation failed. See error message above.)
 endif
 
 # Define all PHONY targets
-.PHONY: act all audit bump clean codegen dist dist_native docs docker_build gui_watch install lint pre_commit_run_all profile setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
+.PHONY: act all audit bump clean codegen dist dist_native docs docker_build gui_watch install lint pre_commit_run_all profile setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
 
 
 # Main target i.e. default sessions defined in noxfile.py
@@ -97,6 +97,10 @@ test_scheduled:
 ## Run tests marked as sequential
 test_sequential:
 	uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m sequential
+
+## Run stress tests marked as such
+test_stress:
+	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "stress"
 
 ## Reset test coverage data
 test_coverage_reset:
