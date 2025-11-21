@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
+import humanize
 from loguru import logger
 from nicegui import app, background_tasks, context, ui  # noq
 from nicegui import run as nicegui_run
@@ -185,7 +186,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     and args.get("run_id") == run_data["run_id"]
                                     else "font-normal"
                                 ).mark(f"LABEL_RUN_APPLICATION:{index}")
-                                ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
+                                if run_data["terminated_at"]:
+                                    duration = run_data["terminated_at"] - run_data["submitted_at"]
+                                else:
+                                    duration = datetime.now(UTC) - run_data["submitted_at"]
+                                ui.label(
+                                    f"{humanize.naturaldelta(duration)}, "
+                                    f"from {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}"
+                                )
                                 if run_data.get("tags") and len(run_data["tags"]):
                                     with ui.row().classes("gap-1 mt-1"):
                                         for tag in run_data["tags"][:3]:
