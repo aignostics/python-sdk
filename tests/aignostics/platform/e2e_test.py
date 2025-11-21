@@ -518,7 +518,7 @@ def test_platform_heta_app_submit() -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.stress
+@pytest.mark.stress_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_special_app_submit() -> None:
     """Test application runs with the HETA application.
