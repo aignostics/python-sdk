@@ -536,7 +536,7 @@ def test_platform_special_app_submit() -> None:
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
-        tags={"test_platform_heta_app_submit_and_find", "scheduled"},
+        tags={"test_platform_special_app_submit", "scheduled"},
     )
 
 
