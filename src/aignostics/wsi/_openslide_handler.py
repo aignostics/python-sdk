@@ -5,14 +5,11 @@ from typing import Any
 
 import defusedxml.ElementTree as ET  # noqa: N817
 import openslide
+from loguru import logger
 from openslide import ImageSlide, OpenSlide, open_slide
 from PIL.Image import Image
 
-from aignostics.utils import get_logger
-
 TIFF_IMAGE_DESCRIPTION = "tiff.ImageDescription"
-
-logger = get_logger(__name__)
 
 
 class OpenSlideHandler:
@@ -222,7 +219,7 @@ class OpenSlideHandler:
             "properties": dict(self.slide.properties),
         }
 
-        logger.debug("Slide metadata extracted: %s", metadata)
+        logger.trace("Slide metadata extracted: {}", metadata)
         # Parse image description if available
         if TIFF_IMAGE_DESCRIPTION in props:
             image_desc = self._parse_xml_image_description(props[TIFF_IMAGE_DESCRIPTION])

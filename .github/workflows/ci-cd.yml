@@ -110,6 +110,7 @@ jobs:
       GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics
 
   codeql:
     needs: [get-commit-message]

@@ -4,16 +4,14 @@ import platform
 from pathlib import Path, PureWindowsPath
 
 import platformdirs
+from loguru import logger
 
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 
 from ._constants import __is_running_in_read_only_environment__, __project_name__
-from ._log import get_logger
 
 # Constants
 _WIN_DRIVE_MIN_LENGTH = 2  # Minimum length for a Windows drive path (e.g. C:)
-
-logger = get_logger(__name__)
 
 
 def sanitize_path_component(component: str) -> str:
@@ -116,7 +114,7 @@ def open_user_data_directory(scope: str | None = None) -> Path:
             error,
             directory,
         )
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         # Catch any other unexpected exceptions to ensure function still returns directory path
         logger.warning(
             "Unexpected error opening user data directory in file manager: %s. Directory path: %s",

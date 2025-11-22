@@ -6,14 +6,12 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from loguru import logger
 from rich.table import Table
 
-from aignostics.utils import console, get_logger
+from aignostics.utils import console
 
 from ._service import QUPATH_VERSION, Service
-
-logger = get_logger(__name__)
-
 
 cli = typer.Typer(
     name="qupath",

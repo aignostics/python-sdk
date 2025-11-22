@@ -1,5 +1,6 @@
 {
     "recommendations": [
+        "bierner.markdown-mermaid",
         "charliermarsh.ruff",
         "codecov.codecov",
         "daelonsuzuka.nicegui",

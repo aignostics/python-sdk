@@ -184,7 +184,7 @@ class PageBuilder(BasePageBuilder):
                         TARGET_LAYOUT_DEFAULT,
                         False,
                     )
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     nicegui.ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
                     download_form.download_button.props(remove="loading")
                     download_form.download_progress.visible = False

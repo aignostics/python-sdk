@@ -5,11 +5,10 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from loguru import logger
 
 from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
-from aignostics.utils import BaseService, Health, get_logger
-
-logger = get_logger(__name__)
+from aignostics.utils import BaseService, Health
 
 TIMEOUT = 60  # 1 minutes
 

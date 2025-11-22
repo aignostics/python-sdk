@@ -32,7 +32,7 @@ def test_cli_health_yaml(runner: CliRunner, record_property) -> None:
     """Check health is true."""
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
-    assert "status: UP" in result.output
+    assert "status: UP" in result.stdout
     assert result.exit_code == 0
 
 
