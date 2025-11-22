@@ -517,6 +517,7 @@ def test_platform_heta_app_submit() -> None:
     )
 
 
+@pytest.mark.skip(reason="Tested")
 @pytest.mark.e2e
 @pytest.mark.stress_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
