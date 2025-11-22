@@ -47,10 +47,10 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         HETA_APPLICATION_VERSION = "1.0.0-sl.4"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = False
 
-        PIPELINE_GPU_TYPE = "A100"
-        PIPELINE_GPU_PROVISIONING_MODE = "ON_DEMAND"
+        PIPELINE_GPU_TYPE = "L4"
+        PIPELINE_GPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_MAX_GPUS_PER_SLIDE = 1
-        PIPELINE_CPU_PROVISIONING_MODE = "ON_DEMAND"
+        PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
@@ -85,12 +85,13 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         HETA_APPLICATION_VERSION = "1.0.0-sl.4"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
-        # Pipeline configuration for staging environment
-        # Using varied settings for testing: L4 GPUs with SPOT provisioning, higher GPU count
         PIPELINE_GPU_TYPE = "L4"
-        PIPELINE_GPU_PROVISIONING_MODE = "SPOT"
-        PIPELINE_MAX_GPUS_PER_SLIDE = 2
-        PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
+        PIPELINE_GPU_PROVISIONING_MODE = "ON_DEMAND"
+        PIPELINE_MAX_GPUS_PER_SLIDE = 1
+        PIPELINE_CPU_PROVISIONING_MODE = "ON_DEMAND"
+
+        SPECIAL_APPLICATION_ID = "he-tme"
+        SPECIAL_APPLICATION_VERSION = "0.0.0-test.retry.bug.20.11"
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
