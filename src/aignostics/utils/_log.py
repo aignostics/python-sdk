@@ -134,7 +134,7 @@ class LogSettings(BaseSettings):
     ]
     redirect_logging: Annotated[
         bool,
-        Field(description="Redirect standard logging", default=False),
+        Field(description="Redirect standard logging", default=True),
     ]
 
     @field_validator("file_name")
@@ -170,8 +170,7 @@ def logging_initialize(filter_func: Callable[["Record"], bool] | None = None) ->
 
     logger.remove()  # Remove all default loggers
 
-    k_service = os.getenv("K_SERVICE", "")  # GCP specific
-    logger.configure(extra={"__project__name__": __project_name__, "K_SERVICE": k_service})  # Add as extras
+    logger.configure(extra={"__project__name__": __project_name__})  # Add as extras
 
     log_format = (
         "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "

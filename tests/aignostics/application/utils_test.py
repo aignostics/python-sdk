@@ -10,6 +10,7 @@ from aignostics.application._utils import (
     application_run_status_to_str,
     get_mime_type_for_artifact,
     get_supported_extensions_for_application,
+    is_not_terminated_with_deadline_exceeded,
     print_runs_non_verbose,
     print_runs_verbose,
     read_metadata_csv_to_dict,
@@ -108,6 +109,136 @@ def test_application_run_status_to_str_terminated() -> None:
     """Test conversion of TERMINATED status to string."""
     result = application_run_status_to_str(RunState.TERMINATED)
     assert result == "terminated"
+
+
+# Tests for is_not_terminated_with_deadline_exceeded
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_terminated_run() -> None:
+    """Test that terminated runs always return None regardless of deadline."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.TERMINATED, metadata)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_none_metadata() -> None:
+    """Test that None metadata returns None."""
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, None)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_empty_metadata() -> None:
+    """Test that empty metadata returns None."""
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, {})
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_no_sdk_key() -> None:
+    """Test that metadata without 'sdk' key returns None."""
+    metadata = {"other_key": "other_value"}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_no_scheduling_key() -> None:
+    """Test that metadata without 'scheduling' key returns None."""
+    metadata = {"sdk": {"other_key": "other_value"}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_no_deadline_key() -> None:
+    """Test that metadata without 'deadline' key returns None."""
+    metadata = {"sdk": {"scheduling": {"other_key": "other_value"}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_pending_deadline_in_future() -> None:
+    """Test that a pending run with deadline in the future returns False."""
+    # Create a deadline 1 hour in the future
+    from datetime import timedelta
+
+    future_deadline = datetime.now(tz=UTC) + timedelta(hours=1)
+    metadata = {"sdk": {"scheduling": {"deadline": future_deadline.isoformat()}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is False
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_pending_deadline_in_past() -> None:
+    """Test that a pending run with deadline in the past returns True."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_processing_deadline_in_past() -> None:
+    """Test that a processing run with deadline in the past returns True."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PROCESSING, metadata)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_invalid_datetime_format() -> None:
+    """Test that invalid datetime format returns None."""
+    metadata = {"sdk": {"scheduling": {"deadline": "not-a-valid-datetime"}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_deadline_with_z_suffix() -> None:
+    """Test that deadline with Z suffix (UTC) is handled correctly for pending run."""
+    past_deadline = "2020-01-01T12:00:00Z"
+    metadata = {"sdk": {"scheduling": {"deadline": past_deadline}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_deadline_with_timezone_offset() -> None:
+    """Test that deadline with timezone offset is handled correctly for pending run."""
+    past_deadline = "2020-01-01T12:00:00+00:00"
+    metadata = {"sdk": {"scheduling": {"deadline": past_deadline}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_deadline_empty_string() -> None:
+    """Test that empty string deadline returns None."""
+    metadata = {"sdk": {"scheduling": {"deadline": ""}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_deadline_none_value() -> None:
+    """Test that None deadline value returns None."""
+    metadata = {"sdk": {"scheduling": {"deadline": None}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_deadline_numeric_value() -> None:
+    """Test that numeric deadline value returns None."""
+    metadata = {"sdk": {"scheduling": {"deadline": 123456789}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    assert result is None
 
 
 # Tests for CSV utilities

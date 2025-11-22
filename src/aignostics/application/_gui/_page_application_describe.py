@@ -12,6 +12,12 @@ from loguru import logger
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
+from aignostics.platform import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+)
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
@@ -27,6 +33,9 @@ from ._utils import (
 
 WIDTH_1200px = "width: 1200px; max-width: none"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
+
+CLASS_SUBSECTION_HEADER = "text-h6 mb-0 pb-0"
+CLASS_WIDTH_ONE_THIRD = "w-1/3"
 
 
 @binding.bindable_dataclass
@@ -50,6 +59,10 @@ class SubmitForm:
     deadline: str = (datetime.now().astimezone() + timedelta(hours=24)).strftime("%Y-%m-%d %H:%M")
     validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
+    gpu_type: str = DEFAULT_GPU_TYPE
+    gpu_provisioning_mode: str = DEFAULT_GPU_PROVISIONING_MODE
+    max_gpus_per_slide: int = DEFAULT_MAX_GPUS_PER_SLIDE
+    cpu_provisioning_mode: str = DEFAULT_CPU_PROVISIONING_MODE
 
 
 submit_form = SubmitForm()
@@ -619,7 +632,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 today = now.strftime("%Y/%m/%d")
                 min_hour = (now + timedelta(hours=1)).hour
                 min_minute = (now + timedelta(hours=1)).minute
-                ui.label("Soft Due Date").classes("text-h6 mb-0 pb-0")
+                ui.label("Soft Due Date").classes("class_subsection_header")
                 ui.label(
                     "The platform will try to complete the run before this time, "
                     "given your subscription tier and available GPU resources."
@@ -672,7 +685,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         }}
                     """
                     )
-                ui.label("Hard Deadline").classes("text-h6 mb-0 pb-0")
+                ui.label("Hard Deadline").classes("class_subsection_header")
                 ui.label("The platform might cancel the run if not completed by this time.").classes(
                     "text-sm mt-0 pt-0"
                 )
@@ -702,11 +715,12 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Submit the application run."""
             ui.notify("Submitting application run ...", type="info")
             try:
+                # Submit run with pipeline configuration
                 run = service.application_run_submit_from_metadata(
                     application_id=str(submit_form.application_id),
                     metadata=submit_form.metadata or [],
                     application_version=str(submit_form.application_version),
-                    custom_metadata=None,  # TODO(Helmut): Allow user to edit custom metadata
+                    custom_metadata=None,
                     note=submit_form.note,
                     tags=set(submit_form.tags) if submit_form.tags else None,
                     due_date=datetime.strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
@@ -719,6 +733,10 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     .isoformat(),
                     validate_only=submit_form.validate_only,
                     onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
+                    gpu_type=submit_form.gpu_type,
+                    gpu_provisioning_mode=submit_form.gpu_provisioning_mode,
+                    max_gpus_per_slide=submit_form.max_gpus_per_slide,
+                    cpu_provisioning_mode=submit_form.cpu_provisioning_mode,
                 )
             except Exception as e:
                 ui.notify(
@@ -815,6 +833,80 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 row["platform_bucket_url"] = message["platform_bucket_url"]
                                 break
                 _upload_ui.refresh(submit_form.metadata)
+
+        with ui.step("Pipeline"):
+            user_info: UserInfo | None = app.storage.tab.get("user_info", None)
+            can_configure_pipeline = (
+                user_info
+                and user_info.organization
+                and user_info.organization.name
+                and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
+            )
+
+            if can_configure_pipeline:
+                with ui.column(align_items="start").classes("w-full"):
+                    ui.label("GPU Configuration").classes("class_subsection_header")
+                    ui.label(
+                        "Configure GPU resources for processing your whole slide images. "
+                        "These settings control the type and provisioning mode of GPUs used during AI analysis."
+                    ).classes("text-sm mt-0 pt-0 mb-4")
+
+                    with ui.row().classes("w-full gap-4"):
+                        ui.select(
+                            label="GPU Type",
+                            options={"L4": "L4", "A100": "A100"},
+                            value=submit_form.gpu_type,
+                        ).bind_value(submit_form, "gpu_type").mark("SELECT_GPU_TYPE").classes(CLASS_WIDTH_ONE_THIRD)
+
+                        ui.number(
+                            label="Max GPUs per Slide",
+                            value=submit_form.max_gpus_per_slide,
+                            min=1,
+                            max=8,
+                            step=1,
+                        ).bind_value(submit_form, "max_gpus_per_slide").mark("NUMBER_MAX_GPUS_PER_SLIDE").classes(
+                            CLASS_WIDTH_ONE_THIRD
+                        )
+
+                        ui.select(
+                            label="GPU Provisioning Mode",
+                            options={
+                                "SPOT": "Spot nodes (lower cost, better availability, might be preempted and retried)",
+                                "ON_DEMAND": (
+                                    "On demand nodes (higher cost, limited availability, processing might be delayed)"
+                                ),
+                            },
+                            value=submit_form.gpu_provisioning_mode,
+                        ).bind_value(submit_form, "gpu_provisioning_mode").mark("SELECT_GPU_PROVISIONING_MODE").classes(
+                            CLASS_WIDTH_ONE_THIRD
+                        )
+
+                    ui.separator().classes("my-4")
+
+                    ui.label("CPU Configuration").classes("class_subsection_header")
+                    ui.label("Configure CPU resources for algorithms that do not require GPU acceleration.").classes(
+                        "text-sm mt-0 pt-0 mb-4"
+                    )
+
+                    with ui.row().classes("w-full gap-4"):
+                        ui.select(
+                            label="CPU Provisioning Mode",
+                            options={
+                                "SPOT": "Spot nodes (lower cost, better availability, might be preempted and retried)",
+                                "ON_DEMAND": "On demand nodes (higher cost, limited availability, might be delayed)",
+                            },
+                            value=submit_form.cpu_provisioning_mode,
+                        ).bind_value(submit_form, "cpu_provisioning_mode").mark("SELECT_CPU_PROVISIONING_MODE").classes(
+                            "w-1/2"
+                        )
+            else:
+                ui.label(
+                    "Pipeline configuration is not available for your organization. Default settings will be used."
+                ).classes("text-body1")
+
+            with ui.stepper_navigation():
+                ui.button("Next", on_click=stepper.next).mark("BUTTON_PIPELINE_NEXT")
+                ui.button("Back", on_click=stepper.previous).props("flat")
 
         with ui.step("Submit"):
             _upload_ui([])

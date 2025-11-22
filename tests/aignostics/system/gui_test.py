@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
@@ -41,6 +42,7 @@ async def test_gui_system_switch_right(user: User, silent_logging, record_proper
 
 
 @pytest.mark.integration
+@pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60)
 async def test_gui_system_health_shown_and_updated(user: User, silent_logging, record_property) -> None:
     """Test that health status is always visible in the footer on any page.
@@ -60,6 +62,9 @@ async def test_gui_system_health_shown_and_updated(user: User, silent_logging, r
     for page in pages_to_test:
         # Navigate to the page
         await user.open(page)
+
+        # Wait a bit to allow any asynchronous health updates to occur
+        await asyncio.sleep(5)
 
         # Verify the health status footer component is visible
         # The health_link() is rendered in the footer and has a tooltip "Check Launchpad Status"

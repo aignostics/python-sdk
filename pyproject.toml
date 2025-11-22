@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "0.2.201"
+version = "0.2.209"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -74,7 +74,7 @@ requires-python = ">=3.11, <3.14"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.121.1,<1",
+    "fastapi[standard,all]>=0.121.3,<1",
     "humanize>=4.14.0,<5",
     "nicegui[native]>=3.1.0,<3.2.0", # Regression in 3.2.0
     "packaging>=25.0,<26",
@@ -83,24 +83,24 @@ dependencies = [
     "pydantic-settings>=2.12.0,<3",
     "pywin32>=310,<311 ; sys_platform == 'win32'",
     "pyyaml>=6.0.3,<7",
-    "sentry-sdk>=2.44.0,<3",
+    "sentry-sdk>=2.45.0,<3",
     "typer>=0.20.0,<1",
     "uptime>=3.0.1,<4",
     # Custom
     "aiopath>=0.6.11,<1",
-    "boto3>=1.40.61,<2",
+    "boto3>=1.41.0,<2",
     "certifi>=2025.11.12,<2026",
     "defusedxml>=0.7.1",
     "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
     "duckdb>=0.10.0,<=1.4.1",
     "fastparquet>=2024.11.0,<2025",
-    "google-cloud-storage>=3.5.0,<4",
+    "google-cloud-storage>=3.6.0,<4",
     "google-crc32c>=1.7.1,<2",
     "highdicom>=0.26.1,<1",
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
-    "idc-index-data==22.1.2",
+    "idc-index-data==22.1.5",
     "ijson>=3.4.0.post0,<4",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
@@ -131,7 +131,7 @@ jupyter = ["jupyter>=1.1.1,<2"]
 marimo = [
     "cloudpathlib>=0.23.0,<1",
     "ipython>=9.7.0,<10",
-    "marimo>=0.17.7,<1",
+    "marimo>=0.17.8,<1",
     "matplotlib>=3.10.7,<4",
     "shapely>=2.1.0,<3",
 ]
@@ -165,7 +165,7 @@ dev = [
     "pytest-timeout>=2.4.0,<3",
     "pytest-watcher>=0.4.3,<1",
     "pytest-xdist[psutil]>=3.8.0,<4",
-    "ruff>=0.14.4,<1",
+    "ruff>=0.14.5,<1",
     "scalene>=1.5.55,<2",
     "sphinx>=8.2.3,<9",
     "sphinx-autobuild>=2025.8.25,<2026",
@@ -175,9 +175,9 @@ dev = [
     "sphinx-mdinclude>=0.6.2,<1",
     "sphinx-rtd-theme>=3.0.2,<4",
     "sphinx_selective_exclude>=1.0.3,<2",
-    "sphinx-toolbox>=3.9.0,<4",
+    "sphinx-toolbox>=4.0.0,<5",
     "sphinxext.opengraph>=0.9.1,<1",
-    "swagger-plugin-for-sphinx>=5.2.0,<6",
+    "swagger-plugin-for-sphinx>=6.0.0,<7",
     "tomli>=2.3.0,<3",
     "types-pyyaml>=6.0.12.20250915,<7",
     "types-requests>=2.32.4.20250913,<3",
@@ -337,6 +337,8 @@ markers = [
     "scheduled_only: Tests to run on a schedule only.",
     "sequential: Exclude from parallel test execution.",
     "skip_with_act: Don't run with act.",
+    "stress: Tests to run as part of 5 minute stress test schedule.",
+    "stress_only: Tests to run as part of 5 minute stress test schedule only.",
     "docker: That require Docker.",
     "long_running: Tests with a test timeout >=5 min and < 60 min. CI/CD will run long running tests with one Python version only. When calling `make` long running tests are excluded - use `make test_long_running` instead.",
     "very_long_running: Tests with a test timeout >= 60 min. CI/CD will run very long running tests with one Python version only. When calling `make` very long runing tests are excluded - use `make test_very_long_running` instead.",
@@ -372,7 +374,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "0.2.201"
+current_version = "0.2.209"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"

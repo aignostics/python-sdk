@@ -28,6 +28,12 @@ from aignostics.platform import Run, RunSdkMetadata
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    PIPELINE_CPU_PROVISIONING_MODE,
+    PIPELINE_GPU_PROVISIONING_MODE,
+    PIPELINE_GPU_TYPE,
+    PIPELINE_MAX_GPUS_PER_SLIDE,
+    SPECIAL_APPLICATION_ID,
+    SPECIAL_APPLICATION_VERSION,
     SPOT_0_CRC32C,
     SPOT_0_GS_URL,
     SPOT_0_HEIGHT,
@@ -208,6 +214,16 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                 "scheduling": {
                     "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
                     "deadline": deadline.isoformat(),
+                },
+                "pipeline": {
+                    "gpu": {
+                        "gpu_type": PIPELINE_GPU_TYPE,
+                        "provisioning_mode": PIPELINE_GPU_PROVISIONING_MODE,
+                        "max_gpus_per_slide": PIPELINE_MAX_GPUS_PER_SLIDE,
+                    },
+                    "cpu": {
+                        "provisioning_mode": PIPELINE_CPU_PROVISIONING_MODE,
+                    },
                 },
             }
         },
@@ -403,7 +419,7 @@ def test_platform_test_app_submit_and_wait(record_property) -> None:
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
         timeout_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS,
-        tags={"test_platform_test_app_submit_and_wait"},
+        tags={"test_platform_test_app_submit_and_wait", "scheduled"},
     )
 
 
@@ -433,13 +449,12 @@ def test_platform_heta_app_submit_and_wait(record_property) -> None:
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
         timeout_seconds=HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS,
-        tags={"test_platform_heta_app_submit_and_wait"},
+        tags={"test_platform_heta_app_submit_and_wait", "scheduled"},
     )
 
 
 @pytest.mark.skip(reason="Using submit and wait approach")
 @pytest.mark.e2e
-@pytest.mark.long_running
 @pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_test_app_submit() -> None:
     """Test application submission with the test application.
@@ -457,12 +472,11 @@ def test_platform_test_app_submit() -> None:
         ),
         deadline_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS,
         due_date_seconds=TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS,
-        tags={"test_platform_heta_app_submit_and_wait"},
+        tags={"test_platform_heta_app_submit_and_wait", "scheduled"},
     )
 
 
 @pytest.mark.e2e
-@pytest.mark.long_running
 @pytest.mark.scheduled_only
 @pytest.mark.timeout(timeout=TEST_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
 def test_platform_test_app_find_and_validate() -> None:
@@ -481,7 +495,6 @@ def test_platform_test_app_find_and_validate() -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.long_running
 @pytest.mark.scheduled_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_heta_app_submit() -> None:
@@ -500,7 +513,31 @@ def test_platform_heta_app_submit() -> None:
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
-        tags={"test_platform_heta_app_submit_and_find"},
+        tags={"test_platform_heta_app_submit_and_find", "scheduled"},
+    )
+
+
+@pytest.mark.skip(reason="Tested")
+@pytest.mark.e2e
+@pytest.mark.stress_only
+@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
+def test_platform_special_app_submit() -> None:
+    """Test application runs with the HETA application.
+
+    This test submits an application run with the HETA application and validates the submission.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _submit_and_validate(
+        application_id=SPECIAL_APPLICATION_ID,
+        application_version=SPECIAL_APPLICATION_VERSION,
+        payload=_get_single_spot_payload_for_heta(
+            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+        ),
+        deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
+        due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+        tags={"test_platform_special_app_submit", "special", "stress", "stress_only"},
     )
 
 

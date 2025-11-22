@@ -1,4 +1,4 @@
-"""Client specific constants."""
+"""Client specific and other constants such as defaults."""
 
 API_ROOT_PRODUCTION = "https://platform.aignostics.com"
 CLIENT_ID_INTERACTIVE_PRODUCTION = "YtJ7F9lAtxx16SZGQlYPe6wcjlXB78MM"  # not a secret, but a public client ID
@@ -26,3 +26,9 @@ TOKEN_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"  # noqa:
 REDIRECT_URI_DEV = "http://localhost:8989/"
 DEVICE_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/.well-known/jwks.json"
+
+# Pipeline orchestration defaults
+DEFAULT_GPU_TYPE = "L4"
+DEFAULT_MAX_GPUS_PER_SLIDE = 1
+DEFAULT_GPU_PROVISIONING_MODE = "SPOT"
+DEFAULT_CPU_PROVISIONING_MODE = "SPOT"

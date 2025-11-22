@@ -892,3 +892,124 @@ class TestItemSdkMetadata:
 
         with pytest.raises(ValidationError):
             validate_item_sdk_metadata(metadata)
+
+
+class TestPipelineConfiguration:
+    """Test cases for pipeline configuration models."""
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_pipeline_config_defaults() -> None:
+        """Test that pipeline configuration uses correct defaults."""
+        from aignostics.platform import (
+            DEFAULT_CPU_PROVISIONING_MODE,
+            DEFAULT_GPU_PROVISIONING_MODE,
+            DEFAULT_GPU_TYPE,
+            DEFAULT_MAX_GPUS_PER_SLIDE,
+            PipelineConfig,
+        )
+
+        config = PipelineConfig()
+
+        assert config.gpu.gpu_type.value == DEFAULT_GPU_TYPE
+        assert config.gpu.provisioning_mode.value == DEFAULT_GPU_PROVISIONING_MODE
+        assert config.gpu.max_gpus_per_slide == DEFAULT_MAX_GPUS_PER_SLIDE
+        assert config.cpu.provisioning_mode.value == DEFAULT_CPU_PROVISIONING_MODE
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_pipeline_config_custom_values() -> None:
+        """Test pipeline configuration with custom values."""
+        from aignostics.platform._sdk_metadata import GPUType, PipelineConfig, ProvisioningMode
+
+        config = PipelineConfig(
+            gpu={
+                "gpu_type": GPUType.L4,
+                "provisioning_mode": ProvisioningMode.SPOT,
+                "max_gpus_per_slide": 4,
+            },
+            cpu={"provisioning_mode": ProvisioningMode.SPOT},
+        )
+
+        assert config.gpu.gpu_type == GPUType.L4
+        assert config.gpu.provisioning_mode == ProvisioningMode.SPOT
+        assert config.gpu.max_gpus_per_slide == 4
+        assert config.cpu.provisioning_mode == ProvisioningMode.SPOT
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_gpu_type_enum() -> None:
+        """Test GPUType enum values."""
+        from aignostics.platform._sdk_metadata import GPUType
+
+        assert GPUType.L4.value == "L4"
+        assert GPUType.A100.value == "A100"
+        assert len(GPUType) == 2
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_provisioning_mode_enum() -> None:
+        """Test ProvisioningMode enum values."""
+        from aignostics.platform._sdk_metadata import ProvisioningMode
+
+        assert ProvisioningMode.SPOT.value == "SPOT"
+        assert ProvisioningMode.ON_DEMAND.value == "ON_DEMAND"
+        assert len(ProvisioningMode) == 2
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_pipeline_config() -> None:
+        """Test that metadata validates with pipeline configuration."""
+        from aignostics.platform._sdk_metadata import GPUType, ProvisioningMode
+
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "aignostics-sdk/1.0.0",
+            "pipeline": {
+                "gpu": {
+                    "gpu_type": GPUType.L4.value,
+                    "provisioning_mode": ProvisioningMode.SPOT.value,
+                    "max_gpus_per_slide": 2,
+                },
+                "cpu": {"provisioning_mode": ProvisioningMode.ON_DEMAND.value},
+            },
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_without_pipeline_config() -> None:
+        """Test that metadata validates without pipeline configuration (optional field)."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": "aignostics-sdk/1.0.0",
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_gpu_config_invalid_max_gpus() -> None:
+        """Test that invalid max_gpus_per_slide value is rejected."""
+        from aignostics.platform._sdk_metadata import GPUConfig
+
+        with pytest.raises(ValidationError):
+            GPUConfig(max_gpus_per_slide=0)  # Must be positive
+
+        with pytest.raises(ValidationError):
+            GPUConfig(max_gpus_per_slide=-1)  # Must be positive
