@@ -3,6 +3,7 @@ itemId: SWR-APPLICATION-2-2
 itemTitle: Validate MPP Resolution Against Application Limits
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
+# Software requirement (user)
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---

@@ -1,14 +1,32 @@
 """Boot sequence."""
 
+import atexit
+import contextlib
 import os
 import ssl
 import sys
 from pathlib import Path
+from typing import Any
 
-import certifi
-import truststore
+from loguru import logger
 
+# Optional SSL certificate modules - gracefully degrade if not available
+try:
+    import certifi
+except ImportError:
+    certifi = None  # type: ignore[assignment]
+
+try:
+    import truststore  # pyright: ignore[reportMissingImports]
+except ImportError:
+    truststore = None  # type: ignore[assignment]
+from collections.abc import Callable
+
+from sentry_sdk.integrations import Integration
+
+from ._constants import __is_library_mode__
 from ._log import logging_initialize
+from ._sentry import sentry_initialize
 
 # Import third party dependencies.
 third_party_dir = Path(__file__).parent.absolute() / ".." / "third_party"
@@ -20,38 +38,33 @@ if "DYLD_FALLBACK_LIBRARY_PATH" not in os.environ:
     os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{os.getenv('HOMEBREW_PREFIX', '/opt/homebrew')}/lib/"
 
 from ._constants import __project_name__, __version__  # noqa: E402
-from ._log import get_logger  # noqa: E402
 from ._process import get_process_info  # noqa: E402
 
 _boot_called = False
 
 
-def boot(modules_to_instrument: list[str]) -> None:
-    """Boot the application.
+def boot(
+    sentry_integrations: list[Integration] | None,
+    log_filter: Callable[[Any], bool] | None = None,
+) -> None:
+    """Boot the application or library.
 
     Args:
-        modules_to_instrument (list): List of modules to be instrumented.
+        sentry_integrations (list[Integration] | None): List of Sentry integrations to use
+        log_filter (Callable[[Any], bool] | None): Optional filter function for logging
     """
     global _boot_called  # noqa: PLW0603
     if _boot_called:
         return
     _boot_called = True
 
-    _amend_ssl_trust_chain()
-
-    from ._sentry import sentry_initialize  # noqa: PLC0415
-
-    sentry_initialize()
-
-    log_to_logfire = False
-    from ._logfire import logfire_initialize  # noqa: PLC0415
-
-    log_to_logfire = logfire_initialize(modules_to_instrument)
-
     _parse_env_args()
-    logging_initialize(log_to_logfire)
-
+    logging_initialize(filter_func=log_filter)
+    _amend_ssl_trust_chain()
+    sentry_initialize(integrations=sentry_integrations)
     _log_boot_message()
+    _register_shutdown_message()
+    logger.trace("Boot sequence completed successfully.")
 
 
 def _parse_env_args() -> None:
@@ -59,9 +72,6 @@ def _parse_env_args() -> None:
 
     - Last but not least removes those args so typer does not complain about them.
     """
-    logger = get_logger(__name__)
-    logger.debug("_parse_env_args called with sys.argv: %s", sys.argv)
-
     i = 1  # Start after script name
     to_remove = []
     prefix = f"{__project_name__.upper()}_"
@@ -88,22 +98,48 @@ def _parse_env_args() -> None:
 
 
 def _amend_ssl_trust_chain() -> None:
-    truststore.inject_into_ssl()
+    if __is_library_mode__:
+        logger.trace("Skipping SSL trust chain amendment in library mode.")
+        return
+    if truststore is not None:
+        truststore.inject_into_ssl()
 
-    if ssl.get_default_verify_paths().cafile is None and os.environ.get("SSL_CERT_FILE") is None:
+    if (
+        ssl.get_default_verify_paths().cafile is None
+        and os.environ.get("SSL_CERT_FILE") is None
+        and certifi is not None
+    ):
         os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
 def _log_boot_message() -> None:
     """Log boot message with version and process information."""
-    logger = get_logger(__name__)
     process_info = get_process_info()
-    logger.info(
-        "⭐ Booting %s v%s (project root %s, pid %s), parent '%s' (pid %s)",
+    mode_suffix = ", library-mode" if __is_library_mode__ else ""
+    logger.trace(
+        "⭐ Booting {} v{} (project root {}, pid {}), parent '{}' (pid {}){}",
         __project_name__,
         __version__,
         process_info.project_root,
         process_info.pid,
         process_info.parent.name,
         process_info.parent.pid,
+        mode_suffix,
     )
+
+
+def _register_shutdown_message() -> None:
+    def _shutdown_handler() -> None:
+        """Log shutdown message, skipping in test environments to avoid stream closure issues."""
+        # In test environments (pytest), stderr may be closed/replaced before atexit runs.
+        # Skip logging in tests to avoid Loguru warnings about closed file handles.
+        if "pytest" in sys.modules:
+            return
+
+        # Check if stderr is still open before attempting to log
+        if not sys.stderr.closed:
+            # Suppress I/O errors at shutdown - streams may be closed during logging
+            with contextlib.suppress(ValueError, OSError):
+                logger.trace("Exiting {project_name} v{version} ...")
+
+    atexit.register(_shutdown_handler)

@@ -7,9 +7,6 @@ from nicegui import ui
 
 from ._constants import __is_running_in_container__, __project_name__
 from ._di import locate_subclasses
-from ._log import get_logger
-
-logger = get_logger(__name__)
 
 WINDOW_SIZE = (1280, 768)  # Default window size for the GUI
 

@@ -80,8 +80,8 @@ def test_cli_bucket_info_settings(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["system", "info"])
     assert result.exit_code == 0
 
-    # Parse the JSON output
-    output_data = json.loads(result.output)
+    # Parse the JSON output from stdout only (stderr contains logs)
+    output_data = json.loads(result.stdout)
 
     # Verify the bucket settings defaults
     assert output_data["settings"]["AIGNOSTICS_BUCKET_PROTOCOL"] == "gs"

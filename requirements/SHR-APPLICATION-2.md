@@ -2,6 +2,7 @@
 itemId: SHR-APPLICATION-2
 itemTitle: Application Run Management
 itemType: Requirement
+# Stakeholder requirement (user)
 Requirement type: ENVIRONMENT
 ---
 

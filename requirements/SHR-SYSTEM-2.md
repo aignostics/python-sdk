@@ -2,6 +2,7 @@
 itemId: SHR-SYSTEM-2
 itemTitle: Sensitive Data Privacy and Access Control
 itemType: Requirement
+# Stakeholder requirement (user)
 Requirement type: ENVIRONMENT
 ---
 

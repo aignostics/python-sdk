@@ -1,7 +1,10 @@
 ---
 itemId: SWR-SYSTEM-GUI-HEALTH-1
+itemTitle: GUI System Health Visibility
 itemHasParent: SHR-SYSTEM-1
 itemType: Requirement
+# Software requirement (system)
+Requirement type: REGULATORY
 Module: System
 Layer: GUI
 ---

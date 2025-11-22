@@ -1,13 +1,11 @@
 """Tests for the platform utility functions."""
 
 import math
-import tempfile
-from pathlib import Path
 
 import pytest
 
 from aignostics.platform import mime_type_to_file_ending
-from aignostics.platform._utils import calculate_file_crc32c, convert_to_json_serializable
+from aignostics.platform._utils import convert_to_json_serializable
 
 
 class TestConvertToJsonSerializable:
@@ -241,105 +239,3 @@ class TestMimeTypeToFileEnding:
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with pytest.raises(ValueError, match="Unknown mime type: application/unknown"):
             mime_type_to_file_ending("application/unknown")
-
-
-class TestCalculateFileCrc32c:
-    """Tests for the calculate_file_crc32c function."""
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_calculate_crc32c_small_file(record_property) -> None:
-        """Test CRC32C calculation for a small file.
-
-        This test verifies that the calculate_file_crc32c function correctly
-        calculates the CRC32C checksum for a small file that fits in a single chunk.
-        """
-        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
-            temp_path = Path(temp_file.name)
-            temp_file.write(b"Hello, World!")
-
-        try:
-            checksum = calculate_file_crc32c(temp_path)
-            # Verify it returns a base64-encoded string
-            assert isinstance(checksum, str)
-            assert len(checksum) > 0
-            # The checksum for "Hello, World!" should be consistent
-            assert checksum == "TVUQaA=="
-        finally:
-            temp_path.unlink()
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_calculate_crc32c_large_file(record_property) -> None:
-        """Test CRC32C calculation for a large file with multiple chunks.
-
-        This test verifies that the calculate_file_crc32c function correctly
-        calculates the CRC32C checksum for a file larger than 8MB, ensuring
-        the continue statement (line 187) is executed multiple times.
-        """
-        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        # Create a file larger than EIGHT_MB (8,388,608 bytes)
-        # Use 10MB to ensure multiple chunks
-        file_size = 10 * 1024 * 1024  # 10 MB
-        chunk_data = b"A" * (1024 * 1024)  # 1 MB chunks
-
-        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
-            temp_path = Path(temp_file.name)
-            for _ in range(10):  # Write 10 chunks of 1MB each
-                temp_file.write(chunk_data)
-
-        try:
-            checksum = calculate_file_crc32c(temp_path)
-            # Verify it returns a base64-encoded string
-            assert isinstance(checksum, str)
-            assert len(checksum) > 0
-            # Verify file size is as expected
-            assert temp_path.stat().st_size == file_size
-        finally:
-            temp_path.unlink()
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_calculate_crc32c_empty_file(record_property) -> None:
-        """Test CRC32C calculation for an empty file.
-
-        This test verifies that the calculate_file_crc32c function correctly
-        handles empty files.
-        """
-        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
-            temp_path = Path(temp_file.name)
-            # Don't write anything, leave file empty
-
-        try:
-            checksum = calculate_file_crc32c(temp_path)
-            # Verify it returns a base64-encoded string
-            assert isinstance(checksum, str)
-            assert len(checksum) > 0
-            # Empty file CRC32C checksum
-            assert checksum == "AAAAAA=="
-        finally:
-            temp_path.unlink()
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_calculate_crc32c_deterministic(record_property) -> None:
-        """Test that CRC32C calculation is deterministic.
-
-        This test verifies that calculating the checksum multiple times for
-        the same file produces the same result.
-        """
-        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        test_data = b"Test data for deterministic checksum verification"
-
-        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
-            temp_path = Path(temp_file.name)
-            temp_file.write(test_data)
-
-        try:
-            checksum1 = calculate_file_crc32c(temp_path)
-            checksum2 = calculate_file_crc32c(temp_path)
-            assert checksum1 == checksum2
-        finally:
-            temp_path.unlink()

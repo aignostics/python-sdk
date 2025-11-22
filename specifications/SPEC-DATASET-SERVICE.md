@@ -2,7 +2,7 @@
 itemId: SPEC-DATASET-SERVICE
 itemTitle: Dataset Module Specification
 itemType: Software Item Spec
-itemFulfills: SHR-DATASET-1, SWR-DATASET-1-1, SWR-DATASET-1-2, SWR-DATASET-1-3, SWR-APPLICATION-2-10
+itemFulfills: SWR-DATASET-1-1, SWR-DATASET-1-2, SWR-DATASET-1-3, SWR-APPLICATION-2-10
 Module: Dataset
 Layer: Domain Service
 Version: 0.2.105

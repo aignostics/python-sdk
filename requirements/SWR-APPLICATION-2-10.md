@@ -3,6 +3,7 @@ itemId: SWR-APPLICATION-2-10
 itemTitle: Provide File Selection Interface
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
+# Software requirement (user)
 Requirement type: FUNCTIONAL
 Layer: User Interface (frontend)
 ---

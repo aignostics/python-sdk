@@ -7,16 +7,78 @@ including user information, CI/CD environment details, and test execution contex
 import os
 import sys
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Literal
 
+from loguru import logger
 from pydantic import BaseModel, Field, ValidationError
 
-from aignostics.utils import get_logger, user_agent
+from aignostics.utils import user_agent
 
-logger = get_logger(__name__)
+from ._constants import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+)
 
 SDK_METADATA_SCHEMA_VERSION = "0.0.4"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
+
+
+class GPUType(StrEnum):
+    """Type of GPU to use for processing."""
+
+    L4 = "L4"
+    A100 = "A100"
+
+
+class ProvisioningMode(StrEnum):
+    """Provisioning mode for resources."""
+
+    SPOT = "SPOT"
+    ON_DEMAND = "ON_DEMAND"
+
+
+class CPUConfig(BaseModel):
+    """Configuration for CPU resources."""
+
+    provisioning_mode: ProvisioningMode = Field(
+        default_factory=lambda: ProvisioningMode(DEFAULT_CPU_PROVISIONING_MODE),
+        description="The provisioning mode for CPU resources (SPOT or ON_DEMAND)",
+    )
+
+
+class GPUConfig(BaseModel):
+    """Configuration for GPU resources."""
+
+    gpu_type: GPUType = Field(
+        default_factory=lambda: GPUType(DEFAULT_GPU_TYPE),
+        description="The type of GPU to use (L4 or A100)",
+    )
+    provisioning_mode: ProvisioningMode = Field(
+        default_factory=lambda: ProvisioningMode(DEFAULT_GPU_PROVISIONING_MODE),
+        description="The provisioning mode for GPU resources (SPOT or ON_DEMAND)",
+    )
+    max_gpus_per_slide: int = Field(
+        default=DEFAULT_MAX_GPUS_PER_SLIDE,
+        ge=1,
+        le=8,
+        description="The maximum number of GPUs to allocate per slide (1-8)",
+    )
+
+
+class PipelineConfig(BaseModel):
+    """Pipeline configuration for dynamic orchestration."""
+
+    gpu: GPUConfig = Field(
+        default_factory=GPUConfig,
+        description="GPU resource configuration",
+    )
+    cpu: CPUConfig = Field(
+        default_factory=CPUConfig,
+        description="CPU resource configuration",
+    )
 
 
 class SubmissionMetadata(BaseModel):
@@ -122,6 +184,7 @@ class RunSdkMetadata(BaseModel):
     note: str | None = Field(None, description="Optional user note for the run")
     workflow: WorkflowMetadata | None = Field(None, description="Workflow control flags")
     scheduling: SchedulingMetadata | None = Field(None, description="Scheduling information")
+    pipeline: PipelineConfig | None = Field(None, description="Pipeline orchestration configuration")
 
     model_config = {"extra": "forbid"}  # Reject unknown fields
 
@@ -212,7 +275,7 @@ def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> d
             "user_email": me.user.email,
             "user_id": me.user.id,
         }
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.warning("Failed to fetch user information for SDK metadata")
 
     ci_metadata: dict[str, Any] = {}

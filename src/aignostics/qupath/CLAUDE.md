@@ -397,7 +397,7 @@ aignostics qupath uninstall
 **Logging Patterns:**
 
 ```python
-logger.info("Installing QuPath", extra={
+logger.debug("Installing QuPath", extra={
     "version": version,
     "path": str(path),
     "platform": f"{system}-{machine}"

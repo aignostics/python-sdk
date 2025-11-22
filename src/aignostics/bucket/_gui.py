@@ -112,7 +112,7 @@ class PageBuilder(BasePageBuilder):
                         True,
                         False,
                     )
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     ui.notify(f"Error deleting objects: {e}", color="red", type="warning")
                     bucket_form.delete_button.props(remove="loading")
                     return
@@ -168,7 +168,7 @@ class PageBuilder(BasePageBuilder):
                         ui.notify(f"Downloaded {len(result.downloaded)} objects.", type="positive")
                     if result.failed:
                         ui.notify(f"Failed to download {len(result.failed)} objects.", type="warning")
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     ui.notify(f"Error downloading objects: {e}", color="red", type="warning")
                 finally:
                     # Reset UI
