@@ -91,7 +91,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_CPU_PROVISIONING_MODE = "ON_DEMAND"
 
         SPECIAL_APPLICATION_ID = "he-tme"
-        SPECIAL_APPLICATION_VERSION = "1.0.0-sl.4"
+        SPECIAL_APPLICATION_VERSION = "0.0.0-test.retry.bug.20.11"
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),

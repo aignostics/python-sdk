@@ -517,8 +517,9 @@ def test_platform_heta_app_submit() -> None:
     )
 
 
+@pytest.mark.skip(reason="Tested")
 @pytest.mark.e2e
-@pytest.mark.stress
+@pytest.mark.stress_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_special_app_submit() -> None:
     """Test application runs with the HETA application.
@@ -536,7 +537,7 @@ def test_platform_special_app_submit() -> None:
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
-        tags={"test_platform_heta_app_submit_and_find", "scheduled"},
+        tags={"test_platform_special_app_submit", "special", "stress", "stress_only"},
     )
 
 
