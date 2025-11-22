@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
+import humanize
 from loguru import logger
 from nicegui import app, background_tasks, context, ui  # noq
 from nicegui import run as nicegui_run
@@ -11,7 +12,7 @@ from .._service import Service  # noqa: TID252
 from ._utils import application_id_to_icon, run_status_to_icon_and_color
 
 BORDERED_SEPARATOR = "bordered separator"
-RUNS_LIMIT = 500
+RUNS_LIMIT = 200
 RUNS_REFRESH_INTERVAL = 60 * 15  # 15 minutes
 STORAGE_TAB_RUNS_HAS_OUTPUT = "runs_has_output"
 
@@ -94,7 +95,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         ui.label(f"Could not load applications: {e!s}").mark("LABEL_ERROR")
                         logger.exception("Could not load applications")
 
-        async def application_runs_load_and_render(  # noqa: C901
+        async def application_runs_load_and_render(  # noqa: C901, PLR0915
             runs_column: ui.column, has_output: bool = False, query: str | None = None
         ) -> None:
             global _runs_last_refresh_time  # noqa: PLW0603
@@ -185,7 +186,14 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                                     and args.get("run_id") == run_data["run_id"]
                                     else "font-normal"
                                 ).mark(f"LABEL_RUN_APPLICATION:{index}")
-                                ui.label(f"submitted {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}")
+                                if run_data["terminated_at"]:
+                                    duration = run_data["terminated_at"] - run_data["submitted_at"]
+                                else:
+                                    duration = datetime.now(UTC) - run_data["submitted_at"]
+                                ui.label(
+                                    f"{humanize.naturaldelta(duration)}, "
+                                    f"from {run_data['submitted_at'].astimezone().strftime('%m-%d %H:%M')}"
+                                )
                                 if run_data.get("tags") and len(run_data["tags"]):
                                     with ui.row().classes("gap-1 mt-1"):
                                         for tag in run_data["tags"][:3]:

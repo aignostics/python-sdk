@@ -107,6 +107,7 @@ def test_inspect_pydicom_geojson_import(runner: CliRunner, record_property) -> N
 
 
 @pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 5)
 def test_wsi_inspect_error_handling(runner: CliRunner, record_property) -> None:
     """Test that wsi inspect command properly displays error messages."""
     record_property("tested-item-id", "SPEC-WSI-SERVICE")
@@ -123,6 +124,7 @@ def test_wsi_inspect_error_handling(runner: CliRunner, record_property) -> None:
 
 
 @pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 5)
 def test_wsi_dicom_inspect_error_handling(runner: CliRunner, record_property) -> None:
     """Test that wsi dicom inspect command properly displays error messages."""
     record_property("tested-item-id", "SPEC-WSI-SERVICE")
@@ -141,6 +143,7 @@ def test_wsi_dicom_inspect_error_handling(runner: CliRunner, record_property) ->
 
 
 @pytest.mark.integration
+@pytest.mark.timeout(timeout=60 * 5)
 def test_wsi_dicom_geojson_import_error_handling(runner: CliRunner, record_property) -> None:
     """Test that wsi dicom geojson_import command properly displays error messages."""
     record_property("tested-item-id", "SPEC-WSI-SERVICE")

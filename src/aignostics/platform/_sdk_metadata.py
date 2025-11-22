@@ -11,18 +11,19 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from loguru import logger
-from pydantic import BaseModel, Field, PositiveInt, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from aignostics.utils import user_agent
 
+from ._constants import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+)
+
 SDK_METADATA_SCHEMA_VERSION = "0.0.4"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
-
-# Pipeline orchestration defaults
-DEFAULT_GPU_TYPE = "L4"
-DEFAULT_MAX_GPUS_PER_SLIDE = 1
-DEFAULT_GPU_PROVISIONING_MODE = "SPOT"
-DEFAULT_CPU_PROVISIONING_MODE = "SPOT"
 
 
 class GPUType(StrEnum):
@@ -59,9 +60,11 @@ class GPUConfig(BaseModel):
         default_factory=lambda: ProvisioningMode(DEFAULT_GPU_PROVISIONING_MODE),
         description="The provisioning mode for GPU resources (SPOT or ON_DEMAND)",
     )
-    max_gpus_per_slide: PositiveInt = Field(
+    max_gpus_per_slide: int = Field(
         default=DEFAULT_MAX_GPUS_PER_SLIDE,
-        description="The maximum number of GPUs to allocate per slide",
+        ge=1,
+        le=8,
+        description="The maximum number of GPUs to allocate per slide (1-8)",
     )
 
 
