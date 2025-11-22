@@ -1,8 +1,8 @@
-name: "+ Scheduled Testing / Production (Hourly)"
+name: "+ Scheduled Testing / Staging (Daily)"
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 12 * * *'
   workflow_dispatch:
     inputs:
       branch:
@@ -12,20 +12,25 @@ on:
         default: ''
 
 jobs:
-  scheduled-testing-production-hourly:
-    uses: ./.github/workflows/_scheduled-test-hourly.yml
+
+  scheduled-testing-staging-daily:
+    uses: ./.github/workflows/_scheduled-test-daily.yml
     with:
-      platform_environment: "production"
+      platform_environment: "staging"
     permissions:
+      attestations: write
       contents: read
       id-token: write
+      packages: write
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
       GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
-      BETTERSTACK_HEARTBEAT_URL_STAGING: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_STAGING }}
+      BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_STAGING }}
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
-      BETTERSTACK_HEARTBEAT_URL_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}
-      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For heartbeat only
+      BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics and heartbeat

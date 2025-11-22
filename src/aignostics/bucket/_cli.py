@@ -10,14 +10,13 @@ from typing import Annotated
 
 import humanize
 import typer
+from loguru import logger
 
-from aignostics.utils import console, get_logger, get_user_data_directory
+from aignostics.utils import console, get_user_data_directory
 
 from ._service import DownloadProgress, Service
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
-
-logger = get_logger(__name__)
 
 
 cli = typer.Typer(

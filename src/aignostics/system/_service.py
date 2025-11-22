@@ -16,6 +16,7 @@ from urllib.request import getproxies
 import urllib3
 from dotenv import set_key as dotenv_set_key
 from dotenv import unset_key as dotenv_unset_key
+from loguru import logger
 from pydantic_settings import BaseSettings
 
 from ..utils import (  # noqa: TID252
@@ -28,7 +29,6 @@ from ..utils import (  # noqa: TID252
     __project_path__,
     __repository_url__,
     __version__,
-    get_logger,
     get_process_info,
     load_settings,
     locate_subclasses,
@@ -36,8 +36,6 @@ from ..utils import (  # noqa: TID252
 )
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
-
-logger = get_logger(__name__)
 
 JsonValue: t.TypeAlias = str | int | float | list["JsonValue"] | t.Mapping[str, "JsonValue"] | None
 JsonType: t.TypeAlias = list[JsonValue] | t.Mapping[str, JsonValue]
@@ -123,7 +121,7 @@ class Service(BaseService):
             )
 
             if response.status != HTTPStatus.OK:
-                logger.error("'%s' returned '%s'", IPIFY_URL, response.status)
+                logger.error(f"'{IPIFY_URL}' returned '{response.status}'")
                 return Health(
                     status=Health.Code.DOWN,
                     reason=f"'{IPIFY_URL}' returned status '{response.status}'",
@@ -197,7 +195,7 @@ class Service(BaseService):
                 timeout=urllib3.Timeout(total=timeout),
             )
             if response.status != HTTPStatus.OK:
-                logger.error("Failed to get public IP: HTTP %s", response.status)
+                logger.error(f"Failed to get public IP: HTTP {response.status}")
                 return None
             return response.data.decode("utf-8")
         except Exception as e:
@@ -421,7 +419,7 @@ class Service(BaseService):
                 service = service_class()
                 result_dict[service.key()] = service.info(mask_secrets=mask_secrets)
 
-        logger.info("Service info: %s", result_dict)
+        logger.debug("Service info: {}", result_dict)
         return result_dict
 
     @staticmethod
@@ -515,7 +513,7 @@ class Service(BaseService):
         for dotenv_path in Service._get_env_files_paths():
             if not dotenv_path.is_file():
                 message = f"File '{dotenv_path!s}' does not exist, skipping update"
-                logger.debug(message)
+                logger.trace(message)
                 continue
             dotenv_unset_key(dotenv_path=str(dotenv_path.resolve()), key_to_unset=key, quote_mode="auto")
         os.environ.pop(key, None)

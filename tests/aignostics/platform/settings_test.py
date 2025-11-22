@@ -195,6 +195,7 @@ def test_authentication_settings_with_env_vars(record_property, mock_env_vars, r
     assert settings1.client_id_device.get_secret_value() == "test-client-id-device"
 
 
+@pytest.mark.unit
 def test_custom_env_file_location(reset_cached_settings, record_property) -> None:
     """Test custom env file location.
 

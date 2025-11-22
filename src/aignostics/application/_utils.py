@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import humanize
+from loguru import logger
 
 from aignostics.constants import (
     HETA_APPLICATION_ID,
@@ -30,9 +31,7 @@ from aignostics.platform import (
     RunItemStatistics,
     RunState,
 )
-from aignostics.utils import console, get_logger
-
-logger = get_logger(__name__)
+from aignostics.utils import console
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
 
@@ -82,6 +81,44 @@ def validate_due_date(due_date: str | None) -> None:
             f"but current UTC time is {now.isoformat()}"
         )
         raise ValueError(message)
+
+
+def is_not_terminated_with_deadline_exceeded(
+    run_state: RunState,
+    custom_metadata: dict[str, Any] | None,
+) -> bool | None:
+    """Check if the run is not terminated and the deadline has been exceeded.
+
+    Only returns True if the run is still in PENDING or PROCESSING state and the deadline has passed.
+    This is useful for identifying runs that are overdue and still active.
+
+    Args:
+        run_state (RunState): The current state of the run.
+        custom_metadata (dict[str, Any] | None): The custom metadata containing optional deadline information.
+
+    Returns:
+        bool | None: True if run is not terminated and deadline exceeded,
+                     False if run is not terminated but deadline not exceeded,
+                     None if run is terminated, no deadline set, or invalid deadline format.
+    """
+    # If run is already terminated, return None (deadline is no longer relevant)
+    if run_state == RunState.TERMINATED:
+        return None
+
+    if not custom_metadata:
+        return None
+
+    deadline_str = custom_metadata.get("sdk", {}).get("scheduling", {}).get("deadline")
+    if not deadline_str:
+        return None
+
+    try:
+        now = datetime.now(tz=UTC)
+        deadline_dt = datetime.fromisoformat(deadline_str)
+        return now > deadline_dt
+    except (ValueError, TypeError, AttributeError):
+        # Invalid deadline format, return None
+        return None
 
 
 class OutputFormat(StrEnum):
@@ -210,7 +247,7 @@ def _retrieve_and_print_run_items(run_handle: Run) -> None:
     for item in results:
         item_output = (
             f"  [bold]Item ID:[/bold] {item.item_id}\n"
-            f"  [bold]Item External ID:[/bold] {item.external_id}\n"
+            f"  [bold]Item External ID:[/bold] `{item.external_id}`\n"
             f"  [bold]Status (Termination Reason):[/bold] {item.state.value} ({item.termination_reason})\n"
             f"  [bold]Error Message (Code):[/bold] {item.error_message} ({item.error_code})\n"
             f"  [bold]Custom Metadata:[/bold] {item.custom_metadata or 'None'}"
@@ -310,7 +347,7 @@ def read_metadata_csv_to_dict(
         with metadata_csv_file.open("r", encoding="utf-8") as f:
             return list(csv.DictReader(f, delimiter=";", quotechar='"'))
     except (csv.Error, UnicodeDecodeError, KeyError) as e:
-        logger.warning("Failed to parse metadata CSV file '%s': %s", metadata_csv_file, e)
+        logger.warning("Failed to parse metadata CSV file '{}': {}", metadata_csv_file, e)
         console.print(f"[warning]Warning:[/warning] Failed to parse metadata CSV file '{metadata_csv_file}': {e}")
         return None
 
@@ -380,7 +417,7 @@ def get_file_extension_for_artifact(artifact: OutputArtifactData) -> str:
         file_extension = ".json"
     if not file_extension:
         file_extension = ".bin"
-    logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
+    logger.trace("Guessed file extension: '{}' for artifact '{}'", file_extension, artifact.name)
     return file_extension
 
 

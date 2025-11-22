@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Any
 
 from ._health import Health
-from ._log import get_logger
+from loguru import logger
 from ._fs import get_user_data_directory
 import shutil
 
-logger = get_logger(__name__)
+
 
 
 def register_health_endpoint(router: Any) -> Callable[..., Health]:  # noqa: ANN401
@@ -58,10 +58,10 @@ def create_marimo_app(notebook: Path, override_if_exists: bool) -> Any:  # noqa:
     directory = get_user_data_directory("notebooks")
     notebook_destination = directory / notebook.name
     if notebook_destination.exists() and not override_if_exists:
-        logger.debug(f"Notebook already exists at {notebook_destination}, using existing file")
+        logger.trace(f"Notebook already exists at {notebook_destination}, using existing file")
     else:
         notebook_destination.write_bytes(notebook.read_bytes())
-        logger.info(f"Copied notebook from {notebook} to {notebook_destination}")
+        logger.debug(f"Copied notebook from {notebook} to {notebook_destination}")
     server = server.with_app(path="/", root=str(notebook_destination.resolve()))
     app = FastAPI()
     router = APIRouter(tags=["marimo"])

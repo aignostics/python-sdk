@@ -88,6 +88,8 @@ profile.html
 # Nicegui
 .nicegui
 
+# MCP
+.mcp.json
 
 # Application specific
 data/**
