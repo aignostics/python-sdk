@@ -100,7 +100,7 @@ dependencies = [
     "highdicom>=0.26.1,<1",
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
-    "idc-index-data==22.1.5",
+    "idc-index-data==23.0.1",
     "ijson>=3.4.0.post0,<4",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
