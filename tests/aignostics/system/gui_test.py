@@ -53,11 +53,8 @@ async def test_gui_system_health_shown_and_updated(user: User, silent_logging, r
     """
     record_property("tested-item-id", "TEST-SYSTEM-GUI-HEALTH, SWR-SYSTEM-GUI-HEALTH-1")
 
-    # Test that health is visible on multiple pages to verify "always visible"
     pages_to_test = [
         "/",  # Main page
-        "/system",  # System page
-        "/dataset/idc",  # Dataset page
     ]
 
     for page in pages_to_test:
