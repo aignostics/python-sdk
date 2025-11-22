@@ -11,7 +11,14 @@ import typer
 from loguru import logger
 
 from aignostics.bucket import Service as BucketService
-from aignostics.platform import NotFoundException, RunState
+from aignostics.platform import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+    NotFoundException,
+    RunState,
+)
 from aignostics.utils import console, get_user_data_directory, sanitize_path
 
 from ._models import DownloadProgress, DownloadProgressState
@@ -39,16 +46,29 @@ run_app.add_typer(result_app, name="result", help="Download or delete run result
 
 
 @cli.command("list")
-def application_list(
+def application_list(  # noqa: C901
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
 ) -> None:
     """List available applications."""
     try:
         apps = Service().applications()
     except Exception as e:
         logger.exception("Could not load applications")
-        console.print(f"[error]Error:[/error] Could not load applications: {e}")
+        if format == "json":
+            print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
+        else:
+            console.print(f"[error]Error:[/error] Could not load applications: {e}")
         sys.exit(1)
+
+    if format == "json":
+        # Convert apps to JSON-serializable format
+        apps_data = [app.model_dump(mode="json") for app in apps]
+        print(json.dumps(apps_data, indent=2, default=str))
+        return
 
     app_count = 0
 
@@ -208,21 +228,37 @@ def application_dump_schemata(  # noqa: C901
 
 
 @cli.command("describe")
-def application_describe(
+def application_describe(  # noqa: C901, PLR0912
     application_id: Annotated[str, typer.Argument(help="Id of the application to describe")],
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
 ) -> None:
     """Describe application."""
     try:
         app = Service().application(application_id)
     except NotFoundException:
         logger.warning(f"Application with ID '{application_id}' not found.")
-        console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
+        if format == "json":
+            error_msg = {"error": "not_found", "message": f"Application with ID '{application_id}' not found."}
+            print(json.dumps(error_msg), file=sys.stderr)
+        else:
+            console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
         sys.exit(2)
     except Exception as e:
         logger.exception(f"Failed to describe application with ID '{application_id}'")
-        console.print(f"[error]Error:[/error] Failed to describe application: {e}")
+        if format == "json":
+            print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
+        else:
+            console.print(f"[error]Error:[/error] Failed to describe application: {e}")
         sys.exit(1)
+
+    if format == "json":
+        # Output application details as JSON
+        print(json.dumps(app.model_dump(mode="json"), indent=2, default=str))
+        return
 
     console.print(f"[bold]Application Details for {app.application_id}[/bold]")
     console.print("=" * 80)
@@ -366,6 +402,22 @@ def run_execute(  # noqa: PLR0913, PLR0917
     validate_only: Annotated[
         bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
     ] = False,
+    gpu_type: Annotated[
+        str,
+        typer.Option(help="GPU type to use for processing (L4 or A100)."),
+    ] = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: Annotated[
+        int,
+        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
+    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
+    cpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = DEFAULT_CPU_PROVISIONING_MODE,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -401,10 +453,15 @@ def run_execute(  # noqa: PLR0913, PLR0917
         metadata_csv_file=metadata_csv_file,
         application_version=application_version,
         note=note,
+        tags=None,
         due_date=due_date,
         deadline=deadline,
         onboard_to_aignostics_portal=onboard_to_aignostics_portal,
         validate_only=validate_only,
+        gpu_type=gpu_type,
+        gpu_provisioning_mode=gpu_provisioning_mode,
+        max_gpus_per_slide=max_gpus_per_slide,
+        cpu_provisioning_mode=cpu_provisioning_mode,
     )
     result_download(
         run_id=run_id,
@@ -652,6 +709,22 @@ def run_submit(  # noqa: PLR0913, PLR0917
     validate_only: Annotated[
         bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
     ] = False,
+    gpu_type: Annotated[
+        str,
+        typer.Option(help="GPU type to use for processing (L4 or A100)."),
+    ] = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: Annotated[
+        int,
+        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
+    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
+    cpu_provisioning_mode: Annotated[
+        str,
+        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
+    ] = DEFAULT_CPU_PROVISIONING_MODE,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -701,17 +774,23 @@ def run_submit(  # noqa: PLR0913, PLR0917
             app_version.version_number,
             metadata_dict,
         )
+
+        # Submit run with pipeline configuration
         application_run = Service().application_run_submit_from_metadata(
             application_id=application_id,
             metadata=metadata_dict,
             application_version=application_version,
-            custom_metadata=None,  # TODO(Helmut): Add support for custom metadata
+            custom_metadata=None,
             note=note,
             tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
             due_date=due_date,
             deadline=deadline,
             onboard_to_aignostics_portal=onboard_to_aignostics_portal,
             validate_only=validate_only,
+            gpu_type=gpu_type,
+            gpu_provisioning_mode=gpu_provisioning_mode,
+            max_gpus_per_slide=max_gpus_per_slide,
+            cpu_provisioning_mode=cpu_provisioning_mode,
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "
@@ -755,6 +834,10 @@ def run_list(  # noqa: PLR0913, PLR0917
     ] = None,
     query: Annotated[str | None, typer.Option(help="Optional query string to filter runs by note OR tags.")] = None,
     note_case_insensitive: Annotated[bool, typer.Option(help="Make note regex search case-insensitive.")] = True,
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
 ) -> None:
     """List runs."""
     try:
@@ -766,39 +849,65 @@ def run_list(  # noqa: PLR0913, PLR0917
             query=query,
         )
         if len(runs) == 0:
-            if tags:
-                message = f"You did not yet create a run matching tags: {tags!r}."
-            elif note_regex:
-                message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+            if format == "json":
+                print(json.dumps([]))
             else:
-                message = "You did not yet create a run."
-            logger.warning(message)
-            console.print(message, style="warning")
+                if tags:
+                    message = f"You did not yet create a run matching tags: {tags!r}."
+                elif note_regex:
+                    message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+                else:
+                    message = "You did not yet create a run."
+                logger.warning(message)
+                console.print(message, style="warning")
         else:
-            print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
-            message = f"Listed '{len(runs)}' run(s)."
-            console.print(message, style="info")
-            logger.debug(message)
+            if format == "json":
+                # Convert runs to JSON-serializable format
+                runs_data = [run.model_dump(mode="json") for run in runs]
+                print(json.dumps(runs_data, indent=2, default=str))
+            else:
+                print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
+                message = f"Listed '{len(runs)}' run(s)."
+                console.print(message, style="info")
+            logger.debug(f"Listed '{len(runs)}' run(s).")
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
 
 
 @run_app.command("describe")
-def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to describe")]) -> None:
+def run_describe(
+    run_id: Annotated[str, typer.Argument(help="Id of the run to describe")],
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
+) -> None:
     """Describe run."""
     logger.trace("Describing run with ID '{}'", run_id)
 
     try:
-        retrieve_and_print_run_details(Service().application_run(run_id))
+        run = Service().application_run(run_id)
+        if format == "json":
+            # Get run details and output as JSON
+            run_details = run.details()
+            print(json.dumps(run_details.model_dump(mode="json"), indent=2, default=str))
+        else:
+            retrieve_and_print_run_details(run)
         logger.debug("Described run with ID '{}'", run_id)
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' not found.")
-        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        if format == "json":
+            print(json.dumps({"error": "not_found", "message": f"Run with ID '{run_id}' not found."}), file=sys.stderr)
+        else:
+            console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
         logger.exception(f"Failed to retrieve and print run details for ID '{run_id}'")
-        console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
+        if format == "json":
+            print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
+        else:
+            console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
         sys.exit(1)
 
 
@@ -902,6 +1011,116 @@ def run_cancel(
     except Exception as e:
         logger.exception(f"Failed to cancel run with ID '{run_id}'")
         console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
+        sys.exit(1)
+
+
+@run_app.command("cancel-by-filter")
+def run_cancel_by_filter(  # noqa: C901, PLR0912, PLR0915
+    tags: Annotated[
+        str | None,
+        typer.Option(help="Optional comma-separated list of tags to filter runs. All tags must match."),
+    ] = None,
+    application_id: Annotated[
+        str | None,
+        typer.Option(help="Optional application ID to filter runs."),
+    ] = None,
+    application_version: Annotated[
+        str | None,
+        typer.Option(help="Optional application version to filter runs."),
+    ] = None,
+    limit: Annotated[int | None, typer.Option(help="Maximum number of runs to cancel")] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="Show which runs would be canceled without actually canceling them."),
+    ] = False,
+) -> None:
+    """Cancel runs matching filter criteria.
+
+    All provided filters must match for a run to be canceled.
+    At least one filter parameter (tags, application_id, or application_version) must be provided.
+    """
+    # Validate at least one filter is provided
+    if not tags and not application_id and not application_version:
+        error_msg = (
+            "[error]Error:[/error] At least one filter parameter "
+            "(--tags, --application-id, or --application-version) must be provided."
+        )
+        console.print(error_msg)
+        sys.exit(1)
+
+    logger.trace(
+        "Canceling runs with filters: tags=%s, application_id=%s, application_version=%s, limit=%s, dry_run=%s",
+        tags,
+        application_id,
+        application_version,
+        limit,
+        dry_run,
+    )
+
+    try:
+        # Get runs matching the tag filter first
+        runs = Service().application_runs(
+            limit=limit,
+            tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
+        )
+
+        # Further filter by application_id and application_version if provided
+        filtered_runs = []
+        for run in runs:
+            # Check application_id match
+            if application_id and run.application_id != application_id:
+                continue
+            # Check application_version match
+            if application_version and run.version_number != application_version:
+                continue
+            filtered_runs.append(run)
+
+        if len(filtered_runs) == 0:
+            filter_desc = []
+            if tags:
+                filter_desc.append(f"tags={tags}")
+            if application_id:
+                filter_desc.append(f"application_id={application_id}")
+            if application_version:
+                filter_desc.append(f"application_version={application_version}")
+            message = f"No runs found matching filters: {', '.join(filter_desc)}"
+            logger.warning(message)
+            console.print(f"[warning]Warning:[/warning] {message}")
+            return
+
+        if dry_run:
+            console.print(f"[bold]Would cancel {len(filtered_runs)} run(s):[/bold]")
+            for run in filtered_runs:
+                console.print(f"  - {run.run_id} ({run.application_id} v{run.version_number}, state: {run.state})")
+            return
+
+        # Cancel each matching run
+        canceled_count = 0
+        failed_count = 0
+        for run in filtered_runs:
+            try:
+                Service().application_run_cancel(run.run_id)
+                canceled_count += 1
+                logger.debug(f"Canceled run with ID '{run.run_id}'.")
+            except NotFoundException:
+                logger.warning(f"Run with ID '{run.run_id}' not found (may have been deleted).")
+                failed_count += 1
+            except ValueError:
+                logger.warning(f"Run ID '{run.run_id}' invalid")
+                failed_count += 1
+            except Exception as e:
+                logger.exception(f"Failed to cancel run with ID '{run.run_id}'")
+                console.print(f"[error]Error:[/error] Failed to cancel run with ID '{run.run_id}': {e}")
+                failed_count += 1
+
+        # Print summary
+        console.print(f"Successfully canceled {canceled_count} run(s).")
+        if failed_count > 0:
+            console.print(f"[warning]Warning:[/warning] Failed to cancel {failed_count} run(s).")
+
+    except Exception as e:
+        logger.exception("Failed to cancel runs by filter")
+        console.print(f"[error]Error:[/error] Failed to cancel runs by filter: {e}")
         sys.exit(1)
 
 

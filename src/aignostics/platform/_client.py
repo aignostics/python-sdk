@@ -301,7 +301,6 @@ class Client:
         client = ApiClient(
             config,
         )
-        # TODO(Helmut): move to request calling
         client.user_agent = user_agent()
         api_client = PublicApi(client)
 

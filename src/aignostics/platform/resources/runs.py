@@ -36,6 +36,7 @@ from aignx.codegen.models import (
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 from loguru import logger
+from sentry_sdk import metrics
 from tenacity import (
     RetryCallState,
     Retrying,
@@ -267,10 +268,9 @@ class Run:
             # track timeout if specified
             start_time = time.time() if timeout_seconds is not None else None
 
-            # incrementally check for available results
+            # iteratively check for available results
             application_run_state = self.details(nocache=True).state  # no cache to get fresh results
             while application_run_state in {RunState.PROCESSING, RunState.PENDING}:
-                # check timeout
                 if start_time is not None and timeout_seconds is not None:
                     elapsed = time.time() - start_time
                     if elapsed >= timeout_seconds:
@@ -284,28 +284,30 @@ class Run:
                         self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 sleep(sleep_interval)
                 application_run_state = self.details(nocache=True).state
-                logger.trace("Continuing to wait for run {}, current state: {!r}", self.run_id, self)
                 print(self) if print_status else None
+                if application_run_state in {RunState.PROCESSING, RunState.PENDING}:
+                    logger.trace("Waiting for termination of run {}, current state: {!r}.", self.run_id, self)
+                else:
+                    logger.trace("Run {} has terminated, final state {!r}.", self.run_id, self)
 
             # check if last results have been downloaded yet and report on errors
             for item in self.results(nocache=True):
-                match item.output:
-                    case ItemOutput.FULL:
-                        self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
-                    case ItemOutput.NONE:
-                        message = (
-                            f"{item.external_id} failed with `{item.state.value}`.\n"
-                            f"Termination reason `{item.termination_reason}`, "
-                            f"error_code:`{item.error_code}`, message `{item.error_message}`."
-                        )
-                        logger.error(message)
-                        print(message) if print_status else None
+                if ItemOutput.FULL:
+                    self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
+                message = (
+                    f"Output of item `{item.external_id}` is `{item.output}`, state `{item.state}`, "
+                    f"error `{item.error_message}` ({item.error_code}), "
+                    f"termination reason `{item.termination_reason}`."
+                )
+                logger.trace(message)
+                print(message) if print_status else None
+
         except (ValueError, DownloadTimeoutError):
             # Re-raise ValueError and DownloadTimeoutError as-is
             raise
         except Exception as e:
             # Wrap all other exceptions in RuntimeError
-            msg = f"Download operation failed for run {self.run_id}: {e}"
+            msg = f"Download operation failed unexpectedly for run {self.run_id}: {e}"
             raise RuntimeError(msg) from e
 
     @staticmethod
@@ -442,6 +444,11 @@ class Run:
         """
         details = cast("RunData", self.details())
         app_status = details.state.value
+        error_status = (
+            f" with error `{details.error_message}` ({details.error_code})"
+            if details.error_message or details.error_code
+            else ""
+        )
         items = (
             f"{details.statistics.item_count} items: "
             f"{details.statistics.item_pending_count}/"
@@ -452,7 +459,10 @@ class Run:
             f"{details.statistics.item_succeeded_count}"
             " [pending/processing/user-error/system-error/skipped/succeeded]"
         )
-        return f"Run `{self.run_id}`: {app_status}, {items}"
+        return (
+            f"Run `{self.run_id}` ({details.application_id}:{details.version_number}): "
+            f"{app_status}{error_status}, {items}"
+        )
 
 
 class Runs:
@@ -521,6 +531,24 @@ class Runs:
             payload,
             _request_timeout=settings().run_submit_timeout,
             _headers={"User-Agent": user_agent()},
+        )
+        metrics.count(
+            "aignostics.platform.run.submitted",
+            1,
+            attributes={
+                "api_root": settings().api_root,
+                "application_id": application_id,
+                "application_version": application_version or "latest",
+            },
+        )
+        metrics.count(
+            "aignostics.platform.items.submitted",
+            len(items),
+            attributes={
+                "api_root": settings().api_root,
+                "application_id": application_id,
+                "application_version": application_version or "latest",
+            },
         )
         operation_cache_clear()  # Clear all caches since we added a new run
         return Run(self._api, str(res.run_id))
