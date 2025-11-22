@@ -1,4 +1,4 @@
-name: "+ Scheduled Testing / Staging (Hourly)"
+name: "+ Scheduled Testing / Production (Hourly)"
 
 on:
   schedule:
@@ -12,10 +12,10 @@ on:
         default: ''
 
 jobs:
-  scheduled-testing-staging-hourly:
+  scheduled-testing-production-hourly:
     uses: ./.github/workflows/_scheduled-test-hourly.yml
     with:
-      platform_environment: "staging"
+      platform_environment: "production"
     permissions:
       contents: read
       id-token: write
@@ -28,4 +28,4 @@ jobs:
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
       BETTERSTACK_HEARTBEAT_URL_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}
-      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For heartbeat only
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics and heartbeat

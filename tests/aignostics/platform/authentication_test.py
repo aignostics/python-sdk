@@ -857,8 +857,12 @@ class TestTokenRefreshRetryLogic:
         # Verify requests.post was called only once (no retries)
         assert mock_response.raise_for_status.call_count == 1
 
-        # Verify no retry log messages
-        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
+        # Verify no retry log messages for client errors
+        retry_logs = [
+            record
+            for record in caplog.records
+            if "Retrying aignostics.platform._authentication._access_token_from_refresh_token" in record.getMessage()
+        ]
         assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
 
     @pytest.mark.unit
@@ -926,7 +930,11 @@ class TestTokenRefreshRetryLogic:
         assert call_count >= 2, f"Expected at least 2 attempts but got {call_count}"
 
         # Verify retry logs exist
-        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
+        retry_logs = [
+            record
+            for record in caplog.records
+            if "Retrying aignostics.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
+        ]
         assert len(retry_logs) > 0, "Should log retry attempts for connection errors"
 
 
@@ -1187,7 +1195,11 @@ class TestTokenVerificationRetryLogic:
         assert call_count == 1
 
         # Verify no retry log messages
-        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
+        retry_logs = [
+            record
+            for record in caplog.records
+            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
+        ]
         assert len(retry_logs) == 0, "Should not log retry attempts for JWT decode errors"
 
     @pytest.mark.unit
@@ -1308,6 +1320,10 @@ class TestTokenVerificationRetryLogic:
         # Verify get_signing_key_from_jwt was called only once (no retries)
         assert call_count == 1
 
-        # Verify no retry log messages
-        retry_logs = [record for record in caplog.records if "retry" in record.getMessage().lower()]
+        # Verify no retry log messages for non-connection JWK errors
+        retry_logs = [
+            record
+            for record in caplog.records
+            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
+        ]
         assert len(retry_logs) == 0, "Should not log retry attempts for non-connection JWK errors"

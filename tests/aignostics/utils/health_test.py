@@ -2,12 +2,9 @@
 
 import pytest
 
-from aignostics.utils import get_logger
 from aignostics.utils._health import Health
 
 DB_FAILURE = "DB failure"
-
-log = get_logger(__name__)
 
 
 @pytest.mark.unit
@@ -200,4 +197,4 @@ def test_health_manually_set_components_validated(record_property) -> None:
             "bad_component": Health(status=Health.Code.DOWN),  # Missing reason
         }
         # Accessing any attribute triggers validation
-        log.info(str(health))
+        _ = str(health)

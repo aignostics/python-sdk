@@ -86,6 +86,13 @@ jobs:
           envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
           envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
           envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+          envkey_AIGNOSTICS_SENTRY_ENABLED: true
+          envkey_AIGNOSTICS_SENTRY_DSN: ${{ secrets.SENTRY_DSN}}
+          envkey_AIGNOSTICS_SENTRY_DEBUG: false
+          envkey_AIGNOSTICS_SENTRY_SEND_DEFAULT_PII: false
+          envkey_AIGNOSTICS_SENTRY_SAMPLE_RATE: 0
+          envkey_AIGNOSTICS_SENTRY_TRACES_SAMPLE_RATE: 0
+          envkey_AIGNOSTICS_SENTRY_PROFILES_SAMPLE_RATE: 0
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access

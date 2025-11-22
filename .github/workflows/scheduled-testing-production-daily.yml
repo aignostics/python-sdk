@@ -1,4 +1,4 @@
-name: "+ Scheduled Testing / Staging (Daily)"
+name: "+ Scheduled Testing / Production (Daily)"
 
 on:
   schedule:
@@ -13,10 +13,10 @@ on:
 
 jobs:
 
-  scheduled-testing-staging-daily:
+  scheduled-testing-production-daily:
     uses: ./.github/workflows/_scheduled-test-daily.yml
     with:
-      platform_environment: "staging"
+      platform_environment: "production"
     permissions:
       attestations: write
       contents: read
@@ -33,4 +33,4 @@ jobs:
       BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_FLOWS_PRODUCTION }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For heartbeat only
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics and heartbeat

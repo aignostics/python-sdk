@@ -19,6 +19,7 @@ The dataset module handles enterprise-scale medical imaging dataset operations, 
 **CLI Commands (`_cli.py`):**
 
 IDC commands:
+
 - `dataset idc browse` - Open browser to explore IDC portal
 - `dataset idc indices` - List available indices
 - `dataset idc columns` - Show columns for a given index
@@ -26,6 +27,7 @@ IDC commands:
 - `dataset idc download` - Download dataset from IDC
 
 Aignostics commands:
+
 - `dataset aignostics download` - Download proprietary sample datasets
 
 **GUI Component (`_gui.py`):**
@@ -37,6 +39,7 @@ Aignostics commands:
 **Service Layer (`_service.py`):**
 
 Core dataset operations:
+
 - IDC client with proxy support
 - s5cmd subprocess management
 - Download progress tracking
@@ -323,7 +326,7 @@ def download_with_resume(collection_id: str, output_dir: Path):
         if Path(item['target_path']) not in existing_files
     ]
 
-    logger.info(f"Resuming download: {len(to_download)} files remaining")
+    logger.debug(f"Resuming download: {len(to_download)} files remaining")
 
     # Download remaining files
     service.download_filtered(to_download, output_dir)
@@ -354,7 +357,7 @@ def download_multiple_collections(collections: list[str]):
             collection_id = futures[future]
             try:
                 future.result()
-                logger.info(f"Completed: {collection_id}")
+                logger.debug(f"Completed: {collection_id}")
             except Exception as e:
                 logger.error(f"Failed {collection_id}: {e}")
 ```
@@ -414,7 +417,7 @@ def test_idc_download_with_proxy():
 **Logging Standards:**
 
 ```python
-logger.info("Dataset download started", extra={
+logger.debug("Dataset download started", extra={
     "collection_id": collection_id,
     "estimated_size_gb": size_gb,
     "output_directory": str(output_dir),
@@ -480,6 +483,7 @@ def download_with_retry(manifest_item: dict, max_retries: int = 3):
 **Problem:** SSL verification failures behind proxy
 
 **Solution:**
+
 ```bash
 export HTTPS_PROXY=http://proxy:8080
 export REQUESTS_CA_BUNDLE=/path/to/ca-bundle.crt
@@ -491,6 +495,7 @@ export AWS_CA_BUNDLE=/path/to/ca-bundle.crt
 **Problem:** Running out of disk space mid-download
 
 **Solution:**
+
 ```python
 def check_disk_space(required_gb: float, path: Path):
     """Pre-flight disk space check."""

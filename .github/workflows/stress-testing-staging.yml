@@ -1,0 +1,29 @@
+name: "+ Stress Testing / Staging (5 minutely)"
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test (leave empty for main)'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  scheduled-testing-staging-5-minutely:
+    uses: ./.github/workflows/_scheduled-test-stress.yml
+    with:
+      platform_environment: "staging"
+    permissions:
+      contents: read
+      id-token: write
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
+      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
+      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics and heartbeat

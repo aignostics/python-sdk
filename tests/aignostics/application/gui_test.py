@@ -14,7 +14,6 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service
 from aignostics.cli import cli
-from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
@@ -28,12 +27,10 @@ from tests.constants_test import (
 if TYPE_CHECKING:
     from nicegui import ui
 
-logger = get_logger(__name__)
-
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=30)
-async def test_gui_index(user: User, record_property) -> None:
+async def test_gui_index(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
     # hello world
@@ -109,6 +106,8 @@ async def test_gui_cli_submit_to_run_result_delete(
                 HETA_APPLICATION_ID,
                 str(csv_path),
                 "--note",
+                "test_gui_cli_submit_to_run_result_delete",
+                "--tags",
                 "test_gui_cli_submit_to_run_result_delete",
                 "--deadline",
                 (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),

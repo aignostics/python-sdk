@@ -33,7 +33,6 @@ The utils module provides core infrastructure and shared utilities used across a
 
 **Integration Services:**
 
-- `_logfire.py` - Logfire observability integration
 - `_sentry.py` - Sentry error monitoring
 - `_notebook.py` - Jupyter notebook utilities
 - `_gui.py` - GUI utilities and NiceGUI helpers
@@ -85,10 +84,10 @@ ua = user_agent()
 **Logging:**
 
 ```python
-from aignostics.utils import get_logger
+from loguru import logger
 
-logger = get_logger(__name__)
-logger.info("Application started", extra={"correlation_id": "123"})
+
+logger.debug("Application started", extra={"correlation_id": "123"})
 ```
 
 **Settings Management:**
@@ -223,7 +222,6 @@ def user_agent() -> str:
 
 **Integration Modules:**
 
-- `_logfire.py` - Observability platform
 - `_sentry.py` - Error monitoring
 - `_notebook.py` - Jupyter integration
 - `_gui.py` - GUI framework utilities

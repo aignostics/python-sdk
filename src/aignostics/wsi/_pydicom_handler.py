@@ -9,13 +9,12 @@ import highdicom as hd
 import numpy as np
 import pydicom
 import pydicom.errors
+from loguru import logger
 from pydicom.sr.codedict import codes
 from pydicom.sr.coding import Code
 from shapely.geometry import Polygon
 
-from aignostics.utils import console, get_logger
-
-logger = get_logger(__name__)
+from aignostics.utils import console
 
 
 class PydicomHandler:

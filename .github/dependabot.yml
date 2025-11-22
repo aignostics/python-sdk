@@ -20,6 +20,7 @@ updates:
       - "dependabot"
       - "dependencies"
       - "skip:test:long_running"
+      - "skip:codecov"
     schedule:
       interval: "cron"
       cronjob: "0 1 * * 1-5"

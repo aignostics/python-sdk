@@ -5,7 +5,6 @@ It includes functionality for starting runs, monitoring status, and downloading 
 """
 
 import builtins
-import logging
 import time
 import typing as t
 from collections.abc import Iterator
@@ -36,9 +35,11 @@ from aignx.codegen.models import (
 )
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
+from loguru import logger
+from sentry_sdk import metrics
 from tenacity import (
+    RetryCallState,
     Retrying,
-    before_sleep_log,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
@@ -63,9 +64,7 @@ from aignostics.platform._utils import (
 )
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
-from aignostics.utils import get_logger, user_agent
-
-logger = get_logger(__name__)
+from aignostics.utils import user_agent
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,  # TODO(Helmut): Do we want this down the road?
@@ -75,6 +74,26 @@ RETRYABLE_EXCEPTIONS = (
     ProtocolError,
     ProxyError,
 )
+
+
+def _log_retry_attempt(retry_state: RetryCallState) -> None:
+    """Custom callback for logging retry attempts with loguru.
+
+    Args:
+        retry_state: The retry state from tenacity.
+    """
+    fn = retry_state.fn
+    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
+    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
+    logger.warning(
+        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
+        fn_module,
+        fn_name,
+        retry_state.next_action.sleep if retry_state.next_action else 0,
+        retry_state.attempt_number,
+        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
+    )
+
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
@@ -137,7 +156,7 @@ class Run:
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.get_run_v1_runs_run_id_get(
@@ -201,7 +220,7 @@ class Run:
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.list_run_items_v1_runs_run_id_items_get(
@@ -249,10 +268,9 @@ class Run:
             # track timeout if specified
             start_time = time.time() if timeout_seconds is not None else None
 
-            # incrementally check for available results
+            # iteratively check for available results
             application_run_state = self.details(nocache=True).state  # no cache to get fresh results
             while application_run_state in {RunState.PROCESSING, RunState.PENDING}:
-                # check timeout
                 if start_time is not None and timeout_seconds is not None:
                     elapsed = time.time() - start_time
                     if elapsed >= timeout_seconds:
@@ -266,28 +284,30 @@ class Run:
                         self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 sleep(sleep_interval)
                 application_run_state = self.details(nocache=True).state
-                logger.debug("Continuing to wait for run %s, current state: %r", self.run_id, self)
                 print(self) if print_status else None
+                if application_run_state in {RunState.PROCESSING, RunState.PENDING}:
+                    logger.trace("Waiting for termination of run {}, current state: {!r}.", self.run_id, self)
+                else:
+                    logger.trace("Run {} has terminated, final state {!r}.", self.run_id, self)
 
             # check if last results have been downloaded yet and report on errors
             for item in self.results(nocache=True):
-                match item.output:
-                    case ItemOutput.FULL:
-                        self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
-                    case ItemOutput.NONE:
-                        message = (
-                            f"{item.external_id} failed with `{item.state.value}`.\n"
-                            f"Termination reason `{item.termination_reason}`, "
-                            f"error_code:`{item.error_code}`, message `{item.error_message}`."
-                        )
-                        logger.error(message)
-                        print(message) if print_status else None
+                if ItemOutput.FULL:
+                    self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
+                message = (
+                    f"Output of item `{item.external_id}` is `{item.output}`, state `{item.state}`, "
+                    f"error `{item.error_message}` ({item.error_code}), "
+                    f"termination reason `{item.termination_reason}`."
+                )
+                logger.trace(message)
+                print(message) if print_status else None
+
         except (ValueError, DownloadTimeoutError):
             # Re-raise ValueError and DownloadTimeoutError as-is
             raise
         except Exception as e:
             # Wrap all other exceptions in RuntimeError
-            msg = f"Download operation failed for run {self.run_id}: {e}"
+            msg = f"Download operation failed unexpectedly for run {self.run_id}: {e}"
             raise RuntimeError(msg) from e
 
     @staticmethod
@@ -332,23 +352,23 @@ class Run:
                 if file_path.exists():
                     file_checksum = calculate_file_crc32c(file_path)
                     if file_checksum != checksum:
-                        logger.debug("Resume download for %s to %s", artifact.name, file_path)
+                        logger.trace("Resume download for {} to {}", artifact.name, file_path)
                         print(f"> Resume download for {artifact.name} to {file_path}") if print_status else None
                     else:
                         continue
                 else:
                     downloaded_at_least_one_artifact = True
-                    logger.debug("Download for %s to %s", artifact.name, file_path)
+                    logger.trace("Download for {} to {}", artifact.name, file_path)
                     print(f"> Download for {artifact.name} to {file_path}") if print_status else None
 
                 # if file is not there at all or only partially downloaded yet
                 download_file(artifact.download_url, str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
-            logger.debug("Downloaded results for item: %s to %s", item.external_id, item_dir)
+            logger.trace("Downloaded results for item: {} to {}", item.external_id, item_dir)
             print(f"Downloaded results for item: {item.external_id} to {item_dir}") if print_status else None
         else:
-            logger.debug("Results for item: %s already present in %s", item.external_id, item_dir)
+            logger.trace("Results for item: {} already present in {}", item.external_id, item_dir)
             print(f"Results for item: {item.external_id} already present in {item_dir}") if print_status else None
 
     def update_custom_metadata(
@@ -424,6 +444,11 @@ class Run:
         """
         details = cast("RunData", self.details())
         app_status = details.state.value
+        error_status = (
+            f" with error `{details.error_message}` ({details.error_code})"
+            if details.error_message or details.error_code
+            else ""
+        )
         items = (
             f"{details.statistics.item_count} items: "
             f"{details.statistics.item_pending_count}/"
@@ -434,7 +459,10 @@ class Run:
             f"{details.statistics.item_succeeded_count}"
             " [pending/processing/user-error/system-error/skipped/succeeded]"
         )
-        return f"Run `{self.run_id}`: {app_status}, {items}"
+        return (
+            f"Run `{self.run_id}` ({details.application_id}:{details.version_number}): "
+            f"{app_status}{error_status}, {items}"
+        )
 
 
 class Runs:
@@ -503,6 +531,24 @@ class Runs:
             payload,
             _request_timeout=settings().run_submit_timeout,
             _headers={"User-Agent": user_agent()},
+        )
+        metrics.count(
+            "aignostics.platform.run.submitted",
+            1,
+            attributes={
+                "api_root": settings().api_root,
+                "application_id": application_id,
+                "application_version": application_version or "latest",
+            },
+        )
+        metrics.count(
+            "aignostics.platform.items.submitted",
+            len(items),
+            attributes={
+                "api_root": settings().api_root,
+                "application_id": application_id,
+                "application_version": application_version or "latest",
+            },
         )
         operation_cache_clear()  # Clear all caches since we added a new run
         return Run(self._api, str(res.run_id))
@@ -594,7 +640,7 @@ class Runs:
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
                 wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.list_runs_v1_runs_get(
