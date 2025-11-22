@@ -11,10 +11,8 @@ import typer
 import yaml
 
 from ..constants import API_VERSIONS  # noqa: TID252
-from ..utils import Health, console, get_logger  # noqa: TID252
+from ..utils import Health, console  # noqa: TID252
 from ._service import Service
-
-logger = get_logger(__name__)
 
 cli = typer.Typer(name="system", help="Determine health, info and further utillities.")
 

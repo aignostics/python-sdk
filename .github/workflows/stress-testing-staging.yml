@@ -1,8 +1,8 @@
-name: "+ Scheduled Testing / Production (Hourly)"
+name: "+ Stress Testing / Staging (5 minutely)"
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       branch:
@@ -12,10 +12,10 @@ on:
         default: ''
 
 jobs:
-  scheduled-testing-production-hourly:
-    uses: ./.github/workflows/_scheduled-test-hourly.yml
+  scheduled-testing-staging-5-minutely:
+    uses: ./.github/workflows/_scheduled-test-stress.yml
     with:
-      platform_environment: "production"
+      platform_environment: "staging"
     permissions:
       contents: read
       id-token: write
@@ -23,9 +23,7 @@ jobs:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
       GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
-      BETTERSTACK_HEARTBEAT_URL_STAGING: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_STAGING }}
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
-      BETTERSTACK_HEARTBEAT_URL_PRODUCTION: ${{ secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics and heartbeat

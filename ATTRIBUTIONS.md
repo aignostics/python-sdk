@@ -506,40 +506,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## aignostics (0.2.192) - MIT License
-
-🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
-
-* URL: https://aignostics.readthedocs.io/en/latest/
-* Author(s): Helmut Hoffer von Ankershoffen <helmut@aignostics.com>, Andreas Kunft <andreas@aignostics.com>
-
-### License Text
-
-```
-MIT License
-
-Copyright (c) [2025] [Aignostics GmbH (support@aignostics.com)]
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
 ## aiofile (3.9.0) - Apache Software License
 
 Asynchronous file operations.
@@ -1757,6 +1723,40 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
+
+```
+
+## annotated-doc (0.0.3) - MIT License
+
+Document parameters, class attributes, return types, and variables inline, with Annotated.
+
+* URL: https://github.com/fastapi/annotated-doc
+* Author(s): Sebastián Ramírez
+
+### License Text
+
+```
+The MIT License (MIT)
+
+Copyright (c) 2025 Sebastián Ramírez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 ```
 
@@ -3659,7 +3659,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## boto3 (1.40.51) - Apache Software License
+## boto3 (1.40.59) - Apache-2.0
 
 The AWS SDK for Python
 
@@ -3857,7 +3857,7 @@ Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 ```
 
-## botocore (1.40.51) - Apache-2.0
+## botocore (1.40.59) - Apache-2.0
 
 Low-level, data-driven core of boto 3.
 
@@ -7585,7 +7585,7 @@ SOFTWARE.
 
 ```
 
-## fastapi (0.119.0) - MIT License
+## fastapi (0.120.0) - MIT License
 
 FastAPI framework, high performance, easy to learn, fast to code, ready for production
 
@@ -10400,7 +10400,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ```
 
-## humanize (4.13.0) - UNKNOWN
+## humanize (4.14.0) - UNKNOWN
 
 Python humanize utilities
 
@@ -12606,7 +12606,7 @@ license-expression is a comprehensive utility library to parse, compare, simplif
 
 ```
 
-## logfire (4.13.2) - UNKNOWN
+## logfire (4.14.2) - UNKNOWN
 
 The best Python observability tool! 🪵🔥
 
@@ -12794,7 +12794,7 @@ Copyright 2010-2020 - Ronald Oussoren
 
 ```
 
-## marimo (0.16.5) - Apache Software License
+## marimo (0.17.2) - Apache Software License
 
 A library for making reactive notebooks and apps
 
@@ -13272,12 +13272,12 @@ Copyright (C) 2008-2011 INADA Naoki <songofacandy@gmail.com>
 
 ```
 
-## msgspec (0.19.0) - BSD License
+## msgspec_m (0.19.2) - BSD License
 
 A fast serialization and validation library, with builtin support for JSON, MessagePack, YAML, and TOML.
 
-* URL: https://jcristharif.com/msgspec/
-* Maintainer(s): Jim Crist-Harif
+* URL: https://github.com/marimo-team/msgspec
+* Maintainer(s): marimo team
 
 ### License Text
 
@@ -13855,7 +13855,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (3.0.4) - MIT License
+## nicegui (3.1.0) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
@@ -14020,7 +14020,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nox (2025.5.1) - UNKNOWN
+## nox (2025.10.16) - UNKNOWN
 
 Flexible test automation.
 
@@ -24654,7 +24654,7 @@ Proxy Implementation
 * URL: http://github.com/jtushman/proxy_tools
 * Author(s): Jonathan Tushman
 
-## psutil (7.1.0) - BSD-3-Clause
+## psutil (7.1.2) - BSD-3-Clause
 
 Cross-platform lib for process and system monitoring.
 
@@ -28387,7 +28387,7 @@ C version of reader, parser and emitter for ruamel.yaml derived from libyaml
 
 ```
 
-## ruff (0.14.0) - MIT License
+## ruff (0.14.2) - MIT License
 
 An extremely fast Python linter and code formatter, written in Rust.
 
@@ -29563,7 +29563,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## sentry-sdk (2.41.0) - BSD License
+## sentry-sdk (2.42.1) - BSD License
 
 Python client for Sentry (https://sentry.io)
 
@@ -31791,7 +31791,7 @@ SOFTWARE.
 
 ```
 
-## typer (0.19.2) - MIT License
+## typer (0.20.0) - MIT License
 
 Typer, build great CLIs. Easy to code. Based on Python type hints.
 
@@ -33192,7 +33192,7 @@ SOFTWARE.
 
 ```
 
-## uv (0.9.2) - Apache Software License; MIT License
+## uv (0.9.5) - Apache Software License; MIT License
 
 An extremely fast Python package and project manager, written in Rust.
 

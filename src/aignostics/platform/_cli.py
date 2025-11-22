@@ -5,13 +5,12 @@ import sys
 from typing import Annotated
 
 import typer
+from loguru import logger
 
-from aignostics.utils import console, get_logger
+from aignostics.utils import console
 
 from ._sdk_metadata import get_item_sdk_metadata_json_schema, get_run_sdk_metadata_json_schema
 from ._service import Service
-
-logger = get_logger(__name__)
 
 cli_user = typer.Typer(name="user", help="User operations such as login, logout and whoami.")
 

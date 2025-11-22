@@ -18,6 +18,7 @@ The notebook module provides interactive Marimo notebook functionality for the A
 **Service Layer (`_service.py`):**
 
 The service manages the Marimo notebook server:
+
 - Server lifecycle (start/stop/restart)
 - Health monitoring
 - Process management with graceful shutdown
@@ -207,7 +208,7 @@ def setup_notebook_tab(ui):
 **Logging Patterns:**
 
 ```python
-logger.info("Starting Marimo server", extra={
+logger.debug("Starting Marimo server", extra={
     "notebook": str(notebook_path),
     "host": host,
     "port": port
@@ -226,6 +227,7 @@ logger.warning("Server startup timeout", extra={
 **Problem:** Port already in use
 
 **Solution:**
+
 ```python
 def find_free_port(start=8080, end=9000):
     """Find available port."""
@@ -242,6 +244,7 @@ def find_free_port(start=8080, end=9000):
 **Problem:** Marimo server fails to start
 
 **Solution:**
+
 ```python
 # Check Marimo installation
 if not find_spec("marimo"):
@@ -257,6 +260,7 @@ if not notebook_path.exists():
 **Problem:** Server process not cleaned up
 
 **Solution:**
+
 ```python
 def cleanup_zombie_processes():
     """Kill any lingering Marimo processes."""
@@ -273,6 +277,7 @@ def cleanup_zombie_processes():
 1. Create template in `notebooks/` directory
 2. Use `.marimo.py` extension
 3. Include metadata header:
+
    ```python
    # /// script
    # requires-python = ">=3.10"

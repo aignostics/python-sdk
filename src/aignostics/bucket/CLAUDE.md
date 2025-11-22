@@ -33,6 +33,7 @@ The bucket module provides enterprise-grade cloud storage operations for the Aig
 **Service Layer (`_service.py`):**
 
 Core storage operations:
+
 - S3/GCS client management
 - Signed URL generation with security constraints
 - Chunked upload/download (1MB upload, 10MB download chunks)
@@ -120,7 +121,7 @@ def generate_signed_url(
     )
 
     # Audit log
-    audit_logger.info(f"Generated signed URL", extra={
+    audit_logger.debug(f"Generated signed URL", extra={
         "operation": operation,
         "bucket": bucket,
         "key": key,
@@ -303,7 +304,7 @@ def download_with_resume(
     # Check for partial download
     if output_path.exists():
         resume_offset = output_path.stat().st_size
-        logger.info(f"Resuming download from byte {resume_offset}")
+        logger.debug(f"Resuming download from byte {resume_offset}")
     else:
         resume_offset = 0
 
@@ -374,7 +375,7 @@ def test_multipart_upload_recovery():
 **Logging Standards:**
 
 ```python
-logger.info("File uploaded", extra={
+logger.debug("File uploaded", extra={
     "bucket": bucket,
     "key": key,
     "size_mb": file_size / (1024*1024),

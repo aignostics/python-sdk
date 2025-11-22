@@ -5,7 +5,6 @@ It includes functionality for listing applications and managing application vers
 """
 
 import builtins
-import logging
 import typing as t
 from operator import itemgetter
 
@@ -16,9 +15,10 @@ from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import ApplicationVersion as VersionTuple
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
+from loguru import logger
 from tenacity import (
+    RetryCallState,
     Retrying,
-    before_sleep_log,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
@@ -29,9 +29,7 @@ from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform._settings import settings
 from aignostics.platform.resources.utils import paginate
-from aignostics.utils import get_logger, user_agent
-
-logger = get_logger(__name__)
+from aignostics.utils import user_agent
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,
@@ -41,6 +39,25 @@ RETRYABLE_EXCEPTIONS = (
     ProtocolError,
     ProxyError,
 )
+
+
+def _log_retry_attempt(retry_state: RetryCallState) -> None:
+    """Custom callback for logging retry attempts with loguru.
+
+    Args:
+        retry_state: The retry state from tenacity.
+    """
+    fn = retry_state.fn
+    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
+    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
+    logger.warning(
+        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
+        fn_module,
+        fn_name,
+        retry_state.next_action.sleep if retry_state.next_action else 0,
+        retry_state.attempt_number,
+        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
+    )
 
 
 class Versions:
@@ -83,7 +100,7 @@ class Versions:
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.read_application_by_id_v1_applications_application_id_get(
@@ -141,7 +158,7 @@ class Versions:
                     initial=settings().application_version_retry_wait_min,
                     max=settings().application_version_retry_wait_max,
                 ),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.application_version_details_v1_applications_application_id_versions_version_get(
@@ -248,7 +265,7 @@ class Applications:
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.read_application_by_id_v1_applications_application_id_get(
@@ -284,7 +301,7 @@ class Applications:
                 wait=wait_exponential_jitter(
                     initial=settings().application_retry_wait_min, max=settings().application_retry_wait_max
                 ),
-                before_sleep=before_sleep_log(logger, logging.WARNING),
+                before_sleep=_log_retry_attempt,
                 reraise=True,
             )(
                 lambda: self._api.list_applications_v1_applications_get(

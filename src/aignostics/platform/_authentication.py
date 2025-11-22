@@ -1,6 +1,5 @@
 import errno
 import functools
-import logging
 import socket
 import time
 import typing as t
@@ -13,12 +12,13 @@ from urllib import parse
 
 import jwt
 import requests
+from loguru import logger
 from pydantic import BaseModel, SecretStr
 from requests.exceptions import HTTPError, JSONDecodeError, RequestException
 from requests_oauthlib import OAuth2Session
 from tenacity import (
+    RetryCallState,
     Retrying,
-    before_sleep_log,
     retry_if_exception,
     stop_after_attempt,
     wait_exponential_jitter,
@@ -31,9 +31,26 @@ from aignostics.platform._messages import (
     INVALID_REDIRECT_URI,
 )
 from aignostics.platform._settings import settings
-from aignostics.utils import get_logger
 
-logger = get_logger(__name__)
+
+def _log_retry_attempt(retry_state: RetryCallState) -> None:
+    """Custom callback for logging retry attempts with loguru.
+
+    Args:
+        retry_state: The retry state from tenacity.
+    """
+    fn = retry_state.fn
+    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
+    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
+    logger.warning(
+        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
+        fn_module,
+        fn_name,
+        retry_state.next_action.sleep if retry_state.next_action else 0,
+        retry_state.attempt_number,
+        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
+    )
+
 
 CALLBACK_PORT_RETRY_COUNT = 20
 CALLBACK_PORT_BACKOFF_DELAY = 1
@@ -203,7 +220,7 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
         ),
         stop=stop_after_attempt(settings().auth_retry_attempts),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+        before_sleep=_log_retry_attempt,
         reraise=True,
     )(_do_verify_and_decode_token, token)  # Retryer will pass down arguments
 
@@ -360,7 +377,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:  # noqa: C901
                 """)
 
             # we want to catch all exceptions here, so we can display them in the browser
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 # Display error message in browser
                 self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
                 self.send_header("Content-type", "text/html")
@@ -525,7 +542,7 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
         retry=retry_if_exception(_is_not_client_or_key_error),
         stop=stop_after_attempt(settings().auth_retry_attempts),
         wait=wait_exponential_jitter(initial=settings().auth_retry_wait_min, max=settings().auth_retry_wait_max),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+        before_sleep=_log_retry_attempt,
         reraise=True,
     )(_do_access_token_from_refresh_token, refresh_token)  # Retryer will pass down arguments
 

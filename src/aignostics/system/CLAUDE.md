@@ -33,6 +33,7 @@ The system module provides system-level utilities, diagnostics, and health monit
 **Service Layer (`_service.py`):**
 
 Core system operations and diagnostics:
+
 - Health aggregation from **ALL modules** via dynamic service discovery
 - System information collection (platform, Python version, packages)
 - Environment detection (proxy settings, environment variables)
@@ -340,6 +341,7 @@ def detect_environment() -> dict:
 **Problem:** GUI commands fail when NiceGUI not installed
 
 **Solution:**
+
 ```python
 if find_spec("nicegui"):
     # Register GUI commands
@@ -348,7 +350,7 @@ if find_spec("nicegui"):
         # ...
 else:
     # CLI-only mode
-    logger.debug("NiceGUI not installed, GUI features disabled")
+    logger.trace("NiceGUI not installed, GUI features disabled")
 ```
 
 ### Health Check Timeouts
@@ -356,6 +358,7 @@ else:
 **Problem:** Health checks timeout with slow modules
 
 **Solution:**
+
 ```python
 def health_with_timeout(module_name: str, timeout: float = 5.0) -> Health:
     """Health check with timeout."""
@@ -376,6 +379,7 @@ def health_with_timeout(module_name: str, timeout: float = 5.0) -> Health:
 **Problem:** System imports cause circular dependencies
 
 **Solution:**
+
 ```python
 # Lazy import pattern
 def get_module_service(module_name: str):
