@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.210](https://github.com/aignostics/python-sdk/compare/v0.2.209..0.2.210) - 2025-11-23
+# [0.2.211](https://github.com/aignostics/python-sdk/compare/v0.2.210..0.2.211) - 2025-11-23
+
+### 🧪 Testing
+
+- *(platform)* Target L4, SPOT in hourly scheduled tests on staging - ([dc9f490](https://github.com/aignostics/python-sdk/commit/dc9f49048a7f51191b79d52015678fbe921d7ebd))
+
+
+# [v0.2.210](https://github.com/aignostics/python-sdk/compare/v0.2.209..v0.2.210) - 2025-11-23
 
 ### 🧪 Testing
 
