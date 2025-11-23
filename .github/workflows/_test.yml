@@ -226,8 +226,8 @@ jobs:
           !cancelled() &&
           (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') &&
           matrix.runner == 'ubuntu-latest' &&
-          !contains(inputs.commit_message, 'skip:ketryx') &&
-          !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
+          !contains(inputs.commit_message, 'skip:codecov') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:codecov')
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: aignostics/python-sdk
@@ -237,8 +237,8 @@ jobs:
           !cancelled() &&
           (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') &&
           matrix.runner == 'ubuntu-latest' &&
-          !contains(inputs.commit_message, 'skip:ketryx') &&
-          !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
+          !contains(inputs.commit_message, 'skip:codecov') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:codecov')
         uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
