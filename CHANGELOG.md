@@ -1,6 +1,29 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.209](https://github.com/aignostics/python-sdk/compare/v0.2.208..0.2.209) - 2025-11-21
+# [0.2.210](https://github.com/aignostics/python-sdk/compare/v0.2.209..0.2.210) - 2025-11-23
+
+### 🧪 Testing
+
+- *(platform)* Target A100, SPOT in hourly scheduled tests, both staging and production - ([1adb4a6](https://github.com/aignostics/python-sdk/commit/1adb4a69c7aa869f92d14075cd00358e41ae7515))
+- *(platform)* Reactivate hourly scheduled teests - ([4027861](https://github.com/aignostics/python-sdk/commit/4027861527a29bff424442e7e15f701dcf5a4d85))
+- *(staging)* Hourly staging tests deactivated for maintenance - ([501571c](https://github.com/aignostics/python-sdk/commit/501571c066c7caeb27e40e26a004fbba06f354bd))
+- *(stress)* Test_platform_special_app_submit deactivation - ([b78548b](https://github.com/aignostics/python-sdk/commit/b78548b6409129b5ad9d4899bd0aa5af4d0a8e59))
+- *(system)* Tweak test - ([ea1e864](https://github.com/aignostics/python-sdk/commit/ea1e864377ca32f45dbdcb92608f9b5a9cf94cc3))
+- *(system)* Test_gui_system_health_shown_and_updated debug - ([41501ae](https://github.com/aignostics/python-sdk/commit/41501ae453c443cc2e8522bf33112bc3a9fbae81))
+- *(system)* Test_gui_system_health_shown_and_updated sequential - ([3f588bc](https://github.com/aignostics/python-sdk/commit/3f588bc46a37844a7d928b22b20c53163cf06c33))
+- *(wsi)* Bump timeout for dicom inspect tests - ([e7e950f](https://github.com/aignostics/python-sdk/commit/e7e950f306ae654c3e6416bc0d07eb3d94b7e289))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Lower log level if runs cannot be loaded on application shutdown - ([ea1e864](https://github.com/aignostics/python-sdk/commit/ea1e864377ca32f45dbdcb92608f9b5a9cf94cc3))
+- *(bots)* Skip codecov on renovate and dependabot - ([4027861](https://github.com/aignostics/python-sdk/commit/4027861527a29bff424442e7e15f701dcf5a4d85))
+- *(gha)* Don't codecov on dependabot or renovate - ([f4063f8](https://github.com/aignostics/python-sdk/commit/f4063f850e632f25e23fcf17f8e4f2494bc0d2d6))
+- *(ketryx)* Fix typo in download action - ([e7e950f](https://github.com/aignostics/python-sdk/commit/e7e950f306ae654c3e6416bc0d07eb3d94b7e289))
+- *(logging)* Disable redirect logging by default - ([ea1e864](https://github.com/aignostics/python-sdk/commit/ea1e864377ca32f45dbdcb92608f9b5a9cf94cc3))
+- *(platform)* Enable special app in prod - ([ea1e864](https://github.com/aignostics/python-sdk/commit/ea1e864377ca32f45dbdcb92608f9b5a9cf94cc3))
+
+
+# [v0.2.209](https://github.com/aignostics/python-sdk/compare/v0.2.208..v0.2.209) - 2025-11-21
 
 ### ⛰️  Features
 
