@@ -52,6 +52,9 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_MAX_GPUS_PER_SLIDE = 1
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
 
+        SPECIAL_APPLICATION_ID = "he-tme"
+        SPECIAL_APPLICATION_VERSION = "0.0.0-test.retry.bug.20.11"
+
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
             ("tissue_qc_geojson_polygons.json", 160668, 10),
