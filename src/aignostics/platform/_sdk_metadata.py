@@ -20,6 +20,7 @@ from ._constants import (
     DEFAULT_GPU_PROVISIONING_MODE,
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
 
 SDK_METADATA_SCHEMA_VERSION = "0.0.4"
@@ -78,6 +79,12 @@ class PipelineConfig(BaseModel):
     cpu: CPUConfig = Field(
         default_factory=CPUConfig,
         description="CPU resource configuration",
+    )
+    node_acquisition_timeout_minutes: int = Field(
+        default=DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+        ge=1,
+        le=60 * 24,
+        description="Timeout for acquiring compute nodes in minutes (1-1440)",
     )
 
 

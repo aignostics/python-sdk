@@ -16,6 +16,7 @@ from aignostics.platform import (
     DEFAULT_GPU_PROVISIONING_MODE,
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
     NotFoundException,
     RunState,
 )
@@ -418,6 +419,10 @@ def run_execute(  # noqa: PLR0913, PLR0917
         str,
         typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
     ] = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: Annotated[
+        int,
+        typer.Option(help="Timeout for acquiring compute nodes in minutes (1-1440).", min=1, max=1440),
+    ] = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -462,6 +467,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
         gpu_provisioning_mode=gpu_provisioning_mode,
         max_gpus_per_slide=max_gpus_per_slide,
         cpu_provisioning_mode=cpu_provisioning_mode,
+        node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
     )
     result_download(
         run_id=run_id,
@@ -725,6 +731,10 @@ def run_submit(  # noqa: PLR0913, PLR0917
         str,
         typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
     ] = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: Annotated[
+        int,
+        typer.Option(help="Timeout for acquiring compute nodes in minutes (1-1440).", min=1, max=1440),
+    ] = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -791,6 +801,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
             gpu_provisioning_mode=gpu_provisioning_mode,
             max_gpus_per_slide=max_gpus_per_slide,
             cpu_provisioning_mode=cpu_provisioning_mode,
+            node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "

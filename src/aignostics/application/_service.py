@@ -806,6 +806,7 @@ class Service(BaseService):  # noqa: PLR0904
         gpu_provisioning_mode: str | None = None,
         max_gpus_per_slide: int | None = None,
         cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -828,6 +829,7 @@ class Service(BaseService):  # noqa: PLR0904
             gpu_provisioning_mode (str | None): The provisioning mode for GPU resources (SPOT or ON_DEMAND).
             max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
             cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
 
         Returns:
             Run: The submitted run.
@@ -930,6 +932,7 @@ class Service(BaseService):  # noqa: PLR0904
                 gpu_provisioning_mode=gpu_provisioning_mode,
                 max_gpus_per_slide=max_gpus_per_slide,
                 cpu_provisioning_mode=cpu_provisioning_mode,
+                node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
             )
             logger.debug(
                 "Submitted application run with items: {}, application run id {}, custom metadata: {}",
@@ -969,6 +972,7 @@ class Service(BaseService):  # noqa: PLR0904
         gpu_provisioning_mode: str | None = None,
         max_gpus_per_slide: int | None = None,
         cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -990,6 +994,7 @@ class Service(BaseService):  # noqa: PLR0904
             gpu_provisioning_mode (str | None): The provisioning mode for GPU resources (SPOT or ON_DEMAND).
             max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
             cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
 
         Returns:
             Run: The submitted run.
@@ -1025,7 +1030,13 @@ class Service(BaseService):  # noqa: PLR0904
                 if deadline:
                     sdk_metadata["scheduling"]["deadline"] = deadline
 
-            if gpu_type or gpu_provisioning_mode or max_gpus_per_slide or cpu_provisioning_mode:
+            if (
+                gpu_type
+                or gpu_provisioning_mode
+                or max_gpus_per_slide
+                or cpu_provisioning_mode
+                or node_acquisition_timeout_minutes
+            ):
                 sdk_metadata["pipeline"] = {}
                 if gpu_type or gpu_provisioning_mode or max_gpus_per_slide:
                     sdk_metadata["pipeline"]["gpu"] = {}
@@ -1037,6 +1048,8 @@ class Service(BaseService):  # noqa: PLR0904
                         sdk_metadata["pipeline"]["gpu"]["max_gpus_per_slide"] = max_gpus_per_slide
                 if cpu_provisioning_mode:
                     sdk_metadata["pipeline"]["cpu"] = {"provisioning_mode": cpu_provisioning_mode}
+                if node_acquisition_timeout_minutes:
+                    sdk_metadata["pipeline"]["node_acquisition_timeout_minutes"] = node_acquisition_timeout_minutes
 
             # Validate pipeline configuration if present
             if "pipeline" in sdk_metadata:

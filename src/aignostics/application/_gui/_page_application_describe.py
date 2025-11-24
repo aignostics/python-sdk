@@ -17,6 +17,7 @@ from aignostics.platform import (
     DEFAULT_GPU_PROVISIONING_MODE,
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -63,6 +64,7 @@ class SubmitForm:
     gpu_provisioning_mode: str = DEFAULT_GPU_PROVISIONING_MODE
     max_gpus_per_slide: int = DEFAULT_MAX_GPUS_PER_SLIDE
     cpu_provisioning_mode: str = DEFAULT_CPU_PROVISIONING_MODE
+    node_acquisition_timeout_minutes: int = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES
 
 
 submit_form = SubmitForm()
@@ -737,6 +739,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     gpu_provisioning_mode=submit_form.gpu_provisioning_mode,
                     max_gpus_per_slide=submit_form.max_gpus_per_slide,
                     cpu_provisioning_mode=submit_form.cpu_provisioning_mode,
+                    node_acquisition_timeout_minutes=submit_form.node_acquisition_timeout_minutes,
                 )
             except Exception as e:
                 ui.notify(
@@ -899,6 +902,24 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         ).bind_value(submit_form, "cpu_provisioning_mode").mark("SELECT_CPU_PROVISIONING_MODE").classes(
                             "w-1/2"
                         )
+
+                    ui.separator().classes("my-4")
+
+                    ui.label("Node Acquisition").classes("class_subsection_header")
+                    ui.label("Configure timeout for acquiring compute nodes from the cluster.").classes(
+                        "text-sm mt-0 pt-0 mb-4"
+                    )
+
+                    with ui.row().classes("w-full gap-4"):
+                        ui.number(
+                            label="Node Acquisition Timeout (minutes)",
+                            value=submit_form.node_acquisition_timeout_minutes,
+                            min=1,
+                            max=1440,
+                            step=1,
+                        ).bind_value(submit_form, "node_acquisition_timeout_minutes").mark(
+                            "NUMBER_NODE_ACQUISITION_TIMEOUT_MINUTES"
+                        ).classes("w-1/2")
             else:
                 ui.label(
                     "Pipeline configuration is not available for your organization. Default settings will be used."
