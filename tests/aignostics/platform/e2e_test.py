@@ -32,6 +32,7 @@ from tests.constants_test import (
     PIPELINE_GPU_PROVISIONING_MODE,
     PIPELINE_GPU_TYPE,
     PIPELINE_MAX_GPUS_PER_SLIDE,
+    PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES,
     SPECIAL_APPLICATION_ID,
     SPECIAL_APPLICATION_VERSION,
     SPOT_0_CRC32C,
@@ -224,6 +225,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                     "cpu": {
                         "provisioning_mode": PIPELINE_CPU_PROVISIONING_MODE,
                     },
+                    "node_acquisition_timeout_minutes": PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES,
                 },
             }
         },
