@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.202 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.211 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -98,6 +98,7 @@ $ aignostics application list [OPTIONS]
 **Options**:
 
 * `--verbose / --no-verbose`: Show application details  [default: no-verbose]
+* `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
 * `--help`: Show this message and exit.
 
 ### `aignostics application dump-schemata`
@@ -138,6 +139,7 @@ $ aignostics application describe [OPTIONS] APPLICATION_ID
 **Options**:
 
 * `--verbose / --no-verbose`: Show application details  [default: no-verbose]
+* `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
 * `--help`: Show this message and exit.
 
 ### `aignostics application run`
@@ -165,6 +167,7 @@ $ aignostics application run [OPTIONS] COMMAND [ARGS]...
 * `dump-metadata`: Dump custom metadata of a run as JSON to...
 * `dump-item-metadata`: Dump custom metadata of an item as JSON to...
 * `cancel`: Cancel run.
+* `cancel-by-filter`: Cancel runs matching filter criteria.
 * `update-metadata`: Update custom metadata for a run.
 * `update-item-metadata`: Update custom metadata for an item in a run.
 * `result`: Download or delete run results.
@@ -204,17 +207,18 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1763616167824.39]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1764110079403.6802]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
-* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: A100]
-* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT or ON_DEMAND).  [default: ON_DEMAND]
+* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
+* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]
-* `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: ON_DEMAND]
+* `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
+* `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-1440).  [default: 30; 1&lt;=x&lt;=1440]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run prepare`
@@ -271,7 +275,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 **Options**:
 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1763616167824.528]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1764110079403.815]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -304,10 +308,11 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
-* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: A100]
-* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT or ON_DEMAND).  [default: ON_DEMAND]
+* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
+* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]
-* `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: ON_DEMAND]
+* `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
+* `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-1440).  [default: 30; 1&lt;=x&lt;=1440]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`
@@ -328,6 +333,7 @@ $ aignostics application run list [OPTIONS]
 * `--note-regex TEXT`: Optional regex pattern to filter runs by note metadata.
 * `--query TEXT`: Optional query string to filter runs by note OR tags.
 * `--note-case-insensitive / --no-note-case-insensitive`: Make note regex search case-insensitive.  [default: note-case-insensitive]
+* `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run describe`
@@ -346,6 +352,7 @@ $ aignostics application run describe [OPTIONS] RUN_ID
 
 **Options**:
 
+* `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run dump-metadata`
@@ -403,6 +410,28 @@ $ aignostics application run cancel [OPTIONS] RUN_ID
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+#### `aignostics application run cancel-by-filter`
+
+Cancel runs matching filter criteria.
+
+All provided filters must match for a run to be canceled.
+At least one filter parameter (tags, application_id, or application_version) must be provided.
+
+**Usage**:
+
+```console
+$ aignostics application run cancel-by-filter [OPTIONS]
+```
+
+**Options**:
+
+* `--tags TEXT`: Optional comma-separated list of tags to filter runs. All tags must match.
+* `--application-id TEXT`: Optional application ID to filter runs.
+* `--application-version TEXT`: Optional application version to filter runs.
+* `--limit INTEGER`: Maximum number of runs to cancel
+* `--dry-run / --no-dry-run`: Show which runs would be canceled without actually canceling them.  [default: no-dry-run]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run update-metadata`
