@@ -2,7 +2,7 @@ name: "+ Stress Testing / Staging (Every 15 minutes)"
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       branch:
