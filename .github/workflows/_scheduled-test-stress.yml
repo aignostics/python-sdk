@@ -1,4 +1,4 @@
-name: "> Stress Test (5 minutely)"
+name: "> Stress Test (hourly)"
 
 on:
   workflow_call:
