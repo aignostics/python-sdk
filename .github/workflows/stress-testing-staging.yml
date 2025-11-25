@@ -1,4 +1,4 @@
-name: "+ Stress Testing / Staging (hourly)"
+name: "+ Stress Testing / Staging (Every 15 minutes)"
 
 on:
   schedule:
@@ -12,7 +12,7 @@ on:
         default: ''
 
 jobs:
-  scheduled-testing-staging-5-minutely:
+  scheduled-testing-staging:
     uses: ./.github/workflows/_scheduled-test-stress.yml
     with:
       platform_environment: "staging"
