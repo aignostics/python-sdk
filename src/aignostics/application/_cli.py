@@ -143,6 +143,7 @@ def application_dump_schemata(  # noqa: C901
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="<current-working-directory>",
         ),
     ] = Path().cwd(),  # noqa: B008,
     zip: Annotated[  # noqa: A002
@@ -367,6 +368,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
         str,
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
+            show_default="<current-timestamp-ms>",
         ),
     ] = f"{time.time() * 1000}",
     wait_for_completion: Annotated[
@@ -578,6 +580,7 @@ def run_upload(
         str,
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
+            show_default="<current-timestamp-ms>",
         ),
     ] = str(time.time() * 1000),
     onboard_to_aignostics_portal: Annotated[
@@ -1244,6 +1247,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/results",
         ),
     ] = get_user_data_directory("results"),  # noqa: B008
     create_subdirectory_for_run: Annotated[

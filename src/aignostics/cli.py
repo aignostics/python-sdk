@@ -46,6 +46,7 @@ if find_spec("marimo"):
                 file_okay=True,
                 dir_okay=False,
                 readable=True,
+                show_default="<sdk-install-dir>/notebook/_notebook.py",
             ),
         ] = NOTEBOOK_DEFAULT,
         override_if_exists: Annotated[
