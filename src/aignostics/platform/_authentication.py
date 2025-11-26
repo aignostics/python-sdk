@@ -124,6 +124,8 @@ def get_token(use_cache: bool = True, use_device_flow: bool = False) -> str:
         # 1. Do not want to use the cached token
         # 2. The cached token is expired
         # 3. No token was cached yet
+
+        
         token = _authenticate(use_device_flow)
         claims = verify_and_decode_token(token)
 
@@ -169,6 +171,7 @@ def _authenticate(use_device_flow: bool) -> str:
         RuntimeError: If authentication fails.
         AssertionError: If the returned token doesn't have the expected format.
     """
+    # have another setting which says no authentication
     if refresh_token := settings().refresh_token:
         token = _access_token_from_refresh_token(refresh_token)
     elif _can_open_browser() and not use_device_flow:

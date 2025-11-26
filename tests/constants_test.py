@@ -60,6 +60,8 @@ SPOT_3_WIDTH = 4016
 SPOT_3_HEIGHT = 3952
 SPOT_3_RESOLUTION_MPP = 0.46499982
 
+# adapt to the DB seed
+
 match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
     case "production":
         TEST_APPLICATION_ID = "test-app"

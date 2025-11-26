@@ -274,6 +274,8 @@ class Client:
             return Client._api_client_uncached
 
         def token_provider() -> str:
+        #     # given some setting do not inject token_provider into client
+            return None
             return get_token(use_cache=cache_token)
 
         ca_file = os.getenv("REQUESTS_CA_BUNDLE")  # point to .cer file of proxy if defined

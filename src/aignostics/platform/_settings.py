@@ -582,6 +582,14 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_DEV
                 values["jws_json_url"] = JWS_JSON_URL_DEV
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_DEV
+            case x if x == "http://localhost:8000":
+                values["audience"] = "abcfsofihaosfih"
+                values["authorization_base_url"] = "abc"
+                values["token_url"] = "http://localhost:8000"
+                values["redirect_uri"] = "http://localhost:8000"
+                values["device_url"] = "http://localhost:8000"
+                values["jws_json_url"] = "http://localhost:8000"
+                values["client_id_interactive"] = "abc"
             case _:
                 raise ValueError(UNKNOWN_ENDPOINT_URL)
 

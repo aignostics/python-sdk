@@ -26,3 +26,4 @@ TOKEN_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"  # noqa:
 REDIRECT_URI_DEV = "http://localhost:8989/"
 DEVICE_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/.well-known/jwks.json"
+
