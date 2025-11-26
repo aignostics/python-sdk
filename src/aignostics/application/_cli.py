@@ -527,7 +527,7 @@ def run_prepare(
         ),
     ] = None,
 ) -> None:
-    """Prepare metadata CSV file required for submitting a run.
+    r"""Prepare metadata CSV file required for submitting a run.
 
     (1) Scans source_directory for whole slide images.
     (2) Extracts metadata from whole slide images such as width, height, mpp.
