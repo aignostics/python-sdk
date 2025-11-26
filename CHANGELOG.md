@@ -1,6 +1,27 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.211](https://github.com/aignostics/python-sdk/compare/v0.2.210..0.2.211) - 2025-11-23
+# [0.2.212](https://github.com/aignostics/python-sdk/compare/v0.2.211..0.2.212) - 2025-11-25
+
+### ⛰️  Features
+
+- *(platform,application)* Introduce configurable node acquisition timeout, defaulting to 30 minutes - ([24d8710](https://github.com/aignostics/python-sdk/commit/24d871018b602f278035ce034aa63c47c3fcb299))
+
+### 📚 Documentation
+
+- Bump custom sdk metadata schema version - ([5022dad](https://github.com/aignostics/python-sdk/commit/5022dad60538a2c5ad33a1413c9d7ef3242d198e))
+
+### 🧪 Testing
+
+- *(platform)* Sl.4.1 -> sl.4 - ([0a3049b](https://github.com/aignostics/python-sdk/commit/0a3049b5dd1fea219f78c593686b14ce40eb8d24))
+- *(platform)* Test-app v0.99.0, 100 items per run, every 15 min - ([7a30dc1](https://github.com/aignostics/python-sdk/commit/7a30dc16db676c8b678137410f2674fcbe9e895e))
+- *(platform)* Production: L4 (was A100); staging: node sl4.1 (was sl4) - ([f697a63](https://github.com/aignostics/python-sdk/commit/f697a631f02f9b6a931131dfb442327ba1666640))
+- *(stress)* Every 5 minutes (was 15) - ([f347ada](https://github.com/aignostics/python-sdk/commit/f347ada9969d2069fa280d0441a5d81c3c97f742))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.211](https://github.com/aignostics/python-sdk/compare/v0.2.210..v0.2.211) - 2025-11-23
 
 ### 🧪 Testing
 

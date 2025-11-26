@@ -53,8 +53,8 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 60  # Respected starting with 1.0.0-sl.4.1+internal
 
-        SPECIAL_APPLICATION_ID = "he-tme"
-        SPECIAL_APPLICATION_VERSION = "0.0.0-test.retry.bug.20.11"
+        SPECIAL_APPLICATION_ID = "test-app"
+        SPECIAL_APPLICATION_VERSION = "0.99.0"
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
@@ -86,7 +86,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         TEST_APPLICATION_VERSION = "0.0.6"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "1.0.0-sl.4.1+internal"
+        HETA_APPLICATION_VERSION = "1.0.0-sl.4"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
         PIPELINE_GPU_TYPE = "L4"
@@ -95,8 +95,8 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 30
 
-        SPECIAL_APPLICATION_ID = "he-tme"
-        SPECIAL_APPLICATION_VERSION = "0.0.0-test.retry.bug.20.11"
+        SPECIAL_APPLICATION_ID = "test-app"
+        SPECIAL_APPLICATION_VERSION = "0.99.0"
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
