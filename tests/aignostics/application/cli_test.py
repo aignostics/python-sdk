@@ -698,6 +698,7 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             HETA_APPLICATION_ID,
             str(tmp_path / "run.csv"),
             str(tmp_path),
+            "--mapping",
             ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER",
             "--no-create-subdirectory-for-run",
             "--due-date",

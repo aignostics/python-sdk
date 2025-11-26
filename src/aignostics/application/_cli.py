@@ -334,21 +334,21 @@ def run_execute(  # noqa: PLR0913, PLR0917
             resolve_path=True,
         ),
     ],
-    mapping: Annotated[
-        list[str],
-        typer.Argument(
-            help="Mapping to use for amending metadata CSV file. "
-            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'."
-            "The regular expression is matched against the external_id attribute of the entry. "
-            "The key/value pairs are applied to the entry if the pattern matches. "
-            "You can use the mapping option multiple times to set values for multiple files. "
-            'Example: ".*:staining_method:H&E,tissue:LIVER,disease:LIVER_CANCER"',
-        ),
-    ],
     application_version: Annotated[
         str | None,
         typer.Option(
             help="Version of the application. If not provided, the latest version will be used.",
+        ),
+    ] = None,
+    mapping: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Mapping to use for amending metadata CSV file. "
+            "Each mapping is of the form '<regexp>:<key>=<value>,<key>=<value>,...'. "
+            "The regular expression is matched against the external_id attribute of the entry. "
+            "The key/value pairs are applied to the entry if the pattern matches. "
+            "You can use the mapping option multiple times to set values for multiple files. "
+            'Example: ".*:staining_method=H&E,tissue=LIVER,disease=LIVER_CANCER"',
         ),
     ] = None,
     create_subdirectory_for_run: Annotated[
@@ -429,8 +429,8 @@ def run_execute(  # noqa: PLR0913, PLR0917
     (1) Prepares metadata CSV file for the given application version
         by scanning the source directory for whole slide images
         and extracting metadata such as width, height, and mpp.
-    (2) Amends the metadata CSV file using the given mappings
-        to set all required attributes.
+    (2) Optionally amends the metadata CSV file using the given mappings
+        to set additional required attributes.
     (3) Uploads the files referenced in the metadata CSV file
         to the cloud bucket provisioned in the Aignostics platform.
     (4) Submits the run for the given application version
@@ -518,7 +518,7 @@ def run_prepare(
         list[str] | None,
         typer.Option(
             help="Mapping to use for amending metadata CSV file. "
-            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'. "
+            "Each mapping is of the form '<regexp>:<key>=<value>,<key>=<value>,...'. "
             "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
             "You can use the mapping option multiple times to set values for multiple files. "
@@ -535,7 +535,7 @@ def run_prepare(
 
     Example:
         aignostics application run prepare "he-tme:v0.51.0" metadata.csv /path/to/source_directory
-        --mapping "*.tiff:staining_method:H&E,tissue:LUNG,disease:LUNG_CANCER"
+        --mapping ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
     """
     write_metadata_dict_to_csv(
         metadata_csv=metadata_csv,

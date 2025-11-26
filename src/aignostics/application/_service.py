@@ -341,7 +341,7 @@ class Service(BaseService):  # noqa: PLR0904
             application_version (str|None): The version of the application (semver).
                 If not given latest version is used.
             with_gui_metadata (bool): If True, include additional metadata for GUI.
-            mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
+            mappings (list[str]): Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
                 The regular expression is matched against the external_id attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
             with_extra_metadata (bool): If True, include extra metadata from the WSIService.
