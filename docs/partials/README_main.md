@@ -22,6 +22,57 @@ more about how we achieve
 [operational excellence](https://aignostics.readthedocs.io/en/latest/operational_excellence.html) and
 [security](https://aignostics.readthedocs.io/en/latest/security.html).
 
+## Installation
+
+The **Aignostics Python SDK** can be installed via the [uv package manager](https://docs.astral.sh/uv/). The installation process sets up the SDK along with the necessary dependencies, including the **uv** package manager itself if not already present.
+
+Before proceeding, ensure you have an **Aignostics Platform account**. You can get access either through your organization admin (if your organization has an Aignostics account) or directly from Aignostics. Check your email for an invitation before proceeding.
+
+The installation will:
+1. Install or update **uv** (Python package installer)
+2. Install the **Aignostics Python SDK** (includes Launchpad, CLI, and Python Library)
+
+Copy and paste the appropriate command below into your terminal (macOS/Linux) or PowerShell (Windows):
+
+
+**Linux/macOS:**
+```bash
+if ! command -v uv &> /dev/null; then
+    echo "uv not found, installing..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source $HOME/.local/bin/env
+else
+    UV_VERSION=$(uv --version | cut -d' ' -f2)
+    if [ "$(printf '%s\n' "0.6.17" "$UV_VERSION" | sort -V | head -n1)" != "0.6.17" ]; then
+        echo "Updating uv to the latest version..."
+        UV_PATH=$(which uv)
+        if [[ "$UV_PATH" == *"brew"* ]]; then
+            echo "Updating uv using Homebrew..."
+            brew upgrade uv
+        else
+            echo "Updating uv using the installer..."
+            uv self update
+        fi
+    else
+        echo "uv is up to date"
+    fi
+fi
+```
+
+**Windows (PowerShell):**
+```powershell
+winget install --id=Microsoft.VCRedist.2015+.x64 -e
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Verify your installation by running:
+```bash
+uvx aignostics --help
+```
+You should see the Aignostics CLI help output.
+
+You can then proceed by choosing your preferred user interface below.
+
 ## Choose your interface
 
 Choose your preferred interface for working with the Aignostics Platform. Each interface is designed for different user roles and use cases:
@@ -62,19 +113,18 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 
 The **Aignostics Launchpad** is a graphical desktop application that allows you to run applications on whole slide images (WSIs) from your computer, and inspect results with QuPath and Python Notebooks with one click. It is designed to be user-friendly and intuitive, for use by Research Pathologists and Data Scientists.
 
-### Installation
-
-The Launchpad is available for Mac OS X, Windows, and Linux, and can be installed easily:
-
-1. Visit the [Quick Start](https://platform.aignostics.com/getting-started/quick-start) page in the Aignostics Console.
-2. Copy the installation script and paste it into your terminal - compatible with MacOS, Windows, and Linux.
-3. Launch the application by running `uvx aignostics launchpad`. The system displays the Launchpad welcome screen showing available applications and existing application runs in the left sidebar.
+**New to Launchpad?** See <a href="#installation">Installation</a> section above to get started.
 
 ### Running Your First Analysis
 
 This tutorial uses [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) with a public lung cancer dataset from the NCI Image Data Commons.
 
-**Step 1: Download a Sample Dataset**
+**Step 1: Start Aignostics Launchpad**
+1. Open a terminal or command prompt
+2. Run the command: `uvx aignostics launchpad`
+This starts the Launchpad application.
+
+**Step 2: Download a Sample Dataset**
 
 1. Click the menu icon (☰) in the top right corner
 2. Click "Download Datasets". The system displays the dataset download interface.
@@ -84,14 +134,14 @@ This tutorial uses [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-pr
 6. Click "DOWNLOAD". The system downloads the DICOM dataset. A progress indicator shows download status.
 7. Click the menu icon and select "Run Applications"
 
-**Step 2: Select Atlas H&E-TME**
+**Step 3: Select Atlas H&E-TME**
 
 1. Click "Atlas H&E-TME" in the left sidebar. The system displays the application workflow with six steps.
 2. Click the version dropdown to view available versions. The system shows all available versions with release notes accessible via the "RELEASE NOTES" button.
 3. Keep the default version (latest)
 4. Click "NEXT"
 
-**Step 3: Select Slides and Provide Metadata**
+**Step 4: Select Slides and Provide Metadata**
 
 1. Click "DATA". The system opens a folder selection dialog showing the Launchpad datasets directory.
 2. Navigate to the downloaded dataset folder (e.g., `/datasets/idc/tcga_luad/`)
@@ -101,21 +151,21 @@ This tutorial uses [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-pr
 6. Review the "Staining" column. The system shows "H&E" if this information was extracted from the DICOM file.
 7. Click "NEXT"
 
-**Step 4: Add Notes and Tags (Optional)**
+**Step 5: Add Notes and Tags (Optional)**
 
 1. The system displays the notes and tags screen.
 2. Enter an optional note in the text field (e.g., "TCGA lung sample analysis")
 3. Add optional tags by typing and pressing Enter (e.g., "TCGA", "lung")
 4. Click "NEXT"
 
-**Step 5: Set Schedule (Optional)**
+**Step 6: Set Schedule (Optional)**
 
 1. The system displays scheduling options with soft due date and hard deadline pickers.
 2. Click "NEXT" to leave the default settings.
 
 The soft due date indicates when the platform will attempt to complete processing. The hard deadline is when the platform may cancel the run if resources are unavailable.
 
-**Step 6: Submit Your Run**
+**Step 7: Submit Your Run**
 
 1. The system displays the submission screen showing number of slides to be analyzed, full file paths, and upload and submit button.
 2. Review the slide information
@@ -123,7 +173,7 @@ The soft due date indicates when the platform will attempt to complete processin
 
 The left sidebar now shows your submitted run with application name and version, submission timestamp, running status icon (🏃), and any tags you added.
 
-**Step 7: Monitor Your Run**
+**Step 8: Monitor Your Run**
 
 Atlas H&E-TME processing time depends on slide size and system load. Depending on the file size and the number of files, processing can take minutes to many hours.
 
@@ -172,6 +222,8 @@ QuPath integration provides the most powerful way to visualize and interact with
 The Python SDK includes the **Aignostics CLI**, a Command-Line Interface (CLI) that allows you to
 interact with the Aignostics Platform directly from your terminal or shell script.
 
+**New to CLI?** See <a href="#installation">Installation</a> section above to get started.
+
 **Common workflows:**
 - Download public datasets from NCI Image Data Commons
 - Submit batch processing runs for multiple slides
@@ -180,6 +232,10 @@ interact with the Aignostics Platform directly from your terminal or shell scrip
 
 See as follows for a simple example where we download a sample dataset for the [Atlas
 H&E-TME application](https://www.aignostics.com/products/he-tme-profiling-product), submit an application run, and download the results.
+
+### Example: Running Atlas H&E-TME with CLI
+1. Open a terminal or command prompt
+2. Use the following commands to run the Atlas H&E-TME application on a sample dataset:
 
 ```shell
 # Download a sample dataset from the NCI Image Data Commons (IDC) portal to your current working directory
@@ -228,32 +284,28 @@ to learn about all commands and options available.
 
 ## Python Library: Call the Aignostics Platform API from your Python scripts
 
-> ⚠️ Before you get started, you need to set up your authentication credentials if
-> you did not yet do so! Please visit
-> [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
-> and follow the steps outlined in the `Enterprise Integration` section.
+The Python SDK includes the *Aignostics Python Library* for integration with your Python codebase.
 
-Next to using the Launchpad, CLI and example notebooks, the Python SDK includes the
-*Aignostics Python Library* for integration with your Python Codebase.
+**New to Python Library?** See <a href="#installation">Installation</a> section above to get started.
 
-The following sections outline how to install the Python SDK and interact with the library.
+
+<!-- - **Authentication setup** - ADD INSTRUCTIONS. -->
 
 ### Installation
 
-The Aignostics Python SDK is required for using the CLI, Python Notebooks, and Python Library. 
-It is published on the [Python Package Index (PyPI)](https://pypi.org/project/aignostics/),
-is compatible with Python 3.11 and above, and can be installed via `uv` or `pip`:
+Add the Aignostics Python SDK to your Python project:
 
-**Install with [uv](https://docs.astral.sh/uv/):** If you don't have uv
-installed follow [these instructions](https://docs.astral.sh/uv/getting-started/installation/).
-
+**Install with [uv](https://docs.astral.sh/uv/):**
 ```shell
-# Add Aignostics Python SDK as dependency to your project
 uv add aignostics
 ```
 
-**Install with [pip](https://pip.pypa.io/en/stable/)**
+**Install with [pip](https://pip.pypa.io/en/stable/):**
+```shell
+pip install aignostics
+```
 
+**Install with [pip](https://pip.pypa.io/en/stable/):**
 ```shell
 # Add Python SDK as dependency to your project
 pip install aignostics
