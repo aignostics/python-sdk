@@ -34,6 +34,8 @@ TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
 HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
 HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
 
+RUN_CSV_FILENAME = "run.csv"
+
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
@@ -696,8 +698,9 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             "run",
             "execute",
             HETA_APPLICATION_ID,
-            str(tmp_path / "run.csv"),
+            str(tmp_path / RUN_CSV_FILENAME),
             str(tmp_path),
+            "--mapping",
             ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER",
             "--no-create-subdirectory-for-run",
             "--due-date",
@@ -762,6 +765,48 @@ def test_cli_run_update_metadata_not_dict(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '["array", "not", "dict"]'])
     assert result.exit_code == 1
     assert "Metadata must be a JSON object" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_execute_invalid_mapping_format(runner: CliRunner, tmp_path: Path) -> None:
+    """Check execute command fails with invalid mapping format."""
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(tmp_path / RUN_CSV_FILENAME),
+            str(tmp_path),
+            "--mapping",
+            ".*\\.tiff:staining_method:H&E",  # Wrong: colon instead of equals
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid mapping" in result.output
+    assert "should be in format" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_execute_invalid_regex_pattern(runner: CliRunner, tmp_path: Path) -> None:
+    """Check execute command fails with invalid regex pattern."""
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(tmp_path / RUN_CSV_FILENAME),
+            str(tmp_path),
+            "--mapping",
+            "*.tiff:staining_method=H&E",  # Wrong: glob pattern, not regex
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid mapping" in result.output
+    assert "invalid regex pattern" in result.output
 
 
 @pytest.mark.integration

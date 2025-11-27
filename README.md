@@ -230,7 +230,7 @@ The below is equivalent to the above, while adding additionally required metadat
 
 ```shell
 uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 data/
-uvx aignostics application run execute he-tme data/tcga_luad/run.csv data/ ".*\.dcm:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
+uvx aignostics application run execute he-tme data/tcga_luad/run.csv data/ --mapping ".*\.dcm:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
 ```
 
 The CLI provides extensive help:
@@ -408,7 +408,6 @@ Now that you have an overview of the Aignostics Python SDK and its interfaces, h
 - **Review detailed documentation**: See the [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html) and [Python Library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 - **Explore QuPath integration**: Use the QuPath extension to visualize and interact with your results
 - **Get support**: Contact [support@aignostics.com](mailto:support@aignostics.com) or check the [full documentation](https://aignostics.readthedocs.io/en/latest/)
-
 
 
 ## Platform

@@ -181,6 +181,7 @@ def download(  # noqa: C901, PLR0915
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/bucket_downloads",
         ),
     ] = get_user_data_directory("bucket_downloads"),  # noqa: B008
 ) -> None:

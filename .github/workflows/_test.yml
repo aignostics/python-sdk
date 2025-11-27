@@ -186,8 +186,6 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / long running (single Python version)
-        if: |
-          !github.event.pull_request.draft
         uses: ./.github/actions/run-tests
         with:
           test-type: long-running
