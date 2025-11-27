@@ -324,11 +324,6 @@ uv add aignostics
 
 **Install with [pip](https://pip.pypa.io/en/stable/):**
 ```shell
-pip install aignostics
-```
-
-**Install with [pip](https://pip.pypa.io/en/stable/):**
-```shell
 # Add Python SDK as dependency to your project
 pip install aignostics
 ```
