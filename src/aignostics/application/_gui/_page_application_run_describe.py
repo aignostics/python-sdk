@@ -1,5 +1,6 @@
 """Run describe page, including download, QuPath and Marimo control."""
 
+import webbrowser
 from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
@@ -755,7 +756,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                                 ui.button(
                                                     text="Download",
                                                     icon="cloud_download",
-                                                    on_click=lambda _, url=url: ui.navigate.to(url, new_tab=True),
+                                                    on_click=lambda _, url=url: webbrowser.open(url),
                                                 )
                                             if metadata:
                                                 ui.button(
