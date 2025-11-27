@@ -38,6 +38,70 @@ from ._utils import (
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 
 
+ApplicationVersionOption = Annotated[
+    str | None,
+    typer.Option(
+        help="Version of the application. If not provided, the latest version will be used.",
+    ),
+]
+
+NoteOption = Annotated[
+    str | None,
+    typer.Option(help="Optional note to include with the run submission via custom metadata."),
+]
+
+DueDateOption = Annotated[
+    str | None,
+    typer.Option(
+        help="Optional soft due date to include with the run submission, ISO8601 format. "
+        "The scheduler will try to complete the run by this date, taking the subscription tier"
+        "and available GPU resources into account."
+    ),
+]
+
+DeadlineOption = Annotated[
+    str | None,
+    typer.Option(
+        help=(
+            "Optional hard deadline to include with the run submission, ISO8601 format. "
+            "If processing exceeds this deadline, the run can be aborted."
+        ),
+    ),
+]
+
+OnboardToPortalOption = Annotated[
+    bool,
+    typer.Option(help="If True, onboard the run to the Aignostics Portal."),
+]
+
+ValidateOnlyOption = Annotated[bool, typer.Option(help="If True, cancel the run post validation, before analysis.")]
+
+GpuTypeOption = Annotated[
+    str,
+    typer.Option(help="GPU type to use for processing (L4 or A100)."),
+]
+
+GpuProvisioningModeOption = Annotated[
+    str,
+    typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
+]
+
+MaxGpusPerSlideOption = Annotated[
+    int,
+    typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
+]
+
+CpuProvisioningModeOption = Annotated[
+    str,
+    typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
+]
+
+NodeAcquisitionTimeoutOption = Annotated[
+    int,
+    typer.Option(help="Timeout for acquiring compute nodes in minutes (1-1440).", min=1, max=1440),
+]
+
+
 cli = typer.Typer(name="application", help="List and inspect applications on Aignostics Platform.")
 
 run_app = typer.Typer()
@@ -336,12 +400,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
             resolve_path=True,
         ),
     ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application. If not provided, the latest version will be used.",
-        ),
-    ] = None,
+    application_version: ApplicationVersionOption = None,
     mapping: Annotated[
         list[str] | None,
         typer.Option(
@@ -378,54 +437,16 @@ def run_execute(  # noqa: PLR0913, PLR0917
             help="Wait for run completion and download results incrementally",
         ),
     ] = True,
-    note: Annotated[
-        str | None,
-        typer.Option(help="Optional note to include with the run submission via custom metadata."),
-    ] = None,
-    due_date: Annotated[
-        str | None,
-        typer.Option(
-            help="Optional soft due date to include with the run submission, ISO8601 format. "
-            "The scheduler will try to complete the run by this date, taking the subscription tier"
-            "and available GPU resources into account."
-        ),
-    ] = None,
-    deadline: Annotated[
-        str | None,
-        typer.Option(
-            help=(
-                "Optional hard deadline to include with the run submission, ISO8601 format. "
-                "If processing exceeds this deadline, the run can be aborted."
-            ),
-        ),
-    ] = None,
-    onboard_to_aignostics_portal: Annotated[
-        bool,
-        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
-    ] = False,
-    validate_only: Annotated[
-        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
-    ] = False,
-    gpu_type: Annotated[
-        str,
-        typer.Option(help="GPU type to use for processing (L4 or A100)."),
-    ] = DEFAULT_GPU_TYPE,
-    gpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_GPU_PROVISIONING_MODE,
-    max_gpus_per_slide: Annotated[
-        int,
-        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
-    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
-    cpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_CPU_PROVISIONING_MODE,
-    node_acquisition_timeout_minutes: Annotated[
-        int,
-        typer.Option(help="Timeout for acquiring compute nodes in minutes (1-1440).", min=1, max=1440),
-    ] = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    note: NoteOption = None,
+    due_date: DueDateOption = None,
+    deadline: DeadlineOption = None,
+    onboard_to_aignostics_portal: OnboardToPortalOption = False,
+    validate_only: ValidateOnlyOption = False,
+    gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -686,65 +707,21 @@ def run_submit(  # noqa: PLR0913, PLR0917
             resolve_path=True,
         ),
     ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application to generate the metadata for. "
-            "If not provided, the latest version will be used.",
-        ),
-    ] = None,
-    note: Annotated[
-        str | None,
-        typer.Option(help="Optional note to include with the run submission via custom metadata."),
-    ] = None,
+    application_version: ApplicationVersionOption = None,
+    note: NoteOption = None,
     tags: Annotated[
         str | None,
         typer.Option(help="Optional comma-separated list of tags to attach to the run for filtering."),
     ] = None,
-    due_date: Annotated[
-        str | None,
-        typer.Option(
-            help="Optional soft due date to include with the run submission, ISO8601 format. "
-            "The scheduler will try to complete the run by this date, taking the subscription tier"
-            "and available GPU resources into account."
-        ),
-    ] = None,
-    deadline: Annotated[
-        str | None,
-        typer.Option(
-            help=(
-                "Optional hard deadline to include with the run submission, ISO8601 format. "
-                "If processing exceeds this deadline, the run can be aborted."
-            ),
-        ),
-    ] = None,
-    onboard_to_aignostics_portal: Annotated[
-        bool,
-        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
-    ] = False,
-    validate_only: Annotated[
-        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
-    ] = False,
-    gpu_type: Annotated[
-        str,
-        typer.Option(help="GPU type to use for processing (L4 or A100)."),
-    ] = DEFAULT_GPU_TYPE,
-    gpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_GPU_PROVISIONING_MODE,
-    max_gpus_per_slide: Annotated[
-        int,
-        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
-    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
-    cpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_CPU_PROVISIONING_MODE,
-    node_acquisition_timeout_minutes: Annotated[
-        int,
-        typer.Option(help="Timeout for acquiring compute nodes in minutes (1-1440).", min=1, max=1440),
-    ] = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    due_date: DueDateOption = None,
+    deadline: DeadlineOption = None,
+    onboard_to_aignostics_portal: OnboardToPortalOption = False,
+    validate_only: ValidateOnlyOption = False,
+    gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
