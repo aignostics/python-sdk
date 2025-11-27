@@ -23,7 +23,7 @@ from ._constants import (
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
 
-SDK_METADATA_SCHEMA_VERSION = "0.0.5"
+SDK_METADATA_SCHEMA_VERSION = "0.0.6"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
 
 
@@ -149,7 +149,6 @@ class WorkflowMetadata(BaseModel):
     onboard_to_aignostics_portal: bool = Field(
         default=False, description="Whether to onboard results to the Aignostics Portal"
     )
-    validate_only: bool = Field(default=False, description="Whether to only validate without running analysis")
 
 
 class SchedulingMetadata(BaseModel):

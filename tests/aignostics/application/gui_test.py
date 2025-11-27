@@ -112,7 +112,6 @@ async def test_gui_cli_submit_to_run_result_delete(
                 "test_gui_cli_submit_to_run_result_delete",
                 "--deadline",
                 (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
-                "--validate-only",
             ],
         )
         assert result.exit_code == 0
@@ -278,7 +277,6 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             # Now on Submission step
             await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
-            user.find(marker="CHECKBOX_VALIDATE_ONLY").click()  # only for aignostics' orgs
 
             # Trigger upload and submission
             await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")

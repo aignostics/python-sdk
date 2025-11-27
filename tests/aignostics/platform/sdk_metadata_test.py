@@ -410,7 +410,6 @@ class TestRunSdkMetadataValidation:
             metadata["note"] = "Test run note"
             metadata["workflow"] = {
                 "onboard_to_aignostics_portal": True,
-                "validate_only": False,
             }
             metadata["scheduling"] = {
                 "due_date": "2025-12-31T23:59:59+00:00",

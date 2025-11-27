@@ -58,7 +58,6 @@ class SubmitForm:
     tags: list[str] | None = None
     due_date: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
     deadline: str = (datetime.now().astimezone() + timedelta(hours=24)).strftime("%Y-%m-%d %H:%M")
-    validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
     gpu_type: str = DEFAULT_GPU_TYPE
     gpu_provisioning_mode: str = DEFAULT_GPU_PROVISIONING_MODE
@@ -733,7 +732,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
-                    validate_only=submit_form.validate_only,
                     onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
                     gpu_type=submit_form.gpu_type,
                     gpu_provisioning_mode=submit_form.gpu_provisioning_mode,
@@ -800,16 +798,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         ).bind_value(submit_form, "onboard_to_aignostics_portal").mark(
                             "CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL"
                         )
-                    # Allow users in aignostics' organisations to do validate only runs
-                    if (
-                        user_info
-                        and user_info.organization
-                        and user_info.organization.name
-                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org"}
-                    ):
-                        ui.checkbox(
-                            text="Validate only",
-                        ).bind_value(submit_form, "validate_only").mark("CHECKBOX_VALIDATE_ONLY")
 
                 upload_complete = True
                 for row in metadata or []:
