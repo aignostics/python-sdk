@@ -31,6 +31,7 @@ from ._utils import (
     print_runs_verbose,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
+    validate_mappings,
     write_metadata_dict_to_csv,
 )
 
@@ -539,6 +540,12 @@ def run_prepare(
         aignostics application run prepare "he-tme:v0.51.0" metadata.csv /path/to/source_directory
         --mapping ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
     """
+    try:
+        validate_mappings(mapping)
+    except ValueError as e:
+        console.print(f"[error]Error:[/error] {e}")
+        sys.exit(1)
+
     write_metadata_dict_to_csv(
         metadata_csv=metadata_csv,
         metadata_dict=Service().generate_metadata_from_source_directory(
