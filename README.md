@@ -410,7 +410,6 @@ Now that you have an overview of the Aignostics Python SDK and its interfaces, h
 - **Get support**: Contact [support@aignostics.com](mailto:support@aignostics.com) or check the [full documentation](https://aignostics.readthedocs.io/en/latest/)
 
 
-
 ## Platform
 
 ### Overview
