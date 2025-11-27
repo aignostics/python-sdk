@@ -315,6 +315,39 @@ def test_issuer_computed_field_dev(record_property, mock_env_vars) -> None:
 
 
 @pytest.mark.unit
+def test_profile_edit_url_computed_field_production(record_property, mock_env_vars) -> None:
+    """Test profile_edit_url computed field with production API root."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    settings = Settings(
+        api_root=API_ROOT_PRODUCTION,
+    )
+    expected_url = f"{API_ROOT_PRODUCTION}/dashboard/account/profile"
+    assert settings.profile_edit_url == expected_url
+
+
+@pytest.mark.unit
+def test_profile_edit_url_computed_field_staging(record_property, mock_env_vars) -> None:
+    """Test profile_edit_url computed field with staging API root."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    settings = Settings(
+        api_root=API_ROOT_STAGING,
+    )
+    expected_url = f"{API_ROOT_STAGING}/dashboard/account/profile"
+    assert settings.profile_edit_url == expected_url
+
+
+@pytest.mark.unit
+def test_profile_edit_url_computed_field_dev(record_property, mock_env_vars) -> None:
+    """Test profile_edit_url computed field with dev API root."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    settings = Settings(
+        api_root=API_ROOT_DEV,
+    )
+    expected_url = f"{API_ROOT_DEV}/dashboard/account/profile"
+    assert settings.profile_edit_url == expected_url
+
+
+@pytest.mark.unit
 def test_issuer_computed_field_custom_url(record_property, mock_env_vars) -> None:
     """Test issuer computed field with custom authorization base URL."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
