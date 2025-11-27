@@ -533,7 +533,7 @@ Some modules have conditional loading based on dependencies:
 * User and organization information (when authenticated)
 * GitHub Actions workflow details (repository, run URL, runner info)
 * Pytest test context (current test, markers)
-* Workflow control flags (validate_only, onboard_to_portal)
+* Workflow control flag (onboard_to_portal)
 * Scheduling information (due dates, deadlines)
 * Optional user notes
 * **Tags** (NEW): Set of tags for filtering (`set[str]`)
