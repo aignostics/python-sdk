@@ -55,7 +55,7 @@ $ aignostics notebook [OPTIONS] [NOTEBOOK]
 
 **Arguments**:
 
-* `[NOTEBOOK]`: Path to the notebook file to run. If not provided, a default notebook will be used.  [default: /Users/helmut/Code/python-sdk/src/aignostics/notebook/_notebook.py]
+* `[NOTEBOOK]`: Path to the notebook file to run. If not provided, a default notebook will be used.  [default: /Users/omid/Documents/repos/python-sdk/src/aignostics/notebook/_notebook.py]
 
 **Options**:
 
@@ -118,7 +118,7 @@ $ aignostics application dump-schemata [OPTIONS] APPLICATION_ID
 **Options**:
 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
-* `--destination DIRECTORY`: Path pointing to directory where the input and output schemata will be dumped.  [default: /Users/helmut/Code/python-sdk]
+* `--destination DIRECTORY`: Path pointing to directory where the input and output schemata will be dumped.  [default: /Users/omid/Documents/repos/python-sdk]
 * `--zip / --no-zip`: If set, the schema files will be zipped into a single file, with the schema files deleted.  [default: no-zip]
 * `--help`: Show this message and exit.
 
@@ -207,7 +207,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1764110079403.6802]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1764159121212.228]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--note TEXT`: Optional note to include with the run submission via custom metadata.
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
@@ -275,7 +275,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 **Options**:
 
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
-* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1764110079403.815]
+* `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: 1764159121212.4172]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--help`: Show this message and exit.
 
@@ -505,7 +505,7 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 **Arguments**:
 
 * `RUN_ID`: Id of the run to download results for  [required]
-* `[DESTINATION_DIRECTORY]`: Destination directory to download results to  [default: /Users/helmut/Library/Application Support/aignostics/results]
+* `[DESTINATION_DIRECTORY]`: Destination directory to download results to  [default: /Users/omid/Library/Application Support/aignostics/results]
 
 **Options**:
 
@@ -615,7 +615,7 @@ $ aignostics bucket download [OPTIONS] [WHAT]...
 **Options**:
 
 * `--what-is-key / --no-what-is-key`: Specify if &#x27;what&#x27; is a single object key. If not specified, &#x27;what&#x27; is treated as a regex pattern.  [default: no-what-is-key]
-* `--destination DIRECTORY`: Destination directory to download the matching objects to.  [default: /Users/helmut/Library/Application Support/aignostics/bucket_downloads]
+* `--destination DIRECTORY`: Destination directory to download the matching objects to.  [default: /Users/omid/Library/Application Support/aignostics/bucket_downloads]
 * `--help`: Show this message and exit.
 
 ### `aignostics bucket delete`
@@ -777,7 +777,7 @@ $ aignostics dataset idc download [OPTIONS] SOURCE [TARGET]
 **Arguments**:
 
 * `SOURCE`: Identifier or comma-separated set of identifiers. IDs matched against collection_id, PatientId, StudyInstanceUID, SeriesInstanceUID or SOPInstanceUID. Example: 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0  [required]
-* `[TARGET]`: target directory for download  [default: /Users/helmut/Library/Application Support/aignostics/datasets/idc]
+* `[TARGET]`: target directory for download  [default: /Users/omid/Library/Application Support/aignostics/datasets/idc]
 
 **Options**:
 
@@ -816,7 +816,7 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 **Arguments**:
 
 * `SOURCE_URL`: URL to download. Example: gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
-* `[DESTINATION_DIRECTORY]`: Destination directory to download to  [default: /Users/helmut/Library/Application Support/aignostics/datasets/aignostics]
+* `[DESTINATION_DIRECTORY]`: Destination directory to download to  [default: /Users/omid/Library/Application Support/aignostics/datasets/aignostics]
 
 **Options**:
 
@@ -985,7 +985,7 @@ $ aignostics qupath install [OPTIONS]
 **Options**:
 
 * `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.6.0-rc5]
-* `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/helmut/Library/Application Support/aignostics]
+* `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/omid/Library/Application Support/aignostics]
 * `--reinstall / --no-reinstall`: Reinstall QuPath even if it is already installed. This will overwrite the existing installation.  [default: reinstall]
 * `--platform-system TEXT`: Override the system to assume for the installation. This is useful for testing purposes.  [default: Darwin]
 * `--platform-machine TEXT`: Override the machine architecture to assume for the installation. This is useful for testing purposes.  [default: arm64]
@@ -1054,7 +1054,7 @@ $ aignostics qupath uninstall [OPTIONS]
 **Options**:
 
 * `--version TEXT`: Version of QuPath to install. If not specified, all versions will be uninstalled.
-* `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/helmut/Library/Application Support/aignostics]
+* `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: /Users/omid/Library/Application Support/aignostics]
 * `--platform-system TEXT`: Override the system to assume for the installation. This is useful for testing purposes.  [default: Darwin]
 * `--platform-machine TEXT`: Override the machine architecture to assume for the installation. This is useful for testing purposes.  [default: arm64]
 * `--help`: Show this message and exit.
