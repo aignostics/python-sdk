@@ -1141,6 +1141,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
     run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
     assert run_id_match, f"Failed to extract run ID from output '{output}'"
     run_id = run_id_match.group(1)
+    run_id_2: str | None = None  # Initialize before try block to avoid UnboundLocalError in finally
 
     try:
         # Step 4: List runs with JSON format and filter by tag
@@ -1295,7 +1296,8 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
 
             # Step 11: Verify runs are NOT canceled after dry-run by describing them
             logger.info("Step 11: Verifying runs are NOT canceled after dry-run")
-            for idx, rid in enumerate([run_id, run_id_2], 1):
+            runs_to_check = [run_id] + ([run_id_2] if run_id_2 else [])
+            for idx, rid in enumerate(runs_to_check, 1):
                 describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
                 assert describe_result.exit_code == 0, f"Failed to describe run {idx}: {describe_result.stdout}"
                 described_run = json.loads(describe_result.stdout)
@@ -1329,7 +1331,8 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
 
             # Step 13: Verify runs ARE canceled by describing them again
             logger.info("Step 13: Verifying runs ARE canceled after actual cancel")
-            for idx, rid in enumerate([run_id, run_id_2], 1):
+            runs_to_verify = [run_id] + ([run_id_2] if run_id_2 else [])
+            for idx, rid in enumerate(runs_to_verify, 1):
                 describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
                 assert describe_result.exit_code == 0, (
                     f"Failed to describe run {idx} after cancel: {describe_result.stdout}"
@@ -1346,5 +1349,6 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                 logger.info("Run %d successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
         else:
             # Fallback: cancel individually if we couldn't get the version
-            for rid in [run_id, run_id_2]:
+            runs_to_cancel = [run_id] + ([run_id_2] if run_id_2 else [])
+            for rid in runs_to_cancel:
                 runner.invoke(cli, ["application", "run", "cancel", rid])
