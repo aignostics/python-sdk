@@ -11,19 +11,20 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from loguru import logger
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from aignostics.utils import user_agent
 
 from ._constants import (
     DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     DEFAULT_GPU_PROVISIONING_MODE,
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
 
-SDK_METADATA_SCHEMA_VERSION = "0.0.5"
+SDK_METADATA_SCHEMA_VERSION = "0.0.6"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
 
 
@@ -39,6 +40,7 @@ class ProvisioningMode(StrEnum):
 
     SPOT = "SPOT"
     ON_DEMAND = "ON_DEMAND"
+    FLEX_START = "FLEX_START"
 
 
 class CPUConfig(BaseModel):
@@ -59,7 +61,7 @@ class GPUConfig(BaseModel):
     )
     provisioning_mode: ProvisioningMode = Field(
         default_factory=lambda: ProvisioningMode(DEFAULT_GPU_PROVISIONING_MODE),
-        description="The provisioning mode for GPU resources (SPOT or ON_DEMAND)",
+        description="The provisioning mode for GPU resources (SPOT, ON_DEMAND, or FLEX_START)",
     )
     max_gpus_per_slide: int = Field(
         default=DEFAULT_MAX_GPUS_PER_SLIDE,
@@ -67,6 +69,37 @@ class GPUConfig(BaseModel):
         le=8,
         description="The maximum number of GPUs to allocate per slide (1-8)",
     )
+    flex_start_max_run_duration_minutes: int | None = Field(
+        default=None,
+        ge=1,
+        le=60 * 60,
+        description="Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). "
+        "Required when provisioning_mode is FLEX_START, must be None otherwise.",
+    )
+
+    @model_validator(mode="after")
+    def validate_flex_start_duration(self) -> "GPUConfig":
+        """Validate flex_start_max_run_duration_minutes based on provisioning mode.
+
+        Returns:
+            The validated GPUConfig instance.
+
+        Raises:
+            ValueError: If flex_start_max_run_duration_minutes is set when not using FLEX_START mode.
+        """
+        if self.provisioning_mode == ProvisioningMode.FLEX_START:
+            if self.flex_start_max_run_duration_minutes is None:
+                # Default to 12 hours (720 minutes) if not specified
+                # Using object.__setattr__ to bypass Pydantic's frozen model protection
+                object.__setattr__(  # noqa: PLC2801
+                    self,
+                    "flex_start_max_run_duration_minutes",
+                    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+                )
+        elif self.flex_start_max_run_duration_minutes is not None:
+            msg = "flex_start_max_run_duration_minutes must be None when provisioning_mode is not FLEX_START"
+            raise ValueError(msg)
+        return self
 
 
 class PipelineConfig(BaseModel):
@@ -83,8 +116,8 @@ class PipelineConfig(BaseModel):
     node_acquisition_timeout_minutes: int = Field(
         default=DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
         ge=1,
-        le=60 * 24,
-        description="Timeout for acquiring compute nodes in minutes (1-1440)",
+        le=60 * 60,
+        description="Timeout for acquiring compute nodes in minutes (1-3600)",
     )
 
 
