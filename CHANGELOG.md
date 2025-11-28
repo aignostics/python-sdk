@@ -783,5 +783,3 @@
 * @omid-aignostics made their first contribution
 * @idelsink made their first contribution
 * @dependabot[bot] made their first contribution
-
-

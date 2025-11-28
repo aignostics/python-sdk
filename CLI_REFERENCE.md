@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.212 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.213 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -213,7 +213,6 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
-* `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
 * `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
 * `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]
@@ -308,7 +307,6 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
-* `--validate-only / --no-validate-only`: If True, cancel the run post validation, before analysis.  [default: no-validate-only]
 * `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
 * `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]

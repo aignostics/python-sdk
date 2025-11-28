@@ -322,7 +322,6 @@ class CIMetadata(BaseModel):
 class WorkflowMetadata(BaseModel):
     """Workflow control metadata."""
     onboard_to_aignostics_portal: bool = False
-    validate_only: bool = False
 
 class SchedulingMetadata(BaseModel):
     """Scheduling metadata for run execution."""

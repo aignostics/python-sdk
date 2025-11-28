@@ -75,8 +75,6 @@ OnboardToPortalOption = Annotated[
     typer.Option(help="If True, onboard the run to the Aignostics Portal."),
 ]
 
-ValidateOnlyOption = Annotated[bool, typer.Option(help="If True, cancel the run post validation, before analysis.")]
-
 GpuTypeOption = Annotated[
     str,
     typer.Option(help="GPU type to use for processing (L4 or A100)."),
@@ -452,7 +450,6 @@ def run_execute(  # noqa: PLR0913, PLR0917
     due_date: DueDateOption = None,
     deadline: DeadlineOption = None,
     onboard_to_aignostics_portal: OnboardToPortalOption = False,
-    validate_only: ValidateOnlyOption = False,
     gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
     gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
     max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
@@ -498,7 +495,6 @@ def run_execute(  # noqa: PLR0913, PLR0917
         due_date=due_date,
         deadline=deadline,
         onboard_to_aignostics_portal=onboard_to_aignostics_portal,
-        validate_only=validate_only,
         gpu_type=gpu_type,
         gpu_provisioning_mode=gpu_provisioning_mode,
         max_gpus_per_slide=max_gpus_per_slide,
@@ -729,7 +725,6 @@ def run_submit(  # noqa: PLR0913, PLR0917
     due_date: DueDateOption = None,
     deadline: DeadlineOption = None,
     onboard_to_aignostics_portal: OnboardToPortalOption = False,
-    validate_only: ValidateOnlyOption = False,
     gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
     gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
     max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
@@ -797,7 +792,6 @@ def run_submit(  # noqa: PLR0913, PLR0917
             due_date=due_date,
             deadline=deadline,
             onboard_to_aignostics_portal=onboard_to_aignostics_portal,
-            validate_only=validate_only,
             gpu_type=gpu_type,
             gpu_provisioning_mode=gpu_provisioning_mode,
             max_gpus_per_slide=max_gpus_per_slide,
