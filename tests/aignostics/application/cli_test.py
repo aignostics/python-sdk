@@ -285,6 +285,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+            "--onboard-to-aignostics-portal",
         ],
     )
     output = normalize_output(result.stdout)
