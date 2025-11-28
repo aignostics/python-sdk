@@ -20,6 +20,9 @@ from aignostics.platform._sdk_metadata import (
     validate_run_sdk_metadata_silent,
 )
 
+# Test constants
+TEST_USER_AGENT = "aignostics-sdk/1.0.0"
+
 
 @pytest.fixture
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -972,7 +975,7 @@ class TestPipelineConfiguration:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "aignostics-sdk/1.0.0",
+            "user_agent": TEST_USER_AGENT,
             "pipeline": {
                 "gpu": {
                     "gpu_type": GPUType.L4.value,
@@ -998,7 +1001,7 @@ class TestPipelineConfiguration:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "aignostics-sdk/1.0.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         assert validate_run_sdk_metadata(metadata) is True
@@ -1101,7 +1104,7 @@ class TestPipelineConfiguration:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "aignostics-sdk/1.0.0",
+            "user_agent": TEST_USER_AGENT,
             "pipeline": {
                 "gpu": {
                     "gpu_type": GPUType.L4.value,

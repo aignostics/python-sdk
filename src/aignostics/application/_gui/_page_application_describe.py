@@ -38,6 +38,7 @@ MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 
 CLASS_SUBSECTION_HEADER = "text-h6 mb-0 pb-0"
 CLASS_WIDTH_ONE_THIRD = "w-1/3"
+CLASS_WIDTH_ONE_HALF = "w-1/2"
 
 
 @binding.bindable_dataclass
@@ -906,7 +907,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             step=1,
                         ).bind_value(submit_form, "flex_start_max_run_duration_minutes").mark(
                             "NUMBER_FLEX_START_MAX_RUN_DURATION_MINUTES"
-                        ).classes("w-1/2")
+                        ).classes(CLASS_WIDTH_ONE_HALF)
                         ui.label(
                             "Maximum duration for the run when using FLEX_START mode. "
                             "Default is 720 minutes (12 hours)."
@@ -928,7 +929,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             },
                             value=submit_form.cpu_provisioning_mode,
                         ).bind_value(submit_form, "cpu_provisioning_mode").mark("SELECT_CPU_PROVISIONING_MODE").classes(
-                            "w-1/2"
+                            CLASS_WIDTH_ONE_HALF
                         )
 
                     ui.separator().classes("my-4")
@@ -947,7 +948,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             step=1,
                         ).bind_value(submit_form, "node_acquisition_timeout_minutes").mark(
                             "NUMBER_NODE_ACQUISITION_TIMEOUT_MINUTES"
-                        ).classes("w-1/2")
+                        ).classes(CLASS_WIDTH_ONE_HALF)
             else:
                 ui.label(
                     "Pipeline configuration is not available for your organization. Default settings will be used."
