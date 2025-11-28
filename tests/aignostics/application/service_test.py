@@ -1,8 +1,11 @@
 """Tests to verify the service functionality of the application module."""
 
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pydicom
 import pytest
 from typer.testing import CliRunner
 
@@ -439,3 +442,112 @@ def test_application_run_update_item_custom_metadata_not_found(mock_get_client: 
 
     with pytest.raises(NotFoundException, match="not found"):
         service.application_run_update_item_custom_metadata("run-123", "invalid-item-id", {"key": "value"})
+
+
+@pytest.fixture
+def create_dicom() -> Callable[..., pydicom.Dataset]:
+    """Fixture that returns a function to create minimal but valid DICOM datasets."""
+
+    def _create_dicom(series_uid: str, rows: int, cols: int) -> pydicom.Dataset:
+        """Create a minimal but valid DICOM dataset.
+
+        Args:
+            series_uid: The series instance UID
+            rows: Number of rows (height)
+            cols: Number of columns (width)
+
+        Returns:
+            A valid pydicom Dataset
+        """
+        ds = pydicom.Dataset()
+
+        # File Meta Information
+        ds.file_meta = pydicom.Dataset()
+        ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+        ds.file_meta.MediaStorageSOPClassUID = "1.2.840.10008.5.1.4.1.1.77.1.6"  # VL Whole Slide Microscopy
+        ds.file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+
+        # Required DICOM attributes
+        ds.SeriesInstanceUID = series_uid
+        ds.SOPInstanceUID = pydicom.uid.generate_uid()
+        ds.SOPClassUID = ds.file_meta.MediaStorageSOPClassUID
+        ds.StudyInstanceUID = pydicom.uid.generate_uid()
+        ds.Modality = "SM"
+        ds.Rows = rows
+        ds.Columns = cols
+
+        return ds
+
+    return _create_dicom
+
+
+@pytest.mark.unit
+def test_filter_dicom_series_files_single_file(
+    tmp_path: Path,
+    create_dicom: Callable[..., pydicom.Dataset],
+) -> None:
+    """Test that single DICOM files are not filtered."""
+    ds = create_dicom("1.2.3.4.5", 1024, 1024)
+    dcm_file = tmp_path / "test.dcm"
+    ds.save_as(dcm_file, write_like_original=False)
+
+    excluded = ApplicationService._filter_dicom_series_files(tmp_path)
+    assert len(excluded) == 0
+
+
+@pytest.mark.unit
+def test_filter_dicom_series_files_pyramid(tmp_path: Path, create_dicom: Callable[..., pydicom.Dataset]) -> None:
+    """Test that for multi-file DICOM series, only the highest resolution file is kept."""
+    series_uid = "1.2.3.4.5"
+
+    # Create low resolution DICOM file
+    ds_low = create_dicom(series_uid, 512, 512)
+    dcm_file_low = tmp_path / "test_low.dcm"
+    ds_low.save_as(dcm_file_low, write_like_original=False)
+
+    # Create medium resolution DICOM file
+    ds_med = create_dicom(series_uid, 1024, 1024)
+    dcm_file_med = tmp_path / "test_med.dcm"
+    ds_med.save_as(dcm_file_med, write_like_original=False)
+
+    # Create high resolution DICOM file
+    ds_high = create_dicom(series_uid, 2048, 2048)
+    dcm_file_high = tmp_path / "test_high.dcm"
+    ds_high.save_as(dcm_file_high, write_like_original=False)
+
+    # Filter the series
+    excluded = ApplicationService._filter_dicom_series_files(tmp_path)
+
+    # Should exclude 2 files (low and medium), keeping only the highest resolution
+    assert len(excluded) == 2
+    assert dcm_file_low in excluded
+    assert dcm_file_med in excluded
+    assert dcm_file_high not in excluded
+
+
+@pytest.mark.unit
+def test_filter_dicom_series_files_multiple_series(
+    tmp_path: Path, create_dicom: Callable[..., pydicom.Dataset]
+) -> None:
+    """Test that files from different series are not filtered against each other."""
+    # Series 1 - two files
+    ds1_low = create_dicom("1.2.3.4.5", 512, 512)
+    dcm_file1_low = tmp_path / "series1_low.dcm"
+    ds1_low.save_as(dcm_file1_low, write_like_original=False)
+
+    ds1_high = create_dicom("1.2.3.4.5", 1024, 1024)
+    dcm_file1_high = tmp_path / "series1_high.dcm"
+    ds1_high.save_as(dcm_file1_high, write_like_original=False)
+
+    # Series 2 - single file (should not be filtered)
+    ds2 = create_dicom("6.7.8.9.0", 512, 512)
+    dcm_file2 = tmp_path / "series2.dcm"
+    ds2.save_as(dcm_file2, write_like_original=False)
+
+    excluded = ApplicationService._filter_dicom_series_files(tmp_path)
+
+    # Should exclude only the low-res file from series 1
+    assert len(excluded) == 1
+    assert dcm_file1_low in excluded
+    assert dcm_file1_high not in excluded
+    assert dcm_file2 not in excluded
