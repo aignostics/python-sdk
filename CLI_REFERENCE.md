@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.212 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.213 - built with love in Berlin 🐻
 
 **Commands**:
 
@@ -214,10 +214,11 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
-* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
+* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]
+* `--flex-start-max-run-duration-minutes INTEGER RANGE`: Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Ignored when gpu_provisioning_mode is not FLEX_START.  [default: 720; 1&lt;=x&lt;=3600]
 * `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
-* `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-1440).  [default: 30; 1&lt;=x&lt;=1440]
+* `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-3600).  [default: 30; 1&lt;=x&lt;=3600]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run prepare`
@@ -307,10 +308,11 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
 * `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
-* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
+* `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]
+* `--flex-start-max-run-duration-minutes INTEGER RANGE`: Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Ignored when gpu_provisioning_mode is not FLEX_START.  [default: 720; 1&lt;=x&lt;=3600]
 * `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
-* `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-1440).  [default: 30; 1&lt;=x&lt;=1440]
+* `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-3600).  [default: 30; 1&lt;=x&lt;=3600]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`

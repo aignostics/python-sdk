@@ -51,7 +51,7 @@
         },
         "provisioning_mode": {
           "$ref": "#/$defs/ProvisioningMode",
-          "description": "The provisioning mode for GPU resources (SPOT or ON_DEMAND)"
+          "description": "The provisioning mode for GPU resources (SPOT, ON_DEMAND, or FLEX_START)"
         },
         "max_gpus_per_slide": {
           "default": 1,
@@ -60,6 +60,21 @@
           "minimum": 1,
           "title": "Max Gpus Per Slide",
           "type": "integer"
+        },
+        "flex_start_max_run_duration_minutes": {
+          "anyOf": [
+            {
+              "maximum": 3600,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Required when provisioning_mode is FLEX_START, must be None otherwise.",
+          "title": "Flex Start Max Run Duration Minutes"
         }
       },
       "title": "GPUConfig",
@@ -270,8 +285,8 @@
         },
         "node_acquisition_timeout_minutes": {
           "default": 30,
-          "description": "Timeout for acquiring compute nodes in minutes (1-1440)",
-          "maximum": 1440,
+          "description": "Timeout for acquiring compute nodes in minutes (1-3600)",
+          "maximum": 3600,
           "minimum": 1,
           "title": "Node Acquisition Timeout Minutes",
           "type": "integer"
@@ -284,7 +299,8 @@
       "description": "Provisioning mode for resources.",
       "enum": [
         "SPOT",
-        "ON_DEMAND"
+        "ON_DEMAND",
+        "FLEX_START"
       ],
       "title": "ProvisioningMode",
       "type": "string"

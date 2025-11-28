@@ -29,6 +29,7 @@ from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     PIPELINE_CPU_PROVISIONING_MODE,
+    PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES,
     PIPELINE_GPU_PROVISIONING_MODE,
     PIPELINE_GPU_TYPE,
     PIPELINE_MAX_GPUS_PER_SLIDE,
@@ -85,8 +86,11 @@ HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 # one application run starting every 5 minutes, with a throughput of 1 slide per minute,
 # given no GPU.
 SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 100
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 1000
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 1 day(s)
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 1 day(s)
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
 SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 60  # 60 minutes
 
@@ -275,6 +279,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                     "gpu": {
                         "gpu_type": PIPELINE_GPU_TYPE,
                         "provisioning_mode": PIPELINE_GPU_PROVISIONING_MODE,
+                        "flex_start_max_run_duration_minutes": PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES,
                         "max_gpus_per_slide": PIPELINE_MAX_GPUS_PER_SLIDE,
                     },
                     "cpu": {
@@ -586,24 +591,53 @@ def test_platform_special_app_submit() -> None:
 
     This test submits an application run with the special application and validates the submission.
 
+    The test behavior varies based on the current minute when triggered by cron (*/10):
+    - Minutes 0-9 (every 6th run): Uses 1000 items instead of 100
+    - Minutes 40-49 (every 4th run): Uses 3h due date/deadline instead of 24h
+
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    # Determine run configuration based on current minute
+    # Cron runs every 10 minutes (*/10, in _scheduled-test-stress.yml),
+    # so we check which 10-minute window we're in
+    current_minute = datetime.now(tz=UTC).minute
+    is_on_00 = 0 <= current_minute <= 9
+    is_on_40 = 40 <= current_minute <= 49
+
+    slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 if is_on_00 else SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT
+
+    deadline_seconds = (
+        SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40
+        if is_on_40
+        else SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS
+    )
+    due_date_seconds = (
+        SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40
+        if is_on_40
+        else SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS
+    )
+
+    logger.info(
+        f"Special app submit config: minute={current_minute}, is_on_00={is_on_00}, is_on_40={is_on_40}, "
+        f"slide_count={slide_count}, deadline_seconds={deadline_seconds}, due_date_seconds={due_date_seconds}"
+    )
+
     logger.trace(
-        f"Generating special application payload with {SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT} spots for "
+        f"Generating special application payload with {slide_count} spots for "
         f"{SPECIAL_APPLICATION_ID} version {SPECIAL_APPLICATION_VERSION}"
     )
     payload = _get_spots_payload_for_special(
-        expires_seconds=SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5,
-        count=SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT,
+        expires_seconds=deadline_seconds + 60 * 5,
+        count=slide_count,
     )
     logger.debug(f"Generated special application payload: {payload}")
     _submit_and_validate(
         application_id=SPECIAL_APPLICATION_ID,
         application_version=SPECIAL_APPLICATION_VERSION,
         payload=payload,
-        deadline_seconds=SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
-        due_date_seconds=SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+        deadline_seconds=deadline_seconds,
+        due_date_seconds=due_date_seconds,
         tags={"test_platform_special_app_submit", "special", "stress", "stress_only"},
     )
     logger.debug("Special application payload submitted successfully")

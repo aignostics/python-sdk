@@ -1,6 +1,41 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.212](https://github.com/aignostics/python-sdk/compare/v0.2.211..0.2.212) - 2025-11-25
+# [0.2.213](https://github.com/aignostics/python-sdk/compare/v0.2.212..0.2.213) - 2025-11-28
+
+### ⛰️  Features
+
+- *(platform, application)* Introduce flex start ([#292](https://github.com/orhun/git-cliff/issues/292)) - ([8122a49](https://github.com/aignostics/python-sdk/commit/8122a49a728a6ff8368f509e23b0b6fc86700ad9))
+- *(platform, application)* Introduce flex start - ([8122a49](https://github.com/aignostics/python-sdk/commit/8122a49a728a6ff8368f509e23b0b6fc86700ad9))
+
+### 🐛 Bug Fixes
+
+- Download single artifact - ([49941e0](https://github.com/aignostics/python-sdk/commit/49941e0063c294cb33b7bc95b1643ace3781dd2f))
+- Revert CLI_REFERENCE.md to remove hardcoded timestamps [skip:ci, skip:test:long-running, skip:test:matrix-runner] - ([739687a](https://github.com/aignostics/python-sdk/commit/739687aa3dbaa018b7e244d6009a56e6bd162f5e))
+- Unify mapping usage and docs - ([e5c164e](https://github.com/aignostics/python-sdk/commit/e5c164e7e64252e660320e1c323d386be061068f))
+- Edit profile button opens new tab ([#286](https://github.com/orhun/git-cliff/issues/286)) - ([176c128](https://github.com/aignostics/python-sdk/commit/176c1285ada86226c77cee25c4b2d638d30d5b83))
+- Handle incomplete DICOM pyramid when getting thumbnail ([#281](https://github.com/orhun/git-cliff/issues/281)) - ([9caa6e1](https://github.com/aignostics/python-sdk/commit/9caa6e14c84175d48ce14b3ef077094f91ab4598))
+
+### 📚 Documentation
+
+- Regenerate README.md from partials to remove duplicate pip section [skip:ci, skip:test:long-running, skip:test:matrix-runner] - ([40221ef](https://github.com/aignostics/python-sdk/commit/40221ef82657e5e2d0fb4b9eae65d744f0c4e6bc))
+- Regenerate CLI reference with generic paths [skip:ci, skip:test:long-running, skip:test:matrix-runner] - ([fcd3376](https://github.com/aignostics/python-sdk/commit/fcd3376ad5bf40023831bbdf1f42aed70d3f1940))
+- Add quick start to public documentation [skip:ci, skip:test:long-running, skip:test:matrix-runner, skip:test:very-long-running] - ([18a6c19](https://github.com/aignostics/python-sdk/commit/18a6c19093152d0b7f38c23f15a30856616157ef))
+- Update fix lint issues [skip:ci, skip:test:long-running, skip:test:matrix-runner, skip:test:very-long-running] - ([3e0a51c](https://github.com/aignostics/python-sdk/commit/3e0a51cddd5dd05a54e0f5f7563989095b30c278))
+- Update readthedocs documentation [skip:ci, skip:test:long-running, skip:test:matrix-runner, skip:test:very-long-running] - ([8065d34](https://github.com/aignostics/python-sdk/commit/8065d3441b12dbd0240794ca3b8cb2b45afdf56c))
+- Remove requirement type comment to fix issue with Ketryx - ([5c85726](https://github.com/aignostics/python-sdk/commit/5c85726d28bc3c5939bedae3840143969f24c872))
+
+### 🧪 Testing
+
+- *(platform)* Test flex start on staging - ([8122a49](https://github.com/aignostics/python-sdk/commit/8122a49a728a6ff8368f509e23b0b6fc86700ad9))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution in [#292](https://github.com/aignostics/python-sdk/pull/292)
+* @olivermeyer made their first contribution in [#287](https://github.com/aignostics/python-sdk/pull/287)
+* @omid-aignostics made their first contribution in [#288](https://github.com/aignostics/python-sdk/pull/288)
+* @santi698 made their first contribution in [#285](https://github.com/aignostics/python-sdk/pull/285)
+
+# [v0.2.212](https://github.com/aignostics/python-sdk/compare/v0.2.211..v0.2.212) - 2025-11-25
 
 ### ⛰️  Features
 
@@ -17,9 +52,6 @@
 - *(platform)* Production: L4 (was A100); staging: node sl4.1 (was sl4) - ([f697a63](https://github.com/aignostics/python-sdk/commit/f697a631f02f9b6a931131dfb442327ba1666640))
 - *(stress)* Every 5 minutes (was 15) - ([f347ada](https://github.com/aignostics/python-sdk/commit/f347ada9969d2069fa280d0441a5d81c3c97f742))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 # [v0.2.211](https://github.com/aignostics/python-sdk/compare/v0.2.210..v0.2.211) - 2025-11-23
 
@@ -751,5 +783,3 @@
 * @omid-aignostics made their first contribution
 * @idelsink made their first contribution
 * @dependabot[bot] made their first contribution
-
-
