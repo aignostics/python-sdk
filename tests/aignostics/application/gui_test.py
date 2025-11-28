@@ -481,8 +481,7 @@ async def test_gui_run_results_pagination_show_more_button_visible(
     # Find a run with enough items to test pagination
     run_with_many_items = None
     for run in runs:
-        details = run.details()
-        if details.statistics.item_count > RESULTS_PAGE_SIZE:
+        if run.statistics.item_count > RESULTS_PAGE_SIZE:
             run_with_many_items = run
             break
 
@@ -492,8 +491,6 @@ async def test_gui_run_results_pagination_show_more_button_visible(
             f"{HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION})"
         )
 
-    run_details = run_with_many_items.details()
-
     # Navigate to the run page
     await user.open(f"/application/run/{run_with_many_items.run_id}")
     await user.should_see(f"Run {run_with_many_items.run_id}", retries=100)
@@ -502,7 +499,7 @@ async def test_gui_run_results_pagination_show_more_button_visible(
     await user.should_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=100)
 
     # Verify the button shows the correct remaining count
-    expected_remaining = run_details.statistics.item_count - RESULTS_PAGE_SIZE
+    expected_remaining = run_with_many_items.statistics.item_count - RESULTS_PAGE_SIZE
     await user.should_see(f"Show more ({expected_remaining} remaining)", retries=100)
 
 
@@ -534,8 +531,7 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
     # Find a run with few enough items
     run_with_few_items = None
     for run in runs:
-        details = run.details()
-        if 0 < details.statistics.item_count <= RESULTS_PAGE_SIZE:
+        if 0 < run.statistics.item_count <= RESULTS_PAGE_SIZE:
             run_with_few_items = run
             break
 
@@ -581,8 +577,7 @@ async def test_gui_run_results_pagination_load_more_works(user: User, silent_log
     # Find a run with enough items to test pagination (need at least 2 pages)
     run_with_many_items = None
     for run in runs:
-        details = run.details()
-        if details.statistics.item_count > RESULTS_PAGE_SIZE:
+        if run.statistics.item_count > RESULTS_PAGE_SIZE:
             run_with_many_items = run
             break
 
@@ -592,8 +587,7 @@ async def test_gui_run_results_pagination_load_more_works(user: User, silent_log
             f"{HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION})"
         )
 
-    run_details = run_with_many_items.details()
-    total_items = run_details.statistics.item_count
+    total_items = run_with_many_items.statistics.item_count
 
     # Navigate to the run page
     await user.open(f"/application/run/{run_with_many_items.run_id}")
