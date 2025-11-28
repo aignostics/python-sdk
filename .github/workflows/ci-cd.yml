@@ -49,7 +49,7 @@ jobs:
             COMMIT_MESSAGE=$(git log -1 --format=%B ${{ github.event.pull_request.head.sha }})
           else
             # For push events, use the head commit message
-            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+            COMMIT_MESSAGE='${{ github.event.head_commit.message }}'
           fi
           # Export for use in other steps (multiline-safe)
           echo "commit_message<<EOF" >> $GITHUB_OUTPUT

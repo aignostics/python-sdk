@@ -40,7 +40,13 @@ class PydicomHandler:
     def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0914, PLR0915
         dicom_files = []
 
-        for file_path in self.path.rglob("*.dcm"):  # noqa: PLR1702
+        # Determine which files to process based on whether the `self.path` points to a single file or a directory
+        if self.path.is_file():
+            files_to_process = [self.path] if self.path.suffix.lower() == ".dcm" else []
+        else:
+            files_to_process = list(self.path.rglob("*.dcm"))
+
+        for file_path in files_to_process:  # noqa: PLR1702
             if not file_path.is_file():
                 continue
 
@@ -183,9 +189,6 @@ class PydicomHandler:
     def _organize_by_hierarchy(files: list[dict[str, Any]]) -> dict[str, Any]:
         if not files:
             return {"type": "empty", "message": "No DICOM files found"}
-
-        if len(files) == 1:
-            return {"type": "file", "file_info": files[0]}
 
         # Group by study -> container -> series
         studies = defaultdict(
