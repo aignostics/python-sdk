@@ -12,6 +12,7 @@ from packaging import version
 from PIL.Image import Image
 
 TIFF_IMAGE_DESCRIPTION = "tiff.ImageDescription"
+DEFAULT_MAX_SAFE_DIMENSION = 4096  # Maximum safe pyramid level dimension (pixels)
 
 
 class OpenSlideHandler:
@@ -92,15 +93,34 @@ class OpenSlideHandler:
         except Exception:
             return LEGACY_MPP_FACTOR
 
-    def get_thumbnail(self) -> Image:
+    def get_thumbnail(self, max_safe_dimension: int = DEFAULT_MAX_SAFE_DIMENSION) -> Image:
         """Get thumbnail of the slide.
+
+        Args:
+            max_safe_dimension (int): Maximum dimension (width or height) of smallest pyramid level
+                before considering the pyramid incomplete.
 
         Returns:
             Image: Thumbnail image of the slide.
 
         Raises:
-            OpenSlideError: If the slide cannot be opened or if thumbnail generation fails.
+            RuntimeError: If the slide has an incomplete pyramid and thumbnail generation
+                would require excessive memory.
         """
+        # Detect incomplete pyramid by checking smallest level
+        smallest_level_idx = self.slide.level_count - 1
+        smallest_width, smallest_height = self.slide.level_dimensions[smallest_level_idx]
+
+        if max(smallest_width, smallest_height) > max_safe_dimension:
+            msg = (
+                f"Cannot generate thumbnail: incomplete pyramid detected. "
+                f"Smallest available level (Level {smallest_level_idx}) is "
+                f"{smallest_width}x{smallest_height} pixels, which exceeds safe "
+                f"threshold of {max_safe_dimension}x{max_safe_dimension}. "
+                f"This file appears to be missing lower-resolution pyramid levels."
+            )
+            raise RuntimeError(msg)
+
         return self.slide.get_thumbnail((256, 256))
 
     def _parse_xml_image_description(self, xml_string: str) -> dict[str, Any]:  # noqa: C901, PLR6301

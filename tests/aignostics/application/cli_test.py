@@ -34,6 +34,8 @@ TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
 HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
 HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
 
+RUN_CSV_FILENAME = "run.csv"
+
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
@@ -696,8 +698,9 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             "run",
             "execute",
             HETA_APPLICATION_ID,
-            str(tmp_path / "run.csv"),
+            str(tmp_path / RUN_CSV_FILENAME),
             str(tmp_path),
+            "--mapping",
             ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER",
             "--no-create-subdirectory-for-run",
             "--due-date",
@@ -762,6 +765,48 @@ def test_cli_run_update_metadata_not_dict(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '["array", "not", "dict"]'])
     assert result.exit_code == 1
     assert "Metadata must be a JSON object" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_execute_invalid_mapping_format(runner: CliRunner, tmp_path: Path) -> None:
+    """Check execute command fails with invalid mapping format."""
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(tmp_path / RUN_CSV_FILENAME),
+            str(tmp_path),
+            "--mapping",
+            ".*\\.tiff:staining_method:H&E",  # Wrong: colon instead of equals
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid mapping" in result.output
+    assert "should be in format" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_execute_invalid_regex_pattern(runner: CliRunner, tmp_path: Path) -> None:
+    """Check execute command fails with invalid regex pattern."""
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(tmp_path / RUN_CSV_FILENAME),
+            str(tmp_path),
+            "--mapping",
+            "*.tiff:staining_method=H&E",  # Wrong: glob pattern, not regex
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid mapping" in result.output
+    assert "invalid regex pattern" in result.output
 
 
 @pytest.mark.integration
@@ -1096,6 +1141,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
     run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
     assert run_id_match, f"Failed to extract run ID from output '{output}'"
     run_id = run_id_match.group(1)
+    run_id_2: str | None = None  # Initialize before try block to avoid UnboundLocalError in finally
 
     try:
         # Step 4: List runs with JSON format and filter by tag
@@ -1250,7 +1296,8 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
 
             # Step 11: Verify runs are NOT canceled after dry-run by describing them
             logger.info("Step 11: Verifying runs are NOT canceled after dry-run")
-            for idx, rid in enumerate([run_id, run_id_2], 1):
+            runs_to_check = [run_id] + ([run_id_2] if run_id_2 else [])
+            for idx, rid in enumerate(runs_to_check, 1):
                 describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
                 assert describe_result.exit_code == 0, f"Failed to describe run {idx}: {describe_result.stdout}"
                 described_run = json.loads(describe_result.stdout)
@@ -1284,7 +1331,8 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
 
             # Step 13: Verify runs ARE canceled by describing them again
             logger.info("Step 13: Verifying runs ARE canceled after actual cancel")
-            for idx, rid in enumerate([run_id, run_id_2], 1):
+            runs_to_verify = [run_id] + ([run_id_2] if run_id_2 else [])
+            for idx, rid in enumerate(runs_to_verify, 1):
                 describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
                 assert describe_result.exit_code == 0, (
                     f"Failed to describe run {idx} after cancel: {describe_result.stdout}"
@@ -1301,5 +1349,6 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                 logger.info("Run %d successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
         else:
             # Fallback: cancel individually if we couldn't get the version
-            for rid in [run_id, run_id_2]:
+            runs_to_cancel = [run_id] + ([run_id_2] if run_id_2 else [])
+            for rid in runs_to_cancel:
                 runner.invoke(cli, ["application", "run", "cancel", rid])

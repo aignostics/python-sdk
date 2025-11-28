@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.e2e
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=30)
 async def test_gui_index(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""

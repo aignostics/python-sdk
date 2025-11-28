@@ -29,9 +29,11 @@ from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     PIPELINE_CPU_PROVISIONING_MODE,
+    PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES,
     PIPELINE_GPU_PROVISIONING_MODE,
     PIPELINE_GPU_TYPE,
     PIPELINE_MAX_GPUS_PER_SLIDE,
+    PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES,
     SPECIAL_APPLICATION_ID,
     SPECIAL_APPLICATION_VERSION,
     SPOT_0_CRC32C,
@@ -79,6 +81,18 @@ HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 12  # 12 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 12  # 12 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
 HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
+
+# Plan to have 100.000 slides processed in total, with 100 slides per application run,
+# one application run starting every 5 minutes, with a throughput of 1 slide per minute,
+# given no GPU.
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 100
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 1000
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 1 day(s)
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 1 day(s)
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
+SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 60  # 60 minutes
 
 
 def _get_single_spot_payload_for_heta(expires_seconds: int) -> list[platform.InputItem]:
@@ -174,6 +188,51 @@ def _get_three_spots_payload_for_test(expires_seconds: int) -> list[platform.Inp
     ]
 
 
+def _get_spots_payload_for_special(expires_seconds: int, count: int) -> list[platform.InputItem]:
+    """Generates a payload using count many spots."""
+    items = []
+    for index in range(count):
+        signed_url = platform.generate_signed_url(
+            url=SPOT_1_GS_URL,
+            expires_seconds=expires_seconds,
+        )
+        items.append(
+            platform.InputItem(
+                external_id=SPOT_1_GS_URL + "&spot_index=" + str(index),
+                input_artifacts=[
+                    platform.InputArtifact(
+                        name="whole_slide_image",
+                        download_url=signed_url,
+                        metadata={
+                            "checksum_base64_crc32c": SPOT_1_CRC32C,
+                            "width_px": SPOT_1_WIDTH,
+                            "height_px": SPOT_1_HEIGHT,
+                            "resolution_mpp": SPOT_1_RESOLUTION_MPP,
+                            "media_type": "image/tiff",
+                            "staining_method": "H&E",
+                            "specimen": {
+                                "tissue": "LUNG",
+                                "disease": "LUNG_CANCER",
+                            },
+                        },
+                    ),
+                    platform.InputArtifact(
+                        name="normalization:wsi",
+                        download_url=signed_url,
+                        metadata={
+                            "checksum_base64_crc32c": SPOT_1_CRC32C,
+                            "width_px": SPOT_1_WIDTH,
+                            "height_px": SPOT_1_HEIGHT,
+                            "resolution_mpp": SPOT_1_RESOLUTION_MPP,
+                            "media_type": "image/tiff",
+                        },
+                    ),
+                ],
+            )
+        )
+    return items
+
+
 def _submit_and_validate(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
@@ -203,6 +262,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
         f"find_and_validate:{find_and_validate_at.month}_{find_and_validate_at.day}_{find_and_validate_at.hour}"
     )  # Add a tag indicating when this run has to be found and validated for completion
 
+    logger.trace(f"Submitting application run for {application_id} version {application_version}")
     client = platform.Client()
     run = client.runs.submit(
         application_id=application_id,
@@ -219,11 +279,13 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                     "gpu": {
                         "gpu_type": PIPELINE_GPU_TYPE,
                         "provisioning_mode": PIPELINE_GPU_PROVISIONING_MODE,
+                        "flex_start_max_run_duration_minutes": PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES,
                         "max_gpus_per_slide": PIPELINE_MAX_GPUS_PER_SLIDE,
                     },
                     "cpu": {
                         "provisioning_mode": PIPELINE_CPU_PROVISIONING_MODE,
                     },
+                    "node_acquisition_timeout_minutes": PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES,
                 },
             }
         },
@@ -317,11 +379,14 @@ def _find_and_validate(
     assert client is not None, "Failed to create platform client"
     now = datetime.now(tz=UTC)
     check_this_hour_tag = f"find_and_validate:{now.month}_{now.day}_{now.hour}"
-    runs = client.runs.list(
-        application_id=application_id,
-        application_version=application_version,
-        custom_metadata=f'$.sdk.tags[*] ? (@ == "{check_this_hour_tag}")',
+    runs = list(
+        client.runs.list(
+            application_id=application_id,
+            application_version=application_version,
+            custom_metadata=f'$.sdk.tags[*] ? (@ == "{check_this_hour_tag}")',
+        )
     )
+    logger.debug(f"Found {len(runs)} runs with tag {check_this_hour_tag}")
     for run in runs:
         details = run.details(nocache=True)
         assert details.application_id == application_id, (
@@ -517,27 +582,84 @@ def test_platform_heta_app_submit() -> None:
     )
 
 
-@pytest.mark.skip(reason="Tested")
 @pytest.mark.e2e
 @pytest.mark.stress_only
-@pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_special_app_submit() -> None:
-    """Test application runs with the HETA application.
+    """Test application runs with the special application.
 
-    This test submits an application run with the HETA application and validates the submission.
+    This test submits an application run with the special application and validates the submission.
+
+    The test behavior varies based on the current minute when triggered by cron (*/10):
+    - Minutes 0-9 (every 6th run): Uses 1000 items instead of 100
+    - Minutes 40-49 (every 4th run): Uses 3h due date/deadline instead of 24h
 
     Raises:
         AssertionError: If any of the validation checks fail.
     """
+    # Determine run configuration based on current minute
+    # Cron runs every 10 minutes (*/10, in _scheduled-test-stress.yml),
+    # so we check which 10-minute window we're in
+    current_minute = datetime.now(tz=UTC).minute
+    is_on_00 = 0 <= current_minute <= 9
+    is_on_40 = 40 <= current_minute <= 49
+
+    slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 if is_on_00 else SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT
+
+    deadline_seconds = (
+        SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40
+        if is_on_40
+        else SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS
+    )
+    due_date_seconds = (
+        SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40
+        if is_on_40
+        else SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS
+    )
+
+    logger.info(
+        f"Special app submit config: minute={current_minute}, is_on_00={is_on_00}, is_on_40={is_on_40}, "
+        f"slide_count={slide_count}, deadline_seconds={deadline_seconds}, due_date_seconds={due_date_seconds}"
+    )
+
+    logger.trace(
+        f"Generating special application payload with {slide_count} spots for "
+        f"{SPECIAL_APPLICATION_ID} version {SPECIAL_APPLICATION_VERSION}"
+    )
+    payload = _get_spots_payload_for_special(
+        expires_seconds=deadline_seconds + 60 * 5,
+        count=slide_count,
+    )
+    logger.debug(f"Generated special application payload: {payload}")
     _submit_and_validate(
         application_id=SPECIAL_APPLICATION_ID,
         application_version=SPECIAL_APPLICATION_VERSION,
-        payload=_get_single_spot_payload_for_heta(
-            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
-        ),
-        deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
-        due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
+        payload=payload,
+        deadline_seconds=deadline_seconds,
+        due_date_seconds=due_date_seconds,
         tags={"test_platform_special_app_submit", "special", "stress", "stress_only"},
+    )
+    logger.debug("Special application payload submitted successfully")
+
+
+@pytest.mark.e2e
+@pytest.mark.stress_only
+@pytest.mark.long_running
+@pytest.mark.scheduled_only
+@pytest.mark.timeout(timeout=SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
+def test_platform_special_app_find_and_validate() -> None:
+    """Test application runs with the special application.
+
+    This test finds an application run with the special application submitted earlier and
+    validates it completed successfully and in time.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _find_and_validate(
+        application_id=SPECIAL_APPLICATION_ID,
+        application_version=SPECIAL_APPLICATION_VERSION,
     )
 
 

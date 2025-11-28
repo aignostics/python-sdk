@@ -388,7 +388,7 @@ class Service(BaseService):  # noqa: PLR0904
             application_version (str|None): The version of the application (semver).
                 If not given latest version is used.
             with_gui_metadata (bool): If True, include additional metadata for GUI.
-            mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
+            mappings (list[str]): Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
                 The regular expression is matched against the external_id attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
             with_extra_metadata (bool): If True, include extra metadata from the WSIService.
@@ -859,7 +859,9 @@ class Service(BaseService):  # noqa: PLR0904
         gpu_type: str | None = None,
         gpu_provisioning_mode: str | None = None,
         max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
         cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -879,9 +881,13 @@ class Service(BaseService):  # noqa: PLR0904
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
             validate_only (bool): If True, cancel the run post validation, before analysis.
             gpu_type (str | None): The type of GPU to use (L4 or A100).
-            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources (SPOT or ON_DEMAND).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
+                (SPOT, ON_DEMAND, or FLEX_START).
             max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            flex_start_max_run_duration_minutes (int | None): Maximum run duration in minutes
+                when using FLEX_START provisioning mode (1-3600).
             cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
 
         Returns:
             Run: The submitted run.
@@ -983,7 +989,9 @@ class Service(BaseService):  # noqa: PLR0904
                 gpu_type=gpu_type,
                 gpu_provisioning_mode=gpu_provisioning_mode,
                 max_gpus_per_slide=max_gpus_per_slide,
+                flex_start_max_run_duration_minutes=flex_start_max_run_duration_minutes,
                 cpu_provisioning_mode=cpu_provisioning_mode,
+                node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
             )
             logger.debug(
                 "Submitted application run with items: {}, application run id {}, custom metadata: {}",
@@ -1007,7 +1015,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(  # noqa: PLR0913, PLR0917, PLR0912, C901
+    def application_run_submit(  # noqa: PLR0913, PLR0917, PLR0912, C901, PLR0915
         self,
         application_id: str,
         items: list[InputItem],
@@ -1022,7 +1030,9 @@ class Service(BaseService):  # noqa: PLR0904
         gpu_type: str | None = None,
         gpu_provisioning_mode: str | None = None,
         max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
         cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -1041,9 +1051,13 @@ class Service(BaseService):  # noqa: PLR0904
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
             validate_only (bool): If True, cancel the run post validation, before analysis.
             gpu_type (str | None): The type of GPU to use (L4 or A100).
-            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources (SPOT or ON_DEMAND).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
+                (SPOT, ON_DEMAND, or FLEX_START).
             max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            flex_start_max_run_duration_minutes (int | None): Maximum run duration in minutes
+                when using FLEX_START provisioning mode (1-3600).
             cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
 
         Returns:
             Run: The submitted run.
@@ -1079,9 +1093,13 @@ class Service(BaseService):  # noqa: PLR0904
                 if deadline:
                     sdk_metadata["scheduling"]["deadline"] = deadline
 
-            if gpu_type or gpu_provisioning_mode or max_gpus_per_slide or cpu_provisioning_mode:
+            has_gpu_config = (
+                gpu_type or gpu_provisioning_mode or max_gpus_per_slide or flex_start_max_run_duration_minutes
+            )
+            has_pipeline_config = has_gpu_config or cpu_provisioning_mode or node_acquisition_timeout_minutes
+            if has_pipeline_config:
                 sdk_metadata["pipeline"] = {}
-                if gpu_type or gpu_provisioning_mode or max_gpus_per_slide:
+                if has_gpu_config:
                     sdk_metadata["pipeline"]["gpu"] = {}
                     if gpu_type:
                         sdk_metadata["pipeline"]["gpu"]["gpu_type"] = gpu_type
@@ -1089,8 +1107,14 @@ class Service(BaseService):  # noqa: PLR0904
                         sdk_metadata["pipeline"]["gpu"]["provisioning_mode"] = gpu_provisioning_mode
                     if max_gpus_per_slide:
                         sdk_metadata["pipeline"]["gpu"]["max_gpus_per_slide"] = max_gpus_per_slide
+                    if flex_start_max_run_duration_minutes:
+                        sdk_metadata["pipeline"]["gpu"]["flex_start_max_run_duration_minutes"] = (
+                            flex_start_max_run_duration_minutes
+                        )
                 if cpu_provisioning_mode:
                     sdk_metadata["pipeline"]["cpu"] = {"provisioning_mode": cpu_provisioning_mode}
+                if node_acquisition_timeout_minutes:
+                    sdk_metadata["pipeline"]["node_acquisition_timeout_minutes"] = node_acquisition_timeout_minutes
 
             # Validate pipeline configuration if present
             if "pipeline" in sdk_metadata:

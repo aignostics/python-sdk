@@ -13,9 +13,11 @@ from loguru import logger
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     DEFAULT_GPU_PROVISIONING_MODE,
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
     NotFoundException,
     RunState,
 )
@@ -30,10 +32,85 @@ from ._utils import (
     print_runs_verbose,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
+    validate_mappings,
     write_metadata_dict_to_csv,
 )
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
+
+
+ApplicationVersionOption = Annotated[
+    str | None,
+    typer.Option(
+        help="Version of the application. If not provided, the latest version will be used.",
+    ),
+]
+
+NoteOption = Annotated[
+    str | None,
+    typer.Option(help="Optional note to include with the run submission via custom metadata."),
+]
+
+DueDateOption = Annotated[
+    str | None,
+    typer.Option(
+        help="Optional soft due date to include with the run submission, ISO8601 format. "
+        "The scheduler will try to complete the run by this date, taking the subscription tier"
+        "and available GPU resources into account."
+    ),
+]
+
+DeadlineOption = Annotated[
+    str | None,
+    typer.Option(
+        help=(
+            "Optional hard deadline to include with the run submission, ISO8601 format. "
+            "If processing exceeds this deadline, the run can be aborted."
+        ),
+    ),
+]
+
+OnboardToPortalOption = Annotated[
+    bool,
+    typer.Option(help="If True, onboard the run to the Aignostics Portal."),
+]
+
+ValidateOnlyOption = Annotated[bool, typer.Option(help="If True, cancel the run post validation, before analysis.")]
+
+GpuTypeOption = Annotated[
+    str,
+    typer.Option(help="GPU type to use for processing (L4 or A100)."),
+]
+
+GpuProvisioningModeOption = Annotated[
+    str,
+    typer.Option(help="GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START)."),
+]
+
+FlexStartMaxRunDurationOption = Annotated[
+    int,
+    typer.Option(
+        help="Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). "
+        "Ignored when gpu_provisioning_mode is not FLEX_START.",
+        min=1,
+        max=3600,
+    ),
+]
+
+MaxGpusPerSlideOption = Annotated[
+    int,
+    typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
+]
+
+CpuProvisioningModeOption = Annotated[
+    str,
+    typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
+]
+
+NodeAcquisitionTimeoutOption = Annotated[
+    int,
+    typer.Option(help="Timeout for acquiring compute nodes in minutes (1-3600).", min=1, max=3600),
+]
 
 
 cli = typer.Typer(name="application", help="List and inspect applications on Aignostics Platform.")
@@ -142,6 +219,7 @@ def application_dump_schemata(  # noqa: C901
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="<current-working-directory>",
         ),
     ] = Path().cwd(),  # noqa: B008,
     zip: Annotated[  # noqa: A002
@@ -333,21 +411,16 @@ def run_execute(  # noqa: PLR0913, PLR0917
             resolve_path=True,
         ),
     ],
+    application_version: ApplicationVersionOption = None,
     mapping: Annotated[
-        list[str],
-        typer.Argument(
+        list[str] | None,
+        typer.Option(
             help="Mapping to use for amending metadata CSV file. "
-            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'."
+            "Each mapping is of the form '<regexp>:<key>=<value>,<key>=<value>,...'. "
             "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
             "You can use the mapping option multiple times to set values for multiple files. "
-            'Example: ".*:staining_method:H&E,tissue:LIVER,disease:LIVER_CANCER"',
-        ),
-    ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application. If not provided, the latest version will be used.",
+            'Example: ".*:staining_method=H&E,tissue=LIVER,disease=LIVER_CANCER"',
         ),
     ] = None,
     create_subdirectory_for_run: Annotated[
@@ -366,6 +439,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
         str,
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
+            show_default="<current-timestamp-ms>",
         ),
     ] = f"{time.time() * 1000}",
     wait_for_completion: Annotated[
@@ -374,58 +448,25 @@ def run_execute(  # noqa: PLR0913, PLR0917
             help="Wait for run completion and download results incrementally",
         ),
     ] = True,
-    note: Annotated[
-        str | None,
-        typer.Option(help="Optional note to include with the run submission via custom metadata."),
-    ] = None,
-    due_date: Annotated[
-        str | None,
-        typer.Option(
-            help="Optional soft due date to include with the run submission, ISO8601 format. "
-            "The scheduler will try to complete the run by this date, taking the subscription tier"
-            "and available GPU resources into account."
-        ),
-    ] = None,
-    deadline: Annotated[
-        str | None,
-        typer.Option(
-            help=(
-                "Optional hard deadline to include with the run submission, ISO8601 format. "
-                "If processing exceeds this deadline, the run can be aborted."
-            ),
-        ),
-    ] = None,
-    onboard_to_aignostics_portal: Annotated[
-        bool,
-        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
-    ] = False,
-    validate_only: Annotated[
-        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
-    ] = False,
-    gpu_type: Annotated[
-        str,
-        typer.Option(help="GPU type to use for processing (L4 or A100)."),
-    ] = DEFAULT_GPU_TYPE,
-    gpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_GPU_PROVISIONING_MODE,
-    max_gpus_per_slide: Annotated[
-        int,
-        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
-    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
-    cpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_CPU_PROVISIONING_MODE,
+    note: NoteOption = None,
+    due_date: DueDateOption = None,
+    deadline: DeadlineOption = None,
+    onboard_to_aignostics_portal: OnboardToPortalOption = False,
+    validate_only: ValidateOnlyOption = False,
+    gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
     (1) Prepares metadata CSV file for the given application version
         by scanning the source directory for whole slide images
         and extracting metadata such as width, height, and mpp.
-    (2) Amends the metadata CSV file using the given mappings
-        to set all required attributes.
+    (2) Optionally amends the metadata CSV file using the given mappings
+        to set additional required attributes.
     (3) Uploads the files referenced in the metadata CSV file
         to the cloud bucket provisioned in the Aignostics platform.
     (4) Submits the run for the given application version
@@ -461,7 +502,9 @@ def run_execute(  # noqa: PLR0913, PLR0917
         gpu_type=gpu_type,
         gpu_provisioning_mode=gpu_provisioning_mode,
         max_gpus_per_slide=max_gpus_per_slide,
+        flex_start_max_run_duration_minutes=flex_start_max_run_duration_minutes,
         cpu_provisioning_mode=cpu_provisioning_mode,
+        node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
     )
     result_download(
         run_id=run_id,
@@ -512,14 +555,14 @@ def run_prepare(
         list[str] | None,
         typer.Option(
             help="Mapping to use for amending metadata CSV file. "
-            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'. "
+            "Each mapping is of the form '<regexp>:<key>=<value>,<key>=<value>,...'. "
             "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
             "You can use the mapping option multiple times to set values for multiple files. "
         ),
     ] = None,
 ) -> None:
-    """Prepare metadata CSV file required for submitting a run.
+    r"""Prepare metadata CSV file required for submitting a run.
 
     (1) Scans source_directory for whole slide images.
     (2) Extracts metadata from whole slide images such as width, height, mpp.
@@ -529,8 +572,14 @@ def run_prepare(
 
     Example:
         aignostics application run prepare "he-tme:v0.51.0" metadata.csv /path/to/source_directory
-        --mapping "*.tiff:staining_method:H&E,tissue:LUNG,disease:LUNG_CANCER"
+        --mapping ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
     """
+    try:
+        validate_mappings(mapping)
+    except ValueError as e:
+        console.print(f"[error]Error:[/error] {e}")
+        sys.exit(1)
+
     write_metadata_dict_to_csv(
         metadata_csv=metadata_csv,
         metadata_dict=Service().generate_metadata_from_source_directory(
@@ -572,6 +621,7 @@ def run_upload(
         str,
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
+            show_default="<current-timestamp-ms>",
         ),
     ] = str(time.time() * 1000),
     onboard_to_aignostics_portal: Annotated[
@@ -670,61 +720,22 @@ def run_submit(  # noqa: PLR0913, PLR0917
             resolve_path=True,
         ),
     ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application to generate the metadata for. "
-            "If not provided, the latest version will be used.",
-        ),
-    ] = None,
-    note: Annotated[
-        str | None,
-        typer.Option(help="Optional note to include with the run submission via custom metadata."),
-    ] = None,
+    application_version: ApplicationVersionOption = None,
+    note: NoteOption = None,
     tags: Annotated[
         str | None,
         typer.Option(help="Optional comma-separated list of tags to attach to the run for filtering."),
     ] = None,
-    due_date: Annotated[
-        str | None,
-        typer.Option(
-            help="Optional soft due date to include with the run submission, ISO8601 format. "
-            "The scheduler will try to complete the run by this date, taking the subscription tier"
-            "and available GPU resources into account."
-        ),
-    ] = None,
-    deadline: Annotated[
-        str | None,
-        typer.Option(
-            help=(
-                "Optional hard deadline to include with the run submission, ISO8601 format. "
-                "If processing exceeds this deadline, the run can be aborted."
-            ),
-        ),
-    ] = None,
-    onboard_to_aignostics_portal: Annotated[
-        bool,
-        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
-    ] = False,
-    validate_only: Annotated[
-        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
-    ] = False,
-    gpu_type: Annotated[
-        str,
-        typer.Option(help="GPU type to use for processing (L4 or A100)."),
-    ] = DEFAULT_GPU_TYPE,
-    gpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_GPU_PROVISIONING_MODE,
-    max_gpus_per_slide: Annotated[
-        int,
-        typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
-    ] = DEFAULT_MAX_GPUS_PER_SLIDE,
-    cpu_provisioning_mode: Annotated[
-        str,
-        typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
-    ] = DEFAULT_CPU_PROVISIONING_MODE,
+    due_date: DueDateOption = None,
+    deadline: DeadlineOption = None,
+    onboard_to_aignostics_portal: OnboardToPortalOption = False,
+    validate_only: ValidateOnlyOption = False,
+    gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -790,7 +801,11 @@ def run_submit(  # noqa: PLR0913, PLR0917
             gpu_type=gpu_type,
             gpu_provisioning_mode=gpu_provisioning_mode,
             max_gpus_per_slide=max_gpus_per_slide,
+            flex_start_max_run_duration_minutes=(
+                flex_start_max_run_duration_minutes if gpu_provisioning_mode == "FLEX_START" else None
+            ),
             cpu_provisioning_mode=cpu_provisioning_mode,
+            node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "
@@ -1233,6 +1248,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/results",
         ),
     ] = get_user_data_directory("results"),  # noqa: B008
     create_subdirectory_for_run: Annotated[

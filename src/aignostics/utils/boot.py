@@ -140,6 +140,6 @@ def _register_shutdown_message() -> None:
         if not sys.stderr.closed:
             # Suppress I/O errors at shutdown - streams may be closed during logging
             with contextlib.suppress(ValueError, OSError):
-                logger.trace("Exiting {project_name} v{version} ...")
+                logger.trace("Exiting {} v{} ...", __project_name__, __version__)
 
     atexit.register(_shutdown_handler)

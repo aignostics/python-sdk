@@ -14,9 +14,11 @@ from nicegui import run as nicegui_run
 
 from aignostics.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     DEFAULT_GPU_PROVISIONING_MODE,
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -36,6 +38,7 @@ MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 
 CLASS_SUBSECTION_HEADER = "text-h6 mb-0 pb-0"
 CLASS_WIDTH_ONE_THIRD = "w-1/3"
+CLASS_WIDTH_ONE_HALF = "w-1/2"
 
 
 @binding.bindable_dataclass
@@ -62,7 +65,9 @@ class SubmitForm:
     gpu_type: str = DEFAULT_GPU_TYPE
     gpu_provisioning_mode: str = DEFAULT_GPU_PROVISIONING_MODE
     max_gpus_per_slide: int = DEFAULT_MAX_GPUS_PER_SLIDE
+    flex_start_max_run_duration_minutes: int = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
     cpu_provisioning_mode: str = DEFAULT_CPU_PROVISIONING_MODE
+    node_acquisition_timeout_minutes: int = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES
 
 
 submit_form = SubmitForm()
@@ -736,7 +741,13 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     gpu_type=submit_form.gpu_type,
                     gpu_provisioning_mode=submit_form.gpu_provisioning_mode,
                     max_gpus_per_slide=submit_form.max_gpus_per_slide,
+                    flex_start_max_run_duration_minutes=(
+                        submit_form.flex_start_max_run_duration_minutes
+                        if submit_form.gpu_provisioning_mode == "FLEX_START"
+                        else None
+                    ),
                     cpu_provisioning_mode=submit_form.cpu_provisioning_mode,
+                    node_acquisition_timeout_minutes=submit_form.node_acquisition_timeout_minutes,
                 )
             except Exception as e:
                 ui.notify(
@@ -875,11 +886,32 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 "ON_DEMAND": (
                                     "On demand nodes (higher cost, limited availability, processing might be delayed)"
                                 ),
+                                "FLEX_START": ("Flex start (discounted GPUs with max run duration limit)"),
                             },
                             value=submit_form.gpu_provisioning_mode,
                         ).bind_value(submit_form, "gpu_provisioning_mode").mark("SELECT_GPU_PROVISIONING_MODE").classes(
                             CLASS_WIDTH_ONE_THIRD
                         )
+
+                    # Show flex start duration input only when FLEX_START is selected
+                    with (
+                        ui.row()
+                        .classes("w-full gap-4")
+                        .bind_visibility_from(submit_form, "gpu_provisioning_mode", lambda v: v == "FLEX_START")
+                    ):
+                        ui.number(
+                            label="Flex Start Max Run Duration (minutes)",
+                            value=submit_form.flex_start_max_run_duration_minutes,
+                            min=1,
+                            max=3600,
+                            step=1,
+                        ).bind_value(submit_form, "flex_start_max_run_duration_minutes").mark(
+                            "NUMBER_FLEX_START_MAX_RUN_DURATION_MINUTES"
+                        ).classes(CLASS_WIDTH_ONE_HALF)
+                        ui.label(
+                            "Maximum duration for the run when using FLEX_START mode. "
+                            "Default is 720 minutes (12 hours)."
+                        ).classes("text-sm text-gray-500 self-center")
 
                     ui.separator().classes("my-4")
 
@@ -897,8 +929,26 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             },
                             value=submit_form.cpu_provisioning_mode,
                         ).bind_value(submit_form, "cpu_provisioning_mode").mark("SELECT_CPU_PROVISIONING_MODE").classes(
-                            "w-1/2"
+                            CLASS_WIDTH_ONE_HALF
                         )
+
+                    ui.separator().classes("my-4")
+
+                    ui.label("Node Acquisition").classes("class_subsection_header")
+                    ui.label("Configure timeout for acquiring compute nodes from the cluster.").classes(
+                        "text-sm mt-0 pt-0 mb-4"
+                    )
+
+                    with ui.row().classes("w-full gap-4"):
+                        ui.number(
+                            label="Node Acquisition Timeout (minutes)",
+                            value=submit_form.node_acquisition_timeout_minutes,
+                            min=1,
+                            max=3600,
+                            step=1,
+                        ).bind_value(submit_form, "node_acquisition_timeout_minutes").mark(
+                            "NUMBER_NODE_ACQUISITION_TIMEOUT_MINUTES"
+                        ).classes(CLASS_WIDTH_ONE_HALF)
             else:
                 ui.label(
                     "Pipeline configuration is not available for your organization. Default settings will be used."

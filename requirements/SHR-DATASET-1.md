@@ -2,7 +2,6 @@
 itemId: SHR-DATASET-1
 itemTitle: Dataset Discovery and Download
 itemType: Requirement
-# Stakeholder requirement (user)
 Requirement type: ENVIRONMENT
 ---
 
