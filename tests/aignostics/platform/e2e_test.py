@@ -29,6 +29,7 @@ from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     PIPELINE_CPU_PROVISIONING_MODE,
+    PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES,
     PIPELINE_GPU_PROVISIONING_MODE,
     PIPELINE_GPU_TYPE,
     PIPELINE_MAX_GPUS_PER_SLIDE,
@@ -275,6 +276,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                     "gpu": {
                         "gpu_type": PIPELINE_GPU_TYPE,
                         "provisioning_mode": PIPELINE_GPU_PROVISIONING_MODE,
+                        "flex_start_max_run_duration_minutes": PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES,
                         "max_gpus_per_slide": PIPELINE_MAX_GPUS_PER_SLIDE,
                     },
                     "cpu": {

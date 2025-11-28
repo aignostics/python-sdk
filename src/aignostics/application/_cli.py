@@ -13,6 +13,7 @@ from loguru import logger
 from aignostics.bucket import Service as BucketService
 from aignostics.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     DEFAULT_GPU_PROVISIONING_MODE,
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
@@ -83,7 +84,17 @@ GpuTypeOption = Annotated[
 
 GpuProvisioningModeOption = Annotated[
     str,
-    typer.Option(help="GPU provisioning mode (SPOT or ON_DEMAND)."),
+    typer.Option(help="GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START)."),
+]
+
+FlexStartMaxRunDurationOption = Annotated[
+    int,
+    typer.Option(
+        help="Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). "
+        "Ignored when gpu_provisioning_mode is not FLEX_START.",
+        min=1,
+        max=3600,
+    ),
 ]
 
 MaxGpusPerSlideOption = Annotated[
@@ -98,7 +109,7 @@ CpuProvisioningModeOption = Annotated[
 
 NodeAcquisitionTimeoutOption = Annotated[
     int,
-    typer.Option(help="Timeout for acquiring compute nodes in minutes (1-1440).", min=1, max=1440),
+    typer.Option(help="Timeout for acquiring compute nodes in minutes (1-3600).", min=1, max=3600),
 ]
 
 
@@ -445,6 +456,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
     gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
     gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
     max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
     node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> None:
@@ -490,6 +502,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
         gpu_type=gpu_type,
         gpu_provisioning_mode=gpu_provisioning_mode,
         max_gpus_per_slide=max_gpus_per_slide,
+        flex_start_max_run_duration_minutes=flex_start_max_run_duration_minutes,
         cpu_provisioning_mode=cpu_provisioning_mode,
         node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
     )
@@ -720,6 +733,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
     gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
     gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
     max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
     node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> str:
@@ -787,6 +801,9 @@ def run_submit(  # noqa: PLR0913, PLR0917
             gpu_type=gpu_type,
             gpu_provisioning_mode=gpu_provisioning_mode,
             max_gpus_per_slide=max_gpus_per_slide,
+            flex_start_max_run_duration_minutes=(
+                flex_start_max_run_duration_minutes if gpu_provisioning_mode == "FLEX_START" else None
+            ),
             cpu_provisioning_mode=cpu_provisioning_mode,
             node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
         )
