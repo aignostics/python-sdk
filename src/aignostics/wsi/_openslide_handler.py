@@ -76,7 +76,7 @@ class OpenSlideHandler:
         Returns:
             float: Correction factor (0.1 for buggy versions, 1.0 otherwise).
         """
-        LEGACY_MPP_FACTOR = 1 / 10  # noqa: N806
+        legacy_mpp_factor = 1 / 10
 
         try:
             xml_string = props[TIFF_IMAGE_DESCRIPTION]
@@ -84,14 +84,14 @@ class OpenSlideHandler:
             # Match custom metadata for library version used during export
             libvips_version_match = re.findall(r"libVips-version.*?(\d+\.\d+\.\d+)", xml_string, re.DOTALL)
             if not libvips_version_match:
-                return LEGACY_MPP_FACTOR
+                return legacy_mpp_factor
 
             if version.parse(libvips_version_match[0]) >= version.parse("8.8.3"):
                 # Bug-free libvips version was used during initial pyramid export
                 return 1.0
-            return LEGACY_MPP_FACTOR
+            return legacy_mpp_factor
         except Exception:
-            return LEGACY_MPP_FACTOR
+            return legacy_mpp_factor
 
     def get_thumbnail(self, max_safe_dimension: int = DEFAULT_MAX_SAFE_DIMENSION) -> Image:
         """Get thumbnail of the slide.
