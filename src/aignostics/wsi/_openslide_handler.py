@@ -181,7 +181,6 @@ class OpenSlideHandler:
         """
         levels = []
         props = dict(self.slide.properties)
-        mpp_correction_factor = self._get_mpp_correction_factor(props) if "tiff.XResolution" in props else 1.0
         base_mpp_x = float(props.get(openslide.PROPERTY_NAME_MPP_X, 0)) * mpp_correction_factor
         base_mpp_y = float(props.get(openslide.PROPERTY_NAME_MPP_Y, 0)) * mpp_correction_factor
 
