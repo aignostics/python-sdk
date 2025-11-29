@@ -229,7 +229,7 @@ class OpenSlideHandler:
         props = dict(self.slide.properties)
         file_size = self.path.stat().st_size
         base_width, base_height = self.slide.dimensions
-        mpp_correction_factor = self._get_mpp_correction_factor(props)
+        mpp_correction_factor = self._get_mpp_correction_factor(props) if "tiff.XResolution" in props else 1.0
 
         metadata = {
             "format": self._detect_format(),
