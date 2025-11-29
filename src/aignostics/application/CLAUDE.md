@@ -163,6 +163,38 @@ APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5  # Wait between status checks
 ```
 
+### DICOM Series Handling
+
+**Multi-File DICOM Series Filtering (`_service.py`):**
+
+The service automatically handles multi-file DICOM series (e.g., whole slide images stored as multiple DICOM files) by selecting only the highest resolution file from each series. This prevents redundant processing since OpenSlide can automatically find related files in the same directory.
+```python
+@staticmethod
+def _filter_dicom_series_files(source_directory: Path) -> set[Path]:
+    """Filter DICOM files to keep only one representative per series.
+    
+    For multi-file DICOM series, keeps only the highest resolution file.
+    OpenSlide will find other files in the same directory when needed.
+    
+    Implementation:
+    - Groups DICOM files by SeriesInstanceUID
+    - For each series with multiple files, selects file with largest dimensions (rows * cols)
+    - Returns set of files to exclude from processing
+    - Standalone DICOM files (not part of multi-file series) are never excluded
+    
+    Used automatically in: generate_metadata_from_source_directory()
+    """
+```
+
+**Key Behaviors:**
+
+- Files are grouped by `SeriesInstanceUID` DICOM tag
+- Highest resolution determined by `Rows × Columns` (total pixel count)
+- Excluded files are logged at DEBUG level with series details
+- Filtering occurs before metadata generation, checksum calculation, or upload
+- Only affects DICOM files (`.dcm` extension); other formats unaffected
+
+
 ### Progress State Management
 
 **Actual DownloadProgress Model (`_models.py`):**
