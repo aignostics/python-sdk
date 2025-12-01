@@ -3,7 +3,6 @@ itemId: SWR-APPLICATION-2-3
 itemTitle: Upload Slide Files to Platform Storage
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
-# Software requirement (user)
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---

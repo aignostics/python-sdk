@@ -4,10 +4,12 @@
 2. Reading/writing metadata CSV files
 3. Mime type handling.
 4. Date/time validation.
+5. Mapping format validation.
 """
 
 import csv
 import mimetypes
+import re
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -81,6 +83,44 @@ def validate_due_date(due_date: str | None) -> None:
             f"but current UTC time is {now.isoformat()}"
         )
         raise ValueError(message)
+
+
+def validate_mappings(mappings: list[str] | None) -> None:
+    """Validate mapping format for file metadata amendment.
+
+    Args:
+        mappings: List of mapping strings to validate.
+
+    Raises:
+        ValueError: If any mapping has invalid format with helpful error message.
+    """
+    if mappings is None or len(mappings) == 0:
+        return
+
+    # Pattern: <regexp>:<key>=<value>(,<key>=<value>)*
+    # Captures: regex pattern, then key=value pairs separated by commas
+    # Keys are word characters, values can be anything except comma
+    mapping_pattern = re.compile(
+        r"^"  # Start of string
+        r"(.+?)"  # Group 1: regex pattern (non-greedy, at least 1 char)
+        r":"  # Separator colon
+        r"(\w+=[^,]+(,\w+=[^,]+)*)"  # Group 2: key=value,key=value,... (values can contain anything except comma)
+        r"$"  # End of string
+    )
+    for mapping in mappings:
+        if not mapping:
+            msg = "Invalid mapping: cannot be empty"
+            raise ValueError(msg)
+        match = mapping_pattern.match(mapping)
+        if not match:
+            msg = f"Invalid mapping: `{mapping}` should be in format `<regex>:<key>=<value>,<key>=<value>`"
+            raise ValueError(msg)
+        regex_pattern = match.group(1)
+        try:
+            re.compile(regex_pattern)
+        except re.error as e:
+            msg = f"Invalid mapping: `{mapping}` has invalid regex pattern `{regex_pattern}`"
+            raise ValueError(msg) from e
 
 
 def is_not_terminated_with_deadline_exceeded(

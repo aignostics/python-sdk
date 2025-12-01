@@ -3,7 +3,6 @@ itemId: SWR-BUCKET-1-7
 itemTitle: Reflect File Removal in User Interface
 itemHasParent: SHR-BUCKET-1
 itemType: Requirement
-# Software requirement (user)
 Requirement type: FUNCTIONAL
 Layer: User Interface (frontend)
 ---
