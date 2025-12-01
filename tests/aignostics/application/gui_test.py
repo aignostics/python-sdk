@@ -14,6 +14,7 @@ import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
 
+from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.application import Service
 from aignostics.application._gui._page_application_run_describe import RESULTS_PAGE_SIZE
 from aignostics.cli import cli
@@ -233,6 +234,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             # Check the file picker opens and closes
             await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
+            await user.should_see(f"Supported formats: {', '.join(sorted(WSI_SUPPORTED_FILE_EXTENSIONS))}")
             user.find(marker="BUTTON_WSI_SELECT_DATA").click()
             await user.should_see("Ok")
             await user.should_see("Cancel")

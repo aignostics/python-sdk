@@ -12,6 +12,7 @@ from loguru import logger
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
+from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
@@ -351,6 +352,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.wsi_step_label = ui.label(
                 "Select the folder with the whole slide images you want to analyze then click Next."
             )
+            ui.label(f"Supported formats: {', '.join(sorted(WSI_SUPPORTED_FILE_EXTENSIONS))}").classes("text-caption")
             with ui.stepper_navigation():
                 if "pytest" in sys.modules:
                     ui.button("Home", on_click=_pytest_home, icon="folder").mark("BUTTON_PYTEST_HOME")
