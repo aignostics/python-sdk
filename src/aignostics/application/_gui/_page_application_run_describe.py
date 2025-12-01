@@ -832,49 +832,55 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             for item in displayed_results:
                 await render_item(item)
 
-        # Create "Show more" button container
-        show_more_container = ui.row().classes("w-full justify-center mt-4")
-
-        async def load_more() -> None:
-            """Load and render the next batch of results."""
-            nonlocal has_more_results
-            show_more_button.disable()
-            show_more_button.props(add="loading")
-
-            # Fetch next batch
-            next_batch = await nicegui_run.io_bound(fetch_next_batch)
-            displayed_results.extend(next_batch)
-
-            # Render new items
-            with results_list:
-                for item in next_batch:
-                    await render_item(item)
-
-            show_more_button.props(remove="loading")
-
-            # Hide button if no more results or remaining count is 0
-            remaining = run_data.statistics.item_count - len(displayed_results)
-            if not has_more_results or remaining <= 0:
-                show_more_container.set_visibility(False)
-            else:
-                show_more_button.enable()
-                # Update button text with count
-                show_more_button.text = f"Show more ({remaining} remaining)"
-
-        # Add "Show more" button
-        with show_more_container:
-            remaining = run_data.statistics.item_count - len(displayed_results)
-            show_more_button = (
-                ui.button(
-                    f"Show more ({remaining} remaining)",
-                    icon="expand_more",
-                    on_click=load_more,
-                )
-                .props("outline")
-                .mark("BUTTON_SHOW_MORE_RESULTS")
-            )
-
-        # Hide button if all results are already loaded or remaining count is 0
+        # Calculate if we need pagination before creating UI elements
         remaining_initial = run_data.statistics.item_count - len(displayed_results)
-        if not has_more_results or remaining_initial <= 0:
-            show_more_container.set_visibility(False)
+        needs_pagination = has_more_results and remaining_initial > 0
+
+        # Only create "Show more" button if there are more results to load
+        show_more_container: ui.row | None = None
+        show_more_button: ui.button | None = None
+
+        if needs_pagination:
+            show_more_container = ui.row().classes("w-full justify-center mt-4")
+
+            async def load_more() -> None:
+                """Load and render the next batch of results."""
+                nonlocal has_more_results
+                # These are guaranteed to be set since load_more is only defined when needs_pagination is True
+                if show_more_button is None or show_more_container is None:
+                    return  # Should never happen, but satisfies type checker
+
+                show_more_button.disable()
+                show_more_button.props(add="loading")
+
+                # Fetch next batch
+                next_batch = await nicegui_run.io_bound(fetch_next_batch)
+                displayed_results.extend(next_batch)
+
+                # Render new items
+                with results_list:
+                    for item in next_batch:
+                        await render_item(item)
+
+                show_more_button.props(remove="loading")
+
+                # Hide button if no more results or remaining count is 0
+                remaining = run_data.statistics.item_count - len(displayed_results)
+                if not has_more_results or remaining <= 0:
+                    show_more_container.set_visibility(False)
+                else:
+                    show_more_button.enable()
+                    # Update button text with count
+                    show_more_button.text = f"Show more ({remaining} remaining)"
+
+            # Add "Show more" button
+            with show_more_container:
+                show_more_button = (
+                    ui.button(
+                        f"Show more ({remaining_initial} remaining)",
+                        icon="expand_more",
+                        on_click=load_more,
+                    )
+                    .props("outline")
+                    .mark("BUTTON_SHOW_MORE_RESULTS")
+                )
