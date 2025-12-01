@@ -13,8 +13,10 @@ from aignostics.application import Service as ApplicationService
 from aignostics.application._utils import validate_due_date
 from aignostics.platform import NotFoundException, RunData, RunOutput
 from tests.constants_test import (
-    HETA_APPLICATION_ID, HETA_APPLICATION_VERSION,
-    TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP)
+    HETA_APPLICATION_ID,
+    HETA_APPLICATION_VERSION,
+    TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP,
+)
 
 
 @pytest.mark.unit
@@ -471,7 +473,7 @@ def create_dicom() -> Callable[..., pydicom.Dataset]:
         ds.SOPClassUID = ds.file_meta.MediaStorageSOPClassUID
         ds.StudyInstanceUID = pydicom.uid.generate_uid()
         ds.Modality = "SM"
-        
+
         # Tile dimensions (typically 256x256 for WSI)
         ds.Rows = 256
         ds.Columns = 256
@@ -501,10 +503,7 @@ def test_filter_dicom_series_files_single_file(
 
 
 @pytest.mark.unit
-def test_filter_dicom_series_files_pyramid(
-    tmp_path: Path, 
-    create_dicom: Callable[..., pydicom.Dataset]
-) -> None:
+def test_filter_dicom_series_files_pyramid(tmp_path: Path, create_dicom: Callable[..., pydicom.Dataset]) -> None:
     """Test that for multi-file DICOM series, only the highest resolution file is kept."""
     series_uid = "1.2.3.4.5"
 
@@ -535,8 +534,7 @@ def test_filter_dicom_series_files_pyramid(
 
 @pytest.mark.unit
 def test_filter_dicom_series_files_multiple_series(
-    tmp_path: Path, 
-    create_dicom: Callable[..., pydicom.Dataset]
+    tmp_path: Path, create_dicom: Callable[..., pydicom.Dataset]
 ) -> None:
     """Test that files from different series are not filtered against each other."""
     # Series 1 - two files (pyramid with 2 levels)
@@ -573,7 +571,7 @@ def test_filter_dicom_series_files_missing_wsi_attributes(
     ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
     ds.file_meta.MediaStorageSOPClassUID = "1.2.840.10008.5.1.4.1.1.2"  # CT Image Storage
     ds.file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
-    
+
     ds.SeriesInstanceUID = "1.2.3.4.5"
     ds.SOPInstanceUID = pydicom.uid.generate_uid()
     ds.SOPClassUID = ds.file_meta.MediaStorageSOPClassUID
@@ -582,10 +580,10 @@ def test_filter_dicom_series_files_missing_wsi_attributes(
     ds.Rows = 512
     ds.Columns = 512
     # Note: No TotalPixelMatrixRows/Columns
-    
+
     dcm_file = tmp_path / "non_wsi.dcm"
     ds.save_as(dcm_file, write_like_original=False)
-    
+
     # Should not crash, and should not exclude anything (file is skipped)
     excluded = ApplicationService._filter_dicom_series_files(tmp_path)
     assert len(excluded) == 0
