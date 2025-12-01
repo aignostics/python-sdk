@@ -1,6 +1,39 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.217](https://github.com/aignostics/python-sdk/compare/v0.2.216..0.2.217) - 2025-12-01
+# [0.2.219](https://github.com/aignostics/python-sdk/compare/v0.2.217..0.2.219) - 2025-12-01
+
+### 🎨 Styling
+
+- *(install.sh)* Use package correctly - ([94d3197](https://github.com/aignostics/python-sdk/commit/94d31971c435011f02a00ec6908edbe76efe9c34))
+
+### 🧪 Testing
+
+- *(platform)* Stopped stress tests - ([0e6e80e](https://github.com/aignostics/python-sdk/commit/0e6e80e719ec8bef62c011805788c4723ea55846))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Update github artifact actions ([#238](https://github.com/orhun/git-cliff/issues/238)) - ([b32e20a](https://github.com/aignostics/python-sdk/commit/b32e20ae3d0404baa13c8718a7a6562d897b6fdc))
+- *(deps)* Update ghcr.io/astral-sh/uv docker tag to v0.9.14 ([#280](https://github.com/orhun/git-cliff/issues/280)) - ([d348c62](https://github.com/aignostics/python-sdk/commit/d348c6215437dcaa1f13c5e3ccdc8c63fe4d34e0))
+- *(deps)* Bump astral-sh/setup-uv from 7.1.1 to 7.1.4 ([#278](https://github.com/orhun/git-cliff/issues/278)) - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+- *(deps)* Update actions/checkout action to v5.0.1 ([#279](https://github.com/orhun/git-cliff/issues/279)) - ([f9a25a1](https://github.com/aignostics/python-sdk/commit/f9a25a1923dc8dbd6ec86527ca3dc7c15ddfb278))
+- *(install.sh)* Use package correctly for uv - ([db601de](https://github.com/aignostics/python-sdk/commit/db601dec6e268e33c82b9874ba312a25d86f6804))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([b32e20a](https://github.com/aignostics/python-sdk/commit/b32e20ae3d0404baa13c8718a7a6562d897b6fdc))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([b32e20a](https://github.com/aignostics/python-sdk/commit/b32e20ae3d0404baa13c8718a7a6562d897b6fdc))
+- Astral-sh/setup-uv - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+- Dependabot[bot] <support@github.com> - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+
+### 🛡️ Security
+
+- *(dep)* Override fonttools given CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib - ([94e985f](https://github.com/aignostics/python-sdk/commit/94e985f962bc6c59ccd493a0b960e7a61706033c))
+
+
+
+* @renovate[bot] made their first contribution in [#238](https://github.com/aignostics/python-sdk/pull/238)
+* @dependabot[bot] made their first contribution in [#278](https://github.com/aignostics/python-sdk/pull/278)
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.217](https://github.com/aignostics/python-sdk/compare/v0.2.216..v0.2.217) - 2025-12-01
 
 ### 🐛 Bug Fixes
 
@@ -17,10 +50,6 @@
 - *(gha)* Use github token on labels sync / checkout, given our repo is not public - ([b0202de](https://github.com/aignostics/python-sdk/commit/b0202dec331c74745392d316c66096cec176d63d))
 - *(gha)* Use github token for checkout on labels sync - ([1814d80](https://github.com/aignostics/python-sdk/commit/1814d80479d145d31c97ad575def1baad3439255))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
-* @olivermeyer made their first contribution in [#297](https://github.com/aignostics/python-sdk/pull/297)
 
 # [v0.2.216](https://github.com/aignostics/python-sdk/compare/v0.2.214..v0.2.216) - 2025-12-01
 

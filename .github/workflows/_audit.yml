@@ -37,7 +37,7 @@ jobs:
         run: make audit
         
       - name: Upload audit results
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:
           name: audit-results
