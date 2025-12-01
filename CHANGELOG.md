@@ -1,6 +1,28 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.217](https://github.com/aignostics/python-sdk/compare/v0.2.216..0.2.217) - 2025-12-01
+# [0.2.218](https://github.com/aignostics/python-sdk/compare/v0.2.217..0.2.218) - 2025-12-01
+
+### 🎨 Styling
+
+- *(install.sh)* Use package correctly - ([94d3197](https://github.com/aignostics/python-sdk/commit/94d31971c435011f02a00ec6908edbe76efe9c34))
+
+### 🧪 Testing
+
+- *(platform)* Stopped stress tests - ([0e6e80e](https://github.com/aignostics/python-sdk/commit/0e6e80e719ec8bef62c011805788c4723ea55846))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(install.sh)* Use package correctly for uv - ([db601de](https://github.com/aignostics/python-sdk/commit/db601dec6e268e33c82b9874ba312a25d86f6804))
+
+### 🛡️ Security
+
+- *(dep)* Override fonttools given CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib - ([99ecdb4](https://github.com/aignostics/python-sdk/commit/99ecdb4055fbbcec210ff936cab1743b2a811e42))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.217](https://github.com/aignostics/python-sdk/compare/v0.2.216..v0.2.217) - 2025-12-01
 
 ### 🐛 Bug Fixes
 
@@ -17,10 +39,6 @@
 - *(gha)* Use github token on labels sync / checkout, given our repo is not public - ([b0202de](https://github.com/aignostics/python-sdk/commit/b0202dec331c74745392d316c66096cec176d63d))
 - *(gha)* Use github token for checkout on labels sync - ([1814d80](https://github.com/aignostics/python-sdk/commit/1814d80479d145d31c97ad575def1baad3439255))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution
-* @olivermeyer made their first contribution in [#297](https://github.com/aignostics/python-sdk/pull/297)
 
 # [v0.2.216](https://github.com/aignostics/python-sdk/compare/v0.2.214..v0.2.216) - 2025-12-01
 
