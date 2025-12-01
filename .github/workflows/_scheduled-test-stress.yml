@@ -1,4 +1,4 @@
-name: "> Stress Test (5 minutely)"
+name: "> Stress Test"
 
 on:
   workflow_call:
@@ -35,7 +35,7 @@ env:
   AIGNOSTICS_PLATFORM_ENVIRONMENT: ${{ inputs.platform_environment }}
 
 jobs:
-  test-scheduled-hourly:
+  test-stress:
     runs-on: ubuntu-latest
     permissions:
       contents: read
