@@ -16,7 +16,7 @@ from nicegui import (
 )
 from nicegui import run as nicegui_run
 
-from aignostics.platform import ItemOutput, ItemResult, ItemState, RunState
+from aignostics.platform import ItemOutput, ItemResult, ItemState, Run, RunData, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -69,42 +69,86 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         </style>
     """)
 
-    spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
-    run = await nicegui_run.io_bound(service.application_run, run_id)
-    spinner.set_visibility(False)
-    run_data = run.details() if run else None
+    # Create frame FIRST with a loading state to avoid NiceGUI drawer JS timeout.
+    # The drawer component queries JavaScript for its state, and if the main thread
+    # is blocked by API calls (like run.details()), the JS query times out after 1s.
+    # By creating the frame before any blocking calls, the drawer initializes properly.
+    await _frame(
+        navigation_title=f"Loading run {run_id[:8]}...",
+        navigation_icon="hourglass_empty",
+        navigation_icon_color="grey",
+        navigation_icon_tooltip=f"Loading run {run_id}",
+        left_sidebar=True,
+        args={"run_id": run_id},
+    )
 
-    if run and run_data:
-        icon, color = run_status_to_icon_and_color(
-            run_data.state.value,
-            run_data.termination_reason,
-            run_data.statistics.item_count,
-            run_data.statistics.item_succeeded_count,
-        )
-        await _frame(
-            navigation_title=(
-                f"Run of {run_data.application_id} ({run_data.version_number}) on "
-                f"{run_data.submitted_at.astimezone().strftime('%m-%d %H:%M')}"
-            ),
-            navigation_icon=icon,
-            navigation_icon_color=color,
-            navigation_icon_tooltip=f"Run {run_data.run_id}, status {run_data.state.value.upper()}",
-            left_sidebar=True,
-            args={"run_id": run_id},
-        )
-    else:
-        await _frame(
-            navigation_title=f"Run {run_id}",
-            navigation_icon="bug_report",
-            navigation_icon_color="negative",
-            navigation_icon_tooltip="Could not load run data",
-            left_sidebar=True,
-            args={"run_id": run_id},
-        )
+    # Show a loading spinner in the main content area
+    loading_container = ui.column().classes("w-full items-center justify-center")
+    with loading_container:
+        ui.spinner(size="xl")
+        ui.label("Loading run details...").classes("text-grey-7 mt-4")
+
+    # Now load the run data asynchronously (this can take 1-2 seconds)
+    run: Run | None = await nicegui_run.io_bound(service.application_run, run_id)
 
     if run is None:
-        ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
+        loading_container.clear()
+        with loading_container:
+            ui.icon("error", color="negative", size="xl")
+            ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR").classes("text-negative")
         return
+
+    # Create row that will contain both expansion and action buttons
+    main_row = ui.row().classes("w-full justify-center")
+    with main_row:
+        # Create expansion panel immediately
+        expansion = ui.expansion(text=f"Run {run.run_id}", icon="info")
+        expansion.on_value_change(
+            lambda e: expansion.classes(add="w-full" if e.value else "", remove="w-full" if not e.value else "")
+        )
+        # Add space immediately to push expansion to the left (buttons will be added here later)
+        ui.space()
+
+    # Load run details (the slow API call - ~1.3s)
+    # Note: We call run.details() synchronously because:
+    # 1. The frame is already created, so the drawer JS query won't timeout
+    # 2. Using io_bound for bound instance methods can cause issues in test environments
+    try:
+        run_data: RunData = run.details()
+    except Exception as e:
+        loading_container.delete()
+        ui.icon("error", color="negative", size="xl")
+        ui.label(f"Failed to load details for run '{run_id}': {e}").mark("LABEL_ERROR").classes("text-negative")
+        return
+
+    # Remove loading state
+    loading_container.delete()
+
+    # Update the header with actual run info now that data is loaded.
+    # We use JavaScript to update the header elements since the frame was created before data was available.
+    icon, color = run_status_to_icon_and_color(
+        run_data.state.value,
+        run_data.termination_reason,
+        run_data.statistics.item_count,
+        run_data.statistics.item_succeeded_count,
+    )
+    new_title = (
+        f"Run of {run_data.application_id} ({run_data.version_number}) on "
+        f"{run_data.submitted_at.astimezone().strftime('%m-%d %H:%M')}"
+    )
+    # Update title text (the label with text-xl font-bold in the header)
+    await ui.run_javascript(f"""
+        const header = document.querySelector('header');
+        if (header) {{
+            const titleLabel = header.querySelector('.text-xl.font-bold');
+            if (titleLabel) titleLabel.textContent = {new_title!r};
+            const icon = header.querySelector('.text-4xl');
+            if (icon) {{
+                icon.textContent = {icon!r};
+                icon.style.color = {color!r};
+            }}
+        }}
+    """)
 
     # Forward declaration of UI buttons that will be defined later
     cancel_button: ui.button
@@ -510,129 +554,128 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         ui.navigate.to(f"/notebook/{run.run_id}?results_folder={quote(results_folder.as_posix())}")
         ui.navigate.reload()  # TODO(Helmut): Find out why this workaround works. Was just a hunch ...
 
-    if run_data:  # noqa: PLR1702
-        with ui.row().classes("w-full justify-center"):
-            expansion = ui.expansion(text=f"Run {run.run_id}", icon="info")
-            expansion.on_value_change(
-                lambda e: expansion.classes(add="w-full" if e.value else "", remove="w-full" if not e.value else "")
-            )
-            with expansion:
-                # Display run metadata, including duration if possible, using humanize
+    if run_data:
+        # Populate the expansion panel that we created earlier (line 104)
+        with expansion:
+            # Display run metadata, including duration if possible, using humanize
 
-                submitted_at = run_data.submitted_at.astimezone()
-                terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
-                if submitted_at and terminated_at:
-                    duration_seconds = (terminated_at - submitted_at).total_seconds()
-                    duration_str = humanize.precisedelta(duration_seconds, format="%0.0f")
-                else:
-                    duration_str = "N/A"
+            submitted_at = run_data.submitted_at.astimezone()
+            terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
+            if submitted_at and terminated_at:
+                duration_seconds = (terminated_at - submitted_at).total_seconds()
+                duration_str = humanize.precisedelta(duration_seconds, format="%0.0f")
+            else:
+                duration_str = "N/A"
 
-                if run_data.state is RunState.TERMINATED and run_data.termination_reason:
-                    status_str = f"{run_data.state.value} ({run_data.termination_reason.name})"
-                else:
-                    status_str = f"{run_data.state.value}"
+            if run_data.state is RunState.TERMINATED and run_data.termination_reason:
+                status_str = f"{run_data.state.value} ({run_data.termination_reason.name})"
+            else:
+                status_str = f"{run_data.state.value}"
 
-                ui.code(
-                    f"""
-                    * Run ID: {run_data.run_id}
-                    * Application: {run_data.application_id} ({run_data.version_number})
-                    * Status: {status_str}
-                    * Output: {run_data.output.name}
-                        - {run_data.statistics.item_count} items
-                        - {run_data.statistics.item_pending_count} pending
-                        - {run_data.statistics.item_processing_count} processing
-                        - {run_data.statistics.item_skipped_count} skipped
-                        - {run_data.statistics.item_succeeded_count} succeeded
-                        - {run_data.statistics.item_user_error_count} user errors
-                        - {run_data.statistics.item_system_error_count} system errors
-                    * Submitted: {submitted_at.strftime("%m-%d %H:%M")} ({run_data.submitted_by})
-                    * Terminated: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"} ({duration_str})
-                    * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
-                    """,
-                    language="markdown",
-                ).classes("full-width").mark("CODE_RUN_METADATA")
-                user_info: UserInfo | None = app.storage.tab.get("user_info", None)
-                if run_data.custom_metadata:
-                    is_editable = user_info and user_info.role in {"admin", "super_admin"}
-                    properties = {
-                        "content": {"json": run_data.custom_metadata},
-                        "mode": "tree",
-                        "readOnly": not is_editable,
-                        "mainMenuBar": True,
-                        "navigationBar": False,
-                        "statusBar": False,
-                    }
+            ui.code(
+                f"""
+                * Run ID: {run_data.run_id}
+                * Application: {run_data.application_id} ({run_data.version_number})
+                * Status: {status_str}
+                * Output: {run_data.output.name}
+                    - {run_data.statistics.item_count} items
+                    - {run_data.statistics.item_pending_count} pending
+                    - {run_data.statistics.item_processing_count} processing
+                    - {run_data.statistics.item_skipped_count} skipped
+                    - {run_data.statistics.item_succeeded_count} succeeded
+                    - {run_data.statistics.item_user_error_count} user errors
+                    - {run_data.statistics.item_system_error_count} system errors
+                * Submitted: {submitted_at.strftime("%m-%d %H:%M")} ({run_data.submitted_by})
+                * Terminated: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"} ({duration_str})
+                * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
+                """,
+                language="markdown",
+            ).classes("full-width").mark("CODE_RUN_METADATA")
+            user_info: UserInfo | None = app.storage.tab.get("user_info", None)
+            if run_data.custom_metadata:
+                is_editable = user_info and user_info.role in {"admin", "super_admin"}
+                properties = {
+                    "content": {"json": run_data.custom_metadata},
+                    "mode": "tree",
+                    "readOnly": not is_editable,
+                    "mainMenuBar": True,
+                    "navigationBar": False,
+                    "statusBar": False,
+                }
 
-                    async def handle_metadata_change(e: Any) -> None:  # noqa: ANN401
-                        """Handle changes to the custom metadata and update the run."""
-                        if not is_editable:
-                            return
-                        try:
-                            # Extract the new metadata from the event's content attribute
-                            new_metadata = e.content.get("json") if hasattr(e, "content") else None
-                            if new_metadata:
-                                ui.notify("Updating custom metadata...", type="info")
-                                await nicegui_run.io_bound(
-                                    Service.application_run_update_custom_metadata_static,
-                                    run_id=run_id,
-                                    custom_metadata=new_metadata,
-                                )
-                                ui.notify("Custom metadata updated successfully!", type="positive")
-                                ui.navigate.reload()
-                        except Exception as ex:
-                            ui.notify(f"Failed to update custom metadata: {ex!s}", type="negative")
+                async def handle_metadata_change(e: Any) -> None:  # noqa: ANN401
+                    """Handle changes to the custom metadata and update the run."""
+                    if not is_editable:
+                        return
+                    try:
+                        # Extract the new metadata from the event's content attribute
+                        new_metadata = e.content.get("json") if hasattr(e, "content") else None
+                        if new_metadata:
+                            ui.notify("Updating custom metadata...", type="info")
+                            await nicegui_run.io_bound(
+                                Service.application_run_update_custom_metadata_static,
+                                run_id=run_id,
+                                custom_metadata=new_metadata,
+                            )
+                            ui.notify("Custom metadata updated successfully!", type="positive")
+                            ui.navigate.reload()
+                    except Exception as ex:
+                        ui.notify(f"Failed to update custom metadata: {ex!s}", type="negative")
 
-                    ui.json_editor(properties, on_change=handle_metadata_change).classes("full-width").mark(
-                        "JSON_EDITOR_CUSTOM_METADATA"
-                    )
-            ui.space()
-            with ui.row().classes("justify-end"):
-                if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:
-                    with ui.button_group().props("push"):
+                ui.json_editor(properties, on_change=handle_metadata_change).classes("full-width").mark(
+                    "JSON_EDITOR_CUSTOM_METADATA"
+                )
+
+    # Action buttons (added to the same main_row as the expansion)
+    # This puts them on the same line (after the space we created earlier)
+    with main_row:  # noqa: PLR1702
+        with ui.row().classes("justify-end"):
+            if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:
+                with ui.button_group().props("push"):
+                    with (
+                        ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
+                        .mark("BUTTON_DOWNLOAD_RUN")
+                        .props("push")
+                    ):
+                        ui.tooltip("Download all results of this run")
+                    if find_spec("ijson") and QuPathService.is_qupath_installed():
                         with (
-                            ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
-                            .mark("BUTTON_DOWNLOAD_RUN")
+                            ui.button(
+                                "QuPath",
+                                icon="zoom_in",
+                                on_click=lambda _: download_run_dialog_open(qupath_project=True),
+                            )
+                            .mark("BUTTON_OPEN_QUPATH")
                             .props("push")
                         ):
-                            ui.tooltip("Download all results of this run")
-                        if find_spec("ijson") and QuPathService.is_qupath_installed():
-                            with (
-                                ui.button(
-                                    "QuPath",
-                                    icon="zoom_in",
-                                    on_click=lambda _: download_run_dialog_open(qupath_project=True),
-                                )
-                                .mark("BUTTON_OPEN_QUPATH")
-                                .props("push")
-                            ):
-                                ui.tooltip("Open results in QuPath Microscopy Viewer")
-                        if find_spec("marimo"):
-                            with (
-                                ui.button(
-                                    "Marimo",
-                                    icon="analytics",
-                                    on_click=lambda _: download_run_dialog_open(qupath_project=False, marimo=True),
-                                )
-                                .mark("BUTTON_OPEN_NOTEBOOK")
-                                .props("push")
-                            ):
-                                ui.tooltip("Open results in Python Notebook served by Marimo")
+                            ui.tooltip("Open results in QuPath Microscopy Viewer")
+                    if find_spec("marimo"):
+                        with (
+                            ui.button(
+                                "Marimo",
+                                icon="analytics",
+                                on_click=lambda _: download_run_dialog_open(qupath_project=False, marimo=True),
+                            )
+                            .mark("BUTTON_OPEN_NOTEBOOK")
+                            .props("push")
+                        ):
+                            ui.tooltip("Open results in Python Notebook served by Marimo")
 
-                if run_data.state.value in {RunState.PENDING, RunState.PROCESSING}:
-                    cancel_button = ui.button(
-                        "Cancel",
-                        color="red",
-                        on_click=lambda: _cancel(run.run_id),
-                        icon="cancel",
-                    ).mark("BUTTON_APPLICATION_RUN_CANCEL")
+            if run_data.state.value in {RunState.PENDING, RunState.PROCESSING}:
+                cancel_button = ui.button(
+                    "Cancel",
+                    color="red",
+                    on_click=lambda: _cancel(run.run_id),
+                    icon="cancel",
+                ).mark("BUTTON_APPLICATION_RUN_CANCEL")
 
-                if run_data:
-                    delete_button = ui.button(
-                        "Delete",
-                        color="red",
-                        on_click=lambda: _delete(run.run_id),
-                        icon="delete",
-                    ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
+            if run_data:
+                delete_button = ui.button(
+                    "Delete",
+                    color="red",
+                    on_click=lambda: _delete(run.run_id),
+                    icon="delete",
+                ).mark("BUTTON_APPLICATION_RUN_RESULT_DELETE")
 
         note = run_data.custom_metadata.get("sdk", {}).get("note") if run_data.custom_metadata else None
         if note:
