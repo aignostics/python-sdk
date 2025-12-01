@@ -431,6 +431,11 @@ filename = "aignostics.spec"
 search = "version='{current_version}'"
 replace = "version='{new_version}'"
 
+[[tool.bumpversion.files]]
+filename = "CLI_REFERENCE.md"
+search = "🔬 Aignostics Python SDK v{current_version}"
+replace = "🔬 Aignostics Python SDK v{new_version}"
+
 [tool.git-cliff.remote.github]
 owner = "aignostics"
 repo = "python-sdk"
