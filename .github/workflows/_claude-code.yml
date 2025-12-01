@@ -121,7 +121,7 @@ jobs:
             --system-prompt "Read the CLAUDE.md file in the root folder of this repository and explicitely acknowledge you will apply **all** guidance therein and in **all** linked documents."
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
-        uses: anthropics/claude-code-action@v1.0.15
+        uses: anthropics/claude-code-action@v1.0.22
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
