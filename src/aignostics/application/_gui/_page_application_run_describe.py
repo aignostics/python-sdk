@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 import humanize
-from aiopath import AsyncPath
 from loguru import logger
 from nicegui import (
     app,
@@ -188,10 +187,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         with ui.row().classes("w-full"):
 
             async def _select_download_destination() -> None:
-                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore[misc]
+                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
-                    folder_path = AsyncPath(result[0])
-                    if await folder_path.is_dir():
+                    folder_path = Path(result[0])
+                    if folder_path.is_dir():
                         selected_folder.value = str(folder_path)
                     else:
                         selected_folder.value = str(folder_path.parent)
@@ -654,7 +653,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         displayed_results: list[ItemResult] = []
         has_more_results = True
 
-        async def render_item(item: ItemResult) -> None:  # noqa: C901, PLR0912, PLR0915
+        def render_item(item: ItemResult) -> None:  # noqa: C901, PLR0912, PLR0915
             """Render a single result item."""
             with ui.item().classes("h-96 px-0").props("clickable"):
                 with (
@@ -662,8 +661,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     ui.card().tight().classes("h-full"),
                     ui.row().classes("w-full"),
                 ):
-                    image_file: AsyncPath | None = await AsyncPath(item.external_id).resolve()
-                    if image_file and await image_file.is_file():
+                    image_file: Path | None = Path(item.external_id).resolve()
+                    if image_file and image_file.is_file():
                         image_url = "/thumbnail?source=" + quote(image_file.as_posix())
                     else:
                         image_file = None
@@ -830,7 +829,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         # Render initial results
         with results_list:
             for item in displayed_results:
-                await render_item(item)
+                render_item(item)
 
         # Calculate if we need pagination before creating UI elements
         remaining_initial = run_data.statistics.item_count - len(displayed_results)
@@ -860,7 +859,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 # Render new items
                 with results_list:
                     for item in next_batch:
-                        await render_item(item)
+                        render_item(item)
 
                 show_more_button.props(remove="loading")
 
