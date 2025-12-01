@@ -225,6 +225,16 @@ class Settings(OpaqueSettings):
             )
             return self.authorization_base_url.rsplit("/", 1)[0] + "/"
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def profile_edit_url(self) -> str:
+        """Get the profile edit URL based on the API root.
+
+        Returns:
+            str: Full URL to the profile editor page
+        """
+        return f"{self.api_root}/dashboard/account/profile"
+
     token_url: Annotated[str, BeforeValidator(_validate_url), Field(description="OAuth token endpoint URL")]
     redirect_uri: Annotated[
         str, BeforeValidator(_validate_url), Field(description="OAuth redirect URI for authorization code flow")

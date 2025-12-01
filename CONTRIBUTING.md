@@ -226,7 +226,7 @@ When submitting application runs to the Aignostics Platform, you can attach cust
 - **SDK version and submission details**: When and how the run was submitted (CLI, script, or GUI)
 - **User information**: Organization and user details (when authenticated)
 - **CI/CD context**: GitHub Actions workflow information, pytest test context
-- **Workflow control**: Flags like `validate_only` or `onboard_to_aignostics_portal`
+- **Workflow control**: Flags like `onboard_to_aignostics_portal`
 - **Scheduling**: Due dates and deadlines for run completion
 - **Notes**: Optional user-provided notes
 

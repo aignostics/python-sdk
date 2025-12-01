@@ -10,6 +10,8 @@ from loguru import logger
 from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.utils import BaseService, Health
 
+from ._openslide_handler import DEFAULT_MAX_SAFE_DIMENSION
+
 TIMEOUT = 60  # 1 minutes
 
 
@@ -38,11 +40,13 @@ class Service(BaseService):
         )
 
     @staticmethod
-    def get_thumbnail(path: Path) -> "PIL.Image.Image":  # type: ignore # noqa: F821
+    def get_thumbnail(path: Path, max_safe_dimension: int = DEFAULT_MAX_SAFE_DIMENSION) -> "PIL.Image.Image":  # type: ignore # noqa: F821
         """Get thumbnail as PIL image.
 
         Args:
             path (Path): Path to the image.
+            max_safe_dimension (int): Maximum dimension (width or height) of smallest pyramid level
+                before considering the pyramid incomplete.
 
         Returns:
             PIL.Image.Image: Thumbnail of the image.
@@ -62,18 +66,20 @@ class Service(BaseService):
             logger.warning(message)
             raise ValueError(message)
         try:
-            return OpenSlideHandler.from_file(path).get_thumbnail()
+            return OpenSlideHandler.from_file(path).get_thumbnail(max_safe_dimension=max_safe_dimension)
         except Exception as e:
             message = f"Error processing file {path}: {e!s}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
     @staticmethod
-    def get_thumbnail_bytes(path: Path) -> bytes:
+    def get_thumbnail_bytes(path: Path, max_safe_dimension: int = DEFAULT_MAX_SAFE_DIMENSION) -> bytes:
         """Get thumbnail of a image as bytes.
 
         Args:
             path (Path): Path to the image.
+            max_safe_dimension (int): Maximum dimension (width or height) of smallest pyramid level
+                before considering the pyramid incomplete.
 
         Returns:
             bytes: Thumbnail of the image.
@@ -82,7 +88,7 @@ class Service(BaseService):
             ValueError: If the file type is not supported.
             RuntimeError: If there is an error processing the file.
         """
-        thumbnail_image = Service.get_thumbnail(path)
+        thumbnail_image = Service.get_thumbnail(path, max_safe_dimension=max_safe_dimension)
         buffer = io.BytesIO()
         thumbnail_image.save(buffer, format="PNG")
         return buffer.getvalue()

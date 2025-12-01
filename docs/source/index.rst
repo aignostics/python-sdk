@@ -8,9 +8,10 @@
    Home<self>
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :hidden:
 
-   main
+   platform_overview
    cli_reference
    lib_reference
    api_explorer_v1
@@ -31,12 +32,3 @@
    ghcr.io <https://github.com/aignostics/python-sdk/pkgs/container/python-sdk>
    SonarQube <https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk>
    Codecov <https://app.codecov.io/gh/aignostics/python-sdk>
-
-.. only:: html
-
-   Indices and tables
-   ==================
-
-   * :ref:`genindex`
-   * :ref:`modindex`
-   * :ref:`search`
