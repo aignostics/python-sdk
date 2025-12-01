@@ -206,7 +206,6 @@ def test_cli_run_submit_succeeds_with_valid_pipeline_config(runner: CliRunner, t
             "4",
             "--cpu-provisioning-mode",
             "ON_DEMAND",
-            "--validate-only",  # Don't actually run the analysis
             "--tags",
             "test_cli_run_submit_succeeds_with_valid_pipeline_config",
         ],
@@ -265,7 +264,6 @@ def test_cli_run_submit_succeeds_with_valid_a100_config(runner: CliRunner, tmp_p
             "8",
             "--cpu-provisioning-mode",
             "SPOT",
-            "--validate-only",
             "--tags",
             "test_cli_run_submit_succeeds_with_valid_a100_config",
         ],

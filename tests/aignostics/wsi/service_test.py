@@ -110,6 +110,32 @@ def test_serve_thumbnail_for_tiff(user: User, record_property) -> None:
 
 
 @pytest.mark.integration
+def test_serve_thumbnail_fails_on_incomplete_pyramid(user: User, silent_logging, record_property) -> None:
+    """Test that thumbnail generation fails gracefully for DICOM with incomplete pyramid.
+
+    The small-pyramidal.dcm test file has only 1 pyramid level at 2054x1529 pixels,
+    with no smaller resolution levels available. By setting max_safe_dimension=1024
+    via query parameter, we simulate the condition where the smallest available pyramid
+    level is too large for safe thumbnail generation, which would normally cause OOM errors.
+    """
+    record_property("tested-item-id", "SPEC-WSI-SERVICE")
+
+    client = TestClient(app)
+
+    test_dir = Path(__file__).parent
+    resources_dir = test_dir.parent.parent / "resources" / "run"
+    test_file_path = resources_dir / "small-pyramidal.dcm"
+
+    # Use low max_safe_dimension (1024) to trigger incomplete pyramid detection
+    # The file has dimensions 2054x1529, which exceeds the threshold
+    response = client.get(f"/thumbnail?source={test_file_path.absolute()}&max_safe_dimension=1024")
+
+    # Should return 200 with fallback image (not crash with 500 or OOM)
+    assert response.status_code == 200
+    assert int(response.headers["Content-Length"]) == CONTENT_LENGTH_FALLBACK
+
+
+@pytest.mark.integration
 @pytest.mark.timeout(timeout=60)
 def test_serve_tiff_to_jpeg_fails_on_broken_url(user: User, record_property) -> None:
     """Test that the tiff route serves the expected jpeg.
