@@ -549,9 +549,7 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
 
     # Verify "Show more" button is NOT visible
     # The button container should be hidden when all results fit on one page
-    button_elements = user.find(marker="BUTTON_SHOW_MORE_RESULTS").elements
-    # If button exists, it should not be visible (container hidden)
-    assert len(button_elements) == 0, "Show more button should not be visible when all results fit on one page"
+    await user.should_not_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=10)
 
 
 @pytest.mark.integration
