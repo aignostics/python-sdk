@@ -3,7 +3,6 @@ itemId: SWR-APPLICATION-2-15
 itemTitle: Display Run Name and Description in Run List
 itemHasParent: SHR-APPLICATION-2
 itemType: Requirement
-# Software requirement (user)
 Requirement type: FUNCTIONAL
 Layer: System (frontend interface)
 ---

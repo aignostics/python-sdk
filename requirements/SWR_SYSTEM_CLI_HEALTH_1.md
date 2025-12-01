@@ -3,7 +3,6 @@ itemId: SWR-SYSTEM-CLI-HEALTH-1
 itemTitle: CLI System Health Check
 itemHasParent: SHR-SYSTEM-1
 itemType: Requirement
-# Software requirement (system)
 Requirement type: REGULATORY
 Module: System
 Layer: CLI

@@ -128,6 +128,18 @@ def lint(session: nox.Session) -> None:
 
 
 @nox.session(python=[PYTHON_VERSION])
+def lint_fix(session: nox.Session) -> None:
+    """Apply code formatting checks and linting."""
+    _setup_venv(session, True)
+    session.run("ruff", "check", "--fix", ".")
+    session.run(
+        "ruff",
+        "format",
+        ".",
+    )
+
+
+@nox.session(python=[PYTHON_VERSION])
 def audit(session: nox.Session) -> None:
     """Run security audit and license checks."""
     _setup_venv(session)
