@@ -154,7 +154,7 @@ install_or_update_uv_tool() {
 
     if command -v "$tool" &> /dev/null; then
         echo "$tool already installed at $(command -v "$tool"), updating..."
-        uv tool update "$tool"
+        uv tool update "$package"
     else
         echo "Installing $tool from $package... # $url"
         uv tool install "$package"
