@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.215](https://github.com/aignostics/python-sdk/compare/v0.2.214..0.2.215) - 2025-12-01
+# [0.2.216](https://github.com/aignostics/python-sdk/compare/v0.2.214..0.2.216) - 2025-12-01
 
 ### 🐛 Bug Fixes
 
@@ -15,6 +15,10 @@
 - *(platform)* Use 1k on staging 0..9 min - ([e674a58](https://github.com/aignostics/python-sdk/commit/e674a589b95249915b31861ad71884706bf21acd))
 - *(platform)* Use spot on staging - ([7dabb89](https://github.com/aignostics/python-sdk/commit/7dabb89d802380448a4919bd74400e227d80cdec))
 
+
+
+* @olivermeyer made their first contribution in [#295](https://github.com/aignostics/python-sdk/pull/295)
+* @helmut-hoffer-von-ankershoffen made their first contribution
 
 # [v0.2.214](https://github.com/aignostics/python-sdk/compare/v0.2.213..v0.2.214) - 2025-12-01
 
