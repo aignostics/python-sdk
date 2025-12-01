@@ -214,7 +214,7 @@ Changelog = "https://github.com/aignostics/python-sdk/releases"
 Issues = "https://github.com/aignostics/python-sdk/issues"
 
 [build-system]
-requires = ["hatchling==1.27.0"]
+requires = ["hatchling==1.28.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
