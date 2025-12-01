@@ -13,10 +13,8 @@ from aignostics.application import Service as ApplicationService
 from aignostics.application._utils import validate_due_date
 from aignostics.platform import NotFoundException, RunData, RunOutput
 from tests.constants_test import (
-    HETA_APPLICATION_ID,
-    HETA_APPLICATION_VERSION,
-    TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP,
-)
+    HETA_APPLICATION_ID, HETA_APPLICATION_VERSION,
+    TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP)
 
 
 @pytest.mark.unit
@@ -449,15 +447,15 @@ def create_dicom() -> Callable[..., pydicom.Dataset]:
     """Fixture that returns a function to create minimal but valid DICOM datasets."""
 
     def _create_dicom(series_uid: str, rows: int, cols: int) -> pydicom.Dataset:
-        """Create a minimal but valid DICOM dataset.
+        """Create a minimal but valid DICOM dataset for WSI.
 
         Args:
             series_uid: The series instance UID
-            rows: Number of rows (height)
-            cols: Number of columns (width)
+            rows: Total image rows (TotalPixelMatrixRows) for the full WSI
+            cols: Total image columns (TotalPixelMatrixColumns) for the full WSI
 
         Returns:
-            A valid pydicom Dataset
+            A valid pydicom Dataset for whole slide imaging
         """
         ds = pydicom.Dataset()
 
@@ -473,8 +471,15 @@ def create_dicom() -> Callable[..., pydicom.Dataset]:
         ds.SOPClassUID = ds.file_meta.MediaStorageSOPClassUID
         ds.StudyInstanceUID = pydicom.uid.generate_uid()
         ds.Modality = "SM"
-        ds.Rows = rows
-        ds.Columns = cols
+        
+        # Tile dimensions (typically 256x256 for WSI)
+        ds.Rows = 256
+        ds.Columns = 256
+
+        # CRITICAL: Total image dimensions for whole slide imaging
+        # These represent the full image size and are what differentiate pyramid levels
+        ds.TotalPixelMatrixRows = rows
+        ds.TotalPixelMatrixColumns = cols
 
         return ds
 
@@ -496,11 +501,14 @@ def test_filter_dicom_series_files_single_file(
 
 
 @pytest.mark.unit
-def test_filter_dicom_series_files_pyramid(tmp_path: Path, create_dicom: Callable[..., pydicom.Dataset]) -> None:
+def test_filter_dicom_series_files_pyramid(
+    tmp_path: Path, 
+    create_dicom: Callable[..., pydicom.Dataset]
+) -> None:
     """Test that for multi-file DICOM series, only the highest resolution file is kept."""
     series_uid = "1.2.3.4.5"
 
-    # Create low resolution DICOM file
+    # Create low resolution DICOM file (smallest pyramid level)
     ds_low = create_dicom(series_uid, 512, 512)
     dcm_file_low = tmp_path / "test_low.dcm"
     ds_low.save_as(dcm_file_low, write_like_original=False)
@@ -510,7 +518,7 @@ def test_filter_dicom_series_files_pyramid(tmp_path: Path, create_dicom: Callabl
     dcm_file_med = tmp_path / "test_med.dcm"
     ds_med.save_as(dcm_file_med, write_like_original=False)
 
-    # Create high resolution DICOM file
+    # Create high resolution DICOM file (base layer - highest resolution)
     ds_high = create_dicom(series_uid, 2048, 2048)
     dcm_file_high = tmp_path / "test_high.dcm"
     ds_high.save_as(dcm_file_high, write_like_original=False)
@@ -527,10 +535,11 @@ def test_filter_dicom_series_files_pyramid(tmp_path: Path, create_dicom: Callabl
 
 @pytest.mark.unit
 def test_filter_dicom_series_files_multiple_series(
-    tmp_path: Path, create_dicom: Callable[..., pydicom.Dataset]
+    tmp_path: Path, 
+    create_dicom: Callable[..., pydicom.Dataset]
 ) -> None:
     """Test that files from different series are not filtered against each other."""
-    # Series 1 - two files
+    # Series 1 - two files (pyramid with 2 levels)
     ds1_low = create_dicom("1.2.3.4.5", 512, 512)
     dcm_file1_low = tmp_path / "series1_low.dcm"
     ds1_low.save_as(dcm_file1_low, write_like_original=False)
@@ -539,7 +548,7 @@ def test_filter_dicom_series_files_multiple_series(
     dcm_file1_high = tmp_path / "series1_high.dcm"
     ds1_high.save_as(dcm_file1_high, write_like_original=False)
 
-    # Series 2 - single file (should not be filtered)
+    # Series 2 - single file (standalone, no pyramid)
     ds2 = create_dicom("6.7.8.9.0", 512, 512)
     dcm_file2 = tmp_path / "series2.dcm"
     ds2.save_as(dcm_file2, write_like_original=False)
@@ -551,3 +560,32 @@ def test_filter_dicom_series_files_multiple_series(
     assert dcm_file1_low in excluded
     assert dcm_file1_high not in excluded
     assert dcm_file2 not in excluded
+
+
+@pytest.mark.unit
+def test_filter_dicom_series_files_missing_wsi_attributes(
+    tmp_path: Path,
+) -> None:
+    """Test that DICOM files without WSI-specific attributes are skipped."""
+    # Create a non-WSI DICOM (missing TotalPixelMatrix attributes)
+    ds = pydicom.Dataset()
+    ds.file_meta = pydicom.Dataset()
+    ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+    ds.file_meta.MediaStorageSOPClassUID = "1.2.840.10008.5.1.4.1.1.2"  # CT Image Storage
+    ds.file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+    
+    ds.SeriesInstanceUID = "1.2.3.4.5"
+    ds.SOPInstanceUID = pydicom.uid.generate_uid()
+    ds.SOPClassUID = ds.file_meta.MediaStorageSOPClassUID
+    ds.StudyInstanceUID = pydicom.uid.generate_uid()
+    ds.Modality = "CT"
+    ds.Rows = 512
+    ds.Columns = 512
+    # Note: No TotalPixelMatrixRows/Columns
+    
+    dcm_file = tmp_path / "non_wsi.dcm"
+    ds.save_as(dcm_file, write_like_original=False)
+    
+    # Should not crash, and should not exclude anything (file is skipped)
+    excluded = ApplicationService._filter_dicom_series_files(tmp_path)
+    assert len(excluded) == 0
