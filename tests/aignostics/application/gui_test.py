@@ -465,7 +465,7 @@ async def test_gui_run_download(  # noqa: PLR0915
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60)
 async def test_gui_run_results_pagination_show_more_button_visible(
-    user: User, silent_logging: None, record_property
+    user: User, record_property
 ) -> None:
     """Test that the 'Show more' button is visible when there are more results than the page size."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
@@ -483,6 +483,7 @@ async def test_gui_run_results_pagination_show_more_button_visible(
     for run in runs:
         if run.statistics.item_count > RESULTS_PAGE_SIZE:
             run_with_many_items = run
+            print(f"Found run {run.run_id} with {run.statistics.item_count} items for pagination test.")
             break
 
     if run_with_many_items is None:
@@ -533,6 +534,7 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
     for run in runs:
         if 0 < run.statistics.item_count <= RESULTS_PAGE_SIZE:
             run_with_few_items = run
+            print(f"Found run {run.run_id} with {run.statistics.item_count} items for pagination test.")
             break
 
     if run_with_few_items is None:
@@ -579,6 +581,7 @@ async def test_gui_run_results_pagination_load_more_works(user: User, silent_log
     for run in runs:
         if run.statistics.item_count > RESULTS_PAGE_SIZE:
             run_with_many_items = run
+            print(f"Found run {run.run_id} with {run.statistics.item_count} items for pagination test.")
             break
 
     if run_with_many_items is None:
