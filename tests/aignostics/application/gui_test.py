@@ -464,51 +464,6 @@ async def test_gui_run_download(  # noqa: PLR0915
 )
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60)
-async def test_gui_run_results_pagination_show_more_button_visible(user: User, record_property) -> None:
-    """Test that the 'Show more' button is visible when there are more results than the page size."""
-    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
-
-    # Find a run with more items than RESULTS_PAGE_SIZE
-    runs = Service().application_runs(
-        application_id=HETA_APPLICATION_ID,
-        application_version=HETA_APPLICATION_VERSION,
-        has_output=True,
-        limit=10,
-    )
-
-    # Find a run with enough items to test pagination
-    run_with_many_items = None
-    for run in runs:
-        if run.statistics.item_count > RESULTS_PAGE_SIZE:
-            run_with_many_items = run
-            print(f"Found run {run.run_id} with {run.statistics.item_count} items for pagination test.")
-            break
-
-    if run_with_many_items is None:
-        pytest.skip(
-            f"No runs found with more than {RESULTS_PAGE_SIZE} items for "
-            f"{HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION})"
-        )
-
-    # Navigate to the run page
-    await user.open(f"/application/run/{run_with_many_items.run_id}")
-    await user.should_see(f"Run {run_with_many_items.run_id}", retries=100)
-
-    # Verify "Show more" button is visible
-    await user.should_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=100)
-
-    # Verify the button shows the correct remaining count
-    expected_remaining = run_with_many_items.statistics.item_count - RESULTS_PAGE_SIZE
-    await user.should_see(f"Show more ({expected_remaining} remaining)", retries=100)
-
-
-@pytest.mark.integration
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info >= (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
-@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
-@pytest.mark.timeout(timeout=60)
 async def test_gui_run_results_pagination_show_more_button_hidden_when_few_results(
     user: User, silent_logging: None, record_property
 ) -> None:
@@ -547,8 +502,7 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
     # Wait for results to load
     await sleep(3)
 
-    # Verify "Show more" button is NOT visible
-    # The button container should be hidden when all results fit on one page
+    # Verify "Show more" button is NOT visible (element should not exist in DOM)
     await user.should_not_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=10)
 
 
@@ -560,8 +514,15 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
 )
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=120)
-async def test_gui_run_results_pagination_load_more_works(user: User, silent_logging: None, record_property) -> None:
-    """Test that clicking 'Show more' loads additional results."""
+async def test_gui_run_results_pagination_show_more(user: User, silent_logging: None, record_property) -> None:
+    """Test pagination 'Show more' button visibility and functionality.
+
+    Verifies:
+    1. Button is visible when there are more results than RESULTS_PAGE_SIZE
+    2. Button shows correct remaining count
+    3. Clicking button loads more results and updates the count
+    4. Button is hidden when all results are loaded
+    """
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
 
     # Find a run with more items than RESULTS_PAGE_SIZE
@@ -592,7 +553,7 @@ async def test_gui_run_results_pagination_load_more_works(user: User, silent_log
     await user.open(f"/application/run/{run_with_many_items.run_id}")
     await user.should_see(f"Run {run_with_many_items.run_id}", retries=100)
 
-    # Verify initial "Show more" button state
+    # Verify "Show more" button is visible with correct initial count
     await user.should_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=100)
     initial_remaining = total_items - RESULTS_PAGE_SIZE
     await user.should_see(f"Show more ({initial_remaining} remaining)", retries=100)
@@ -610,5 +571,4 @@ async def test_gui_run_results_pagination_load_more_works(user: User, silent_log
         await user.should_see(f"Show more ({new_remaining} remaining)", retries=100)
     else:
         # All items loaded - button should be hidden
-        await sleep(2)
-        # The button container should be hidden when all results are loaded
+        await user.should_not_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=20)
