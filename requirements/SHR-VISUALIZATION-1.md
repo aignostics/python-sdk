@@ -2,7 +2,6 @@
 itemId: SHR-VISUALIZATION-1
 itemTitle: Image Visualization and Analysis Tools
 itemType: Requirement
-# Stakeholder requirement (user)
 Requirement type: ENVIRONMENT
 ---
 
