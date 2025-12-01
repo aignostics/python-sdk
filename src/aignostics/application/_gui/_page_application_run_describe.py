@@ -1,5 +1,6 @@
 """Run describe page, including download, QuPath and Marimo control."""
 
+import webbrowser
 from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
@@ -7,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 import humanize
-from aiopath import AsyncPath
 from loguru import logger
 from nicegui import (
     app,
@@ -15,7 +15,7 @@ from nicegui import (
 )
 from nicegui import run as nicegui_run
 
-from aignostics.platform import ItemOutput, ItemState, RunState
+from aignostics.platform import ItemOutput, ItemResult, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -33,6 +33,7 @@ from ._utils import (
 )
 
 WIDTH_1200px = "width: 1200px; max-width: none"
+RESULTS_PAGE_SIZE = 20
 
 service = Service()
 
@@ -186,10 +187,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         with ui.row().classes("w-full"):
 
             async def _select_download_destination() -> None:
-                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore[misc]
+                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
-                    folder_path = AsyncPath(result[0])
-                    if await folder_path.is_dir():
+                    folder_path = Path(result[0])
+                    if folder_path.is_dir():
                         selected_folder.value = str(folder_path)
                     else:
                         selected_folder.value = str(folder_path.parent)
@@ -647,156 +648,238 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         on_click=lambda t=tag: ui.navigate.to(f"/?query={quote(str(t))}"),
                     ).props("small outlined clickable").classes("bg-white text-black")
 
-        with ui.list().classes("full-width"):
-            results = list(run.results())
-            if not results:
-                with ui.row().classes("w-full justify-center content-center"):
-                    ui.space()
-                    ui.html(
-                        '<dotlottie-player src="/application_assets/empty.lottie" '
-                        'background="transparent" speed="1" style="width: 700px; height: 700px" '
-                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
-                        sanitize=False,
+        # Pagination state
+        results_iterator = run.results()
+        displayed_results: list[ItemResult] = []
+        has_more_results = True
+
+        def render_item(item: ItemResult) -> None:  # noqa: C901, PLR0912, PLR0915
+            """Render a single result item."""
+            with ui.item().classes("h-96 px-0").props("clickable"):
+                with (
+                    ui.item_section().classes("h-full"),
+                    ui.card().tight().classes("h-full"),
+                    ui.row().classes("w-full"),
+                ):
+                    image_file: Path | None = Path(item.external_id).resolve()
+                    if image_file and image_file.is_file():
+                        image_url = "/thumbnail?source=" + quote(image_file.as_posix())
+                    else:
+                        image_file = None
+                        image_url = "/application_assets/image-not-found.png"
+                    ui.image(image_url).classes("object-contain absolute-center max-h-full")
+                    icon, color = run_item_status_and_termination_reason_to_icon_and_color(
+                        item.state.value, item.termination_reason
                     )
-                    ui.space()
-                return
-            for item in results:
-                with ui.item().classes("h-96 px-0").props("clickable"):
-                    with (
-                        ui.item_section().classes("h-full"),
-                        ui.card().tight().classes("h-full"),
-                        ui.row().classes("w-full"),
-                    ):
-                        image_file: AsyncPath | None = await AsyncPath(item.external_id).resolve()
-                        if image_file and await image_file.is_file():
-                            image_url = "/thumbnail?source=" + quote(image_file.as_posix())
-                        else:
-                            image_file = None
-                            image_url = "/application_assets/image-not-found.png"
-                        ui.image(image_url).classes("object-contain absolute-center max-h-full")
-                        icon, color = run_item_status_and_termination_reason_to_icon_and_color(
-                            item.state.value, item.termination_reason
-                        )
-                        with ui.row().classes("justify-center w-full"):
-                            with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                tooltip = f"Item {item.item_id}, status {item.state.value.upper()}"
-                                if item.termination_reason:
-                                    tooltip += f" ({item.termination_reason})"
-                                ui.tooltip(tooltip)
-                            ui.space()
-                            with ui.button_group():
-                                if find_spec("ijson") and QuPathService.is_qupath_installed():
-                                    with ui.button(
-                                        icon="zoom_in",
-                                        color="primary",
-                                    ).props("floating") as qupath_button:
-                                        qupath_button.on_click(
-                                            lambda _, image_file=image_file, qupath_button=qupath_button: open_qupath(
-                                                image=image_file, button=qupath_button
-                                            )
+                    with ui.row().classes("justify-center w-full"):
+                        with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
+                            tooltip = f"Item {item.item_id}, status {item.state.value.upper()}"
+                            if item.termination_reason:
+                                tooltip += f" ({item.termination_reason})"
+                            ui.tooltip(tooltip)
+                        ui.space()
+                        with ui.button_group():
+                            if find_spec("ijson") and QuPathService.is_qupath_installed():
+                                with ui.button(
+                                    icon="zoom_in",
+                                    color="primary",
+                                ).props("floating") as qupath_button:
+                                    qupath_button.on_click(
+                                        lambda _, image_file=image_file, qupath_button=qupath_button: open_qupath(
+                                            image=image_file, button=qupath_button
                                         )
-                                        ui.tooltip("Open in QuPath")
-                                if item.custom_metadata:
-                                    with ui.button(
-                                        icon="info",
-                                        on_click=lambda _,
-                                        custom_metadata=item.custom_metadata,
-                                        external_id=item.external_id: custom_metadata_dialog_open(
-                                            title=f"Custom Metadata of item {external_id} ",
-                                            custom_metadata=custom_metadata,
-                                        ),
-                                    ).props("floating"):
-                                        ui.tooltip("Show custom metadata")
-                                if image_file:
-                                    with ui.button(
-                                        icon="folder_open",
-                                        on_click=lambda _, image_file=image_file: show_in_file_manager(
-                                            str(image_file.parent)
-                                        ),
-                                    ).props("floating"):
-                                        ui.tooltip("Open folder")
-                        with ui.row().classes(
-                            "absolute-bottom h-32 bg-indigo-700 bg-opacity-80 content-center w-full p-4"
+                                    )
+                                    ui.tooltip("Open in QuPath")
+                            if item.custom_metadata:
+                                with ui.button(
+                                    icon="info",
+                                    on_click=lambda _,
+                                    custom_metadata=item.custom_metadata,
+                                    external_id=item.external_id: custom_metadata_dialog_open(
+                                        title=f"Custom Metadata of item {external_id} ",
+                                        custom_metadata=custom_metadata,
+                                    ),
+                                ).props("floating"):
+                                    ui.tooltip("Show custom metadata")
+                            if image_file:
+                                with ui.button(
+                                    icon="folder_open",
+                                    on_click=lambda _, image_file=image_file: show_in_file_manager(
+                                        str(image_file.parent)
+                                    ),
+                                ).props("floating"):
+                                    ui.tooltip("Open folder")
+                    with ui.row().classes("absolute-bottom h-32 bg-indigo-700 bg-opacity-80 content-center w-full p-4"):
+                        ui.label(item.external_id).classes(
+                            "text-center break-all text-white font-semibold text-shadow-lg/30"
+                        )
+                if item.output is ItemOutput.FULL:
+                    with ui.item_section().classes("w-full"), ui.scroll_area().classes("h-full p-0"):
+                        for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
+                            mime_type = get_mime_type_for_artifact(artifact)
+                            with ui.expansion(
+                                str(artifact.name),
+                                icon=mime_type_to_icon(mime_type),
+                                group="artifacts",
+                            ).classes("w-full"):
+                                if artifact.download_url:
+                                    url = artifact.download_url
+                                    title = artifact.name
+                                    metadata = artifact.metadata
+                                    with ui.button_group():
+                                        if mime_type == "image/tiff":
+                                            ui.button(
+                                                "Preview",
+                                                icon=mime_type_to_icon(mime_type),
+                                                on_click=lambda _, url=url, title=title: tiff_dialog_open(title, url),
+                                            )
+                                        if mime_type == "text/csv":
+                                            ui.button(
+                                                "Preview",
+                                                icon=mime_type_to_icon(mime_type),
+                                                on_click=lambda _, url=url, title=title: csv_dialog_open(title, url),
+                                            )
+                                        if url:
+                                            ui.button(
+                                                text="Download",
+                                                icon="cloud_download",
+                                                on_click=lambda _, url=url: webbrowser.open(url),
+                                            )
+                                        if metadata:
+                                            ui.button(
+                                                text="Schema",
+                                                icon="schema",
+                                                on_click=lambda _, title=title, metadata=metadata: metadata_dialog_open(
+                                                    title, metadata
+                                                ),
+                                            )
+                elif item.state is ItemState.TERMINATED:
+                    if item.error_message:
+                        with (
+                            ui.row()
+                            .classes("w-1/2 justify-start items-start content-start ml-4")
+                            .style("max-width: 50%;")
                         ):
-                            ui.label(item.external_id).classes(
-                                "text-center break-all text-white font-semibold text-shadow-lg/30"
-                            )
-                    if item.output is ItemOutput.FULL:
-                        with ui.item_section().classes("w-full"), ui.scroll_area().classes("h-full p-0"):
-                            for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
-                                mime_type = get_mime_type_for_artifact(artifact)
-                                with ui.expansion(
-                                    str(artifact.name),
-                                    icon=mime_type_to_icon(mime_type),
-                                    group="artifacts",
-                                ).classes("w-full"):
-                                    if artifact.download_url:
-                                        url = artifact.download_url
-                                        title = artifact.name
-                                        metadata = artifact.metadata
-                                        with ui.button_group():
-                                            if mime_type == "image/tiff":
-                                                ui.button(
-                                                    "Preview",
-                                                    icon=mime_type_to_icon(mime_type),
-                                                    on_click=lambda _, url=url, title=title: tiff_dialog_open(
-                                                        title, url
-                                                    ),
-                                                )
-                                            if mime_type == "text/csv":
-                                                ui.button(
-                                                    "Preview",
-                                                    icon=mime_type_to_icon(mime_type),
-                                                    on_click=lambda _, url=url, title=title: csv_dialog_open(
-                                                        title, url
-                                                    ),
-                                                )
-                                            if url:
-                                                ui.button(
-                                                    text="Download",
-                                                    icon="cloud_download",
-                                                    on_click=lambda _, url=url: ui.navigate.to(url, new_tab=True),
-                                                )
-                                            if metadata:
-                                                ui.button(
-                                                    text="Schema",
-                                                    icon="schema",
-                                                    on_click=lambda _,
-                                                    title=title,
-                                                    metadata=metadata: metadata_dialog_open(title, metadata),
-                                                )
-                    elif item.state is ItemState.TERMINATED:
-                        if item.error_message:
-                            with (
-                                ui.row()
-                                .classes("w-1/2 justify-start items-start content-start ml-4")
-                                .style("max-width: 50%;")
-                            ):
-                                ui.code(
-                                    f"Error: {item.error_message}, code: {item.error_code or 'N/A'}",
-                                    language="markdown",
-                                ).classes("ml-8").style("width: 100%; max-width: 100%;")
-                        else:
-                            with ui.row().classes("w-1/2 justify-center content-center"):
-                                ui.space()
-                                ui.html(
-                                    '<dotlottie-player src="/application_assets/error.lottie" '
-                                    'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
-                                    sanitize=False,
-                                )
-                                ui.space()
+                            ui.code(
+                                f"Error: {item.error_message}, code: {item.error_code or 'N/A'}",
+                                language="markdown",
+                            ).classes("ml-8").style("width: 100%; max-width: 100%;")
                     else:
                         with ui.row().classes("w-1/2 justify-center content-center"):
                             ui.space()
-                            animation_file = {
-                                ItemState.PENDING: "pending.lottie",
-                                ItemState.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
-                            }[item.state]
                             ui.html(
-                                f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                '<dotlottie-player src="/application_assets/error.lottie" '
                                 'background="transparent" speed="1" style="width: 300px; height: 300px" '
                                 'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
                                 sanitize=False,
                             )
                             ui.space()
+                else:
+                    with ui.row().classes("w-1/2 justify-center content-center"):
+                        ui.space()
+                        animation_file = {
+                            ItemState.PENDING: "pending.lottie",
+                            ItemState.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
+                        }[item.state]
+                        ui.html(
+                            f'<dotlottie-player src="/application_assets/{animation_file}" '
+                            'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                            'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                            sanitize=False,
+                        )
+                        ui.space()
+
+        def fetch_next_batch() -> list[ItemResult]:
+            """Fetch the next batch of results from the iterator.
+
+            Returns:
+                list[ItemResult]: The next batch of results, up to RESULTS_PAGE_SIZE items.
+            """
+            nonlocal has_more_results
+            batch: list[ItemResult] = []
+            for _ in range(RESULTS_PAGE_SIZE):
+                try:
+                    item = next(results_iterator)
+                    batch.append(item)
+                except StopIteration:
+                    has_more_results = False
+                    break
+            return batch
+
+        # Load initial batch
+        initial_batch = await nicegui_run.io_bound(fetch_next_batch)
+        displayed_results.extend(initial_batch)
+
+        # Check if there are no results at all
+        if not displayed_results:
+            with ui.row().classes("w-full justify-center content-center"):
+                ui.space()
+                ui.html(
+                    '<dotlottie-player src="/application_assets/empty.lottie" '
+                    'background="transparent" speed="1" style="width: 700px; height: 700px" '
+                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                    sanitize=False,
+                )
+                ui.space()
+            return
+
+        # Create the results list container
+        results_list = ui.list().classes("full-width")
+
+        # Render initial results
+        with results_list:
+            for item in displayed_results:
+                render_item(item)
+
+        # Calculate if we need pagination before creating UI elements
+        remaining_initial = run_data.statistics.item_count - len(displayed_results)
+        needs_pagination = has_more_results and remaining_initial > 0
+
+        # Only create "Show more" button if there are more results to load
+        show_more_container: ui.row | None = None
+        show_more_button: ui.button | None = None
+
+        if needs_pagination:
+            show_more_container = ui.row().classes("w-full justify-center mt-4")
+
+            async def load_more() -> None:
+                """Load and render the next batch of results."""
+                nonlocal has_more_results
+                # These are guaranteed to be set since load_more is only defined when needs_pagination is True
+                if show_more_button is None or show_more_container is None:
+                    return  # Should never happen, but satisfies type checker
+
+                show_more_button.disable()
+                show_more_button.props(add="loading")
+
+                # Fetch next batch
+                next_batch = await nicegui_run.io_bound(fetch_next_batch)
+                displayed_results.extend(next_batch)
+
+                # Render new items
+                with results_list:
+                    for item in next_batch:
+                        render_item(item)
+
+                show_more_button.props(remove="loading")
+
+                # Hide button if no more results or remaining count is 0
+                remaining = run_data.statistics.item_count - len(displayed_results)
+                if not has_more_results or remaining <= 0:
+                    show_more_container.set_visibility(False)
+                else:
+                    show_more_button.enable()
+                    # Update button text with count
+                    show_more_button.text = f"Show more ({remaining} remaining)"
+
+            # Add "Show more" button
+            with show_more_container:
+                show_more_button = (
+                    ui.button(
+                        f"Show more ({remaining_initial} remaining)",
+                        icon="expand_more",
+                        on_click=load_more,
+                    )
+                    .props("outline")
+                    .mark("BUTTON_SHOW_MORE_RESULTS")
+                )

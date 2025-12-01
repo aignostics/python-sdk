@@ -15,6 +15,7 @@ from aignostics.application._utils import (
     print_runs_verbose,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
+    validate_mappings,
     write_metadata_dict_to_csv,
 )
 from aignostics.constants import (
@@ -34,6 +35,8 @@ from aignostics.platform import (
     RunState,
     RunTerminationReason,
 )
+
+TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
 
 
 @pytest.mark.unit
@@ -566,3 +569,122 @@ def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     assert mock_console.print.call_count >= 2
     last_call = str(mock_console.print.call_args_list[-1])
     assert "No item results available" in last_call
+
+
+# Tests for validate_mappings
+
+
+@pytest.mark.unit
+def test_validate_mappings_accepts_none() -> None:
+    """Test that None mappings are accepted (no validation needed)."""
+    validate_mappings(None)
+
+
+@pytest.mark.unit
+def test_validate_mappings_accepts_empty_list() -> None:
+    """Test that empty list is accepted."""
+    validate_mappings([])
+
+
+@pytest.mark.unit
+def test_validate_mappings_accepts_single_key_value_pair() -> None:
+    """Test valid mapping with single key-value pair."""
+    validate_mappings([TEST_MAPPING_TIFF_HE])
+
+
+@pytest.mark.unit
+def test_validate_mappings_accepts_multiple_key_value_pairs() -> None:
+    """Test valid mapping with multiple key-value pairs."""
+    validate_mappings([".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_accepts_multiple_mappings() -> None:
+    """Test multiple valid mappings."""
+    validate_mappings([TEST_MAPPING_TIFF_HE, ".*\\.svs:tissue=LIVER", "sample.*:disease=CANCER"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_accepts_complex_regex_patterns() -> None:
+    """Test valid complex regex patterns."""
+    validate_mappings([
+        "^slide[0-9]+\\.tiff$:staining_method=H&E",
+        ".*/(sample|test)_.*\\.svs:tissue=LUNG",
+        "[a-zA-Z]+_[0-9]{4}:disease=CANCER",
+    ])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_missing_colon_separator() -> None:
+    """Test validation fails when colon separator is missing."""
+    with pytest.raises(ValueError):
+        validate_mappings([".*tiff staining_method=H&E"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_colon_instead_of_equals() -> None:
+    """Test validation fails when colon is used instead of equals."""
+    with pytest.raises(ValueError):
+        validate_mappings([".*\\.tiff:staining_method:H&E"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_empty_mapping_string() -> None:
+    """Test validation fails for empty mapping string."""
+    with pytest.raises(ValueError):
+        validate_mappings([""])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_missing_key() -> None:
+    """Test validation fails for missing key."""
+    with pytest.raises(ValueError):
+        validate_mappings([".*\\.tiff:=H&E"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_missing_equals_and_value() -> None:
+    """Test validation fails for missing equals and value."""
+    with pytest.raises(ValueError):
+        validate_mappings([".*\\.tiff:staining_method"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_invalid_regex_quantifier() -> None:
+    """Test validation fails for invalid regex quantifier."""
+    with pytest.raises(ValueError):
+        validate_mappings(["*\\.tiff:staining_method=H&E"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_invalid_regex_unclosed_bracket() -> None:
+    """Test validation fails for invalid regex with unclosed bracket."""
+    with pytest.raises(ValueError):
+        validate_mappings(["[unclosed:staining_method=H&E"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_for_glob_pattern_with_helpful_message() -> None:
+    """Test validation fails for glob pattern instead of regex."""
+    with pytest.raises(ValueError):
+        validate_mappings(["*.tiff:staining_method=H&E"])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_with_correct_index_for_first_invalid() -> None:
+    """Test validation fails on first invalid mapping."""
+    with pytest.raises(ValueError):
+        validate_mappings([
+            "*.tiff:staining_method=H&E",  # Invalid (index 0)
+            ".*\\.svs:tissue=LUNG",  # Valid
+        ])
+
+
+@pytest.mark.unit
+def test_validate_mappings_raises_with_correct_index_for_second_invalid() -> None:
+    """Test validation fails on second invalid mapping."""
+    with pytest.raises(ValueError):
+        validate_mappings([
+            TEST_MAPPING_TIFF_HE,  # Valid
+            "*.svs:tissue=LUNG",  # Invalid (index 1)
+        ])

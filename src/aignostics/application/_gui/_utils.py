@@ -1,8 +1,8 @@
 """Utility functions for the application GUI."""
 
-from tkinter import NONE
-
 from aignostics.platform import ItemState, ItemTerminationReason, RunState, RunTerminationReason
+
+NONE = "none"
 
 
 def application_id_to_icon(application_id: str) -> str:

@@ -2,7 +2,6 @@
 itemId: SHR-APPLICATION-1
 itemTitle: Application Discovery and Navigation
 itemType: Requirement
-# Stakeholder requirement (user)
 Requirement type: ENVIRONMENT
 ---
 
