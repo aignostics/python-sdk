@@ -666,16 +666,31 @@ class Runs:
     def _amend_input_items_with_sdk_metadata(items: builtins.list[ItemCreationRequest]) -> None:
         """Amends input items with SDK metadata.
 
+        Optimized for large item counts: builds SDK metadata once and reuses it for items
+        without existing SDK metadata. Items with custom SDK metadata are processed individually.
+
         Args:
             items (builtins.list[ItemCreationRequest]): The list of item creation requests to amend.
         """
+        if not items:
+            return
+
+        base_sdk_metadata: dict[str, Any] | None = None
+
         for item in items:
             item_custom_metadata = item.custom_metadata or {}
-            item_custom_metadata.setdefault("sdk", {})
             existing_item_sdk_metadata = item_custom_metadata.get("sdk")
-            item_sdk_metadata = build_item_sdk_metadata(existing_item_sdk_metadata)
-            item_custom_metadata["sdk"].update(item_sdk_metadata)
-            validate_item_sdk_metadata(item_custom_metadata["sdk"])
+
+            if existing_item_sdk_metadata:
+                item_sdk_metadata = build_item_sdk_metadata(existing_item_sdk_metadata)
+                validate_item_sdk_metadata(item_sdk_metadata)
+                item_custom_metadata["sdk"] = item_sdk_metadata
+            else:
+                if base_sdk_metadata is None:
+                    base_sdk_metadata = build_item_sdk_metadata({})  # Cache base SDK metadata
+                    validate_item_sdk_metadata(base_sdk_metadata)
+                item_custom_metadata["sdk"] = base_sdk_metadata
+
             item.custom_metadata = cast("dict[str, Any]", convert_to_json_serializable(item_custom_metadata))
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
