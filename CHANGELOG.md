@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.219](https://github.com/aignostics/python-sdk/compare/v0.2.217..0.2.219) - 2025-12-01
+# [0.2.220](https://github.com/aignostics/python-sdk/compare/v0.2.219..0.2.220) - 2025-12-02
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove unused pyjpegls given not compatible with 3.14 as of today - ([350d5ca](https://github.com/aignostics/python-sdk/commit/350d5ca959777c7c2e69e9cb29b87bc16249b25f))
+
+
+# [v0.2.219](https://github.com/aignostics/python-sdk/compare/v0.2.217..v0.2.219) - 2025-12-01
 
 ### 🎨 Styling
 
@@ -27,11 +34,6 @@
 
 - *(dep)* Override fonttools given CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib - ([94e985f](https://github.com/aignostics/python-sdk/commit/94e985f962bc6c59ccd493a0b960e7a61706033c))
 
-
-
-* @renovate[bot] made their first contribution in [#238](https://github.com/aignostics/python-sdk/pull/238)
-* @dependabot[bot] made their first contribution in [#278](https://github.com/aignostics/python-sdk/pull/278)
-* @helmut-hoffer-von-ankershoffen made their first contribution
 
 # [v0.2.217](https://github.com/aignostics/python-sdk/compare/v0.2.216..v0.2.217) - 2025-12-01
 
