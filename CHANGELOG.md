@@ -1,11 +1,29 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.220](https://github.com/aignostics/python-sdk/compare/v0.2.219..0.2.220) - 2025-12-02
+# [0.2.221](https://github.com/aignostics/python-sdk/compare/v0.2.219..0.2.221) - 2025-12-02
 
 ### ⚙️ Miscellaneous Tasks
 
-- Remove unused pyjpegls given not compatible with 3.14 as of today - ([350d5ca](https://github.com/aignostics/python-sdk/commit/350d5ca959777c7c2e69e9cb29b87bc16249b25f))
+- *(deps)* Update docker/setup-qemu-action action to v3.7.0 ([#304](https://github.com/orhun/git-cliff/issues/304)) - ([ba881b7](https://github.com/aignostics/python-sdk/commit/ba881b72e00152c22d5ad293ea99f8aefd6e4f13))
+- *(deps)* Bump docker/metadata-action from 5.8.0 to 5.9.0 ([#246](https://github.com/orhun/git-cliff/issues/246)) - ([bfcfa61](https://github.com/aignostics/python-sdk/commit/bfcfa61ceb3df1589bdc4e24eaee693f2ae5b338))
+- *(deps)* Bump getsentry/action-release from 3.3.0 to 3.4.0 ([#242](https://github.com/orhun/git-cliff/issues/242)) - ([e445a6a](https://github.com/aignostics/python-sdk/commit/e445a6a9aa2206472d0610e9129437e3db6ce4cc))
+- *(deps)* Bump idc-index-data from 22.1.5 to 23.0.1 ([#277](https://github.com/orhun/git-cliff/issues/277)) - ([ee4c7b7](https://github.com/aignostics/python-sdk/commit/ee4c7b781bc4a4c40e631c976c3a466e0531ee1e))
+- *(deps)* Update dependency hatchling to v1.28.0 ([#302](https://github.com/orhun/git-cliff/issues/302)) - ([a96c8cd](https://github.com/aignostics/python-sdk/commit/a96c8cd46712b3c2d30b2b818f77706c6085a9bf))
+- *(deps-dev)* Bump hatchling from 1.27.0 to 1.28.0 ([#290](https://github.com/orhun/git-cliff/issues/290)) - ([c908758](https://github.com/aignostics/python-sdk/commit/c9087580f976425d4ab42d78893bcaa94e1625e9))
+- Remove unused pyjpegls given not compatible with 3.14 as of today - ([248def6](https://github.com/aignostics/python-sdk/commit/248def63ca775a4dfd2123294199f0be83ad0ae2))
+- Hatchling - ([c908758](https://github.com/aignostics/python-sdk/commit/c9087580f976425d4ab42d78893bcaa94e1625e9))
+- Dependabot[bot] <support@github.com> - ([c908758](https://github.com/aignostics/python-sdk/commit/c9087580f976425d4ab42d78893bcaa94e1625e9))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([c908758](https://github.com/aignostics/python-sdk/commit/c9087580f976425d4ab42d78893bcaa94e1625e9))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([c908758](https://github.com/aignostics/python-sdk/commit/c9087580f976425d4ab42d78893bcaa94e1625e9))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([ba881b7](https://github.com/aignostics/python-sdk/commit/ba881b72e00152c22d5ad293ea99f8aefd6e4f13))
+- Docker/metadata-action - ([bfcfa61](https://github.com/aignostics/python-sdk/commit/bfcfa61ceb3df1589bdc4e24eaee693f2ae5b338))
+- Getsentry/action-release - ([e445a6a](https://github.com/aignostics/python-sdk/commit/e445a6a9aa2206472d0610e9129437e3db6ce4cc))
+- Idc-index-data - ([ee4c7b7](https://github.com/aignostics/python-sdk/commit/ee4c7b781bc4a4c40e631c976c3a466e0531ee1e))
 
+
+
+* @dependabot[bot] made their first contribution in [#290](https://github.com/aignostics/python-sdk/pull/290)
+* @renovate[bot] made their first contribution in [#304](https://github.com/aignostics/python-sdk/pull/304)
 
 # [v0.2.219](https://github.com/aignostics/python-sdk/compare/v0.2.217..v0.2.219) - 2025-12-01
 
