@@ -857,7 +857,6 @@ class Service(BaseService):  # noqa: PLR0904
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
-        validate_only: bool = False,
         gpu_type: str | None = None,
         gpu_provisioning_mode: str | None = None,
         max_gpus_per_slide: int | None = None,
@@ -881,7 +880,6 @@ class Service(BaseService):  # noqa: PLR0904
             application_version (str | None): The version of the application.
                 If not given latest version is used.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
-            validate_only (bool): If True, cancel the run post validation, before analysis.
             gpu_type (str | None): The type of GPU to use (L4 or A100).
             gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
                 (SPOT, ON_DEMAND, or FLEX_START).
@@ -987,7 +985,6 @@ class Service(BaseService):  # noqa: PLR0904
                 due_date=due_date,
                 deadline=deadline,
                 onboard_to_aignostics_portal=onboard_to_aignostics_portal,
-                validate_only=validate_only,
                 gpu_type=gpu_type,
                 gpu_provisioning_mode=gpu_provisioning_mode,
                 max_gpus_per_slide=max_gpus_per_slide,
@@ -1028,7 +1025,6 @@ class Service(BaseService):  # noqa: PLR0904
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
-        validate_only: bool = False,
         gpu_type: str | None = None,
         gpu_provisioning_mode: str | None = None,
         max_gpus_per_slide: int | None = None,
@@ -1051,7 +1047,6 @@ class Service(BaseService):  # noqa: PLR0904
             deadline (str | None): An optional hard deadline for the run, ISO8601 format.
                 If processing exceeds this deadline, the run can be aborted.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
-            validate_only (bool): If True, cancel the run post validation, before analysis.
             gpu_type (str | None): The type of GPU to use (L4 or A100).
             gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
                 (SPOT, ON_DEMAND, or FLEX_START).
@@ -1083,10 +1078,9 @@ class Service(BaseService):  # noqa: PLR0904
                 sdk_metadata["note"] = note
             if tags:
                 sdk_metadata["tags"] = tags
-            if onboard_to_aignostics_portal or validate_only:
+            if onboard_to_aignostics_portal:
                 sdk_metadata["workflow"] = {
                     "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
-                    "validate_only": validate_only,
                 }
             if due_date or deadline:
                 sdk_metadata["scheduling"] = {}

@@ -7,7 +7,6 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from aiopath import AsyncPath
 from loguru import logger
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
@@ -60,7 +59,6 @@ class SubmitForm:
     tags: list[str] | None = None
     due_date: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
     deadline: str = (datetime.now().astimezone() + timedelta(hours=24)).strftime("%Y-%m-%d %H:%M")
-    validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
     gpu_type: str = DEFAULT_GPU_TYPE
     gpu_provisioning_mode: str = DEFAULT_GPU_PROVISIONING_MODE
@@ -172,11 +170,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         from nicegui import ui  # noqa: PLC0415
 
         result = await GUILocalFilePicker(
-            str(get_user_data_directory("datasets") if data else str(Path(await AsyncPath.home()))), multiple=False
+            str(get_user_data_directory("datasets") if data else str(Path.home())), multiple=False
         )  # type: ignore
         if result and len(result) > 0:
-            path = AsyncPath(result[0])
-            if not await path.is_dir():
+            path = Path(result[0])
+            if not path.is_dir():
                 submit_form.source = None
                 submit_form.wsi_step_label.set_text(
                     "Select a folder with whole slide images you want to analyze"
@@ -184,7 +182,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
                 ui.notify("The selected path is not a directory. Please select a valid directory.", type="warning")
             else:
-                submit_form.source = Path(path)
+                submit_form.source = path
                 submit_form.wsi_step_label.set_text(
                     f"Selected folder {submit_form.source} to analyze."
                 ) if submit_form.wsi_step_label else None
@@ -204,11 +202,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 type="warning",
             )
 
-    async def _pytest_home() -> None:
+    def _pytest_home() -> None:
         """Select home folder."""
         from nicegui import ui  # noqa: PLC0415
 
-        submit_form.source = Path(await AsyncPath.home())
+        submit_form.source = Path.home()
         submit_form.wsi_step_label.set_text(
             f"Selected folder {submit_form.source} to analyze."
         ) if submit_form.wsi_step_label else None
@@ -736,7 +734,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
-                    validate_only=submit_form.validate_only,
                     onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
                     gpu_type=submit_form.gpu_type,
                     gpu_provisioning_mode=submit_form.gpu_provisioning_mode,
@@ -808,16 +805,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         ).bind_value(submit_form, "onboard_to_aignostics_portal").mark(
                             "CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL"
                         )
-                    # Allow users in aignostics' organisations to do validate only runs
-                    if (
-                        user_info
-                        and user_info.organization
-                        and user_info.organization.name
-                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org"}
-                    ):
-                        ui.checkbox(
-                            text="Validate only",
-                        ).bind_value(submit_form, "validate_only").mark("CHECKBOX_VALIDATE_ONLY")
 
                 upload_complete = True
                 for row in metadata or []:
