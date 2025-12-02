@@ -400,8 +400,6 @@ class Run:
         )
         operation_cache_clear()  # Clear all caches since we updated a run
 
-    # TODO(Andreas): Always returns 404, likely connected with external_id encoding,
-    # see test test_cli_run_dump_and_update_item_custom_metadata
     def update_item_custom_metadata(
         self,
         external_id: str,
@@ -526,17 +524,18 @@ class Runs:
             custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
             items=items,
         )
+        current_settings = settings()
         self._validate_input_items(payload)
         res: RunCreationResponse = self._api.create_run_v1_runs_post(
             payload,
-            _request_timeout=settings().run_submit_timeout,
+            _request_timeout=current_settings.run_submit_timeout,
             _headers={"User-Agent": user_agent()},
         )
         metrics.count(
             "aignostics.platform.run.submitted",
             1,
             attributes={
-                "api_root": settings().api_root,
+                "api_root": current_settings.api_root,
                 "application_id": application_id,
                 "application_version": application_version or "latest",
             },
@@ -545,7 +544,7 @@ class Runs:
             "aignostics.platform.items.submitted",
             len(items),
             attributes={
-                "api_root": settings().api_root,
+                "api_root": current_settings.api_root,
                 "application_id": application_id,
                 "application_version": application_version or "latest",
             },
