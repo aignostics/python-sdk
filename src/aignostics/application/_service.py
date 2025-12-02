@@ -311,11 +311,22 @@ class Service(BaseService):  # noqa: PLR0904
                 Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
-    def _filter_dicom_series_files(source_directory: Path) -> set[Path]:
-        """Filter DICOM files to keep only one representative per series.
+    def _filter_dicom_pyramid_files(source_directory: Path) -> set[Path]:  # noqa: C901
+        """Filter DICOM files to keep only one representative per pyramid.
 
-        For multi-file DICOM series, keeps only the highest resolution file.
-        OpenSlide will find other files in the same directory when needed.
+        For multi-file DICOM pyramids (WSI images split across multiple DICOM instances),
+        keeps only the highest resolution file. Excludes segmentations, annotations,
+        thumbnails, labels, and other non-image DICOM files. OpenSlide will automatically
+        find related pyramid files in the same directory when needed.
+
+        Filtering Strategy:
+        - Only processes VL Whole Slide Microscopy Image Storage
+          (SOPClassUID 1.2.840.10008.5.1.4.1.1.77.1.6, see here:
+          https://dicom.nema.org/medical/dicom/current/output/chtml/part04/sect_b.5.html)
+        - Excludes thumbnails, labels, overviews by ImageType DICOM attribute
+        - Groups files by PyramidUID (unique identifier for multi-resolution pyramids)
+        - Selects highest resolution based on TotalPixelMatrixRows x TotalPixelMatrixColumns
+        - Preserves standalone WSI files without PyramidUID
 
         Args:
             source_directory: The directory to scan.
@@ -324,26 +335,49 @@ class Service(BaseService):  # noqa: PLR0904
             set[Path]: Set of DICOM files to exclude from processing.
         """
         dicom_files = list(source_directory.glob("**/*.dcm"))
-        series_groups: dict[str, list[tuple[Path, int, int]]] = defaultdict(list)
+        pyramid_groups: dict[str, list[tuple[Path, int, int]]] = defaultdict(list)
+        files_to_exclude = set()
 
-        # Group by SeriesInstanceUID with dimensions
+        # Group by PyramidUID with dimensions
         for dcm_file in dicom_files:
             try:
                 ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
-                series_uid = ds.SeriesInstanceUID
+
+                # Exclude non-WSI image files by SOPClassUID
+                # Only process VL Whole Slide Microscopy Image Storage (1.2.840.10008.5.1.4.1.1.77.1.6)
+                if ds.SOPClassUID != "1.2.840.10008.5.1.4.1.1.77.1.6":
+                    logger.debug(f"Excluding {dcm_file.name} - not a WSI image (SOPClassUID: {ds.SOPClassUID})")
+                    files_to_exclude.add(dcm_file)
+                    continue
+
+                # Exclude thumbnails, labels, and overview images by ImageType
+                if hasattr(ds, "ImageType"):
+                    image_type = [t.upper() for t in ds.ImageType]
+                    exclude_types = {"THUMBNAIL", "LABEL", "OVERVIEW", "MACRO", "ANNOTATION", "LOCALIZER"}
+                    if any(excluded in image_type for excluded in exclude_types):
+                        logger.debug(f"Excluding {dcm_file.name} - ImageType: {image_type}")
+                        files_to_exclude.add(dcm_file)
+                        continue
+
+                # Now process valid WSI images with PyramidUID
+                if not hasattr(ds, "PyramidUID"):
+                    logger.debug(f"DICOM {dcm_file.name} has no PyramidUID - treating as standalone")
+                    continue
+
+                pyramid_uid = ds.PyramidUID
 
                 # These represent the full image dimensions across all frames
                 rows = int(ds.TotalPixelMatrixRows)
                 cols = int(ds.TotalPixelMatrixColumns)
 
-                series_groups[series_uid].append((dcm_file, rows, cols))
+                pyramid_groups[pyramid_uid].append((dcm_file, rows, cols))
+            except AttributeError as e:
+                logger.debug(f"DICOM {dcm_file} missing required attributes: {e}")
             except Exception as e:
                 logger.debug(f"Could not read DICOM {dcm_file}: {e}")
-                # Treat as standalone - don't exclude
 
-        # For each series with multiple files, keep only the highest resolution one
-        files_to_exclude = set()
-        for series_uid, files_with_dims in series_groups.items():
+        # For each pyramid with multiple files, keep only the highest resolution one
+        for pyramid_uid, files_with_dims in pyramid_groups.items():
             if len(files_with_dims) > 1:
                 # Find the file with the largest dimensions (rows * cols = total pixels)
                 highest_res_file = max(files_with_dims, key=lambda x: x[1] * x[2])
@@ -355,7 +389,7 @@ class Service(BaseService):  # noqa: PLR0904
                         files_to_exclude.add(file_path)
 
                 logger.debug(
-                    f"DICOM series {series_uid}: keeping {file_to_keep.name} "
+                    f"DICOM pyramid {pyramid_uid}: keeping {file_to_keep.name} "
                     f"({rows}x{cols}), excluding {len(files_with_dims) - 1} related files"
                 )
 
@@ -415,8 +449,8 @@ class Service(BaseService):  # noqa: PLR0904
 
         metadata = []
 
-        # Pre-filter: exclude redundant DICOM files from multi-file series
-        dicom_files_to_exclude = Service._filter_dicom_series_files(source_directory)
+        # Pre-filter: exclude redundant DICOM files from multi-file pyramids
+        dicom_files_to_exclude = Service._filter_dicom_pyramid_files(source_directory)
 
         try:
             extensions = get_supported_extensions_for_application(application_id)
