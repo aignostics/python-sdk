@@ -16,6 +16,7 @@ overrides = [
     { name = "jupyterlab", specifier = ">=4.4.9" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pip", specifier = ">=5.3" },
+    { name = "pyjpegls", marker = "sys_platform == 'never'" },
     { name = "rfc3987", marker = "sys_platform == 'never'" },
     { name = "starlette", specifier = ">=0.47.2" },
     { name = "starlette", specifier = ">=0.49.1" },
@@ -1993,7 +1994,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pillow" },
     { name = "pydicom" },
-    { name = "pyjpegls" },
+    { name = "pyjpegls", marker = "sys_platform == 'never'" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/46/00/a44494d45e27fefeeb9e1ecc294aa8333a1b98719615751d277ef609aaf9/highdicom-0.27.0.tar.gz", hash = "sha256:4999b62a4fc1e58ae1d25eb12058dae3b83d816a6214c00e342356a3ad0774f2", size = 1129146, upload-time = "2025-10-24T19:22:16.871Z" }
@@ -4357,23 +4358,6 @@ dependencies = [
     { name = "numpy" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2c/59/98f5e19752ae8ffea9b0d15b4ad3b20022d96479201b9674d4708e3293d1/pyjpegls-1.5.1.tar.gz", hash = "sha256:d0fe09dfb7f75ce78e3b1e0519912a42f1827d68bbc3609652f4f8743c956025", size = 1103288, upload-time = "2024-10-28T11:23:24.705Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/ca/32f520feb652c78359c96b2603c7cd2e7bf87600e8239c78e19c86af56c1/pyjpegls-1.5.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:14b870392e6796ea0e2fac226e97ac730a634549923c475d173bc9c291f02658", size = 1201446, upload-time = "2024-10-28T11:22:52.573Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/1d/058786659fdb8ffa38a50949c8ba91dc41606269868e88d409ec7e08bac7/pyjpegls-1.5.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e206e4ade507f6a3066a134d04a68b7c2570a2365f18e43ee2b01a08f3efcd30", size = 1190920, upload-time = "2024-10-28T11:22:54.205Z" },
-    { url = "https://files.pythonhosted.org/packages/dc/50/cb385d00b028037e2b814936bc77e3992a921f40e0d6855e8ef1b171dfef/pyjpegls-1.5.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:496ae75dc1b06a5e3fb6893593665fa40093e18a162de518ee0609c77cb7d4fe", size = 2659348, upload-time = "2024-10-28T11:22:55.505Z" },
-    { url = "https://files.pythonhosted.org/packages/ee/67/a42ff2401f9accf8b245c7b503e6d71bba3ebdb95cd185a053aa7deedca7/pyjpegls-1.5.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8ec9eb9f7bd5332f86b3c9749f17aa8429a7965acfa7f2ab568eb11b70631472", size = 2665938, upload-time = "2024-10-28T11:22:57.578Z" },
-    { url = "https://files.pythonhosted.org/packages/3d/2a/64057a0a464105e40e22adc7a527b1c5453fe374b4002c214123abba6ff5/pyjpegls-1.5.1-cp311-cp311-win_amd64.whl", hash = "sha256:acbe5ba2dde9b97bb98571a17a949bfbba7c9e40e78dfb79c08ecc568db50cee", size = 1143691, upload-time = "2024-10-28T11:22:59.354Z" },
-    { url = "https://files.pythonhosted.org/packages/d3/63/9e65815ea2c1b8abefda341d8fadb7d4d19c4fc9e7f3eb4bff1706a95371/pyjpegls-1.5.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:a5430dcd735bc4c0c1eb478510d73a5178a4743cbad1d72113926accdd738921", size = 1200829, upload-time = "2024-10-28T11:23:00.715Z" },
-    { url = "https://files.pythonhosted.org/packages/84/5f/08760f98d1a49bee3046a2da6af4c1da339b49c8ebcbd976e36177af0c89/pyjpegls-1.5.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:c3e6355a4bc9d3da46f7d4377793576b261bf60df297cea7167b3556adb98eb7", size = 1191073, upload-time = "2024-10-28T11:23:02.655Z" },
-    { url = "https://files.pythonhosted.org/packages/bc/83/153aedc15c9064091b2251fba99998866e4a2c0624905b9bae1c31644e5e/pyjpegls-1.5.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:45630167eb37990701854f882455f4611c24902a2de1d27635076c3fed4a04a7", size = 2670175, upload-time = "2024-10-28T11:23:04.726Z" },
-    { url = "https://files.pythonhosted.org/packages/4d/f6/597cd0566f90b33428d6979f2967ac7ff1f7be0631e72c3a170dd966a98a/pyjpegls-1.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5e8c7257bfd1700d563c4fdc60a8794519e00da21798221d964271bc5a027a49", size = 2678115, upload-time = "2024-10-28T11:23:06.06Z" },
-    { url = "https://files.pythonhosted.org/packages/50/32/b011c2c33850c8d6f7815cf30257e0e00d9fcb70e0a8052448257636bf19/pyjpegls-1.5.1-cp312-cp312-win_amd64.whl", hash = "sha256:14d7cf5e61ffdb9343a888dde5e3f9b7e527cc805c31c7f48a1e2cdb73d9d9fa", size = 1143350, upload-time = "2024-10-28T11:23:07.978Z" },
-    { url = "https://files.pythonhosted.org/packages/2d/f7/c3e0e7d5067ce71930b757e61d82aef129b69e7c95ad881adae571ee49b1/pyjpegls-1.5.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:bba892f411091a0de0736f39ac8da11e667a929fbc1e474657f1291d5e303d37", size = 1200012, upload-time = "2024-10-28T11:23:09.715Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/91/59f22460a9f64b38bbd83de859963a4b5688f9cfac9e67c7d7a33b54373e/pyjpegls-1.5.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:0080024c9e9e6be7bb0276ea54510488c28c8c9f2c0841049c64ab8b66d899f2", size = 1190156, upload-time = "2024-10-28T11:23:11.124Z" },
-    { url = "https://files.pythonhosted.org/packages/f1/9d/219cd41b62aec45f8f635c0f2175abcbc6642f334d94276da852d077b0d4/pyjpegls-1.5.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dfecd3ea08ff2df367eb90791e3ff5288ccc0293fc13e99adc5542629a97a493", size = 2669034, upload-time = "2024-10-28T11:23:12.463Z" },
-    { url = "https://files.pythonhosted.org/packages/48/db/08ce5743ca250750776bf39729d495442966a2ddb23017e61ac43567c5bf/pyjpegls-1.5.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fb56f056868561a1e49995bcbbe7ba8c38d56838d5c975ef5a0ff887d9189230", size = 2677947, upload-time = "2024-10-28T11:23:13.998Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/8a/98c33dae7a420fdd0078df7eed406748abe68eed43622258e03da9049c77/pyjpegls-1.5.1-cp313-cp313-win_amd64.whl", hash = "sha256:5812655f1fbb93bd2666ff05616bf3c7eae2474c6c4f8bf8afb6d5e5c0d6e9cf", size = 1142653, upload-time = "2024-10-28T11:23:16.023Z" },
-]
 
 [[package]]
 name = "pyjwt"
