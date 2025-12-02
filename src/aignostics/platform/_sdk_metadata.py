@@ -182,7 +182,6 @@ class WorkflowMetadata(BaseModel):
     onboard_to_aignostics_portal: bool = Field(
         default=False, description="Whether to onboard results to the Aignostics Portal"
     )
-    validate_only: bool = Field(default=False, description="Whether to only validate without running analysis")
 
 
 class SchedulingMetadata(BaseModel):

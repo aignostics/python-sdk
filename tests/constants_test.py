@@ -52,7 +52,9 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES = None
         PIPELINE_MAX_GPUS_PER_SLIDE = 1
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
-        PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 60  # Respected starting with 1.0.0-sl.4.1+internal
+        PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = (
+            30  # Respected starting with 1.0.0-sl.4.1+internal, until then set to 60min by application itself.
+        )
 
         SPECIAL_APPLICATION_ID = "test-app"
         SPECIAL_APPLICATION_VERSION = "0.99.0"

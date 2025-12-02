@@ -1,6 +1,90 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.213](https://github.com/aignostics/python-sdk/compare/v0.2.212..0.2.213) - 2025-11-28
+# [0.2.219](https://github.com/aignostics/python-sdk/compare/v0.2.217..0.2.219) - 2025-12-01
+
+### 🎨 Styling
+
+- *(install.sh)* Use package correctly - ([94d3197](https://github.com/aignostics/python-sdk/commit/94d31971c435011f02a00ec6908edbe76efe9c34))
+
+### 🧪 Testing
+
+- *(platform)* Stopped stress tests - ([0e6e80e](https://github.com/aignostics/python-sdk/commit/0e6e80e719ec8bef62c011805788c4723ea55846))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Update github artifact actions ([#238](https://github.com/orhun/git-cliff/issues/238)) - ([b32e20a](https://github.com/aignostics/python-sdk/commit/b32e20ae3d0404baa13c8718a7a6562d897b6fdc))
+- *(deps)* Update ghcr.io/astral-sh/uv docker tag to v0.9.14 ([#280](https://github.com/orhun/git-cliff/issues/280)) - ([d348c62](https://github.com/aignostics/python-sdk/commit/d348c6215437dcaa1f13c5e3ccdc8c63fe4d34e0))
+- *(deps)* Bump astral-sh/setup-uv from 7.1.1 to 7.1.4 ([#278](https://github.com/orhun/git-cliff/issues/278)) - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+- *(deps)* Update actions/checkout action to v5.0.1 ([#279](https://github.com/orhun/git-cliff/issues/279)) - ([f9a25a1](https://github.com/aignostics/python-sdk/commit/f9a25a1923dc8dbd6ec86527ca3dc7c15ddfb278))
+- *(install.sh)* Use package correctly for uv - ([db601de](https://github.com/aignostics/python-sdk/commit/db601dec6e268e33c82b9874ba312a25d86f6804))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([b32e20a](https://github.com/aignostics/python-sdk/commit/b32e20ae3d0404baa13c8718a7a6562d897b6fdc))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([b32e20a](https://github.com/aignostics/python-sdk/commit/b32e20ae3d0404baa13c8718a7a6562d897b6fdc))
+- Astral-sh/setup-uv - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+- Dependabot[bot] <support@github.com> - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([449358c](https://github.com/aignostics/python-sdk/commit/449358c053bf68861481c65183330e34ffc79af1))
+
+### 🛡️ Security
+
+- *(dep)* Override fonttools given CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib - ([94e985f](https://github.com/aignostics/python-sdk/commit/94e985f962bc6c59ccd493a0b960e7a61706033c))
+
+
+
+* @renovate[bot] made their first contribution in [#238](https://github.com/aignostics/python-sdk/pull/238)
+* @dependabot[bot] made their first contribution in [#278](https://github.com/aignostics/python-sdk/pull/278)
+* @helmut-hoffer-von-ankershoffen made their first contribution
+
+# [v0.2.217](https://github.com/aignostics/python-sdk/compare/v0.2.216..v0.2.217) - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- *(application,bucket,dataset)* Remove use of aiopath which turns out to not be compatible with python 3.11.x as advertised - ([238d47a](https://github.com/aignostics/python-sdk/commit/238d47af14f11570f0763eab605dec44bb5f9bb6))
+- Replace tkinter.NONE with literal to support Python 3.13.9 on macOS ([#296](https://github.com/orhun/git-cliff/issues/296)) - ([28d4b32](https://github.com/aignostics/python-sdk/commit/28d4b328bfb498b787c7bc21c097cd65dc6d1b0f))
+
+### 🧪 Testing
+
+- *(platform)* Reenable flex start for hourly tests against staging - ([2d4e382](https://github.com/aignostics/python-sdk/commit/2d4e382c31472f6ee67068881925b87e09e6a7bb))
+- Fix flaky GUI tests ([#297](https://github.com/orhun/git-cliff/issues/297)) - ([c9815ec](https://github.com/aignostics/python-sdk/commit/c9815ec8bbbfdc302a02a19031b737466ebf48d5))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gha)* Use github token on labels sync / checkout, given our repo is not public - ([b0202de](https://github.com/aignostics/python-sdk/commit/b0202dec331c74745392d316c66096cec176d63d))
+- *(gha)* Use github token for checkout on labels sync - ([1814d80](https://github.com/aignostics/python-sdk/commit/1814d80479d145d31c97ad575def1baad3439255))
+
+
+# [v0.2.216](https://github.com/aignostics/python-sdk/compare/v0.2.214..v0.2.216) - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- Paginate run results ([#295](https://github.com/orhun/git-cliff/issues/295)) - ([0e5d821](https://github.com/aignostics/python-sdk/commit/0e5d821775eaff34617822fcf7c2e1c3a79e4eaa))
+
+### 🧪 Testing
+
+- *(platform)* Fix title for stress test - ([993c845](https://github.com/aignostics/python-sdk/commit/993c845807f1626c07e9ad9e658b304e41451961))
+- *(platform)* Fix setting - ([1b72717](https://github.com/aignostics/python-sdk/commit/1b727177d7284a477db6ad10a341d23c9bab16e2))
+- *(platform)* On 20 - ([da3664c](https://github.com/aignostics/python-sdk/commit/da3664c033a4be465a4d29eb36bc359e550b0bc0))
+- *(platform)* Prep for 30min node acquisition timeout on production - ([2725077](https://github.com/aignostics/python-sdk/commit/27250777b31c28bfd18faa28a6498f83ffe07757))
+- *(platform)* Use 1k on staging 0..9 min - ([e674a58](https://github.com/aignostics/python-sdk/commit/e674a589b95249915b31861ad71884706bf21acd))
+- *(platform)* Use spot on staging - ([7dabb89](https://github.com/aignostics/python-sdk/commit/7dabb89d802380448a4919bd74400e227d80cdec))
+
+
+# [v0.2.214](https://github.com/aignostics/python-sdk/compare/v0.2.213..v0.2.214) - 2025-12-01
+
+### 🐛 Bug Fixes
+
+- Remove validate_only option - ([e838bd9](https://github.com/aignostics/python-sdk/commit/e838bd9b0f06247eda40d71851f8a116b2977418))
+- Make inspect command work with a single file as input as well - ([5c651d1](https://github.com/aignostics/python-sdk/commit/5c651d150384e3cbdc36ae1fcc017db36eafe081))
+
+### 🧪 Testing
+
+- *(platform)* On_00 to 100 items - ([b5b29f3](https://github.com/aignostics/python-sdk/commit/b5b29f3de84119eea8a539bb7b8195dffa8deeb1))
+- *(platform)* For stress test - 3h due date and deadline if test triggered in minute 40 to 49, 1k items if triggered in minute 0..9, triggering every 10 minutes, was every 5 minutes - ([e8d0aa5](https://github.com/aignostics/python-sdk/commit/e8d0aa5ed7f2634e381be4e9e64997d3e9891c98))
+- Disable flaky GUI tests on macos-latest and python 3.13 ([#293](https://github.com/orhun/git-cliff/issues/293)) - ([35aeab6](https://github.com/aignostics/python-sdk/commit/35aeab6427758c8bdf21644180b0ef1b9c1ebd8f))
+
+
+
+* @neelay-aign made their first contribution in [#291](https://github.com/aignostics/python-sdk/pull/291)
+
+# [v0.2.213](https://github.com/aignostics/python-sdk/compare/v0.2.212..v0.2.213) - 2025-11-28
 
 ### ⛰️  Features
 
@@ -28,12 +112,6 @@
 
 - *(platform)* Test flex start on staging - ([8122a49](https://github.com/aignostics/python-sdk/commit/8122a49a728a6ff8368f509e23b0b6fc86700ad9))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution in [#292](https://github.com/aignostics/python-sdk/pull/292)
-* @olivermeyer made their first contribution in [#287](https://github.com/aignostics/python-sdk/pull/287)
-* @omid-aignostics made their first contribution in [#288](https://github.com/aignostics/python-sdk/pull/288)
-* @santi698 made their first contribution in [#285](https://github.com/aignostics/python-sdk/pull/285)
 
 # [v0.2.212](https://github.com/aignostics/python-sdk/compare/v0.2.211..v0.2.212) - 2025-11-25
 

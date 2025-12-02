@@ -285,7 +285,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
-            "--validate-only",
+            "--onboard-to-aignostics-portal",
         ],
     )
     output = normalize_output(result.stdout)
@@ -707,7 +707,6 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DUE_DATE_SECONDS)).isoformat(),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DEADLINE_SECONDS)).isoformat(),
-            "--validate-only",
         ],
     )
 
@@ -1131,7 +1130,6 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
             unique_tag,
             "--note",
             "Testing JSON format output",
-            "--validate-only",
         ],
     )
     output = normalize_output(result.stdout)

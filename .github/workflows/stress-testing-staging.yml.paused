@@ -1,4 +1,4 @@
-name: "+ Stress Testing / Staging (Every 15 minutes)"
+name: "+ Stress Testing / Staging (ca. every 10 minutes)"
 
 on:
   schedule:

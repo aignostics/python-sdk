@@ -447,12 +447,6 @@
           "description": "Whether to onboard results to the Aignostics Portal",
           "title": "Onboard To Aignostics Portal",
           "type": "boolean"
-        },
-        "validate_only": {
-          "default": false,
-          "description": "Whether to only validate without running analysis",
-          "title": "Validate Only",
-          "type": "boolean"
         }
       },
       "title": "WorkflowMetadata",

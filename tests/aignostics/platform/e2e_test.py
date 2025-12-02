@@ -86,11 +86,12 @@ HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 # one application run starting every 5 minutes, with a throughput of 1 slide per minute,
 # given no GPU.
 SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 100
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 1000
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 1000  # Minute 0..9
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20 = 1000  # Minute 20..29
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 1 day(s)
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 1 day(s)
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours; Minute 40..49
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours; Minute 40..49
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
 SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 60  # 60 minutes
 
@@ -603,9 +604,15 @@ def test_platform_special_app_submit() -> None:
     # so we check which 10-minute window we're in
     current_minute = datetime.now(tz=UTC).minute
     is_on_00 = 0 <= current_minute <= 9
+    is_on_20 = 20 <= current_minute <= 29
     is_on_40 = 40 <= current_minute <= 49
 
-    slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 if is_on_00 else SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT
+    if is_on_00:
+        slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00
+    elif is_on_20:
+        slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20
+    else:
+        slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT
 
     deadline_seconds = (
         SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40
