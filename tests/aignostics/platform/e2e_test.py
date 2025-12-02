@@ -190,48 +190,63 @@ def _get_three_spots_payload_for_test(expires_seconds: int) -> list[platform.Inp
 
 
 def _get_spots_payload_for_special(expires_seconds: int, count: int) -> list[platform.InputItem]:
-    """Generates a payload using count many spots."""
-    items = []
-    for index in range(count):
-        signed_url = platform.generate_signed_url(
-            url=SPOT_1_GS_URL,
-            expires_seconds=expires_seconds,
+    """Generates a payload using count many spots.
+
+    Optimized for large counts (e.g., 100k items):
+    - Generates signed URL once (all items use same source file)
+    - Pre-builds metadata dicts once (identical across all items)
+
+    Args:
+        expires_seconds: Expiration time for signed URLs in seconds.
+        count: Number of items to generate.
+
+    Returns:
+        List of InputItem objects for the special application.
+    """
+    if count <= 0:
+        return []
+
+    signed_url = platform.generate_signed_url(
+        url=SPOT_1_GS_URL,
+        expires_seconds=expires_seconds,
+    )
+    wsi_metadata = {
+        "checksum_base64_crc32c": SPOT_1_CRC32C,
+        "width_px": SPOT_1_WIDTH,
+        "height_px": SPOT_1_HEIGHT,
+        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
+        "media_type": "image/tiff",
+        "staining_method": "H&E",
+        "specimen": {
+            "tissue": "LUNG",
+            "disease": "LUNG_CANCER",
+        },
+    }
+    normalization_metadata = {
+        "checksum_base64_crc32c": SPOT_1_CRC32C,
+        "width_px": SPOT_1_WIDTH,
+        "height_px": SPOT_1_HEIGHT,
+        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
+        "media_type": "image/tiff",
+    }
+    return [
+        platform.InputItem(
+            external_id=f"{SPOT_1_GS_URL}&spot_index={index}",
+            input_artifacts=[
+                platform.InputArtifact(
+                    name="whole_slide_image",
+                    download_url=signed_url,
+                    metadata=wsi_metadata,
+                ),
+                platform.InputArtifact(
+                    name="normalization:wsi",
+                    download_url=signed_url,
+                    metadata=normalization_metadata,
+                ),
+            ],
         )
-        items.append(
-            platform.InputItem(
-                external_id=SPOT_1_GS_URL + "&spot_index=" + str(index),
-                input_artifacts=[
-                    platform.InputArtifact(
-                        name="whole_slide_image",
-                        download_url=signed_url,
-                        metadata={
-                            "checksum_base64_crc32c": SPOT_1_CRC32C,
-                            "width_px": SPOT_1_WIDTH,
-                            "height_px": SPOT_1_HEIGHT,
-                            "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-                            "media_type": "image/tiff",
-                            "staining_method": "H&E",
-                            "specimen": {
-                                "tissue": "LUNG",
-                                "disease": "LUNG_CANCER",
-                            },
-                        },
-                    ),
-                    platform.InputArtifact(
-                        name="normalization:wsi",
-                        download_url=signed_url,
-                        metadata={
-                            "checksum_base64_crc32c": SPOT_1_CRC32C,
-                            "width_px": SPOT_1_WIDTH,
-                            "height_px": SPOT_1_HEIGHT,
-                            "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-                            "media_type": "image/tiff",
-                        },
-                    ),
-                ],
-            )
-        )
-    return items
+        for index in range(count)
+    ]
 
 
 def _submit_and_validate(  # noqa: PLR0913, PLR0917
