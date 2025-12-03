@@ -151,7 +151,7 @@ async def test_gui_cli_submit_to_run_result_delete(
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
         await user.should_see(
-            f"Run of {application.application_id} ({latest_version_number})",
+            f"Run {run_id}",
             retries=100,
         )
         await user.should_see(
@@ -307,7 +307,9 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             # Check user is redirected to the run page and run is running
             await sleep(5)
-            await user.should_see(f"Run of he-tme ({latest_application_version.number})", retries=200)
+            # The navigation title is now static "Run {run_id}" but we don't know run_id yet.
+            # Check for the application info in the page content instead.
+            await user.should_see(f"Application: he-tme ({latest_application_version.number})", retries=200)
             try:
                 await user.should_see("PENDING", retries=100)
             except AssertionError:
@@ -389,7 +391,7 @@ async def test_gui_run_download(  # noqa: PLR0915
         await user.open(f"/application/run/{run.run_id}")
         await user.should_see(f"Run {run.run_id}", retries=100)
         await user.should_see(
-            f"Run of {run.application_id} ({run.version_number})",
+            f"Application: {run.application_id} ({run.version_number})",
             retries=100,
         )
 

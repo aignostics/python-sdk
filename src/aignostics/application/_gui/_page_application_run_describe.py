@@ -29,7 +29,6 @@ from ._frame import _frame
 from ._utils import (
     mime_type_to_icon,
     run_item_status_and_termination_reason_to_icon_and_color,
-    run_status_to_icon_and_color,
 )
 
 WIDTH_1200px = "width: 1200px; max-width: none"
@@ -68,38 +67,19 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         </style>
     """)
 
+    # Render frame FIRST to establish NiceGUI client connection before any blocking I/O.
+    # This prevents "Response not ready" timeouts on first page load when API calls are slow.
+    await _frame(
+        navigation_title=f"Run {run_id}",
+        left_sidebar=True,
+        args={"run_id": run_id},
+    )
+
+    # Perform I/O operations AFTER the frame is rendered
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     run = await nicegui_run.io_bound(service.application_run, run_id)
     run_data = await nicegui_run.io_bound(run.details) if run else None
     spinner.set_visibility(False)
-
-    if run and run_data:
-        icon, color = run_status_to_icon_and_color(
-            run_data.state.value,
-            run_data.termination_reason,
-            run_data.statistics.item_count,
-            run_data.statistics.item_succeeded_count,
-        )
-        await _frame(
-            navigation_title=(
-                f"Run of {run_data.application_id} ({run_data.version_number}) on "
-                f"{run_data.submitted_at.astimezone().strftime('%m-%d %H:%M')}"
-            ),
-            navigation_icon=icon,
-            navigation_icon_color=color,
-            navigation_icon_tooltip=f"Run {run_data.run_id}, status {run_data.state.value.upper()}",
-            left_sidebar=True,
-            args={"run_id": run_id},
-        )
-    else:
-        await _frame(
-            navigation_title=f"Run {run_id}",
-            navigation_icon="bug_report",
-            navigation_icon_color="negative",
-            navigation_icon_tooltip="Could not load run data",
-            left_sidebar=True,
-            args={"run_id": run_id},
-        )
 
     if run is None:
         ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
