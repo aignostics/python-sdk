@@ -1290,7 +1290,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
             )
             assert dry_run_result.exit_code == 0, f"Dry-run failed: {dry_run_result.stdout}"
             assert "Would cancel 2 run(s)" in dry_run_result.stdout
-            logger.info("Dry-run output:\n%s", dry_run_result.stdout)
+            logger.info("Dry-run output:\n{}", dry_run_result.stdout)
 
             # Step 11: Verify runs are NOT canceled after dry-run by describing them
             logger.info("Step 11: Verifying runs are NOT canceled after dry-run")
@@ -1304,7 +1304,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                     "PENDING",
                     "PROCESSING",
                 }, f"Run {idx} was unexpectedly canceled during dry-run"
-                logger.info("Run %d still active after dry-run (state: %s)", idx, described_run["state"])
+                logger.info("Run {} still active after dry-run (state: {})", idx, described_run["state"])
 
             # Step 12: Actually cancel runs using cancel-by-filter with all three filters
             logger.info("Step 12: Canceling runs by filter (tags, application_id, application_version)")
@@ -1344,7 +1344,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                 assert described_run["termination_reason"] == "CANCELED_BY_USER", (
                     f"Run {idx} has unexpected termination reason: {described_run.get('termination_reason')}"
                 )
-                logger.info("Run %d successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
+                logger.info("Run {} successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
         else:
             # Fallback: cancel individually if we couldn't get the version
             runs_to_cancel = [run_id] + ([run_id_2] if run_id_2 else [])
