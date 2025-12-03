@@ -55,8 +55,9 @@
         },
         "max_gpus_per_slide": {
           "default": 1,
-          "description": "The maximum number of GPUs to allocate per slide",
-          "exclusiveMinimum": 0,
+          "description": "The maximum number of GPUs to allocate per slide (1-8)",
+          "maximum": 8,
+          "minimum": 1,
           "title": "Max Gpus Per Slide",
           "type": "integer"
         }
@@ -266,6 +267,14 @@
         "cpu": {
           "$ref": "#/$defs/CPUConfig",
           "description": "CPU resource configuration"
+        },
+        "node_acquisition_timeout_minutes": {
+          "default": 30,
+          "description": "Timeout for acquiring compute nodes in minutes (1-1440)",
+          "maximum": 1440,
+          "minimum": 1,
+          "title": "Node Acquisition Timeout Minutes",
+          "type": "integer"
         }
       },
       "title": "PipelineConfig",

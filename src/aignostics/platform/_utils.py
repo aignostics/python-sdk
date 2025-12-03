@@ -23,6 +23,7 @@ import requests
 from aignx.codegen.models import InputArtifact as InputArtifactData
 from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
+from loguru import logger
 from tqdm.auto import tqdm
 
 EIGHT_MB = 8_388_608
@@ -147,6 +148,7 @@ def generate_signed_url(url: str, expires_seconds: int = SIGNED_DOWNLOAD_URL_EXP
     from google.cloud import storage  # noqa: PLC0415, lazy loading for performance
 
     pattern = r"gs://(?P<bucket_name>[^/]+)/(?P<path>.*)"
+    logger.trace(f"Generating signed URL for: {url}")
     m = re.fullmatch(pattern, url)
     if not m:
         msg = "Invalid google storage URI"
@@ -157,14 +159,17 @@ def generate_signed_url(url: str, expires_seconds: int = SIGNED_DOWNLOAD_URL_EXP
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(path)
+    logger.trace(f"Check if blob exists: gs://{bucket_name}/{path}")
     if not blob.exists():
         msg = f"Blob does not exist: {url}"
         raise ValueError(msg)
 
-    return t.cast(
+    url = t.cast(
         "str",
         blob.generate_signed_url(expiration=datetime.timedelta(seconds=expires_seconds), method="GET", version="v4"),
     )
+    logger.debug(f"Generated signed URL for {url} valid for {expires_seconds} seconds")
+    return url
 
 
 def calculate_file_crc32c(file: Path) -> str:
