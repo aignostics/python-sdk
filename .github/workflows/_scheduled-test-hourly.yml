@@ -46,13 +46,13 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@2ddd2b9cb38ad8efd50337e8ab201519a34c9f24 # v7.1.1
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -73,6 +73,13 @@ jobs:
           envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
           envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
           envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+          envkey_AIGNOSTICS_SENTRY_ENABLED: true
+          envkey_AIGNOSTICS_SENTRY_DSN: ${{ secrets.SENTRY_DSN}}
+          envkey_AIGNOSTICS_SENTRY_DEBUG: false
+          envkey_AIGNOSTICS_SENTRY_SEND_DEFAULT_PII: false
+          envkey_AIGNOSTICS_SENTRY_SAMPLE_RATE: 0
+          envkey_AIGNOSTICS_SENTRY_TRACES_SAMPLE_RATE: 0
+          envkey_AIGNOSTICS_SENTRY_PROFILES_SAMPLE_RATE: 0
           fail_on_empty: false
 
       - name: Set up GCP credentials for bucket access
@@ -163,7 +170,7 @@ jobs:
           exit $EXIT_CODE
 
       - name: Upload test results
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:
           name: test-results-scheduled

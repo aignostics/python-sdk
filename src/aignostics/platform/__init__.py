@@ -47,6 +47,12 @@ from ._constants import (
     CLIENT_ID_INTERACTIVE_DEV,
     CLIENT_ID_INTERACTIVE_PRODUCTION,
     CLIENT_ID_INTERACTIVE_STAGING,
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
     DEVICE_URL_DEV,
     DEVICE_URL_PRODUCTION,
     DEVICE_URL_STAGING,
@@ -61,6 +67,11 @@ from ._constants import (
     TOKEN_URL_STAGING,
 )
 from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
+from ._sdk_metadata import (
+    PipelineConfig,
+    RunSdkMetadata,
+    SchedulingMetadata,
+)
 from ._service import Service, TokenInfo, UserInfo
 from ._settings import Settings, settings
 from ._utils import (
@@ -86,6 +97,16 @@ __all__ = [
     "CLIENT_ID_INTERACTIVE_DEV",
     "CLIENT_ID_INTERACTIVE_PRODUCTION",
     "CLIENT_ID_INTERACTIVE_STAGING",
+    "DEFAULT_CPU_PROVISIONING_MODE",
+    "DEFAULT_CPU_PROVISIONING_MODE",
+    "DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES",
+    "DEFAULT_GPU_PROVISIONING_MODE",
+    "DEFAULT_GPU_PROVISIONING_MODE",
+    "DEFAULT_GPU_TYPE",
+    "DEFAULT_GPU_TYPE",
+    "DEFAULT_MAX_GPUS_PER_SLIDE",
+    "DEFAULT_MAX_GPUS_PER_SLIDE",
+    "DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES",
     "DEVICE_URL_DEV",
     "DEVICE_URL_PRODUCTION",
     "DEVICE_URL_STAGING",
@@ -120,13 +141,16 @@ __all__ = [
     "Organization",
     "OutputArtifactData",
     "OutputArtifactElement",
+    "PipelineConfig",
     "Run",
     "RunData",
     "RunItemStatistics",
     "RunOutput",
+    "RunSdkMetadata",
     "RunState",
     "RunState",
     "RunTerminationReason",
+    "SchedulingMetadata",
     "Service",
     "Settings",
     "TokenInfo",

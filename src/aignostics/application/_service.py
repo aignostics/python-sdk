@@ -11,6 +11,7 @@ from typing import Any
 
 import google_crc32c
 import requests
+from loguru import logger
 
 from aignostics.bucket import Service as BucketService
 from aignostics.constants import (
@@ -34,7 +35,7 @@ from aignostics.platform import (
 from aignostics.platform import (
     Service as PlatformService,
 )
-from aignostics.utils import BaseService, Health, get_logger, sanitize_path_component
+from aignostics.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
 from ._download import (
@@ -48,6 +49,7 @@ from ._settings import Settings
 from ._utils import (
     get_mime_type_for_artifact,
     get_supported_extensions_for_application,
+    is_not_terminated_with_deadline_exceeded,
     validate_due_date,
 )
 
@@ -57,8 +59,6 @@ if has_qupath_extra:
     from aignostics.qupath import AnnotateProgress as QuPathAnnotateProgress
     from aignostics.qupath import Service as QuPathService
 
-
-logger = get_logger(__name__)
 
 APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5
 APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
@@ -108,10 +108,10 @@ class Service(BaseService):  # noqa: PLR0904
             Exception: If the client cannot be created.
         """
         if self._client is None:
-            logger.debug("Creating platform client.")
+            logger.trace("Creating platform client.")
             self._client = Client()
         else:
-            logger.debug("Reusing platform client.")
+            logger.trace("Reusing platform client.")
         return self._client
 
     def _get_platform_service(self) -> PlatformService:
@@ -124,10 +124,10 @@ class Service(BaseService):  # noqa: PLR0904
             Exception: If the client cannot be created.
         """
         if self._platform_service is None:
-            logger.debug("Creating platform service.")
+            logger.trace("Creating platform service.")
             self._platform_service = PlatformService()
         else:
-            logger.debug("Reusing platform service.")
+            logger.trace("Reusing platform service.")
         return self._platform_service
 
     @staticmethod
@@ -280,10 +280,10 @@ class Service(BaseService):  # noqa: PLR0904
             return
 
         if key not in entry:
-            logger.warning("key '%s' not found in entry, ignoring mapping for '%s'", key, external_id)
+            logger.warning("key '{}' not found in entry, ignoring mapping for '{}'", key, external_id)
             return
 
-        logger.debug("Updating key '%s' with value '%s' for external_id '%s'.", key, value, external_id)
+        logger.trace("Updating key '{}' with value '{}' for external_id '{}'.", key, value, external_id)
         entry[key.strip()] = value.strip()
 
     @staticmethod
@@ -341,7 +341,7 @@ class Service(BaseService):  # noqa: PLR0904
             application_version (str|None): The version of the application (semver).
                 If not given latest version is used.
             with_gui_metadata (bool): If True, include additional metadata for GUI.
-            mappings (list[str]): Mappings of the form '<regexp>:<key>:<value>,<key>:<value>,...'.
+            mappings (list[str]): Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
                 The regular expression is matched against the external_id attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
             with_extra_metadata (bool): If True, include extra metadata from the WSIService.
@@ -359,7 +359,7 @@ class Service(BaseService):  # noqa: PLR0904
                 or is not a directory.
             RuntimeError: If the metadata generation fails unexpectedly.
         """
-        logger.debug("Generating metadata from source directory: %s", source_directory)
+        logger.trace("Generating metadata from source directory: {}", source_directory)
 
         # TODO(Helmut): Use it
         _ = Service().application_version(application_id, application_version)
@@ -411,12 +411,12 @@ class Service(BaseService):  # noqa: PLR0904
                             Service._apply_mappings_to_entry(entry, mappings)
 
                         metadata.append(entry)
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
                         message = f"Failed to process file '{file_path}': {e}"
                         logger.warning(message)
                         continue
 
-            logger.debug("Generated metadata for %d files", len(metadata))
+            logger.trace("Generated metadata for {} files", len(metadata))
             return metadata
 
         except Exception as e:
@@ -456,13 +456,13 @@ class Service(BaseService):  # noqa: PLR0904
         """
         import psutil  # noqa: PLC0415
 
-        logger.debug("Uploading files with upload ID '%s'", upload_prefix)
+        logger.trace("Uploading files with upload ID '{}'", upload_prefix)
         app_version = Service().application_version(application_id, application_version=application_version)
         for row in metadata:
             external_id = row["external_id"]
             source_file_path = Path(row["external_id"])
             if not source_file_path.is_file():
-                logger.warning("Source file '%s' does not exist.", row["external_id"])
+                logger.warning("Source file '{}' does not exist.", row["external_id"])
                 return False
             username = psutil.Process().username().replace("\\", "_")
             object_key = (
@@ -474,14 +474,14 @@ class Service(BaseService):  # noqa: PLR0904
                 f"{BucketService().get_bucket_protocol()}://{BucketService().get_bucket_name()}/{object_key}"
             )
             signed_upload_url = BucketService().create_signed_upload_url(object_key)
-            logger.debug("Generated signed upload URL '%s' for object '%s'", signed_upload_url, platform_bucket_url)
+            logger.trace("Generated signed upload URL '{}' for object '{}'", signed_upload_url, platform_bucket_url)
             if upload_progress_queue:
                 upload_progress_queue.put_nowait({
                     "external_id": external_id,
                     "platform_bucket_url": platform_bucket_url,
                 })
             file_size = source_file_path.stat().st_size
-            logger.debug(
+            logger.trace(
                 "Uploading file '%s' with size %d bytes to '%s' via '%s'",
                 source_file_path,
                 file_size,
@@ -520,7 +520,7 @@ class Service(BaseService):  # noqa: PLR0904
                     timeout=60,
                 )
                 response.raise_for_status()
-        logger.info("Upload completed successfully.")
+        logger.debug("Upload completed successfully.")
         return True
 
     @staticmethod
@@ -572,6 +572,9 @@ class Service(BaseService):  # noqa: PLR0904
                 "item_count": run.statistics.item_count,
                 "item_succeeded_count": run.statistics.item_succeeded_count,
                 "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
+                "is_not_terminated_with_deadline_exceeded": is_not_terminated_with_deadline_exceeded(
+                    run.state, run.custom_metadata
+                ),
             }
             for run in Service().application_runs(
                 application_id=application_id,
@@ -798,7 +801,12 @@ class Service(BaseService):  # noqa: PLR0904
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
-        validate_only: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -816,7 +824,14 @@ class Service(BaseService):  # noqa: PLR0904
             application_version (str | None): The version of the application.
                 If not given latest version is used.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
-            validate_only (bool): If True, cancel the run post validation, before analysis.
+            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
+                (SPOT, ON_DEMAND, or FLEX_START).
+            max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            flex_start_max_run_duration_minutes (int | None): Maximum run duration in minutes
+                when using FLEX_START provisioning mode (1-3600).
+            cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
 
         Returns:
             Run: The submitted run.
@@ -832,7 +847,7 @@ class Service(BaseService):  # noqa: PLR0904
             RuntimeError: If submitting the run failed unexpectedly.
         """
         validate_due_date(due_date)
-        logger.debug("Submitting application run with metadata: %s", metadata)
+        logger.trace("Submitting application run with metadata: {}", metadata)
         app_version = self.application_version(application_id, application_version=application_version)
         if len(app_version.input_artifacts) != 1:
             message = (
@@ -901,7 +916,7 @@ class Service(BaseService):  # noqa: PLR0904
                     },
                 )
             )
-        logger.debug("Items for application run submission: %s", items)
+        logger.trace("Items for application run submission: {}", items)
 
         try:
             run = self.application_run_submit(
@@ -914,10 +929,15 @@ class Service(BaseService):  # noqa: PLR0904
                 due_date=due_date,
                 deadline=deadline,
                 onboard_to_aignostics_portal=onboard_to_aignostics_portal,
-                validate_only=validate_only,
+                gpu_type=gpu_type,
+                gpu_provisioning_mode=gpu_provisioning_mode,
+                max_gpus_per_slide=max_gpus_per_slide,
+                flex_start_max_run_duration_minutes=flex_start_max_run_duration_minutes,
+                cpu_provisioning_mode=cpu_provisioning_mode,
+                node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
             )
-            logger.info(
-                "Submitted application run with items: %s, application run id %s, custom metadata: %s",
+            logger.debug(
+                "Submitted application run with items: {}, application run id {}, custom metadata: {}",
                 items,
                 run.run_id,
                 custom_metadata,
@@ -938,7 +958,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(  # noqa: PLR0913, PLR0917
+    def application_run_submit(  # noqa: PLR0913, PLR0917, PLR0912, C901, PLR0915
         self,
         application_id: str,
         items: list[InputItem],
@@ -949,7 +969,12 @@ class Service(BaseService):  # noqa: PLR0904
         due_date: str | None = None,
         deadline: str | None = None,
         onboard_to_aignostics_portal: bool = False,
-        validate_only: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
     ) -> Run:
         """Submit a run for the given application.
 
@@ -966,7 +991,14 @@ class Service(BaseService):  # noqa: PLR0904
             deadline (str | None): An optional hard deadline for the run, ISO8601 format.
                 If processing exceeds this deadline, the run can be aborted.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
-            validate_only (bool): If True, cancel the run post validation, before analysis.
+            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
+                (SPOT, ON_DEMAND, or FLEX_START).
+            max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            flex_start_max_run_duration_minutes (int | None): Maximum run duration in minutes
+                when using FLEX_START provisioning mode (1-3600).
+            cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
 
         Returns:
             Run: The submitted run.
@@ -990,10 +1022,9 @@ class Service(BaseService):  # noqa: PLR0904
                 sdk_metadata["note"] = note
             if tags:
                 sdk_metadata["tags"] = tags
-            if onboard_to_aignostics_portal or validate_only:
+            if onboard_to_aignostics_portal:
                 sdk_metadata["workflow"] = {
                     "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
-                    "validate_only": validate_only,
                 }
             if due_date or deadline:
                 sdk_metadata["scheduling"] = {}
@@ -1001,6 +1032,40 @@ class Service(BaseService):  # noqa: PLR0904
                     sdk_metadata["scheduling"]["due_date"] = due_date
                 if deadline:
                     sdk_metadata["scheduling"]["deadline"] = deadline
+
+            has_gpu_config = (
+                gpu_type or gpu_provisioning_mode or max_gpus_per_slide or flex_start_max_run_duration_minutes
+            )
+            has_pipeline_config = has_gpu_config or cpu_provisioning_mode or node_acquisition_timeout_minutes
+            if has_pipeline_config:
+                sdk_metadata["pipeline"] = {}
+                if has_gpu_config:
+                    sdk_metadata["pipeline"]["gpu"] = {}
+                    if gpu_type:
+                        sdk_metadata["pipeline"]["gpu"]["gpu_type"] = gpu_type
+                    if gpu_provisioning_mode:
+                        sdk_metadata["pipeline"]["gpu"]["provisioning_mode"] = gpu_provisioning_mode
+                    if max_gpus_per_slide:
+                        sdk_metadata["pipeline"]["gpu"]["max_gpus_per_slide"] = max_gpus_per_slide
+                    if flex_start_max_run_duration_minutes:
+                        sdk_metadata["pipeline"]["gpu"]["flex_start_max_run_duration_minutes"] = (
+                            flex_start_max_run_duration_minutes
+                        )
+                if cpu_provisioning_mode:
+                    sdk_metadata["pipeline"]["cpu"] = {"provisioning_mode": cpu_provisioning_mode}
+                if node_acquisition_timeout_minutes:
+                    sdk_metadata["pipeline"]["node_acquisition_timeout_minutes"] = node_acquisition_timeout_minutes
+
+            # Validate pipeline configuration if present
+            if "pipeline" in sdk_metadata:
+                from aignostics.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
+
+                try:
+                    PipelineConfig.model_validate(sdk_metadata["pipeline"])
+                except Exception as e:
+                    message = f"Invalid pipeline configuration: {e}"
+                    logger.warning(message)
+                    raise ValueError(message) from e
 
             custom_metadata["sdk"] = sdk_metadata
 
@@ -1036,9 +1101,9 @@ class Service(BaseService):  # noqa: PLR0904
             RuntimeError: If updating the run metadata fails unexpectedly.
         """
         try:
-            logger.debug("Updating custom metadata for run with ID '%s'", run_id)
+            logger.trace("Updating custom metadata for run with ID '{}'", run_id)
             self._get_platform_client().run(run_id).update_custom_metadata(custom_metadata)
-            logger.debug("Updated custom metadata for run with ID '%s'", run_id)
+            logger.trace("Updated custom metadata for run with ID '{}'", run_id)
         except ValueError as e:
             message = f"Failed to update custom metadata for run with ID '{run_id}': ValueError {e}"
             logger.warning(message)
@@ -1097,7 +1162,7 @@ class Service(BaseService):  # noqa: PLR0904
             RuntimeError: If updating the item metadata fails unexpectedly.
         """
         try:
-            logger.debug(
+            logger.trace(
                 "Updating custom metadata for item '%s' in run with ID '%s'",
                 external_id,
                 run_id,
@@ -1106,7 +1171,7 @@ class Service(BaseService):  # noqa: PLR0904
                 external_id,
                 custom_metadata,
             )
-            logger.debug(
+            logger.trace(
                 "Updated custom metadata for item '%s' in run with ID '%s'",
                 external_id,
                 run_id,
@@ -1210,9 +1275,9 @@ class Service(BaseService):  # noqa: PLR0904
             RuntimeError: If deleting the run fails unexpectedly.
         """
         try:
-            logger.debug("Deleting application run with ID '%s'", run_id)
+            logger.trace("Deleting application run with ID '{}'", run_id)
             self.application_run(run_id).delete()
-            logger.debug("Deleted application run with ID '%s'", run_id)
+            logger.trace("Deleted application run with ID '{}'", run_id)
         except ValueError as e:
             message = f"Failed to delete application run with ID '{run_id}': ValueError {e}"
             logger.warning(message)
@@ -1362,7 +1427,7 @@ class Service(BaseService):  # noqa: PLR0904
                             download_progress_callable,
                         )
                     item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     logger.warning(
                         "Failed to download input slide from '%s' to '%s': %s", item.external_id, local_path, e
                     )
@@ -1374,21 +1439,21 @@ class Service(BaseService):  # noqa: PLR0904
                 progress.qupath_add_input_progress = qupath_add_input_progress
                 update_progress(progress, download_progress_callable, download_progress_queue)
 
-            logger.debug("Adding input slides to QuPath project ...")
+            logger.trace("Adding input slides to QuPath project ...")
             image_paths = []
             for item in results:
                 local_path = Path(item.external_id)
                 if not local_path.is_file():
-                    logger.warning("Input slide '%s' not found, skipping QuPath addition.", local_path)
+                    logger.warning("Input slide '{}' not found, skipping QuPath addition.", local_path)
                     continue
                 image_paths.append(local_path.resolve())
             added = QuPathService.add(
                 final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
             )
             message = f"Added '{added}' input slides to QuPath project."
-            logger.info(message)
+            logger.debug(message)
 
-        logger.debug("Downloading results for run '%s' to '%s'", run_id, final_destination_directory)
+        logger.trace("Downloading results for run '{}' to '{}'", run_id, final_destination_directory)
 
         progress.status = DownloadProgressState.CHECKING
         update_progress(progress, download_progress_callable, download_progress_queue)
@@ -1410,7 +1475,7 @@ class Service(BaseService):  # noqa: PLR0904
             )
 
             if run_details.state == RunState.TERMINATED:
-                logger.debug(
+                logger.trace(
                     "Run '%s' reached final status '%s' with message '%s' (%s).",
                     run_id,
                     run_details.state,
@@ -1420,7 +1485,7 @@ class Service(BaseService):  # noqa: PLR0904
                 break
 
             if not wait_for_completion:
-                logger.debug(
+                logger.trace(
                     "Run '%s' is in progress with status '%s' and message '%s' (%s), "
                     "but not requested to wait for completion.",
                     run_id,
@@ -1430,7 +1495,7 @@ class Service(BaseService):  # noqa: PLR0904
                 )
                 break
 
-            logger.debug(
+            logger.trace(
                 "Run '%s' is in progress with status '%s', waiting for completion ...", run_id, run_details.state
             )
             progress.status = DownloadProgressState.WAITING
@@ -1438,7 +1503,7 @@ class Service(BaseService):  # noqa: PLR0904
             time.sleep(APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS)
 
         if qupath_project:
-            logger.debug("Adding result images to QuPath project ...")
+            logger.trace("Adding result images to QuPath project ...")
 
             def update_qupath_add_results_progress(qupath_add_results_progress: QuPathAddProgress) -> None:
                 progress.status = DownloadProgressState.QUPATH_ADD_RESULTS
@@ -1451,8 +1516,8 @@ class Service(BaseService):  # noqa: PLR0904
                 update_qupath_add_results_progress,
             )
             message = f"Added {added} result images to QuPath project."
-            logger.info(message)
-            logger.debug("Annotating input slides with polygons from results ...")
+            logger.debug(message)
+            logger.trace("Annotating input slides with polygons from results ...")
 
             def update_qupath_annotate_input_with_results_progress(
                 qupath_annotate_input_with_results_progress: QuPathAnnotateProgress,
@@ -1469,7 +1534,7 @@ class Service(BaseService):  # noqa: PLR0904
 
                 image_path = Path(item.external_id)
                 if not image_path.is_file():
-                    logger.warning("Input slide '%s' not found, skipping QuPath annotation.", image_path)
+                    logger.warning("Input slide '{}' not found, skipping QuPath annotation.", image_path)
                     continue
                 for artifact in item.output_artifacts:
                     if (
@@ -1490,7 +1555,7 @@ class Service(BaseService):  # noqa: PLR0904
                                 final_destination_directory / f"{sanitize_path_component(artifact_name)}.json"
                             )
                         message = f"Annotating input slide '{image_path}' with artifact '{artifact_path}' ..."
-                        logger.debug(message)
+                        logger.trace(message)
                         added = QuPathService.annotate(
                             final_destination_directory / "qupath",
                             image_path,
@@ -1498,10 +1563,10 @@ class Service(BaseService):  # noqa: PLR0904
                             update_qupath_annotate_input_with_results_progress,
                         )
                         message = f"Added {added} annotations to input slide '{image_path}' from '{artifact_path}'."
-                        logger.info(message)
+                        logger.debug(message)
                         total_annotations += added
             message = f"Added {added} annotations to input slides."
-            logger.info(message)
+            logger.debug(message)
 
         progress.status = DownloadProgressState.COMPLETED
         update_progress(progress, download_progress_callable, download_progress_queue)

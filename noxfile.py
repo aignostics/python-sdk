@@ -128,6 +128,18 @@ def lint(session: nox.Session) -> None:
 
 
 @nox.session(python=[PYTHON_VERSION])
+def lint_fix(session: nox.Session) -> None:
+    """Apply code formatting checks and linting."""
+    _setup_venv(session, True)
+    session.run("ruff", "check", "--fix", ".")
+    session.run(
+        "ruff",
+        "format",
+        ".",
+    )
+
+
+@nox.session(python=[PYTHON_VERSION])
 def audit(session: nox.Session) -> None:
     """Run security audit and license checks."""
     _setup_venv(session)
@@ -408,8 +420,8 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
     Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
 
     formats = {
-        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", "AIGNOSTICS_LOG_CONSOLE_ENABLED=false"]},
-        "json": {"ext": "json", "args": ["--output-format=json", "--env", "AIGNOSTICS_LOG_CONSOLE_ENABLED=false"]},
+        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
+        "json": {"ext": "json", "args": ["--output-format=json", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
     }
 
     for version in API_VERSIONS:
@@ -443,7 +455,7 @@ def _generate_sdk_metadata_schema(session: nox.Session, schema_type: str) -> Non
             f"{schema_type}-metadata-schema",
             "--no-pretty",
             "--env",
-            "AIGNOSTICS_LOG_CONSOLE_ENABLED=false",
+            "AIGNOSTICS_LOG_STDERR_ENABLED=false",
             stdout=f,
             external=True,
         )
@@ -935,7 +947,7 @@ def setup(session: nox.Session) -> None:
         session.run("git", "add", ".", external=True)
         try:
             session.run("pre-commit", external=True)
-        except Exception:  # noqa: BLE001
+        except Exception:
             session.log("pre-commit run failed, continuing anyway")
         session.run("git", "add", ".", external=True)
 

@@ -3,7 +3,6 @@ itemId: SWR-APPLICATION-3-2
 itemTitle: Validate Output Artifact Integrity
 itemHasParent: SHR-APPLICATION-3
 itemType: Requirement
-# Software requirement (user)
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---

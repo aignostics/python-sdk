@@ -1,0 +1,93 @@
+name: "> Stress Test"
+
+on:
+  workflow_call:
+    inputs:
+      platform_environment:
+        description: 'Environment to test against, that is staging or production'
+        required: false
+        default: 'staging'
+        type: string
+      branch:
+        description: 'Branch to checkout (leave empty for default branch)'
+        required: false
+        default: ''
+        type: string
+    secrets:
+      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
+        required: true
+      AIGNOSTICS_REFRESH_TOKEN_STAGING:
+        required: true
+      GCP_CREDENTIALS_STAGING:
+        required: true
+      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
+        required: true
+      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
+        required: true
+      GCP_CREDENTIALS_PRODUCTION:
+        required: true
+      SENTRY_DSN:
+        required: true
+
+env:
+  # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
+  PYTHONIOENCODING: "utf8"
+  AIGNOSTICS_PLATFORM_ENVIRONMENT: ${{ inputs.platform_environment }}
+
+jobs:
+  test-stress:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+        with:
+          version-file: "pyproject.toml"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dev tools
+        shell: bash
+        run: .github/workflows/_install_dev_tools.bash
+
+      - name: Install Python, venv and dependencies
+        shell: bash
+        run: uv sync --all-extras --frozen --link-mode=copy
+
+      - name: Create .env file
+        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
+        with:
+          # The following 3 lines are correct even if vscode complains
+          envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
+          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
+          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
+          envkey_AIGNOSTICS_SENTRY_ENABLED: true
+          envkey_AIGNOSTICS_SENTRY_DSN: ${{ secrets.SENTRY_DSN}}
+          envkey_AIGNOSTICS_SENTRY_DEBUG: false
+          envkey_AIGNOSTICS_SENTRY_SEND_DEFAULT_PII: false
+          envkey_AIGNOSTICS_SENTRY_SAMPLE_RATE: 0
+          envkey_AIGNOSTICS_SENTRY_TRACES_SAMPLE_RATE: 0
+          envkey_AIGNOSTICS_SENTRY_PROFILES_SAMPLE_RATE: 0
+          fail_on_empty: false
+
+      - name: Set up GCP credentials for bucket access
+        shell: bash
+        env:
+          GCP_CREDENTIALS: ${{ inputs.platform_environment == 'staging' && secrets.GCP_CREDENTIALS_STAGING || secrets.GCP_CREDENTIALS_PRODUCTION }}
+        run: |
+          echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+
+      - name: Test / stress
+        shell: bash
+        run: |
+          set +e
+          make test_stress

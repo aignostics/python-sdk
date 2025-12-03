@@ -2,6 +2,8 @@
 
 from aignostics.platform import ItemState, ItemTerminationReason, RunState, RunTerminationReason
 
+NONE = "none"
+
 
 def application_id_to_icon(application_id: str) -> str:
     """Convert application ID to icon.
@@ -21,7 +23,11 @@ def application_id_to_icon(application_id: str) -> str:
 
 
 def run_status_to_icon_and_color(
-    run_status: str, termination_reason: str | None, item_count: int, item_succeeded_count: int
+    run_status: str,
+    termination_reason: str | None,
+    item_count: int,
+    item_succeeded_count: int,
+    is_not_terminated_with_deadline_exceeded: bool = False,
 ) -> tuple[str, str]:
     """Convert run status and termination reason to icon and color.
 
@@ -30,30 +36,30 @@ def run_status_to_icon_and_color(
         termination_reason (str): The termination reason.
         item_count (int): The total number of items in the run.
         item_succeeded_count (int): The number of items that succeeded in the run.
+        is_not_terminated_with_deadline_exceeded (bool): Whether the run is not terminated with deadline exceeded.
 
     Returns:
         tuple[str, str]: The icon name and color.
     """
+    if is_not_terminated_with_deadline_exceeded:  # This should never happen
+        return "alarm_off", "orange"
     match run_status:
         case RunState.PENDING:
-            return "schedule", "info"
+            return "schedule", "secondary"
         case RunState.PROCESSING:
             return "directions_run", "info"
         case RunState.TERMINATED:
             icon = "bug_report"
+            color = NONE
             if termination_reason == RunTerminationReason.CANCELED_BY_USER:
                 icon = "cancel"
+                color = "warning"
             if termination_reason == RunTerminationReason.CANCELED_BY_SYSTEM:
                 icon = "error"
+                color = "error"
             if termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
                 icon = "sports_score"
-            color = "negative"
-            if item_succeeded_count <= 0:
-                color = "negative"
-            elif item_succeeded_count < item_count:
-                color = "warning"
-            elif item_succeeded_count == item_count:
-                color = "positive"
+                color = "success" if item_succeeded_count == item_count else "error"
             return (icon, color)
     return "bug_report", "negative"
 
@@ -72,19 +78,19 @@ def run_item_status_and_termination_reason_to_icon_and_color(  # noqa: PLR0911
     """
     match item_status:
         case ItemState.PENDING:
-            return "schedule", "info"
+            return "schedule", "secondary"
         case ItemState.PROCESSING:
             return "directions_run", "info"
         case ItemState.TERMINATED:
             if termination_reason == ItemTerminationReason.SKIPPED:
                 return "next_plan", "warning"
             if termination_reason == ItemTerminationReason.SUCCEEDED:
-                return "check_circle", "positive"
+                return "check_circle", "success"
             if termination_reason == ItemTerminationReason.SYSTEM_ERROR:
-                return "error", "negative"
+                return "error", "error"
             if termination_reason == ItemTerminationReason.USER_ERROR:
-                return "warning", "negative"
-    return "bug_report", "negative"
+                return "warning", "warning"
+    return "bug_report", "error"
 
 
 def mime_type_to_icon(mime_type: str) -> str:

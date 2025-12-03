@@ -6,10 +6,9 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from loguru import logger
 
-from aignostics.utils import console, get_logger, get_user_data_directory
-
-logger = get_logger(__name__)
+from aignostics.utils import console, get_user_data_directory
 
 PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"
@@ -110,7 +109,7 @@ WHERE
     try:
         client = IDCClient.client()
         for idx in [idx.strip() for idx in indices.split(",") if idx.strip()]:
-            logger.info("Fetching index: '%s'", idx)
+            logger.debug("Fetching index: '{}'", idx)
             client.fetch_index(idx)
 
         pd.set_option("display.max_colwidth", None)
@@ -142,6 +141,7 @@ def idc_download(
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/datasets/idc",
         ),
     ] = get_user_data_directory("datasets/idc"),  # noqa: B008
     target_layout: Annotated[
@@ -161,7 +161,7 @@ def idc_download(
         )
         console.print(f"[green]Successfully downloaded {matches_found} identifier type(s) to {target}[/green]")
     except ValueError as e:
-        logger.warning("Bad input to download from IDC for IDs '%s': %s", source, e)
+        logger.warning(f"Bad input to download from IDC for IDs '{source}': {e}")
         console.print(f"[warning]Warning:[/warning] {e}")
         sys.exit(2)
     except Exception as e:
@@ -190,6 +190,7 @@ def aignostics_download(
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/datasets/aignostics",
         ),
     ] = get_user_data_directory("datasets/aignostics"),  # noqa: B008
 ) -> None:
@@ -234,7 +235,7 @@ def aignostics_download(
 
         console.print(f"[green]Successfully downloaded to {output_path}[/green]")
     except ValueError as e:
-        logger.warning("Bad input to download from '%s': %s", source_url, e)
+        logger.warning(f"Bad input to download from '{source_url}': {e}")
         console.print(f"[warning]Warning:[/warning] Bad input: {e}")
         sys.exit(2)
     except Exception as e:

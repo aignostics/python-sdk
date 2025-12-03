@@ -7,16 +7,118 @@ including user information, CI/CD environment details, and test execution contex
 import os
 import sys
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, ValidationError
+from loguru import logger
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from aignostics.utils import get_logger, user_agent
+from aignostics.utils import user_agent
 
-logger = get_logger(__name__)
+from ._constants import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+)
 
-SDK_METADATA_SCHEMA_VERSION = "0.0.4"
+SDK_METADATA_SCHEMA_VERSION = "0.0.6"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
+
+
+class GPUType(StrEnum):
+    """Type of GPU to use for processing."""
+
+    L4 = "L4"
+    A100 = "A100"
+
+
+class ProvisioningMode(StrEnum):
+    """Provisioning mode for resources."""
+
+    SPOT = "SPOT"
+    ON_DEMAND = "ON_DEMAND"
+    FLEX_START = "FLEX_START"
+
+
+class CPUConfig(BaseModel):
+    """Configuration for CPU resources."""
+
+    provisioning_mode: ProvisioningMode = Field(
+        default_factory=lambda: ProvisioningMode(DEFAULT_CPU_PROVISIONING_MODE),
+        description="The provisioning mode for CPU resources (SPOT or ON_DEMAND)",
+    )
+
+
+class GPUConfig(BaseModel):
+    """Configuration for GPU resources."""
+
+    gpu_type: GPUType = Field(
+        default_factory=lambda: GPUType(DEFAULT_GPU_TYPE),
+        description="The type of GPU to use (L4 or A100)",
+    )
+    provisioning_mode: ProvisioningMode = Field(
+        default_factory=lambda: ProvisioningMode(DEFAULT_GPU_PROVISIONING_MODE),
+        description="The provisioning mode for GPU resources (SPOT, ON_DEMAND, or FLEX_START)",
+    )
+    max_gpus_per_slide: int = Field(
+        default=DEFAULT_MAX_GPUS_PER_SLIDE,
+        ge=1,
+        le=8,
+        description="The maximum number of GPUs to allocate per slide (1-8)",
+    )
+    flex_start_max_run_duration_minutes: int | None = Field(
+        default=None,
+        ge=1,
+        le=60 * 60,
+        description="Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). "
+        "Required when provisioning_mode is FLEX_START, must be None otherwise.",
+    )
+
+    @model_validator(mode="after")
+    def validate_flex_start_duration(self) -> "GPUConfig":
+        """Validate flex_start_max_run_duration_minutes based on provisioning mode.
+
+        Returns:
+            The validated GPUConfig instance.
+
+        Raises:
+            ValueError: If flex_start_max_run_duration_minutes is set when not using FLEX_START mode.
+        """
+        if self.provisioning_mode == ProvisioningMode.FLEX_START:
+            if self.flex_start_max_run_duration_minutes is None:
+                # Default to 12 hours (720 minutes) if not specified
+                # Using object.__setattr__ to bypass Pydantic's frozen model protection
+                object.__setattr__(  # noqa: PLC2801
+                    self,
+                    "flex_start_max_run_duration_minutes",
+                    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+                )
+        elif self.flex_start_max_run_duration_minutes is not None:
+            msg = "flex_start_max_run_duration_minutes must be None when provisioning_mode is not FLEX_START"
+            raise ValueError(msg)
+        return self
+
+
+class PipelineConfig(BaseModel):
+    """Pipeline configuration for dynamic orchestration."""
+
+    gpu: GPUConfig = Field(
+        default_factory=GPUConfig,
+        description="GPU resource configuration",
+    )
+    cpu: CPUConfig = Field(
+        default_factory=CPUConfig,
+        description="CPU resource configuration",
+    )
+    node_acquisition_timeout_minutes: int = Field(
+        default=DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+        ge=1,
+        le=60 * 60,
+        description="Timeout for acquiring compute nodes in minutes (1-3600)",
+    )
 
 
 class SubmissionMetadata(BaseModel):
@@ -80,7 +182,6 @@ class WorkflowMetadata(BaseModel):
     onboard_to_aignostics_portal: bool = Field(
         default=False, description="Whether to onboard results to the Aignostics Portal"
     )
-    validate_only: bool = Field(default=False, description="Whether to only validate without running analysis")
 
 
 class SchedulingMetadata(BaseModel):
@@ -122,6 +223,7 @@ class RunSdkMetadata(BaseModel):
     note: str | None = Field(None, description="Optional user note for the run")
     workflow: WorkflowMetadata | None = Field(None, description="Workflow control flags")
     scheduling: SchedulingMetadata | None = Field(None, description="Scheduling information")
+    pipeline: PipelineConfig | None = Field(None, description="Pipeline orchestration configuration")
 
     model_config = {"extra": "forbid"}  # Reject unknown fields
 
@@ -212,7 +314,7 @@ def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> d
             "user_email": me.user.email,
             "user_id": me.user.id,
         }
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.warning("Failed to fetch user information for SDK metadata")
 
     ci_metadata: dict[str, Any] = {}
