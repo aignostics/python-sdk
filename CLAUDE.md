@@ -18,6 +18,7 @@ If you want to execute and verify code yourself:
 * Use `uv run pytest ...` to run tests.
 * Use `uv run aignostics ...` to run the CLI and commands.
 * Use `make lint` to check code style and types.
+* Use `make lint_fix` to automatically fix code style issues.
 * Use `make test_unit` to run the unit test suite.
 * Use `make test_integration` to run the integration test suite.
 * Use `make test_e2e` to run the end-to-end (e2e) test suite.
@@ -533,7 +534,7 @@ Some modules have conditional loading based on dependencies:
 * User and organization information (when authenticated)
 * GitHub Actions workflow details (repository, run URL, runner info)
 * Pytest test context (current test, markers)
-* Workflow control flags (validate_only, onboard_to_portal)
+* Workflow control flag (onboard_to_portal)
 * Scheduling information (due dates, deadlines)
 * Optional user notes
 * **Tags** (NEW): Set of tags for filtering (`set[str]`)

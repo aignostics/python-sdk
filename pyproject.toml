@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "0.2.209"
+version = "0.2.222"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -87,7 +87,6 @@ dependencies = [
     "typer>=0.20.0,<1",
     "uptime>=3.0.1,<4",
     # Custom
-    "aiopath>=0.6.11,<1",
     "boto3>=1.41.0,<2",
     "certifi>=2025.11.12,<2026",
     "defusedxml>=0.7.1",
@@ -100,7 +99,7 @@ dependencies = [
     "highdicom>=0.26.1,<1",
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
-    "idc-index-data==22.1.5",
+    "idc-index-data==23.0.1",
     "ijson>=3.4.0.post0,<4",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
@@ -199,6 +198,8 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "jupyterlab>=4.4.9",                # CVE-2025-59842
     "pip>=5.3",                         # CVE-2025-8869  
     "starlette>=0.49.1",                # GHSA-7f5h-v6xp-fcq8
+    "fonttools>=4.60.2",                # CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib
+    "pyjpegls; sys_platform == 'never'", # 3.14
 ]
 
 [tool.uv.sources]
@@ -215,7 +216,7 @@ Changelog = "https://github.com/aignostics/python-sdk/releases"
 Issues = "https://github.com/aignostics/python-sdk/issues"
 
 [build-system]
-requires = ["hatchling==1.27.0"]
+requires = ["hatchling==1.28.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
@@ -268,6 +269,7 @@ ignore = [
     "T201",     # Remove `print`
     "INP001",   # Checks for packages that are missing an __init__.py file.
     "BLE001",   # Accept for now TODO(Helmut): Add proper exception handling later
+    "ASYNC240"  # Aiopath broken in Python 3.11 which we want to support
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -374,7 +376,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "0.2.209"
+current_version = "0.2.222"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
@@ -430,6 +432,11 @@ filename = "examples/notebook.py"
 filename = "aignostics.spec"
 search = "version='{current_version}'"
 replace = "version='{new_version}'"
+
+[[tool.bumpversion.files]]
+filename = "CLI_REFERENCE.md"
+search = "🔬 Aignostics Python SDK v{current_version}"
+replace = "🔬 Aignostics Python SDK v{new_version}"
 
 [tool.git-cliff.remote.github]
 owner = "aignostics"

@@ -51,7 +51,7 @@
         },
         "provisioning_mode": {
           "$ref": "#/$defs/ProvisioningMode",
-          "description": "The provisioning mode for GPU resources (SPOT, ON_DEMAND, or FLEX_START)"
+          "description": "The provisioning mode for GPU resources (SPOT or ON_DEMAND)"
         },
         "max_gpus_per_slide": {
           "default": 1,
@@ -60,21 +60,6 @@
           "minimum": 1,
           "title": "Max Gpus Per Slide",
           "type": "integer"
-        },
-        "flex_start_max_run_duration_minutes": {
-          "anyOf": [
-            {
-              "maximum": 3600,
-              "minimum": 1,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Required when provisioning_mode is FLEX_START, must be None otherwise.",
-          "title": "Flex Start Max Run Duration Minutes"
         }
       },
       "title": "GPUConfig",
@@ -285,8 +270,8 @@
         },
         "node_acquisition_timeout_minutes": {
           "default": 30,
-          "description": "Timeout for acquiring compute nodes in minutes (1-3600)",
-          "maximum": 3600,
+          "description": "Timeout for acquiring compute nodes in minutes (1-1440)",
+          "maximum": 1440,
           "minimum": 1,
           "title": "Node Acquisition Timeout Minutes",
           "type": "integer"
@@ -299,8 +284,7 @@
       "description": "Provisioning mode for resources.",
       "enum": [
         "SPOT",
-        "ON_DEMAND",
-        "FLEX_START"
+        "ON_DEMAND"
       ],
       "title": "ProvisioningMode",
       "type": "string"
@@ -447,6 +431,12 @@
           "description": "Whether to onboard results to the Aignostics Portal",
           "title": "Onboard To Aignostics Portal",
           "type": "boolean"
+        },
+        "validate_only": {
+          "default": false,
+          "description": "Whether to only validate without running analysis",
+          "title": "Validate Only",
+          "type": "boolean"
         }
       },
       "title": "WorkflowMetadata",
@@ -582,5 +572,5 @@
   "title": "RunSdkMetadata",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v0.0.6.json"
+  "$id": "https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v0.0.5.json"
 }

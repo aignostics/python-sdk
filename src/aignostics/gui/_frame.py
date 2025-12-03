@@ -3,6 +3,7 @@
 import contextlib
 import platform
 import sys
+import webbrowser
 from collections.abc import Generator
 from contextlib import contextmanager
 from importlib.util import find_spec
@@ -19,8 +20,6 @@ FLAT_COLOR_WHITE = "flat color=white"
 
 HEALTH_UPDATE_INTERVAL = 30
 USERINFO_UPDATE_INTERVAL = 60 * 60
-
-PROFILE_EDIT_URL = "https://platform.aignostics.com/dashboard/account/profile"
 
 
 @contextmanager
@@ -46,7 +45,7 @@ def frame(  # noqa: C901, PLR0915
     from nicegui import app, background_tasks, context, run, ui  # noqa: PLC0415
 
     from aignostics.platform import Service as PlatformService  # noqa: PLC0415
-    from aignostics.platform import UserInfo  # noqa: PLC0415
+    from aignostics.platform import UserInfo, settings  # noqa: PLC0415
     from aignostics.system import Service as SystemService  # noqa: PLC0415
 
     theme()
@@ -84,7 +83,7 @@ def frame(  # noqa: C901, PLR0915
                     ui.button(
                         "Edit Profile",
                         icon="edit",
-                        on_click=lambda _: ui.navigate.to(PROFILE_EDIT_URL, new_tab=True),
+                        on_click=lambda: webbrowser.open(settings().profile_edit_url),
                     )
 
     async def _user_info_ui_load() -> None:

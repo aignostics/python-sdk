@@ -141,6 +141,7 @@ def idc_download(
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/datasets/idc",
         ),
     ] = get_user_data_directory("datasets/idc"),  # noqa: B008
     target_layout: Annotated[
@@ -189,6 +190,7 @@ def aignostics_download(
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/datasets/aignostics",
         ),
     ] = get_user_data_directory("datasets/aignostics"),  # noqa: B008
 ) -> None:

@@ -38,6 +38,7 @@ def install(
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics",
         ),
     ] = Service.get_installation_path(),  # noqa: B008
     reinstall: Annotated[
@@ -261,6 +262,7 @@ def uninstall(
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics",
         ),
     ] = Service.get_installation_path(),  # noqa: B008
     platform_system: Annotated[

@@ -134,7 +134,7 @@ class LogSettings(BaseSettings):
     ]
     redirect_logging: Annotated[
         bool,
-        Field(description="Redirect standard logging", default=True),
+        Field(description="Redirect standard logging", default=False),
     ]
 
     @field_validator("file_name")
@@ -182,11 +182,14 @@ def logging_initialize(filter_func: Callable[["Record"], bool] | None = None) ->
     )
 
     if settings.stderr_enabled:
-        # Use catch=True to suppress errors when stderr is closed during test teardown
-        logger.add(sys.stderr, level=settings.level, format=log_format, filter=filter_func, catch=True)
+        logger.add(
+            sys.stderr, level=settings.level, format=log_format, filter=filter_func, enqueue=True, catch=True
+        )  # Use catch=True to suppress errors when stderr is closed during test teardown
 
     if settings.file_enabled:
-        logger.add(settings.file_name, level=settings.level, format=log_format, filter=filter_func, catch=True)
+        logger.add(
+            settings.file_name, level=settings.level, format=log_format, filter=filter_func, enqueue=True, catch=True
+        )  # Use catch=True to suppress errors when stderr is closed during test teardown
 
     if settings.redirect_logging:
         logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
