@@ -20,6 +20,9 @@ from aignostics.platform._sdk_metadata import (
     validate_run_sdk_metadata_silent,
 )
 
+# Test constants
+TEST_USER_AGENT = "aignostics-sdk/1.0.0"
+
 
 @pytest.fixture
 def clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -410,7 +413,6 @@ class TestRunSdkMetadataValidation:
             metadata["note"] = "Test run note"
             metadata["workflow"] = {
                 "onboard_to_aignostics_portal": True,
-                "validate_only": False,
             }
             metadata["scheduling"] = {
                 "due_date": "2025-12-31T23:59:59+00:00",
@@ -954,7 +956,8 @@ class TestPipelineConfiguration:
 
         assert ProvisioningMode.SPOT.value == "SPOT"
         assert ProvisioningMode.ON_DEMAND.value == "ON_DEMAND"
-        assert len(ProvisioningMode) == 2
+        assert ProvisioningMode.FLEX_START.value == "FLEX_START"
+        assert len(ProvisioningMode) == 3
 
     @pytest.mark.unit
     @staticmethod
@@ -971,7 +974,7 @@ class TestPipelineConfiguration:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "aignostics-sdk/1.0.0",
+            "user_agent": TEST_USER_AGENT,
             "pipeline": {
                 "gpu": {
                     "gpu_type": GPUType.L4.value,
@@ -997,7 +1000,7 @@ class TestPipelineConfiguration:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "aignostics-sdk/1.0.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         assert validate_run_sdk_metadata(metadata) is True
@@ -1013,3 +1016,111 @@ class TestPipelineConfiguration:
 
         with pytest.raises(ValidationError):
             GPUConfig(max_gpus_per_slide=-1)  # Must be positive
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_flex_start_provisioning_mode_sets_default_duration() -> None:
+        """Test that FLEX_START mode automatically sets default duration when not specified."""
+        from aignostics.platform._sdk_metadata import (
+            DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+            GPUConfig,
+            ProvisioningMode,
+        )
+
+        config = GPUConfig(provisioning_mode=ProvisioningMode.FLEX_START)
+
+        assert config.provisioning_mode == ProvisioningMode.FLEX_START
+        assert config.flex_start_max_run_duration_minutes == DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_flex_start_with_custom_duration() -> None:
+        """Test FLEX_START mode with custom duration."""
+        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+
+        config = GPUConfig(
+            provisioning_mode=ProvisioningMode.FLEX_START,
+            flex_start_max_run_duration_minutes=360,  # 6 hours
+        )
+
+        assert config.provisioning_mode == ProvisioningMode.FLEX_START
+        assert config.flex_start_max_run_duration_minutes == 360
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_non_flex_start_mode_rejects_duration() -> None:
+        """Test that non-FLEX_START modes reject flex_start_max_run_duration_minutes."""
+        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+
+        # SPOT mode should not allow flex_start_max_run_duration_minutes
+        with pytest.raises(ValidationError) as exc_info:
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.SPOT,
+                flex_start_max_run_duration_minutes=720,
+            )
+        assert "flex_start_max_run_duration_minutes must be None" in str(exc_info.value)
+
+        # ON_DEMAND mode should not allow flex_start_max_run_duration_minutes
+        with pytest.raises(ValidationError) as exc_info:
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.ON_DEMAND,
+                flex_start_max_run_duration_minutes=720,
+            )
+        assert "flex_start_max_run_duration_minutes must be None" in str(exc_info.value)
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_flex_start_duration_out_of_range() -> None:
+        """Test that flex_start_max_run_duration_minutes validates range."""
+        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+
+        # Too low
+        with pytest.raises(ValidationError):
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.FLEX_START,
+                flex_start_max_run_duration_minutes=0,
+            )
+
+        # Too high (> 60 hours)
+        with pytest.raises(ValidationError):
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.FLEX_START,
+                flex_start_max_run_duration_minutes=3700,
+            )
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_flex_start_pipeline_config() -> None:
+        """Test that metadata validates with FLEX_START pipeline configuration."""
+        from aignostics.platform._sdk_metadata import GPUType, ProvisioningMode
+
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+            "pipeline": {
+                "gpu": {
+                    "gpu_type": GPUType.L4.value,
+                    "provisioning_mode": ProvisioningMode.FLEX_START.value,
+                    "max_gpus_per_slide": 2,
+                    "flex_start_max_run_duration_minutes": 480,
+                },
+                "cpu": {"provisioning_mode": ProvisioningMode.SPOT.value},
+            },
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_default_flex_start_duration_value() -> None:
+        """Test that DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES is 12 hours (720 minutes)."""
+        from aignostics.platform._sdk_metadata import DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
+
+        assert DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES == 12 * 60  # 720 minutes

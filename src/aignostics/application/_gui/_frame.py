@@ -116,8 +116,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                             "nicegui_run.io_bound(Service.application_runs_static) returned None, "
                             "likely canceled by shutdown."
                         )
-                        logger.error(message)
-                        raise RuntimeError(message)  # noqa: TRY301
+                        logger.warning(message)
 
                     # Update refresh timestamp before checking for new terminations
                     _runs_last_refresh_time = datetime.now(UTC)
@@ -142,7 +141,7 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                             )
 
                     runs_column.clear()
-                    for index, run_data in enumerate(runs):
+                    for index, run_data in enumerate(runs) if runs else []:
                         with (
                             ui.item(
                                 on_click=lambda run_id=run_data["run_id"]: ui.navigate.to(f"/application/run/{run_id}")
