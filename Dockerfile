@@ -1,5 +1,5 @@
 # We share the base in the builder and targets
-FROM python:3.13-slim-bookworm AS base
+FROM python:3.13.10-slim-bookworm AS base
 
 # The base of our builder
 FROM base AS builder
