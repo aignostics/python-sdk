@@ -19,6 +19,8 @@ from ._service import Service
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
+        from fastapi import Response  # noqa: PLC0415
+        from fastapi.responses import RedirectResponse  # noqa: PLC0415
         from nicegui import app  # noqa: PLC0415
 
         app.add_static_files("/wsi_assets", Path(__file__).parent / "assets")
@@ -35,9 +37,6 @@ class PageBuilder(BasePageBuilder):
             Returns:
                 fastapi.Response: HTTP response containing the thumbnail or fallback image.
             """
-            from fastapi import Response  # noqa: PLC0415
-            from fastapi.responses import RedirectResponse  # noqa: PLC0415
-
             try:
                 return Response(
                     content=Service().get_thumbnail_bytes(Path(source), max_safe_dimension=max_safe_dimension),
@@ -60,9 +59,6 @@ class PageBuilder(BasePageBuilder):
             Returns:
                 fastapi.Response: HTTP response containing the converted tiff or fallback image
             """
-            from fastapi import Response  # noqa: PLC0415
-            from fastapi.responses import RedirectResponse  # noqa: PLC0415
-
             try:
                 return Response(content=Service().get_tiff_as_jpg(url), media_type="image/jpeg")
             except ValueError:
