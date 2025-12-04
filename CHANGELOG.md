@@ -1,6 +1,46 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.222](https://github.com/aignostics/python-sdk/compare/v0.2.221..0.2.222) - 2025-12-02
+# [0.2.223](https://github.com/aignostics/python-sdk/compare/v0.2.222..0.2.223) - 2025-12-04
+
+### ⛰️  Features
+
+- Support validation case in tags ([#275](https://github.com/orhun/git-cliff/issues/275)) - ([89343fc](https://github.com/aignostics/python-sdk/commit/89343fc6bbd824b1bd520aeeb0589806ee239fa4))
+
+### 🐛 Bug Fixes
+
+- *(logging)* Log format to be compatible with loguru - ([974fcca](https://github.com/aignostics/python-sdk/commit/974fccaf8175801adbb0c2b5c40046e51dfa64c1))
+- Move FastAPI imports to function scope ([#315](https://github.com/orhun/git-cliff/issues/315)) - ([1bcce1b](https://github.com/aignostics/python-sdk/commit/1bcce1b6765c8ec997c9500080e632a180186447))
+- Restore ATTRIBUTIONS.md (generated file should not be modified) [skip:ci, skip:test:long-running, skip:test:matrix-runner, skip:test:very-long-running] - ([24539ce](https://github.com/aignostics/python-sdk/commit/24539ce96ba4182de7a340a96aaa6c4a5d03171d))
+
+### 🚜 Refactor
+
+- *(platform)* Remove superfluous function calls in run submit - ([81752df](https://github.com/aignostics/python-sdk/commit/81752dfb51c7a11f47566c5778cc738b827f7c89))
+
+### 📚 Documentation
+
+- Add installation requirements to user documentation [skip:ci, skip:test:long-running, skip:test:matrix-runner, skip:test:very-long-running] - ([1caa5c8](https://github.com/aignostics/python-sdk/commit/1caa5c8135d624a960e9a63a1aa5c008c82437a0))
+
+### ⚡ Performance
+
+- *(platform)* _get_spots_payload_for_special for 100k items - ([b7a8e09](https://github.com/aignostics/python-sdk/commit/b7a8e09c97334504aa3a84c53e85ff916466164d))
+- *(platform)* Pre-built item sdk metadata - ([4a36778](https://github.com/aignostics/python-sdk/commit/4a36778790dc1d5a42c4aaa462a3993247997aac))
+
+### 🧪 Testing
+
+- *(platform)* Consistently use SPOT_1_GS_URL and _FILENAME so it can be changed easily for maintenance - ([251b097](https://github.com/aignostics/python-sdk/commit/251b097f57d7bee26fd51632b5a271e6e3a8168a))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Update docker/metadata-action action to v5.10.0 ([#303](https://github.com/orhun/git-cliff/issues/303)) - ([89e4926](https://github.com/aignostics/python-sdk/commit/89e492664b43929e54f7757fa4e436aff4afa11c))
+- *(gha)* Fix track progress for oe report - ([e96452e](https://github.com/aignostics/python-sdk/commit/e96452e55d4add7074397f67ddd9e893fe0a9ccb))
+- Reduce items per run to 800 for stress test - ([9f43596](https://github.com/aignostics/python-sdk/commit/9f435969a0403ba5d51b8889170c9c4ce2c560a0))
+- Upgrade to Python 3.13.10 ([#312](https://github.com/orhun/git-cliff/issues/312)) - ([363e1c7](https://github.com/aignostics/python-sdk/commit/363e1c76829ea29a30967e5e8e288e9eaccdeb95))
+- Stop passing GCP secrets to Claude workflows ([#311](https://github.com/orhun/git-cliff/issues/311)) - ([fe9149f](https://github.com/aignostics/python-sdk/commit/fe9149f99cd40b5978eb3413363b521cb6540a49))
+- Reenable stress tests with 1k items - ([0751c5c](https://github.com/aignostics/python-sdk/commit/0751c5c9316d2f817dde7fe4e1b56cd6f19cb2ea))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([89e4926](https://github.com/aignostics/python-sdk/commit/89e492664b43929e54f7757fa4e436aff4afa11c))
+
+
+# [v0.2.222](https://github.com/aignostics/python-sdk/compare/v0.2.221..v0.2.222) - 2025-12-02
 
 ### ⛰️  Features
 
@@ -2321,3 +2361,5 @@
 
 
 * @helmut-hoffer-von-ankershoffen made their first contribution
+
+
