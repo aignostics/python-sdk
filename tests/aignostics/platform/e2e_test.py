@@ -590,7 +590,7 @@ def test_platform_heta_app_submit() -> None:
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta(
-            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 60 * 10  # 10 hours buffer
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
