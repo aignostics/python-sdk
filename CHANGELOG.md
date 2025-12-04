@@ -1,6 +1,19 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.223](https://github.com/aignostics/python-sdk/compare/v0.2.222..0.2.223) - 2025-12-04
+# [0.2.224](https://github.com/aignostics/python-sdk/compare/v0.2.223..0.2.224) - 2025-12-04
+
+### 🐛 Bug Fixes
+
+- Prevent Launchpad crash with FastAPI 0.123.7+ ([#317](https://github.com/orhun/git-cliff/issues/317)) - ([49b2aa8](https://github.com/aignostics/python-sdk/commit/49b2aa8563219e74a494465a95f4c74629a1a5b4))
+
+### 🧪 Testing
+
+- Set TTL for signed URLs to deadline + 10 hours - ([f6b937a](https://github.com/aignostics/python-sdk/commit/f6b937aa8f18af95bcb7a8a5dc71a32902b81802))
+- Set deadline for HETA tests to 24h - ([3ac09c2](https://github.com/aignostics/python-sdk/commit/3ac09c2c04f4b1636df947b338155857730988c8))
+- Fix flaky CLI test ([#313](https://github.com/orhun/git-cliff/issues/313)) - ([cc27a94](https://github.com/aignostics/python-sdk/commit/cc27a945c063a901fc303cbfccb092e338fe628d))
+
+
+# [v0.2.223](https://github.com/aignostics/python-sdk/compare/v0.2.222..v0.2.223) - 2025-12-04
 
 ### ⛰️  Features
 
