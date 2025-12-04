@@ -74,7 +74,7 @@ requires-python = ">=3.11, <3.14"
 
 dependencies = [
     # From Template
-    "fastapi[standard,all]>=0.121.3,<1",
+    "fastapi[all,standard]>=0.123.8",
     "humanize>=4.14.0,<5",
     "nicegui[native]>=3.1.0,<3.2.0", # Regression in 3.2.0
     "packaging>=25.0,<26",
