@@ -4,7 +4,7 @@ import base64
 import re
 import time
 from collections import defaultdict
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Iterable
 from http import HTTPStatus
 from importlib.util import find_spec
 from pathlib import Path
@@ -311,8 +311,8 @@ class Service(BaseService):  # noqa: PLR0904
                 Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
-    def _filter_dicom_pyramid_files(source_directory: Path) -> set[Path]:  # noqa: C901
-        """Filter DICOM files to keep only one representative per pyramid.
+    def _select_dicom_files_to_process(source_directory: Path) -> list[Path]:
+        """Select DICOM files to process, excluding auxiliary and redundant files.
 
         For multi-file DICOM pyramids (WSI images split across multiple DICOM instances),
         keeps only the highest resolution file. Excludes segmentations, annotations,
@@ -321,25 +321,30 @@ class Service(BaseService):  # noqa: PLR0904
 
         Filtering Strategy:
         - Only processes VL Whole Slide Microscopy Image Storage
-          (SOPClassUID 1.2.840.10008.5.1.4.1.1.77.1.6, see here:
-          https://dicom.nema.org/medical/dicom/current/output/chtml/part04/sect_b.5.html)
-        - Excludes thumbnails, labels, overviews by ImageType DICOM attribute
+          (SOPClassUID 1.2.840.10008.5.1.4.1.1.77.1.6)
+          Reference: https://dicom.nema.org/medical/dicom/current/output/chtml/part04/sect_b.5.html
+        - Excludes auxiliary images by ImageType Value 3 (keeps only VOLUME images)
+          Reference: https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.8.12.4.html#sect_C.8.12.4.1.1
         - Groups files by PyramidUID (unique identifier for multi-resolution pyramids)
-        - Selects highest resolution based on TotalPixelMatrixRows x TotalPixelMatrixColumns
+        - For pyramids with multiple files, selects only the highest resolution based
+          on TotalPixelMatrixRows x TotalPixelMatrixColumns
         - Preserves standalone WSI files without PyramidUID
 
         Args:
-            source_directory: The directory to scan.
+            source_directory: The directory to recursively scan for DICOM files.
 
         Returns:
-            set[Path]: Set of DICOM files to exclude from processing.
-        """
-        dicom_files = list(source_directory.glob("**/*.dcm"))
-        pyramid_groups: dict[str, list[tuple[Path, int, int]]] = defaultdict(list)
-        files_to_exclude = set()
+            List of DICOM file paths to process. All other DICOM files are excluded.
 
-        # Group by PyramidUID with dimensions
-        for dcm_file in dicom_files:
+        Note:
+            This function reads DICOM metadata but not pixel data (stop_before_pixels=True).
+            Files that cannot be read or are missing required attributes are logged and skipped.
+        """
+        pyramid_groups: dict[str, list[tuple[Path, int, int]]] = defaultdict(list)
+        included_dicom_files: list[Path] = []
+
+        # Scan all DICOM files and filter based on SOPClassUID and ImageType
+        for dcm_file in source_directory.glob("**/*.dcm"):
             try:
                 ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
 
@@ -347,53 +352,112 @@ class Service(BaseService):  # noqa: PLR0904
                 # Only process VL Whole Slide Microscopy Image Storage (1.2.840.10008.5.1.4.1.1.77.1.6)
                 if ds.SOPClassUID != "1.2.840.10008.5.1.4.1.1.77.1.6":
                     logger.debug(f"Excluding {dcm_file.name} - not a WSI image (SOPClassUID: {ds.SOPClassUID})")
-                    files_to_exclude.add(dcm_file)
                     continue
 
-                # Exclude thumbnails, labels, and overview images by ImageType
-                if hasattr(ds, "ImageType"):
-                    image_type = [t.upper() for t in ds.ImageType]
-                    exclude_types = {"THUMBNAIL", "LABEL", "OVERVIEW", "MACRO", "ANNOTATION", "LOCALIZER"}
-                    if any(excluded in image_type for excluded in exclude_types):
-                        logger.debug(f"Excluding {dcm_file.name} - ImageType: {image_type}")
-                        files_to_exclude.add(dcm_file)
+                # Exclude auxiliary images by ImageType Value 3
+                # Per DICOM PS3.3 C.8.12.4.1.1: Value 3 should be VOLUME, THUMBNAIL, LABEL, or OVERVIEW.
+                # We only want VOLUME images
+                if hasattr(ds, "ImageType") and len(ds.ImageType) >= 3:  # noqa: PLR2004
+                    image_type_value_3 = ds.ImageType[2].upper()
+
+                    if image_type_value_3 != "VOLUME":
+                        logger.debug(f"Excluding {dcm_file.name} - ImageType Value 3: {image_type_value_3}")
                         continue
+                else:
+                    # No ImageType Value 3 - could be standalone WSI or non-standard file
+                    logger.debug(f"DICOM {dcm_file.name} has no ImageType Value 3 - treating as standalone")
 
-                # Now process valid WSI images with PyramidUID
-                if not hasattr(ds, "PyramidUID"):
-                    logger.debug(f"DICOM {dcm_file.name} has no PyramidUID - treating as standalone")
-                    continue
+                # Try to group by PyramidUID for pyramid resolution selection
+                pyramid_info = Service._extract_pyramid_info(dcm_file)
+                if pyramid_info:
+                    pyramid_uid, rows, cols = pyramid_info
+                    pyramid_groups[pyramid_uid].append((dcm_file, rows, cols))
+                else:
+                    # No PyramidUID or missing dimensions - treat as standalone file
+                    included_dicom_files.append(dcm_file)
 
-                pyramid_uid = ds.PyramidUID
-
-                # These represent the full image dimensions across all frames
-                rows = int(ds.TotalPixelMatrixRows)
-                cols = int(ds.TotalPixelMatrixColumns)
-
-                pyramid_groups[pyramid_uid].append((dcm_file, rows, cols))
-            except AttributeError as e:
-                logger.debug(f"DICOM {dcm_file} missing required attributes: {e}")
             except Exception as e:
-                logger.debug(f"Could not read DICOM {dcm_file}: {e}")
+                logger.debug(f"Could not process DICOM file {dcm_file}: {e}")
+                continue
 
-        # For each pyramid with multiple files, keep only the highest resolution one
+        # For each pyramid with multiple files, select only the highest resolution
+        pyramid_files_to_include = Service._find_highest_resolution_files(pyramid_groups)
+        included_dicom_files.extend(pyramid_files_to_include)
+
+        return included_dicom_files
+
+    @staticmethod
+    def _extract_pyramid_info(dcm_file: Path) -> tuple[str, int, int] | None:
+        """Extract pyramid information from a DICOM file.
+
+        Attempts to read PyramidUID and image dimensions (TotalPixelMatrixRows/Columns)
+        from a DICOM file. These attributes are used to group multi-file pyramids
+        and select the highest resolution file.
+
+        Args:
+            dcm_file: Path to the DICOM file to extract information from.
+
+        Returns:
+            Tuple of (PyramidUID, rows, cols) if the file is part of a pyramid,
+            None if the file is standalone or required attributes are missing.
+
+        Note:
+            Files without PyramidUID are treated as standalone WSI images.
+            Missing TotalPixelMatrix attributes also result in None (file treated as standalone).
+        """
+        try:
+            ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
+
+            # PyramidUID is Type 1C (conditional) - required if part of a multi-file pyramid
+            pyramid_uid = ds.PyramidUID
+
+            # TotalPixelMatrix attributes are Type 1 for WSI - should always be present
+            rows = int(ds.TotalPixelMatrixRows)
+            cols = int(ds.TotalPixelMatrixColumns)
+
+            return (pyramid_uid, rows, cols)
+
+        except AttributeError as e:
+            logger.debug(f"DICOM {dcm_file.name} missing pyramid attributes: {e}")
+            return None
+        except Exception as e:
+            logger.debug(f"Could not extract pyramid info from {dcm_file}: {e}")
+            return None
+
+    @staticmethod
+    def _find_highest_resolution_files(
+        pyramid_groups: dict[str, list[tuple[Path, int, int]]],
+    ) -> list[Path]:
+        """Find the highest resolution file for each multi-file pyramid.
+
+        For each pyramid (identified by PyramidUID), selects the file with the
+        largest total pixel count (rows x cols). All other files in the pyramid
+        are excluded, as OpenSlide can find them automatically.
+
+        Args:
+            pyramid_groups: Dictionary mapping PyramidUID to list of (file_path, rows, cols).
+
+        Returns:
+            List of file paths to keep (one per pyramid, the highest resolution).
+
+        Note:
+            Single-file pyramids (only one file per PyramidUID) are included without
+            comparison.
+        """
+        files_to_keep: list[Path] = []
+
         for pyramid_uid, files_with_dims in pyramid_groups.items():
+            highest_res_file_with_dims = max(files_with_dims, key=lambda x: x[1] * x[2])
+            highest_res_file, rows, cols = highest_res_file_with_dims
+            files_to_keep.append(highest_res_file)
+
             if len(files_with_dims) > 1:
-                # Find the file with the largest dimensions (rows * cols = total pixels)
-                highest_res_file = max(files_with_dims, key=lambda x: x[1] * x[2])
-                file_to_keep, rows, cols = highest_res_file
-
-                # Exclude all others
-                for file_path, _, _ in files_with_dims:
-                    if file_path != file_to_keep:
-                        files_to_exclude.add(file_path)
-
                 logger.debug(
-                    f"DICOM pyramid {pyramid_uid}: keeping {file_to_keep.name} "
+                    f"DICOM pyramid {pyramid_uid}: keeping {highest_res_file.name} "
                     f"({rows}x{cols}), excluding {len(files_with_dims) - 1} related files"
                 )
 
-        return files_to_exclude
+        return files_to_keep
 
     @staticmethod
     def generate_metadata_from_source_directory(  # noqa: PLR0913, PLR0917
@@ -407,39 +471,35 @@ class Service(BaseService):  # noqa: PLR0904
         """Generate metadata from the source directory.
 
         Steps:
-        1. Recursively files ending with supported extensions in the source directory
-        2. Creates a dict with the following columns
+        1. Recursively scans files ending with supported extensions in the source directory
+        2. For DICOM files (.dcm), filters out auxiliary and redundant files
+        3. Creates a dict for each file with the following fields:
             - external_id (str): The external_id of the file, by default equivalent to the absolute file name
             - source (str): The absolute filename
-            - checksum_base64_crc32c (str): The CRC32C checksum of the file constructed, base64 encoded
+            - checksum_base64_crc32c (str): The CRC32C checksum of the file, base64 encoded
             - resolution_mpp (float): The microns per pixel, inspecting the base layer
-            - height_px: The height of the image in pixels, inspecting the base layer
-            - width_px: The width of the image in pixels, inspecting the base layer
-            - Further attributes depending on the application and it's version
-        3. Applies the optional mappings to fill in additional metadata fields in the dict.
+            - height_px (int): The height of the image in pixels, inspecting the base layer
+            - width_px (int): The width of the image in pixels, inspecting the base layer
+            - Further attributes depending on the application and its version
+        4. Applies the optional mappings to fill in additional metadata fields in the dict
 
         Args:
-            source_directory (Path): The source directory to generate metadata from.
-            application_id (str): The ID of the application.
-            application_version (str|None): The version of the application (semver).
-                If not given latest version is used.
-            with_gui_metadata (bool): If True, include additional metadata for GUI.
-            mappings (list[str]): Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
+            source_directory: The source directory to generate metadata from.
+            application_id: The ID of the application.
+            application_version: The version of the application (semver).
+                If not given, latest version is used.
+            with_gui_metadata: If True, include additional metadata for GUI display.
+            mappings: Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
                 The regular expression is matched against the external_id attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
-            with_extra_metadata (bool): If True, include extra metadata from the WSIService.
+            with_extra_metadata: If True, include extra metadata from the WSIService.
 
         Returns:
-            dict[str, Any]: The generated metadata.
+            List of metadata dictionaries, one per processable file found.
 
         Raises:
-            Exception: If the metadata cannot be generated.
-
-        Raises:
-            NotFoundError: If the application version with the given ID is not found.
-            ValueError: If
-                the source directory does not exist
-                or is not a directory.
+            NotFoundException: If the application version with the given ID is not found.
+            ValueError: If the source directory does not exist or is not a directory.
             RuntimeError: If the metadata generation fails unexpectedly.
         """
         logger.trace("Generating metadata from source directory: {}", source_directory)
@@ -447,25 +507,27 @@ class Service(BaseService):  # noqa: PLR0904
         # TODO(Helmut): Use it
         _ = Service().application_version(application_id, application_version)
 
-        metadata = []
-
-        # Pre-filter: exclude redundant DICOM files from multi-file pyramids
-        dicom_files_to_exclude = Service._filter_dicom_pyramid_files(source_directory)
+        metadata: list[dict[str, Any]] = []
 
         try:
             extensions = get_supported_extensions_for_application(application_id)
             for extension in extensions:
-                for file_path in source_directory.glob(f"**/*{extension}"):
-                    # Skip excluded DICOM files
-                    if file_path in dicom_files_to_exclude:
-                        continue
+                # Special handling for DICOM files - filter out auxiliary and redundant files
+                files_to_process: Iterable[Path]
+                if extension == ".dcm":
+                    files_to_process = Service._select_dicom_files_to_process(source_directory)
+                else:
+                    # For non-DICOM formats, process all files with this extension
+                    files_to_process = source_directory.glob(f"**/*{extension}")
 
+                for file_path in files_to_process:
                     # Generate CRC32C checksum with google_crc32c and encode as base64
                     hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
                     with file_path.open("rb") as f:
                         while chunk := f.read(1024):
                             hash_sum.update(chunk)  # type: ignore[no-untyped-call]
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
+
                     try:
                         image_metadata = WSIService().get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
