@@ -15,24 +15,39 @@ from loguru import logger
 
 from aignostics.bucket import Service as BucketService
 from aignostics.constants import TEST_APP_APPLICATION_ID
-from aignostics.platform import (LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
-                                 ApiException, Application, ApplicationSummary,
-                                 ApplicationVersion, Client, InputArtifact,
-                                 InputItem, NotFoundException, Run, RunData,
-                                 RunOutput, RunState)
+from aignostics.platform import (
+    LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    ApiException,
+    Application,
+    ApplicationSummary,
+    ApplicationVersion,
+    Client,
+    InputArtifact,
+    InputItem,
+    NotFoundException,
+    Run,
+    RunData,
+    RunOutput,
+    RunState,
+)
 from aignostics.platform import Service as PlatformService
 from aignostics.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
-from ._download import (download_available_items,
-                        download_url_to_file_with_progress,
-                        extract_filename_from_url, update_progress)
+from ._download import (
+    download_available_items,
+    download_url_to_file_with_progress,
+    extract_filename_from_url,
+    update_progress,
+)
 from ._models import DownloadProgress, DownloadProgressState
 from ._settings import Settings
-from ._utils import (get_mime_type_for_artifact,
-                     get_supported_extensions_for_application,
-                     is_not_terminated_with_deadline_exceeded,
-                     validate_due_date)
+from ._utils import (
+    get_mime_type_for_artifact,
+    get_supported_extensions_for_application,
+    is_not_terminated_with_deadline_exceeded,
+    validate_due_date,
+)
 
 has_qupath_extra = find_spec("ijson")
 if has_qupath_extra:
@@ -1039,8 +1054,7 @@ class Service(BaseService):  # noqa: PLR0904
 
             # Validate pipeline configuration if present
             if "pipeline" in sdk_metadata:
-                from aignostics.platform._sdk_metadata import \
-                    PipelineConfig  # noqa: PLC0415
+                from aignostics.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
 
                 try:
                     PipelineConfig.model_validate(sdk_metadata["pipeline"])
