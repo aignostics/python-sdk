@@ -33,16 +33,166 @@ class PydicomHandler:
         """
         return cls(Path(path))
 
-    def get_metadata(self, verbose: bool = False) -> dict[str, Any]:
-        files = self._scan_files(verbose)
+    def get_metadata(self, verbose: bool = False, wsi_only: bool = False) -> dict[str, Any]:
+        """Get DICOM metadata from files in the configured path.
+
+        Args:
+            verbose: If True, include detailed annotation group data (coordinates, counts)
+                for annotation files. Defaults to False.
+            wsi_only: If True, filter to only WSI DICOM files (highest resolution per
+                pyramid), excluding thumbnails, labels, segmentations, and redundant
+                pyramid levels. Defaults to False.
+
+        Returns:
+            Dictionary containing hierarchical DICOM metadata
+        """
+        files = self._scan_files(verbose, wsi_only)
         return self._organize_by_hierarchy(files)
 
-    def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0914, PLR0915
+    def select_wsi_files(self) -> list[Path]:
+        """Select WSI files only from the path, excluding auxiliary and redundant files.
+
+        For multi-file DICOM pyramids (WSI images split across multiple DICOM instances),
+        keeps only the highest resolution file. Excludes segmentations, annotations,
+        thumbnails, labels, and other non-image DICOM files. OpenSlide will automatically
+        find related pyramid files in the same directory when needed.
+
+        See here for more info on the DICOM data model:
+        https://dicom.nema.org/medical/dicom/current/output/chtml/part03/chapter_7.html
+
+        Filtering Strategy:
+        - Only processes VL Whole Slide Microscopy Image Storage
+          (SOPClassUID 1.2.840.10008.5.1.4.1.1.77.1.6)
+          Reference: https://dicom.nema.org/medical/dicom/current/output/chtml/part04/sect_b.5.html
+        - Excludes auxiliary images by ImageType Value 3 (keeps only VOLUME images)
+          Reference: https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.8.12.4.html#sect_C.8.12.4.1.1
+        - Groups files by PyramidUID (unique identifier for multi-resolution pyramids)
+        - For pyramids with multiple files, selects only the highest resolution based
+          on TotalPixelMatrixRows x TotalPixelMatrixColumns
+        - Preserves standalone WSI files without PyramidUID
+
+        Returns:
+            List of DICOM file paths to process. All other DICOM files are excluded.
+
+        Note:
+            Files that cannot be read or are missing required attributes are logged and skipped.
+        """
+        pyramid_groups: dict[str, list[tuple[Path, int, int]]] = defaultdict(list)
+        included_dicom_files: list[Path] = []
+
+        # Scan all DICOM files and filter based on SOPClassUID and ImageType
+        for dcm_file in self.path.glob("**/*.dcm"):
+            try:
+                ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
+
+                # Exclude non-WSI image files by SOPClassUID
+                # Only process VL Whole Slide Microscopy Image Storage (1.2.840.10008.5.1.4.1.1.77.1.6)
+                if ds.SOPClassUID != "1.2.840.10008.5.1.4.1.1.77.1.6":
+                    logger.debug(f"Excluding {dcm_file.name} - not a WSI image (SOPClassUID: {ds.SOPClassUID})")
+                    continue
+
+                # Exclude auxiliary images by ImageType Value 3
+                # Per DICOM PS3.3 C.8.12.4.1.1: Value 3 should be VOLUME, THUMBNAIL, LABEL, or OVERVIEW.
+                # We only want VOLUME images
+                if hasattr(ds, "ImageType") and len(ds.ImageType) >= 3:  # noqa: PLR2004
+                    image_type_value_3 = ds.ImageType[2].upper()
+
+                    if image_type_value_3 != "VOLUME":
+                        logger.debug(f"Excluding {dcm_file.name} - ImageType Value 3: {image_type_value_3}")
+                        continue
+                else:
+                    # No ImageType Value 3 - could be standalone WSI or non-standard file
+                    logger.debug(f"DICOM {dcm_file.name} has no ImageType Value 3 - treating as standalone")
+
+                # Try to group by PyramidUID for pyramid resolution selection
+                if hasattr(ds, "PyramidUID"):
+                    # PyramidUID is Type 1C (conditional) - required if part of a multi-file pyramid
+                    # TotalPixelMatrix attributes are Type 1 for WSI - should always be present
+                    pyramid_uid = ds.PyramidUID
+                    rows = int(ds.TotalPixelMatrixRows)
+                    cols = int(ds.TotalPixelMatrixColumns)
+
+                    pyramid_groups[pyramid_uid].append((dcm_file, rows, cols))
+                else:
+                    # Treat as standalone file
+                    included_dicom_files.append(dcm_file)
+
+            except Exception as e:
+                logger.debug(f"Could not process DICOM file {dcm_file}: {e}")
+                continue
+
+        # For each pyramid with multiple files, select only the highest resolution
+        pyramid_files_to_include = PydicomHandler._find_highest_resolution_files(pyramid_groups)
+        included_dicom_files.extend(pyramid_files_to_include)
+
+        return included_dicom_files
+
+    @staticmethod
+    def _find_highest_resolution_files(
+        pyramid_groups: dict[str, list[tuple[Path, int, int]]],
+    ) -> list[Path]:
+        """Find the highest resolution file for each multi-file pyramid.
+
+        For each pyramid (identified by PyramidUID), selects the file with the
+        largest total pixel count (rows x cols). All other files in the pyramid
+        are excluded, as OpenSlide can find them automatically.
+
+        Args:
+            pyramid_groups: Dictionary mapping PyramidUID to list of (file_path, rows, cols).
+
+        Returns:
+            List of file paths to keep (one per pyramid, the highest resolution).
+
+        Note:
+            Single-file pyramids (only one file per PyramidUID) are included without
+            comparison.
+        """
+        files_to_keep: list[Path] = []
+
+        for pyramid_uid, files_with_dims in pyramid_groups.items():
+            if len(files_with_dims) > 1:
+                highest_res_file_with_dims = max(files_with_dims, key=lambda x: x[1] * x[2])
+                highest_res_file, rows, cols = highest_res_file_with_dims
+                files_to_keep.append(highest_res_file)
+
+                logger.debug(
+                    f"DICOM pyramid {pyramid_uid}: keeping {highest_res_file.name} "
+                    f"({rows}x{cols}), excluding {len(files_with_dims) - 1} related files"
+                )
+            else:
+                files_to_keep.append(files_with_dims[0][0])
+
+        return files_to_keep
+
+    def _scan_files(self, verbose: bool = False, wsi_only: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0914, PLR0915
+        """Scan DICOM files and extract metadata.
+
+        Recursively scans the path for DICOM files, reads their metadata (without loading
+        pixel data), and returns structured information about each file including modality,
+        dimensions, and type-specific details.
+
+        Args:
+            verbose: If True, include detailed annotation group data (coordinates, counts).
+            wsi_only: If True, filter to only WSI files (highest resolution ones only in
+                multi-file pyramid case).
+
+        Returns:
+            List of dictionaries containing file metadata. Each dict includes:
+            - Basic info: path, study_uid, series_uid, modality, type, size
+            - Modality-specific data (e.g., pyramid info for SM/WSI, annotations for ANN)
+            - Patient metadata where available
+
+        Note:
+            Invalid DICOM files are logged and skipped.
+        """
         dicom_files = []
 
-        # Determine which files to process based on whether the `self.path` points to a single file or a directory
+        # Determine which files to process
         if self.path.is_file():
             files_to_process = [self.path] if self.path.suffix.lower() == ".dcm" else []
+        elif wsi_only:
+            # Use your filtering logic
+            files_to_process = self._select_wsi_files(self.path)
         else:
             files_to_process = list(self.path.rglob("*.dcm"))
 

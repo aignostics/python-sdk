@@ -3,53 +3,36 @@
 import base64
 import re
 import time
-from collections import defaultdict
-from collections.abc import Callable, Generator, Iterable
+from collections.abc import Callable, Generator
 from http import HTTPStatus
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
 import google_crc32c
-import pydicom
 import requests
 from loguru import logger
 
 from aignostics.bucket import Service as BucketService
 from aignostics.constants import TEST_APP_APPLICATION_ID
-from aignostics.platform import (
-    LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
-    ApiException,
-    Application,
-    ApplicationSummary,
-    ApplicationVersion,
-    Client,
-    InputArtifact,
-    InputItem,
-    NotFoundException,
-    Run,
-    RunData,
-    RunOutput,
-    RunState,
-)
+from aignostics.platform import (LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+                                 ApiException, Application, ApplicationSummary,
+                                 ApplicationVersion, Client, InputArtifact,
+                                 InputItem, NotFoundException, Run, RunData,
+                                 RunOutput, RunState)
 from aignostics.platform import Service as PlatformService
 from aignostics.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
-from ._download import (
-    download_available_items,
-    download_url_to_file_with_progress,
-    extract_filename_from_url,
-    update_progress,
-)
+from ._download import (download_available_items,
+                        download_url_to_file_with_progress,
+                        extract_filename_from_url, update_progress)
 from ._models import DownloadProgress, DownloadProgressState
 from ._settings import Settings
-from ._utils import (
-    get_mime_type_for_artifact,
-    get_supported_extensions_for_application,
-    is_not_terminated_with_deadline_exceeded,
-    validate_due_date,
-)
+from ._utils import (get_mime_type_for_artifact,
+                     get_supported_extensions_for_application,
+                     is_not_terminated_with_deadline_exceeded,
+                     validate_due_date)
 
 has_qupath_extra = find_spec("ijson")
 if has_qupath_extra:
@@ -311,155 +294,6 @@ class Service(BaseService):  # noqa: PLR0904
                 Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
-    def _select_dicom_files_to_process(source_directory: Path) -> list[Path]:
-        """Select DICOM files to process, excluding auxiliary and redundant files.
-
-        For multi-file DICOM pyramids (WSI images split across multiple DICOM instances),
-        keeps only the highest resolution file. Excludes segmentations, annotations,
-        thumbnails, labels, and other non-image DICOM files. OpenSlide will automatically
-        find related pyramid files in the same directory when needed.
-
-        Filtering Strategy:
-        - Only processes VL Whole Slide Microscopy Image Storage
-          (SOPClassUID 1.2.840.10008.5.1.4.1.1.77.1.6)
-          Reference: https://dicom.nema.org/medical/dicom/current/output/chtml/part04/sect_b.5.html
-        - Excludes auxiliary images by ImageType Value 3 (keeps only VOLUME images)
-          Reference: https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.8.12.4.html#sect_C.8.12.4.1.1
-        - Groups files by PyramidUID (unique identifier for multi-resolution pyramids)
-        - For pyramids with multiple files, selects only the highest resolution based
-          on TotalPixelMatrixRows x TotalPixelMatrixColumns
-        - Preserves standalone WSI files without PyramidUID
-
-        Args:
-            source_directory: The directory to recursively scan for DICOM files.
-
-        Returns:
-            List of DICOM file paths to process. All other DICOM files are excluded.
-
-        Note:
-            This function reads DICOM metadata but not pixel data (stop_before_pixels=True).
-            Files that cannot be read or are missing required attributes are logged and skipped.
-        """
-        pyramid_groups: dict[str, list[tuple[Path, int, int]]] = defaultdict(list)
-        included_dicom_files: list[Path] = []
-
-        # Scan all DICOM files and filter based on SOPClassUID and ImageType
-        for dcm_file in source_directory.glob("**/*.dcm"):
-            try:
-                ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
-
-                # Exclude non-WSI image files by SOPClassUID
-                # Only process VL Whole Slide Microscopy Image Storage (1.2.840.10008.5.1.4.1.1.77.1.6)
-                if ds.SOPClassUID != "1.2.840.10008.5.1.4.1.1.77.1.6":
-                    logger.debug(f"Excluding {dcm_file.name} - not a WSI image (SOPClassUID: {ds.SOPClassUID})")
-                    continue
-
-                # Exclude auxiliary images by ImageType Value 3
-                # Per DICOM PS3.3 C.8.12.4.1.1: Value 3 should be VOLUME, THUMBNAIL, LABEL, or OVERVIEW.
-                # We only want VOLUME images
-                if hasattr(ds, "ImageType") and len(ds.ImageType) >= 3:  # noqa: PLR2004
-                    image_type_value_3 = ds.ImageType[2].upper()
-
-                    if image_type_value_3 != "VOLUME":
-                        logger.debug(f"Excluding {dcm_file.name} - ImageType Value 3: {image_type_value_3}")
-                        continue
-                else:
-                    # No ImageType Value 3 - could be standalone WSI or non-standard file
-                    logger.debug(f"DICOM {dcm_file.name} has no ImageType Value 3 - treating as standalone")
-
-                # Try to group by PyramidUID for pyramid resolution selection
-                pyramid_info = Service._extract_pyramid_info(dcm_file)
-                if pyramid_info:
-                    pyramid_uid, rows, cols = pyramid_info
-                    pyramid_groups[pyramid_uid].append((dcm_file, rows, cols))
-                else:
-                    # No PyramidUID or missing dimensions - treat as standalone file
-                    included_dicom_files.append(dcm_file)
-
-            except Exception as e:
-                logger.debug(f"Could not process DICOM file {dcm_file}: {e}")
-                continue
-
-        # For each pyramid with multiple files, select only the highest resolution
-        pyramid_files_to_include = Service._find_highest_resolution_files(pyramid_groups)
-        included_dicom_files.extend(pyramid_files_to_include)
-
-        return included_dicom_files
-
-    @staticmethod
-    def _extract_pyramid_info(dcm_file: Path) -> tuple[str, int, int] | None:
-        """Extract pyramid information from a DICOM file.
-
-        Attempts to read PyramidUID and image dimensions (TotalPixelMatrixRows/Columns)
-        from a DICOM file. These attributes are used to group multi-file pyramids
-        and select the highest resolution file.
-
-        Args:
-            dcm_file: Path to the DICOM file to extract information from.
-
-        Returns:
-            Tuple of (PyramidUID, rows, cols) if the file is part of a pyramid,
-            None if the file is standalone or required attributes are missing.
-
-        Note:
-            Files without PyramidUID are treated as standalone WSI images.
-            Missing TotalPixelMatrix attributes also result in None (file treated as standalone).
-        """
-        try:
-            ds = pydicom.dcmread(dcm_file, stop_before_pixels=True)
-
-            # PyramidUID is Type 1C (conditional) - required if part of a multi-file pyramid
-            pyramid_uid = ds.PyramidUID
-
-            # TotalPixelMatrix attributes are Type 1 for WSI - should always be present
-            rows = int(ds.TotalPixelMatrixRows)
-            cols = int(ds.TotalPixelMatrixColumns)
-
-            return (pyramid_uid, rows, cols)
-
-        except AttributeError as e:
-            logger.debug(f"DICOM {dcm_file.name} missing pyramid attributes: {e}")
-            return None
-        except Exception as e:
-            logger.debug(f"Could not extract pyramid info from {dcm_file}: {e}")
-            return None
-
-    @staticmethod
-    def _find_highest_resolution_files(
-        pyramid_groups: dict[str, list[tuple[Path, int, int]]],
-    ) -> list[Path]:
-        """Find the highest resolution file for each multi-file pyramid.
-
-        For each pyramid (identified by PyramidUID), selects the file with the
-        largest total pixel count (rows x cols). All other files in the pyramid
-        are excluded, as OpenSlide can find them automatically.
-
-        Args:
-            pyramid_groups: Dictionary mapping PyramidUID to list of (file_path, rows, cols).
-
-        Returns:
-            List of file paths to keep (one per pyramid, the highest resolution).
-
-        Note:
-            Single-file pyramids (only one file per PyramidUID) are included without
-            comparison.
-        """
-        files_to_keep: list[Path] = []
-
-        for pyramid_uid, files_with_dims in pyramid_groups.items():
-            highest_res_file_with_dims = max(files_with_dims, key=lambda x: x[1] * x[2])
-            highest_res_file, rows, cols = highest_res_file_with_dims
-            files_to_keep.append(highest_res_file)
-
-            if len(files_with_dims) > 1:
-                logger.debug(
-                    f"DICOM pyramid {pyramid_uid}: keeping {highest_res_file.name} "
-                    f"({rows}x{cols}), excluding {len(files_with_dims) - 1} related files"
-                )
-
-        return files_to_keep
-
-    @staticmethod
     def generate_metadata_from_source_directory(  # noqa: PLR0913, PLR0917
         source_directory: Path,
         application_id: str,
@@ -508,17 +342,12 @@ class Service(BaseService):  # noqa: PLR0904
         _ = Service().application_version(application_id, application_version)
 
         metadata: list[dict[str, Any]] = []
+        wsi_service = WSIService()
 
         try:
             extensions = get_supported_extensions_for_application(application_id)
             for extension in extensions:
-                # Special handling for DICOM files - filter out auxiliary and redundant files
-                files_to_process: Iterable[Path]
-                if extension == ".dcm":
-                    files_to_process = Service._select_dicom_files_to_process(source_directory)
-                else:
-                    # For non-DICOM formats, process all files with this extension
-                    files_to_process = source_directory.glob(f"**/*{extension}")
+                files_to_process = wsi_service.get_wsi_files_to_process(source_directory, extension)
 
                 for file_path in files_to_process:
                     # Generate CRC32C checksum with google_crc32c and encode as base64
@@ -529,7 +358,7 @@ class Service(BaseService):  # noqa: PLR0904
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
 
                     try:
-                        image_metadata = WSIService().get_metadata(file_path)
+                        image_metadata = wsi_service.get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
                         height = image_metadata["dimensions"]["height"]
                         mpp = image_metadata["resolution"]["mpp_x"]
@@ -1210,7 +1039,8 @@ class Service(BaseService):  # noqa: PLR0904
 
             # Validate pipeline configuration if present
             if "pipeline" in sdk_metadata:
-                from aignostics.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
+                from aignostics.platform._sdk_metadata import \
+                    PipelineConfig  # noqa: PLC0415
 
                 try:
                     PipelineConfig.model_validate(sdk_metadata["pipeline"])
