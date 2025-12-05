@@ -480,6 +480,3 @@ def test_get_wsi_files_to_process_non_dicom_passthrough(tmp_path: Path) -> None:
     assert len(files) == 2
     assert tiff1 in files
     assert tiff2 in files
-    assert tiff2 in files
-    assert tiff2 in files
-    assert tiff2 in files

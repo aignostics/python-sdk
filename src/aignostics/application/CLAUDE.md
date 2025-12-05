@@ -163,8 +163,6 @@ APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5  # Wait between status checks
 ```
 
-
-
 ### Progress State Management
 
 **Actual DownloadProgress Model (`_models.py`):**
