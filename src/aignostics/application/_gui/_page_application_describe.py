@@ -839,12 +839,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 # Allow users of some organisations to request onboarding slides to Portal
                 user_info: UserInfo | None = app.storage.tab.get("user_info", None)
                 with ui.row().classes("full-width mt-4 mb-4"):
-                    if (
-                        user_info
-                        and user_info.organization
-                        and user_info.organization.name
-                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
-                    ):
+                    if user_info and user_info.is_internal_user:
                         ui.checkbox(
                             text="Onboard Slides and Output to Aignostics Portal",
                         ).bind_value(submit_form, "onboard_to_aignostics_portal").mark(
@@ -879,12 +874,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
 
         with ui.step("Pipeline"):
             user_info: UserInfo | None = app.storage.tab.get("user_info", None)
-            can_configure_pipeline = (
-                user_info
-                and user_info.organization
-                and user_info.organization.name
-                and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
-            )
+            can_configure_pipeline = user_info and user_info.is_internal_user
 
             if can_configure_pipeline:
                 with ui.column(align_items="start").classes("w-full"):

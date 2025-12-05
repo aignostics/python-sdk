@@ -17,22 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from aignx.codegen.models.application_version import ApplicationVersion
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApplicationReadShortResponse(BaseModel):
+class CustomMetadataUpdateResponse(BaseModel):
     """
-    Response schema for `List available applications` and `Read Application by Id` endpoints
+    CustomMetadataUpdateResponse
     """ # noqa: E501
-    application_id: StrictStr = Field(description="Application ID")
-    name: StrictStr = Field(description="Application display name")
-    regulatory_classes: List[StrictStr] = Field(description="Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.")
-    description: StrictStr = Field(description="Describing what the application can do ")
-    latest_version: Optional[ApplicationVersion] = None
-    __properties: ClassVar[List[str]] = ["application_id", "name", "regulatory_classes", "description", "latest_version"]
+    custom_metadata_checksum: Optional[StrictStr]
+    __properties: ClassVar[List[str]] = ["custom_metadata_checksum"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +47,7 @@ class ApplicationReadShortResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApplicationReadShortResponse from a JSON string"""
+        """Create an instance of CustomMetadataUpdateResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,19 +68,16 @@ class ApplicationReadShortResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of latest_version
-        if self.latest_version:
-            _dict['latest_version'] = self.latest_version.to_dict()
-        # set to None if latest_version (nullable) is None
+        # set to None if custom_metadata_checksum (nullable) is None
         # and model_fields_set contains the field
-        if self.latest_version is None and "latest_version" in self.model_fields_set:
-            _dict['latest_version'] = None
+        if self.custom_metadata_checksum is None and "custom_metadata_checksum" in self.model_fields_set:
+            _dict['custom_metadata_checksum'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApplicationReadShortResponse from a dict"""
+        """Create an instance of CustomMetadataUpdateResponse from a dict"""
         if obj is None:
             return None
 
@@ -93,11 +85,7 @@ class ApplicationReadShortResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "application_id": obj.get("application_id"),
-            "name": obj.get("name"),
-            "regulatory_classes": obj.get("regulatory_classes"),
-            "description": obj.get("description"),
-            "latest_version": ApplicationVersion.from_dict(obj["latest_version"]) if obj.get("latest_version") is not None else None
+            "custom_metadata_checksum": obj.get("custom_metadata_checksum")
         })
         return _obj
 

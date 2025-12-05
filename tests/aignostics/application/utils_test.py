@@ -452,6 +452,126 @@ def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
     assert "USER_CANCELED" in call_args
 
 
+# Tests for _format_queue_position
+
+
+@pytest.mark.unit
+def test_format_queue_position_no_data() -> None:
+    """Test queue position formatting when no queue data is available."""
+    from aignostics.application._utils import _format_queue_position
+
+    run_data = RunData(
+        run_id="run-123",
+        application_id="he-tme",
+        version_number="1.0.0",
+        state=RunState.PENDING,
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
+        num_preceding_items_org=None,
+        num_preceding_items_platform=None,
+    )
+
+    result = _format_queue_position(run_data)
+    assert "Queue Position:" in result
+    assert "N/A" in result
+
+
+@pytest.mark.unit
+def test_format_queue_position_org_only() -> None:
+    """Test queue position formatting when only org position is available (external users).
+
+    External users receive run_data with num_preceding_items_platform set to REDACTED_QUEUE_POSITION
+    by Run.details_for_user_display(), so we test formatting with platform position redacted.
+    """
+    from aignostics.application._utils import _format_queue_position
+    from aignostics.constants import REDACTED_QUEUE_POSITION
+
+    run_data = RunData(
+        run_id="run-123",
+        application_id="he-tme",
+        version_number="1.0.0",
+        state=RunState.PENDING,
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
+        num_preceding_items_org=5,
+        num_preceding_items_platform=REDACTED_QUEUE_POSITION,  # redacted for external users
+    )
+
+    result = _format_queue_position(run_data)
+    assert "5 items ahead in your organization's queue" in result
+    assert "platform" not in result.lower()
+
+
+@pytest.mark.unit
+def test_format_queue_position_with_platform() -> None:
+    """Test queue position formatting when both org and platform positions are available (internal users).
+
+    Internal users receive run_data with num_preceding_items_platform populated
+    by Run.details_for_user_display(), so we test formatting with both positions.
+    """
+    from aignostics.application._utils import _format_queue_position
+
+    run_data = RunData(
+        run_id="run-123",
+        application_id="he-tme",
+        version_number="1.0.0",
+        state=RunState.PENDING,
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
+        num_preceding_items_org=5,
+        num_preceding_items_platform=100,
+    )
+
+    result = _format_queue_position(run_data)
+    assert "5 items ahead within your organization" in result
+    assert "100 items ahead across the entire platform" in result
+
+
 @pytest.mark.unit
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
@@ -513,9 +633,9 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
         ],
     )
 
-    # Create mock run handle
+    # Create mock run handle - now mock details_for_user_display instead of details
     mock_run = MagicMock()
-    mock_run.details.return_value = run_data
+    mock_run.details_for_user_display.return_value = run_data
     mock_run.results.return_value = [item_result]
 
     retrieve_and_print_run_details(mock_run)
@@ -560,7 +680,7 @@ def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     )
 
     mock_run = MagicMock()
-    mock_run.details.return_value = run_data
+    mock_run.details_for_user_display.return_value = run_data
     mock_run.results.return_value = []
 
     retrieve_and_print_run_details(mock_run)

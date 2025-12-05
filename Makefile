@@ -176,7 +176,8 @@ codegen:
 	find codegen/out/aignx/codegen/models/ -name "[a-z]*.py" -type f | sed 's|.*/\(.*\)\.py|\1|' | xargs -I{} echo "from .{} import *" > codegen/out/aignx/codegen/models/__init__.py
 	# fix resource patch
 	# in codegen/out/public_api.py replace all occurrences of resource_path='/v1 with resource_path='/api/v1
-	sed -i '' "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py
+	# Use portable sed syntax: -i'' works on both macOS and Linux
+	sed -i"" "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py
 	
 # Special rule to catch any arguments (like patch, minor, major, pdf, Python versions, or x.y.z)
 # This prevents "No rule to make target" errors when passing arguments to make commands

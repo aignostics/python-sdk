@@ -10,6 +10,7 @@ aignx/codegen/models/artifact_output.py
 aignx/codegen/models/artifact_state.py
 aignx/codegen/models/artifact_termination_reason.py
 aignx/codegen/models/custom_metadata_update_request.py
+aignx/codegen/models/custom_metadata_update_response.py
 aignx/codegen/models/http_validation_error.py
 aignx/codegen/models/input_artifact.py
 aignx/codegen/models/input_artifact_creation_request.py

@@ -925,8 +925,8 @@ def run_describe(
     try:
         run = Service().application_run(run_id)
         if format == "json":
-            # Get run details and output as JSON
-            run_details = run.details()
+            # Get run details with appropriate redaction of the platform-wide queue position for the current user
+            run_details = run.details_for_user_display()
             print(json.dumps(run_details.model_dump(mode="json"), indent=2, default=str))
         else:
             retrieve_and_print_run_details(run)
