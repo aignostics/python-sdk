@@ -84,6 +84,33 @@ def frame(  # noqa: C901, PLR0915
                 for item in group.items:
                     _render_nav_item(item)
 
+    def _bring_window_to_front() -> None:
+        """Bring the native window to front after authentication completes.
+
+        Uses platform-specific approaches:
+        - Windows: Uses ctypes to find window by title and call SetForegroundWindow,
+          as pywebview's set_always_on_top/show methods don't reliably bring windows
+          to front and the window handle isn't directly exposed.
+        - macOS/Linux: Uses pywebview's built-in methods.
+        """
+        if not app.native.main_window:
+            return
+        try:
+            if platform.system() == "Windows":
+                import ctypes  # noqa: PLC0415
+
+                # Find window by title since pywebview doesn't expose hwnd directly
+                # FindWindowW(lpClassName, lpWindowName) - use None for class to match any
+                hwnd = ctypes.windll.user32.FindWindowW(None, "Aignostics Launchpad")  # type: ignore
+                if hwnd:
+                    ctypes.windll.user32.SetForegroundWindow(hwnd)  # type: ignore
+            else:
+                app.native.main_window.set_always_on_top(True)
+                app.native.main_window.show()
+                app.native.main_window.set_always_on_top(False)
+        except Exception:  # noqa: S110
+            pass  # Window operations can fail on some platforms
+
     user_info: UserInfo | None = None
     launchpad_healthy: bool | None = None
 
@@ -127,6 +154,8 @@ def frame(  # noqa: C901, PLR0915
         await ui.context.client.connected()
         app.storage.tab["user_info"] = user_info
         _user_info_ui.refresh()
+        if user_info:
+            _bring_window_to_front()
 
     ui.timer(interval=USERINFO_UPDATE_INTERVAL, callback=_user_info_ui_load, immediate=True)
 
