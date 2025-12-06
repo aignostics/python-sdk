@@ -1417,10 +1417,10 @@ def test_runs_list_with_pagination(runs, mock_api):
 ```python
 
 
-logger.trace("Initializing client with cache_token=%s", cache_token)
+logger.trace("Initializing client with cache_token={}", cache_token)
 logger.trace("Client initialized successfully.")
 logger.exception("Failed to initialize client.")
-logger.warning("Application with ID '%s' not found.", application_id)
+logger.warning("Application with ID '{}' not found.", application_id)
 ```
 
 ### Security & Compliance
@@ -1542,7 +1542,7 @@ from aignx.codegen.models import (
 from aignx.codegen.exceptions import NotFoundException, ApiException
 
 # Log appropriately
-logger.warning("Resource not found: %s", resource_id)
+logger.warning("Resource not found: {}", resource_id)
 logger.exception("Unexpected API error")
 
 # Raise meaningful errors

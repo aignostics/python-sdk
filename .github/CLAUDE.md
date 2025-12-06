@@ -509,7 +509,6 @@ Claude Code is integrated into the CI/CD pipeline for:
 # Inputs:
 #   - prompt: "Your task description"
 #   - max_turns: 200 (default)
-#   - platform_environment: staging (default) or production
 ```
 
 #### 2. Automation Mode
@@ -526,21 +525,20 @@ Claude Code is integrated into the CI/CD pipeline for:
 **Inputs**:
 
 ```yaml
-platform_environment: 'staging' | 'production'  # Default: staging
 mode: 'interactive' | 'automation'               # Required
 prompt: 'string'                                 # For automation mode
 max_turns: '200'                                 # Default: 200
 allowed_tools: 'comma,separated,list'            # Default: Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(uv:*),Bash(make:*)
 ```
 
-**Environment Setup** (same as test environment):
+**Environment Setup**:
 
 1. Installs `uv` package manager
 2. Installs dev tools (`.github/workflows/_install_dev_tools.bash`)
 3. Syncs Python dependencies (`uv sync --all-extras`)
 4. Sets up headless display (for GUI tests)
-5. Creates `.env` with Aignostics credentials (staging or production)
-6. Configures GCP credentials for bucket access
+
+**Note**: Claude Code workflows intentionally do NOT have access to Aignostics platform credentials or GCP credentials to prevent accidental credential leakage.
 
 **Claude Configuration**:
 
@@ -555,10 +553,7 @@ claude \
 
 **Secrets Required**:
 
-* `ANTHROPIC_API_KEY` - For Claude Code
-* `AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING|PRODUCTION}`
-* `AIGNOSTICS_REFRESH_TOKEN_{STAGING|PRODUCTION}`
-* `GCP_CREDENTIALS_{STAGING|PRODUCTION}`
+* `ANTHROPIC_API_KEY` - For Claude Code (only secret available to Claude Code workflows)
 
 ### Automated PR Review (claude-code-automation-pr-review.yml)
 
@@ -600,7 +595,6 @@ and adherence to CLAUDE.md guidelines.
 
 * `prompt`: What you want Claude to work on
 * `max_turns`: How many iterations (default 200)
-* `platform_environment`: staging (default) or production
 
 **Example Use Cases**:
 
@@ -618,7 +612,6 @@ and adherence to CLAUDE.md guidelines.
 * ✅ Use `--system-prompt` referencing CLAUDE.md
 * ✅ Limit tool access (`--allowed-tools`)
 * ✅ Set reasonable `--max-turns`
-* ✅ Use staging environment for development
 * ✅ Review Claude's changes before merging
 * ✅ Let Claude explore workflows and test strategies
 
@@ -626,8 +619,8 @@ and adherence to CLAUDE.md guidelines.
 
 * ❌ Grant unrestricted tool access
 * ❌ Skip CLAUDE.md system prompt
-* ❌ Test against production without approval
 * ❌ Merge without human review
+* ❌ Add platform/GCP credentials to Claude Code workflows (security risk)
 
 ## Scheduled Jobs
 
