@@ -26,6 +26,11 @@ on:
         required: false
         default: true
         type: boolean
+      use_sticky_comment:
+        description: 'Use just one comment to deliver PR comments (only applies for pull_request event workflows)'
+        required: false
+        default: false
+        type: boolean
     secrets:
       ANTHROPIC_API_KEY:
         required: true
@@ -92,6 +97,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
+          use_sticky_comment: ${{ inputs.use_sticky_comment }}
           additional_permissions: |
             actions: read
           allowed_bots: "dependabot[bot],renovate[bot]"
