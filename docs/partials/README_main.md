@@ -28,6 +28,14 @@ The **Aignostics Python SDK** can be installed via the [uv package manager](http
 
 Before proceeding, ensure you have an **Aignostics Platform account**. You can get access either through your organization admin (if your organization has an Aignostics account) or directly from Aignostics. Check your email for an invitation before proceeding.
 
+### Requirements
+
+- **Python 3.11, 3.12, or 3.13** (⚠️ Python 3.14 is not yet supported)
+- **macOS 11.0+, Linux, or Windows**
+- **Homebrew** (only if you previously installed `uv` via Homebrew)
+
+### Installation Steps
+
 The installation will:
 1. Install or update **uv** (Python package installer)
 2. Install the **Aignostics Python SDK** (includes Launchpad, CLI, and Python Library)

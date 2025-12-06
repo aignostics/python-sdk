@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.222 - built with love in Berlin 🐻
+🔬 Aignostics Python SDK v0.2.225 - built with love in Berlin 🐻
 
 **Commands**:
 

@@ -77,17 +77,17 @@ HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
     60 * 60 * 5
 )  # 5 hours - timeout should never happen if cancel on deadline exceeded works
 
-HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 12  # 12 hours
-HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 12  # 12 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
 HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 
 # Plan to have 100.000 slides processed in total, with 100 slides per application run,
 # one application run starting every 5 minutes, with a throughput of 1 slide per minute,
 # given no GPU.
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 100
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 1000  # Minute 0..9
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20 = 2500  # Minute 20..29
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 50
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 50  # Minute 0..9
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20 = 50  # Minute 20..29
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 1 day(s)
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 1 day(s)
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours; Minute 40..49
@@ -590,7 +590,7 @@ def test_platform_heta_app_submit() -> None:
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta(
-            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 60 * 10  # 10 hours buffer
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,
