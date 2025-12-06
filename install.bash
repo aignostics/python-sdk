@@ -174,7 +174,7 @@ if ! command -v brew &> /dev/null; then
     # Check if we should install Homebrew in this environment
     if [ "$ENV" = "local" ]; then
         echo "Installing Homebrew... # https://brew.sh/"
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        /bin/bash -c "$(curl --proto "=https" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     else
         echo "Skipping Homebrew installation (not needed in $ENV environment)"
     fi
