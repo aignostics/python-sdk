@@ -508,6 +508,10 @@ def _generate_cli_reference(session: nox.Session) -> None:
     """
     if CLI_MODULE:
         session.run(
+            "python",
+            "-W",
+            "ignore::UserWarning",
+            "-m",
             "typer",
             f"aignostics.{CLI_MODULE}",
             "utils",
