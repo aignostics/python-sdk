@@ -16,9 +16,9 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
         cli (typer.Typer): Typer instance
         epilog (str): Epilog to add
     """
-    for _cli in locate_implementations(typer.Typer):
-        if _cli != cli:
-            cli.add_typer(_cli)
+    for subcli in locate_implementations(typer.Typer):
+        if subcli != cli:
+            cli.add_typer(subcli)
 
     cli.info.epilog = epilog
     if not any(arg.endswith("typer") for arg in Path(sys.argv[0]).parts):

@@ -23,6 +23,7 @@ JUNIT_XML_PREFIX = "--junitxml=reports/junit_"
 CLI_MODULE = "cli"
 API_VERSIONS = ["v1"]
 UTF8 = "utf-8"
+LOG_STDERR_DISABLED = "AIGNOSTICS_LOG_STDERR_ENABLED=false"
 
 
 def _read_python_version() -> str:
@@ -420,8 +421,8 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
     Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
 
     formats = {
-        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
-        "json": {"ext": "json", "args": ["--output-format=json", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
+        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", LOG_STDERR_DISABLED]},
+        "json": {"ext": "json", "args": ["--output-format=json", "--env", LOG_STDERR_DISABLED]},
     }
 
     for version in API_VERSIONS:
@@ -455,7 +456,7 @@ def _generate_sdk_metadata_schema(session: nox.Session, schema_type: str) -> Non
             f"{schema_type}-metadata-schema",
             "--no-pretty",
             "--env",
-            "AIGNOSTICS_LOG_STDERR_ENABLED=false",
+            LOG_STDERR_DISABLED,
             stdout=f,
             external=True,
         )
