@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.226](https://github.com/aignostics/python-sdk/compare/v0.2.225..0.2.226) - 2025-12-06
+# [0.2.227](https://github.com/aignostics/python-sdk/compare/v0.2.225..0.2.227) - 2025-12-06
 
 ### ⛰️  Features
 
@@ -37,8 +37,8 @@
 - *(deps)* Bump docker/setup-qemu-action from 3.6.0 to 3.7.0 ([#247](https://github.com/orhun/git-cliff/issues/247)) - ([2ccc420](https://github.com/aignostics/python-sdk/commit/2ccc420fb8bdb1b3bb4445a880fb7216c2c49102))
 - *(deps)* Update anthropics/claude-code-action action to v1.0.22 ([#231](https://github.com/orhun/git-cliff/issues/231)) - ([17cd8ea](https://github.com/aignostics/python-sdk/commit/17cd8ea25eb4470f718d09ea9797735de485af6e))
 - *(deps)* Bump - ([4623101](https://github.com/aignostics/python-sdk/commit/462310106d03018439c5c05c314f6957f678072c))
-- *(docker)* Give more time for bytecode compilation with python 3.14 on github with qemu for arm - ([22bc44e](https://github.com/aignostics/python-sdk/commit/22bc44e9510f0d538434ccfd95a5145c76b5f980))
-- *(native)* Don't use splash for native linux with python 3.14 - ([22bc44e](https://github.com/aignostics/python-sdk/commit/22bc44e9510f0d538434ccfd95a5145c76b5f980))
+- *(docker)* Give more time for bytecode compilation with python 3.14 on github with qemu for arm - ([dd0a167](https://github.com/aignostics/python-sdk/commit/dd0a167bcfba02c3c9f196756f31a09bbf4ca7b4))
+- *(native)* Don't use splash for native linux with python 3.14 - ([dd0a167](https://github.com/aignostics/python-sdk/commit/dd0a167bcfba02c3c9f196756f31a09bbf4ca7b4))
 - Actions/checkout - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
 - Dependabot[bot] <support@github.com> - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
 - Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
@@ -50,6 +50,11 @@
 
 - *(install)* Bash and ensure ssl - ([4623101](https://github.com/aignostics/python-sdk/commit/462310106d03018439c5c05c314f6957f678072c))
 
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution in [#321](https://github.com/aignostics/python-sdk/pull/321)
+* @dependabot[bot] made their first contribution in [#307](https://github.com/aignostics/python-sdk/pull/307)
+* @renovate[bot] made their first contribution in [#231](https://github.com/aignostics/python-sdk/pull/231)
 
 # [v0.2.225](https://github.com/aignostics/python-sdk/compare/v0.2.224..v0.2.225) - 2025-12-06
 
