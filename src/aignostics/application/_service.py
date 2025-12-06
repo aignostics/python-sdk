@@ -9,7 +9,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-import google_crc32c
+import crc32c
 import requests
 from loguru import logger
 
@@ -370,8 +370,8 @@ class Service(BaseService):  # noqa: PLR0904
             extensions = get_supported_extensions_for_application(application_id)
             for extension in extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
-                    # Generate CRC32C checksum with google_crc32c and encode as base64
-                    hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
+                    # Generate CRC32C checksum with crc32c and encode as base64
+                    hash_sum = crc32c.CRC32CHash()  # type: ignore[no-untyped-call]
                     with file_path.open("rb") as f:
                         while chunk := f.read(1024):
                             hash_sum.update(chunk)  # type: ignore[no-untyped-call]

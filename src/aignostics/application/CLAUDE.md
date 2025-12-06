@@ -475,7 +475,7 @@ def upload_file(self, file_path: Path, signed_url: str):
 
     with file_path.open("rb") as f:
         # Calculate CRC32C
-        crc = google_crc32c.Checksum()
+        crc = crc32c.CRC32CHash()
 
         # Upload in chunks
         while True:
