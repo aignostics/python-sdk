@@ -64,7 +64,7 @@ def _get_test_python_versions() -> list[str]:
     Returns:
         list[str]: List of Python version strings to test against
     """
-    versions = ["3.11.9", "3.12.12", PYTHON_VERSION]
+    versions = ["3.11.14", "3.12.12", "3.13.10", PYTHON_VERSION]
     if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
         versions = [PYTHON_VERSION]
         # Only test with 3.13.x on Windows ARM due to:
