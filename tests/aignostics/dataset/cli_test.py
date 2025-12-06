@@ -11,6 +11,7 @@ from typer.testing import CliRunner
 
 from aignostics.cli import cli
 from tests.conftest import normalize_output
+from tests.constants_test import SPOT_1_FILENAME, SPOT_1_GS_URL
 
 SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
@@ -137,19 +138,16 @@ def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path, recor
             "dataset",
             "aignostics",
             "download",
-            "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+            SPOT_1_GS_URL,
             str(tmp_path),
         ],
     )
     assert result.exit_code == 0
 
-    # Check that the output contains the successful download message
-    # Use a simpler pattern that just checks for the key phrase and filename, regardless of formatting
     assert "Successfully downloaded" in result.stdout
-    assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in result.stdout
+    assert SPOT_1_FILENAME in result.stdout
 
-    # Verify the file exists in the tmpdir
-    expected_file = tmp_path / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+    expected_file = tmp_path / SPOT_1_FILENAME
     assert expected_file.exists(), f"Expected file {expected_file} not found"
     assert expected_file.stat().st_size == 14681750
 

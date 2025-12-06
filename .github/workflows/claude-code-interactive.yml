@@ -12,15 +12,6 @@ on:
   pull_request_review:
     types: [submitted]
   workflow_dispatch:
-    inputs:
-      platform_environment:
-        description: 'Environment to use'
-        required: false
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 jobs:
   claude:
@@ -33,14 +24,7 @@ jobs:
       github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/_claude-code.yml
     with:
-      platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'interactive'
       track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
     secrets:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
-      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
-      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
-      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
-      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
