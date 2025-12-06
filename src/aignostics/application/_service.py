@@ -371,11 +371,11 @@ class Service(BaseService):  # noqa: PLR0904
             for extension in extensions:
                 for file_path in source_directory.glob(f"**/*{extension}"):
                     # Generate CRC32C checksum with crc32c and encode as base64
-                    hash_sum = crc32c.CRC32CHash()  # type: ignore[no-untyped-call]
+                    hash_sum = crc32c.CRC32CHash()
                     with file_path.open("rb") as f:
                         while chunk := f.read(1024):
-                            hash_sum.update(chunk)  # type: ignore[no-untyped-call]
-                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
+                            hash_sum.update(chunk)
+                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")
                     try:
                         image_metadata = WSIService().get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
