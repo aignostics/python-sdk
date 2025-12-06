@@ -200,7 +200,7 @@ class Service(BaseService):
             )
 
             if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (public) returned '%s'", response.status)
+                logger.error("Aignostics Platform API (public) returned '{}'", response.status)
                 return Health(
                     status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status}'"
                 )
@@ -227,7 +227,7 @@ class Service(BaseService):
                 _request_timeout=self._settings.health_timeout,
             )
             if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (authenticated) returned '%s'", response.status)
+                logger.error("Aignostics Platform API (authenticated) returned '{}'", response.status)
                 return Health(status=Health.Code.DOWN, reason=f"Aignostics Platform API returned '{response.status}'")
         except Exception as e:
             logger.exception("Issue with Aignostics Platform API")

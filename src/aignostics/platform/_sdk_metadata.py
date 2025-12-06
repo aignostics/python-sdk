@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from loguru import logger
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from aignostics.utils import user_agent
 
@@ -26,6 +26,7 @@ from ._constants import (
 
 SDK_METADATA_SCHEMA_VERSION = "0.0.6"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
+VALIDATION_CASE_TAG_PREFIX = "__aignx_validation_case:"
 
 
 class GPUType(StrEnum):
@@ -41,6 +42,16 @@ class ProvisioningMode(StrEnum):
     SPOT = "SPOT"
     ON_DEMAND = "ON_DEMAND"
     FLEX_START = "FLEX_START"
+
+
+class ValidationCase(StrEnum):
+    """Cases supported by the validation application."""
+
+    SEND_SUCCEEDED = "send_succeeded"
+    SEND_RECOVERABLE_ERROR = "send_recoverable_error"
+    SEND_SYSTEM_ERROR = "send_system_error"
+    SEND_USER_ERROR = "send_user_error"
+    DO_NOTHING = "do_nothing"
 
 
 class CPUConfig(BaseModel):
@@ -226,6 +237,19 @@ class RunSdkMetadata(BaseModel):
     pipeline: PipelineConfig | None = Field(None, description="Pipeline orchestration configuration")
 
     model_config = {"extra": "forbid"}  # Reject unknown fields
+
+    @field_validator("tags", mode="after")
+    @classmethod
+    def validate_validation_case(cls, tags: set[str] | None) -> set[str] | None:
+        if tags is None:
+            return None
+        for tag in tags:
+            if tag.startswith(VALIDATION_CASE_TAG_PREFIX):
+                case_value = tag.split(VALIDATION_CASE_TAG_PREFIX)[1]
+                if case_value not in ValidationCase._value2member_map_:
+                    msg = f"Invalid validation_case tag value: {case_value}"
+                    raise ValueError(msg)
+        return tags
 
 
 class PlatformBucketMetadata(BaseModel):
