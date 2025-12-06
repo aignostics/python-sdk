@@ -37,6 +37,7 @@ from ._utils import (
 )
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
+PROGRESS_TASK_DESCRIPTION = "[progress.description]{task.description}"
 
 
 ApplicationVersionOption = Annotated[
@@ -219,7 +220,7 @@ def application_dump_schemata(  # noqa: C901
             resolve_path=True,
             show_default="<current-working-directory>",
         ),
-    ] = Path().cwd(),  # noqa: B008,
+    ] = Path().cwd(),  # noqa: B008
     zip: Annotated[  # noqa: A002
         bool,
         typer.Option(
@@ -236,7 +237,7 @@ def application_dump_schemata(  # noqa: C901
         logger.warning(message)
         console.print(f"[warning]Warning:[/warning] {message}")
         sys.exit(2)
-    except (Exception, RuntimeError) as e:
+    except Exception as e:
         message = f"Failed to load application version with ID '{id}': {e!s}."
         logger.exception(message)
         console.print(f"[warning]Error:[/warning] {message}")
@@ -670,7 +671,7 @@ def run_upload(
         FileSizeColumn(),
         TotalFileSizeColumn(),
         TransferSpeedColumn(),
-        TextColumn("[progress.description]{task.description}"),
+        TextColumn(PROGRESS_TASK_DESCRIPTION),
     ) as progress:
         task = progress.add_task(f"Uploading to {upload_prefix}/...", total=total_bytes)
 
@@ -761,7 +762,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
             f"(version: {application_version})': {e}"
         )
         sys.exit(2)
-    except (Exception, RuntimeError) as e:
+    except Exception as e:
         message = (
             f"Failed to load application version '{application_version}' for application '{application_id}': {e!s}."
         )
@@ -1308,7 +1309,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
         main_download_progress_ui = Progress(
             BarColumn(),
             TaskProgressColumn(),
-            TextColumn("[progress.description]{task.description}"),
+            TextColumn(PROGRESS_TASK_DESCRIPTION),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             TextColumn("{task.fields[extra_description]}"),
@@ -1316,7 +1317,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
         artifact_download_progress_ui = Progress(
             BarColumn(),
             TaskProgressColumn(),
-            TextColumn("[progress.description]{task.description}"),
+            TextColumn(PROGRESS_TASK_DESCRIPTION),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             FileSizeColumn(),
