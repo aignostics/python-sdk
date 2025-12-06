@@ -1,6 +1,57 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.225](https://github.com/aignostics/python-sdk/compare/v0.2.224..0.2.225) - 2025-12-06
+# [0.2.226](https://github.com/aignostics/python-sdk/compare/v0.2.225..0.2.226) - 2025-12-06
+
+### ⛰️  Features
+
+- *(cli)* Print python version in epilog - ([7182533](https://github.com/aignostics/python-sdk/commit/7182533fc8fa22b192dae96ddefada2830f24c33))
+- *(core)* Support for python 3.14.x ([#321](https://github.com/orhun/git-cliff/issues/321)) - ([7182533](https://github.com/aignostics/python-sdk/commit/7182533fc8fa22b192dae96ddefada2830f24c33))
+- *(core)* Support for python 3.14.x - ([7182533](https://github.com/aignostics/python-sdk/commit/7182533fc8fa22b192dae96ddefada2830f24c33))
+
+### 🚜 Refactor
+
+- *(platform)* Adapt to PEP 649 given we shadow list ... - ([7182533](https://github.com/aignostics/python-sdk/commit/7182533fc8fa22b192dae96ddefada2830f24c33))
+- *(various)* Given issues identified by SonarQube - ([4623101](https://github.com/aignostics/python-sdk/commit/462310106d03018439c5c05c314f6957f678072c))
+
+### 📚 Documentation
+
+- Introduce mermaid support - ([7182533](https://github.com/aignostics/python-sdk/commit/7182533fc8fa22b192dae96ddefada2830f24c33))
+- Update - ([7182533](https://github.com/aignostics/python-sdk/commit/7182533fc8fa22b192dae96ddefada2830f24c33))
+
+### ⚡ Performance
+
+- *(gui,utils,wsi)* Lazy load nicegui - ([7182533](https://github.com/aignostics/python-sdk/commit/7182533fc8fa22b192dae96ddefada2830f24c33))
+
+### 🧪 Testing
+
+- *(platform)* Use L4 provisioning mode on staging (was A100) - ([cd6d34a](https://github.com/aignostics/python-sdk/commit/cd6d34a264abbdb615265101c160ea9eb1bcb15f))
+- *(platform)* Use SPOT provisioning mode on staging (was FLEX_START) - ([a6ca29a](https://github.com/aignostics/python-sdk/commit/a6ca29a696d6a27226f892fd62596609a2118beb))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(ai)* Remove sticky again - ([e82db37](https://github.com/aignostics/python-sdk/commit/e82db379631838ddee4d26e9ed46294df66a2a49))
+- *(ai)* Sticky broken with claude - ([d6fe1bc](https://github.com/aignostics/python-sdk/commit/d6fe1bcfe85e56a1c38feab65db83667f5b10987))
+- *(ai)* Use stick comment in claude pr reviews - ([2d817da](https://github.com/aignostics/python-sdk/commit/2d817da1ecb8250a8a048f888a05af2144540ec9))
+- *(audit)* Allow Zope Public License for audit - ([4623101](https://github.com/aignostics/python-sdk/commit/462310106d03018439c5c05c314f6957f678072c))
+- *(deps)* Bump actions/checkout from 5.0.1 to 6.0.1 ([#307](https://github.com/orhun/git-cliff/issues/307)) - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
+- *(deps)* Bump docker/setup-qemu-action from 3.6.0 to 3.7.0 ([#247](https://github.com/orhun/git-cliff/issues/247)) - ([2ccc420](https://github.com/aignostics/python-sdk/commit/2ccc420fb8bdb1b3bb4445a880fb7216c2c49102))
+- *(deps)* Update anthropics/claude-code-action action to v1.0.22 ([#231](https://github.com/orhun/git-cliff/issues/231)) - ([17cd8ea](https://github.com/aignostics/python-sdk/commit/17cd8ea25eb4470f718d09ea9797735de485af6e))
+- *(deps)* Bump - ([4623101](https://github.com/aignostics/python-sdk/commit/462310106d03018439c5c05c314f6957f678072c))
+- *(docker)* Give more time for bytecode compilation with python 3.14 on github with qemu for arm - ([22bc44e](https://github.com/aignostics/python-sdk/commit/22bc44e9510f0d538434ccfd95a5145c76b5f980))
+- *(native)* Don't use splash for native linux with python 3.14 - ([22bc44e](https://github.com/aignostics/python-sdk/commit/22bc44e9510f0d538434ccfd95a5145c76b5f980))
+- Actions/checkout - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
+- Dependabot[bot] <support@github.com> - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([f075d73](https://github.com/aignostics/python-sdk/commit/f075d73da91774f9185203d7e59cee6dc8f42a76))
+- Docker/setup-qemu-action - ([2ccc420](https://github.com/aignostics/python-sdk/commit/2ccc420fb8bdb1b3bb4445a880fb7216c2c49102))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([17cd8ea](https://github.com/aignostics/python-sdk/commit/17cd8ea25eb4470f718d09ea9797735de485af6e))
+
+### 🛡️ Security
+
+- *(install)* Bash and ensure ssl - ([4623101](https://github.com/aignostics/python-sdk/commit/462310106d03018439c5c05c314f6957f678072c))
+
+
+# [v0.2.225](https://github.com/aignostics/python-sdk/compare/v0.2.224..v0.2.225) - 2025-12-06
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -10,9 +61,6 @@
 
 - *(dep)* Require urllib3 >= 2.6.0 given CVE-2025-66471 (GHSA-2xpw-w6gg-jr37); dep of boto3, dicomweb-client and others - ([72e862c](https://github.com/aignostics/python-sdk/commit/72e862c927a8bb8193c4e8baf03fcd16835012c0))
 
-
-
-* @arne-aignx made their first contribution
 
 # [v0.2.224](https://github.com/aignostics/python-sdk/compare/v0.2.223..v0.2.224) - 2025-12-04
 

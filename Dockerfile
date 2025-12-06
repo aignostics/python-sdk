@@ -13,6 +13,9 @@ ENV UV_PYTHON_DOWNLOADS=0
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 
+# Can take a bit longer on GitHub / Qemu for arm
+ENV UV_COMPILE_BYTECODE_TIMEOUT=300
+
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
