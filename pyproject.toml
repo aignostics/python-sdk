@@ -94,9 +94,8 @@ dependencies = [
     "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
     "duckdb>=0.14.2,<=1.5",
-    "fastparquet>=2024.11.0",
     "google-cloud-storage>=3.6.0,<4",
-    "crc32c>=2.8,<3",
+    "crc32c>=2.8,<3", # TODO(Helmut): Remove and back to google_crc32c when that supports Python 3.14
     "highdicom>=0.26.1,<1",
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
@@ -110,6 +109,7 @@ dependencies = [
     "pandas>=2.3.3,<3",
     "platformdirs>=4.3.2,<5",
     "procrastinate>=3.5.3",
+    "pyarrow>=22.0.0,<23", # TODO(Helmut): replace with fastparquet when that returns python 3.14
     "pyjwt[crypto]>=2.10.1,<3",
     "python-dateutil>=2.9.0.post0,<3",
     # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
