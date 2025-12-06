@@ -71,6 +71,10 @@ UV_TOOLS=(
     "copier;copier;https://copier.readthedocs.io/;local"
 )
 
+PNPM_TOOLS=(
+    "@mermaid-js/mermaid-cli;;https://mermaid.js.org/;"
+)
+
 # Function to check if a tool should be installed in the current environment
 should_install_in_env() {
     local environments=$1
@@ -212,4 +216,30 @@ fi
 for tool_entry in "${UV_TOOLS[@]}"; do
     IFS=";" read -r tool package url environments <<< "$tool_entry"
     install_or_update_uv_tool "$tool" "$package" "$url" "$environments"
+done
+
+# Function to install/update tools via pnpm
+install_or_update_pnpm_tool() {
+    local package=$1
+    local url=$2
+    local environments=$3
+    
+    # Check if the tool should be installed in the current environment
+    if ! should_install_in_env "$environments"; then
+        echo "Skipping $package installation (not needed in $ENV environment)"
+        return
+    fi
+
+    if command -v pnpm &> /dev/null; then
+        echo "Installing/updating $package via pnpm... # $url"
+        pnpm add -g --ignore-scripts "$package"
+    else
+        echo "pnpm not found, skipping $package installation"
+    fi
+}
+
+# Install/update pnpm tools
+for tool_entry in "${PNPM_TOOLS[@]}"; do
+    IFS=";" read -r package _ url environments <<< "$tool_entry"
+    install_or_update_pnpm_tool "$package" "$url" "$environments"
 done

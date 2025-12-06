@@ -30,7 +30,7 @@ def _read_python_version() -> str:
     """Read Python version from .python-version file.
 
     Returns:
-        str: Python version string (e.g., "3.13" or "3.13.1")
+        str: Python version string (e.g., "3.14" or "3.14.1")
 
     Raises:
         FileNotFoundError: If .python-version file does not exist
@@ -66,8 +66,8 @@ def _get_test_python_versions() -> list[str]:
     """
     versions = ["3.11.14", "3.12.12", "3.13.10", PYTHON_VERSION]
     if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
-        versions = [PYTHON_VERSION]
-        # Only test with 3.13.x on Windows ARM due to:
+        versions = ["3.13.10", PYTHON_VERSION]
+        # Only test with >= 3.13.x on Windows ARM due to:
         # 1. Access denied errors when uv >= 0.9.4 tries to recreate venv directories (all Python versions)
         # 2. Instability of Python 3.12.x on Windows ARM platform
     return versions

@@ -34,3 +34,5 @@ build:
       - uv venv $READTHEDOCS_VIRTUALENV_PATH
       - . ${READTHEDOCS_VIRTUALENV_PATH}/bin/activate
       - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --frozen --all-extras
+    post_install:
+      - npm install -g --ignore-scripts @mermaid-js/mermaid-cli

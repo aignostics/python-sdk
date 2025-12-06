@@ -514,7 +514,7 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results. 
 The QuPath project will be created in a subfolder of the destination directory. 
-This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...` 
+This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...`
 This options requires installation of the QuPath application: Run uvx --with &quot;aignostics&quot; aignostics qupath install  [default: no-qupath-project]
 * `--help`: Show this message and exit.
 

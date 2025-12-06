@@ -30,20 +30,21 @@ Before proceeding, ensure you have an **Aignostics Platform account**. You can g
 
 ### Requirements
 
-- **Python 3.11, 3.12, or 3.13** (⚠️ Python 3.14 is not yet supported)
+- **Python 3.11, 3.12, 3.13, or 3.14**
 - **macOS 11.0+, Linux, or Windows**
 - **Homebrew** (only if you previously installed `uv` via Homebrew)
 
 ### Installation Steps
 
 The installation will:
+
 1. Install or update **uv** (Python package installer)
 2. Install the **Aignostics Python SDK** (includes Launchpad, CLI, and Python Library)
 
 Copy and paste the appropriate command below into your terminal (macOS/Linux) or PowerShell (Windows):
 
-
 **Linux/macOS:**
+
 ```bash
 if ! command -v uv &> /dev/null; then
     echo "uv not found, installing..."
@@ -68,15 +69,18 @@ fi
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 winget install --id=Microsoft.VCRedist.2015+.x64 -e
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 Verify your installation by running:
+
 ```bash
 uvx aignostics --help
 ```
+
 You should see the Aignostics CLI help output.
 
 You can then proceed by choosing your preferred user interface below.
@@ -112,10 +116,7 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Building custom analysis pipeline in Python for repeated usage and processing large datasets (10s-1000s of slides) |
 | **Get started** | <a href="#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment">Run example notebooks</a> or <a href="#python-library-call-the-aignostics-platform-api-from-your-python-scripts">call the Aignostics Platform API from your Python scripts</a> |
 
-
 > 💡 Launchpad and CLI handle authentication automatically. Python Library requires manual setup (see [authentication section](#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment)).
-
-
 
 ## Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
 
@@ -128,6 +129,7 @@ The **Aignostics Launchpad** is a graphical desktop application that allows you 
 This tutorial uses [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) with a public lung cancer dataset from the NCI Image Data Commons.
 
 **Step 1: Start Aignostics Launchpad**
+
 1. Open a terminal or command prompt
 2. Run the command: `uvx aignostics launchpad`
 This starts the Launchpad application.
@@ -201,6 +203,7 @@ When processing completes, Atlas H&E-TME provides comprehensive tumor microenvir
 **Downloading Results:**
 
 When processing completes, the status icon changes to show completion. To download results:
+
 1. Click the "Download Results" button
 2. The system downloads a ZIP file containing all outputs to your computer
 
@@ -233,6 +236,7 @@ interact with the Aignostics Platform directly from your terminal or shell scrip
 **New to CLI?** See <a href="#installation">Installation</a> section above to get started.
 
 **Common workflows:**
+
 - Download public datasets from NCI Image Data Commons
 - Submit batch processing runs for multiple slides
 - Monitor run status and download results incrementally
@@ -242,6 +246,7 @@ See as follows for a simple example where we download a sample dataset for the [
 H&E-TME application](https://www.aignostics.com/products/he-tme-profiling-product), submit an application run, and download the results.
 
 ### Example: Running Atlas H&E-TME with CLI
+
 1. Open a terminal or command prompt
 2. Use the following commands to run the Atlas H&E-TME application on a sample dataset:
 
@@ -289,13 +294,11 @@ Check out our
 [CLI reference documentation](https://aignostics.readthedocs.io/en/latest/cli_reference.html)
 to learn about all commands and options available.
 
-
 ## Python Library: Call the Aignostics Platform API from your Python scripts
 
 The Python SDK includes the *Aignostics Python Library* for integration with your Python codebase.
 
 **New to Python Library?** See <a href="#installation">Installation</a> section above to get started.
-
 
 <!-- - **Authentication setup** - ADD INSTRUCTIONS. -->
 
@@ -304,11 +307,13 @@ The Python SDK includes the *Aignostics Python Library* for integration with you
 Add the Aignostics Python SDK to your Python project:
 
 **Install with [uv](https://docs.astral.sh/uv/):**
+
 ```shell
 uv add aignostics
 ```
 
 **Install with [pip](https://pip.pypa.io/en/stable/):**
+
 ```shell
 # Add Python SDK as dependency to your project
 pip install aignostics
@@ -363,6 +368,7 @@ to learn about all classes and methods.
 > and follow the steps outlined in the `Use in Python Notebooks` section.
 
 The Python SDK includes ready-to-use Marimo notebooks that demonstrate platform interaction patterns. These notebooks are ideal for:
+
 - Learning the API through interactive examples
 - Prototyping custom analysis workflows
 - Integrating with existing data science pipelines
@@ -436,7 +442,9 @@ Self-signed URLs for files in google storage buckets can be generated using the
 for the Google Storage Bucket**
 
 ## Next Steps
+
 Now that you have an overview of the Aignostics Python SDK and its interfaces, here are some recommended next steps to deepen your understanding and get the most out of the platform:
+
 - **Understand the platform**: Read the [Aignostics Platform Overview](platform_overview.md) to learn about architecture and core concepts
 - **Review detailed documentation**: See the [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html) and [Python Library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 - **Explore QuPath integration**: Use the QuPath extension to visualize and interact with your results

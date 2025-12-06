@@ -761,7 +761,7 @@ The `_download.py` module uses `platform.generate_signed_url()` to convert `gs:/
 ### External Dependencies
 
 - `semver` - Semantic version validation (using `Version.is_valid()`)
-- `google-crc32c` - File integrity checking (CRC32C checksums)
+- `crc32c` - File integrity checking (CRC32C checksums)
 - `requests` - HTTP operations (streaming downloads)
 - `pydantic` - Data models with validation and computed fields
 - `ijson` - Required for QuPath features (optional)

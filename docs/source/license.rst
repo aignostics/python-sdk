@@ -1,3 +1,4 @@
 License
 =======
-.. mdinclude:: ../../LICENSE
+.. include:: ../../LICENSE
+    :parser: myst_parser.sphinx_
