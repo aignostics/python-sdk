@@ -106,53 +106,6 @@ class Settings(OpaqueSettings):
     This class handles configuration settings loaded from environment variables,
     configuration files, or default values. It manages authentication endpoints,
     client credentials, token storage, and other SDK behaviors.
-
-    Attributes:
-        api_root (str): Base URL of the Aignostics API.
-        audience (str): OAuth audience claim.
-        authorization_base_url (str): Authorization endpoint for OAuth flows.
-        cache_dir (str): Directory for caching tokens and other data.
-        client_id_interactive (str): Client ID for interactive authorization flow.
-        client_id_device (SecretStr | None): Client ID for device authorization flow.
-        device_url (str): Device authorization endpoint for device flow.
-        jws_json_url (str): URL for JWS key set.
-        redirect_uri (str): Redirect URI for OAuth authorization code flow.
-        refresh_token (SecretStr | None): OAuth refresh token if available.
-        health_timeout (float): Timeout for health checks in seconds.
-        auth_jwk_set_cache_ttl (int): Time-to-live for JWK set cache in seconds.
-        auth_timeout (float): Authentication request timeout in seconds.
-        auth_retry_attempts (int): Number of retry attempts for authentication requests.
-        auth_retry_wait_min (float): Minimum wait time between authentication request retries in seconds.
-        auth_retry_wait_max (float): Maximum wait time between authentication request retries in seconds.
-        me_timeout (float): Timeout for "me" requests in seconds.
-        me_retry_attempts (int): Number of retry attempts for "me" requests.
-        me_retry_wait_min (float): Minimum wait time between "me" request retries in seconds.
-        me_retry_wait_max (float): Maximum wait time between "me" request retries in seconds.
-        me_cache_ttl (int): Time-to-live for "me" cache in seconds.
-        application_timeout (float): Timeout for application requests in seconds.
-        application_retry_attempts (int): Number of retry attempts for application requests.
-        application_retry_wait_min (float): Minimum wait time between application request retries in seconds.
-        application_retry_wait_max (float): Maximum wait time between application request retries in seconds.
-        application_cache_ttl (int): Time-to-live for application cache in seconds.
-        application_version_timeout (float): Timeout for application version requests in seconds.
-        application_version_retry_attempts (int): Number of retry attempts for application version requests.
-        application_version_retry_wait_min (float): Minimum wait time between application version request
-            retries in seconds.
-        application_version_retry_wait_max (float): Maximum wait time between application version request
-            retries in seconds.
-        application_version_cache_ttl (int): Time-to-live for application version cache in seconds.
-        run_timeout (float): Timeout for run requests in seconds.
-        run_retry_attempts (int): Number of retry attempts for run requests.
-        run_retry_wait_min (float): Minimum wait time between run request retries in seconds.
-        run_retry_wait_max (float): Maximum wait time between run request retries in seconds.
-        run_cache_ttl (int): Time-to-live for run cache in seconds.
-        run_cancel_timeout (float): Timeout for run cancel requests in seconds.
-        run_delete_timeout (float): Timeout for run delete requests in seconds.
-        run_submit_timeout (float): Timeout for run submit requests in seconds.
-        scope (str): OAuth scopes required by the SDK.
-        scope_elements (list[str]): OAuth scopes split into individual elements.
-        token_file (Path): Path to the token storage file.
-        token_url (str): Token endpoint for OAuth flows.
     """
 
     model_config = SettingsConfigDict(

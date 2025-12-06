@@ -475,7 +475,7 @@ def upload_file(self, file_path: Path, signed_url: str):
 
     with file_path.open("rb") as f:
         # Calculate CRC32C
-        crc = google_crc32c.Checksum()
+        crc = crc32c.CRC32CHash()
 
         # Upload in chunks
         while True:
@@ -761,7 +761,7 @@ The `_download.py` module uses `platform.generate_signed_url()` to convert `gs:/
 ### External Dependencies
 
 - `semver` - Semantic version validation (using `Version.is_valid()`)
-- `google-crc32c` - File integrity checking (CRC32C checksums)
+- `crc32c` - File integrity checking (CRC32C checksums)
 - `requests` - HTTP operations (streaming downloads)
 - `pydantic` - Data models with validation and computed fields
 - `ijson` - Required for QuPath features (optional)

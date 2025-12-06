@@ -74,7 +74,7 @@ class Versions:
         """
         self._api = api
 
-    def list(self, application: Application | str, nocache: bool = False) -> list[VersionTuple]:
+    def list(self, application: Application | str, nocache: bool = False) -> builtins.list[VersionTuple]:
         """Find all versions for a specific application.
 
         Retries on network and server errors.
@@ -294,7 +294,7 @@ class Applications:
         # Create a wrapper function that applies retry logic and caching to each API call
         # Caching at this level ensures having a fresh iterator on cache hits
         @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
-        def list_with_retry(**kwargs: object) -> list[ApplicationSummary]:
+        def list_with_retry(**kwargs: object) -> builtins.list[ApplicationSummary]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().application_retry_attempts),

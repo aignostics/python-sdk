@@ -60,6 +60,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
@@ -70,7 +71,7 @@ classifiers = [
     "Natural Language :: English",
 ]
 
-requires-python = ">=3.11, <3.14"
+requires-python = ">=3.11, <3.15"
 
 dependencies = [
     # From Template
@@ -81,7 +82,7 @@ dependencies = [
     "platformdirs>=4.5.1,<5",
     "psutil>=7.1.3,<8",
     "pydantic-settings>=2.12.0,<3",
-    "pywin32>=310,<311 ; sys_platform == 'win32'",
+    "pywin32>=311,<312; sys_platform == 'win32'",
     "pyyaml>=6.0.3,<7",
     "sentry-sdk>=2.47.0,<3",
     "typer>=0.20.0,<1",
@@ -92,10 +93,9 @@ dependencies = [
     "defusedxml>=0.7.1",
     "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
-    "duckdb>=0.10.0,<=1.4.1",
-    "fastparquet>=2024.11.0",
+    "duckdb>=1.4.2,<=2",
     "google-cloud-storage>=3.6.0,<4",
-    "google-crc32c>=1.7.1,<2",
+    "crc32c>=2.8,<3", # TODO(Helmut): Remove and back to google_crc32c when that supports Python 3.14
     "highdicom>=0.26.1,<1",
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
@@ -109,6 +109,8 @@ dependencies = [
     "pandas>=2.3.3,<3",
     "platformdirs>=4.3.2,<5",
     "procrastinate>=3.5.3",
+    "fastparquet>=2024.11.0; python_version < '3.14'",
+    "pyarrow>=22.0.0,<23; python_version >= '3.14'",
     "pyjwt[crypto]>=2.10.1,<3",
     "python-dateutil>=2.9.0.post0,<3",
     # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
@@ -145,6 +147,7 @@ dev = [
     "furo>=2025.9.25",
     "git-cliff>=2.10.1,<3",
     "mypy>=1.19.0,<2",
+    "myst-parser>=4.0.1,<5",
     "nox[uv]>=2025.11.12",
     "pip-audit>=2.10.0,<3",
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
@@ -171,10 +174,11 @@ dev = [
     "sphinx-click>=6.2.0,<7",
     "sphinx-copybutton>=0.5.2,<1",
     "sphinx-inline-tabs>=2023.4.21,<2024",
-    "sphinx-mdinclude>=0.6.2,<1",
+    "linkify-it-py>=2.0.3,<3",
     "sphinx-rtd-theme>=3.0.2,<4",
     "sphinx_selective_exclude>=1.0.3,<2",
     "sphinx-toolbox>=4.1.0,<5",
+    "sphinxcontrib.mermaid",  # https://github.com/mgaitan/sphinxcontrib-mermaid
     "sphinxext.opengraph>=0.9.1,<1",
     "swagger-plugin-for-sphinx>=6.1.0,<7",
     "tomli>=2.3.0,<3",
@@ -199,9 +203,10 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pip>=5.3",                         # CVE-2025-8869  
     "starlette>=0.49.1",                # GHSA-7f5h-v6xp-fcq8
     "fonttools>=4.60.2",                # CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib
-    "pyjpegls; sys_platform == 'never'", # Python 3.14
+    "pyjpegls; python_version < '3.14'", # No Python 3.14 support yet
     "urllib3>=2.6.0",                   # CVE-2025-66471 (GHSA-2xpw-w6gg-jr37), dep of boto3, dicomweb-client and others
     "pytest>=9.0.1",                    # pytest-md-report depends on pytest<9 unnecessarily
+    "lxml>=6.0.2",                      # For python 3.14 pre-built wheels
 ]
 
 [tool.uv.sources]

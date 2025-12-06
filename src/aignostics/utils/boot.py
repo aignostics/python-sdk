@@ -1,12 +1,14 @@
 """Boot sequence."""
 
+from __future__ import annotations
+
 import atexit
 import contextlib
 import os
 import ssl
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
@@ -20,9 +22,11 @@ try:
     import truststore  # pyright: ignore[reportMissingImports]
 except ImportError:
     truststore = None  # type: ignore[assignment]
-from collections.abc import Callable
 
-from sentry_sdk.integrations import Integration
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from sentry_sdk.integrations import Integration
 
 from ._constants import __is_library_mode__
 from ._log import logging_initialize

@@ -10,6 +10,7 @@ from loguru import logger
 from .constants import NOTEBOOK_DEFAULT
 from .utils import (
     __is_running_in_container__,
+    __python_version__,
     __version__,
     console,
     prepare_cli,
@@ -63,7 +64,9 @@ if find_spec("marimo"):
         uvicorn.run(create_marimo_app(notebook=notebook, override_if_exists=override_if_exists), host=host, port=port)
 
 
-prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")
+prepare_cli(
+    cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻 // Python v{__python_version__}"
+)
 
 
 if __name__ == "__main__":  # pragma: no cover

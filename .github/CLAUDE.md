@@ -70,7 +70,7 @@ The Aignostics Python SDK uses a **sophisticated multi-stage CI/CD pipeline** bu
 
 | Workflow | Triggers | Purpose | Calls |
 |----------|----------|---------|-------|
-| **ci-cd.yml** | push(main), PR, release, tag | Main CI/CD pipeline | _lint, _audit, _test, _codeql, _ketryx, _package-publish, _docker-publish |
+| **ci-cd.yml** | push(main), PR, release, tag | Main CI/CD pipeline | _lint,_audit, _test,_codeql, _ketryx,_package-publish, _docker-publish |
 | **build-native-only.yml** | push, PR, release (if msg contains `build:native:only`) | Native executable builds | _build-native-only |
 | **claude-code-interactive.yml** | workflow_dispatch (manual) | Manual Claude sessions | _claude-code (interactive) |
 | **claude-code-automation-pr-review.yml** | PR opened/sync (excludes bots) | Automated PR reviews | _claude-code (automation) |
@@ -334,30 +334,32 @@ uv run pytest -m "(scheduled or scheduled_only)" -v
 1. Unit Tests (3 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   └─ Python 3.13 ─┘
+   ├─ Python 3.13 ─┤
+   └─ Python 3.14 ─┘
 
 2. Integration Tests (5 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   └─ Python 3.13 ─┘
+   ├─ Python 3.13 ─┤
+   └─ Python 3.14 ─┘
 
 3. E2E Regular (7 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   └─ Python 3.13 ─┘
+   ├─ Python 3.13 ─┤
+   └─ Python 3.14 ─┘
 
 4. Long Running (if not skipped)
-   └─ Python 3.13 only (single version)
+   └─ Python 3.14 only (single version)
 
 5. Very Long Running (if explicitly enabled)
-   └─ Python 3.13 only (single version)
+   └─ Python 3.14 only (single version)
 ```
 
 **Matrix Testing**:
 
-* Unit, Integration, E2E run on **all 3 Python versions** (3.11, 3.12, 3.13)
-* Long running and very long running run on **Python 3.13 only** to save CI time
-* Windows ARM excludes Python 3.12.12 due to instability
+* Unit, Integration, E2E run on **all four Python versions** (3.11, 3.12, 3.13, 3.14)
+* Long running and very long running run on **Python 3.14 only** to save CI time
 
 ### Skip Markers System
 
@@ -1006,14 +1008,18 @@ make dist_native
 
 1. Ensure `main` branch is clean and all tests pass
 2. Run version bump:
+
    ```bash
    make bump patch  # or minor, major
    ```
+
 3. This creates a commit and git tag
 4. Push with tags:
+
    ```bash
    git push --follow-tags
    ```
+
 5. CI detects tag and triggers:
    * Full CI pipeline (lint, audit, test, CodeQL)
    * Package build and publish to PyPI
