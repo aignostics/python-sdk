@@ -39,6 +39,7 @@ MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
 CLASS_SUBSECTION_HEADER = "text-h6 mb-0 pb-0"
 CLASS_WIDTH_ONE_THIRD = "w-1/3"
 CLASS_WIDTH_ONE_HALF = "w-1/2"
+DATETIME_MASK = "YYYY-MM-DD HH:mm"
 
 
 @binding.bindable_dataclass
@@ -645,13 +646,13 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 with ui.row().classes("full-width"):
                     ui.label("")
                     due_date_date_picker = (
-                        ui.date(mask="YYYY-MM-DD HH:mm")
+                        ui.date(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props(f":options=\"(date) => date >= '{today}'\"")
                         .mark("DATE_DUE_DATE")
                     )
                     due_date_time_picker = (
-                        ui.time(mask="YYYY-MM-DD HH:mm")
+                        ui.time(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props("format24h now-btn")
                         .mark("TIME_DUE_DATE")
@@ -695,12 +696,12 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     "text-sm mt-0 pt-0"
                 )
                 with ui.row().classes("full-width"):
-                    ui.date(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "deadline").props(
+                    ui.date(mask=DATETIME_MASK).bind_value(submit_form, "deadline").props(
                         f":options=\"(date) => date >= '{today}'\""
                     ).mark("DATE_DEADLINE")
-                    ui.time(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "deadline").props(
-                        "format24h now-btn"
-                    ).mark("TIME_DEADLINE")
+                    ui.time(mask=DATETIME_MASK).bind_value(submit_form, "deadline").props("format24h now-btn").mark(
+                        "TIME_DEADLINE"
+                    )
 
             def _scheduling_next() -> None:
                 if submit_form.upload_and_submit_button is None:
