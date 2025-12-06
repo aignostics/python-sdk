@@ -2,7 +2,7 @@ name: "+ Claude Code / Automation / PR Review"
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, reopened, synchronize, ready_for_review, labeled]
   workflow_dispatch:
 
 concurrency:
