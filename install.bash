@@ -6,7 +6,7 @@ ENV="local"
 
 # Parse command line arguments
 i=0
-while [ $i -lt $# ]; do
+while [[ $i -lt $# ]]; do
     i=$((i + 1))
     arg="${!i}"
     
@@ -16,7 +16,7 @@ while [ $i -lt $# ]; do
             ;;
         --env)
             i=$((i + 1))
-            if [ $i -le $# ]; then
+            if [[ $i -le $# ]]; then
                 ENV="${!i}"
             fi
             ;;
@@ -76,14 +76,14 @@ should_install_in_env() {
     local environments=$1
     
     # If environments is empty, install in all environments
-    if [ -z "$environments" ]; then
+    if [[ -z "$environments" ]]; then
         return 0  # true
     fi
     
     # Check if the current environment is in the list
     IFS=',' read -ra ENV_LIST <<< "$environments"
     for e in "${ENV_LIST[@]}"; do
-        if [ "$e" = "$ENV" ]; then
+        if [[ "$e" = "$ENV" ]]; then
             return 0  # true
         fi
     done
@@ -172,13 +172,13 @@ fi
 # Install/update Homebrew itself
 if ! command -v brew &> /dev/null; then
     # Check if we should install Homebrew in this environment
-    if [ "$ENV" = "local" ]; then
+    if [[ "$ENV" = "local" ]]; then
         echo "Installing Homebrew... # https://brew.sh/"
         /bin/bash -c "$(curl --proto "=https" -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     else
         echo "Skipping Homebrew installation (not needed in $ENV environment)"
     fi
-elif [ "$ENV" = "local" ]; then
+elif [[ "$ENV" = "local" ]]; then
     echo "Homebrew already installed at $(command -v brew), updating..."
     brew update
 fi
