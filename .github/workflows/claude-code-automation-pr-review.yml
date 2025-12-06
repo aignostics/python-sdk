@@ -4,15 +4,6 @@ on:
   pull_request:
     types: [opened, synchronize]
   workflow_dispatch:
-    inputs:
-      platform_environment:
-        description: 'Environment to use'
-        required: false
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
@@ -22,7 +13,6 @@ jobs:
   claude-review:
     uses: ./.github/workflows/_claude-code.yml
     with:
-      platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'automation'
       track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
       allowed_tools: 'mcp__github_inline_comment__create_inline_comment,Read,Write,Edit,MultiEdit,Glob,Grep,LS,WebFetch,WebSearch,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),Bash(uv:*),Bash(make:*)'
@@ -225,9 +215,3 @@ jobs:
         **Remember**: This is medical device software. Insist on highest standards. Be thorough, actionable, and kind.
     secrets:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
-      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
-      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
-      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
-      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}

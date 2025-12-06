@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from aignostics.platform._sdk_metadata import (
     ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
+    VALIDATION_CASE_TAG_PREFIX,
+    ValidationCase,
     build_item_sdk_metadata,
     build_run_sdk_metadata,
     get_item_sdk_metadata_json_schema,
@@ -325,10 +327,10 @@ class TestBuildRunSdkMetadata:
         """Test that user_agent is included in metadata."""
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
-            with patch("aignostics.platform._sdk_metadata.user_agent", return_value="test-agent/1.0"):
+            with patch("aignostics.platform._sdk_metadata.user_agent", return_value=TEST_USER_AGENT):
                 metadata = build_run_sdk_metadata()
 
-                assert metadata["user_agent"] == "test-agent/1.0"
+                assert metadata["user_agent"] == TEST_USER_AGENT
 
     @pytest.mark.unit
     @staticmethod
@@ -413,6 +415,7 @@ class TestRunSdkMetadataValidation:
             metadata["note"] = "Test run note"
             metadata["workflow"] = {
                 "onboard_to_aignostics_portal": True,
+                "validate_only": False,
             }
             metadata["scheduling"] = {
                 "due_date": "2025-12-31T23:59:59+00:00",
@@ -432,7 +435,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -451,7 +454,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "invalid",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -470,7 +473,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "invalid",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -489,7 +492,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
             },
             # Missing initiator
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -508,7 +511,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "unknown_field": "should fail",
         }
 
@@ -528,7 +531,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": {"experiment", "production", "v2"},
         }
 
@@ -547,7 +550,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": set(),
         }
 
@@ -566,7 +569,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": None,
         }
 
@@ -585,7 +588,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         assert validate_run_sdk_metadata(metadata) is True
@@ -603,7 +606,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": ["tag1", "tag2"],  # List gets converted to set
         }
 
@@ -623,7 +626,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": {"key": "value"},  # Dict instead of set
         }
 
@@ -643,7 +646,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": {"valid", 123, None},  # Mixed types
         }
 
@@ -671,7 +674,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "invalid",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         assert validate_run_sdk_metadata_silent(metadata) is False
@@ -1124,3 +1127,43 @@ class TestPipelineConfiguration:
         from aignostics.platform._sdk_metadata import DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
 
         assert DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES == 12 * 60  # 720 minutes
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_valid_validation_case_tag() -> None:
+        """Test that metadata validates with a valid validation case tag."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+            "tags": [f"{VALIDATION_CASE_TAG_PREFIX}{ValidationCase.SEND_SUCCEEDED}"],
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_invalid_validation_case_tag() -> None:
+        """Test that metadata validation rejects an invalid validation case tag."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+            "tags": [f"{VALIDATION_CASE_TAG_PREFIX}invalid_case"],
+        }
+
+        with pytest.raises(ValidationError) as exc:
+            validate_run_sdk_metadata(metadata)
+        assert "validation_case" in str(exc.value)

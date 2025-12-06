@@ -26,6 +26,8 @@ from tests.constants_test import (
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
+    SPOT_1_FILENAME,
+    SPOT_1_GS_URL,
 )
 
 if TYPE_CHECKING:
@@ -205,14 +207,14 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
                     "dataset",
                     "aignostics",
                     "download",
-                    "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+                    SPOT_1_GS_URL,
                     str(tmp_path),
                 ],
             )
             assert result.exit_code == 0
             assert "Successfully downloaded" in normalize_output(result.stdout)
-            assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
-            expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+            assert SPOT_1_FILENAME in normalize_output(result.stdout)
+            expected_file = Path(tmp_path) / SPOT_1_FILENAME
             assert expected_file.exists(), f"Expected file {expected_file} not found"
             assert expected_file.stat().st_size == 14681750
 
