@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from fastapi import Response
 from loguru import logger
 
 from aignostics.utils import BasePageBuilder
@@ -15,14 +16,16 @@ from ._service import Service
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
-        from fastapi import Response  # noqa: PLC0415
         from fastapi.responses import RedirectResponse  # noqa: PLC0415
         from nicegui import app  # noqa: PLC0415
 
         app.add_static_files("/wsi_assets", Path(__file__).parent / "assets")
 
         @app.get("/thumbnail")
-        def thumbnail(source: str, max_safe_dimension: int = DEFAULT_MAX_SAFE_DIMENSION) -> Response:
+        def thumbnail(
+            source: str,
+            max_safe_dimension: int = DEFAULT_MAX_SAFE_DIMENSION,
+        ) -> Response:
             """Serve a thumbnail for a given source reference.
 
             Args:
