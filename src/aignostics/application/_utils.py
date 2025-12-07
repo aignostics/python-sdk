@@ -4,16 +4,19 @@
 2. Reading/writing metadata CSV files
 3. Mime type handling.
 4. Date/time validation.
+5. Mapping format validation.
 """
 
 import csv
 import mimetypes
+import re
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 import humanize
+from loguru import logger
 
 from aignostics.constants import (
     HETA_APPLICATION_ID,
@@ -30,9 +33,7 @@ from aignostics.platform import (
     RunItemStatistics,
     RunState,
 )
-from aignostics.utils import console, get_logger
-
-logger = get_logger(__name__)
+from aignostics.utils import console
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
 
@@ -82,6 +83,82 @@ def validate_due_date(due_date: str | None) -> None:
             f"but current UTC time is {now.isoformat()}"
         )
         raise ValueError(message)
+
+
+def validate_mappings(mappings: list[str] | None) -> None:
+    """Validate mapping format for file metadata amendment.
+
+    Args:
+        mappings: List of mapping strings to validate.
+
+    Raises:
+        ValueError: If any mapping has invalid format with helpful error message.
+    """
+    if mappings is None or len(mappings) == 0:
+        return
+
+    # Pattern: <regexp>:<key>=<value>(,<key>=<value>)*
+    # Captures: regex pattern, then key=value pairs separated by commas
+    # Keys are word characters, values can be anything except comma
+    mapping_pattern = re.compile(
+        r"^"  # Start of string
+        r"(.+?)"  # Group 1: regex pattern (non-greedy, at least 1 char)
+        r":"  # Separator colon
+        r"(\w+=[^,]+(,\w+=[^,]+)*)"  # Group 2: key=value,key=value,... (values can contain anything except comma)
+        r"$"  # End of string
+    )
+    for mapping in mappings:
+        if not mapping:
+            msg = "Invalid mapping: cannot be empty"
+            raise ValueError(msg)
+        match = mapping_pattern.match(mapping)
+        if not match:
+            msg = f"Invalid mapping: `{mapping}` should be in format `<regex>:<key>=<value>,<key>=<value>`"
+            raise ValueError(msg)
+        regex_pattern = match.group(1)
+        try:
+            re.compile(regex_pattern)
+        except re.error as e:
+            msg = f"Invalid mapping: `{mapping}` has invalid regex pattern `{regex_pattern}`"
+            raise ValueError(msg) from e
+
+
+def is_not_terminated_with_deadline_exceeded(
+    run_state: RunState,
+    custom_metadata: dict[str, Any] | None,
+) -> bool | None:
+    """Check if the run is not terminated and the deadline has been exceeded.
+
+    Only returns True if the run is still in PENDING or PROCESSING state and the deadline has passed.
+    This is useful for identifying runs that are overdue and still active.
+
+    Args:
+        run_state (RunState): The current state of the run.
+        custom_metadata (dict[str, Any] | None): The custom metadata containing optional deadline information.
+
+    Returns:
+        bool | None: True if run is not terminated and deadline exceeded,
+                     False if run is not terminated but deadline not exceeded,
+                     None if run is terminated, no deadline set, or invalid deadline format.
+    """
+    # If run is already terminated, return None (deadline is no longer relevant)
+    if run_state == RunState.TERMINATED:
+        return None
+
+    if not custom_metadata:
+        return None
+
+    deadline_str = custom_metadata.get("sdk", {}).get("scheduling", {}).get("deadline")
+    if not deadline_str:
+        return None
+
+    try:
+        now = datetime.now(tz=UTC)
+        deadline_dt = datetime.fromisoformat(deadline_str)
+        return now > deadline_dt
+    except (ValueError, TypeError, AttributeError):
+        # Invalid deadline format, return None
+        return None
 
 
 class OutputFormat(StrEnum):
@@ -310,7 +387,7 @@ def read_metadata_csv_to_dict(
         with metadata_csv_file.open("r", encoding="utf-8") as f:
             return list(csv.DictReader(f, delimiter=";", quotechar='"'))
     except (csv.Error, UnicodeDecodeError, KeyError) as e:
-        logger.warning("Failed to parse metadata CSV file '%s': %s", metadata_csv_file, e)
+        logger.warning("Failed to parse metadata CSV file '{}': {}", metadata_csv_file, e)
         console.print(f"[warning]Warning:[/warning] Failed to parse metadata CSV file '{metadata_csv_file}': {e}")
         return None
 
@@ -380,7 +457,7 @@ def get_file_extension_for_artifact(artifact: OutputArtifactData) -> str:
         file_extension = ".json"
     if not file_extension:
         file_extension = ".bin"
-    logger.debug("Guessed file extension: '%s' for artifact '%s'", file_extension, artifact.name)
+    logger.trace("Guessed file extension: '{}' for artifact '{}'", file_extension, artifact.name)
     return file_extension
 
 

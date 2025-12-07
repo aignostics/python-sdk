@@ -77,7 +77,7 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
 
     # Step 1: System info determines QuPath is not installed
     result = runner.invoke(cli, ["system", "info"])
-    output_data = json.loads(result.output)
+    output_data = json.loads(result.stdout)
     assert output_data["qupath"]["app"]["path"] is None
     assert output_data["qupath"]["app"]["version"] is None
     assert result.exit_code == 0
@@ -89,7 +89,7 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
 
     # Step 3: Check QuPath can now launch successfully
     result = runner.invoke(cli, ["system", "info"])
-    output_data = json.loads(result.output)
+    output_data = json.loads(result.stdout)
     assert output_data["qupath"]["app"]["path"] is not None
     assert output_data["qupath"]["app"]["version"]["version"] == QUPATH_VERSION
     assert result.exit_code == 0
@@ -121,7 +121,7 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
 
     # Step 8: Check QuPath info fails if not installed
     result = runner.invoke(cli, ["system", "info"])
-    output_data = json.loads(result.output)
+    output_data = json.loads(result.stdout)
     assert output_data["qupath"]["app"]["path"] is None
     assert output_data["qupath"]["app"]["version"] is None
     assert result.exit_code == 0

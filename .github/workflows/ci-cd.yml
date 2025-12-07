@@ -36,7 +36,7 @@ jobs:
       commit_message: ${{ steps.get-commit-message.outputs.commit_message }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -49,7 +49,7 @@ jobs:
             COMMIT_MESSAGE=$(git log -1 --format=%B ${{ github.event.pull_request.head.sha }})
           else
             # For push events, use the head commit message
-            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+            COMMIT_MESSAGE='${{ github.event.head_commit.message }}'
           fi
           # Export for use in other steps (multiline-safe)
           echo "commit_message<<EOF" >> $GITHUB_OUTPUT
@@ -110,6 +110,7 @@ jobs:
       GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics
 
   codeql:
     needs: [get-commit-message]

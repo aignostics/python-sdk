@@ -195,6 +195,7 @@ def test_authentication_settings_with_env_vars(record_property, mock_env_vars, r
     assert settings1.client_id_device.get_secret_value() == "test-client-id-device"
 
 
+@pytest.mark.unit
 def test_custom_env_file_location(reset_cached_settings, record_property) -> None:
     """Test custom env file location.
 
@@ -311,6 +312,39 @@ def test_issuer_computed_field_dev(record_property, mock_env_vars) -> None:
     # So issuer should be https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/
     expected_issuer = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/"
     assert settings.issuer == expected_issuer
+
+
+@pytest.mark.unit
+def test_profile_edit_url_computed_field_production(record_property, mock_env_vars) -> None:
+    """Test profile_edit_url computed field with production API root."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    settings = Settings(
+        api_root=API_ROOT_PRODUCTION,
+    )
+    expected_url = f"{API_ROOT_PRODUCTION}/dashboard/account/profile"
+    assert settings.profile_edit_url == expected_url
+
+
+@pytest.mark.unit
+def test_profile_edit_url_computed_field_staging(record_property, mock_env_vars) -> None:
+    """Test profile_edit_url computed field with staging API root."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    settings = Settings(
+        api_root=API_ROOT_STAGING,
+    )
+    expected_url = f"{API_ROOT_STAGING}/dashboard/account/profile"
+    assert settings.profile_edit_url == expected_url
+
+
+@pytest.mark.unit
+def test_profile_edit_url_computed_field_dev(record_property, mock_env_vars) -> None:
+    """Test profile_edit_url computed field with dev API root."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    settings = Settings(
+        api_root=API_ROOT_DEV,
+    )
+    expected_url = f"{API_ROOT_DEV}/dashboard/account/profile"
+    assert settings.profile_edit_url == expected_url
 
 
 @pytest.mark.unit

@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from aignostics.platform._sdk_metadata import (
     ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
+    VALIDATION_CASE_TAG_PREFIX,
+    ValidationCase,
     build_item_sdk_metadata,
     build_run_sdk_metadata,
     get_item_sdk_metadata_json_schema,
@@ -19,6 +21,9 @@ from aignostics.platform._sdk_metadata import (
     validate_run_sdk_metadata,
     validate_run_sdk_metadata_silent,
 )
+
+# Test constants
+TEST_USER_AGENT = "aignostics-sdk/1.0.0"
 
 
 @pytest.fixture
@@ -322,10 +327,10 @@ class TestBuildRunSdkMetadata:
         """Test that user_agent is included in metadata."""
         with patch("aignostics.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
-            with patch("aignostics.platform._sdk_metadata.user_agent", return_value="test-agent/1.0"):
+            with patch("aignostics.platform._sdk_metadata.user_agent", return_value=TEST_USER_AGENT):
                 metadata = build_run_sdk_metadata()
 
-                assert metadata["user_agent"] == "test-agent/1.0"
+                assert metadata["user_agent"] == TEST_USER_AGENT
 
     @pytest.mark.unit
     @staticmethod
@@ -430,7 +435,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -449,7 +454,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "invalid",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -468,7 +473,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "invalid",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -487,7 +492,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
             },
             # Missing initiator
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         with pytest.raises(ValidationError):
@@ -506,7 +511,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "unknown_field": "should fail",
         }
 
@@ -526,7 +531,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": {"experiment", "production", "v2"},
         }
 
@@ -545,7 +550,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": set(),
         }
 
@@ -564,7 +569,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": None,
         }
 
@@ -583,7 +588,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         assert validate_run_sdk_metadata(metadata) is True
@@ -601,7 +606,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": ["tag1", "tag2"],  # List gets converted to set
         }
 
@@ -621,7 +626,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": {"key": "value"},  # Dict instead of set
         }
 
@@ -641,7 +646,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "script",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
             "tags": {"valid", 123, None},  # Mixed types
         }
 
@@ -669,7 +674,7 @@ class TestRunSdkMetadataValidation:
                 "interface": "invalid",
                 "initiator": "user",
             },
-            "user_agent": "test-agent/1.0",
+            "user_agent": TEST_USER_AGENT,
         }
 
         assert validate_run_sdk_metadata_silent(metadata) is False
@@ -892,3 +897,273 @@ class TestItemSdkMetadata:
 
         with pytest.raises(ValidationError):
             validate_item_sdk_metadata(metadata)
+
+
+class TestPipelineConfiguration:
+    """Test cases for pipeline configuration models."""
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_pipeline_config_defaults() -> None:
+        """Test that pipeline configuration uses correct defaults."""
+        from aignostics.platform import (
+            DEFAULT_CPU_PROVISIONING_MODE,
+            DEFAULT_GPU_PROVISIONING_MODE,
+            DEFAULT_GPU_TYPE,
+            DEFAULT_MAX_GPUS_PER_SLIDE,
+            PipelineConfig,
+        )
+
+        config = PipelineConfig()
+
+        assert config.gpu.gpu_type.value == DEFAULT_GPU_TYPE
+        assert config.gpu.provisioning_mode.value == DEFAULT_GPU_PROVISIONING_MODE
+        assert config.gpu.max_gpus_per_slide == DEFAULT_MAX_GPUS_PER_SLIDE
+        assert config.cpu.provisioning_mode.value == DEFAULT_CPU_PROVISIONING_MODE
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_pipeline_config_custom_values() -> None:
+        """Test pipeline configuration with custom values."""
+        from aignostics.platform._sdk_metadata import GPUType, PipelineConfig, ProvisioningMode
+
+        config = PipelineConfig(
+            gpu={
+                "gpu_type": GPUType.L4,
+                "provisioning_mode": ProvisioningMode.SPOT,
+                "max_gpus_per_slide": 4,
+            },
+            cpu={"provisioning_mode": ProvisioningMode.SPOT},
+        )
+
+        assert config.gpu.gpu_type == GPUType.L4
+        assert config.gpu.provisioning_mode == ProvisioningMode.SPOT
+        assert config.gpu.max_gpus_per_slide == 4
+        assert config.cpu.provisioning_mode == ProvisioningMode.SPOT
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_gpu_type_enum() -> None:
+        """Test GPUType enum values."""
+        from aignostics.platform._sdk_metadata import GPUType
+
+        assert GPUType.L4.value == "L4"
+        assert GPUType.A100.value == "A100"
+        assert len(GPUType) == 2
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_provisioning_mode_enum() -> None:
+        """Test ProvisioningMode enum values."""
+        from aignostics.platform._sdk_metadata import ProvisioningMode
+
+        assert ProvisioningMode.SPOT.value == "SPOT"
+        assert ProvisioningMode.ON_DEMAND.value == "ON_DEMAND"
+        assert ProvisioningMode.FLEX_START.value == "FLEX_START"
+        assert len(ProvisioningMode) == 3
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_pipeline_config() -> None:
+        """Test that metadata validates with pipeline configuration."""
+        from aignostics.platform._sdk_metadata import GPUType, ProvisioningMode
+
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+            "pipeline": {
+                "gpu": {
+                    "gpu_type": GPUType.L4.value,
+                    "provisioning_mode": ProvisioningMode.SPOT.value,
+                    "max_gpus_per_slide": 2,
+                },
+                "cpu": {"provisioning_mode": ProvisioningMode.ON_DEMAND.value},
+            },
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_without_pipeline_config() -> None:
+        """Test that metadata validates without pipeline configuration (optional field)."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_gpu_config_invalid_max_gpus() -> None:
+        """Test that invalid max_gpus_per_slide value is rejected."""
+        from aignostics.platform._sdk_metadata import GPUConfig
+
+        with pytest.raises(ValidationError):
+            GPUConfig(max_gpus_per_slide=0)  # Must be positive
+
+        with pytest.raises(ValidationError):
+            GPUConfig(max_gpus_per_slide=-1)  # Must be positive
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_flex_start_provisioning_mode_sets_default_duration() -> None:
+        """Test that FLEX_START mode automatically sets default duration when not specified."""
+        from aignostics.platform._sdk_metadata import (
+            DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+            GPUConfig,
+            ProvisioningMode,
+        )
+
+        config = GPUConfig(provisioning_mode=ProvisioningMode.FLEX_START)
+
+        assert config.provisioning_mode == ProvisioningMode.FLEX_START
+        assert config.flex_start_max_run_duration_minutes == DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_flex_start_with_custom_duration() -> None:
+        """Test FLEX_START mode with custom duration."""
+        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+
+        config = GPUConfig(
+            provisioning_mode=ProvisioningMode.FLEX_START,
+            flex_start_max_run_duration_minutes=360,  # 6 hours
+        )
+
+        assert config.provisioning_mode == ProvisioningMode.FLEX_START
+        assert config.flex_start_max_run_duration_minutes == 360
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_non_flex_start_mode_rejects_duration() -> None:
+        """Test that non-FLEX_START modes reject flex_start_max_run_duration_minutes."""
+        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+
+        # SPOT mode should not allow flex_start_max_run_duration_minutes
+        with pytest.raises(ValidationError) as exc_info:
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.SPOT,
+                flex_start_max_run_duration_minutes=720,
+            )
+        assert "flex_start_max_run_duration_minutes must be None" in str(exc_info.value)
+
+        # ON_DEMAND mode should not allow flex_start_max_run_duration_minutes
+        with pytest.raises(ValidationError) as exc_info:
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.ON_DEMAND,
+                flex_start_max_run_duration_minutes=720,
+            )
+        assert "flex_start_max_run_duration_minutes must be None" in str(exc_info.value)
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_flex_start_duration_out_of_range() -> None:
+        """Test that flex_start_max_run_duration_minutes validates range."""
+        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+
+        # Too low
+        with pytest.raises(ValidationError):
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.FLEX_START,
+                flex_start_max_run_duration_minutes=0,
+            )
+
+        # Too high (> 60 hours)
+        with pytest.raises(ValidationError):
+            GPUConfig(
+                provisioning_mode=ProvisioningMode.FLEX_START,
+                flex_start_max_run_duration_minutes=3700,
+            )
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_flex_start_pipeline_config() -> None:
+        """Test that metadata validates with FLEX_START pipeline configuration."""
+        from aignostics.platform._sdk_metadata import GPUType, ProvisioningMode
+
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+            "pipeline": {
+                "gpu": {
+                    "gpu_type": GPUType.L4.value,
+                    "provisioning_mode": ProvisioningMode.FLEX_START.value,
+                    "max_gpus_per_slide": 2,
+                    "flex_start_max_run_duration_minutes": 480,
+                },
+                "cpu": {"provisioning_mode": ProvisioningMode.SPOT.value},
+            },
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_default_flex_start_duration_value() -> None:
+        """Test that DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES is 12 hours (720 minutes)."""
+        from aignostics.platform._sdk_metadata import DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
+
+        assert DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES == 12 * 60  # 720 minutes
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_valid_validation_case_tag() -> None:
+        """Test that metadata validates with a valid validation case tag."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+            "tags": [f"{VALIDATION_CASE_TAG_PREFIX}{ValidationCase.SEND_SUCCEEDED}"],
+        }
+
+        assert validate_run_sdk_metadata(metadata) is True
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_metadata_with_invalid_validation_case_tag() -> None:
+        """Test that metadata validation rejects an invalid validation case tag."""
+        metadata = {
+            "schema_version": SDK_METADATA_SCHEMA_VERSION,
+            "created_at": "2025-10-19T12:00:00+00:00",
+            "updated_at": "2025-10-19T12:00:00+00:00",
+            "submission": {
+                "date": "2025-10-19T12:00:00+00:00",
+                "interface": "script",
+                "initiator": "user",
+            },
+            "user_agent": TEST_USER_AGENT,
+            "tags": [f"{VALIDATION_CASE_TAG_PREFIX}invalid_case"],
+        }
+
+        with pytest.raises(ValidationError) as exc:
+            validate_run_sdk_metadata(metadata)
+        assert "validation_case" in str(exc.value)

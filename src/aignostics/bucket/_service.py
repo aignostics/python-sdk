@@ -8,13 +8,14 @@ from typing import TYPE_CHECKING, Any, cast
 
 import humanize
 import requests
+from loguru import logger
 from pydantic import BaseModel, computed_field
 
 if TYPE_CHECKING:
     from botocore.client import BaseClient
 
 from aignostics.platform import Service as PlatformService
-from aignostics.utils import BaseService, Health, get_logger, get_user_data_directory
+from aignostics.utils import BaseService, Health, get_user_data_directory
 
 from ._settings import Settings
 
@@ -25,8 +26,6 @@ ENDPOINT_URL_DEFAULT = "https://storage.googleapis.com"
 UPLOAD_CHUNK_SIZE = 1024 * 1024
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024 * 10
 ETAG_CHUNK_SIZE = 1024 * 1024 * 100
-
-logger = get_logger(__name__)
 
 
 class DownloadProgress(BaseModel):
@@ -208,9 +207,9 @@ class Service(BaseService):
         Returns:
             bool: True if upload was successful, False otherwise.
         """
-        logger.debug("Uploading file '%s' to object key '%s'", source_path, object_key)
+        logger.trace("Uploading file '{}' to object key '{}'", source_path, object_key)
         if not source_path.is_file():
-            logger.error("Source path '%s' is not a file", source_path)
+            logger.error("Source path '{}' is not a file", source_path)
             return False
 
         signed_url = self.create_signed_upload_url(object_key)
@@ -235,11 +234,11 @@ class Service(BaseService):
                 )
                 response.raise_for_status()
 
-            logger.info("Successfully uploaded '%s' to object key '%s'", source_path, object_key)
+            logger.debug("Successfully uploaded '{}' to object key '{}'", source_path, object_key)
             return True
 
         except (OSError, requests.RequestException):
-            logger.exception("Error uploading file '%s' to object key '%s'", source_path, object_key)
+            logger.exception("Error uploading file '{}' to object key '{}'", source_path, object_key)
             return False
 
     def upload(
@@ -281,7 +280,7 @@ class Service(BaseService):
                     else:
                         results["failed"].append(object_key)
         else:
-            logger.error("Source path '%s' is neither a file nor directory", source_path)
+            logger.error("Source path '{}' is neither a file nor directory", source_path)
 
         return results
 
@@ -447,7 +446,7 @@ class Service(BaseService):
                     should_download = True
 
             if not should_download:
-                logger.debug("File %s is up to date (ETag: %s), skipping download", output_path, etag)
+                logger.trace("File {} is up to date (ETag: {}), skipping download", output_path, etag)
                 return output_path
 
         try:
@@ -461,11 +460,11 @@ class Service(BaseService):
                         if progress_callback:
                             progress_callback(len(chunk))
 
-            logger.info("Successfully downloaded object with key '%s' to '%s'", object_key, output_path)
+            logger.debug("Successfully downloaded object with key '{}' to '{}'", object_key, output_path)
             return output_path
 
         except requests.RequestException:
-            logger.exception("Failed to download %s", object_key)
+            logger.exception("Failed to download {}", object_key)
             return None
 
     @staticmethod
@@ -519,8 +518,8 @@ class Service(BaseService):
         if not matched_objects:
             return DownloadResult(downloaded=[], failed=[])
 
-        logger.debug(
-            "Found %d objects matching '%s' in bucket, downloading to '%s'...",
+        logger.trace(
+            "Found {} objects matching '{}' in bucket, downloading to '{}'...",
             len(matched_objects),
             what,
             destination,
@@ -638,21 +637,21 @@ class Service(BaseService):
             return 0
 
         if dry_run:
-            logger.info("Would delete %d objects", len(object_keys_to_delete))
+            logger.debug("Would delete {} objects", len(object_keys_to_delete))
             return len(object_keys_to_delete)
 
         s3c = self._get_s3_client()
         deleted_count = 0
         for object_key in object_keys_to_delete:
-            logger.debug("Deleting object with key: %s", object_key)
+            logger.trace("Deleting object with key: {}", object_key)
             try:
                 s3c.delete_object(Bucket=self.get_bucket_name(), Key=object_key)
                 deleted_count += 1
             except ClientError as e:
                 if e.response["Error"]["Code"] == "NoSuchKey":
-                    logger.warning("Object with key '%s' not found", object_key)
+                    logger.warning("Object with key '{}' not found", object_key)
                 else:
-                    logger.exception("Error deleting object with key '%s'", object_key)
+                    logger.exception("Error deleting object with key '{}'", object_key)
 
-        logger.info("Deleted %d objects", deleted_count)
+        logger.debug("Deleted {} objects", deleted_count)
         return deleted_count

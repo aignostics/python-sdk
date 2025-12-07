@@ -1,5 +1,6 @@
 """Tests to verify the CLI functionality of the application module."""
 
+import json
 import platform
 import re
 from datetime import UTC, datetime, timedelta
@@ -7,6 +8,8 @@ from pathlib import Path
 from time import sleep
 
 import pytest
+from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
@@ -30,7 +33,9 @@ TEST_APPLICATION_DEADLINE_SECONDS = 60 * 45  # 45 minutes
 TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
 
 HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
-HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 3  # 3 hours
+HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
+
+RUN_CSV_FILENAME = "run.csv"
 
 
 @pytest.mark.e2e
@@ -281,7 +286,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
-            "--validate-only",
+            "--onboard-to-aignostics-portal",
         ],
     )
     output = normalize_output(result.stdout)
@@ -694,17 +699,20 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             "run",
             "execute",
             HETA_APPLICATION_ID,
-            str(tmp_path / "run.csv"),
+            str(tmp_path / RUN_CSV_FILENAME),
             str(tmp_path),
+            "--mapping",
             ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER",
             "--no-create-subdirectory-for-run",
             "--due-date",
             (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DUE_DATE_SECONDS)).isoformat(),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DEADLINE_SECONDS)).isoformat(),
-            "--validate-only",
         ],
     )
+
+    # Validate the download command exited successfully
+    assert result.exit_code == 0
 
     # Explore what was download
     print_directory_structure(tmp_path, "execute")
@@ -757,6 +765,48 @@ def test_cli_run_update_metadata_not_dict(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '["array", "not", "dict"]'])
     assert result.exit_code == 1
     assert "Metadata must be a JSON object" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_execute_invalid_mapping_format(runner: CliRunner, tmp_path: Path) -> None:
+    """Check execute command fails with invalid mapping format."""
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(tmp_path / RUN_CSV_FILENAME),
+            str(tmp_path),
+            "--mapping",
+            ".*\\.tiff:staining_method:H&E",  # Wrong: colon instead of equals
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid mapping" in result.output
+    assert "should be in format" in result.output
+
+
+@pytest.mark.integration
+def test_cli_run_execute_invalid_regex_pattern(runner: CliRunner, tmp_path: Path) -> None:
+    """Check execute command fails with invalid regex pattern."""
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(tmp_path / RUN_CSV_FILENAME),
+            str(tmp_path),
+            "--mapping",
+            "*.tiff:staining_method=H&E",  # Wrong: glob pattern, not regex
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid mapping" in result.output
+    assert "invalid regex pattern" in result.output
 
 
 @pytest.mark.integration
@@ -884,8 +934,6 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner) -> None:
     assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
 
 
-# TODO(Andreas): Update item metadata returns 404 always
-@pytest.mark.skip(reason="Waiting for platform API fix to item metadata endpoint which currently returns 404 always")
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=120)
 @pytest.mark.skipif(
@@ -912,6 +960,7 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
     run_id_match = re.search(r"-\s+([a-f0-9\-]{36})\s+of\s+", normalized_output)
     assert run_id_match is not None, f"Could not extract run ID from list output:\n{normalized_output}"
     run_id = run_id_match.group(1)
+    print(run_id)
 
     # Get run details to extract an item's external_id
     result = runner.invoke(cli, ["application", "run", "describe", run_id])
@@ -925,12 +974,11 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
         pytest.skip("Could not extract item external_id from run. Run may not have items yet.")
 
     external_id = external_id_match.group(1).strip()
-    print(run_id)
     print(external_id)
 
     # Step 2: Dump custom metadata of item
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id])
-    initial_metadata = json.loads(result.output)
+    initial_metadata = json.loads(result.stdout)
     # If metadata is None/null, start with empty dict
     if initial_metadata is None:
         initial_metadata = {}
@@ -958,7 +1006,7 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
 
     # Step 4: Dump metadata again and verify random number appeared
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id, "--pretty"])
-    metadata_with_random = json.loads(result.output)
+    metadata_with_random = json.loads(result.stdout)
     assert "random" in metadata_with_random, "Random field should be present in metadata"
     assert metadata_with_random["random"] == random_value, f"Random value should be {random_value}"
     assert result.exit_code == 0
@@ -992,9 +1040,340 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
     # Step 6: Dump metadata and validate random element has been removed
     result = runner.invoke(cli, ["application", "run", "dump-item-metadata", run_id, external_id])
     assert result.exit_code == 0
-    final_metadata = json.loads(result.output)
+    final_metadata = json.loads(result.stdout)
     assert "random" not in final_metadata, "Random field should have been removed from metadata"
 
     # Note: Similar to run metadata, we verify the structure remains consistent
     # rather than doing exact equality comparison due to dynamic fields
     assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
+
+
+@retry(wait=wait_exponential(multiplier=2, max=10), stop=stop_after_attempt(5))
+def list_runs_by_tag(tag: str, runner: CliRunner, expected_count: int = 1) -> list[dict]:
+    """List runs filtered by tag. Returns list of runs.
+
+    Retries to handle eventual consistency.
+
+    Args:
+        runner: CliRunner to use.
+        tag: Tag to filter runs by.
+        expected_count: Minimum number of runs expected (default: 1).
+
+    Raises:
+        RuntimeError: If listing runs fails or expected count not met.
+    """
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--tags",
+            tag,
+            "--format",
+            "json",
+        ],
+    )
+    if list_result.exit_code != 0:
+        msg = f"List runs by tag '{tag}' failed"
+        raise RuntimeError(msg)
+    runs_data = json.loads(list_result.stdout)
+    if len(runs_data) < expected_count:
+        msg = f"Expected at least {expected_count} run(s) with tag '{tag}', but found {len(runs_data)}"
+        raise RuntimeError(msg)
+    return runs_data
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
+def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PLR0914
+    runner: CliRunner, tmp_path: Path, silent_logging, record_property
+) -> None:
+    """Test JSON output format for application/run commands and cancel-by-filter with dry-run mode.
+
+    This test comprehensively validates:
+    1. JSON format for application list/describe commands
+    2. JSON format for run list/describe commands
+    3. Run filtering by tags
+    4. cancel-by-filter command with multiple filters (tags, application_id, application_version)
+    5. Dry-run mode (preview without canceling)
+    6. Actual cancellation and state transitions (PENDING/PROCESSING → TERMINATED)
+    7. Termination reason verification (CANCELED_BY_USER)
+    """
+    record_property("tested-item-id", "TC-APPLICATION-CLI-JSON-FORMAT-AND-CANCEL-BY-FILTER")
+
+    # Step 1: Test application list with JSON format
+    app_list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "list",
+            "--format",
+            "json",
+        ],
+    )
+    assert app_list_result.exit_code == 0
+    apps_data = json.loads(app_list_result.stdout)
+    assert isinstance(apps_data, list), "Application list JSON output should be a list"
+    assert len(apps_data) > 0, "Should have at least one application"
+
+    # Find HETA application in the list
+    heta_found = False
+    for app in apps_data:
+        if app["application_id"] == HETA_APPLICATION_ID:
+            heta_found = True
+            assert "name" in app
+            assert "latest_version" in app
+            break
+    assert heta_found, f"Application '{HETA_APPLICATION_ID}' should be in the list"
+
+    # Step 2: Test application describe with JSON format
+    app_describe_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "describe",
+            HETA_APPLICATION_ID,
+            "--format",
+            "json",
+        ],
+    )
+    assert app_describe_result.exit_code == 0
+    app_details = json.loads(app_describe_result.stdout)
+    assert isinstance(app_details, dict), "Application describe JSON output should be a dictionary"
+    assert app_details["application_id"] == HETA_APPLICATION_ID
+    assert "name" in app_details
+    assert "versions" in app_details
+    assert "description" in app_details
+
+    # Step 3: Submit a run with custom tag
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
+    csv_path = tmp_path / "dummy.csv"
+    csv_path.write_text(csv_content)
+
+    unique_tag = f"test_json_format_{datetime.now(tz=UTC).timestamp()}"
+
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+            "--tags",
+            unique_tag,
+            "--note",
+            "Testing JSON format output",
+        ],
+    )
+    output = normalize_output(result.stdout)
+    assert result.exit_code == 0
+
+    # Extract run ID from the output
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+    assert run_id_match, f"Failed to extract run ID from output '{output}'"
+    run_id = run_id_match.group(1)
+    run_id_2: str | None = None  # Initialize before try block to avoid UnboundLocalError in finally
+
+    try:
+        # Step 4: List runs with JSON format and filter by tag
+        runs_data = list_runs_by_tag(unique_tag, runner, expected_count=1)
+
+        # Step 5: Parse JSON output and verify structure
+        assert isinstance(runs_data, list), "JSON output should be a list"
+        assert len(runs_data) > 0, "Should find at least one run with the unique tag"
+
+        # Step 6: Find our run in the JSON output
+        run_found = False
+        for run in runs_data:
+            if run["run_id"] == run_id:
+                run_found = True
+
+                # Verify basic structure
+                assert "application_id" in run
+                assert run["application_id"] == HETA_APPLICATION_ID
+                assert "version_number" in run
+                assert "state" in run
+                assert "custom_metadata" in run
+
+                # Verify custom metadata contains SDK metadata with tags
+                custom_metadata = run["custom_metadata"]
+                assert "sdk" in custom_metadata, "SDK metadata should be present"
+                assert "tags" in custom_metadata["sdk"], "Tags should be in SDK metadata"
+                assert unique_tag in custom_metadata["sdk"]["tags"], f"Tag '{unique_tag}' should be in tags"
+
+                # Verify note is in SDK metadata
+                assert "note" in custom_metadata["sdk"], "Note should be in SDK metadata"
+                assert custom_metadata["sdk"]["note"] == "Testing JSON format output"
+
+                break
+
+        assert run_found, f"Run with ID '{run_id}' not found in JSON output"
+
+        # Step 7: Test run describe with JSON format
+        describe_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "describe",
+                run_id,
+                "--format",
+                "json",
+            ],
+        )
+        assert describe_result.exit_code == 0
+
+        # Parse and verify describe JSON output
+        describe_data = json.loads(describe_result.stdout)
+        assert isinstance(describe_data, dict), "Describe JSON output should be a dictionary"
+        assert describe_data["run_id"] == run_id, "Run ID should match"
+        assert describe_data["application_id"] == HETA_APPLICATION_ID, "Application ID should match"
+        assert "custom_metadata" in describe_data, "Should have custom_metadata field"
+        assert "sdk" in describe_data["custom_metadata"], "Should have SDK metadata"
+        assert unique_tag in describe_data["custom_metadata"]["sdk"]["tags"], "Tag should be in SDK metadata"
+        assert describe_data["custom_metadata"]["sdk"]["note"] == "Testing JSON format output", "Note should match"
+
+        # Step 8: Test empty result with JSON format
+        empty_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--tags",
+                "non_existent_tag_12345",
+                "--format",
+                "json",
+            ],
+        )
+        assert empty_result.exit_code == 0
+        empty_runs = json.loads(empty_result.stdout)
+        assert isinstance(empty_runs, list), "Empty JSON output should be a list"
+        assert len(empty_runs) == 0, "Should return empty list for non-existent tag"
+
+        # Step 9: Submit a second run with same tags for testing cancel-by-filter
+        submit_result_2 = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "submit",
+                HETA_APPLICATION_ID,
+                str(csv_path),
+                "--tags",
+                unique_tag,
+                "--note",
+                "Testing JSON format output - run 2",
+            ],
+        )
+        assert submit_result_2.exit_code == 0
+        output_2 = submit_result_2.stdout
+        run_id_match_2 = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output_2)
+        assert run_id_match_2, f"Failed to extract run ID from output '{output_2}'"
+        run_id_2 = run_id_match_2.group(1)
+
+        # Wait for both runs to appear in the list (handles eventual consistency)
+        list_runs_by_tag(unique_tag, runner, expected_count=2)
+
+    finally:
+        # Step 10: Test dry-run mode - verify it shows what would be canceled without actually canceling
+        logger.info("Step 10: Testing dry-run mode for cancel-by-filter")
+
+        # First get the application version from the first run
+        app_version_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "describe",
+                run_id,
+                "--format",
+                "json",
+            ],
+        )
+        if app_version_result.exit_code == 0:
+            run_details = json.loads(app_version_result.stdout)
+            app_version = run_details["version_number"]
+
+            # Test dry-run mode
+            dry_run_result = runner.invoke(
+                cli,
+                [
+                    "application",
+                    "run",
+                    "cancel-by-filter",
+                    "--tags",
+                    unique_tag,
+                    "--application-id",
+                    HETA_APPLICATION_ID,
+                    "--application-version",
+                    app_version,
+                    "--dry-run",
+                ],
+            )
+            assert dry_run_result.exit_code == 0, f"Dry-run failed: {dry_run_result.stdout}"
+            assert "Would cancel 2 run(s)" in dry_run_result.stdout
+            logger.info("Dry-run output:\n{}", dry_run_result.stdout)
+
+            # Step 11: Verify runs are NOT canceled after dry-run by describing them
+            logger.info("Step 11: Verifying runs are NOT canceled after dry-run")
+            runs_to_check = [run_id] + ([run_id_2] if run_id_2 else [])
+            for idx, rid in enumerate(runs_to_check, 1):
+                describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
+                assert describe_result.exit_code == 0, f"Failed to describe run {idx}: {describe_result.stdout}"
+                described_run = json.loads(describe_result.stdout)
+                # Verify run is still in original state (PENDING or PROCESSING, not TERMINATED)
+                assert described_run["state"] in {
+                    "PENDING",
+                    "PROCESSING",
+                }, f"Run {idx} was unexpectedly canceled during dry-run"
+                logger.info("Run {} still active after dry-run (state: {})", idx, described_run["state"])
+
+            # Step 12: Actually cancel runs using cancel-by-filter with all three filters
+            logger.info("Step 12: Canceling runs by filter (tags, application_id, application_version)")
+            cancel_by_filter_result = runner.invoke(
+                cli,
+                [
+                    "application",
+                    "run",
+                    "cancel-by-filter",
+                    "--tags",
+                    unique_tag,
+                    "--application-id",
+                    HETA_APPLICATION_ID,
+                    "--application-version",
+                    app_version,
+                ],
+            )
+            # Should succeed (exit code 0)
+            assert cancel_by_filter_result.exit_code == 0
+            assert "Successfully canceled 2 run(s)" in cancel_by_filter_result.stdout
+            logger.info("Successfully canceled both runs using cancel-by-filter")
+
+            # Step 13: Verify runs ARE canceled by describing them again
+            logger.info("Step 13: Verifying runs ARE canceled after actual cancel")
+            runs_to_verify = [run_id] + ([run_id_2] if run_id_2 else [])
+            for idx, rid in enumerate(runs_to_verify, 1):
+                describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
+                assert describe_result.exit_code == 0, (
+                    f"Failed to describe run {idx} after cancel: {describe_result.stdout}"
+                )
+                described_run = json.loads(describe_result.stdout)
+                # Verify run is now TERMINATED
+                assert described_run["state"] == "TERMINATED", (
+                    f"Run {idx} was not canceled (state: {described_run['state']})"
+                )
+                # termination_reason is a top-level field, not nested under output
+                assert described_run["termination_reason"] == "CANCELED_BY_USER", (
+                    f"Run {idx} has unexpected termination reason: {described_run.get('termination_reason')}"
+                )
+                logger.info("Run {} successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
+        else:
+            # Fallback: cancel individually if we couldn't get the version
+            runs_to_cancel = [run_id] + ([run_id_2] if run_id_2 else [])
+            for rid in runs_to_cancel:
+                runner.invoke(cli, ["application", "run", "cancel", rid])

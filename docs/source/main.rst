@@ -1,2 +1,2 @@
-.. mdinclude:: ../partials/README_main.md
-.. mdinclude:: ../partials/README_platform.md
+.. include:: ../partials/README_main.md
+    :parser: myst_parser.sphinx_

@@ -63,6 +63,7 @@ application/
 ```
 
 **Key Separation:**
+
 - **_models.py**: Pydantic models for progress tracking with computed fields
 - **_download.py**: Pure download logic (URLs, artifacts, progress callbacks)
 - **_service.py**: High-level business logic and module integration
@@ -396,6 +397,7 @@ APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB (for streaming download
 **URL Support:**
 
 The download module supports three URL schemes:
+
 1. **gs://** - Google Cloud Storage (converted to signed URLs via `platform.generate_signed_url()`)
 2. **http://** - HTTP URLs (used directly)
 3. **https://** - HTTPS URLs (used directly)
@@ -473,7 +475,7 @@ def upload_file(self, file_path: Path, signed_url: str):
 
     with file_path.open("rb") as f:
         # Calculate CRC32C
-        crc = google_crc32c.Checksum()
+        crc = crc32c.CRC32CHash()
 
         # Upload in chunks
         while True:
@@ -658,9 +660,9 @@ def test_application_version_use_latest_fallback():
 **Logging Patterns (Actual):**
 
 ```python
-logger = get_logger(__name__)
 
-logger.info("Starting application run", extra={
+
+logger.debug("Starting application run", extra={
     "application_id": app_id,
     "file_count": len(files)
 })
@@ -745,6 +747,7 @@ The application module is organized into focused submodules:
 **SDK Metadata Integration:**
 
 Every run submitted through the application module automatically includes SDK metadata:
+
 - **Run metadata** (v0.0.4): Execution context, user info, CI/CD details, tags, timestamps
 - **Item metadata** (v0.0.3): Platform bucket location, tags, timestamps
 - Automatic attachment via `platform._sdk_metadata.build_run_sdk_metadata()`
@@ -758,7 +761,7 @@ The `_download.py` module uses `platform.generate_signed_url()` to convert `gs:/
 ### External Dependencies
 
 - `semver` - Semantic version validation (using `Version.is_valid()`)
-- `google-crc32c` - File integrity checking (CRC32C checksums)
+- `crc32c` - File integrity checking (CRC32C checksums)
 - `requests` - HTTP operations (streaming downloads)
 - `pydantic` - Data models with validation and computed fields
 - `ijson` - Required for QuPath features (optional)

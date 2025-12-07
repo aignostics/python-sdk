@@ -6,16 +6,15 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlparse
 
-import google_crc32c
+import crc32c
 import requests
+from loguru import logger
 
 from aignostics.platform import ItemOutput, ItemState, Run, generate_signed_url
-from aignostics.utils import get_logger, sanitize_path_component
+from aignostics.utils import sanitize_path_component
 
 from ._models import DownloadProgress, DownloadProgressState
 from ._utils import get_file_extension_for_artifact
-
-logger = get_logger(__name__)
 
 # Download chunk sizes
 APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
@@ -79,7 +78,7 @@ def download_url_to_file_with_progress(
         ValueError: If the URL is invalid.
         RuntimeError: If the download fails.
     """
-    logger.debug("Downloading URL '%s' to '%s' with progress tracking", url, destination_path)
+    logger.trace("Downloading URL '{}' to '{}' with progress tracking", url, destination_path)
 
     # Initialize progress tracking
     progress.status = DownloadProgressState.DOWNLOADING_INPUT
@@ -117,7 +116,7 @@ def download_url_to_file_with_progress(
                     progress.input_slide_downloaded_size += progress.input_slide_downloaded_chunk_size
                     update_progress(progress, download_progress_callable, download_progress_queue)
 
-        logger.info("Downloaded URL '%s' to '%s'", url, destination_path)
+        logger.debug("Downloaded URL '{}' to '{}'", url, destination_path)
         return destination_path
     except requests.HTTPError as e:
         msg = f"HTTP error downloading '{url}': {e}"
@@ -250,13 +249,13 @@ def download_item_artifact(  # noqa: PLR0913, PLR0917
     )
 
     if artifact_path.exists():
-        checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
+        checksum = crc32c.CRC32CHash()
         with open(artifact_path, "rb") as f:
             while chunk := f.read(APPLICATION_RUN_FILE_READ_CHUNK_SIZE):
-                checksum.update(chunk)  # type: ignore[no-untyped-call]
-        existing_checksum = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
+                checksum.update(chunk)
+        existing_checksum = base64.b64encode(checksum.digest()).decode("ascii")
         if existing_checksum == metadata_checksum:
-            logger.debug("File %s already exists with correct checksum", artifact_path)
+            logger.trace("File {} already exists with correct checksum", artifact_path)
             return
 
     download_file_with_progress(
@@ -292,8 +291,8 @@ def download_file_with_progress(  # noqa: PLR0913, PLR0917
             checksum verification fails.
         requests.HTTPError: If download fails.
     """
-    logger.debug(
-        "Downloading artifact '%s' to '%s' with expected checksum '%s' for item with external id '%s'",
+    logger.trace(
+        "Downloading artifact '{}' to '{}' with expected checksum '{}' for item with external id '{}'",
         progress.artifact.name if progress.artifact else "unknown",
         artifact_path,
         metadata_checksum,
@@ -306,7 +305,7 @@ def download_file_with_progress(  # noqa: PLR0913, PLR0917
     progress.artifact_size = None
     update_progress(progress, download_progress_callable, download_progress_queue)
 
-    checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
+    checksum = crc32c.CRC32CHash()
 
     with requests.get(signed_url, stream=True, timeout=60) as stream:
         stream.raise_for_status()
@@ -316,12 +315,12 @@ def download_file_with_progress(  # noqa: PLR0913, PLR0917
             for chunk in stream.iter_content(chunk_size=APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE):
                 if chunk:
                     file.write(chunk)
-                    checksum.update(chunk)  # type: ignore[no-untyped-call]
+                    checksum.update(chunk)
                     progress.artifact_downloaded_chunk_size = len(chunk)
                     progress.artifact_downloaded_size += progress.artifact_downloaded_chunk_size
                     update_progress(progress, download_progress_callable, download_progress_queue)
 
-    downloaded_checksum = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
+    downloaded_checksum = base64.b64encode(checksum.digest()).decode("ascii")
     if downloaded_checksum != metadata_checksum:
         artifact_path.unlink()  # Remove corrupted file
         msg = f"Checksum mismatch for {artifact_path}: {downloaded_checksum} != {metadata_checksum}"

@@ -33,7 +33,7 @@ def test_cleanup_processes_terminates_running_processes(mock_terminate_process: 
 
 @pytest.mark.unit
 @mock.patch("time.sleep")
-def test_terminate_process(mock_sleep: mock.MagicMock) -> None:
+def test_terminate_process_regular(mock_sleep: mock.MagicMock) -> None:
     """Test that _terminate_process properly terminates a process."""
     # Create a mock process that needs to be killed after terminate
     mock_process = mock.MagicMock(spec=subprocess.Popen)
@@ -70,8 +70,7 @@ def test_terminate_process_graceful_exit(mock_sleep: mock.MagicMock) -> None:
 
 
 @pytest.mark.unit
-@mock.patch("aignostics.dataset._service.logger")
-def test_terminate_process_exception_handling(mock_logger: mock.MagicMock) -> None:
+def test_terminate_process_exception_handling(caplog: pytest.LogCaptureFixture) -> None:
     """Test that _terminate_process handles exceptions properly."""
     # Create a mock process that raises an exception when terminated
     mock_process = mock.MagicMock(spec=subprocess.Popen)
@@ -82,5 +81,6 @@ def test_terminate_process_exception_handling(mock_logger: mock.MagicMock) -> No
     _terminate_process(mock_process)
 
     # Verify the exception was logged
-    mock_logger.exception.assert_called_once()
-    assert "Error terminating subprocess with PID 12345" in mock_logger.exception.call_args[0][0]
+    error_logs = [record for record in caplog.records if record.levelname == "ERROR"]
+    assert len(error_logs) >= 1, "Expected at least one ERROR log"
+    assert "Error terminating subprocess with PID 12345" in error_logs[0].getMessage()

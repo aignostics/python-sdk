@@ -5,17 +5,16 @@ from importlib.util import find_spec
 from pathlib import Path
 
 import typer
+from loguru import logger
 
 from .constants import NOTEBOOK_DEFAULT
 from .utils import (
     __is_running_in_container__,
+    __python_version__,
     __version__,
     console,
-    get_logger,
     prepare_cli,
 )
-
-logger = get_logger(__name__)
 
 cli = typer.Typer(
     help="Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.",
@@ -48,6 +47,7 @@ if find_spec("marimo"):
                 file_okay=True,
                 dir_okay=False,
                 readable=True,
+                show_default="<sdk-install-dir>/notebook/_notebook.py",
             ),
         ] = NOTEBOOK_DEFAULT,
         override_if_exists: Annotated[
@@ -64,13 +64,15 @@ if find_spec("marimo"):
         uvicorn.run(create_marimo_app(notebook=notebook, override_if_exists=override_if_exists), host=host, port=port)
 
 
-prepare_cli(cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻")
+prepare_cli(
+    cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻 // Python v{__python_version__}"
+)
 
 
 if __name__ == "__main__":  # pragma: no cover
     try:
         cli()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         message = f"An error occurred while running the CLI: {e!s}"
         logger.critical(message)
         console.print(message, style="error")

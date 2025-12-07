@@ -11,7 +11,6 @@ if find_spec("sentry_sdk"):
     import pytest
     from pydantic import SecretStr
 
-    from aignostics.utils import get_logger
     from aignostics.utils._sentry import (
         _ERR_MSG_INVALID_DOMAIN,
         _ERR_MSG_MISSING_NETLOC,
@@ -24,8 +23,6 @@ if find_spec("sentry_sdk"):
         _validate_url_scheme,
         sentry_initialize,
     )
-
-    log = get_logger(__name__)
 
     VALID_DSN = "https://abcdef1234567890@o12345.ingest.us.sentry.io/1234567890"
 
@@ -153,7 +150,7 @@ if find_spec("sentry_sdk"):
             mock_settings.dsn = None
             mock_load_settings.return_value = mock_settings
 
-            result = sentry_initialize()
+            result = sentry_initialize(integrations=None)
             assert result is False  # Should return False when no DSN is provided
 
     @pytest.mark.unit
@@ -166,9 +163,10 @@ if find_spec("sentry_sdk"):
         ):
             mock_settings = mock.MagicMock()
             mock_settings.dsn = SecretStr(VALID_DSN)
+            mock_settings.enabled = True
             mock_load_settings.return_value = mock_settings
 
-            result = sentry_initialize()
+            result = sentry_initialize(integrations=None)
 
             assert result is True  # Should return True when initialization is successful
             mock_sentry_init.assert_called_once()  # Should call sentry_sdk.init

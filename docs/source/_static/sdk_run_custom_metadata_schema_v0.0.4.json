@@ -31,6 +31,49 @@
       "title": "CIMetadata",
       "type": "object"
     },
+    "CPUConfig": {
+      "description": "Configuration for CPU resources.",
+      "properties": {
+        "provisioning_mode": {
+          "$ref": "#/$defs/ProvisioningMode",
+          "description": "The provisioning mode for CPU resources (SPOT or ON_DEMAND)"
+        }
+      },
+      "title": "CPUConfig",
+      "type": "object"
+    },
+    "GPUConfig": {
+      "description": "Configuration for GPU resources.",
+      "properties": {
+        "gpu_type": {
+          "$ref": "#/$defs/GPUType",
+          "description": "The type of GPU to use (L4 or A100)"
+        },
+        "provisioning_mode": {
+          "$ref": "#/$defs/ProvisioningMode",
+          "description": "The provisioning mode for GPU resources (SPOT or ON_DEMAND)"
+        },
+        "max_gpus_per_slide": {
+          "default": 1,
+          "description": "The maximum number of GPUs to allocate per slide (1-8)",
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Max Gpus Per Slide",
+          "type": "integer"
+        }
+      },
+      "title": "GPUConfig",
+      "type": "object"
+    },
+    "GPUType": {
+      "description": "Type of GPU to use for processing.",
+      "enum": [
+        "L4",
+        "A100"
+      ],
+      "title": "GPUType",
+      "type": "string"
+    },
     "GitHubCIMetadata": {
       "description": "GitHub Actions CI metadata.",
       "properties": {
@@ -213,6 +256,38 @@
       ],
       "title": "GitHubCIMetadata",
       "type": "object"
+    },
+    "PipelineConfig": {
+      "description": "Pipeline configuration for dynamic orchestration.",
+      "properties": {
+        "gpu": {
+          "$ref": "#/$defs/GPUConfig",
+          "description": "GPU resource configuration"
+        },
+        "cpu": {
+          "$ref": "#/$defs/CPUConfig",
+          "description": "CPU resource configuration"
+        },
+        "node_acquisition_timeout_minutes": {
+          "default": 30,
+          "description": "Timeout for acquiring compute nodes in minutes (1-1440)",
+          "maximum": 1440,
+          "minimum": 1,
+          "title": "Node Acquisition Timeout Minutes",
+          "type": "integer"
+        }
+      },
+      "title": "PipelineConfig",
+      "type": "object"
+    },
+    "ProvisioningMode": {
+      "description": "Provisioning mode for resources.",
+      "enum": [
+        "SPOT",
+        "ON_DEMAND"
+      ],
+      "title": "ProvisioningMode",
+      "type": "string"
     },
     "PytestCIMetadata": {
       "description": "Pytest test execution metadata.",
@@ -473,6 +548,18 @@
       ],
       "default": null,
       "description": "Scheduling information"
+    },
+    "pipeline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PipelineConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Pipeline orchestration configuration"
     }
   },
   "required": [

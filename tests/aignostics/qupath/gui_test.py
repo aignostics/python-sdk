@@ -139,7 +139,7 @@ async def test_gui_qupath_install_and_launch(
         pytest.fail(f"Could not extract process ID from notification: {notification}")
     try:
         psutil.Process(pid).kill()
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         pytest.fail(f"Failed to kill QuPath process: {e}")
 
     if not was_installed:
@@ -165,6 +165,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         external_id=SPOT_0_GS_URL,
+        tags=["scheduled"],
         has_output=True,
         limit=1,
     )
@@ -299,7 +300,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
             pytest.fail(f"Could not extract process ID from notification: {notification}")
         try:
             psutil.Process(pid).kill()
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             pytest.fail(f"Failed to kill QuPath process: {e}")
 
         # Step 7: Inspect QuPath results

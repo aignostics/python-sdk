@@ -2,7 +2,7 @@
 itemId: SPEC-WSI-SERVICE
 itemTitle: WSI Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-VISUALIZATION-1, SWR-APPLICATION-2-2
+itemFulfills: SWR-APPLICATION-2-2
 Module: WSI _(Whole Slide Image Processing)_
 Layer: Domain Service
 Version: 1.0.0

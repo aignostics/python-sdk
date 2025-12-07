@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
-import logging
+import contextlib
 import os
+
+from .constants_test import TEST_SUITE
+
+os.environ[f"PYTEST_RUNNING_{TEST_SUITE}"] = "1"  # Doing this at the top ensures aignostics src code sees it early
+
+import logging
 from asyncio import sleep
 from importlib.util import find_spec
 from pathlib import Path
@@ -11,11 +17,9 @@ from typing import TYPE_CHECKING
 
 import psutil
 import pytest
+from loguru import logger
 from typer.testing import CliRunner
 
-from aignostics.utils import get_logger
-
-logger = get_logger(__name__)
 if TYPE_CHECKING:
     from collections.abc import Generator
 
@@ -44,7 +48,7 @@ def pytest_xdist_auto_num_workers(config) -> int:
         num_workers = max(1, int(logical_cpu_count * factor))
         print(f"xdist_num_workers: {num_workers}")
         logger.info(
-            "Set number of xdist workers to '%s' based on logical CPU count of %d.", num_workers, logical_cpu_count
+            "Set number of xdist workers to '{}' based on logical CPU count of {}.", num_workers, logical_cpu_count
         )
         return num_workers
     return config.getoption("numprocesses")
@@ -164,7 +168,7 @@ def pytest_runtest_makereport(item, call):  # noqa: ANN201
             # Mark as passed to avoid failing the test suite
             report.outcome = "passed"
             logger.warning(
-                "Suppressed expected NiceGUI teardown error in test '%s': %s",
+                "Suppressed expected NiceGUI teardown error in test '{}': {}",
                 item.nodeid,
                 error_msg[:200],
             )
@@ -230,6 +234,38 @@ def pytest_collection_modifyitems(config, items) -> None:
 def runner() -> CliRunner:
     """Provide a CLI test runner fixture."""
     return CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def caplog_loguru_integration(caplog) -> Generator[None, None, None]:
+    """Enable caplog to capture loguru logs by propagating them to Python's logging.
+
+    This fixture automatically runs for all tests and bridges loguru to Python's
+    standard logging module so that pytest's caplog fixture can capture loguru logs.
+
+    Args:
+        caplog: The pytest fixture for capturing log messages.
+
+    Yields:
+        None: This fixture doesn't yield any value.
+    """
+
+    class PropagateHandler(logging.Handler):
+        """Handler that propagates loguru logs to Python's logging."""
+
+        @staticmethod
+        def emit(record) -> None:
+            """Emit a log record to Python's logging."""
+            logging.getLogger(record.name).handle(record)
+
+    # Add handler to propagate loguru logs to Python's logging
+    handler_id = logger.add(PropagateHandler(), format="{message}")
+
+    yield
+
+    # Remove the handler after test - ignore if already removed (e.g., by logging_initialize())
+    with contextlib.suppress(ValueError):
+        logger.remove(handler_id)
 
 
 @pytest.fixture

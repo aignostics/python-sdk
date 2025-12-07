@@ -2,14 +2,14 @@
 
 from pathlib import Path
 
-from nicegui import app
-
 from aignostics.utils import BasePageBuilder
 
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:
+        from nicegui import app  # noqa: PLC0415
+
         app.add_static_files("/assets", Path(__file__).parent / "assets")
 
 
@@ -24,9 +24,11 @@ def theme() -> None:
         dark="#1d1d1d1d",
         dark_page="#12121212",
         positive="#0CA57B",
+        success="#0CA57B",
         negative="#D4313C",
         info="#261C8D",
         warning="#FFCC00",
+        error="#D4313C",
         brand_white="#EFF0F1",
         brand_background_light="#E7E6E8",
         brand_logo="#AFA3DD",

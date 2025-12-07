@@ -7,11 +7,20 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from aiopath import AsyncPath
+from loguru import logger
 from nicegui import app, binding, ui  # noq
 from nicegui import run as nicegui_run
 
-from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
+from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
+from aignostics.platform import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+)
+from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
     from aignostics.platform import UserInfo
@@ -24,10 +33,13 @@ from ._utils import (
     mime_type_to_icon,
 )
 
-logger = get_logger(__name__)
-
 WIDTH_1200px = "width: 1200px; max-width: none"
 MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED = "Metadata grid is not initialized."
+
+CLASS_SUBSECTION_HEADER = "text-h6 mb-0 pb-0"
+CLASS_WIDTH_ONE_THIRD = "w-1/3"
+CLASS_WIDTH_ONE_HALF = "w-1/2"
+DATETIME_MASK = "YYYY-MM-DD HH:mm"
 
 
 @binding.bindable_dataclass
@@ -49,8 +61,13 @@ class SubmitForm:
     tags: list[str] | None = None
     due_date: str = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
     deadline: str = (datetime.now().astimezone() + timedelta(hours=24)).strftime("%Y-%m-%d %H:%M")
-    validate_only: bool = False
     onboard_to_aignostics_portal: bool = False
+    gpu_type: str = DEFAULT_GPU_TYPE
+    gpu_provisioning_mode: str = DEFAULT_GPU_PROVISIONING_MODE
+    max_gpus_per_slide: int = DEFAULT_MAX_GPUS_PER_SLIDE
+    flex_start_max_run_duration_minutes: int = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
+    cpu_provisioning_mode: str = DEFAULT_CPU_PROVISIONING_MODE
+    node_acquisition_timeout_minutes: int = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES
 
 
 submit_form = SubmitForm()
@@ -155,11 +172,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         from nicegui import ui  # noqa: PLC0415
 
         result = await GUILocalFilePicker(
-            str(get_user_data_directory("datasets") if data else str(Path(await AsyncPath.home()))), multiple=False
+            str(get_user_data_directory("datasets") if data else str(Path.home())), multiple=False
         )  # type: ignore
         if result and len(result) > 0:
-            path = AsyncPath(result[0])
-            if not await path.is_dir():
+            path = Path(result[0])
+            if not path.is_dir():
                 submit_form.source = None
                 submit_form.wsi_step_label.set_text(
                     "Select a folder with whole slide images you want to analyze"
@@ -167,7 +184,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.wsi_next_button.disable() if submit_form.wsi_next_button else None
                 ui.notify("The selected path is not a directory. Please select a valid directory.", type="warning")
             else:
-                submit_form.source = Path(path)
+                submit_form.source = path
                 submit_form.wsi_step_label.set_text(
                     f"Selected folder {submit_form.source} to analyze."
                 ) if submit_form.wsi_step_label else None
@@ -187,11 +204,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 type="warning",
             )
 
-    async def _pytest_home() -> None:
+    def _pytest_home() -> None:
         """Select home folder."""
         from nicegui import ui  # noqa: PLC0415
 
-        submit_form.source = Path(await AsyncPath.home())
+        submit_form.source = Path.home()
         submit_form.wsi_step_label.set_text(
             f"Selected folder {submit_form.source} to analyze."
         ) if submit_form.wsi_step_label else None
@@ -335,6 +352,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.wsi_step_label = ui.label(
                 "Select the folder with the whole slide images you want to analyze then click Next."
             )
+            ui.label(f"Supported formats: {', '.join(sorted(WSI_SUPPORTED_FILE_EXTENSIONS))}").classes("text-caption")
             with ui.stepper_navigation():
                 if "pytest" in sys.modules:
                     ui.button("Home", on_click=_pytest_home, icon="folder").mark("BUTTON_PYTEST_HOME")
@@ -434,7 +452,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     submit_form.metadata = await submit_form.metadata_grid.get_client_data()
                 if "pytest" in sys.modules:
                     message = f"Captured metadata '{submit_form.metadata}' for pytest."
-                    logger.debug(message)
+                    logger.trace(message)
                     ui.notify("Metadata captured.", type="info")
                 stepper.next()
 
@@ -620,7 +638,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 today = now.strftime("%Y/%m/%d")
                 min_hour = (now + timedelta(hours=1)).hour
                 min_minute = (now + timedelta(hours=1)).minute
-                ui.label("Soft Due Date").classes("text-h6 mb-0 pb-0")
+                ui.label("Soft Due Date").classes("class_subsection_header")
                 ui.label(
                     "The platform will try to complete the run before this time, "
                     "given your subscription tier and available GPU resources."
@@ -628,13 +646,13 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 with ui.row().classes("full-width"):
                     ui.label("")
                     due_date_date_picker = (
-                        ui.date(mask="YYYY-MM-DD HH:mm")
+                        ui.date(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props(f":options=\"(date) => date >= '{today}'\"")
                         .mark("DATE_DUE_DATE")
                     )
                     due_date_time_picker = (
-                        ui.time(mask="YYYY-MM-DD HH:mm")
+                        ui.time(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props("format24h now-btn")
                         .mark("TIME_DUE_DATE")
@@ -673,17 +691,17 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         }}
                     """
                     )
-                ui.label("Hard Deadline").classes("text-h6 mb-0 pb-0")
+                ui.label("Hard Deadline").classes("class_subsection_header")
                 ui.label("The platform might cancel the run if not completed by this time.").classes(
                     "text-sm mt-0 pt-0"
                 )
                 with ui.row().classes("full-width"):
-                    ui.date(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "deadline").props(
+                    ui.date(mask=DATETIME_MASK).bind_value(submit_form, "deadline").props(
                         f":options=\"(date) => date >= '{today}'\""
                     ).mark("DATE_DEADLINE")
-                    ui.time(mask="YYYY-MM-DD HH:mm").bind_value(submit_form, "deadline").props(
-                        "format24h now-btn"
-                    ).mark("TIME_DEADLINE")
+                    ui.time(mask=DATETIME_MASK).bind_value(submit_form, "deadline").props("format24h now-btn").mark(
+                        "TIME_DEADLINE"
+                    )
 
             def _scheduling_next() -> None:
                 if submit_form.upload_and_submit_button is None:
@@ -703,11 +721,12 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """Submit the application run."""
             ui.notify("Submitting application run ...", type="info")
             try:
+                # Submit run with pipeline configuration
                 run = service.application_run_submit_from_metadata(
                     application_id=str(submit_form.application_id),
                     metadata=submit_form.metadata or [],
                     application_version=str(submit_form.application_version),
-                    custom_metadata=None,  # TODO(Helmut): Allow user to edit custom metadata
+                    custom_metadata=None,
                     note=submit_form.note,
                     tags=set(submit_form.tags) if submit_form.tags else None,
                     due_date=datetime.strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
@@ -718,10 +737,19 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
-                    validate_only=submit_form.validate_only,
                     onboard_to_aignostics_portal=submit_form.onboard_to_aignostics_portal,
+                    gpu_type=submit_form.gpu_type,
+                    gpu_provisioning_mode=submit_form.gpu_provisioning_mode,
+                    max_gpus_per_slide=submit_form.max_gpus_per_slide,
+                    flex_start_max_run_duration_minutes=(
+                        submit_form.flex_start_max_run_duration_minutes
+                        if submit_form.gpu_provisioning_mode == "FLEX_START"
+                        else None
+                    ),
+                    cpu_provisioning_mode=submit_form.cpu_provisioning_mode,
+                    node_acquisition_timeout_minutes=submit_form.node_acquisition_timeout_minutes,
                 )
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(
                     f"Failed to submit application run: {e}.",
                     type="negative",
@@ -743,7 +771,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 logger.error("Submission submit button is not initialized.")
                 return
             message = "Uploading whole slide images to Aignostics Platform ..."
-            logger.debug(message)
+            logger.trace(message)
             ui.notify(message, type="info")
             submit_form.upload_and_submit_button.disable()
             await nicegui_run.io_bound(
@@ -756,7 +784,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 upload_message_queue,
             )
             message = "Upload to Aignostics Platform completed."
-            logger.debug(message)
+            logger.trace(message)
             ui.notify(message, type="positive")
             _submit()
 
@@ -780,16 +808,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                         ).bind_value(submit_form, "onboard_to_aignostics_portal").mark(
                             "CHECKBOX_ONBOARD_TO_AIGNOSTICS_PORTAL"
                         )
-                    # Allow users in aignostics' organisations to do validate only runs
-                    if (
-                        user_info
-                        and user_info.organization
-                        and user_info.organization.name
-                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org"}
-                    ):
-                        ui.checkbox(
-                            text="Validate only",
-                        ).bind_value(submit_form, "validate_only").mark("CHECKBOX_VALIDATE_ONLY")
 
                 upload_complete = True
                 for row in metadata or []:
@@ -816,6 +834,119 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 row["platform_bucket_url"] = message["platform_bucket_url"]
                                 break
                 _upload_ui.refresh(submit_form.metadata)
+
+        with ui.step("Pipeline"):
+            user_info: UserInfo | None = app.storage.tab.get("user_info", None)
+            can_configure_pipeline = (
+                user_info
+                and user_info.organization
+                and user_info.organization.name
+                and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
+            )
+
+            if can_configure_pipeline:
+                with ui.column(align_items="start").classes("w-full"):
+                    ui.label("GPU Configuration").classes("class_subsection_header")
+                    ui.label(
+                        "Configure GPU resources for processing your whole slide images. "
+                        "These settings control the type and provisioning mode of GPUs used during AI analysis."
+                    ).classes("text-sm mt-0 pt-0 mb-4")
+
+                    with ui.row().classes("w-full gap-4"):
+                        ui.select(
+                            label="GPU Type",
+                            options={"L4": "L4", "A100": "A100"},
+                            value=submit_form.gpu_type,
+                        ).bind_value(submit_form, "gpu_type").mark("SELECT_GPU_TYPE").classes(CLASS_WIDTH_ONE_THIRD)
+
+                        ui.number(
+                            label="Max GPUs per Slide",
+                            value=submit_form.max_gpus_per_slide,
+                            min=1,
+                            max=8,
+                            step=1,
+                        ).bind_value(submit_form, "max_gpus_per_slide").mark("NUMBER_MAX_GPUS_PER_SLIDE").classes(
+                            CLASS_WIDTH_ONE_THIRD
+                        )
+
+                        ui.select(
+                            label="GPU Provisioning Mode",
+                            options={
+                                "SPOT": "Spot nodes (lower cost, better availability, might be preempted and retried)",
+                                "ON_DEMAND": (
+                                    "On demand nodes (higher cost, limited availability, processing might be delayed)"
+                                ),
+                                "FLEX_START": ("Flex start (discounted GPUs with max run duration limit)"),
+                            },
+                            value=submit_form.gpu_provisioning_mode,
+                        ).bind_value(submit_form, "gpu_provisioning_mode").mark("SELECT_GPU_PROVISIONING_MODE").classes(
+                            CLASS_WIDTH_ONE_THIRD
+                        )
+
+                    # Show flex start duration input only when FLEX_START is selected
+                    with (
+                        ui.row()
+                        .classes("w-full gap-4")
+                        .bind_visibility_from(submit_form, "gpu_provisioning_mode", lambda v: v == "FLEX_START")
+                    ):
+                        ui.number(
+                            label="Flex Start Max Run Duration (minutes)",
+                            value=submit_form.flex_start_max_run_duration_minutes,
+                            min=1,
+                            max=3600,
+                            step=1,
+                        ).bind_value(submit_form, "flex_start_max_run_duration_minutes").mark(
+                            "NUMBER_FLEX_START_MAX_RUN_DURATION_MINUTES"
+                        ).classes(CLASS_WIDTH_ONE_HALF)
+                        ui.label(
+                            "Maximum duration for the run when using FLEX_START mode. "
+                            "Default is 720 minutes (12 hours)."
+                        ).classes("text-sm text-gray-500 self-center")
+
+                    ui.separator().classes("my-4")
+
+                    ui.label("CPU Configuration").classes("class_subsection_header")
+                    ui.label("Configure CPU resources for algorithms that do not require GPU acceleration.").classes(
+                        "text-sm mt-0 pt-0 mb-4"
+                    )
+
+                    with ui.row().classes("w-full gap-4"):
+                        ui.select(
+                            label="CPU Provisioning Mode",
+                            options={
+                                "SPOT": "Spot nodes (lower cost, better availability, might be preempted and retried)",
+                                "ON_DEMAND": "On demand nodes (higher cost, limited availability, might be delayed)",
+                            },
+                            value=submit_form.cpu_provisioning_mode,
+                        ).bind_value(submit_form, "cpu_provisioning_mode").mark("SELECT_CPU_PROVISIONING_MODE").classes(
+                            CLASS_WIDTH_ONE_HALF
+                        )
+
+                    ui.separator().classes("my-4")
+
+                    ui.label("Node Acquisition").classes("class_subsection_header")
+                    ui.label("Configure timeout for acquiring compute nodes from the cluster.").classes(
+                        "text-sm mt-0 pt-0 mb-4"
+                    )
+
+                    with ui.row().classes("w-full gap-4"):
+                        ui.number(
+                            label="Node Acquisition Timeout (minutes)",
+                            value=submit_form.node_acquisition_timeout_minutes,
+                            min=1,
+                            max=3600,
+                            step=1,
+                        ).bind_value(submit_form, "node_acquisition_timeout_minutes").mark(
+                            "NUMBER_NODE_ACQUISITION_TIMEOUT_MINUTES"
+                        ).classes(CLASS_WIDTH_ONE_HALF)
+            else:
+                ui.label(
+                    "Pipeline configuration is not available for your organization. Default settings will be used."
+                ).classes("text-body1")
+
+            with ui.stepper_navigation():
+                ui.button("Next", on_click=stepper.next).mark("BUTTON_PIPELINE_NEXT")
+                ui.button("Back", on_click=stepper.previous).props("flat")
 
         with ui.step("Submit"):
             _upload_ui([])

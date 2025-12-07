@@ -1,0 +1,576 @@
+{
+  "$defs": {
+    "CIMetadata": {
+      "description": "CI/CD environment metadata.",
+      "properties": {
+        "github": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GitHubCIMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub Actions metadata"
+        },
+        "pytest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PytestCIMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pytest test metadata"
+        }
+      },
+      "title": "CIMetadata",
+      "type": "object"
+    },
+    "CPUConfig": {
+      "description": "Configuration for CPU resources.",
+      "properties": {
+        "provisioning_mode": {
+          "$ref": "#/$defs/ProvisioningMode",
+          "description": "The provisioning mode for CPU resources (SPOT or ON_DEMAND)"
+        }
+      },
+      "title": "CPUConfig",
+      "type": "object"
+    },
+    "GPUConfig": {
+      "description": "Configuration for GPU resources.",
+      "properties": {
+        "gpu_type": {
+          "$ref": "#/$defs/GPUType",
+          "description": "The type of GPU to use (L4 or A100)"
+        },
+        "provisioning_mode": {
+          "$ref": "#/$defs/ProvisioningMode",
+          "description": "The provisioning mode for GPU resources (SPOT or ON_DEMAND)"
+        },
+        "max_gpus_per_slide": {
+          "default": 1,
+          "description": "The maximum number of GPUs to allocate per slide (1-8)",
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Max Gpus Per Slide",
+          "type": "integer"
+        }
+      },
+      "title": "GPUConfig",
+      "type": "object"
+    },
+    "GPUType": {
+      "description": "Type of GPU to use for processing.",
+      "enum": [
+        "L4",
+        "A100"
+      ],
+      "title": "GPUType",
+      "type": "string"
+    },
+    "GitHubCIMetadata": {
+      "description": "GitHub Actions CI metadata.",
+      "properties": {
+        "action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub Action name",
+          "title": "Action"
+        },
+        "job": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub job name",
+          "title": "Job"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Git reference",
+          "title": "Ref"
+        },
+        "ref_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Git reference name",
+          "title": "Ref Name"
+        },
+        "ref_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Git reference type (branch, tag)",
+          "title": "Ref Type"
+        },
+        "repository": {
+          "description": "Repository name (owner/repo)",
+          "title": "Repository",
+          "type": "string"
+        },
+        "run_attempt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Attempt number for this run",
+          "title": "Run Attempt"
+        },
+        "run_id": {
+          "description": "Unique ID for this workflow run",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "run_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Run number for this workflow",
+          "title": "Run Number"
+        },
+        "run_url": {
+          "description": "URL to the workflow run",
+          "title": "Run Url",
+          "type": "string"
+        },
+        "runner_arch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Runner architecture (x64, ARM64, etc.)",
+          "title": "Runner Arch"
+        },
+        "runner_os": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Runner operating system",
+          "title": "Runner Os"
+        },
+        "sha": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Git commit SHA",
+          "title": "Sha"
+        },
+        "workflow": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workflow name",
+          "title": "Workflow"
+        },
+        "workflow_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reference to the workflow file",
+          "title": "Workflow Ref"
+        }
+      },
+      "required": [
+        "repository",
+        "run_id",
+        "run_url"
+      ],
+      "title": "GitHubCIMetadata",
+      "type": "object"
+    },
+    "PipelineConfig": {
+      "description": "Pipeline configuration for dynamic orchestration.",
+      "properties": {
+        "gpu": {
+          "$ref": "#/$defs/GPUConfig",
+          "description": "GPU resource configuration"
+        },
+        "cpu": {
+          "$ref": "#/$defs/CPUConfig",
+          "description": "CPU resource configuration"
+        },
+        "node_acquisition_timeout_minutes": {
+          "default": 30,
+          "description": "Timeout for acquiring compute nodes in minutes (1-1440)",
+          "maximum": 1440,
+          "minimum": 1,
+          "title": "Node Acquisition Timeout Minutes",
+          "type": "integer"
+        }
+      },
+      "title": "PipelineConfig",
+      "type": "object"
+    },
+    "ProvisioningMode": {
+      "description": "Provisioning mode for resources.",
+      "enum": [
+        "SPOT",
+        "ON_DEMAND"
+      ],
+      "title": "ProvisioningMode",
+      "type": "string"
+    },
+    "PytestCIMetadata": {
+      "description": "Pytest test execution metadata.",
+      "properties": {
+        "current_test": {
+          "description": "Current test being executed",
+          "title": "Current Test",
+          "type": "string"
+        },
+        "markers": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pytest markers applied to the test",
+          "title": "Markers"
+        }
+      },
+      "required": [
+        "current_test"
+      ],
+      "title": "PytestCIMetadata",
+      "type": "object"
+    },
+    "SchedulingMetadata": {
+      "description": "Scheduling metadata for run execution.",
+      "properties": {
+        "due_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Requested completion time (ISO 8601). Scheduler will try to complete before this time.",
+          "title": "Due Date"
+        },
+        "deadline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Hard deadline (ISO 8601). Run may be aborted if processing exceeds this time.",
+          "title": "Deadline"
+        }
+      },
+      "title": "SchedulingMetadata",
+      "type": "object"
+    },
+    "SubmissionMetadata": {
+      "description": "Metadata about how the SDK was invoked.",
+      "properties": {
+        "date": {
+          "description": "ISO 8601 timestamp of submission",
+          "title": "Date",
+          "type": "string"
+        },
+        "interface": {
+          "description": "How the SDK was accessed (script, cli, launchpad)",
+          "enum": [
+            "script",
+            "cli",
+            "launchpad"
+          ],
+          "title": "Interface",
+          "type": "string"
+        },
+        "initiator": {
+          "description": "Who/what initiated the run (user, test, bridge)",
+          "enum": [
+            "user",
+            "test",
+            "bridge"
+          ],
+          "title": "Initiator",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "interface",
+        "initiator"
+      ],
+      "title": "SubmissionMetadata",
+      "type": "object"
+    },
+    "UserMetadata": {
+      "description": "User information metadata.",
+      "properties": {
+        "organization_id": {
+          "description": "User's organization ID",
+          "title": "Organization Id",
+          "type": "string"
+        },
+        "organization_name": {
+          "description": "User's organization name",
+          "title": "Organization Name",
+          "type": "string"
+        },
+        "user_email": {
+          "description": "User's email address",
+          "title": "User Email",
+          "type": "string"
+        },
+        "user_id": {
+          "description": "User's unique ID",
+          "title": "User Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organization_id",
+        "organization_name",
+        "user_email",
+        "user_id"
+      ],
+      "title": "UserMetadata",
+      "type": "object"
+    },
+    "WorkflowMetadata": {
+      "description": "Workflow control metadata.",
+      "properties": {
+        "onboard_to_aignostics_portal": {
+          "default": false,
+          "description": "Whether to onboard results to the Aignostics Portal",
+          "title": "Onboard To Aignostics Portal",
+          "type": "boolean"
+        },
+        "validate_only": {
+          "default": false,
+          "description": "Whether to only validate without running analysis",
+          "title": "Validate Only",
+          "type": "boolean"
+        }
+      },
+      "title": "WorkflowMetadata",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete Run SDK metadata schema.\n\nThis model defines the structure and validation rules for SDK metadata\nthat is attached to application runs. It includes information about:\n- SDK version and timestamps\n- User information (when available)\n- CI/CD environment context (GitHub Actions, pytest)\n- Workflow control flags\n- Scheduling information\n- Optional user note",
+  "properties": {
+    "schema_version": {
+      "description": "Schema version for this metadata format",
+      "pattern": "^\\d+\\.\\d+\\.\\d+-?.*$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "created_at": {
+      "description": "ISO 8601 timestamp when the metadata was first created",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "description": "ISO 8601 timestamp when the metadata was last updated",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "tags": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional list of tags associated with the run",
+      "title": "Tags"
+    },
+    "submission": {
+      "$ref": "#/$defs/SubmissionMetadata",
+      "description": "Submission context metadata"
+    },
+    "user_agent": {
+      "description": "User agent string for the SDK client",
+      "title": "User Agent",
+      "type": "string"
+    },
+    "user": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/UserMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "User information (when authenticated)"
+    },
+    "ci": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CIMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "CI/CD environment metadata"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional user note for the run",
+      "title": "Note"
+    },
+    "workflow": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkflowMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Workflow control flags"
+    },
+    "scheduling": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SchedulingMetadata"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Scheduling information"
+    },
+    "pipeline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PipelineConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Pipeline orchestration configuration"
+    }
+  },
+  "required": [
+    "schema_version",
+    "created_at",
+    "updated_at",
+    "submission",
+    "user_agent"
+  ],
+  "title": "RunSdkMetadata",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v0.0.5.json"
+}

@@ -1,5 +1,6 @@
 """Run describe page, including download, QuPath and Marimo control."""
 
+import webbrowser
 from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
@@ -7,16 +8,16 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 import humanize
-from aiopath import AsyncPath
+from loguru import logger
 from nicegui import (
     app,
     ui,  # noq
 )
 from nicegui import run as nicegui_run
 
-from aignostics.platform import ItemOutput, ItemState, RunState
+from aignostics.platform import ItemOutput, ItemResult, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
-from aignostics.utils import GUILocalFilePicker, get_logger, get_user_data_directory
+from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
     from aignostics.platform import UserInfo
@@ -31,9 +32,8 @@ from ._utils import (
     run_status_to_icon_and_color,
 )
 
-logger = get_logger(__name__)
-
 WIDTH_1200px = "width: 1200px; max-width: none"
+RESULTS_PAGE_SIZE = 20
 
 service = Service()
 
@@ -70,8 +70,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     run = await nicegui_run.io_bound(service.application_run, run_id)
+    run_data = await nicegui_run.io_bound(run.details) if run else None
     spinner.set_visibility(False)
-    run_data = run.details() if run else None
 
     if run and run_data:
         icon, color = run_status_to_icon_and_color(
@@ -127,7 +127,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.navigate.reload()
             ui.notify("Application run cancelled!", type="positive")
             return True
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             cancel_button.enable()
             cancel_button.props(remove="loading")
             ui.notify(f"Failed to cancel application run: {e}.", type="warning")
@@ -151,14 +151,23 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.navigate.to("/")
             ui.notify("Application run deleted!", type="positive")
             return True
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             delete_button.enable()
             delete_button.props(remove="loading")
             ui.notify(f"Failed to delete results of application run: {e}.", type="warning")
             return False
 
+    # Mutable container for qupath_project and marimo options that persists across @ui.refreshable calls.
+    # Defined OUTSIDE the @ui.refreshable function so closures (like start_download) always read
+    # from the same dict instance, even after refresh() is called with new parameter values.
+    download_options: dict[str, bool] = {"qupath_project": False, "marimo": False}
+
     @ui.refreshable
     def download_run_dialog_content(qupath_project: bool = False, marimo: bool = False) -> None:  # noqa: C901, PLR0915
+        # Update the shared options dict so closures read the current values
+        download_options["qupath_project"] = qupath_project
+        download_options["marimo"] = marimo
+
         if qupath_project:
             ui.markdown(
                 "##### Visualize results in QuPath with one click \n"
@@ -182,26 +191,31 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 "2. A subfolder with the application run will be created and all results downloaded there. \n"
             )
 
-        selected_folder = ui.input("Selected folder", value="").classes("w-full").props("readonly")
+        # Use the input field directly as the source of truth for folder selection.
+        # We bind to folder_state dict so start_download can read the current value.
+        folder_state: dict[str, str] = {"value": ""}
+        folder_input = ui.input("Selected folder", value="").classes("w-full").props("readonly")
+        folder_input.bind_value(folder_state, "value")
 
         with ui.row().classes("w-full"):
 
             async def _select_download_destination() -> None:
-                result = await GUILocalFilePicker(str(Path(await AsyncPath.home())), multiple=False)  # type: ignore[misc]
+                result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
-                    folder_path = AsyncPath(result[0])
-                    if await folder_path.is_dir():
-                        selected_folder.value = str(folder_path)
-                    else:
-                        selected_folder.value = str(folder_path.parent)
-                    ui.notify(f"Using custom directory: {selected_folder.value}", type="info")
+                    folder_path = Path(result[0])
+                    folder_value = str(folder_path) if folder_path.is_dir() else str(folder_path.parent)
+                    folder_state["value"] = folder_value
+                    folder_input.set_value(folder_value)
+                    ui.notify(f"Using custom directory: {folder_value}", type="info")
                     download_button.enable()
                 else:
                     ui.notify("No folder selected", type="warning")
 
-            async def _select_data() -> None:  # noqa: RUF029
-                """Open a file picker dialog and show notifier when closed again."""
-                selected_folder.value = str(get_user_data_directory("results"))
+            def _select_data() -> None:
+                """Select the Launchpad data directory."""
+                folder_value = str(get_user_data_directory("results"))
+                folder_state["value"] = folder_value
+                folder_input.set_value(folder_value)
                 ui.notify("Using Launchpad results directory", type="info")
                 download_button.enable()
 
@@ -225,105 +239,114 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         download_artifact_progress = ui.linear_progress(value=0, show_value=False).props("instant-feedback")
         download_artifact_progress.set_visibility(False)
 
-        async def start_download() -> None:  # noqa: C901, PLR0915
-            if not selected_folder.value:
+        # Create a mutable container for the progress queue that will be set when download starts
+        # This allows the timer callback to access the queue that's created during start_download
+        progress_state: dict[str, Any] = {"queue": None}
+
+        def update_download_progress() -> None:  # noqa: C901, PLR0912
+            """Update the progress indicator with values from the queue."""
+            progress_queue = progress_state.get("queue")
+            if progress_queue is None:
+                return
+            while not progress_queue.empty():
+                progress = progress_queue.get()
+                if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                    status_text = (
+                        f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
+                        if progress.item_index is not None and progress.item_count
+                        else "Downloading input slide ..."
+                    )
+                elif progress.status is DownloadProgressState.DOWNLOADING and progress.total_artifact_index is not None:
+                    status_text = (
+                        f"Downloading artifact {progress.total_artifact_index + 1} of {progress.total_artifact_count}"
+                    )
+                else:
+                    status_text = progress.status
+
+                download_item_status.set_text(status_text)
+                download_item_status.set_visibility(True)
+                download_item_progress.set_value(progress.item_progress_normalized)
+                download_artifact_progress.set_value(progress.artifact_progress_normalized)
+                if progress.status is DownloadProgressState.INITIALIZING:
+                    download_artifact_status.set_visibility(False)
+                    download_item_progress.set_visibility(False)
+                    download_artifact_progress.set_visibility(False)
+                elif progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                    if progress.input_slide_path:
+                        download_artifact_status.set_text(f"Input: {progress.input_slide_path.name}")
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(True)
+                elif progress.status is DownloadProgressState.DOWNLOADING:
+                    if progress.artifact_path:
+                        download_artifact_status.set_text(str(progress.artifact_path))
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(True)
+                elif progress.status is DownloadProgressState.QUPATH_ADD_INPUT and progress.qupath_add_input_progress:
+                    download_artifact_status.set_text(progress.qupath_add_input_progress.status)
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(False)
+                elif (
+                    progress.status is DownloadProgressState.QUPATH_ADD_RESULTS and progress.qupath_add_results_progress
+                ):
+                    download_artifact_status.set_text(progress.qupath_add_results_progress.status)
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(False)
+                elif (
+                    progress.status is DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
+                    and progress.qupath_annotate_input_with_results_progress
+                ):
+                    download_artifact_status.set_text(progress.qupath_annotate_input_with_results_progress.status)
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(True)
+                else:
+                    download_artifact_status.set_text("")
+                    download_item_progress.set_visibility(False)
+                    download_artifact_progress.set_visibility(False)
+
+        # Create the timer during dialog construction (in valid slot context), but inactive initially
+        # This avoids RuntimeError when trying to create timer inside async event handler
+        progress_timer = ui.timer(0.1, update_download_progress, active=False)
+
+        async def start_download() -> None:
+            # Read from download_options dict (defined outside @ui.refreshable) to get current values
+            current_qupath_project = download_options["qupath_project"]
+            current_marimo = download_options["marimo"]
+            current_folder = folder_state["value"]
+            if not current_folder:
                 ui.notify("Please select a folder first", type="warning")
                 return
 
             ui.notify("Downloading ...", type="info")
             progress_queue = Manager().Queue()
+            progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
 
-            def update_download_progress() -> None:  # noqa: C901, PLR0912
-                """Update the progress indicator with values from the queue."""
-                while not progress_queue.empty():
-                    progress = progress_queue.get()
-                    # Determine status text based on progress state
-                    if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
-                        status_text = (
-                            f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
-                            if progress.item_index is not None and progress.item_count
-                            else "Downloading input slide ..."
-                        )
-                    elif (
-                        progress.status is DownloadProgressState.DOWNLOADING
-                        and progress.total_artifact_index is not None
-                    ):
-                        status_text = (
-                            f"Downloading artifact {progress.total_artifact_index + 1} "
-                            f"of {progress.total_artifact_count}"
-                        )
-                    else:
-                        status_text = progress.status
-
-                    download_item_status.set_text(status_text)
-                    download_item_status.set_visibility(True)
-                    download_item_progress.set_value(progress.item_progress_normalized)
-                    download_artifact_progress.set_value(progress.artifact_progress_normalized)
-                    if progress.status is DownloadProgressState.INITIALIZING:
-                        download_artifact_status.set_visibility(False)
-                        download_item_progress.set_visibility(False)
-                        download_artifact_progress.set_visibility(False)
-                    elif progress.status is DownloadProgressState.DOWNLOADING_INPUT:
-                        if progress.input_slide_path:
-                            download_artifact_status.set_text(f"Input: {progress.input_slide_path.name}")
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(True)
-                    elif progress.status is DownloadProgressState.DOWNLOADING:
-                        if progress.artifact_path:
-                            download_artifact_status.set_text(str(progress.artifact_path))
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(True)
-                    elif (
-                        progress.status is DownloadProgressState.QUPATH_ADD_INPUT and progress.qupath_add_input_progress
-                    ):
-                        download_artifact_status.set_text(progress.qupath_add_input_progress.status)
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(False)
-                    elif (
-                        progress.status is DownloadProgressState.QUPATH_ADD_RESULTS
-                        and progress.qupath_add_results_progress
-                    ):
-                        download_artifact_status.set_text(progress.qupath_add_results_progress.status)
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(False)
-                    elif (
-                        progress.status is DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
-                        and progress.qupath_annotate_input_with_results_progress
-                    ):
-                        download_artifact_status.set_text(progress.qupath_annotate_input_with_results_progress.status)
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(True)
-                    else:
-                        download_artifact_status.set_text("")
-                        download_item_progress.set_visibility(False)
-                        download_artifact_progress.set_visibility(False)
-
-            ui.timer(0.1, update_download_progress)
+            # Activate the timer now that download is starting
+            progress_timer.activate()
             try:
                 download_button.disable()
                 download_button.props(add="loading")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
-                    destination_directory=Path(selected_folder.value),
+                    destination_directory=Path(current_folder),
                     wait_for_completion=True,
-                    qupath_project=qupath_project,
+                    qupath_project=current_qupath_project,
                     download_progress_queue=progress_queue,
                 )
                 if not results_folder:
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
-                if qupath_project:
+                if current_qupath_project:
                     if results_folder:
                         ui.notify("Download and QuPath project creation completed.", type="positive")
                         download_item_status.set_text("Opening QuPath ...")
                         await open_qupath(project=results_folder / "qupath", button=download_button)
-                elif marimo:
+                elif current_marimo:
                     ui.notify("Download and Notebook preparation completed.", type="positive")
                     download_item_status.set_text("Opening Notebook ...")
                     open_marimo(results_folder=results_folder, button=download_button)
@@ -332,7 +355,11 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 show_in_file_manager(str(results_folder))
             except ValueError as e:
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
+                progress_timer.deactivate()
+                progress_state["queue"] = None
                 return
+            progress_timer.deactivate()
+            progress_state["queue"] = None
             download_button.props(remove="loading")
             download_button.enable()
             download_item_status.set_visibility(False)
@@ -361,7 +388,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 .props("color=primary")
                 .mark("DIALOG_BUTTON_DOWNLOAD_RUN")
             )
-            download_button.disable()
+            if not folder_state["value"]:  # Disable download button initially, will be enabled when folder is selected
+                download_button.disable()
+
             ui.space()
             ui.button("Close", on_click=download_run_dialog.close).props("flat")
 
@@ -380,7 +409,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         if url:
             try:
                 csv_df = pd.read_csv(url, comment="#")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to load CSV: {e!s}", type="negative")
                 csv_df = pd.DataFrame()  # Empty dataframe as fallback
             ui.aggrid.from_pandas(csv_df)
@@ -409,7 +438,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     "navigationBar": True,
                     "statusBar": False,
                 }).classes("full-width")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
     with ui.dialog() as metadata_dialog, ui.card().style(WIDTH_1200px):
@@ -430,7 +459,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             try:
                 with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
                     ui.image("/tiff?url=" + quote(url))
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to load CSV: {e!s}", type="negative")
 
     with ui.dialog() as tiff_view_dialog, ui.card().style(WIDTH_1200px):
@@ -463,7 +492,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     "navigationBar": True,
                     "statusBar": False,
                 }).classes("full-width")
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
     with ui.dialog() as custom_metadata_dialog, ui.card().style(WIDTH_1200px):
@@ -488,7 +517,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             pid = await nicegui_run.cpu_bound(QuPathService.execute_qupath, project=project, image=image)
             if pid:
                 message = f"QuPath opened successfully with process id '{pid}'."
-                logger.info(message)
+                logger.debug(message)
                 ui.notify(message, type="positive")
             else:
                 message = "Failed to launch QuPath."
@@ -516,8 +545,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 lambda e: expansion.classes(add="w-full" if e.value else "", remove="w-full" if not e.value else "")
             )
             with expansion:
-                # Display run metadata, including duration if possible, using humanize
-
                 submitted_at = run_data.submitted_at.astimezone()
                 terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
                 if submitted_at and terminated_at:
@@ -578,7 +605,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 )
                                 ui.notify("Custom metadata updated successfully!", type="positive")
                                 ui.navigate.reload()
-                        except Exception as ex:  # noqa: BLE001
+                        except Exception as ex:
                             ui.notify(f"Failed to update custom metadata: {ex!s}", type="negative")
 
                     ui.json_editor(properties, on_change=handle_metadata_change).classes("full-width").mark(
@@ -648,156 +675,238 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         on_click=lambda t=tag: ui.navigate.to(f"/?query={quote(str(t))}"),
                     ).props("small outlined clickable").classes("bg-white text-black")
 
-        with ui.list().classes("full-width"):
-            results = list(run.results())
-            if not results:
-                with ui.row().classes("w-full justify-center content-center"):
-                    ui.space()
-                    ui.html(
-                        '<dotlottie-player src="/application_assets/empty.lottie" '
-                        'background="transparent" speed="1" style="width: 700px; height: 700px" '
-                        'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
-                        sanitize=False,
+        # Pagination state
+        results_iterator = run.results()
+        displayed_results: list[ItemResult] = []
+        has_more_results = True
+
+        def render_item(item: ItemResult) -> None:  # noqa: C901, PLR0912, PLR0915
+            """Render a single result item."""
+            with ui.item().classes("h-96 px-0").props("clickable"):
+                with (
+                    ui.item_section().classes("h-full"),
+                    ui.card().tight().classes("h-full"),
+                    ui.row().classes("w-full"),
+                ):
+                    image_file: Path | None = Path(item.external_id).resolve()
+                    if image_file and image_file.is_file():
+                        image_url = "/thumbnail?source=" + quote(image_file.as_posix())
+                    else:
+                        image_file = None
+                        image_url = "/application_assets/image-not-found.png"
+                    ui.image(image_url).classes("object-contain absolute-center max-h-full")
+                    icon, color = run_item_status_and_termination_reason_to_icon_and_color(
+                        item.state.value, item.termination_reason
                     )
-                    ui.space()
-                return
-            for item in results:
-                with ui.item().classes("h-96 px-0").props("clickable"):
-                    with (
-                        ui.item_section().classes("h-full"),
-                        ui.card().tight().classes("h-full"),
-                        ui.row().classes("w-full"),
-                    ):
-                        image_file: AsyncPath | None = await AsyncPath(item.external_id).resolve()
-                        if image_file and await image_file.is_file():
-                            image_url = "/thumbnail?source=" + quote(image_file.as_posix())
-                        else:
-                            image_file = None
-                            image_url = "/application_assets/image-not-found.png"
-                        ui.image(image_url).classes("object-contain absolute-center max-h-full")
-                        icon, color = run_item_status_and_termination_reason_to_icon_and_color(
-                            item.state.value, item.termination_reason
-                        )
-                        with ui.row().classes("justify-center w-full"):
-                            with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
-                                tooltip = f"Item {item.item_id}, status {item.state.value.upper()}"
-                                if item.termination_reason:
-                                    tooltip += f" ({item.termination_reason})"
-                                ui.tooltip(tooltip)
-                            ui.space()
-                            with ui.button_group():
-                                if find_spec("ijson") and QuPathService.is_qupath_installed():
-                                    with ui.button(
-                                        icon="zoom_in",
-                                        color="primary",
-                                    ).props("floating") as qupath_button:
-                                        qupath_button.on_click(
-                                            lambda _, image_file=image_file, qupath_button=qupath_button: open_qupath(
-                                                image=image_file, button=qupath_button
-                                            )
+                    with ui.row().classes("justify-center w-full"):
+                        with ui.icon(icon, color=color).classes("text-4xl pl-2 pt-1").props("floating"):
+                            tooltip = f"Item {item.item_id}, status {item.state.value.upper()}"
+                            if item.termination_reason:
+                                tooltip += f" ({item.termination_reason})"
+                            ui.tooltip(tooltip)
+                        ui.space()
+                        with ui.button_group():
+                            if find_spec("ijson") and QuPathService.is_qupath_installed():
+                                with ui.button(
+                                    icon="zoom_in",
+                                    color="primary",
+                                ).props("floating") as qupath_button:
+                                    qupath_button.on_click(
+                                        lambda _, image_file=image_file, qupath_button=qupath_button: open_qupath(
+                                            image=image_file, button=qupath_button
                                         )
-                                        ui.tooltip("Open in QuPath")
-                                if item.custom_metadata:
-                                    with ui.button(
-                                        icon="info",
-                                        on_click=lambda _,
-                                        custom_metadata=item.custom_metadata,
-                                        external_id=item.external_id: custom_metadata_dialog_open(
-                                            title=f"Custom Metadata of item {external_id} ",
-                                            custom_metadata=custom_metadata,
-                                        ),
-                                    ).props("floating"):
-                                        ui.tooltip("Show custom metadata")
-                                if image_file:
-                                    with ui.button(
-                                        icon="folder_open",
-                                        on_click=lambda _, image_file=image_file: show_in_file_manager(
-                                            str(image_file.parent)
-                                        ),
-                                    ).props("floating"):
-                                        ui.tooltip("Open folder")
-                        with ui.row().classes(
-                            "absolute-bottom h-32 bg-indigo-700 bg-opacity-80 content-center w-full p-4"
+                                    )
+                                    ui.tooltip("Open in QuPath")
+                            if item.custom_metadata:
+                                with ui.button(
+                                    icon="info",
+                                    on_click=lambda _,
+                                    custom_metadata=item.custom_metadata,
+                                    external_id=item.external_id: custom_metadata_dialog_open(
+                                        title=f"Custom Metadata of item {external_id} ",
+                                        custom_metadata=custom_metadata,
+                                    ),
+                                ).props("floating"):
+                                    ui.tooltip("Show custom metadata")
+                            if image_file:
+                                with ui.button(
+                                    icon="folder_open",
+                                    on_click=lambda _, image_file=image_file: show_in_file_manager(
+                                        str(image_file.parent)
+                                    ),
+                                ).props("floating"):
+                                    ui.tooltip("Open folder")
+                    with ui.row().classes("absolute-bottom h-32 bg-indigo-700 bg-opacity-80 content-center w-full p-4"):
+                        ui.label(item.external_id).classes(
+                            "text-center break-all text-white font-semibold text-shadow-lg/30"
+                        )
+                if item.output is ItemOutput.FULL:
+                    with ui.item_section().classes("w-full"), ui.scroll_area().classes("h-full p-0"):
+                        for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
+                            mime_type = get_mime_type_for_artifact(artifact)
+                            with ui.expansion(
+                                str(artifact.name),
+                                icon=mime_type_to_icon(mime_type),
+                                group="artifacts",
+                            ).classes("w-full"):
+                                if artifact.download_url:
+                                    url = artifact.download_url
+                                    title = artifact.name
+                                    metadata = artifact.metadata
+                                    with ui.button_group():
+                                        if mime_type == "image/tiff":
+                                            ui.button(
+                                                "Preview",
+                                                icon=mime_type_to_icon(mime_type),
+                                                on_click=lambda _, url=url, title=title: tiff_dialog_open(title, url),
+                                            )
+                                        if mime_type == "text/csv":
+                                            ui.button(
+                                                "Preview",
+                                                icon=mime_type_to_icon(mime_type),
+                                                on_click=lambda _, url=url, title=title: csv_dialog_open(title, url),
+                                            )
+                                        if url:
+                                            ui.button(
+                                                text="Download",
+                                                icon="cloud_download",
+                                                on_click=lambda _, url=url: webbrowser.open(url),
+                                            )
+                                        if metadata:
+                                            ui.button(
+                                                text="Schema",
+                                                icon="schema",
+                                                on_click=lambda _, title=title, metadata=metadata: metadata_dialog_open(
+                                                    title, metadata
+                                                ),
+                                            )
+                elif item.state is ItemState.TERMINATED:
+                    if item.error_message:
+                        with (
+                            ui.row()
+                            .classes("w-1/2 justify-start items-start content-start ml-4")
+                            .style("max-width: 50%;")
                         ):
-                            ui.label(item.external_id).classes(
-                                "text-center break-all text-white font-semibold text-shadow-lg/30"
-                            )
-                    if item.output is ItemOutput.FULL:
-                        with ui.item_section().classes("w-full"), ui.scroll_area().classes("h-full p-0"):
-                            for artifact in sorted(item.output_artifacts, key=lambda a: str(a.name)):
-                                mime_type = get_mime_type_for_artifact(artifact)
-                                with ui.expansion(
-                                    str(artifact.name),
-                                    icon=mime_type_to_icon(mime_type),
-                                    group="artifacts",
-                                ).classes("w-full"):
-                                    if artifact.download_url:
-                                        url = artifact.download_url
-                                        title = artifact.name
-                                        metadata = artifact.metadata
-                                        with ui.button_group():
-                                            if mime_type == "image/tiff":
-                                                ui.button(
-                                                    "Preview",
-                                                    icon=mime_type_to_icon(mime_type),
-                                                    on_click=lambda _, url=url, title=title: tiff_dialog_open(
-                                                        title, url
-                                                    ),
-                                                )
-                                            if mime_type == "text/csv":
-                                                ui.button(
-                                                    "Preview",
-                                                    icon=mime_type_to_icon(mime_type),
-                                                    on_click=lambda _, url=url, title=title: csv_dialog_open(
-                                                        title, url
-                                                    ),
-                                                )
-                                            if url:
-                                                ui.button(
-                                                    text="Download",
-                                                    icon="cloud_download",
-                                                    on_click=lambda _, url=url: ui.navigate.to(url, new_tab=True),
-                                                )
-                                            if metadata:
-                                                ui.button(
-                                                    text="Schema",
-                                                    icon="schema",
-                                                    on_click=lambda _,
-                                                    title=title,
-                                                    metadata=metadata: metadata_dialog_open(title, metadata),
-                                                )
-                    elif item.state is ItemState.TERMINATED:
-                        if item.error_message:
-                            with (
-                                ui.row()
-                                .classes("w-1/2 justify-start items-start content-start ml-4")
-                                .style("max-width: 50%;")
-                            ):
-                                ui.code(
-                                    f"Error: {item.error_message}, code: {item.error_code or 'N/A'}",
-                                    language="markdown",
-                                ).classes("ml-8").style("width: 100%; max-width: 100%;")
-                        else:
-                            with ui.row().classes("w-1/2 justify-center content-center"):
-                                ui.space()
-                                ui.html(
-                                    '<dotlottie-player src="/application_assets/error.lottie" '
-                                    'background="transparent" speed="1" style="width: 300px; height: 300px" '
-                                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
-                                    sanitize=False,
-                                )
-                                ui.space()
+                            ui.code(
+                                f"Error: {item.error_message}, code: {item.error_code or 'N/A'}",
+                                language="markdown",
+                            ).classes("ml-8").style("width: 100%; max-width: 100%;")
                     else:
                         with ui.row().classes("w-1/2 justify-center content-center"):
                             ui.space()
-                            animation_file = {
-                                ItemState.PENDING: "pending.lottie",
-                                ItemState.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
-                            }[item.state]
                             ui.html(
-                                f'<dotlottie-player src="/application_assets/{animation_file}" '
+                                '<dotlottie-player src="/application_assets/error.lottie" '
                                 'background="transparent" speed="1" style="width: 300px; height: 300px" '
                                 'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
                                 sanitize=False,
                             )
                             ui.space()
+                else:
+                    with ui.row().classes("w-1/2 justify-center content-center"):
+                        ui.space()
+                        animation_file = {
+                            ItemState.PENDING: "pending.lottie",
+                            ItemState.PROCESSING: "processing.lottie",  # TODO(Helmut): Different icon
+                        }[item.state]
+                        ui.html(
+                            f'<dotlottie-player src="/application_assets/{animation_file}" '
+                            'background="transparent" speed="1" style="width: 300px; height: 300px" '
+                            'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                            sanitize=False,
+                        )
+                        ui.space()
+
+        def fetch_next_batch() -> list[ItemResult]:
+            """Fetch the next batch of results from the iterator.
+
+            Returns:
+                list[ItemResult]: The next batch of results, up to RESULTS_PAGE_SIZE items.
+            """
+            nonlocal has_more_results
+            batch: list[ItemResult] = []
+            for _ in range(RESULTS_PAGE_SIZE):
+                try:
+                    item = next(results_iterator)
+                    batch.append(item)
+                except StopIteration:
+                    has_more_results = False
+                    break
+            return batch
+
+        # Load initial batch
+        initial_batch = await nicegui_run.io_bound(fetch_next_batch)
+        displayed_results.extend(initial_batch)
+
+        # Check if there are no results at all
+        if not displayed_results:
+            with ui.row().classes("w-full justify-center content-center"):
+                ui.space()
+                ui.html(
+                    '<dotlottie-player src="/application_assets/empty.lottie" '
+                    'background="transparent" speed="1" style="width: 700px; height: 700px" '
+                    'direction="1" playMode="normal" loop autoplay></dotlottie-player>',
+                    sanitize=False,
+                )
+                ui.space()
+            return
+
+        # Create the results list container
+        results_list = ui.list().classes("full-width")
+
+        # Render initial results
+        with results_list:
+            for item in displayed_results:
+                render_item(item)
+
+        # Calculate if we need pagination before creating UI elements
+        remaining_initial = run_data.statistics.item_count - len(displayed_results)
+        needs_pagination = has_more_results and remaining_initial > 0
+
+        # Only create "Show more" button if there are more results to load
+        show_more_container: ui.row | None = None
+        show_more_button: ui.button | None = None
+
+        if needs_pagination:
+            show_more_container = ui.row().classes("w-full justify-center mt-4")
+
+            async def load_more() -> None:
+                """Load and render the next batch of results."""
+                nonlocal has_more_results
+                # These are guaranteed to be set since load_more is only defined when needs_pagination is True
+                if show_more_button is None or show_more_container is None:
+                    return  # Should never happen, but satisfies type checker
+
+                show_more_button.disable()
+                show_more_button.props(add="loading")
+
+                # Fetch next batch
+                next_batch = await nicegui_run.io_bound(fetch_next_batch)
+                displayed_results.extend(next_batch)
+
+                # Render new items
+                with results_list:
+                    for item in next_batch:
+                        render_item(item)
+
+                show_more_button.props(remove="loading")
+
+                # Hide button if no more results or remaining count is 0
+                remaining = run_data.statistics.item_count - len(displayed_results)
+                if not has_more_results or remaining <= 0:
+                    show_more_container.set_visibility(False)
+                else:
+                    show_more_button.enable()
+                    # Update button text with count
+                    show_more_button.text = f"Show more ({remaining} remaining)"
+
+            # Add "Show more" button
+            with show_more_container:
+                show_more_button = (
+                    ui.button(
+                        f"Show more ({remaining_initial} remaining)",
+                        icon="expand_more",
+                        on_click=load_more,
+                    )
+                    .props("outline")
+                    .mark("BUTTON_SHOW_MORE_RESULTS")
+                )

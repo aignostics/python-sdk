@@ -1,1 +1,2 @@
-.. mdinclude:: ../../SECURITY.md
+.. include:: ../../SECURITY.md
+    :parser: myst_parser.sphinx_

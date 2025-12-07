@@ -8,10 +8,20 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from loguru import logger
 
 from aignostics.bucket import Service as BucketService
-from aignostics.platform import NotFoundException, RunState
-from aignostics.utils import console, get_logger, get_user_data_directory, sanitize_path
+from aignostics.platform import (
+    DEFAULT_CPU_PROVISIONING_MODE,
+    DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    DEFAULT_GPU_PROVISIONING_MODE,
+    DEFAULT_GPU_TYPE,
+    DEFAULT_MAX_GPUS_PER_SLIDE,
+    DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    NotFoundException,
+    RunState,
+)
+from aignostics.utils import console, get_user_data_directory, sanitize_path
 
 from ._models import DownloadProgress, DownloadProgressState
 from ._service import Service
@@ -22,12 +32,85 @@ from ._utils import (
     print_runs_verbose,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
+    validate_mappings,
     write_metadata_dict_to_csv,
 )
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
+PROGRESS_TASK_DESCRIPTION = "[progress.description]{task.description}"
 
-logger = get_logger(__name__)
+
+ApplicationVersionOption = Annotated[
+    str | None,
+    typer.Option(
+        help="Version of the application. If not provided, the latest version will be used.",
+    ),
+]
+
+NoteOption = Annotated[
+    str | None,
+    typer.Option(help="Optional note to include with the run submission via custom metadata."),
+]
+
+DueDateOption = Annotated[
+    str | None,
+    typer.Option(
+        help="Optional soft due date to include with the run submission, ISO8601 format. "
+        "The scheduler will try to complete the run by this date, taking the subscription tier"
+        "and available GPU resources into account."
+    ),
+]
+
+DeadlineOption = Annotated[
+    str | None,
+    typer.Option(
+        help=(
+            "Optional hard deadline to include with the run submission, ISO8601 format. "
+            "If processing exceeds this deadline, the run can be aborted."
+        ),
+    ),
+]
+
+OnboardToPortalOption = Annotated[
+    bool,
+    typer.Option(help="If True, onboard the run to the Aignostics Portal."),
+]
+
+GpuTypeOption = Annotated[
+    str,
+    typer.Option(help="GPU type to use for processing (L4 or A100)."),
+]
+
+GpuProvisioningModeOption = Annotated[
+    str,
+    typer.Option(help="GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START)."),
+]
+
+FlexStartMaxRunDurationOption = Annotated[
+    int,
+    typer.Option(
+        help="Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). "
+        "Ignored when gpu_provisioning_mode is not FLEX_START.",
+        min=1,
+        max=3600,
+    ),
+]
+
+MaxGpusPerSlideOption = Annotated[
+    int,
+    typer.Option(help="Maximum number of GPUs to allocate per slide (1-8).", min=1, max=8),
+]
+
+CpuProvisioningModeOption = Annotated[
+    str,
+    typer.Option(help="CPU provisioning mode (SPOT or ON_DEMAND)."),
+]
+
+NodeAcquisitionTimeoutOption = Annotated[
+    int,
+    typer.Option(help="Timeout for acquiring compute nodes in minutes (1-3600).", min=1, max=3600),
+]
+
 
 cli = typer.Typer(name="application", help="List and inspect applications on Aignostics Platform.")
 
@@ -39,16 +122,29 @@ run_app.add_typer(result_app, name="result", help="Download or delete run result
 
 
 @cli.command("list")
-def application_list(
+def application_list(  # noqa: C901
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
 ) -> None:
     """List available applications."""
     try:
         apps = Service().applications()
     except Exception as e:
         logger.exception("Could not load applications")
-        console.print(f"[error]Error:[/error] Could not load applications: {e}")
+        if format == "json":
+            print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
+        else:
+            console.print(f"[error]Error:[/error] Could not load applications: {e}")
         sys.exit(1)
+
+    if format == "json":
+        # Convert apps to JSON-serializable format
+        apps_data = [app.model_dump(mode="json") for app in apps]
+        print(json.dumps(apps_data, indent=2, default=str))
+        return
 
     app_count = 0
 
@@ -65,7 +161,7 @@ def application_list(
             try:
                 details = Service().application(app.application_id)
             except Exception as e:
-                logger.exception("Failed to get application details for application '%s'", app.application_id)
+                logger.exception(f"Failed to get application details for application '{app.application_id}'")
                 console.print(
                     f"[error]Error:[/error] Failed to get application details for application "
                     f"'{app.application_id}': {e}"
@@ -96,7 +192,7 @@ def application_list(
             )
 
     if app_count == 0:
-        logger.info("No applications available.")
+        logger.debug("No applications available.")
         console.print("No applications available.")
 
 
@@ -122,8 +218,9 @@ def application_dump_schemata(  # noqa: C901
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="<current-working-directory>",
         ),
-    ] = Path().cwd(),  # noqa: B008,
+    ] = Path().cwd(),  # noqa: B008
     zip: Annotated[  # noqa: A002
         bool,
         typer.Option(
@@ -140,7 +237,7 @@ def application_dump_schemata(  # noqa: C901
         logger.warning(message)
         console.print(f"[warning]Warning:[/warning] {message}")
         sys.exit(2)
-    except (Exception, RuntimeError) as e:
+    except Exception as e:
         message = f"Failed to load application version with ID '{id}': {e!s}."
         logger.exception(message)
         console.print(f"[warning]Error:[/warning] {message}")
@@ -208,21 +305,37 @@ def application_dump_schemata(  # noqa: C901
 
 
 @cli.command("describe")
-def application_describe(
+def application_describe(  # noqa: C901, PLR0912
     application_id: Annotated[str, typer.Argument(help="Id of the application to describe")],
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
 ) -> None:
     """Describe application."""
     try:
         app = Service().application(application_id)
     except NotFoundException:
-        logger.warning("Application with ID '%s' not found.", application_id)
-        console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
+        logger.warning(f"Application with ID '{application_id}' not found.")
+        if format == "json":
+            error_msg = {"error": "not_found", "message": f"Application with ID '{application_id}' not found."}
+            print(json.dumps(error_msg), file=sys.stderr)
+        else:
+            console.print(f"[warning]Warning:[/warning] Application with ID '{application_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to describe application with ID '%s'", application_id)
-        console.print(f"[error]Error:[/error] Failed to describe application: {e}")
+        logger.exception(f"Failed to describe application with ID '{application_id}'")
+        if format == "json":
+            print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
+        else:
+            console.print(f"[error]Error:[/error] Failed to describe application: {e}")
         sys.exit(1)
+
+    if format == "json":
+        # Output application details as JSON
+        print(json.dumps(app.model_dump(mode="json"), indent=2, default=str))
+        return
 
     console.print(f"[bold]Application Details for {app.application_id}[/bold]")
     console.print("=" * 80)
@@ -243,7 +356,7 @@ def application_describe(
             try:
                 app_version = Service().application_version(app.application_id, version.number)
             except Exception as e:
-                logger.exception("Failed to get application version for '%s', '%s'", application_id, version.number)
+                logger.exception(f"Failed to get application version for '{application_id}', '{version.number}'")
                 console.print(
                     f"[error]Error:[/error] Failed to get application version for "
                     f"'{application_id}', '{version.number}': {e}"
@@ -297,21 +410,16 @@ def run_execute(  # noqa: PLR0913, PLR0917
             resolve_path=True,
         ),
     ],
+    application_version: ApplicationVersionOption = None,
     mapping: Annotated[
-        list[str],
-        typer.Argument(
+        list[str] | None,
+        typer.Option(
             help="Mapping to use for amending metadata CSV file. "
-            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'."
+            "Each mapping is of the form '<regexp>:<key>=<value>,<key>=<value>,...'. "
             "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
             "You can use the mapping option multiple times to set values for multiple files. "
-            'Example: ".*:staining_method:H&E,tissue:LIVER,disease:LIVER_CANCER"',
-        ),
-    ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application. If not provided, the latest version will be used.",
+            'Example: ".*:staining_method=H&E,tissue=LIVER,disease=LIVER_CANCER"',
         ),
     ] = None,
     create_subdirectory_for_run: Annotated[
@@ -330,6 +438,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
         str,
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
+            show_default="<current-timestamp-ms>",
         ),
     ] = f"{time.time() * 1000}",
     wait_for_completion: Annotated[
@@ -338,42 +447,24 @@ def run_execute(  # noqa: PLR0913, PLR0917
             help="Wait for run completion and download results incrementally",
         ),
     ] = True,
-    note: Annotated[
-        str | None,
-        typer.Option(help="Optional note to include with the run submission via custom metadata."),
-    ] = None,
-    due_date: Annotated[
-        str | None,
-        typer.Option(
-            help="Optional soft due date to include with the run submission, ISO8601 format. "
-            "The scheduler will try to complete the run by this date, taking the subscription tier"
-            "and available GPU resources into account."
-        ),
-    ] = None,
-    deadline: Annotated[
-        str | None,
-        typer.Option(
-            help=(
-                "Optional hard deadline to include with the run submission, ISO8601 format. "
-                "If processing exceeds this deadline, the run can be aborted."
-            ),
-        ),
-    ] = None,
-    onboard_to_aignostics_portal: Annotated[
-        bool,
-        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
-    ] = False,
-    validate_only: Annotated[
-        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
-    ] = False,
+    note: NoteOption = None,
+    due_date: DueDateOption = None,
+    deadline: DeadlineOption = None,
+    onboard_to_aignostics_portal: OnboardToPortalOption = False,
+    gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
     (1) Prepares metadata CSV file for the given application version
         by scanning the source directory for whole slide images
         and extracting metadata such as width, height, and mpp.
-    (2) Amends the metadata CSV file using the given mappings
-        to set all required attributes.
+    (2) Optionally amends the metadata CSV file using the given mappings
+        to set additional required attributes.
     (3) Uploads the files referenced in the metadata CSV file
         to the cloud bucket provisioned in the Aignostics platform.
     (4) Submits the run for the given application version
@@ -401,10 +492,16 @@ def run_execute(  # noqa: PLR0913, PLR0917
         metadata_csv_file=metadata_csv_file,
         application_version=application_version,
         note=note,
+        tags=None,
         due_date=due_date,
         deadline=deadline,
         onboard_to_aignostics_portal=onboard_to_aignostics_portal,
-        validate_only=validate_only,
+        gpu_type=gpu_type,
+        gpu_provisioning_mode=gpu_provisioning_mode,
+        max_gpus_per_slide=max_gpus_per_slide,
+        flex_start_max_run_duration_minutes=flex_start_max_run_duration_minutes,
+        cpu_provisioning_mode=cpu_provisioning_mode,
+        node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
     )
     result_download(
         run_id=run_id,
@@ -455,14 +552,14 @@ def run_prepare(
         list[str] | None,
         typer.Option(
             help="Mapping to use for amending metadata CSV file. "
-            "Each mapping is of the form '<regexp>:<key>:<value>,<key>:<value>,...'. "
+            "Each mapping is of the form '<regexp>:<key>=<value>,<key>=<value>,...'. "
             "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
             "You can use the mapping option multiple times to set values for multiple files. "
         ),
     ] = None,
 ) -> None:
-    """Prepare metadata CSV file required for submitting a run.
+    r"""Prepare metadata CSV file required for submitting a run.
 
     (1) Scans source_directory for whole slide images.
     (2) Extracts metadata from whole slide images such as width, height, mpp.
@@ -472,8 +569,14 @@ def run_prepare(
 
     Example:
         aignostics application run prepare "he-tme:v0.51.0" metadata.csv /path/to/source_directory
-        --mapping "*.tiff:staining_method:H&E,tissue:LUNG,disease:LUNG_CANCER"
+        --mapping ".*\\.tiff:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"
     """
+    try:
+        validate_mappings(mapping)
+    except ValueError as e:
+        console.print(f"[error]Error:[/error] {e}")
+        sys.exit(1)
+
     write_metadata_dict_to_csv(
         metadata_csv=metadata_csv,
         metadata_dict=Service().generate_metadata_from_source_directory(
@@ -484,7 +587,7 @@ def run_prepare(
         ),
     )
     console.print(f"Generated metadata file [bold]{metadata_csv}[/bold]")
-    logger.info("Generated metadata file: '%s'", metadata_csv)
+    logger.debug("Generated metadata file: '{}'", metadata_csv)
 
 
 @run_app.command(name="upload")
@@ -515,6 +618,7 @@ def run_upload(
         str,
         typer.Option(
             help="Prefix for the upload destination. If not given will be set to current milliseconds.",
+            show_default="<current-timestamp-ms>",
         ),
     ] = str(time.time() * 1000),
     onboard_to_aignostics_portal: Annotated[
@@ -550,7 +654,7 @@ def run_upload(
         source = entry["external_id"]
         source_file_path = Path(source)
         if not source_file_path.is_file():
-            logger.warning("Source file '%s' (row %d) does not exist", source_file_path, i)
+            logger.warning(f"Source file '{source_file_path}' (row {i}) does not exist")
             console.print(f"[warning]Warning:[/warning] Source file '{source_file_path}' (row {i}) does not exist")
             sys.exit(2)
 
@@ -567,7 +671,7 @@ def run_upload(
         FileSizeColumn(),
         TotalFileSizeColumn(),
         TransferSpeedColumn(),
-        TextColumn("[progress.description]{task.description}"),
+        TextColumn(PROGRESS_TASK_DESCRIPTION),
     ) as progress:
         task = progress.add_task(f"Uploading to {upload_prefix}/...", total=total_bytes)
 
@@ -591,7 +695,7 @@ def run_upload(
             upload_progress_callable=update_progress,
         )
 
-    logger.info("Upload completed.")
+    logger.debug("Upload completed.")
     console.print("Upload completed.", style="info")
 
 
@@ -613,45 +717,21 @@ def run_submit(  # noqa: PLR0913, PLR0917
             resolve_path=True,
         ),
     ],
-    application_version: Annotated[
-        str | None,
-        typer.Option(
-            help="Version of the application to generate the metadata for. "
-            "If not provided, the latest version will be used.",
-        ),
-    ] = None,
-    note: Annotated[
-        str | None,
-        typer.Option(help="Optional note to include with the run submission via custom metadata."),
-    ] = None,
+    application_version: ApplicationVersionOption = None,
+    note: NoteOption = None,
     tags: Annotated[
         str | None,
         typer.Option(help="Optional comma-separated list of tags to attach to the run for filtering."),
     ] = None,
-    due_date: Annotated[
-        str | None,
-        typer.Option(
-            help="Optional soft due date to include with the run submission, ISO8601 format. "
-            "The scheduler will try to complete the run by this date, taking the subscription tier"
-            "and available GPU resources into account."
-        ),
-    ] = None,
-    deadline: Annotated[
-        str | None,
-        typer.Option(
-            help=(
-                "Optional hard deadline to include with the run submission, ISO8601 format. "
-                "If processing exceeds this deadline, the run can be aborted."
-            ),
-        ),
-    ] = None,
-    onboard_to_aignostics_portal: Annotated[
-        bool,
-        typer.Option(help="If True, onboard the run to the Aignostics Portal."),
-    ] = False,
-    validate_only: Annotated[
-        bool, typer.Option(help="If True, cancel the run post validation, before analysis.")
-    ] = False,
+    due_date: DueDateOption = None,
+    deadline: DeadlineOption = None,
+    onboard_to_aignostics_portal: OnboardToPortalOption = False,
+    gpu_type: GpuTypeOption = DEFAULT_GPU_TYPE,
+    gpu_provisioning_mode: GpuProvisioningModeOption = DEFAULT_GPU_PROVISIONING_MODE,
+    max_gpus_per_slide: MaxGpusPerSlideOption = DEFAULT_MAX_GPUS_PER_SLIDE,
+    flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
+    cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
+    node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -666,7 +746,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         )
     except ValueError as e:
         logger.warning(
-            "Bad input to create run for application '%s' (version: '%s'): %s", application_id, application_version, e
+            "Bad input to create run for application '{}' (version: '{}'): {}", application_id, application_version, e
         )
         console.print(
             f"[warning]Warning:[/warning] Bad input to create run for application "
@@ -675,14 +755,14 @@ def run_submit(  # noqa: PLR0913, PLR0917
         sys.exit(2)
     except NotFoundException as e:
         logger.warning(
-            "Could not find application version '%s' (version: '%s'): %s", application_id, application_version, e
+            "Could not find application version '{}' (version: '{}'): {}", application_id, application_version, e
         )
         console.print(
             f"[warning]Warning:[/warning] Could not find application '{application_id} "
             f"(version: {application_version})': {e}"
         )
         sys.exit(2)
-    except (Exception, RuntimeError) as e:
+    except Exception as e:
         message = (
             f"Failed to load application version '{application_version}' for application '{application_id}': {e!s}."
         )
@@ -693,25 +773,34 @@ def run_submit(  # noqa: PLR0913, PLR0917
     try:
         metadata_dict = read_metadata_csv_to_dict(metadata_csv_file=metadata_csv_file)
         if not metadata_dict:
-            console.print("Could mot read metadata file '%s'", metadata_csv_file)
+            console.print(f"Could not read metadata file '{metadata_csv_file}'")
             sys.exit(2)
-        logger.debug(
-            "Submitting run for application '%s' (version: '%s') with metadata: %s",
+        logger.trace(
+            "Submitting run for application '{}' (version: '{}') with metadata: {}",
             application_id,
             app_version.version_number,
             metadata_dict,
         )
+
+        # Submit run with pipeline configuration
         application_run = Service().application_run_submit_from_metadata(
             application_id=application_id,
             metadata=metadata_dict,
             application_version=application_version,
-            custom_metadata=None,  # TODO(Helmut): Add support for custom metadata
+            custom_metadata=None,
             note=note,
             tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
             due_date=due_date,
             deadline=deadline,
             onboard_to_aignostics_portal=onboard_to_aignostics_portal,
-            validate_only=validate_only,
+            gpu_type=gpu_type,
+            gpu_provisioning_mode=gpu_provisioning_mode,
+            max_gpus_per_slide=max_gpus_per_slide,
+            flex_start_max_run_duration_minutes=(
+                flex_start_max_run_duration_minutes if gpu_provisioning_mode == "FLEX_START" else None
+            ),
+            cpu_provisioning_mode=cpu_provisioning_mode,
+            node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "
@@ -720,7 +809,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         return application_run.run_id
     except ValueError as e:
         logger.warning(
-            "Bad input to create run for application '%s' (version: %s): %s",
+            "Bad input to create run for application '{}' (version: {}): {}",
             application_id,
             app_version.version_number,
             e,
@@ -732,7 +821,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         sys.exit(2)
     except Exception as e:
         logger.exception(
-            "Failed to create run for application '%s' (version: %s)", application_id, app_version.version_number
+            "Failed to create run for application '{}' (version: {})", application_id, app_version.version_number
         )
         console.print(
             f"[error]Error:[/error] Failed to create run for application "
@@ -755,6 +844,10 @@ def run_list(  # noqa: PLR0913, PLR0917
     ] = None,
     query: Annotated[str | None, typer.Option(help="Optional query string to filter runs by note OR tags.")] = None,
     note_case_insensitive: Annotated[bool, typer.Option(help="Make note regex search case-insensitive.")] = True,
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
 ) -> None:
     """List runs."""
     try:
@@ -766,39 +859,65 @@ def run_list(  # noqa: PLR0913, PLR0917
             query=query,
         )
         if len(runs) == 0:
-            if tags:
-                message = f"You did not yet create a run matching tags: {tags!r}."
-            elif note_regex:
-                message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+            if format == "json":
+                print(json.dumps([]))
             else:
-                message = "You did not yet create a run."
-            logger.warning(message)
-            console.print(message, style="warning")
+                if tags:
+                    message = f"You did not yet create a run matching tags: {tags!r}."
+                elif note_regex:
+                    message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+                else:
+                    message = "You did not yet create a run."
+                logger.warning(message)
+                console.print(message, style="warning")
         else:
-            print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
-            message = f"Listed '{len(runs)}' run(s)."
-            console.print(message, style="info")
-            logger.info(message)
+            if format == "json":
+                # Convert runs to JSON-serializable format
+                runs_data = [run.model_dump(mode="json") for run in runs]
+                print(json.dumps(runs_data, indent=2, default=str))
+            else:
+                print_runs_verbose(runs) if verbose else print_runs_non_verbose(runs)
+                message = f"Listed '{len(runs)}' run(s)."
+                console.print(message, style="info")
+            logger.debug(f"Listed '{len(runs)}' run(s).")
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
 
 
 @run_app.command("describe")
-def run_describe(run_id: Annotated[str, typer.Argument(help="Id of the run to describe")]) -> None:
+def run_describe(
+    run_id: Annotated[str, typer.Argument(help="Id of the run to describe")],
+    format: Annotated[  # noqa: A002
+        str,
+        typer.Option(help="Output format: 'text' (default) or 'json'"),
+    ] = "text",
+) -> None:
     """Describe run."""
-    logger.debug("Describing run with ID '%s'", run_id)
+    logger.trace("Describing run with ID '{}'", run_id)
 
     try:
-        retrieve_and_print_run_details(Service().application_run(run_id))
-        logger.info("Described run with ID '%s'", run_id)
+        run = Service().application_run(run_id)
+        if format == "json":
+            # Get run details and output as JSON
+            run_details = run.details()
+            print(json.dumps(run_details.model_dump(mode="json"), indent=2, default=str))
+        else:
+            retrieve_and_print_run_details(run)
+        logger.debug("Described run with ID '{}'", run_id)
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
-        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        logger.warning(f"Run with ID '{run_id}' not found.")
+        if format == "json":
+            print(json.dumps({"error": "not_found", "message": f"Run with ID '{run_id}' not found."}), file=sys.stderr)
+        else:
+            console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to retrieve and print run details for ID '%s'", run_id)
-        console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
+        logger.exception(f"Failed to retrieve and print run details for ID '{run_id}'")
+        if format == "json":
+            print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
+        else:
+            console.print(f"[error]Error:[/error] Failed to retrieve run details for ID '{run_id}': {e}")
         sys.exit(1)
 
 
@@ -808,7 +927,7 @@ def run_dump_metadata(
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
 ) -> None:
     """Dump custom metadata of a run as JSON to stdout."""
-    logger.debug("Dumping custom metadata for run with ID '%s'", run_id)
+    logger.trace("Dumping custom metadata for run with ID '{}'", run_id)
 
     try:
         run = Service().application_run(run_id).details()
@@ -820,13 +939,13 @@ def run_dump_metadata(
         else:
             print(json.dumps(custom_metadata))
 
-        logger.info("Dumped custom metadata for run with ID '%s'", run_id)
+        logger.debug("Dumped custom metadata for run with ID '{}'", run_id)
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to dump custom metadata for run with ID '%s'", run_id)
+        logger.exception(f"Failed to dump custom metadata for run with ID '{run_id}'")
         console.print(f"[error]Error:[/error] Failed to dump custom metadata for run with ID '{run_id}': {e}")
         sys.exit(1)
 
@@ -838,7 +957,7 @@ def run_dump_item_metadata(
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
 ) -> None:
     """Dump custom metadata of an item as JSON to stdout."""
-    logger.debug("Dumping custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+    logger.trace("Dumping custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
     try:
         run = Service().application_run(run_id)
@@ -851,7 +970,7 @@ def run_dump_item_metadata(
                 break
 
         if item is None:
-            logger.warning("Item with external ID '%s' not found in run '%s'.", external_id, run_id)
+            logger.warning(f"Item with external ID '{external_id}' not found in run '{run_id}'.")
             print(
                 f"Warning: Item with external ID '{external_id}' not found in run '{run_id}'.",
                 file=sys.stderr,
@@ -866,13 +985,13 @@ def run_dump_item_metadata(
         else:
             print(json.dumps(custom_metadata))
 
-        logger.info("Dumped custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+        logger.debug("Dumped custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         print(f"Warning: Run with ID '{run_id}' not found.", file=sys.stderr)
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to dump custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+        logger.exception(f"Failed to dump custom metadata for item '{external_id}' in run with ID '{run_id}'")
         print(
             f"Error: Failed to dump custom metadata for item '{external_id}' in run with ID '{run_id}': {e}",
             file=sys.stderr,
@@ -885,23 +1004,133 @@ def run_cancel(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to cancel")],
 ) -> None:
     """Cancel run."""
-    logger.debug("Canceling run with ID '%s'", run_id)
+    logger.trace("Canceling run with ID '{}'", run_id)
 
     try:
         Service().application_run_cancel(run_id)
-        logger.info("Canceled run with ID '%s'.", run_id)
+        logger.debug("Canceled run with ID '{}'.", run_id)
         console.print(f"Run with ID '{run_id}' has been canceled.")
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ValueError:
-        logger.warning("Run ID '%s' invalid", run_id)
+        logger.warning(f"Run ID '{run_id}' invalid")
         console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to cancel run with ID '%s'", run_id)
+        logger.exception(f"Failed to cancel run with ID '{run_id}'")
         console.print(f"[bold red]Error:[/bold red] Failed to cancel run with ID '{run_id}': {e}")
+        sys.exit(1)
+
+
+@run_app.command("cancel-by-filter")
+def run_cancel_by_filter(  # noqa: C901, PLR0912, PLR0915
+    tags: Annotated[
+        str | None,
+        typer.Option(help="Optional comma-separated list of tags to filter runs. All tags must match."),
+    ] = None,
+    application_id: Annotated[
+        str | None,
+        typer.Option(help="Optional application ID to filter runs."),
+    ] = None,
+    application_version: Annotated[
+        str | None,
+        typer.Option(help="Optional application version to filter runs."),
+    ] = None,
+    limit: Annotated[int | None, typer.Option(help="Maximum number of runs to cancel")] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="Show which runs would be canceled without actually canceling them."),
+    ] = False,
+) -> None:
+    """Cancel runs matching filter criteria.
+
+    All provided filters must match for a run to be canceled.
+    At least one filter parameter (tags, application_id, or application_version) must be provided.
+    """
+    # Validate at least one filter is provided
+    if not tags and not application_id and not application_version:
+        error_msg = (
+            "[error]Error:[/error] At least one filter parameter "
+            "(--tags, --application-id, or --application-version) must be provided."
+        )
+        console.print(error_msg)
+        sys.exit(1)
+
+    logger.trace(
+        "Canceling runs with filters: tags={}, application_id={}, application_version={}, limit={}, dry_run={}",
+        tags,
+        application_id,
+        application_version,
+        limit,
+        dry_run,
+    )
+
+    try:
+        # Get runs matching the tag filter first
+        runs = Service().application_runs(
+            limit=limit,
+            tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
+        )
+
+        # Further filter by application_id and application_version if provided
+        filtered_runs = []
+        for run in runs:
+            # Check application_id match
+            if application_id and run.application_id != application_id:
+                continue
+            # Check application_version match
+            if application_version and run.version_number != application_version:
+                continue
+            filtered_runs.append(run)
+
+        if len(filtered_runs) == 0:
+            filter_desc = []
+            if tags:
+                filter_desc.append(f"tags={tags}")
+            if application_id:
+                filter_desc.append(f"application_id={application_id}")
+            if application_version:
+                filter_desc.append(f"application_version={application_version}")
+            message = f"No runs found matching filters: {', '.join(filter_desc)}"
+            logger.warning(message)
+            console.print(f"[warning]Warning:[/warning] {message}")
+            return
+
+        if dry_run:
+            console.print(f"[bold]Would cancel {len(filtered_runs)} run(s):[/bold]")
+            for run in filtered_runs:
+                console.print(f"  - {run.run_id} ({run.application_id} v{run.version_number}, state: {run.state})")
+            return
+
+        # Cancel each matching run
+        canceled_count = 0
+        failed_count = 0
+        for run in filtered_runs:
+            try:
+                Service().application_run_cancel(run.run_id)
+                canceled_count += 1
+                logger.debug(f"Canceled run with ID '{run.run_id}'.")
+            except NotFoundException:
+                logger.warning(f"Run with ID '{run.run_id}' not found (may have been deleted).")
+                failed_count += 1
+            except ValueError:
+                logger.warning(f"Run ID '{run.run_id}' invalid")
+                failed_count += 1
+            except Exception as e:
+                logger.exception(f"Failed to cancel run with ID '{run.run_id}'")
+                console.print(f"[error]Error:[/error] Failed to cancel run with ID '{run.run_id}': {e}")
+                failed_count += 1
+
+        # Print summary
+        console.print(f"Successfully canceled {canceled_count} run(s).")
+        if failed_count > 0:
+            console.print(f"[warning]Warning:[/warning] Failed to cancel {failed_count} run(s).")
+
+    except Exception as e:
+        logger.exception("Failed to cancel runs by filter")
+        console.print(f"[error]Error:[/error] Failed to cancel runs by filter: {e}")
         sys.exit(1)
 
 
@@ -915,7 +1144,7 @@ def run_update_metadata(
     """Update custom metadata for a run."""
     import json  # noqa: PLC0415
 
-    logger.debug("Updating custom metadata for run with ID '%s'", run_id)
+    logger.trace("Updating custom metadata for run with ID '{}'", run_id)
 
     try:
         # Parse JSON metadata
@@ -929,18 +1158,18 @@ def run_update_metadata(
             sys.exit(1)
 
         Service().application_run_update_custom_metadata(run_id, custom_metadata)
-        logger.info("Updated custom metadata for run with ID '%s'.", run_id)
+        logger.debug("Updated custom metadata for run with ID '{}'.", run_id)
         console.print(f"Successfully updated custom metadata for run with ID '{run_id}'.")
     except NotFoundException:
-        logger.warning("Run with ID '%s' not found.", run_id)
+        logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ValueError as e:
-        logger.warning("Run ID '%s' invalid or metadata invalid: %s", run_id, e)
+        logger.warning(f"Run ID '{run_id}' invalid or metadata invalid: {e}")
         console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid or metadata invalid: {e}")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to update custom metadata for run with ID '%s'", run_id)
+        logger.exception(f"Failed to update custom metadata for run with ID '{run_id}'")
         console.print(f"[bold red]Error:[/bold red] Failed to update custom metadata for run with ID '{run_id}': {e}")
         sys.exit(1)
 
@@ -956,7 +1185,7 @@ def run_update_item_metadata(
     """Update custom metadata for an item in a run."""
     import json  # noqa: PLC0415
 
-    logger.debug("Updating custom metadata for item '%s' in run with ID '%s'", external_id, run_id)
+    logger.trace("Updating custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
     try:
         # Parse JSON metadata
@@ -970,15 +1199,15 @@ def run_update_item_metadata(
             sys.exit(1)
 
         Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
-        logger.info("Updated custom metadata for item '%s' in run with ID '%s'.", external_id, run_id)
+        logger.debug("Updated custom metadata for item '{}' in run with ID '{}'.", external_id, run_id)
         console.print(f"Successfully updated custom metadata for item '{external_id}' in run with ID '{run_id}'.")
     except NotFoundException:
-        logger.warning("Run with ID '%s' or item '%s' not found.", run_id, external_id)
+        logger.warning(f"Run with ID '{run_id}' or item '{external_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' or item '{external_id}' not found.")
         sys.exit(2)
     except ValueError as e:
         logger.warning(
-            "Run ID '%s' or item external ID '%s' invalid or metadata invalid: %s",
+            "Run ID '{}' or item external ID '{}' invalid or metadata invalid: {}",
             run_id,
             external_id,
             e,
@@ -990,7 +1219,7 @@ def run_update_item_metadata(
         sys.exit(2)
     except Exception as e:
         logger.exception(
-            "Failed to update custom metadata for item '%s' in run with ID '%s'",
+            "Failed to update custom metadata for item '{}' in run with ID '{}'",
             external_id,
             run_id,
         )
@@ -1014,6 +1243,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
             writable=True,
             readable=True,
             resolve_path=True,
+            show_default="~/Library/Application Support/aignostics/results",
         ),
     ] = get_user_data_directory("results"),  # noqa: B008
     create_subdirectory_for_run: Annotated[
@@ -1047,9 +1277,9 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
     ] = False,
 ) -> None:
     """Download results of a run."""
-    logger.debug(
-        "Downloading results for run with ID '%s' to '%s' with options: "
-        "create_subdirectory_for_run=%s, create_subdirectory_per_item=%s, wait_for_completion=%s, qupath_project=%r",
+    logger.trace(
+        "Downloading results for run with ID '{}' to '{}' with options: "
+        "create_subdirectory_for_run={}, create_subdirectory_per_item={}, wait_for_completion={}, qupath_project={}",
         run_id,
         destination_directory,
         create_subdirectory_for_run,
@@ -1079,7 +1309,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
         main_download_progress_ui = Progress(
             BarColumn(),
             TaskProgressColumn(),
-            TextColumn("[progress.description]{task.description}"),
+            TextColumn(PROGRESS_TASK_DESCRIPTION),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             TextColumn("{task.fields[extra_description]}"),
@@ -1087,7 +1317,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
         artifact_download_progress_ui = Progress(
             BarColumn(),
             TaskProgressColumn(),
-            TextColumn("[progress.description]{task.description}"),
+            TextColumn(PROGRESS_TASK_DESCRIPTION),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             FileSizeColumn(),
@@ -1197,18 +1427,18 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
             main_download_progress_ui.update(main_task, completed=100, total=100)
 
         message = f"Downloaded results of run '{run_id}' to '{destination_directory}'"
-        logger.info(message)
+        logger.debug(message)
         console.print(message, style="info")
     except NotFoundException as e:
-        logger.warning("Run with ID '%s' not found: %s", run_id, e)
+        logger.warning(f"Run with ID '{run_id}' not found: {e}")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ValueError as e:
-        logger.warning("Bad input to download results of run with ID '%s': %s", run_id, e)
+        logger.warning(f"Bad input to download results of run with ID '{run_id}': {e}")
         console.print(f"[warning]Warning:[/warning] Bad input to download results of run with ID '{run_id}': {e}")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to download results of run with ID '%s'", run_id)
+        logger.exception(f"Failed to download results of run with ID '{run_id}'")
         console.print(
             f"[error]Error:[/error] Failed to download results of run with ID '{run_id}': {type(e).__name__}: {e}"
         )
@@ -1220,17 +1450,17 @@ def result_delete(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to delete results for")],
 ) -> None:
     """Delete results of run."""
-    logger.debug("Deleting results for run with ID '%s'", run_id)
+    logger.trace("Deleting results for run with ID '{}'", run_id)
 
     try:
         Service().application_run_delete(run_id)
-        logger.info("Deleted run with ID '%s'.", run_id)
+        logger.debug("Deleted run with ID '{}'.", run_id)
         console.print(f"Results for run with ID '{run_id}' have been deleted.")
     except NotFoundException:
-        logger.warning("Results for with ID '%s' not found.", run_id)
+        logger.warning(f"Results for with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except Exception as e:
-        logger.exception("Failed to delete run with ID '%s'", run_id)
+        logger.exception(f"Failed to delete run with ID '{run_id}'")
         console.print(f"[bold red]Error:[/bold red] Failed to delete results for with ID '{run_id}': {e}")
         sys.exit(1)

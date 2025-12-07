@@ -59,85 +59,72 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
-if platform.system() != "Darwin":
+# Platform-specific configuration
+is_windows = platform.system() == "Windows"
+is_darwin = platform.system() == "Darwin"
+use_splash = is_windows  # Splash only on Windows (disabled on Linux for Python 3.14 compatibility)
+use_strip = is_darwin    # Strip symbols only on macOS
 
+# Splash screen (Windows only)
+splash = None
+if use_splash:
     splash = Splash('logo.png',
-                    binaries=a.binaries,
-                    datas=a.datas,
-                    text_pos=(170, 400),
-                    text_size=12,
-                    text_color='white',
-                    text_default='Loading application ...'
-                    )
-
-    exe = EXE(
-        pyz,
-        splash,
-        a.scripts,
-        [('O', None, 'OPTION'), ('O', None, 'OPTION')], # https://github.com/numpy/numpy/issues/13248
-        exclude_binaries=True,
-        name='aignostics',
-        debug=False,
-        bootloader_ignore_signals=False,
-        strip=True if platform.system() == "Darwin" else False,
-        upx=True,
-        console=False,
-        disable_windowed_traceback=False,
-        argv_emulation=False,
-        target_arch=None,
-        codesign_identity=None,
-        entitlements_file=None,
-        icon=['logo.ico'],
+        binaries=a.binaries,
+        datas=a.datas,
+        text_pos=(170, 400),
+        text_size=12,
+        text_color='white',
+        text_default='Loading application ...'
     )
 
-    coll = COLLECT(
-        exe,
-        splash.binaries,
-        a.binaries,
-        a.datas,
-        strip=True if platform.system() == "Darwin" else False,
-        upx=True,
-        upx_exclude=[],
-        name='aignostics',
-    )
+# Build EXE arguments dynamically
+exe_args = [pyz]
+if splash:
+    exe_args.append(splash)
+exe_args.extend([
+    a.scripts,
+    [('O', None, 'OPTION'), ('O', None, 'OPTION')],  # https://github.com/numpy/numpy/issues/13248
+])
 
-else:
+exe = EXE(
+    *exe_args,
+    exclude_binaries=True,
+    name='aignostics',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=use_strip,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=['logo.ico'],
+)
 
-    exe = EXE(
-        pyz,
-        a.scripts,
-        [('O', None, 'OPTION'), ('O', None, 'OPTION')], # https://github.com/numpy/numpy/issues/13248
-        exclude_binaries=True,
-        name='aignostics',
-        debug=False,
-        bootloader_ignore_signals=False,
-        strip=True if platform.system() == "Darwin" else False,
-        upx=True,
-        console=False,
-        disable_windowed_traceback=False,
-        argv_emulation=False,
-        target_arch=None,
-        codesign_identity=None,
-        entitlements_file=None,
-        icon=['logo.ico'],
-    )
+# Build COLLECT arguments dynamically
+collect_args = [exe]
+if splash:
+    collect_args.append(splash.binaries)
+collect_args.extend([a.binaries, a.datas])
 
-    coll = COLLECT(
-        exe,
-        a.binaries,
-        a.datas,
-        strip=True if platform.system() == "Darwin" else False,
-        upx=True,
-        upx_exclude=[],
-        name='aignostics',
-    )
+coll = COLLECT(
+    *collect_args,
+    strip=use_strip,
+    upx=True,
+    upx_exclude=[],
+    name='aignostics',
+)
 
+# macOS app bundle
+if is_darwin:
     app = BUNDLE(
         coll,
         name='aignostics.app',
         icon='logo.ico',
         bundle_identifier='com.aignostics.launchpad',
-        version='0.2.199',
+        version='0.2.228',
         info_plist={
             'NSPrincipalClass': 'NSApplication',
             'NSAppleScriptEnabled': False,

@@ -1,6 +1,7 @@
 """Constants generated from the environment at runtime used throughout the project."""
 
 import os
+import platform
 import sys
 from importlib import metadata
 from pathlib import Path
@@ -15,9 +16,19 @@ __project_path__ = str(Path(__file__).parent.parent.parent)
 __version__ = metadata.version(__project_name__)
 __build_number__ = os.getenv("GITHUB_RUN_NUMBER") or os.getenv("BUILD_NUMBER") or None
 __version_full__ = f"{__version__}+{__build_number__}" if __build_number__ else __version__
+__python_version__ = platform.python_version()
 
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
 __is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
+
+__is_cli_mode__ = (
+    sys.argv[0].endswith(__project_name__)
+    or (len(sys.argv) > 1 and sys.argv[1] == __project_name__)
+    or sys.argv[0].endswith("gui_watch.py")
+    or (len(sys.argv) > 1 and sys.argv[1] == "gui_watch.py")
+)
+__is_library_mode__ = not __is_cli_mode__ and not os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
+__is_test_mode__ = "pytest" in sys.modules and os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
 
 # Determine if we're running in a read-only runtime environment
 READ_ONLY_ENV_INDICATORS = [
@@ -29,6 +40,7 @@ __is_running_in_read_only_environment__ = any(os.getenv(env_var) is not None for
 
 # Determine environment we are deployed on
 ENV_VAR_MAPPINGS = {
+    f"{__project_name__.upper()}_ENVIRONMENT": lambda env: env,
     "ENV": lambda env: env,
     "VERCEL_ENV": lambda env: env,  # See https://vercel.com/docs/environment-variables/system-environment-variables
     "RAILWAY_ENVIRONMENT": lambda env: env,  # See https://docs.railway.com/reference/variables#railway-provided-variables

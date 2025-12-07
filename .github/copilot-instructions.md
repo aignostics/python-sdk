@@ -77,7 +77,7 @@ CLI and GUI layers depend on Service layer, never on each other.
 make install          # Install dev deps + pre-commit hooks
 make all             # Full CI pipeline (lint, test, docs, audit)
 make test            # Run tests with coverage (85% minimum)
-make test 3.12       # Run on specific Python version
+make test 3.14       # Run on specific Python version
 make lint            # Ruff formatting + MyPy type checking
 ```
 

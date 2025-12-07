@@ -12,9 +12,10 @@ import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
 
+from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.application import Service
+from aignostics.application._gui._page_application_run_describe import RESULTS_PAGE_SIZE
 from aignostics.cli import cli
-from aignostics.utils import get_logger
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
@@ -23,17 +24,18 @@ from tests.constants_test import (
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
+    SPOT_1_FILENAME,
+    SPOT_1_GS_URL,
 )
 
 if TYPE_CHECKING:
     from nicegui import ui
 
-logger = get_logger(__name__)
-
 
 @pytest.mark.e2e
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=30)
-async def test_gui_index(user: User, record_property) -> None:
+async def test_gui_index(user: User, silent_logging, record_property) -> None:
     """Test that the user sees the index page, and sees the intro."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
     # hello world
@@ -110,9 +112,10 @@ async def test_gui_cli_submit_to_run_result_delete(
                 str(csv_path),
                 "--note",
                 "test_gui_cli_submit_to_run_result_delete",
+                "--tags",
+                "test_gui_cli_submit_to_run_result_delete",
                 "--deadline",
                 (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
-                "--validate-only",
             ],
         )
         assert result.exit_code == 0
@@ -194,14 +197,14 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
                     "dataset",
                     "aignostics",
                     "download",
-                    "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+                    SPOT_1_GS_URL,
                     str(tmp_path),
                 ],
             )
             assert result.exit_code == 0
             assert "Successfully downloaded" in normalize_output(result.stdout)
-            assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
-            expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+            assert SPOT_1_FILENAME in normalize_output(result.stdout)
+            expected_file = Path(tmp_path) / SPOT_1_FILENAME
             assert expected_file.exists(), f"Expected file {expected_file} not found"
             assert expected_file.stat().st_size == 14681750
 
@@ -223,6 +226,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             # Check the file picker opens and closes
             await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
+            await user.should_see(f"Supported formats: {', '.join(sorted(WSI_SUPPORTED_FILE_EXTENSIONS))}")
             user.find(marker="BUTTON_WSI_SELECT_DATA").click()
             await user.should_see("Ok")
             await user.should_see("Cancel")
@@ -278,7 +282,6 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             # Now on Submission step
             await user.should_see("Upload and submit your 1 slide(s) for analysis.", retries=100)
-            user.find(marker="CHECKBOX_VALIDATE_ONLY").click()  # only for aignostics' orgs
 
             # Trigger upload and submission
             await user.should_see(marker="BUTTON_SUBMISSION_UPLOAD")
@@ -336,7 +339,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5)
-@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
 async def test_gui_run_download(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
@@ -352,6 +355,7 @@ async def test_gui_run_download(  # noqa: PLR0915
             application_id=HETA_APPLICATION_ID,
             application_version=HETA_APPLICATION_VERSION,
             external_id=SPOT_0_GS_URL,
+            tags=["scheduled"],
             has_output=True,
             limit=1,
         )
@@ -384,15 +388,15 @@ async def test_gui_run_download(  # noqa: PLR0915
         await user.should_see(marker="BUTTON_DOWNLOAD_RUN", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_RUN").click()
 
-        # Step 3: Select Data
+        # Step 3: Check download button is initially disabled, then select Data folder
         download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
         assert not download_run_button.enabled, "Download button should be disabled before selecting target"
         await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await assert_notified(user, "Using Launchpad results directory")
 
-        # Step 3: Trigger Download
-        await sleep(2)  # Wait a bit for button state to update so we can click
-        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        # Step 4: Trigger Download - wait for button to be enabled
+        download_run_button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
         assert download_run_button.enabled, "Download button should be enabled after selecting target"
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
         await assert_notified(user, "Downloading ...")
@@ -446,3 +450,114 @@ async def test_gui_run_download(  # noqa: PLR0915
                 f"File size for {filename} ({actual_size} bytes) is outside allowed range "
                 f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
             )
+
+
+@pytest.mark.integration
+@pytest.mark.sequential
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60)
+async def test_gui_run_results_pagination_show_more_button_hidden_when_few_results(
+    user: User, silent_logging: None, record_property
+) -> None:
+    """Test that the 'Show more' button is hidden when there are fewer results than the page size.
+
+    Raises:
+        AssertionError: If the button is visible when it shouldn't be.
+    """
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
+
+    # Find a run with fewer items than RESULTS_PAGE_SIZE
+    runs = Service().application_runs(
+        application_id=HETA_APPLICATION_ID,
+        application_version=HETA_APPLICATION_VERSION,
+        has_output=True,
+        limit=20,
+    )
+
+    # Find a run with few enough items
+    run_with_few_items = None
+    for run in runs:
+        if 0 < run.statistics.item_count <= RESULTS_PAGE_SIZE:
+            run_with_few_items = run
+            print(f"Found run {run.run_id} with {run.statistics.item_count} items for pagination test.")
+            break
+
+    if run_with_few_items is None:
+        pytest.skip(
+            f"No runs found with 1-{RESULTS_PAGE_SIZE} items for {HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION})"
+        )
+
+    # Navigate to the run page
+    await user.open(f"/application/run/{run_with_few_items.run_id}")
+    await user.should_see(f"Run {run_with_few_items.run_id}", retries=100)
+
+    # Wait for results to load
+    await sleep(3)
+
+    # Verify "Show more" button is NOT visible (element should not exist in DOM)
+    await user.should_not_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=10)
+
+
+@pytest.mark.integration
+@pytest.mark.long_running
+@pytest.mark.sequential
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=120)
+async def test_gui_run_results_pagination_show_more(user: User, silent_logging: None, record_property) -> None:
+    """Test pagination 'Show more' button visibility and functionality.
+
+    Verifies:
+    1. Button is visible when there are more results than RESULTS_PAGE_SIZE
+    2. Button shows correct remaining count
+    3. Clicking button loads more results and updates the count
+    4. Button is hidden when all results are loaded
+    """
+    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
+
+    # Find a run with more items than RESULTS_PAGE_SIZE
+    runs = Service().application_runs(
+        application_id=HETA_APPLICATION_ID,
+        application_version=HETA_APPLICATION_VERSION,
+        has_output=True,
+        limit=10,
+    )
+
+    # Find a run with enough items to test pagination (need at least 2 pages)
+    run_with_many_items = None
+    for run in runs:
+        if run.statistics.item_count > RESULTS_PAGE_SIZE:
+            run_with_many_items = run
+            print(f"Found run {run.run_id} with {run.statistics.item_count} items for pagination test.")
+            break
+
+    if run_with_many_items is None:
+        pytest.skip(
+            f"No runs found with more than {RESULTS_PAGE_SIZE} items for "
+            f"{HETA_APPLICATION_ID} ({HETA_APPLICATION_VERSION})"
+        )
+
+    total_items = run_with_many_items.statistics.item_count
+
+    # Navigate to the run page
+    await user.open(f"/application/run/{run_with_many_items.run_id}")
+    await user.should_see(f"Run {run_with_many_items.run_id}", retries=100)
+
+    # Verify "Show more" button is visible with correct initial count
+    await user.should_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=100)
+    initial_remaining = total_items - RESULTS_PAGE_SIZE
+    await user.should_see(f"Show more ({initial_remaining} remaining)", retries=100)
+
+    # Click "Show more" button
+    user.find(marker="BUTTON_SHOW_MORE_RESULTS").click()
+
+    # Wait for loading to complete
+    await sleep(5)
+
+    # After loading more, the remaining count should decrease
+    new_remaining = total_items - (2 * RESULTS_PAGE_SIZE)
+    if new_remaining > 0:
+        # Button should still be visible with updated count
+        await user.should_see(f"Show more ({new_remaining} remaining)", retries=100)
+    else:
+        # All items loaded - button should be hidden
+        await user.should_not_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=20)

@@ -23,6 +23,7 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.12"
+    nodejs: "16"
   apt_packages:
     - imagemagick
   jobs:
@@ -34,3 +35,5 @@ build:
       - uv venv $READTHEDOCS_VIRTUALENV_PATH
       - . ${READTHEDOCS_VIRTUALENV_PATH}/bin/activate
       - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --frozen --all-extras
+    post_install:
+      - npm install -g --ignore-scripts @mermaid-js/mermaid-cli

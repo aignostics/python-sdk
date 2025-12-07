@@ -18,16 +18,13 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import IO, Any
 
-import google_crc32c
+import crc32c
 import requests
 from aignx.codegen.models import InputArtifact as InputArtifactData
 from aignx.codegen.models import OutputArtifact as OutputArtifactData
 from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
+from loguru import logger
 from tqdm.auto import tqdm
-
-from aignostics.utils import get_logger
-
-logger = get_logger(__name__)
 
 EIGHT_MB = 8_388_608
 SIGNED_DOWNLOAD_URL_EXPIRES_SECONDS_DEFAULT = 6 * 60 * 60  # 6 hours
@@ -117,7 +114,7 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
         ValueError: If the downloaded file's checksum doesn't match the expected value.
         requests.HTTPError: If the download request fails.
     """
-    checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
+    checksum = crc32c.CRC32CHash()
     with requests.get(signed_url, stream=True, timeout=60) as stream:
         stream.raise_for_status()
         with open(file_path, mode="wb") as file:
@@ -126,10 +123,10 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
             for chunk in stream.iter_content(chunk_size=EIGHT_MB):
                 if chunk:
                     file.write(chunk)
-                    checksum.update(chunk)  # type: ignore[no-untyped-call]
+                    checksum.update(chunk)
                     progress_bar.update(len(chunk))
             progress_bar.close()
-    downloaded_file = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
+    downloaded_file = base64.b64encode(checksum.digest()).decode("ascii")
     if downloaded_file != verify_checksum:
         msg = f"Checksum mismatch: {downloaded_file} != {verify_checksum}"
         raise ValueError(msg)
@@ -151,6 +148,7 @@ def generate_signed_url(url: str, expires_seconds: int = SIGNED_DOWNLOAD_URL_EXP
     from google.cloud import storage  # noqa: PLC0415, lazy loading for performance
 
     pattern = r"gs://(?P<bucket_name>[^/]+)/(?P<path>.*)"
+    logger.trace(f"Generating signed URL for: {url}")
     m = re.fullmatch(pattern, url)
     if not m:
         msg = "Invalid google storage URI"
@@ -161,14 +159,17 @@ def generate_signed_url(url: str, expires_seconds: int = SIGNED_DOWNLOAD_URL_EXP
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(path)
+    logger.trace(f"Check if blob exists: gs://{bucket_name}/{path}")
     if not blob.exists():
         msg = f"Blob does not exist: {url}"
         raise ValueError(msg)
 
-    return t.cast(
+    url = t.cast(
         "str",
         blob.generate_signed_url(expiration=datetime.timedelta(seconds=expires_seconds), method="GET", version="v4"),
     )
+    logger.debug(f"Generated signed URL for {url} valid for {expires_seconds} seconds")
+    return url
 
 
 def calculate_file_crc32c(file: Path) -> str:
@@ -180,12 +181,11 @@ def calculate_file_crc32c(file: Path) -> str:
     Returns:
         str: The CRC32C checksum in base64 encoding.
     """
-    checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
+    checksum = crc32c.CRC32CHash()
     with open(file, mode="rb") as f:
-        # Iterate through file chunks - checksum is calculated as side effect of consume()
-        for _ in checksum.consume(f, EIGHT_MB):  # type: ignore[no-untyped-call]
-            continue  # Consume all chunks; checksum accumulates internally
-    return base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
+        while chunk := f.read(EIGHT_MB):
+            checksum.update(chunk)
+    return base64.b64encode(checksum.digest()).decode("ascii")
 
 
 @contextlib.contextmanager

@@ -9,15 +9,14 @@ import urllib3
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import UserReadResponse as User
+from loguru import logger
 from pydantic import BaseModel, computed_field
 
-from aignostics.utils import BaseService, Health, get_logger, user_agent
+from aignostics.utils import BaseService, Health, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
 from ._client import Client
 from ._settings import Settings
-
-logger = get_logger(__name__)
 
 
 class TokenInfo(BaseModel):
@@ -201,7 +200,7 @@ class Service(BaseService):
             )
 
             if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (public) returned '%s'", response.status)
+                logger.error("Aignostics Platform API (public) returned '{}'", response.status)
                 return Health(
                     status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status}'"
                 )
@@ -228,7 +227,7 @@ class Service(BaseService):
                 _request_timeout=self._settings.health_timeout,
             )
             if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (authenticated) returned '%s'", response.status)
+                logger.error("Aignostics Platform API (authenticated) returned '{}'", response.status)
                 return Health(status=Health.Code.DOWN, reason=f"Aignostics Platform API returned '{response.status}'")
         except Exception as e:
             logger.exception("Issue with Aignostics Platform API")
