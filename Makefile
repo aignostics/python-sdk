@@ -54,7 +54,7 @@ act audit bump dist docs lint lint_fix setup test update_from_template:
 
 ## Install development dependencies and pre-commit hooks
 install:
-	sh install.sh
+	bash install.bash
 	uv run pre-commit install
 
 ## Run default tests, i.e. unit, then integration, then e2e tests, no (very_)long_running tests, single Python version

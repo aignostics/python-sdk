@@ -934,6 +934,70 @@ def test_api_response_structure(snapshot):
     snapshot.assert_match(response.json())
 ```
 
+## NiceGUI Troubleshooting
+
+### Symptom: Element State Lost After User Interaction (NiceGUI 3.0+)
+
+**Problem:** After upgrading to NiceGUI 3.0+, tests fail because UI element state (e.g., button enabled/disabled, input values) is lost after user interactions inside `@ui.refreshable` functions.
+
+**Root Cause:** NiceGUI 3.0.0 introduced observable props/classes/styles that automatically sync UI updates. When modifying `.value` on elements inside `@ui.refreshable`, the framework may trigger element recreation, causing local variables to reset.
+
+**Symptom Example:**
+
+```python
+@ui.refreshable
+def dialog_content() -> None:
+    selected_folder = ui.input("Folder", value="")  # Local variable resets on recreation!
+    download_button = ui.button("Download").props("disabled")
+
+    def on_select():
+        selected_folder.value = "/path/to/folder"  # This may trigger refresh
+        download_button.enable()  # Button recreated, enable() lost
+```
+
+**Solution:** Use a mutable dictionary container instead of `ui.state()` when the `@ui.refreshable` function has parameters that must be preserved:
+
+```python
+@ui.refreshable
+def dialog_content(qupath_project: bool = False) -> None:
+    # Use mutable dict instead of ui.state() to avoid triggering refresh
+    # which would reset qupath_project to its default value.
+    # ui.state() triggers refresh() internally when set_folder() is called,
+    # but refresh() without arguments uses the original call arguments.
+    folder_state: dict[str, str] = {"value": ""}
+
+    selected_folder = ui.input("Folder", value=folder_state["value"])
+    download_button = ui.button("Download")
+    if not folder_state["value"]:
+        download_button.disable()
+
+    def on_select():
+        folder_value = "/path/to/folder"
+        folder_state["value"] = folder_value  # Update dict without triggering refresh
+        selected_folder.value = folder_value
+        download_button.enable()
+```
+
+**Why This Works:**
+
+1. Mutable dict container stores state without triggering `refresh()`
+2. `ui.state()` internally calls `refresh()` when setter is invoked, which uses **original** function arguments
+3. For `@ui.refreshable` functions with parameters, `ui.state()` setter can reset those parameters to defaults
+4. The dict pattern preserves both local state AND function arguments
+
+**CRITICAL:** Do NOT use `ui.state()` in `@ui.refreshable` functions that accept parameters and are called with `refresh(param=value)`. The `set_state()` function triggers `refresh()` without arguments, resetting all parameters to their defaults.
+
+**When to use each pattern:**
+
+| Pattern | Use Case |
+|---------|----------|
+| `ui.state()` | `@ui.refreshable` with no parameters or when refresh resets are acceptable |
+| Mutable dict | `@ui.refreshable` with parameters that must be preserved after state updates |
+
+**Reference:** [NiceGUI 3.0.0 Release Notes](https://github.com/zauberzeug/nicegui/releases/tag/v3.0.0)
+
+---
+
 ## Debugging Test Failures
 
 ### Verbose Output
@@ -980,10 +1044,10 @@ def test_complex_logic():
 
 ### Test Hygiene
 
-- Remove obsolete tests
-- Update mocks when API changes
-- Maintain test documentation
-- Regular dependency updates
+* Remove obsolete tests
+* Update mocks when API changes
+* Maintain test documentation
+* Regular dependency updates
 
 ---
 

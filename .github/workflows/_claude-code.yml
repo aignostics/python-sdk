@@ -3,11 +3,6 @@ name: "> Claude Code"
 on:
   workflow_call:
     inputs:
-      platform_environment:
-        description: 'Environment to use, that is staging or production'
-        required: false
-        default: 'staging'
-        type: string
       mode:
         description: 'Mode: interactive or automation'
         required: true
@@ -31,21 +26,14 @@ on:
         required: false
         default: true
         type: boolean
+      use_sticky_comment:
+        description: 'Use just one comment to deliver PR comments (only applies for pull_request event workflows)'
+        required: false
+        default: false
+        type: boolean
     secrets:
       ANTHROPIC_API_KEY:
         required: true
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
-        required: false
-      AIGNOSTICS_REFRESH_TOKEN_STAGING:
-        required: false
-      GCP_CREDENTIALS_STAGING:
-        required: false
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
-        required: false
-      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
-        required: false
-      GCP_CREDENTIALS_PRODUCTION:
-        required: false
 
 jobs:
   claude-code:
@@ -58,7 +46,7 @@ jobs:
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: ${{ inputs.mode == 'interactive' && 0 || 1 }}
 
@@ -79,23 +67,6 @@ jobs:
 
       - name: Setup display
         uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
-
-      - name: Create .env file
-        uses: SpicyPizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f # v2.0.3
-        with:
-          # The following 3 lines are correct even if vscode complains
-          envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
-          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
-          envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
-          fail_on_empty: false
-
-      - name: Set up GCP credentials for bucket access
-        shell: bash
-        env:
-          GCP_CREDENTIALS: ${{ inputs.platform_environment == 'staging' && secrets.GCP_CREDENTIALS_STAGING || secrets.GCP_CREDENTIALS_PRODUCTION }}
-        run: |
-          echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Print development version info
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
@@ -119,13 +90,15 @@ jobs:
             --model claude-sonnet-4-5-20250929
             --allowed-tools "${{ inputs.allowed_tools }}"
             --system-prompt "Read the CLAUDE.md file in the root folder of this repository and explicitely acknowledge you will apply **all** guidance therein and in **all** linked documents."
+
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
-        uses: anthropics/claude-code-action@v1.0.15
+        uses: anthropics/claude-code-action@v1.0.22
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
+          use_sticky_comment: ${{ inputs.use_sticky_comment }}
           additional_permissions: |
             actions: read
           allowed_bots: "dependabot[bot],renovate[bot]"

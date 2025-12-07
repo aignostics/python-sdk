@@ -549,7 +549,7 @@ class Service(BaseService):
         system = platform.system() if platform_system is None else platform_system
         machine = platform.machine() if platform_machine is None else platform_machine
         logger.trace(
-            "Getting QuPath application directory for version '%s', installation path '%s' on system '%s'",
+            "Getting QuPath application directory for version '{}', installation path '{}' on system '{}'",
             version,
             installation_path,
             system,

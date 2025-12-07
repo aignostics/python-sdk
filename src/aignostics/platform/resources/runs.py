@@ -634,7 +634,7 @@ class Runs:
             raise ValueError(message)
 
         @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
-        def list_data_with_retry(**kwargs: object) -> list[RunData]:
+        def list_data_with_retry(**kwargs: object) -> builtins.list[RunData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),

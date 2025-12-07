@@ -1,1 +1,2 @@
-.. mdinclude:: ../../OPERATIONAL_EXCELLENCE.md
+.. include:: ../../OPERATIONAL_EXCELLENCE.md
+    :parser: myst_parser.sphinx_

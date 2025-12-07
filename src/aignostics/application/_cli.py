@@ -37,6 +37,7 @@ from ._utils import (
 )
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
+PROGRESS_TASK_DESCRIPTION = "[progress.description]{task.description}"
 
 
 ApplicationVersionOption = Annotated[
@@ -219,7 +220,7 @@ def application_dump_schemata(  # noqa: C901
             resolve_path=True,
             show_default="<current-working-directory>",
         ),
-    ] = Path().cwd(),  # noqa: B008,
+    ] = Path().cwd(),  # noqa: B008
     zip: Annotated[  # noqa: A002
         bool,
         typer.Option(
@@ -236,7 +237,7 @@ def application_dump_schemata(  # noqa: C901
         logger.warning(message)
         console.print(f"[warning]Warning:[/warning] {message}")
         sys.exit(2)
-    except (Exception, RuntimeError) as e:
+    except Exception as e:
         message = f"Failed to load application version with ID '{id}': {e!s}."
         logger.exception(message)
         console.print(f"[warning]Error:[/warning] {message}")
@@ -670,7 +671,7 @@ def run_upload(
         FileSizeColumn(),
         TotalFileSizeColumn(),
         TransferSpeedColumn(),
-        TextColumn("[progress.description]{task.description}"),
+        TextColumn(PROGRESS_TASK_DESCRIPTION),
     ) as progress:
         task = progress.add_task(f"Uploading to {upload_prefix}/...", total=total_bytes)
 
@@ -745,7 +746,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         )
     except ValueError as e:
         logger.warning(
-            "Bad input to create run for application '%s' (version: '%s'): %s", application_id, application_version, e
+            "Bad input to create run for application '{}' (version: '{}'): {}", application_id, application_version, e
         )
         console.print(
             f"[warning]Warning:[/warning] Bad input to create run for application "
@@ -754,14 +755,14 @@ def run_submit(  # noqa: PLR0913, PLR0917
         sys.exit(2)
     except NotFoundException as e:
         logger.warning(
-            "Could not find application version '%s' (version: '%s'): %s", application_id, application_version, e
+            "Could not find application version '{}' (version: '{}'): {}", application_id, application_version, e
         )
         console.print(
             f"[warning]Warning:[/warning] Could not find application '{application_id} "
             f"(version: {application_version})': {e}"
         )
         sys.exit(2)
-    except (Exception, RuntimeError) as e:
+    except Exception as e:
         message = (
             f"Failed to load application version '{application_version}' for application '{application_id}': {e!s}."
         )
@@ -772,10 +773,10 @@ def run_submit(  # noqa: PLR0913, PLR0917
     try:
         metadata_dict = read_metadata_csv_to_dict(metadata_csv_file=metadata_csv_file)
         if not metadata_dict:
-            console.print("Could mot read metadata file '%s'", metadata_csv_file)
+            console.print(f"Could not read metadata file '{metadata_csv_file}'")
             sys.exit(2)
         logger.trace(
-            "Submitting run for application '%s' (version: '%s') with metadata: %s",
+            "Submitting run for application '{}' (version: '{}') with metadata: {}",
             application_id,
             app_version.version_number,
             metadata_dict,
@@ -808,7 +809,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         return application_run.run_id
     except ValueError as e:
         logger.warning(
-            "Bad input to create run for application '%s' (version: %s): %s",
+            "Bad input to create run for application '{}' (version: {}): {}",
             application_id,
             app_version.version_number,
             e,
@@ -820,7 +821,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         sys.exit(2)
     except Exception as e:
         logger.exception(
-            "Failed to create run for application '%s' (version: %s)", application_id, app_version.version_number
+            "Failed to create run for application '{}' (version: {})", application_id, app_version.version_number
         )
         console.print(
             f"[error]Error:[/error] Failed to create run for application "
@@ -1058,7 +1059,7 @@ def run_cancel_by_filter(  # noqa: C901, PLR0912, PLR0915
         sys.exit(1)
 
     logger.trace(
-        "Canceling runs with filters: tags=%s, application_id=%s, application_version=%s, limit=%s, dry_run=%s",
+        "Canceling runs with filters: tags={}, application_id={}, application_version={}, limit={}, dry_run={}",
         tags,
         application_id,
         application_version,
@@ -1206,7 +1207,7 @@ def run_update_item_metadata(
         sys.exit(2)
     except ValueError as e:
         logger.warning(
-            "Run ID '%s' or item external ID '%s' invalid or metadata invalid: %s",
+            "Run ID '{}' or item external ID '{}' invalid or metadata invalid: {}",
             run_id,
             external_id,
             e,
@@ -1218,7 +1219,7 @@ def run_update_item_metadata(
         sys.exit(2)
     except Exception as e:
         logger.exception(
-            "Failed to update custom metadata for item '%s' in run with ID '%s'",
+            "Failed to update custom metadata for item '{}' in run with ID '{}'",
             external_id,
             run_id,
         )
@@ -1277,8 +1278,8 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
 ) -> None:
     """Download results of a run."""
     logger.trace(
-        "Downloading results for run with ID '%s' to '%s' with options: "
-        "create_subdirectory_for_run=%s, create_subdirectory_per_item=%s, wait_for_completion=%s, qupath_project=%r",
+        "Downloading results for run with ID '{}' to '{}' with options: "
+        "create_subdirectory_for_run={}, create_subdirectory_per_item={}, wait_for_completion={}, qupath_project={}",
         run_id,
         destination_directory,
         create_subdirectory_for_run,
@@ -1308,7 +1309,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
         main_download_progress_ui = Progress(
             BarColumn(),
             TaskProgressColumn(),
-            TextColumn("[progress.description]{task.description}"),
+            TextColumn(PROGRESS_TASK_DESCRIPTION),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             TextColumn("{task.fields[extra_description]}"),
@@ -1316,7 +1317,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
         artifact_download_progress_ui = Progress(
             BarColumn(),
             TaskProgressColumn(),
-            TextColumn("[progress.description]{task.description}"),
+            TextColumn(PROGRESS_TASK_DESCRIPTION),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             FileSizeColumn(),

@@ -23,13 +23,14 @@ JUNIT_XML_PREFIX = "--junitxml=reports/junit_"
 CLI_MODULE = "cli"
 API_VERSIONS = ["v1"]
 UTF8 = "utf-8"
+LOG_STDERR_DISABLED = "AIGNOSTICS_LOG_STDERR_ENABLED=false"
 
 
 def _read_python_version() -> str:
     """Read Python version from .python-version file.
 
     Returns:
-        str: Python version string (e.g., "3.13" or "3.13.1")
+        str: Python version string (e.g., "3.14" or "3.14.1")
 
     Raises:
         FileNotFoundError: If .python-version file does not exist
@@ -63,10 +64,10 @@ def _get_test_python_versions() -> list[str]:
     Returns:
         list[str]: List of Python version strings to test against
     """
-    versions = ["3.11.9", "3.12.12", PYTHON_VERSION]
+    versions = ["3.11.14", "3.12.12", "3.13.10", PYTHON_VERSION]
     if platform.system() == "Windows" and platform.machine().lower() in {"arm64", "aarch64"}:
-        versions = [PYTHON_VERSION]
-        # Only test with 3.13.x on Windows ARM due to:
+        versions = ["3.13.10", PYTHON_VERSION]
+        # Only test with >= 3.13.x on Windows ARM due to:
         # 1. Access denied errors when uv >= 0.9.4 tries to recreate venv directories (all Python versions)
         # 2. Instability of Python 3.12.x on Windows ARM platform
     return versions
@@ -420,8 +421,8 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
     Path("docs/source/_static").mkdir(parents=True, exist_ok=True)
 
     formats = {
-        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
-        "json": {"ext": "json", "args": ["--output-format=json", "--env", "AIGNOSTICS_LOG_STDERR_ENABLED=false"]},
+        "yaml": {"ext": "yaml", "args": ["--output-format=yaml", "--env", LOG_STDERR_DISABLED]},
+        "json": {"ext": "json", "args": ["--output-format=json", "--env", LOG_STDERR_DISABLED]},
     }
 
     for version in API_VERSIONS:
@@ -455,7 +456,7 @@ def _generate_sdk_metadata_schema(session: nox.Session, schema_type: str) -> Non
             f"{schema_type}-metadata-schema",
             "--no-pretty",
             "--env",
-            "AIGNOSTICS_LOG_STDERR_ENABLED=false",
+            LOG_STDERR_DISABLED,
             stdout=f,
             external=True,
         )
@@ -507,6 +508,10 @@ def _generate_cli_reference(session: nox.Session) -> None:
     """
     if CLI_MODULE:
         session.run(
+            "python",
+            "-W",
+            "ignore::UserWarning",
+            "-m",
             "typer",
             f"aignostics.{CLI_MODULE}",
             "utils",

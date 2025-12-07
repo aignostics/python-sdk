@@ -70,7 +70,7 @@ The Aignostics Python SDK uses a **sophisticated multi-stage CI/CD pipeline** bu
 
 | Workflow | Triggers | Purpose | Calls |
 |----------|----------|---------|-------|
-| **ci-cd.yml** | push(main), PR, release, tag | Main CI/CD pipeline | _lint, _audit, _test, _codeql, _ketryx, _package-publish, _docker-publish |
+| **ci-cd.yml** | push(main), PR, release, tag | Main CI/CD pipeline | _lint,_audit, _test,_codeql, _ketryx,_package-publish, _docker-publish |
 | **build-native-only.yml** | push, PR, release (if msg contains `build:native:only`) | Native executable builds | _build-native-only |
 | **claude-code-interactive.yml** | workflow_dispatch (manual) | Manual Claude sessions | _claude-code (interactive) |
 | **claude-code-automation-pr-review.yml** | PR opened/sync (excludes bots) | Automated PR reviews | _claude-code (automation) |
@@ -334,30 +334,32 @@ uv run pytest -m "(scheduled or scheduled_only)" -v
 1. Unit Tests (3 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   └─ Python 3.13 ─┘
+   ├─ Python 3.13 ─┤
+   └─ Python 3.14 ─┘
 
 2. Integration Tests (5 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   └─ Python 3.13 ─┘
+   ├─ Python 3.13 ─┤
+   └─ Python 3.14 ─┘
 
 3. E2E Regular (7 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   └─ Python 3.13 ─┘
+   ├─ Python 3.13 ─┤
+   └─ Python 3.14 ─┘
 
 4. Long Running (if not skipped)
-   └─ Python 3.13 only (single version)
+   └─ Python 3.14 only (single version)
 
 5. Very Long Running (if explicitly enabled)
-   └─ Python 3.13 only (single version)
+   └─ Python 3.14 only (single version)
 ```
 
 **Matrix Testing**:
 
-* Unit, Integration, E2E run on **all 3 Python versions** (3.11, 3.12, 3.13)
-* Long running and very long running run on **Python 3.13 only** to save CI time
-* Windows ARM excludes Python 3.12.12 due to instability
+* Unit, Integration, E2E run on **all four Python versions** (3.11, 3.12, 3.13, 3.14)
+* Long running and very long running run on **Python 3.14 only** to save CI time
 
 ### Skip Markers System
 
@@ -509,7 +511,6 @@ Claude Code is integrated into the CI/CD pipeline for:
 # Inputs:
 #   - prompt: "Your task description"
 #   - max_turns: 200 (default)
-#   - platform_environment: staging (default) or production
 ```
 
 #### 2. Automation Mode
@@ -526,21 +527,20 @@ Claude Code is integrated into the CI/CD pipeline for:
 **Inputs**:
 
 ```yaml
-platform_environment: 'staging' | 'production'  # Default: staging
 mode: 'interactive' | 'automation'               # Required
 prompt: 'string'                                 # For automation mode
 max_turns: '200'                                 # Default: 200
 allowed_tools: 'comma,separated,list'            # Default: Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(uv:*),Bash(make:*)
 ```
 
-**Environment Setup** (same as test environment):
+**Environment Setup**:
 
 1. Installs `uv` package manager
 2. Installs dev tools (`.github/workflows/_install_dev_tools.bash`)
 3. Syncs Python dependencies (`uv sync --all-extras`)
 4. Sets up headless display (for GUI tests)
-5. Creates `.env` with Aignostics credentials (staging or production)
-6. Configures GCP credentials for bucket access
+
+**Note**: Claude Code workflows intentionally do NOT have access to Aignostics platform credentials or GCP credentials to prevent accidental credential leakage.
 
 **Claude Configuration**:
 
@@ -555,10 +555,7 @@ claude \
 
 **Secrets Required**:
 
-* `ANTHROPIC_API_KEY` - For Claude Code
-* `AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING|PRODUCTION}`
-* `AIGNOSTICS_REFRESH_TOKEN_{STAGING|PRODUCTION}`
-* `GCP_CREDENTIALS_{STAGING|PRODUCTION}`
+* `ANTHROPIC_API_KEY` - For Claude Code (only secret available to Claude Code workflows)
 
 ### Automated PR Review (claude-code-automation-pr-review.yml)
 
@@ -600,7 +597,6 @@ and adherence to CLAUDE.md guidelines.
 
 * `prompt`: What you want Claude to work on
 * `max_turns`: How many iterations (default 200)
-* `platform_environment`: staging (default) or production
 
 **Example Use Cases**:
 
@@ -618,7 +614,6 @@ and adherence to CLAUDE.md guidelines.
 * ✅ Use `--system-prompt` referencing CLAUDE.md
 * ✅ Limit tool access (`--allowed-tools`)
 * ✅ Set reasonable `--max-turns`
-* ✅ Use staging environment for development
 * ✅ Review Claude's changes before merging
 * ✅ Let Claude explore workflows and test strategies
 
@@ -626,8 +621,8 @@ and adherence to CLAUDE.md guidelines.
 
 * ❌ Grant unrestricted tool access
 * ❌ Skip CLAUDE.md system prompt
-* ❌ Test against production without approval
 * ❌ Merge without human review
+* ❌ Add platform/GCP credentials to Claude Code workflows (security risk)
 
 ## Scheduled Jobs
 
@@ -1013,14 +1008,18 @@ make dist_native
 
 1. Ensure `main` branch is clean and all tests pass
 2. Run version bump:
+
    ```bash
    make bump patch  # or minor, major
    ```
+
 3. This creates a commit and git tag
 4. Push with tags:
+
    ```bash
    git push --follow-tags
    ```
+
 5. CI detects tag and triggers:
    * Full CI pipeline (lint, audit, test, CodeQL)
    * Package build and publish to PyPI

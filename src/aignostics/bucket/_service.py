@@ -519,7 +519,7 @@ class Service(BaseService):
             return DownloadResult(downloaded=[], failed=[])
 
         logger.trace(
-            "Found %d objects matching '%s' in bucket, downloading to '%s'...",
+            "Found {} objects matching '{}' in bucket, downloading to '{}'...",
             len(matched_objects),
             what,
             destination,

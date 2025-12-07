@@ -9,6 +9,7 @@ from time import sleep
 
 import pytest
 from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
@@ -1047,6 +1048,42 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner) -> None
     assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
 
 
+@retry(wait=wait_exponential(multiplier=2, max=10), stop=stop_after_attempt(5))
+def list_runs_by_tag(tag: str, runner: CliRunner, expected_count: int = 1) -> list[dict]:
+    """List runs filtered by tag. Returns list of runs.
+
+    Retries to handle eventual consistency.
+
+    Args:
+        runner: CliRunner to use.
+        tag: Tag to filter runs by.
+        expected_count: Minimum number of runs expected (default: 1).
+
+    Raises:
+        RuntimeError: If listing runs fails or expected count not met.
+    """
+    list_result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "list",
+            "--tags",
+            tag,
+            "--format",
+            "json",
+        ],
+    )
+    if list_result.exit_code != 0:
+        msg = f"List runs by tag '{tag}' failed"
+        raise RuntimeError(msg)
+    runs_data = json.loads(list_result.stdout)
+    if len(runs_data) < expected_count:
+        msg = f"Expected at least {expected_count} run(s) with tag '{tag}', but found {len(runs_data)}"
+        raise RuntimeError(msg)
+    return runs_data
+
+
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
 def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PLR0914
@@ -1143,22 +1180,9 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
 
     try:
         # Step 4: List runs with JSON format and filter by tag
-        list_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--tags",
-                unique_tag,
-                "--format",
-                "json",
-            ],
-        )
-        assert list_result.exit_code == 0
+        runs_data = list_runs_by_tag(unique_tag, runner, expected_count=1)
 
         # Step 5: Parse JSON output and verify structure
-        runs_data = json.loads(list_result.stdout)
         assert isinstance(runs_data, list), "JSON output should be a list"
         assert len(runs_data) > 0, "Should find at least one run with the unique tag"
 
@@ -1252,6 +1276,9 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
         assert run_id_match_2, f"Failed to extract run ID from output '{output_2}'"
         run_id_2 = run_id_match_2.group(1)
 
+        # Wait for both runs to appear in the list (handles eventual consistency)
+        list_runs_by_tag(unique_tag, runner, expected_count=2)
+
     finally:
         # Step 10: Test dry-run mode - verify it shows what would be canceled without actually canceling
         logger.info("Step 10: Testing dry-run mode for cancel-by-filter")
@@ -1290,7 +1317,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
             )
             assert dry_run_result.exit_code == 0, f"Dry-run failed: {dry_run_result.stdout}"
             assert "Would cancel 2 run(s)" in dry_run_result.stdout
-            logger.info("Dry-run output:\n%s", dry_run_result.stdout)
+            logger.info("Dry-run output:\n{}", dry_run_result.stdout)
 
             # Step 11: Verify runs are NOT canceled after dry-run by describing them
             logger.info("Step 11: Verifying runs are NOT canceled after dry-run")
@@ -1304,7 +1331,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                     "PENDING",
                     "PROCESSING",
                 }, f"Run {idx} was unexpectedly canceled during dry-run"
-                logger.info("Run %d still active after dry-run (state: %s)", idx, described_run["state"])
+                logger.info("Run {} still active after dry-run (state: {})", idx, described_run["state"])
 
             # Step 12: Actually cancel runs using cancel-by-filter with all three filters
             logger.info("Step 12: Canceling runs by filter (tags, application_id, application_version)")
@@ -1344,7 +1371,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                 assert described_run["termination_reason"] == "CANCELED_BY_USER", (
                     f"Run {idx} has unexpected termination reason: {described_run.get('termination_reason')}"
                 )
-                logger.info("Run %d successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
+                logger.info("Run {} successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
         else:
             # Fallback: cancel individually if we couldn't get the version
             runs_to_cancel = [run_id] + ([run_id_2] if run_id_2 else [])

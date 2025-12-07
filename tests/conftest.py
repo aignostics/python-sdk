@@ -168,7 +168,7 @@ def pytest_runtest_makereport(item, call):  # noqa: ANN201
             # Mark as passed to avoid failing the test suite
             report.outcome = "passed"
             logger.warning(
-                "Suppressed expected NiceGUI teardown error in test '%s': %s",
+                "Suppressed expected NiceGUI teardown error in test '{}': {}",
                 item.nodeid,
                 error_msg[:200],
             )

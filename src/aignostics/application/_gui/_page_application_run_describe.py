@@ -157,8 +157,17 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.notify(f"Failed to delete results of application run: {e}.", type="warning")
             return False
 
+    # Mutable container for qupath_project and marimo options that persists across @ui.refreshable calls.
+    # Defined OUTSIDE the @ui.refreshable function so closures (like start_download) always read
+    # from the same dict instance, even after refresh() is called with new parameter values.
+    download_options: dict[str, bool] = {"qupath_project": False, "marimo": False}
+
     @ui.refreshable
     def download_run_dialog_content(qupath_project: bool = False, marimo: bool = False) -> None:  # noqa: C901, PLR0915
+        # Update the shared options dict so closures read the current values
+        download_options["qupath_project"] = qupath_project
+        download_options["marimo"] = marimo
+
         if qupath_project:
             ui.markdown(
                 "##### Visualize results in QuPath with one click \n"
@@ -182,7 +191,11 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 "2. A subfolder with the application run will be created and all results downloaded there. \n"
             )
 
-        selected_folder = ui.input("Selected folder", value="").classes("w-full").props("readonly")
+        # Use the input field directly as the source of truth for folder selection.
+        # We bind to folder_state dict so start_download can read the current value.
+        folder_state: dict[str, str] = {"value": ""}
+        folder_input = ui.input("Selected folder", value="").classes("w-full").props("readonly")
+        folder_input.bind_value(folder_state, "value")
 
         with ui.row().classes("w-full"):
 
@@ -190,18 +203,19 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 result = await GUILocalFilePicker(str(Path.home()), multiple=False)  # type: ignore[misc]
                 if result and len(result) > 0:
                     folder_path = Path(result[0])
-                    if folder_path.is_dir():
-                        selected_folder.value = str(folder_path)
-                    else:
-                        selected_folder.value = str(folder_path.parent)
-                    ui.notify(f"Using custom directory: {selected_folder.value}", type="info")
+                    folder_value = str(folder_path) if folder_path.is_dir() else str(folder_path.parent)
+                    folder_state["value"] = folder_value
+                    folder_input.set_value(folder_value)
+                    ui.notify(f"Using custom directory: {folder_value}", type="info")
                     download_button.enable()
                 else:
                     ui.notify("No folder selected", type="warning")
 
-            async def _select_data() -> None:  # noqa: RUF029
-                """Open a file picker dialog and show notifier when closed again."""
-                selected_folder.value = str(get_user_data_directory("results"))
+            def _select_data() -> None:
+                """Select the Launchpad data directory."""
+                folder_value = str(get_user_data_directory("results"))
+                folder_state["value"] = folder_value
+                folder_input.set_value(folder_value)
                 ui.notify("Using Launchpad results directory", type="info")
                 download_button.enable()
 
@@ -225,105 +239,114 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         download_artifact_progress = ui.linear_progress(value=0, show_value=False).props("instant-feedback")
         download_artifact_progress.set_visibility(False)
 
-        async def start_download() -> None:  # noqa: C901, PLR0915
-            if not selected_folder.value:
+        # Create a mutable container for the progress queue that will be set when download starts
+        # This allows the timer callback to access the queue that's created during start_download
+        progress_state: dict[str, Any] = {"queue": None}
+
+        def update_download_progress() -> None:  # noqa: C901, PLR0912
+            """Update the progress indicator with values from the queue."""
+            progress_queue = progress_state.get("queue")
+            if progress_queue is None:
+                return
+            while not progress_queue.empty():
+                progress = progress_queue.get()
+                if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                    status_text = (
+                        f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
+                        if progress.item_index is not None and progress.item_count
+                        else "Downloading input slide ..."
+                    )
+                elif progress.status is DownloadProgressState.DOWNLOADING and progress.total_artifact_index is not None:
+                    status_text = (
+                        f"Downloading artifact {progress.total_artifact_index + 1} of {progress.total_artifact_count}"
+                    )
+                else:
+                    status_text = progress.status
+
+                download_item_status.set_text(status_text)
+                download_item_status.set_visibility(True)
+                download_item_progress.set_value(progress.item_progress_normalized)
+                download_artifact_progress.set_value(progress.artifact_progress_normalized)
+                if progress.status is DownloadProgressState.INITIALIZING:
+                    download_artifact_status.set_visibility(False)
+                    download_item_progress.set_visibility(False)
+                    download_artifact_progress.set_visibility(False)
+                elif progress.status is DownloadProgressState.DOWNLOADING_INPUT:
+                    if progress.input_slide_path:
+                        download_artifact_status.set_text(f"Input: {progress.input_slide_path.name}")
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(True)
+                elif progress.status is DownloadProgressState.DOWNLOADING:
+                    if progress.artifact_path:
+                        download_artifact_status.set_text(str(progress.artifact_path))
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(True)
+                elif progress.status is DownloadProgressState.QUPATH_ADD_INPUT and progress.qupath_add_input_progress:
+                    download_artifact_status.set_text(progress.qupath_add_input_progress.status)
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(False)
+                elif (
+                    progress.status is DownloadProgressState.QUPATH_ADD_RESULTS and progress.qupath_add_results_progress
+                ):
+                    download_artifact_status.set_text(progress.qupath_add_results_progress.status)
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(False)
+                elif (
+                    progress.status is DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
+                    and progress.qupath_annotate_input_with_results_progress
+                ):
+                    download_artifact_status.set_text(progress.qupath_annotate_input_with_results_progress.status)
+                    download_artifact_status.set_visibility(True)
+                    download_item_progress.set_visibility(True)
+                    download_artifact_progress.set_visibility(True)
+                else:
+                    download_artifact_status.set_text("")
+                    download_item_progress.set_visibility(False)
+                    download_artifact_progress.set_visibility(False)
+
+        # Create the timer during dialog construction (in valid slot context), but inactive initially
+        # This avoids RuntimeError when trying to create timer inside async event handler
+        progress_timer = ui.timer(0.1, update_download_progress, active=False)
+
+        async def start_download() -> None:
+            # Read from download_options dict (defined outside @ui.refreshable) to get current values
+            current_qupath_project = download_options["qupath_project"]
+            current_marimo = download_options["marimo"]
+            current_folder = folder_state["value"]
+            if not current_folder:
                 ui.notify("Please select a folder first", type="warning")
                 return
 
             ui.notify("Downloading ...", type="info")
             progress_queue = Manager().Queue()
+            progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
 
-            def update_download_progress() -> None:  # noqa: C901, PLR0912
-                """Update the progress indicator with values from the queue."""
-                while not progress_queue.empty():
-                    progress = progress_queue.get()
-                    # Determine status text based on progress state
-                    if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
-                        status_text = (
-                            f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
-                            if progress.item_index is not None and progress.item_count
-                            else "Downloading input slide ..."
-                        )
-                    elif (
-                        progress.status is DownloadProgressState.DOWNLOADING
-                        and progress.total_artifact_index is not None
-                    ):
-                        status_text = (
-                            f"Downloading artifact {progress.total_artifact_index + 1} "
-                            f"of {progress.total_artifact_count}"
-                        )
-                    else:
-                        status_text = progress.status
-
-                    download_item_status.set_text(status_text)
-                    download_item_status.set_visibility(True)
-                    download_item_progress.set_value(progress.item_progress_normalized)
-                    download_artifact_progress.set_value(progress.artifact_progress_normalized)
-                    if progress.status is DownloadProgressState.INITIALIZING:
-                        download_artifact_status.set_visibility(False)
-                        download_item_progress.set_visibility(False)
-                        download_artifact_progress.set_visibility(False)
-                    elif progress.status is DownloadProgressState.DOWNLOADING_INPUT:
-                        if progress.input_slide_path:
-                            download_artifact_status.set_text(f"Input: {progress.input_slide_path.name}")
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(True)
-                    elif progress.status is DownloadProgressState.DOWNLOADING:
-                        if progress.artifact_path:
-                            download_artifact_status.set_text(str(progress.artifact_path))
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(True)
-                    elif (
-                        progress.status is DownloadProgressState.QUPATH_ADD_INPUT and progress.qupath_add_input_progress
-                    ):
-                        download_artifact_status.set_text(progress.qupath_add_input_progress.status)
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(False)
-                    elif (
-                        progress.status is DownloadProgressState.QUPATH_ADD_RESULTS
-                        and progress.qupath_add_results_progress
-                    ):
-                        download_artifact_status.set_text(progress.qupath_add_results_progress.status)
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(False)
-                    elif (
-                        progress.status is DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
-                        and progress.qupath_annotate_input_with_results_progress
-                    ):
-                        download_artifact_status.set_text(progress.qupath_annotate_input_with_results_progress.status)
-                        download_artifact_status.set_visibility(True)
-                        download_item_progress.set_visibility(True)
-                        download_artifact_progress.set_visibility(True)
-                    else:
-                        download_artifact_status.set_text("")
-                        download_item_progress.set_visibility(False)
-                        download_artifact_progress.set_visibility(False)
-
-            ui.timer(0.1, update_download_progress)
+            # Activate the timer now that download is starting
+            progress_timer.activate()
             try:
                 download_button.disable()
                 download_button.props(add="loading")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
-                    destination_directory=Path(selected_folder.value),
+                    destination_directory=Path(current_folder),
                     wait_for_completion=True,
-                    qupath_project=qupath_project,
+                    qupath_project=current_qupath_project,
                     download_progress_queue=progress_queue,
                 )
                 if not results_folder:
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
-                if qupath_project:
+                if current_qupath_project:
                     if results_folder:
                         ui.notify("Download and QuPath project creation completed.", type="positive")
                         download_item_status.set_text("Opening QuPath ...")
                         await open_qupath(project=results_folder / "qupath", button=download_button)
-                elif marimo:
+                elif current_marimo:
                     ui.notify("Download and Notebook preparation completed.", type="positive")
                     download_item_status.set_text("Opening Notebook ...")
                     open_marimo(results_folder=results_folder, button=download_button)
@@ -332,7 +355,11 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 show_in_file_manager(str(results_folder))
             except ValueError as e:
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
+                progress_timer.deactivate()
+                progress_state["queue"] = None
                 return
+            progress_timer.deactivate()
+            progress_state["queue"] = None
             download_button.props(remove="loading")
             download_button.enable()
             download_item_status.set_visibility(False)
@@ -361,7 +388,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 .props("color=primary")
                 .mark("DIALOG_BUTTON_DOWNLOAD_RUN")
             )
-            download_button.disable()
+            if not folder_state["value"]:  # Disable download button initially, will be enabled when folder is selected
+                download_button.disable()
+
             ui.space()
             ui.button("Close", on_click=download_run_dialog.close).props("flat")
 
@@ -516,8 +545,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 lambda e: expansion.classes(add="w-full" if e.value else "", remove="w-full" if not e.value else "")
             )
             with expansion:
-                # Display run metadata, including duration if possible, using humanize
-
                 submitted_at = run_data.submitted_at.astimezone()
                 terminated_at = run_data.terminated_at.astimezone() if run_data.terminated_at else None
                 if submitted_at and terminated_at:
