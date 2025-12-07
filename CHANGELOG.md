@@ -1,6 +1,21 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.226](https://github.com/aignostics/python-sdk/compare/v0.2.225..0.2.226) - 2025-12-06
+# [0.2.227](https://github.com/aignostics/python-sdk/compare/v0.2.226..0.2.227) - 2025-12-07
+
+### 📚 Documentation
+
+- *(nicegui)* Bump attributions - ([0101310](https://github.com/aignostics/python-sdk/commit/0101310c6bf05eadd79720fc118734f7a35c8722))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(application)* Bump timeout for application run and application run describe page from 3s to 30s - ([56eeff5](https://github.com/aignostics/python-sdk/commit/56eeff54b38f0fe4a3acf4478c32db17a484e64d))
+- *(gui)* Refactor to enable bump to nicegui 3.3.1 - ([56eeff5](https://github.com/aignostics/python-sdk/commit/56eeff54b38f0fe4a3acf4478c32db17a484e64d))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution in [#322](https://github.com/aignostics/python-sdk/pull/322)
+
+# [v0.2.226](https://github.com/aignostics/python-sdk/compare/v0.2.225..v0.2.226) - 2025-12-06
 
 ### ⛰️  Features
 
