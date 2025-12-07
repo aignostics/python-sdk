@@ -15250,7 +15250,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ```
 
-## nicegui (3.1.0) - MIT License
+## nicegui (3.3.1) - MIT License
 
 Create web-based user interfaces with Python. The nice way.
 
