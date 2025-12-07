@@ -1,6 +1,20 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.228](https://github.com/aignostics/python-sdk/compare/v0.2.226..0.2.228) - 2025-12-07
+# [0.2.229](https://github.com/aignostics/python-sdk/compare/v0.2.228..0.2.229) - 2025-12-07
+
+### 📚 Documentation
+
+- *(readme)* Introduce sequence diagram - ([bdac6bd](https://github.com/aignostics/python-sdk/commit/bdac6bdc620ffa2c7c9cd5813729d41d164e2ebd))
+
+### 🧪 Testing
+
+- *(gui)* Enabel gui tests for macos on arm - ([45a4ef7](https://github.com/aignostics/python-sdk/commit/45a4ef702bef59cc4d7f213c25abdb8ccfa8d4c3))
+
+
+
+* @helmut-hoffer-von-ankershoffen made their first contribution in [#323](https://github.com/aignostics/python-sdk/pull/323)
+
+# [v0.2.228](https://github.com/aignostics/python-sdk/compare/v0.2.226..v0.2.228) - 2025-12-07
 
 ### 📚 Documentation
 
@@ -11,9 +25,6 @@
 - *(application)* Bump timeout for application run and application run describe page from 3s to 30s - ([56eeff5](https://github.com/aignostics/python-sdk/commit/56eeff54b38f0fe4a3acf4478c32db17a484e64d))
 - *(gui)* Refactor to enable bump to nicegui 3.3.1 - ([56eeff5](https://github.com/aignostics/python-sdk/commit/56eeff54b38f0fe4a3acf4478c32db17a484e64d))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution in [#322](https://github.com/aignostics/python-sdk/pull/322)
 
 # [v0.2.226](https://github.com/aignostics/python-sdk/compare/v0.2.225..v0.2.226) - 2025-12-06
 
