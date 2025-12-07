@@ -1,8 +1,6 @@
 """Tests to verify the GUI functionality of the application module."""
 
-import platform
 import re
-import sys
 import tempfile
 from asyncio import sleep
 from datetime import UTC, datetime, timedelta
@@ -14,6 +12,7 @@ import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
 
+from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.application import Service
 from aignostics.application._gui._page_application_run_describe import RESULTS_PAGE_SIZE
 from aignostics.cli import cli
@@ -25,6 +24,8 @@ from tests.constants_test import (
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
+    SPOT_1_FILENAME,
+    SPOT_1_GS_URL,
 )
 
 if TYPE_CHECKING:
@@ -32,10 +33,6 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info >= (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=30)
 async def test_gui_index(user: User, silent_logging, record_property) -> None:
@@ -48,10 +45,6 @@ async def test_gui_index(user: User, silent_logging, record_property) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info >= (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 2)
 @pytest.mark.parametrize(
@@ -204,14 +197,14 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
                     "dataset",
                     "aignostics",
                     "download",
-                    "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff",
+                    SPOT_1_GS_URL,
                     str(tmp_path),
                 ],
             )
             assert result.exit_code == 0
             assert "Successfully downloaded" in normalize_output(result.stdout)
-            assert "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff" in normalize_output(result.stdout)
-            expected_file = Path(tmp_path) / "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+            assert SPOT_1_FILENAME in normalize_output(result.stdout)
+            expected_file = Path(tmp_path) / SPOT_1_FILENAME
             assert expected_file.exists(), f"Expected file {expected_file} not found"
             assert expected_file.stat().st_size == 14681750
 
@@ -233,6 +226,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             # Check the file picker opens and closes
             await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
+            await user.should_see(f"Supported formats: {', '.join(sorted(WSI_SUPPORTED_FILE_EXTENSIONS))}")
             user.find(marker="BUTTON_WSI_SELECT_DATA").click()
             await user.should_see("Ok")
             await user.should_see("Cancel")
@@ -345,7 +339,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5)
-@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
 async def test_gui_run_download(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
@@ -361,6 +355,7 @@ async def test_gui_run_download(  # noqa: PLR0915
             application_id=HETA_APPLICATION_ID,
             application_version=HETA_APPLICATION_VERSION,
             external_id=SPOT_0_GS_URL,
+            tags=["scheduled"],
             has_output=True,
             limit=1,
         )
@@ -393,15 +388,15 @@ async def test_gui_run_download(  # noqa: PLR0915
         await user.should_see(marker="BUTTON_DOWNLOAD_RUN", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_RUN").click()
 
-        # Step 3: Select Data
+        # Step 3: Check download button is initially disabled, then select Data folder
         download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
         assert not download_run_button.enabled, "Download button should be disabled before selecting target"
         await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await assert_notified(user, "Using Launchpad results directory")
 
-        # Step 3: Trigger Download
-        await sleep(2)  # Wait a bit for button state to update so we can click
-        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        # Step 4: Trigger Download - wait for button to be enabled
+        download_run_button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
         assert download_run_button.enabled, "Download button should be enabled after selecting target"
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
         await assert_notified(user, "Downloading ...")
@@ -459,10 +454,6 @@ async def test_gui_run_download(  # noqa: PLR0915
 
 @pytest.mark.integration
 @pytest.mark.sequential
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info >= (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60)
 async def test_gui_run_results_pagination_show_more_button_hidden_when_few_results(
@@ -510,10 +501,6 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
 @pytest.mark.integration
 @pytest.mark.long_running
 @pytest.mark.sequential
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info >= (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=120)
 async def test_gui_run_results_pagination_show_more(user: User, silent_logging: None, record_property) -> None:

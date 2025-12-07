@@ -5,15 +5,6 @@ on:
     # Every Monday at 6:00 AM UTC
     - cron: "0 6 * * 1"
   workflow_dispatch:
-    inputs:
-      platform_environment:
-        description: 'Environment'
-        required: false
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 concurrency:
   group: ${{ github.workflow }}
@@ -23,9 +14,8 @@ jobs:
   operational-excellence:
     uses: ./.github/workflows/_claude-code.yml
     with:
-      platform_environment: ${{ inputs.platform_environment || 'staging' }}
       mode: 'automation'
-      track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
+      track_progress: false
       allowed_tools: 'Read,Write,Edit,Glob,Grep,LS,,WebFetch,WebSearch,Bash(git:*),Bash(gh:*)'
       prompt: |
         # 🎯 AI-POWERED OPERATIONAL EXCELLENCE AUDIT
@@ -299,9 +289,3 @@ jobs:
 
     secrets:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
-      AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
-      GCP_CREDENTIALS_STAGING: ${{ secrets.GCP_CREDENTIALS_STAGING }}
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
-      AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
-      GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}

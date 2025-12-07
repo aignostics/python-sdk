@@ -4,6 +4,9 @@ from pathlib import Path
 
 from aignostics.utils import BasePageBuilder
 
+APPLICATION_DESCRIBE_PAGE_TIMEOUT = 30
+RUN_DESCRIBE_PAGE_TIMEOUT = 30
+
 
 class PageBuilder(BasePageBuilder):
     @staticmethod
@@ -19,7 +22,7 @@ class PageBuilder(BasePageBuilder):
 
             await _page_index(client, query=query)
 
-        @ui.page("/application/{application_id}")
+        @ui.page("/application/{application_id}", response_timeout=APPLICATION_DESCRIBE_PAGE_TIMEOUT)
         async def page_application_describe(application_id: str) -> None:
             """Describe Application.
 
@@ -30,7 +33,7 @@ class PageBuilder(BasePageBuilder):
 
             await _page_application_describe(application_id)
 
-        @ui.page("/application/run/{run_id}")
+        @ui.page("/application/run/{run_id}", response_timeout=RUN_DESCRIBE_PAGE_TIMEOUT)
         async def page_application_run_describe(run_id: str) -> None:
             """Describe Application Run.
 

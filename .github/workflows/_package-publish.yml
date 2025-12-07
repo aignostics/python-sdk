@@ -32,15 +32,15 @@ jobs:
         experimental: [false]
         include:
           - runner: ubuntu-24.04-arm
-            experimental: true
+            experimental: false
           - runner: macos-latest
-            experimental: true
+            experimental: false
           - runner: macos-13
-            experimental: true
+            experimental: false
           - runner: windows-latest
-            experimental: true
+            experimental: false
           - runner: windows-11-arm
-            experimental: true
+            experimental: false
 
     permissions:
       attestations: write
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -100,7 +100,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 

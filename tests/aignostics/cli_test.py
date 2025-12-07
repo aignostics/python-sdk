@@ -11,6 +11,7 @@ from typer.testing import CliRunner
 
 from aignostics.cli import cli
 from aignostics.utils import (
+    __python_version__,
     __version__,
 )
 from tests.conftest import normalize_output
@@ -26,6 +27,28 @@ def test_cli_built_with_love(runner) -> None:
     assert result.exit_code == 0
     assert BUILT_WITH_LOVE in result.output
     assert __version__ in result.output
+
+
+@pytest.mark.integration
+def test_cli_python_version_format(runner) -> None:
+    """Check that Python version in epilog is clean format like 'v3.14.1'.
+
+    The epilog should show 'Python v3.14.1' not the full sys.version string
+    which includes build info like '(main, Dec 2 2025, 22:17:19) [Clang 21.1.4]'.
+    """
+    result = runner.invoke(cli, ["--help"])
+    assert result.exit_code == 0
+
+    # Normalize output by removing newlines and extra spaces for assertion
+    normalized_output = " ".join(result.output.split())
+
+    # Should contain the clean python version
+    assert f"Python v{__python_version__}" in normalized_output
+
+    # Should NOT contain build metadata patterns that sys.version includes
+    unwanted_patterns = ["(main,", "[Clang", "[GCC", "[MSC"]
+    for pattern in unwanted_patterns:
+        assert pattern not in normalized_output, f"Epilog should not contain '{pattern}'"
 
 
 @pytest.mark.integration

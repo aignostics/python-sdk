@@ -1,5 +1,5 @@
 # We share the base in the builder and targets
-FROM python:3.13-slim-bookworm AS base
+FROM python:3.14.1-slim-trixie AS base
 
 # The base of our builder
 FROM base AS builder
@@ -12,6 +12,9 @@ ENV UV_PYTHON_DOWNLOADS=0
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
+
+# Give more time with Python 3.14 on GHA with Qemu for arm
+ENV UV_COMPILE_BYTECODE_TIMEOUT=300
 
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy

@@ -65,7 +65,7 @@ elif len(sys.argv) > 1 and sys.argv[1] == MODULE_FLAG:
 
                 runpy.run_module(module_name, run_name="__main__")
         except Exception:
-            logger.exception("Failed to execute module '%s'", module_name)
+            logger.exception("Failed to execute module '{}'", module_name)
             sys.exit(1)
     else:
         logger.error("No module name provided")

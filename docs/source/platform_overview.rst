@@ -1,4 +1,5 @@
 Platform Overview
 =================
 
-.. mdinclude:: ../partials/README_platform.md
+.. include:: ../partials/README_platform.md
+    :parser: myst_parser.sphinx_

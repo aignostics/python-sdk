@@ -165,6 +165,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         external_id=SPOT_0_GS_URL,
+        tags=["scheduled"],
         has_output=True,
         limit=1,
     )

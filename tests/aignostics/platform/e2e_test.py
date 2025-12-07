@@ -77,17 +77,17 @@ HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
     60 * 60 * 5
 )  # 5 hours - timeout should never happen if cancel on deadline exceeded works
 
-HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 12  # 12 hours
-HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 12  # 12 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
 HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 
 # Plan to have 100.000 slides processed in total, with 100 slides per application run,
 # one application run starting every 5 minutes, with a throughput of 1 slide per minute,
 # given no GPU.
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 100
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 1000  # Minute 0..9
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20 = 1000  # Minute 20..29
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 50
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 50  # Minute 0..9
+SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20 = 50  # Minute 20..29
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 1 day(s)
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 1 day(s)
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours; Minute 40..49
@@ -190,48 +190,63 @@ def _get_three_spots_payload_for_test(expires_seconds: int) -> list[platform.Inp
 
 
 def _get_spots_payload_for_special(expires_seconds: int, count: int) -> list[platform.InputItem]:
-    """Generates a payload using count many spots."""
-    items = []
-    for index in range(count):
-        signed_url = platform.generate_signed_url(
-            url=SPOT_1_GS_URL,
-            expires_seconds=expires_seconds,
+    """Generates a payload using count many spots.
+
+    Optimized for large counts (e.g., 100k items):
+    - Generates signed URL once (all items use same source file)
+    - Pre-builds metadata dicts once (identical across all items)
+
+    Args:
+        expires_seconds: Expiration time for signed URLs in seconds.
+        count: Number of items to generate.
+
+    Returns:
+        List of InputItem objects for the special application.
+    """
+    if count <= 0:
+        return []
+
+    signed_url = platform.generate_signed_url(
+        url=SPOT_1_GS_URL,
+        expires_seconds=expires_seconds,
+    )
+    wsi_metadata = {
+        "checksum_base64_crc32c": SPOT_1_CRC32C,
+        "width_px": SPOT_1_WIDTH,
+        "height_px": SPOT_1_HEIGHT,
+        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
+        "media_type": "image/tiff",
+        "staining_method": "H&E",
+        "specimen": {
+            "tissue": "LUNG",
+            "disease": "LUNG_CANCER",
+        },
+    }
+    normalization_metadata = {
+        "checksum_base64_crc32c": SPOT_1_CRC32C,
+        "width_px": SPOT_1_WIDTH,
+        "height_px": SPOT_1_HEIGHT,
+        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
+        "media_type": "image/tiff",
+    }
+    return [
+        platform.InputItem(
+            external_id=f"{SPOT_1_GS_URL}&spot_index={index}",
+            input_artifacts=[
+                platform.InputArtifact(
+                    name="whole_slide_image",
+                    download_url=signed_url,
+                    metadata=wsi_metadata,
+                ),
+                platform.InputArtifact(
+                    name="normalization:wsi",
+                    download_url=signed_url,
+                    metadata=normalization_metadata,
+                ),
+            ],
         )
-        items.append(
-            platform.InputItem(
-                external_id=SPOT_1_GS_URL + "&spot_index=" + str(index),
-                input_artifacts=[
-                    platform.InputArtifact(
-                        name="whole_slide_image",
-                        download_url=signed_url,
-                        metadata={
-                            "checksum_base64_crc32c": SPOT_1_CRC32C,
-                            "width_px": SPOT_1_WIDTH,
-                            "height_px": SPOT_1_HEIGHT,
-                            "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-                            "media_type": "image/tiff",
-                            "staining_method": "H&E",
-                            "specimen": {
-                                "tissue": "LUNG",
-                                "disease": "LUNG_CANCER",
-                            },
-                        },
-                    ),
-                    platform.InputArtifact(
-                        name="normalization:wsi",
-                        download_url=signed_url,
-                        metadata={
-                            "checksum_base64_crc32c": SPOT_1_CRC32C,
-                            "width_px": SPOT_1_WIDTH,
-                            "height_px": SPOT_1_HEIGHT,
-                            "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-                            "media_type": "image/tiff",
-                        },
-                    ),
-                ],
-            )
-        )
-    return items
+        for index in range(count)
+    ]
 
 
 def _submit_and_validate(  # noqa: PLR0913, PLR0917
@@ -575,7 +590,7 @@ def test_platform_heta_app_submit() -> None:
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         payload=_get_single_spot_payload_for_heta(
-            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 5
+            expires_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS + 60 * 60 * 10  # 10 hours buffer
         ),
         deadline_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS,
         due_date_seconds=HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS,

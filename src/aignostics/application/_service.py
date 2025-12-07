@@ -9,7 +9,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-import google_crc32c
+import crc32c
 import requests
 from loguru import logger
 
@@ -365,12 +365,12 @@ class Service(BaseService):  # noqa: PLR0904
                 files_to_process = wsi_service.get_wsi_files_to_process(source_directory, extension)
 
                 for file_path in files_to_process:
-                    # Generate CRC32C checksum with google_crc32c and encode as base64
-                    hash_sum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
+                    # Generate CRC32C checksum with crc32c and encode as base64
+                    hash_sum = crc32c.CRC32CHash()
                     with file_path.open("rb") as f:
                         while chunk := f.read(1024):
-                            hash_sum.update(chunk)  # type: ignore[no-untyped-call]
-                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")  # type: ignore[no-untyped-call]
+                            hash_sum.update(chunk)
+                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")
 
                     try:
                         image_metadata = wsi_service.get_metadata(file_path)
@@ -478,7 +478,7 @@ class Service(BaseService):  # noqa: PLR0904
                 })
             file_size = source_file_path.stat().st_size
             logger.trace(
-                "Uploading file '%s' with size %d bytes to '%s' via '%s'",
+                "Uploading file '{}' with size {} bytes to '{}' via '{}'",
                 source_file_path,
                 file_size,
                 platform_bucket_url,
@@ -1159,7 +1159,7 @@ class Service(BaseService):  # noqa: PLR0904
         """
         try:
             logger.trace(
-                "Updating custom metadata for item '%s' in run with ID '%s'",
+                "Updating custom metadata for item '{}' in run with ID '{}'",
                 external_id,
                 run_id,
             )
@@ -1168,7 +1168,7 @@ class Service(BaseService):  # noqa: PLR0904
                 custom_metadata,
             )
             logger.trace(
-                "Updated custom metadata for item '%s' in run with ID '%s'",
+                "Updated custom metadata for item '{}' in run with ID '{}'",
                 external_id,
                 run_id,
             )
@@ -1371,6 +1371,16 @@ class Service(BaseService):  # noqa: PLR0904
             NotFoundException: If the application run with the given ID is not found.
             RuntimeError: If run details cannot be retrieved or download fails.
         """
+        logger.trace(
+            "Downloading application run '{}' to '{}', create_subdirectory_for_run={}, "
+            "create_subdirectory_per_item={}, wait_for_completion={}, qupath_project={}",
+            run_id,
+            destination_directory,
+            create_subdirectory_for_run,
+            create_subdirectory_per_item,
+            wait_for_completion,
+            qupath_project,
+        )
         if qupath_project and not has_qupath_extra:
             message = "QuPath project creation requested, but 'qupath' extra is not installed."
             message += 'Start launchpad with `uvx --with "aignostics[qupath]" ....'
@@ -1425,7 +1435,7 @@ class Service(BaseService):  # noqa: PLR0904
                     item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
                 except Exception as e:
                     logger.warning(
-                        "Failed to download input slide from '%s' to '%s': %s", item.external_id, local_path, e
+                        "Failed to download input slide from '{}' to '{}': {}", item.external_id, local_path, e
                     )
 
         if qupath_project:
@@ -1472,7 +1482,7 @@ class Service(BaseService):  # noqa: PLR0904
 
             if run_details.state == RunState.TERMINATED:
                 logger.trace(
-                    "Run '%s' reached final status '%s' with message '%s' (%s).",
+                    "Run '{}' reached final status '{}' with message '{}' ({}).",
                     run_id,
                     run_details.state,
                     run_details.error_message,
@@ -1482,7 +1492,7 @@ class Service(BaseService):  # noqa: PLR0904
 
             if not wait_for_completion:
                 logger.trace(
-                    "Run '%s' is in progress with status '%s' and message '%s' (%s), "
+                    "Run '{}' is in progress with status '{}' and message '{}' ({}), "
                     "but not requested to wait for completion.",
                     run_id,
                     run_details.state,
@@ -1492,7 +1502,7 @@ class Service(BaseService):  # noqa: PLR0904
                 break
 
             logger.trace(
-                "Run '%s' is in progress with status '%s', waiting for completion ...", run_id, run_details.state
+                "Run '{}' is in progress with status '{}', waiting for completion ...", run_id, run_details.state
             )
             progress.status = DownloadProgressState.WAITING
             update_progress(progress, download_progress_callable, download_progress_queue)
@@ -1564,6 +1574,10 @@ class Service(BaseService):  # noqa: PLR0904
             message = f"Added {added} annotations to input slides."
             logger.debug(message)
 
+        else:
+            logger.trace("QuPath project creation not requested, skipping ...")
+
+        logger.trace("Completed downloading application run '{}' to '{}'", run_id, final_destination_directory)
         progress.status = DownloadProgressState.COMPLETED
         update_progress(progress, download_progress_callable, download_progress_queue)
 

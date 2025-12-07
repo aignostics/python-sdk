@@ -11,6 +11,7 @@
    :maxdepth: 1
    :hidden:
 
+   main
    platform_overview
    cli_reference
    lib_reference
