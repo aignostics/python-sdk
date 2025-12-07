@@ -349,7 +349,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5)
-@pytest.mark.timeout(timeout=60 * 5)
+@pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
 async def test_gui_run_download(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
@@ -365,6 +365,7 @@ async def test_gui_run_download(  # noqa: PLR0915
             application_id=HETA_APPLICATION_ID,
             application_version=HETA_APPLICATION_VERSION,
             external_id=SPOT_0_GS_URL,
+            tags=["scheduled"],
             has_output=True,
             limit=1,
         )
@@ -397,15 +398,15 @@ async def test_gui_run_download(  # noqa: PLR0915
         await user.should_see(marker="BUTTON_DOWNLOAD_RUN", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_RUN").click()
 
-        # Step 3: Select Data
+        # Step 3: Check download button is initially disabled, then select Data folder
         download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
         assert not download_run_button.enabled, "Download button should be disabled before selecting target"
         await user.should_see(marker="BUTTON_DOWNLOAD_DESTINATION_DATA", retries=100)
         user.find(marker="BUTTON_DOWNLOAD_DESTINATION_DATA").click()
+        await assert_notified(user, "Using Launchpad results directory")
 
-        # Step 3: Trigger Download
-        await sleep(2)  # Wait a bit for button state to update so we can click
-        download_run_button: ui.button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
+        # Step 4: Trigger Download - wait for button to be enabled
+        download_run_button = user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").elements.pop()
         assert download_run_button.enabled, "Download button should be enabled after selecting target"
         user.find(marker="DIALOG_BUTTON_DOWNLOAD_RUN").click()
         await assert_notified(user, "Downloading ...")

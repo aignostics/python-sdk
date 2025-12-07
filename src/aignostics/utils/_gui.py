@@ -7,6 +7,7 @@ from ._constants import __is_running_in_container__, __project_name__
 from ._di import locate_subclasses
 
 WINDOW_SIZE = (1280, 768)  # Default window size for the GUI
+BROWSER_RECONNECT_TIMEOUT = 60 * 60 * 24 * 7  # 7 days
 
 
 class BasePageBuilder(ABC):
@@ -86,7 +87,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
         show_welcome_message=native is False,
         show=show,
         window_size=WINDOW_SIZE if native else None,
-        reconnect_timeout=60 * 60 * 24 * 7,
+        reconnect_timeout=BROWSER_RECONNECT_TIMEOUT,
     )
 
 

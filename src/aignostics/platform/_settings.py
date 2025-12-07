@@ -1,12 +1,12 @@
 """Settings of the Python SDK."""
 
-import logging
 import os
 from pathlib import Path
 from typing import Annotated, TypeVar
 from urllib.parse import urlparse
 
 import platformdirs
+from loguru import logger
 from pydantic import (
     BeforeValidator,
     Field,
@@ -48,8 +48,6 @@ from ._constants import (
     TOKEN_URL_STAGING,
 )
 from ._messages import UNKNOWN_ENDPOINT_URL
-
-logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseSettings)
 

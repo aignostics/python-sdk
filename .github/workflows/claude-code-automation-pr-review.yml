@@ -11,10 +11,15 @@ concurrency:
 
 jobs:
   claude-review:
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'claude') ||
+      github.event.action == 'ready_for_review'
     uses: ./.github/workflows/_claude-code.yml
     with:
       mode: 'automation'
+      allowed_tools: 'mcp__github_inline_comment__create_inline_comment,Read,Write,Edit,MultiEdit,Glob,Grep,LS,WebFetch,WebSearch,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),Bash(uv:*),Bash(make:*)'
       track_progress: ${{ github.event_name == 'pull_request' && contains(fromJSON('["opened", "synchronize", "ready_for_review", "reopened"]'), github.event.action) }}
+      use_sticky_comment: true
       prompt: |
         # PR REVIEW FOR AIGNOSTICS PYTHON SDK
 

@@ -255,7 +255,7 @@ client.download_from_selection(
                 )
             else:
                 logger.trace(
-                    "Starting download subprocess with executable '%s' and script:\n%s", sys.executable, script_content
+                    "Starting download subprocess with executable '{}' and script:\n{}", sys.executable, script_content
                 )
                 process = subprocess.Popen(  # noqa: S603
                     [sys.executable, "-c", script_content],
@@ -284,7 +284,7 @@ client.download_from_selection(
                     stdout_output = process.stdout.read() if process.stdout else "No stdout output"
                     stderr_output = process.stderr.read() if process.stderr else "No stderr output"
                     logger.error(
-                        "Download subprocess failed with code '%d'\n\nstdout:\n\n%sstdin:\n\n%s\n\n",
+                        "Download subprocess failed with code '{}'\n\nstdout:\n\n{}stdin:\n\n{}\n\n",
                         return_code,
                         stdout_output,
                         stderr_output,
