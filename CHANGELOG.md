@@ -1,6 +1,6 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.227](https://github.com/aignostics/python-sdk/compare/v0.2.226..0.2.227) - 2025-12-07
+# [0.2.228](https://github.com/aignostics/python-sdk/compare/v0.2.226..0.2.228) - 2025-12-07
 
 ### 📚 Documentation
 
