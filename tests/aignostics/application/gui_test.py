@@ -1,8 +1,6 @@
 """Tests to verify the GUI functionality of the application module."""
 
-import platform
 import re
-import sys
 import tempfile
 from asyncio import sleep
 from datetime import UTC, datetime, timedelta
@@ -35,10 +33,6 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info == (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=30)
 async def test_gui_index(user: User, silent_logging, record_property) -> None:
@@ -51,10 +45,6 @@ async def test_gui_index(user: User, silent_logging, record_property) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info == (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 2)
 @pytest.mark.parametrize(
@@ -464,10 +454,6 @@ async def test_gui_run_download(  # noqa: PLR0915
 
 @pytest.mark.integration
 @pytest.mark.sequential
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info == (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60)
 async def test_gui_run_results_pagination_show_more_button_hidden_when_few_results(
@@ -515,10 +501,6 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
 @pytest.mark.integration
 @pytest.mark.long_running
 @pytest.mark.sequential
-@pytest.mark.skipif(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and sys.version_info == (3, 13),
-    reason="GUI tests unstable on macOS Apple Silicon with Python 3.13 (GitHub Actions runner architecture issues)",
-)
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=120)
 async def test_gui_run_results_pagination_show_more(user: User, silent_logging: None, record_property) -> None:
