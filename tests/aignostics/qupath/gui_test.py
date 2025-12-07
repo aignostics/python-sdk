@@ -176,8 +176,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
 
     run_id = runs[0].run_id
 
-    run_id = "0717d2ca-2bc8-4f0f-815a-928553660e05"  # For debugging only
-
     # Explore run
     run = Service().application_run(run_id).details()
     print(
