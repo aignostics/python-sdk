@@ -32,15 +32,15 @@ jobs:
         experimental: [false]
         include:
           - runner: ubuntu-24.04-arm
-            experimental: true
+            experimental: false
           - runner: macos-latest
-            experimental: true
+            experimental: false
           - runner: macos-13
-            experimental: true
+            experimental: false
           - runner: windows-latest
-            experimental: true
+            experimental: false
           - runner: windows-11-arm
-            experimental: true
+            experimental: false
 
     permissions:
       attestations: write

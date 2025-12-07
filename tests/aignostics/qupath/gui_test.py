@@ -165,6 +165,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
         external_id=SPOT_0_GS_URL,
+        tags=["scheduled"],
         has_output=True,
         limit=1,
     )
@@ -174,6 +175,8 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         pytest.skip(message)
 
     run_id = runs[0].run_id
+
+    run_id = "0717d2ca-2bc8-4f0f-815a-928553660e05"  # For debugging only
 
     # Explore run
     run = Service().application_run(run_id).details()

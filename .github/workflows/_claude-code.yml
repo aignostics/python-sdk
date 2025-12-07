@@ -26,6 +26,11 @@ on:
         required: false
         default: true
         type: boolean
+      use_sticky_comment:
+        description: 'Use just one comment to deliver PR comments (only applies for pull_request event workflows)'
+        required: false
+        default: false
+        type: boolean
     secrets:
       ANTHROPIC_API_KEY:
         required: true
@@ -85,6 +90,7 @@ jobs:
             --model claude-sonnet-4-5-20250929
             --allowed-tools "${{ inputs.allowed_tools }}"
             --system-prompt "Read the CLAUDE.md file in the root folder of this repository and explicitely acknowledge you will apply **all** guidance therein and in **all** linked documents."
+
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
         uses: anthropics/claude-code-action@v1.0.22
@@ -92,6 +98,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
+          use_sticky_comment: ${{ inputs.use_sticky_comment }}
           additional_permissions: |
             actions: read
           allowed_bots: "dependabot[bot],renovate[bot]"
