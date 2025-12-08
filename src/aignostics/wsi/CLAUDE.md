@@ -19,8 +19,8 @@ The WSI module provides comprehensive support for medical imaging files, particu
 **CLI Commands (`_cli.py`):**
 
 - `wsi inspect` - Display WSI file metadata and properties
-- `wsi dicom-inspect` - Inspect DICOM-specific metadata
-- `wsi dicom-geojson-import` - Import GeoJSON annotations to DICOM
+- `wsi dicom inspect` - Inspect DICOM-specific metadata
+- `wsi dicom geojson_import` - Import GeoJSON annotations to DICOM
 
 **GUI Component (`_gui.py`):**
 
@@ -371,13 +371,10 @@ for wsi in wsi_files:
 aignostics wsi inspect slide.svs
 
 # Inspect DICOM metadata
-aignostics wsi dicom-inspect scan.dcm
+aignostics wsi dicom inspect scan.dcm
 
 # Import GeoJSON annotations
-aignostics wsi dicom-geojson-import \
-    --dicom-file scan.dcm \
-    --geojson-file annotations.json \
-    --output annotated.dcm
+aignostics wsi dicom geojson_import scan.dcm annotations.json
 ```
 
 ## Dependencies & Integration
