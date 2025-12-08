@@ -294,8 +294,6 @@ ignore = [
     "ARG",      # unused function args -> fixtures nevertheless are functionally relevant...
     "FBT",      # don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
     "PLR2004",  # magic value used in comparison, ...
-    "PLR0913",  # too many arguments in function definition (factory functions need flexibility)
-    "PLR0917",  # too many positional arguments (factory functions need flexibility)
     "PT011",    # exception to broad
     "PLC2701",  # private import, but required for unit testing
     "PLC0415",  # local import

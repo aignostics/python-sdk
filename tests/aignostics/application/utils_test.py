@@ -29,12 +29,12 @@ from aignostics.platform import (
     ItemState,
     ItemTerminationReason,
     OutputArtifactElement,
+    RunData,
+    RunItemStatistics,
     RunOutput,
     RunState,
     RunTerminationReason,
 )
-
-from .conftest import make_run_data, make_run_item_statistics
 
 TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
 
@@ -377,14 +377,31 @@ def test_get_mime_type_for_output_artifact_element_default() -> None:
 @patch("aignostics.application._utils.console")
 def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
     """Test verbose printing of a single run."""
-    run = make_run_data(
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
+
+    run = RunData(
         run_id="run-123",
         application_id="he-tme",
+        version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=make_run_item_statistics(item_count=5, item_succeeded_count=5, item_pending_count=0),
-        terminated_at=datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC),
+        statistics=RunItemStatistics(
+            item_count=5,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=5,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=terminated_at,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
     )
 
     print_runs_verbose([run])
@@ -400,16 +417,27 @@ def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
     """Test non-verbose printing of runs with errors."""
-    run = make_run_data(
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+
+    run = RunData(
         run_id="run-456",
         application_id="test-app",
         version_number="0.0.1",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_USER,
         output=RunOutput.PARTIAL,
-        statistics=make_run_item_statistics(
-            item_count=3, item_succeeded_count=1, item_user_error_count=2, item_pending_count=0
+        statistics=RunItemStatistics(
+            item_count=3,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=1,
+            item_user_error_count=2,
+            item_system_error_count=0,
         ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=None,
         custom_metadata={"key": "value"},
         error_message="User canceled the run",
         error_code="USER_CANCELED",
@@ -432,9 +460,28 @@ def test_format_queue_position_no_data() -> None:
     """Test queue position formatting when no queue data is available."""
     from aignostics.application._utils import _format_queue_position
 
-    run_data = make_run_data(
+    run_data = RunData(
+        run_id="run-123",
+        application_id="he-tme",
+        version_number="1.0.0",
         state=RunState.PENDING,
-        statistics=make_run_item_statistics(item_count=1, item_pending_count=1, item_succeeded_count=0),
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
         num_preceding_items_org=None,
         num_preceding_items_platform=None,
     )
@@ -454,11 +501,30 @@ def test_format_queue_position_org_only() -> None:
     from aignostics.application._utils import _format_queue_position
     from aignostics.constants import REDACTED_QUEUE_POSITION
 
-    run_data = make_run_data(
+    run_data = RunData(
+        run_id="run-123",
+        application_id="he-tme",
+        version_number="1.0.0",
         state=RunState.PENDING,
-        statistics=make_run_item_statistics(item_count=1, item_pending_count=1, item_succeeded_count=0),
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
         num_preceding_items_org=5,
-        num_preceding_items_platform=REDACTED_QUEUE_POSITION,
+        num_preceding_items_platform=REDACTED_QUEUE_POSITION,  # redacted for external users
     )
 
     result = _format_queue_position(run_data)
@@ -475,9 +541,28 @@ def test_format_queue_position_with_platform() -> None:
     """
     from aignostics.application._utils import _format_queue_position
 
-    run_data = make_run_data(
+    run_data = RunData(
+        run_id="run-123",
+        application_id="he-tme",
+        version_number="1.0.0",
         state=RunState.PENDING,
-        statistics=make_run_item_statistics(item_count=1, item_pending_count=1, item_succeeded_count=0),
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
         num_preceding_items_org=5,
         num_preceding_items_platform=100,
     )
@@ -491,16 +576,32 @@ def test_format_queue_position_with_platform() -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with items."""
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
     # Mock run data
-    run_data = make_run_data(
+    run_data = RunData(
         run_id="run-789",
+        application_id="he-tme",
+        version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=make_run_item_statistics(item_count=2, item_succeeded_count=2, item_pending_count=0),
+        statistics=RunItemStatistics(
+            item_count=2,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=2,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
         terminated_at=terminated_at,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
     )
 
     # Mock item results
@@ -552,12 +653,30 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with no items."""
-    run_data = make_run_data(
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+
+    run_data = RunData(
         run_id="run-empty",
         application_id="test-app",
         version_number="0.0.1",
         state=RunState.PENDING,
-        statistics=make_run_item_statistics(item_count=0, item_pending_count=0, item_succeeded_count=0),
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=0,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
     )
 
     mock_run = MagicMock()

@@ -22,7 +22,6 @@ from aignostics.platform.resources.runs import (
     Runs,
 )
 from aignostics.platform.resources.utils import PAGE_SIZE
-from tests.aignostics.platform.conftest import make_run_item_statistics, make_run_read_response
 
 # Patch path for Client used in is_internal_user tests
 _CLIENT_PATCH_PATH = "aignostics.platform._client.Client"
@@ -588,13 +587,37 @@ def test_run_details_for_user_display_redacts_platform_position_for_external_use
     When the current user is not from an internal organization, the platform
     queue position should be set to REDACTED_QUEUE_POSITION (-1) to prevent exposing internal metrics.
     """
+    from datetime import UTC, datetime
     from unittest.mock import patch
+
+    from aignx.codegen.models import RunItemStatistics, RunOutput, RunState
 
     from aignostics.constants import REDACTED_QUEUE_POSITION
 
     # Create mock run data with both queue positions
-    mock_run_data = make_run_read_response(
-        statistics=make_run_item_statistics(item_count=1, item_pending_count=1, item_succeeded_count=0),
+    mock_run_data = RunReadResponse(
+        run_id="test-run-id",
+        application_id="he-tme",
+        version_number="1.0.0",
+        state=RunState.PENDING,
+        output=RunOutput.NONE,
+        termination_reason=None,
+        error_code=None,
+        error_message=None,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        custom_metadata=None,
+        custom_metadata_checksum=None,
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
         num_preceding_items_org=5,
         num_preceding_items_platform=100,
     )
@@ -621,11 +644,35 @@ def test_run_details_for_user_display_preserves_platform_position_for_internal_u
     When the current user is from an internal organization (e.g., Aignostics),
     both org and platform queue positions should be visible.
     """
+    from datetime import UTC, datetime
     from unittest.mock import patch
 
+    from aignx.codegen.models import RunItemStatistics, RunOutput, RunState
+
     # Create mock run data with both queue positions
-    mock_run_data = make_run_read_response(
-        statistics=make_run_item_statistics(item_count=1, item_pending_count=1, item_succeeded_count=0),
+    mock_run_data = RunReadResponse(
+        run_id="test-run-id",
+        application_id="he-tme",
+        version_number="1.0.0",
+        state=RunState.PENDING,
+        output=RunOutput.NONE,
+        termination_reason=None,
+        error_code=None,
+        error_message=None,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=1,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        custom_metadata=None,
+        custom_metadata_checksum=None,
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by="user@example.com",
+        terminated_at=None,
         num_preceding_items_org=5,
         num_preceding_items_platform=100,
     )
@@ -683,4 +730,3 @@ def test_is_internal_user_returns_false_on_exception() -> None:
     with patch(_CLIENT_PATCH_PATH) as mock_client:
         mock_client.side_effect = Exception("Auth failed")
         assert is_internal_user() is False
-

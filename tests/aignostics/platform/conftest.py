@@ -1,114 +1,12 @@
 """Shared fixtures for platform tests."""
 
 import typing as t
-from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from aignx.codegen.models import RunItemStatistics, RunOutput, RunReadResponse, RunState, RunTerminationReason
 
 from aignostics.platform._client import Client
 from aignostics.platform._operation_cache import _operation_cache
-
-
-def make_run_item_statistics(
-    item_count: int = 1,
-    item_pending_count: int = 0,
-    item_processing_count: int = 0,
-    item_skipped_count: int = 0,
-    item_succeeded_count: int = 1,
-    item_user_error_count: int = 0,
-    item_system_error_count: int = 0,
-) -> RunItemStatistics:
-    """Create a RunItemStatistics instance with sensible defaults.
-
-    Args:
-        item_count: Total number of items.
-        item_pending_count: Number of pending items.
-        item_processing_count: Number of processing items.
-        item_skipped_count: Number of skipped items.
-        item_succeeded_count: Number of succeeded items.
-        item_user_error_count: Number of user error items.
-        item_system_error_count: Number of system error items.
-
-    Returns:
-        RunItemStatistics: A statistics instance with the specified values.
-    """
-    return RunItemStatistics(
-        item_count=item_count,
-        item_pending_count=item_pending_count,
-        item_processing_count=item_processing_count,
-        item_skipped_count=item_skipped_count,
-        item_succeeded_count=item_succeeded_count,
-        item_user_error_count=item_user_error_count,
-        item_system_error_count=item_system_error_count,
-    )
-
-
-def make_run_read_response(
-    run_id: str = "test-run-id",
-    application_id: str = "he-tme",
-    version_number: str = "1.0.0",
-    state: RunState = RunState.PENDING,
-    output: RunOutput = RunOutput.NONE,
-    termination_reason: RunTerminationReason | None = None,
-    error_code: str | None = None,
-    error_message: str | None = None,
-    statistics: RunItemStatistics | None = None,
-    custom_metadata: dict | None = None,
-    custom_metadata_checksum: str | None = None,
-    submitted_at: datetime | None = None,
-    submitted_by: str = "user@example.com",
-    terminated_at: datetime | None = None,
-    num_preceding_items_org: int | None = None,
-    num_preceding_items_platform: int | None = None,
-) -> RunReadResponse:
-    """Create a RunReadResponse instance with sensible defaults.
-
-    Args:
-        run_id: The run ID.
-        application_id: The application ID.
-        version_number: The version number.
-        state: The run state.
-        output: The output status.
-        termination_reason: The termination reason.
-        error_code: Error code if any.
-        error_message: Error message if any.
-        statistics: The item statistics (defaults to single pending item).
-        custom_metadata: Custom metadata dictionary.
-        custom_metadata_checksum: Checksum of custom metadata.
-        submitted_at: When the run was submitted.
-        submitted_by: Who submitted the run.
-        terminated_at: When the run terminated.
-        num_preceding_items_org: Queue position within organization.
-        num_preceding_items_platform: Queue position across platform.
-
-    Returns:
-        RunReadResponse: A run read response with the specified values.
-    """
-    if statistics is None:
-        statistics = make_run_item_statistics()
-    if submitted_at is None:
-        submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    return RunReadResponse(
-        run_id=run_id,
-        application_id=application_id,
-        version_number=version_number,
-        state=state,
-        output=output,
-        termination_reason=termination_reason,
-        error_code=error_code,
-        error_message=error_message,
-        statistics=statistics,
-        custom_metadata=custom_metadata,
-        custom_metadata_checksum=custom_metadata_checksum,
-        submitted_at=submitted_at,
-        submitted_by=submitted_by,
-        terminated_at=terminated_at,
-        num_preceding_items_org=num_preceding_items_org,
-        num_preceding_items_platform=num_preceding_items_platform,
-    )
 
 
 @pytest.fixture
