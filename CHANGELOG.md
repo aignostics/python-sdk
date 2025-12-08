@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.229](https://github.com/aignostics/python-sdk/compare/v0.2.228..0.2.229) - 2025-12-07
+# [0.2.230](https://github.com/aignostics/python-sdk/compare/v0.2.229..0.2.230) - 2025-12-08
+
+### ⛰️  Features
+
+- *(application)* 30s page timeout for home as well - ([a1245f7](https://github.com/aignostics/python-sdk/commit/a1245f7a26dada68a34a22e142d82f1f7ebfca9a))
+
+
+# [v0.2.229](https://github.com/aignostics/python-sdk/compare/v0.2.228..v0.2.229) - 2025-12-07
 
 ### 📚 Documentation
 
@@ -10,9 +17,6 @@
 
 - *(gui)* Enabel gui tests for macos on arm - ([45a4ef7](https://github.com/aignostics/python-sdk/commit/45a4ef702bef59cc4d7f213c25abdb8ccfa8d4c3))
 
-
-
-* @helmut-hoffer-von-ankershoffen made their first contribution in [#323](https://github.com/aignostics/python-sdk/pull/323)
 
 # [v0.2.228](https://github.com/aignostics/python-sdk/compare/v0.2.226..v0.2.228) - 2025-12-07
 
