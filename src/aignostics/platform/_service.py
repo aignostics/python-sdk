@@ -12,8 +12,7 @@ from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import UserReadResponse as User
 from loguru import logger
 from pydantic import BaseModel, computed_field
-
-from aignostics.constants import INTERNAL_ORGS
+from aignostics.platform._utils import is_internal_user
 from aignostics.utils import BaseService, Health, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
@@ -102,7 +101,7 @@ class UserInfo(BaseModel):
         Returns:
             bool: True if it is an internal user, False otherwise.
         """
-        return bool(self.organization and self.organization.name and self.organization.name.lower() in INTERNAL_ORGS)
+        return is_internal_user()
 
     def model_dump_secrets_masked(self) -> dict[str, Any]:
         """Dump model to dict with sensitive organization and user secrets masked.
