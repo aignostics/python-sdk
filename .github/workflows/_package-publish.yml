@@ -39,8 +39,6 @@ jobs:
             experimental: false
           - runner: windows-latest
             experimental: false
-          - runner: windows-11-arm
-            experimental: false
 
     permissions:
       attestations: write
