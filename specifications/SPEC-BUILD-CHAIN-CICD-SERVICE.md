@@ -145,7 +145,7 @@ pull_request:
 strategy:
   matrix:
     runner: [ubuntu-latest, macos-latest, windows-latest]
-    python-version: ["3.11", "3.12", "3.13", "3.14"]
+    python-version: ["3.11", "3.12", "3.13"]
     experimental: [false]
     include:
       - runner: ubuntu-24.04-arm
@@ -320,11 +320,11 @@ uv run nox -s dist    # Package building
 
 ### 6.1 Configuration Parameters
 
-| Parameter              | Type   | Default                              | Description                        | Required |
-| ---------------------- | ------ | ------------------------------------ | ---------------------------------- | -------- |
-| `TEST_PYTHON_VERSIONS` | List   | ["3.11", "3.12", "3.13", "3.14"] | Python versions for testing        | Yes      |
-| `PYTHON_VERSION`       | String | "3.14"                               | Default Python version             | Yes      |
-| `API_VERSIONS`         | List   | ["v1"]                               | API versions to test               | Yes      |
+| Parameter              | Type   | Default                      | Description                        | Required |
+| ---------------------- | ------ | ---------------------------- | ---------------------------------- | -------- |
+| `TEST_PYTHON_VERSIONS` | List   | ["3.11", "3.12", "3.13"]     | Python versions for testing        | Yes      |
+| `PYTHON_VERSION`       | String | "3.13"                       | Default Python version             | Yes      |
+| `API_VERSIONS`         | List   | ["v1"]                       | API versions to test               | Yes      |
 | `JUNIT_XML_PREFIX`     | String | "--junitxml=reports/junit\_" | Test report file prefix            | Yes      |
 | `UTF8`                 | String | "utf-8"                      | Default encoding                   | Yes      |
 | `LATEXMK_VERSION_MIN`  | Float  | 4.86                         | Minimum LaTeX version for PDF docs | No       |

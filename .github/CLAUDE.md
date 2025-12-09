@@ -334,32 +334,30 @@ uv run pytest -m "(scheduled or scheduled_only)" -v
 1. Unit Tests (3 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   ├─ Python 3.13 ─┤
-   └─ Python 3.14 ─┘
+   └─ Python 3.13 ─┘
 
 2. Integration Tests (5 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   ├─ Python 3.13 ─┤
-   └─ Python 3.14 ─┘
+   └─ Python 3.13 ─┘
 
 3. E2E Regular (7 min)
    ├─ Python 3.11 ─┐
    ├─ Python 3.12 ─┼─ Parallel execution
-   ├─ Python 3.13 ─┤
-   └─ Python 3.14 ─┘
+   └─ Python 3.13 ─┘
 
 4. Long Running (if not skipped)
-   └─ Python 3.14 only (single version)
+   └─ Python 3.13 only (single version)
 
 5. Very Long Running (if explicitly enabled)
-   └─ Python 3.14 only (single version)
+   └─ Python 3.13 only (single version)
 ```
 
 **Matrix Testing**:
 
-* Unit, Integration, E2E run on **all four Python versions** (3.11, 3.12, 3.13, 3.14)
-* Long running and very long running run on **Python 3.14 only** to save CI time
+* Unit, Integration, E2E run on **all 3 Python versions** (3.11, 3.12, 3.13)
+* Long running and very long running run on **Python 3.13 only** to save CI time
+* Windows ARM excludes Python 3.12.12 due to instability
 
 ### Skip Markers System
 

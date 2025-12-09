@@ -341,7 +341,7 @@ uvx aignostics application [subcommand] [options]
 | ------------- | -------- | ------------------------------ | ----------------- |
 | aignx-codegen | Latest   | Platform API client generation | Required          |
 | ijson         | >=3.4.0  | QuPath integration             | Optional          |
-| crc32c        | >=2.7.0  | Data integrity verification    | Required          |
+| google-crc32c | >=1.7.1  | Data integrity verification    | Required          |
 | humanize      | >=4.12.3 | Progress formatting            | Required          |
 | tqdm          | >=4.67.1 | CLI progress indicators        | Required          |
 

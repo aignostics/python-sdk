@@ -1,20 +1,16 @@
 """Python SDK providing access to Aignostics AI services."""
 
 import os
-import warnings
 from typing import Any
 
-# TODO(Helmut): remove when google_crc32c supports Python 3.14
-warnings.filterwarnings("ignore", message="As the c extension couldn't be imported", category=RuntimeWarning)
-
-from .constants import (  # noqa: E402
+from .constants import (
     HETA_APPLICATION_ID,
     SENTRY_INTEGRATIONS,
     TEST_APP_APPLICATION_ID,
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from .utils.boot import boot  # noqa: E402
+from .utils.boot import boot
 
 # Add scheme to HTTP proxy environment variables if missing
 for proxy_var in ["HTTP_PROXY", "HTTPS_PROXY"]:

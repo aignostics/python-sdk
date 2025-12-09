@@ -30,7 +30,7 @@ Before proceeding, ensure you have an **Aignostics Platform account**. You can g
 
 ### Requirements
 
-- **Python 3.11, 3.12, 3.13, or 3.14**
+- **Python 3.11, 3.12, or 3.13** (⚠️ Python 3.14 is not yet supported)
 - **macOS 11.0+, Linux, or Windows**
 - **Homebrew** (only if you previously installed `uv` via Homebrew)
 

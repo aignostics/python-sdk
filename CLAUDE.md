@@ -60,7 +60,7 @@ Every module has detailed CLAUDE.md documentation. For module-specific guidance,
 make install          # Install dev dependencies + pre-commit hooks
 make all             # Run lint, test, docs, audit (full CI pipeline)
 make test            # Run tests with coverage
-make test 3.14       # Run tests on specific Python version
+make test 3.12       # Run tests on specific Python version
 make lint            # Ruff formatting + linting + MyPy type checking
 make docs            # Build Sphinx documentation
 make audit           # Security and license compliance checks
@@ -749,12 +749,12 @@ The SDK has a comprehensive test suite organized by test type and execution stra
 **Test Execution Control Markers**:
 
 * **`long_running`** - Tests with timeout **≥ 5 min and < 60 min**
-  * CI/CD runs with **one Python version only** (3.14)
+  * CI/CD runs with **one Python version only** (3.13)
   * Excluded by default in `make test` - use `make test_long_running`
   * Can be skipped in PRs with `skip:test:long_running` label
 
 * **`very_long_running`** - Tests with timeout **≥ 60 min**
-  * CI/CD runs with **one Python version only** (3.14)
+  * CI/CD runs with **one Python version only** (3.13)
   * Excluded by default in `make test` - use `make test_very_long_running`
   * Only runs when explicitly enabled with `enable:test:very_long_running` label
 
@@ -822,7 +822,6 @@ make test_scheduled         # Scheduled tests
 # Run on specific Python version
 make test 3.12              # Python 3.12
 make test 3.13              # Python 3.13
-make test 3.14              # Python 3.14
 ```
 
 **Direct pytest commands:**
@@ -1163,7 +1162,7 @@ gh pr edit --add-label "skip:test_long_running"
 
 * Lint checks (~5 min)
 * Security audit (~3 min)
-* Test matrix on Python 3.11, 3.12, 3.13, 3.14 (~15 min)
+* Test matrix on Python 3.11, 3.12, 3.13 (~15 min)
 * CodeQL security scanning (~10 min)
 * Claude Code automated review (~10 min)
 * Ketryx compliance reporting
@@ -1207,7 +1206,6 @@ uv run nox -s test -- -m unit  # Specific markers
 uv run nox -s test-3.11
 uv run nox -s test-3.12
 uv run nox -s test-3.13
-uv run nox -s test-3.14
 
 # Documentation
 uv run nox -s docs           # Build Sphinx docs
@@ -1596,7 +1594,7 @@ uv run nox --list
 uv run nox -s lint
 
 # Run session with specific Python version
-uv run nox -s test-3.14.1
+uv run nox -s test-3.13.7
 
 # Run multiple sessions
 uv run nox -s lint audit

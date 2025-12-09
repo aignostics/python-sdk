@@ -18,7 +18,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import IO, Any
 
-import crc32c
+import google_crc32c
 import requests
 from aignx.codegen.models import InputArtifact as InputArtifactData
 from aignx.codegen.models import OutputArtifact as OutputArtifactData
@@ -114,7 +114,7 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
         ValueError: If the downloaded file's checksum doesn't match the expected value.
         requests.HTTPError: If the download request fails.
     """
-    checksum = crc32c.CRC32CHash()
+    checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
     with requests.get(signed_url, stream=True, timeout=60) as stream:
         stream.raise_for_status()
         with open(file_path, mode="wb") as file:
@@ -123,10 +123,10 @@ def download_file(signed_url: str, file_path: str, verify_checksum: str) -> None
             for chunk in stream.iter_content(chunk_size=EIGHT_MB):
                 if chunk:
                     file.write(chunk)
-                    checksum.update(chunk)
+                    checksum.update(chunk)  # type: ignore[no-untyped-call]
                     progress_bar.update(len(chunk))
             progress_bar.close()
-    downloaded_file = base64.b64encode(checksum.digest()).decode("ascii")
+    downloaded_file = base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
     if downloaded_file != verify_checksum:
         msg = f"Checksum mismatch: {downloaded_file} != {verify_checksum}"
         raise ValueError(msg)
@@ -181,11 +181,12 @@ def calculate_file_crc32c(file: Path) -> str:
     Returns:
         str: The CRC32C checksum in base64 encoding.
     """
-    checksum = crc32c.CRC32CHash()
+    checksum = google_crc32c.Checksum()  # type: ignore[no-untyped-call]
     with open(file, mode="rb") as f:
-        while chunk := f.read(EIGHT_MB):
-            checksum.update(chunk)
-    return base64.b64encode(checksum.digest()).decode("ascii")
+        # Iterate through file chunks - checksum is calculated as side effect of consume()
+        for _ in checksum.consume(f, EIGHT_MB):  # type: ignore[no-untyped-call]
+            continue  # Consume all chunks; checksum accumulates internally
+    return base64.b64encode(checksum.digest()).decode("ascii")  # type: ignore[no-untyped-call]
 
 
 @contextlib.contextmanager
