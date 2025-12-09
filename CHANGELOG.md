@@ -1,6 +1,28 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.230](https://github.com/aignostics/python-sdk/compare/v0.2.229..0.2.230) - 2025-12-08
+# [0.2.231](https://github.com/aignostics/python-sdk/compare/v0.2.230..0.2.231) - 2025-12-09
+
+### 🧪 Testing
+
+- Fix skip - ([cdb67fa](https://github.com/aignostics/python-sdk/commit/cdb67fa00a78cd55530a26421c721a9c49015581))
+- Disable test_cli_application_run_prepare_upload_submit_fail_on_mpp given changed error message in heta - ([cad6763](https://github.com/aignostics/python-sdk/commit/cad6763fe348ba095e9382b0db7869698c643e71))
+- Fix broken tests ([#327](https://github.com/orhun/git-cliff/issues/327)) - ([8524a6b](https://github.com/aignostics/python-sdk/commit/8524a6b9e9a4545337f5922ca378339b7fd23f91))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Nicegui 3.4.0 and urllib 2.6.1 ([#326](https://github.com/orhun/git-cliff/issues/326)) - ([0ee9ecd](https://github.com/aignostics/python-sdk/commit/0ee9ecd2df13ce6cb23ba27d44add2bbcd510a78))
+- *(deps)* Bump astral-sh/setup-uv from 7.1.4 to 7.1.5 ([#324](https://github.com/orhun/git-cliff/issues/324)) - ([a62286e](https://github.com/aignostics/python-sdk/commit/a62286e5785691f5b6c5c1a5c909a70170fcc88b))
+- *(gha)* No longer build natively for Windows on ARM - ([86bdf17](https://github.com/aignostics/python-sdk/commit/86bdf176e6afe551e456ab101b9f4902cd69f8af))
+- Oliver Meyer <42039965+olivermeyer@users.noreply.github.com> - ([0ee9ecd](https://github.com/aignostics/python-sdk/commit/0ee9ecd2df13ce6cb23ba27d44add2bbcd510a78))
+- Bump macos-13 runner to macos-15-intel ([#328](https://github.com/orhun/git-cliff/issues/328)) - ([b85ab72](https://github.com/aignostics/python-sdk/commit/b85ab72db56fedc3f00a79b169468629e74026ec))
+- Astral-sh/setup-uv - ([a62286e](https://github.com/aignostics/python-sdk/commit/a62286e5785691f5b6c5c1a5c909a70170fcc88b))
+- Dependabot[bot] <support@github.com> - ([a62286e](https://github.com/aignostics/python-sdk/commit/a62286e5785691f5b6c5c1a5c909a70170fcc88b))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([a62286e](https://github.com/aignostics/python-sdk/commit/a62286e5785691f5b6c5c1a5c909a70170fcc88b))
+- Helmut Hoffer von Ankershoffen né Oertel <helmut@aignostics.com> - ([a62286e](https://github.com/aignostics/python-sdk/commit/a62286e5785691f5b6c5c1a5c909a70170fcc88b))
+- Increase stress test slides - ([c67289a](https://github.com/aignostics/python-sdk/commit/c67289ab898c653c0208fd5142ada15bfe8beefc))
+
+
+# [v0.2.230](https://github.com/aignostics/python-sdk/compare/v0.2.229..v0.2.230) - 2025-12-08
 
 ### ⛰️  Features
 
