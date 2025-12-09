@@ -35,7 +35,7 @@ jobs:
             experimental: false
           - runner: macos-latest
             experimental: false
-          - runner: macos-13
+          - runner: macos-15-intel
             experimental: false
           - runner: windows-latest
             experimental: false

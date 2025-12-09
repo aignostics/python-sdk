@@ -450,7 +450,7 @@ Build standalone native executables for distribution without Python runtime depe
 | **Linux x86_64** | ubuntu-latest | ✅ Stable | Primary platform |
 | **Linux ARM64** | ubuntu-24.04-arm | ⚠️ Experimental | continue-on-error |
 | **macOS ARM (M1+)** | macos-latest | ⚠️ Experimental | Apple Silicon |
-| **macOS Intel** | macos-13 | ⚠️ Experimental | Intel chips |
+| **macOS Intel** | macos-15-intel | ⚠️ Experimental | Intel chips |
 | **Windows x86_64** | windows-latest | ⚠️ Experimental | With UPX compression |
 | **Windows ARM64** | windows-11-arm | ⚠️ Experimental | ARM-based Windows |
 
