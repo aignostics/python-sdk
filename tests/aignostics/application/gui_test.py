@@ -89,10 +89,7 @@ async def test_gui_cli_submit_to_run_result_delete(
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-
         application = Service().application(HETA_APPLICATION_ID)
-        latest_version_number = application.versions[0].number if application.versions else None
-        assert latest_version_number is not None, f"No versions found for application {HETA_APPLICATION_ID}"
 
         # Submit run
         csv_content = (
@@ -110,6 +107,8 @@ async def test_gui_cli_submit_to_run_result_delete(
                 "submit",
                 HETA_APPLICATION_ID,
                 str(csv_path),
+                "--application-version",
+                HETA_APPLICATION_VERSION,
                 "--note",
                 "test_gui_cli_submit_to_run_result_delete",
                 "--tags",
@@ -141,11 +140,11 @@ async def test_gui_cli_submit_to_run_result_delete(
         # Navigate to the extracted run ID
         await user.open(f"/application/run/{run_id}")
         await user.should_see(
-            f"Run of {application.application_id} ({latest_version_number})",
+            f"Run of {application.application_id} ({HETA_APPLICATION_VERSION})",
             retries=100,
         )
         await user.should_see(
-            f"Application: {application.application_id} ({latest_version_number})",
+            f"Application: {application.application_id} ({HETA_APPLICATION_VERSION})",
             retries=100,
         )
         try:

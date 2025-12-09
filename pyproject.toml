@@ -337,7 +337,11 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 10 # We use a rather short default timeout. Override with @pytest.mark.timeout(timeout=N)
 # timeout_method="signal" 
-env = ["COVERAGE_FILE=.coverage", "COVERAGE_PROCESS_START=pyproject.toml"]
+env = [
+    "COVERAGE_FILE=.coverage",
+    "COVERAGE_PROCESS_START=pyproject.toml",
+    "COLUMNS=10000",  # Prevent Rich console from wrapping text, which can break string assertions
+]
 markers = [
     # From Template
     "no_extras: Tests that do require no extras installed.",
