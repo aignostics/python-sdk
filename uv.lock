@@ -40,7 +40,7 @@ dependencies = [
     { name = "fastparquet", marker = "python_full_version < '3.14'" },
     { name = "google-cloud-storage" },
     { name = "h11" },
-    { name = "highdicom" },
+    { name = "highdicom", marker = "python_full_version < '3.14'" },
     { name = "html-sanitizer" },
     { name = "httpx" },
     { name = "humanize" },
@@ -61,7 +61,6 @@ dependencies = [
     { name = "psutil" },
     { name = "pyarrow", marker = "python_full_version >= '3.14'" },
     { name = "pydantic-settings" },
-    { name = "pyjpegls", marker = "python_full_version < '3.14'" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dateutil" },
     { name = "pywin32", marker = "sys_platform == 'win32'" },
@@ -169,7 +168,7 @@ requires-dist = [
     { name = "fastparquet", marker = "python_full_version < '3.14'", specifier = ">=2024.11.0" },
     { name = "google-cloud-storage", specifier = ">=3.6.0,<4" },
     { name = "h11", specifier = ">=0.16.0" },
-    { name = "highdicom", specifier = ">=0.26.1,<1" },
+    { name = "highdicom", marker = "python_full_version < '3.14'", specifier = ">=0.26.1,<1" },
     { name = "html-sanitizer", specifier = ">=2.6.0,<3" },
     { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "humanize", specifier = ">=4.14.0,<5" },
@@ -198,7 +197,6 @@ requires-dist = [
     { name = "pyarrow", marker = "python_full_version >= '3.14'", specifier = ">=22.0.0,<23" },
     { name = "pydantic-settings", specifier = ">=2.12.0,<3" },
     { name = "pyinstaller", marker = "extra == 'pyinstaller'", specifier = ">=6.14.0,<7" },
-    { name = "pyjpegls", marker = "python_full_version < '3.14'" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10.1,<3" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0,<3" },
     { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=311,<312" },
@@ -2402,11 +2400,11 @@ name = "highdicom"
 version = "0.27.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy" },
-    { name = "pillow" },
-    { name = "pydicom" },
-    { name = "pyjpegls" },
-    { name = "typing-extensions" },
+    { name = "numpy", marker = "python_full_version < '3.14'" },
+    { name = "pillow", marker = "python_full_version < '3.14'" },
+    { name = "pydicom", marker = "python_full_version < '3.14'" },
+    { name = "pyjpegls", marker = "python_full_version < '3.14'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.14'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/46/00/a44494d45e27fefeeb9e1ecc294aa8333a1b98719615751d277ef609aaf9/highdicom-0.27.0.tar.gz", hash = "sha256:4999b62a4fc1e58ae1d25eb12058dae3b83d816a6214c00e342356a3ad0774f2", size = 1129146, upload-time = "2025-10-24T19:22:16.871Z" }
 wheels = [
@@ -5293,7 +5291,7 @@ name = "pyjpegls"
 version = "1.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy" },
+    { name = "numpy", marker = "python_full_version < '3.14'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2c/59/98f5e19752ae8ffea9b0d15b4ad3b20022d96479201b9674d4708e3293d1/pyjpegls-1.5.1.tar.gz", hash = "sha256:d0fe09dfb7f75ce78e3b1e0519912a42f1827d68bbc3609652f4f8743c956025", size = 1103288, upload-time = "2024-10-28T11:23:24.705Z" }
 wheels = [
