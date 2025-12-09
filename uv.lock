@@ -18,7 +18,6 @@ overrides = [
     { name = "lxml", specifier = ">=6.0.2" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pip", specifier = ">=5.3" },
-    { name = "pyjpegls", marker = "python_full_version < '3.14'" },
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "rfc3987", marker = "sys_platform == 'never'" },
     { name = "starlette", specifier = ">=0.47.2" },
@@ -2390,7 +2389,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pillow" },
     { name = "pydicom" },
-    { name = "pyjpegls", marker = "python_full_version < '3.14'" },
+    { name = "pyjpegls" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/46/00/a44494d45e27fefeeb9e1ecc294aa8333a1b98719615751d277ef609aaf9/highdicom-0.27.0.tar.gz", hash = "sha256:4999b62a4fc1e58ae1d25eb12058dae3b83d816a6214c00e342356a3ad0774f2", size = 1129146, upload-time = "2025-10-24T19:22:16.871Z" }
@@ -5278,7 +5277,7 @@ name = "pyjpegls"
 version = "1.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", marker = "python_full_version < '3.14'" },
+    { name = "numpy" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2c/59/98f5e19752ae8ffea9b0d15b4ad3b20022d96479201b9674d4708e3293d1/pyjpegls-1.5.1.tar.gz", hash = "sha256:d0fe09dfb7f75ce78e3b1e0519912a42f1827d68bbc3609652f4f8743c956025", size = 1103288, upload-time = "2024-10-28T11:23:24.705Z" }
 wheels = [
