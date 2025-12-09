@@ -73,9 +73,9 @@ async def test_gui_home_to_application(  # noqa: PLR0913, PLR0917
     await user.should_see(expected_text, retries=300)
 
 
-# @pytest.mark.e2e
-# @pytest.mark.long_running
-# @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
+@pytest.mark.e2e
+@pytest.mark.long_running
+@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
 async def test_gui_cli_submit_to_run_result_delete(
