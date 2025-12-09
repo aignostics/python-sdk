@@ -107,6 +107,90 @@ You should see the Aignostics CLI help output.
 
 You can then proceed by choosing your preferred user interface below.
 
+## Platform Workflow Overview
+
+The Aignostics Platform delivers enterprise-grade computational pathology through a secure, scalable cloud architecture. Organizations subscribe to the platform, and their users interact through three interfaces - all part of the Python SDK - to leverage advanced AI/ML models running on dedicated NVIDIA® GPU infrastructure.
+
+**Key architectural components:**
+
+- **Python SDK**: Provides three user interfaces (Launchpad desktop app, CLI, and Client Library) with unified functionality
+- **Enterprise authentication**: Powered by Auth0, supporting Single Sign-On (SSO) and existing identity management systems
+- **Organization storage**: Dedicated Google Cloud Storage bucket per organization with automatic 30-day cleanup
+- **Aignostics Platform API**: Orchestrates application discovery, run submission, status monitoring, and results delivery
+- **NVIDIA® GPU clusters**: Dedicated compute provisioned per application run for maximum security and compliance
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User<br/>(Organization Member)
+    participant SDK as Python SDK<br/>(Launchpad/CLI/Client Library)
+    participant Auth0 as Auth0<br/>(Enterprise Identity)
+    participant Bucket as Organization Bucket<br/>(Google Cloud Storage)
+    participant API as Aignostics Platform API
+    participant GPU as NVIDIA® GPU Cluster<br/>(per-run isolation)
+
+    Note over User,GPU: Authentication & Authorization
+    User->>SDK: Launch interface
+    SDK->>Auth0: Authenticate user
+    Auth0-->>SDK: Access token
+    SDK->>API: Validate token
+    API-->>SDK: User authorized
+
+    Note over User,GPU: Application Selection
+    User->>SDK: Browse applications
+    SDK->>API: List applications & versions
+    API-->>SDK: Application catalog
+    SDK-->>User: Display options
+
+    Note over User,GPU: Data Upload
+    User->>SDK: Select WSIs + metadata
+    SDK->>Bucket: Upload files
+    Note over Bucket: 30-day auto-cleanup
+    Bucket-->>SDK: Upload complete
+    SDK->>SDK: Generate signed download URLs
+
+    Note over User,GPU: Run Submission
+    SDK->>API: Submit run (app, metadata, signed URLs)
+    API-->>SDK: Run ID + queue position
+    SDK-->>User: Confirm submission
+
+    Note over User,GPU: GPU Processing
+    API->>GPU: Provision dedicated NVIDIA® cluster
+    GPU->>Bucket: Download WSIs via signed URLs
+    GPU->>GPU: Process slides incrementally
+    GPU->>API: Upload results per slide
+    Note over GPU: Deprovision after completion
+
+    Note over User,GPU: Status Monitoring & Results
+    User->>SDK: Check status
+    SDK->>API: Poll run status
+    API-->>SDK: Progress (e.g., "3 of 10 complete")
+    SDK-->>User: Display progress
+
+    User->>SDK: Download results
+    SDK->>API: Request result URLs
+    API-->>SDK: Signed download URLs
+    SDK->>API: Download files (GeoJSON, CSV, TIFF)
+    SDK-->>User: Results ready for inspection
+```
+
+**How it works:**
+
+Organizations subscribe to the Aignostics Platform and receive dedicated infrastructure including a Google Cloud Storage bucket and API access. Users within the organization authenticate through Auth0, which integrates with enterprise identity management systems for seamless Single Sign-On (SSO).
+
+The Python SDK - available as a desktop application (Launchpad), command-line interface (CLI), or programmable library (Client Library) - handles all complexity of authentication, data upload, run orchestration, and results delivery. Users simply select an application, provide whole slide images with metadata, and submit.
+
+Behind the scenes, the Aignostics Platform API provisions dedicated NVIDIA® GPU clusters for each application run, ensuring data isolation and compliance with healthcare regulations. Processing occurs incrementally (slide-by-slide), allowing users to monitor progress and download results as they become available rather than waiting for entire cohorts.
+
+The organization's Google Cloud Storage bucket stores uploaded files with automatic 30-day cleanup, optimizing costs while maintaining data availability throughout processing. All data transfers use time-limited signed URLs, eliminating credential management complexity and security risks.
+
+**Enterprise benefits:**
+
+- **Security & compliance**: Per-run GPU isolation, enterprise SSO integration, zero-trust architecture with signed URLs
+- **Scalability**: Handles single exploratory slides through thousand-slide clinical studies with identical user experience
+- **Cost efficiency**: Pay-per-use GPU provisioning, automatic storage cleanup, no idle infrastructure costs
+- **Operational simplicity**: Python SDK abstracts all cloud complexity; IT teams manage access through existing identity systems
+
 ## Choose your interface
 
 Choose your preferred interface for working with the Aignostics Platform. Each interface is designed for different user roles and use cases:
