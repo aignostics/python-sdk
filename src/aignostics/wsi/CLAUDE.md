@@ -213,9 +213,13 @@ def get_tile(
 
 ### DICOM WSI File Filtering
 
-**Multi-File DICOM Pyramid Selection (`PydicomHandler.select_wsi_files()`):**
+**Multi-File DICOM Pyramid Selection (`_utils.select_dicom_files()`):**
 
 The WSI module automatically handles multi-file DICOM pyramids (whole slide images stored across multiple DICOM instances) by selecting only the highest resolution file from each pyramid. This prevents redundant processing since OpenSlide can automatically find related pyramid files in the same directory.
+
+**Implementation Location:**
+
+The DICOM file selection logic is implemented in `_utils.py` as `select_dicom_files()`. This function **only depends on pydicom** (not highdicom), making it compatible with Python 3.14+ where highdicom is not available.
 
 **Service Integration (`Service.get_wsi_files_to_process()`):**
 ```python
@@ -237,9 +241,19 @@ tiff_files = Service.get_wsi_files_to_process(
 # Returns all .tiff files (no filtering)
 ```
 
+**Direct Usage (Advanced):**
+```python
+from aignostics.wsi._utils import select_dicom_files
+from pathlib import Path
+
+# Directly filter DICOM files (used internally by Service)
+dicom_files = select_dicom_files(Path("/data/dicoms"))
+# Returns only highest resolution WSI files
+```
+
 **Filtering Strategy:**
 ```python
-def select_wsi_files(self) -> list[Path]:
+def select_dicom_files(path: Path) -> list[Path]:
     """Select WSI files only, excluding auxiliary and redundant files.
     
     Filtering Strategy:
@@ -316,6 +330,17 @@ for file_path in files:
     metadata = WSIService.get_metadata(file_path)
 ```
 
+**Module Architecture:**
+
+The DICOM file selection functionality is organized as follows:
+- **`_utils.py`**: Contains `select_dicom_files()` and `_find_highest_resolution_files()` helper
+  - Only depends on `pydicom`, `pathlib`, `collections.defaultdict`, and `loguru`
+  - Compatible with Python 3.14+ (no highdicom dependency)
+- **`_service.py`**: Uses `select_dicom_files()` in `get_wsi_files_to_process()`
+- **`_pydicom_handler.py`**: Uses `select_dicom_files()` for metadata extraction with `wsi_only=True`
+  - This module still requires highdicom for annotation/measurement features
+  - Only the CLI commands that need highdicom (geojson import, detailed inspection) use PydicomHandler
+
 
 ## Usage Patterns
 
@@ -389,8 +414,17 @@ aignostics wsi dicom geojson_import scan.dcm annotations.json
 
 - `openslide-python` - Core WSI reading functionality
 - `Pillow` - Image processing and thumbnail generation
-- `pydicom` - DICOM file handling
+- `pydicom` - DICOM file handling (required for basic DICOM WSI operations)
 - `numpy` - Array manipulation for pixel data
+- `highdicom` - DICOM annotation/measurement features (optional, not available on Python 3.14+)
+
+**Python 3.14+ Compatibility:**
+
+The core WSI functionality (thumbnail generation, metadata extraction, DICOM file selection) works on Python 3.14+ without highdicom. Only the following CLI commands require highdicom and are unavailable on Python 3.14+:
+- `aignostics wsi dicom geojson_import` - Import GeoJSON to DICOM annotations
+- Detailed annotation/measurement inspection features
+
+The DICOM file selection logic (`select_dicom_files()`) works on all Python versions since it only depends on `pydicom`.
 
 ### Format Support Matrix
 
