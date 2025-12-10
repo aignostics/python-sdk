@@ -15,6 +15,12 @@ SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
 SMALL_PYRAMIDAL_STUDY_UID = "Study: 2.25.150973379448125660359643882019624926008"
 
+# Skip tests requiring highdicom on Python 3.14+ (highdicom not yet supported)
+SKIP_HIGHDICOM_PYTHON_314 = pytest.mark.skipif(
+    sys.version_info[:2] >= (3, 14),
+    reason="highdicom is not available on Python 3.14+",
+)
+
 
 @pytest.mark.integration
 @pytest.mark.timeout(timeout=60 * 5)
@@ -36,6 +42,7 @@ def test_inspect_openslide_dicom(runner: CliRunner, record_property) -> None:
     )
 
 
+@SKIP_HIGHDICOM_PYTHON_314
 @pytest.mark.skipif(
     sys.platform == "win32" and platform.machine().lower() in {"arm64", "aarch64"} and sys.version_info[:2] == (3, 12),
     reason="Skipping on Windows ARM with Python 3.12.x",
@@ -57,6 +64,7 @@ def test_inspect_pydicom_directory_non_verbose(runner: CliRunner, record_propert
     )
 
 
+@SKIP_HIGHDICOM_PYTHON_314
 @pytest.mark.skipif(
     platform.system() == "Windows"
     and platform.machine().lower() in {"arm64", "aarch64"}
@@ -84,6 +92,7 @@ def test_inspect_pydicom_directory_verbose(runner: CliRunner, record_property) -
     )
 
 
+@SKIP_HIGHDICOM_PYTHON_314
 @pytest.mark.skipif(
     platform.system() == "Windows"
     and platform.machine().lower() in {"arm64", "aarch64"}
@@ -101,6 +110,7 @@ def test_inspect_pydicom_single_file_non_verbose(runner: CliRunner, record_prope
     assert SMALL_PYRAMIDAL_STUDY_UID in result.output
 
 
+@SKIP_HIGHDICOM_PYTHON_314
 @pytest.mark.skipif(
     platform.system() == "Windows"
     and platform.machine().lower() in {"arm64", "aarch64"}
@@ -125,6 +135,7 @@ def test_inspect_pydicom_single_file_verbose(runner: CliRunner, record_property)
     )
 
 
+@SKIP_HIGHDICOM_PYTHON_314
 @pytest.mark.skipif(
     platform.system() == "Windows"
     and platform.machine().lower() in {"arm64", "aarch64"}
@@ -165,6 +176,7 @@ def test_wsi_inspect_error_handling(runner: CliRunner, record_property) -> None:
         assert str(file_path) in normalize_output(result.output)
 
 
+@SKIP_HIGHDICOM_PYTHON_314
 @pytest.mark.integration
 @pytest.mark.timeout(timeout=60 * 5)
 def test_wsi_dicom_inspect_error_handling(runner: CliRunner, record_property) -> None:
@@ -184,6 +196,7 @@ def test_wsi_dicom_inspect_error_handling(runner: CliRunner, record_property) ->
         assert "Invalid DICOM structure" in normalize_output(result.output)
 
 
+@SKIP_HIGHDICOM_PYTHON_314
 @pytest.mark.integration
 @pytest.mark.timeout(timeout=60 * 5)
 def test_wsi_dicom_geojson_import_error_handling(runner: CliRunner, record_property) -> None:
