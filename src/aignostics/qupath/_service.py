@@ -42,6 +42,7 @@ QUPATH_SCRIPT_MAX_EXECUTION_TIME = 60 * 60 * 2  # seconds, maximum wait time for
 
 PROJECT_FILENAME = "project.qpproj"
 ANNOTATIONS_BATCH_SIZE = 500000
+JSON_SUFFIX = ".json"
 
 
 class QuPathVersion(BaseModel):
@@ -1124,40 +1125,46 @@ class Service(BaseService):
             progress_callable(progress)
 
         # We communicate via file I/O with the Groovy script running within QuPath
-        with (
-            tempfile.NamedTemporaryFile(mode="w", suffix=".json", encoding="utf-8") as paths_file,
-            tempfile.NamedTemporaryFile(mode="w", suffix=".json", encoding="utf-8") as output_file,
-        ):
-            try:
-                json.dump([str(path.resolve()) for path in paths], paths_file.file)
-                paths_file.flush()
+        # Use delete=False to avoid Windows file locking issues - the file must be closed
+        # before QuPath can read it, but NamedTemporaryFile keeps files locked while open on Windows
+        paths_file = tempfile.NamedTemporaryFile(mode="w", suffix=JSON_SUFFIX, encoding="utf-8", delete=False)  # noqa: SIM115
+        output_file = tempfile.NamedTemporaryFile(mode="w", suffix=JSON_SUFFIX, encoding="utf-8", delete=False)  # noqa: SIM115
+        try:
+            # Write paths and close file so QuPath can read it
+            json.dump([str(path.resolve()) for path in paths], paths_file)
+            paths_file.close()
+            output_file.close()
 
-                pid = Service.execute_qupath(
-                    script=Service._find_groovy_script("add"),
-                    script_args=[str(project), str(paths_file.name), str(output_file.name)],
-                )
+            pid = Service.execute_qupath(
+                script=Service._find_groovy_script("add"),
+                script_args=[str(project), paths_file.name, output_file.name],
+            )
 
-                if not pid:
-                    message = "Failed to execute QuPath script for adding images."
-                    logger.error(message)
-                    raise RuntimeError(message)  # noqa: TRY301
+            if not pid:
+                message = "Failed to execute QuPath script for adding images."
+                logger.error(message)
+                raise RuntimeError(message)  # noqa: TRY301
 
-                with Path(output_file.name).open("r", encoding="utf-8") as f:
-                    result_data = json.load(f)
-                added_count = int(result_data.get("added_count", 0))
-                errors = result_data.get("errors", [])
-                for error in errors:
-                    logger.warning(f"QuPath add script error: {error}")
+            with Path(output_file.name).open("r", encoding="utf-8") as f:
+                result_data = json.load(f)
+            added_count = int(result_data.get("added_count", 0))
+            errors = result_data.get("errors", [])
+            for error in errors:
+                logger.warning(f"QuPath add script error: {error}")
 
-                if progress_callable:
-                    progress.status = AddProgressState.COMPLETED
-                    progress_callable(progress)
+            if progress_callable:
+                progress.status = AddProgressState.COMPLETED
+                progress_callable(progress)
 
-                return added_count
-            except Exception as e:
-                message = f"Failed to add images to QuPath project: {e!s}"
-                logger.exception(message)
-                raise RuntimeError(message) from e
+            return added_count
+        except Exception as e:
+            message = f"Failed to add images to QuPath project: {e!s}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        finally:
+            # Clean up temp files
+            Path(paths_file.name).unlink(missing_ok=True)
+            Path(output_file.name).unlink(missing_ok=True)
 
     @staticmethod
     def annotate(
@@ -1246,9 +1253,12 @@ class Service(BaseService):
             RuntimeError: If there is an error inspecting the project.
         """
         # We communicate via file I/O with the Groovy script running within QuPath
-        with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", encoding="utf-8") as temp_file:
-            output_file = Path(temp_file.name).resolve()
-
+        # Use delete=False to avoid Windows file locking issues - the file must be closed
+        # before QuPath can write to it, but NamedTemporaryFile keeps files locked while open on Windows
+        temp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=JSON_SUFFIX, encoding="utf-8", delete=False)  # noqa: SIM115
+        output_file = Path(temp_file.name).resolve()
+        temp_file.close()
+        try:
             pid = Service.execute_qupath(
                 quiet=True,
                 project=project,
@@ -1267,3 +1277,5 @@ class Service(BaseService):
                 raise RuntimeError(message)
 
             return QuPathProject.model_validate_json(output_file.read_text(encoding="utf-8"))
+        finally:
+            output_file.unlink(missing_ok=True)
