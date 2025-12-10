@@ -11,7 +11,9 @@ from typing import Any
 
 from html_sanitizer import Sanitizer
 from humanize import naturaldelta
+from loguru import logger
 
+from aignostics.constants import WINDOW_TITLE
 from aignostics.utils import __version__, open_user_data_directory
 
 from ._theme import theme
@@ -101,15 +103,16 @@ def frame(  # noqa: C901, PLR0915
 
                 # Find window by title since pywebview doesn't expose hwnd directly
                 # FindWindowW(lpClassName, lpWindowName) - use None for class to match any
-                hwnd = ctypes.windll.user32.FindWindowW(None, "Aignostics Launchpad")  # type: ignore
+                hwnd = ctypes.windll.user32.FindWindowW(None, WINDOW_TITLE)  # type: ignore
                 if hwnd:
                     ctypes.windll.user32.SetForegroundWindow(hwnd)  # type: ignore
             else:
                 app.native.main_window.set_always_on_top(True)
                 app.native.main_window.show()
                 app.native.main_window.set_always_on_top(False)
-        except Exception:  # noqa: S110
-            pass  # Window operations can fail on some platforms
+        except Exception as e:
+            logger.exception(f"Failed to bring window to front: {e}")
+            # Window operations can fail on some platforms
 
     user_info: UserInfo | None = None
     launchpad_healthy: bool | None = None
@@ -168,6 +171,8 @@ def frame(  # noqa: C901, PLR0915
         _user_info_ui.refresh()
         with contextlib.suppress(Exception):
             user_info = await run.io_bound(PlatformService.get_user_info, relogin=True)
+            if user_info:
+                _bring_window_to_front()
             app.storage.tab["user_info"] = user_info
         ui.navigate.reload()
 

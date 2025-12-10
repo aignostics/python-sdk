@@ -23,7 +23,7 @@ if pyi_splash and pyi_splash.is_alive():
 
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
-from aignostics.constants import SENTRY_INTEGRATIONS  # noqa: E402
+from aignostics.constants import SENTRY_INTEGRATIONS, WINDOW_TITLE  # noqa: E402
 from aignostics.utils import boot, gui_run  # noqa: E402
 
 boot(SENTRY_INTEGRATIONS)
@@ -80,4 +80,4 @@ elif len(sys.argv) > 1 and sys.argv[1] == DEBUG_FLAG:
 else:
     if pyi_splash and pyi_splash.is_alive():
         pyi_splash.update_text("Opening user interface ...")
-    gui_run(native=True, with_api=False, title="Aignostics Launchpad", icon="🔬")
+    gui_run(native=True, with_api=False, title=WINDOW_TITLE, icon="🔬")
