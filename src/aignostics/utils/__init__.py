@@ -22,7 +22,7 @@ from ._constants import (
     __version__,
     __version_full__,
 )
-from ._di import load_modules, locate_implementations, locate_subclasses
+from ._di import discover_plugin_packages, load_modules, locate_implementations, locate_subclasses
 from ._fs import get_user_data_directory, open_user_data_directory, sanitize_path, sanitize_path_component
 from ._health import Health
 from ._log import LogSettings
@@ -60,6 +60,7 @@ __all__ = [
     "__version_full__",
     "boot",
     "console",
+    "discover_plugin_packages",
     "get_process_info",
     "get_user_data_directory",
     "load_modules",
