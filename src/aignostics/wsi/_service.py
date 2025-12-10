@@ -12,7 +12,7 @@ from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.utils import BaseService, Health
 
 from ._openslide_handler import DEFAULT_MAX_SAFE_DIMENSION
-from ._pydicom_handler import PydicomHandler
+from ._utils import select_dicom_files
 
 TIMEOUT = 60  # 1 minutes
 
@@ -195,9 +195,9 @@ class Service(BaseService):
             Iterable of Path objects for files to process.
         """
         files_to_process: Iterable[Path]
-        if extension == ".dcm":
+        if extension == ".dcm":  # noqa: SIM108
             # Special handling for DICOM files - filter out auxiliary and redundant files
-            files_to_process = PydicomHandler.from_file(str(path)).select_wsi_files()
+            files_to_process = select_dicom_files(path)
         else:
             # For non-DICOM formats, process all files with this extension
             files_to_process = path.glob(f"**/*{extension}")
