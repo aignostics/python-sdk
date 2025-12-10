@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.233](https://github.com/aignostics/python-sdk/compare/v0.2.232..0.2.233) - 2025-12-10
+# [0.2.234](https://github.com/aignostics/python-sdk/compare/v0.2.233..0.2.234) - 2025-12-10
+
+### ⛰️  Features
+
+- *(gui)* Enable plugins to contribute nav items to right sidebar - ([2d4e327](https://github.com/aignostics/python-sdk/commit/2d4e327beb2ec7bca97cb7d541b351a606ee8289))
+
+
+# [v0.2.233](https://github.com/aignostics/python-sdk/compare/v0.2.232..v0.2.233) - 2025-12-10
 
 ### ⛰️  Features
 
