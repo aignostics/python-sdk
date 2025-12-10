@@ -25,7 +25,7 @@ wheels = [
 
 [[package]]
 name = "aignostics"
-version = "0.2.231"
+version = "0.2.232"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

@@ -1,6 +1,18 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.231](https://github.com/aignostics/python-sdk/compare/v0.2.230..0.2.231) - 2025-12-09
+# [0.2.232](https://github.com/aignostics/python-sdk/compare/v0.2.231..0.2.232) - 2025-12-10
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gui)* Don't use windowed mode for launchpad if on Python 3.14 - ([66688c6](https://github.com/aignostics/python-sdk/commit/66688c60d46881d128bfa3b9174a53012199c9a6))
+- *(wsi)* Reject running wsi dicom commands on Python 3.14, given transitive dependency of highdicom not yet supported on that Python version - ([66688c6](https://github.com/aignostics/python-sdk/commit/66688c60d46881d128bfa3b9174a53012199c9a6))
+
+### 🛡️ Security
+
+- *(deps)* Don't use override-dependencies as this is not respected by uvx, but use regular dependency trees - ([66688c6](https://github.com/aignostics/python-sdk/commit/66688c60d46881d128bfa3b9174a53012199c9a6))
+
+
+# [v0.2.231](https://github.com/aignostics/python-sdk/compare/v0.2.230..v0.2.231) - 2025-12-09
 
 ### 🧪 Testing
 
