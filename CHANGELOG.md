@@ -1,6 +1,21 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.232](https://github.com/aignostics/python-sdk/compare/v0.2.231..0.2.232) - 2025-12-10
+# [0.2.233](https://github.com/aignostics/python-sdk/compare/v0.2.232..0.2.233) - 2025-12-10
+
+### ⛰️  Features
+
+- *(core)* Allow to dynamically inject external (private or public) plugins extending Python SDK dynamically - ([45cdc51](https://github.com/aignostics/python-sdk/commit/45cdc51b9aa4947a3d34971e256bf3f76c07eb0a))
+
+### 🐛 Bug Fixes
+
+- Enable opening artifacts in qupath on Windows ([#335](https://github.com/orhun/git-cliff/issues/335)) - ([878cbb0](https://github.com/aignostics/python-sdk/commit/878cbb0ca84139b6f9f22da6d18460c424ea4ba9))
+
+### 🧪 Testing
+
+- Revert skip failing test ([#329](https://github.com/orhun/git-cliff/issues/329)) - ([0fc5990](https://github.com/aignostics/python-sdk/commit/0fc59904cb5a57e9c5556987055b64c1045a1d25))
+
+
+# [v0.2.232](https://github.com/aignostics/python-sdk/compare/v0.2.231..v0.2.232) - 2025-12-10
 
 ### ⚙️ Miscellaneous Tasks
 
