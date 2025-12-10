@@ -124,7 +124,8 @@ dependencies = [
     "truststore>=0.10.4,<1",
     "urllib3>=2.6.1,<3",
     "wsidicom>=0.28.1,<1",
-    # transitive overrides
+    # Transitive overrides
+    # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
     "tornado>=6.5.0",                   # CVE-2025-47287
@@ -140,7 +141,8 @@ dependencies = [
 pyinstaller = ["pyinstaller>=6.14.0,<7"]
 jupyter = [
     "jupyter>=1.1.1,<2",    
-    # transitive overrides
+    # Transitive overrides
+    # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "jupyter-core>=5.8.1",              # CVE-2025-30167
     "jupyterlab>=4.4.9",                # CVE-2025-59842
 ]
@@ -201,13 +203,16 @@ dev = [
     "types-requests>=2.32.4.20250913,<3",
     "watchdog>=6.0.0,<7",
     # Transitive overrides
+    # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "pip>=5.3",                         # CVE-2025-8869  
     "uv>=0.9.7",                        # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64
     "fonttools>=4.60.2",                # CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib
 ]
 
 [tool.uv]
+# WARNING: required-version is *not* respected by uvx
 required-version = ">=0.9.7" # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64
+# WARNING: override-dependencies is *not* respected by uvx
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pytest>=9.0.1",    # pytest-md-report depends on pytest<9 unnecessarily
 ]

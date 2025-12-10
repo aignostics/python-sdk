@@ -213,7 +213,7 @@ if find_spec("nicegui"):
                 "show_welcome_message parameter should be True when native is False"
             )
             assert mock_ui_run_args["show"] is True, "show parameter should be True when native is False"
-        if platform.system() == "Windows" and platform.python_version_tuple() >= ("3", "14"):
+        elif platform.system() == "Windows" and platform.python_version_tuple() >= ("3", "14"):
             assert mock_ui_run_args["native"] is False, "native parameter should be False on Windows"
             assert mock_ui_run_args["show_welcome_message"] is True, (
                 "show_welcome_message parameter should be True when native is False"
