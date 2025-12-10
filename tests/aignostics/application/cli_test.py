@@ -112,7 +112,6 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
-@pytest.mark.skip(reason="Test needs to be updated to changed error message")
 def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     runner: CliRunner, tmp_path: Path, record_property
 ) -> None:
