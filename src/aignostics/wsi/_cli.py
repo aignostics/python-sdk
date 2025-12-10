@@ -12,6 +12,33 @@ from aignostics.utils import console
 from ._service import Service
 from ._utils import print_slide_info, print_study_info
 
+# Python version for highdicom compatibility check
+_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
+_HIGHDICOM_UNSUPPORTED_VERSIONS = {"3.14"}
+
+
+def _check_highdicom_available() -> bool:
+    """Check if highdicom is available (not supported on Python 3.14+).
+
+    Returns:
+        True if highdicom can be imported, False otherwise.
+    """
+    try:
+        from ._pydicom_handler import PydicomHandler  # noqa: PLC0415, F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def _print_highdicom_unsupported_error() -> None:
+    """Print error message when highdicom is not available."""
+    console.print(f"[red]This command requires 'highdicom' which is not available on Python {_PYTHON_VERSION}.[/red]")
+    console.print("[yellow]Please run with Python 3.13 or earlier:[/yellow]")
+    console.print("[green]  uvx -p 3.13 aignostics wsi dicom <command> ...[/green]")
+    sys.exit(1)
+
+
 cli = typer.Typer(name="wsi", help="Operations on whole slide images.")
 
 
@@ -107,6 +134,10 @@ def dicom_inspect(
     summary: Annotated[bool, typer.Option(help="Show only summary information")] = False,
 ) -> None:  # pylint: disable=W0613
     """Inspect DICOM files at any hierarchy level."""
+    if not _check_highdicom_available():
+        _print_highdicom_unsupported_error()
+        return
+
     from ._pydicom_handler import PydicomHandler  # noqa: PLC0415
 
     try:
@@ -139,6 +170,10 @@ def dicom_geojson_import(
     geojson_path: Annotated[Path, typer.Argument(help="Path to the GeoJSON file", exists=True)],
 ) -> None:  # pylint: disable=W0613
     """Import GeoJSON annotations into DICOM ANN instance."""
+    if not _check_highdicom_available():
+        _print_highdicom_unsupported_error()
+        return
+
     from ._pydicom_handler import PydicomHandler  # noqa: PLC0415
 
     try:
