@@ -20,6 +20,11 @@ FLAT_COLOR_WHITE = "flat color=white"
 
 HEALTH_UPDATE_INTERVAL = 30
 USERINFO_UPDATE_INTERVAL = 60 * 60
+PROPS_CLICKABLE = "clickable"
+PROPS_AVATAR = "avatar"
+CLASSES_FULL_WIDTH = "w-full"
+CLASSES_FULL_HEIGHT = "h-full"
+CLASSES_FULL_SIZE = f"{CLASSES_FULL_WIDTH} {CLASSES_FULL_HEIGHT}"
 
 
 @contextmanager
@@ -47,8 +52,37 @@ def frame(  # noqa: C901, PLR0915
     from aignostics.platform import Service as PlatformService  # noqa: PLC0415
     from aignostics.platform import UserInfo, settings  # noqa: PLC0415
     from aignostics.system import Service as SystemService  # noqa: PLC0415
+    from aignostics.utils import NavItem, gui_get_nav_groups  # noqa: PLC0415
 
     theme()
+
+    def _nav_item(icon: str, label: str, target: str, marker: str, new_tab: bool = True) -> None:
+        """Create a navigation item with icon and link."""
+        with ui.item().props(PROPS_CLICKABLE).classes(CLASSES_FULL_WIDTH):
+            with ui.item_section().props(PROPS_AVATAR):
+                ui.icon(icon, color="primary")
+            with ui.item_section():
+                ui.link(label, target, new_tab=new_tab).mark(marker)
+
+    def _render_nav_item(item: NavItem) -> None:
+        """Render a single NavItem."""
+        _nav_item(item.icon, item.label, item.target, item.marker or "", item.new_tab)
+
+    def _render_nav_groups() -> None:
+        """Render all navigation groups from discovered NavBuilders."""
+        nav_groups = gui_get_nav_groups()
+        for group in nav_groups:
+            if group.use_expansion:
+                with (
+                    ui.expansion(group.name, icon=group.icon, group="nav").classes(CLASSES_FULL_WIDTH),
+                    ui.list().props("dense").classes(CLASSES_FULL_WIDTH),
+                ):
+                    for item in group.items:
+                        _render_nav_item(item)
+            else:
+                # Render items flat without expansion
+                for item in group.items:
+                    _render_nav_item(item)
 
     user_info: UserInfo | None = None
     launchpad_healthy: bool | None = None
@@ -247,6 +281,7 @@ def frame(  # noqa: C901, PLR0915
                     ui.label("Manage Cloud Bucket").classes(
                         "font-bold" if context.client.page.path == "/bucket" else "font-normal"
                     )
+            _render_nav_groups()
             with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     health_icon()

@@ -26,6 +26,7 @@ from ._di import discover_plugin_packages, load_modules, locate_implementations,
 from ._fs import get_user_data_directory, open_user_data_directory, sanitize_path, sanitize_path_component
 from ._health import Health
 from ._log import LogSettings
+from ._nav import BaseNavBuilder, NavGroup, NavItem, gui_get_nav_groups
 from ._process import SUBPROCESS_CREATION_FLAGS, ProcessInfo, get_process_info
 from ._service import BaseService
 from ._settings import UNHIDE_SENSITIVE_INFO, OpaqueSettings, load_settings, strip_to_none_before_validator
@@ -35,9 +36,12 @@ from .boot import boot
 __all__ = [
     "SUBPROCESS_CREATION_FLAGS",
     "UNHIDE_SENSITIVE_INFO",
+    "BaseNavBuilder",
     "BaseService",
     "Health",
     "LogSettings",
+    "NavGroup",
+    "NavItem",
     "OpaqueSettings",
     "ProcessInfo",
     "__author_email__",
@@ -63,6 +67,7 @@ __all__ = [
     "discover_plugin_packages",
     "get_process_info",
     "get_user_data_directory",
+    "gui_get_nav_groups",
     "load_modules",
     "load_settings",
     "locate_implementations",
