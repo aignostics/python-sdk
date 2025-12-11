@@ -24,6 +24,7 @@ def _get_console() -> Console:
             "error": "red1",
         }),
         width=int(os.environ.get("AIGNOSTICS_CONSOLE_WIDTH", "0")) or None,
+        legacy_windows=False,  # Modern Windows (10+) doesn't need width adjustment
     )
 
 

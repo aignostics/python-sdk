@@ -7,14 +7,12 @@ from aignostics.utils._console import _get_console
 
 @pytest.mark.unit
 def test_get_console_default_width(monkeypatch: pytest.MonkeyPatch, record_property) -> None:
-    """Test that the console is created with default width when our env var is not set."""
+    """Test that the console is created with default width when no env var is set."""
     record_property("tested-item-id", "SPEC-UTILS-CONSOLE")
 
-    width = 100
     monkeypatch.delenv("AIGNOSTICS_CONSOLE_WIDTH", raising=False)
-    monkeypatch.setenv("COLUMNS", width)
     console = _get_console()
-    assert console.width == width, f"Default console width should be {width}."
+    assert console.width == 80, "Default console width should be 80."
 
 
 @pytest.mark.unit
