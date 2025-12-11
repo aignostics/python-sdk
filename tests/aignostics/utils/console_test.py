@@ -11,6 +11,7 @@ def test_get_console_default_width(monkeypatch: pytest.MonkeyPatch, record_prope
     record_property("tested-item-id", "SPEC-UTILS-CONSOLE")
 
     monkeypatch.delenv("AIGNOSTICS_CONSOLE_WIDTH", raising=False)
+    monkeypatch.delenv("COLUMNS", raising=False)  # Rich Console uses COLUMNS for width detection
     console = _get_console()
     assert console.width == 80, "Default console width should be 80."
 
