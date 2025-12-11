@@ -246,7 +246,7 @@ aignostics application run submit --application-id heta --files slide.svs
 aignostics dataset download --collection-id TCGA-LUAD --output-dir ./data
 
 # Get WSI info
-aignostics wsi info slide.svs
+aignostics wsi inspect slide.svs
 ```
 
 ## GUI Launch

@@ -19,8 +19,8 @@ The WSI module provides comprehensive support for medical imaging files, particu
 **CLI Commands (`_cli.py`):**
 
 - `wsi inspect` - Display WSI file metadata and properties
-- `wsi dicom-inspect` - Inspect DICOM-specific metadata
-- `wsi dicom-geojson-import` - Import GeoJSON annotations to DICOM
+- `wsi dicom inspect` - Inspect DICOM-specific metadata
+- `wsi dicom geojson_import` - Import GeoJSON annotations to DICOM
 
 **GUI Component (`_gui.py`):**
 
@@ -210,6 +210,138 @@ def get_tile(
     return tile
 ```
 
+
+### DICOM WSI File Filtering
+
+**Multi-File DICOM Pyramid Selection (`_utils.select_dicom_files()`):**
+
+The WSI module automatically handles multi-file DICOM pyramids (whole slide images stored across multiple DICOM instances) by selecting only the highest resolution file from each pyramid. This prevents redundant processing since OpenSlide can automatically find related pyramid files in the same directory.
+
+**Implementation Location:**
+
+The DICOM file selection logic is implemented in `_utils.py` as `select_dicom_files()`. This function **only depends on pydicom** (not highdicom), making it compatible with Python 3.14+ where highdicom is not available.
+
+**Service Integration (`Service.get_wsi_files_to_process()`):**
+```python
+from aignostics.wsi import Service
+from pathlib import Path
+
+# Get filtered DICOM files
+files = Service.get_wsi_files_to_process(
+    path=Path("/data/dicoms"),
+    extension=".dcm"
+)
+# Returns only highest resolution WSI files
+
+# For non-DICOM formats, returns all files
+tiff_files = Service.get_wsi_files_to_process(
+    path=Path("/data/slides"),
+    extension=".tiff"
+)
+# Returns all .tiff files (no filtering)
+```
+
+**Direct Usage (Advanced):**
+```python
+from aignostics.wsi._utils import select_dicom_files
+from pathlib import Path
+
+# Directly filter DICOM files (used internally by Service)
+dicom_files = select_dicom_files(Path("/data/dicoms"))
+# Returns only highest resolution WSI files
+```
+
+**Filtering Strategy:**
+```python
+def select_dicom_files(path: Path) -> list[Path]:
+    """Select WSI files only, excluding auxiliary and redundant files.
+    
+    Filtering Strategy:
+    1. SOPClassUID filtering - Only process VL Whole Slide Microscopy Image Storage
+       - Include: 1.2.840.10008.5.1.4.1.1.77.1.6 (VL WSI)
+       - Exclude: 1.2.840.10008.5.1.4.1.1.66.4 (Segmentation Storage)
+       - Exclude: Other non-WSI DICOM types
+    
+    2. ImageType filtering - Exclude auxiliary images
+       - Keep: VOLUME images only
+       - Exclude: THUMBNAIL, LABEL, OVERVIEW, MACRO, ANNOTATION, LOCALIZER
+    
+    3. PyramidUID grouping - Group multi-file pyramids
+       - Files with same PyramidUID are part of one logical WSI
+       - Files without PyramidUID are treated as standalone WSIs
+    
+    4. Resolution selection - Keep highest resolution per pyramid
+       - Based on TotalPixelMatrixRows × TotalPixelMatrixColumns
+       - Excludes all lower resolution levels
+    
+    Reference: https://dicom.nema.org/medical/dicom/current/output/chtml/part03/chapter_7.html
+    """
+```
+
+**Key Behaviors:**
+
+- **SOPClassUID validation**: Only processes VL Whole Slide Microscopy Image Storage files (1.2.840.10008.5.1.4.1.1.77.1.6)
+- **Non-WSI exclusion**: Automatically excludes segmentations (1.2.840.10008.5.1.4.1.1.66.4), annotations, and other DICOM object types
+- **ImageType filtering**: Excludes THUMBNAIL, LABEL, OVERVIEW, MACRO, ANNOTATION, and LOCALIZER image types
+- **PyramidUID grouping**: Groups files by PyramidUID (DICOM tag identifying multi-resolution pyramids)
+- **Resolution selection**: For each pyramid, keeps only the file with largest TotalPixelMatrixRows × TotalPixelMatrixColumns
+- **Standalone handling**: Files without PyramidUID are treated as standalone WSI images and preserved
+- **Graceful degradation**: Files with missing attributes are logged and treated as standalone (not excluded)
+- **Debug logging**: Excluded files are logged at DEBUG level with pyramid/exclusion details
+
+**DICOM WSI Structure:**
+
+In the DICOM Whole Slide Imaging standard:
+- **PyramidUID**: Uniquely identifies a single multi-resolution pyramid that may span multiple files
+- **SeriesInstanceUID**: Groups related images (may include multiple pyramids, thumbnails, labels)
+- **TotalPixelMatrixRows/Columns**: Represents full image dimensions at the highest resolution level
+
+**Example Scenario:**
+```
+Input Directory:
+├── pyramid_level_0.dcm    (10000×10000 px, PyramidUID: ABC123) ← KEPT
+├── pyramid_level_1.dcm    (5000×5000 px,   PyramidUID: ABC123) ← EXCLUDED
+├── pyramid_level_2.dcm    (2500×2500 px,   PyramidUID: ABC123) ← EXCLUDED
+├── thumbnail.dcm          (256×256 px,     PyramidUID: ABC123, ImageType: THUMBNAIL) ← EXCLUDED
+├── segmentation.dcm       (10000×10000 px, SOPClassUID: Segmentation) ← EXCLUDED
+└── standalone.dcm         (8000×8000 px,   No PyramidUID) ← KEPT
+
+Result: Only pyramid_level_0.dcm and standalone.dcm are processed
+```
+
+**Error Handling:**
+
+- Files with missing SOPClassUID are logged as warnings and excluded (malformed DICOM)
+- Files with PyramidUID but missing TotalPixelMatrix* attributes are treated as standalone
+- Files that cannot be read by pydicom are logged at DEBUG level and skipped
+- AttributeError and general exceptions are caught to prevent processing pipeline failure
+
+**Integration with Application Module:**
+
+The Application module uses this filtering automatically when generating metadata:
+```python
+# In Application Service
+from aignostics.wsi import Service as WSIService
+
+# Filtering happens automatically for DICOM files
+files = WSIService.get_wsi_files_to_process(source_directory, ".dcm")
+for file_path in files:
+    # Only highest resolution WSI files are processed
+    metadata = WSIService.get_metadata(file_path)
+```
+
+**Module Architecture:**
+
+The DICOM file selection functionality is organized as follows:
+- **`_utils.py`**: Contains `select_dicom_files()` and `_find_highest_resolution_files()` helper
+  - Only depends on `pydicom`, `pathlib`, `collections.defaultdict`, and `loguru`
+  - Compatible with Python 3.14+ (no highdicom dependency)
+- **`_service.py`**: Uses `select_dicom_files()` in `get_wsi_files_to_process()`
+- **`_pydicom_handler.py`**: Uses `select_dicom_files()` for metadata extraction with `wsi_only=True`
+  - This module still requires highdicom for annotation/measurement features
+  - Only the CLI commands that need highdicom (geojson import, detailed inspection) use PydicomHandler
+
+
 ## Usage Patterns
 
 ### Basic WSI Operations
@@ -264,13 +396,10 @@ for wsi in wsi_files:
 aignostics wsi inspect slide.svs
 
 # Inspect DICOM metadata
-aignostics wsi dicom-inspect scan.dcm
+aignostics wsi dicom inspect scan.dcm
 
 # Import GeoJSON annotations
-aignostics wsi dicom-geojson-import \
-    --dicom-file scan.dcm \
-    --geojson-file annotations.json \
-    --output annotated.dcm
+aignostics wsi dicom geojson_import scan.dcm annotations.json
 ```
 
 ## Dependencies & Integration
@@ -285,8 +414,17 @@ aignostics wsi dicom-geojson-import \
 
 - `openslide-python` - Core WSI reading functionality
 - `Pillow` - Image processing and thumbnail generation
-- `pydicom` - DICOM file handling
+- `pydicom` - DICOM file handling (required for basic DICOM WSI operations)
 - `numpy` - Array manipulation for pixel data
+- `highdicom` - DICOM annotation/measurement features (optional, not available on Python 3.14+)
+
+**Python 3.14+ Compatibility:**
+
+The core WSI functionality (thumbnail generation, metadata extraction, DICOM file selection) works on Python 3.14+ without highdicom. Only the following CLI commands require highdicom and are unavailable on Python 3.14+:
+- `aignostics wsi dicom geojson_import` - Import GeoJSON to DICOM annotations
+- Detailed annotation/measurement inspection features
+
+The DICOM file selection logic (`select_dicom_files()`) works on all Python versions since it only depends on `pydicom`.
 
 ### Format Support Matrix
 

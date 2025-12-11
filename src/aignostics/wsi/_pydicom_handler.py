@@ -16,6 +16,8 @@ from shapely.geometry import Polygon
 
 from aignostics.utils import console
 
+from ._utils import select_dicom_files
+
 
 class PydicomHandler:
     def __init__(self, path: Path) -> None:
@@ -33,157 +35,255 @@ class PydicomHandler:
         """
         return cls(Path(path))
 
-    def get_metadata(self, verbose: bool = False) -> dict[str, Any]:
-        files = self._scan_files(verbose)
+    def get_metadata(self, verbose: bool = False, wsi_only: bool = False) -> dict[str, Any]:
+        """Get DICOM metadata from files in the configured path.
+
+        Args:
+            verbose: If True, include detailed annotation group data (coordinates, counts)
+                for annotation files. Defaults to False.
+            wsi_only: If True, filter to only WSI DICOM files (highest resolution per
+                pyramid), excluding thumbnails, labels, segmentations, and redundant
+                pyramid levels. Defaults to False.
+
+        Returns:
+            Dictionary containing hierarchical DICOM metadata
+        """
+        files = self._scan_files(verbose, wsi_only)
         return self._organize_by_hierarchy(files)
 
-    def _scan_files(self, verbose: bool = False) -> list[dict[str, Any]]:  # noqa: C901, PLR0912, PLR0914, PLR0915
+    def _scan_files(self, verbose: bool = False, wsi_only: bool = False) -> list[dict[str, Any]]:
+        """Scan DICOM files and extract metadata.
+
+        Recursively scans the path for DICOM files, reads their metadata (without loading
+        pixel data), and returns structured information about each file including modality,
+        dimensions, and type-specific details.
+
+        Args:
+            verbose: If True, include detailed annotation group data (coordinates, counts).
+            wsi_only: If True, filter to only WSI files (highest resolution ones only in
+                multi-file pyramid case).
+
+        Returns:
+            List of dictionaries containing file metadata. Each dict includes:
+            - Basic info: path, study_uid, series_uid, modality, type, size
+            - Modality-specific data (e.g., pyramid info for SM/WSI, annotations for ANN)
+            - Patient metadata where available
+
+        Note:
+            Invalid DICOM files are logged and skipped.
+        """
+        files_to_process = self._get_files_to_process(wsi_only)
         dicom_files = []
 
-        # Determine which files to process based on whether the `self.path` points to a single file or a directory
-        if self.path.is_file():
-            files_to_process = [self.path] if self.path.suffix.lower() == ".dcm" else []
-        else:
-            files_to_process = list(self.path.rglob("*.dcm"))
-
-        for file_path in files_to_process:  # noqa: PLR1702
+        for file_path in files_to_process:
             if not file_path.is_file():
                 continue
 
             try:
                 print(file_path)
                 ds = pydicom.dcmread(str(file_path), stop_before_pixels=True)
-                # TODO(Helmut): Uncomment when DICOM is implemented
-                # print(ds["Modality"].value)  # noqa: ERA001
-                # print(getattr(ds, "Modality", "unknown"))  # noqa: ERA001
-                # sys.exit()  # noqa: ERA001
-
-                # Basic required DICOM fields
-                file_info: dict[str, Any] = {
-                    "path": str(file_path),
-                    "study_uid": str(getattr(ds, "StudyInstanceUID", "unknown")),
-                    "container_id": str(getattr(ds, "ContainerIdentifier", "unknown")),
-                    "series_uid": str(getattr(ds, "SeriesInstanceUID", "unknown")),
-                    "modality": str(getattr(ds, "Modality", "unknown")),
-                    "type": "unknown",
-                    "frame_of_reference_uid": str(getattr(ds, "FrameOfReferenceUID", "unknown")),
-                }
-
-                # Try to determine file type using highdicom
-                try:
-                    # TODO(Helmut): Check below, hd.sr.is_microscopy_bulk_simple_annotation(ds),
-                    # hd.sr.is_microscopy_measurement(ds) for type annotation/measurement
-                    if getattr(ds, "Modality", "") in {"SM", "WSI"}:
-                        file_info["type"] = "image"
-                except Exception:
-                    logger.exception("Failed to analyze DICOM file with highdicom")
-                    # If highdicom analysis fails, keep 'unknown' type
-
-                # Add size and basic metadata
-                file_info["size"] = file_path.stat().st_size
-                file_info["metadata"] = {
-                    "PatientID": str(getattr(ds, "PatientID", "unknown")),
-                    "StudyDate": str(getattr(ds, "StudyDate", "unknown")),
-                    "SeriesDescription": str(getattr(ds, "SeriesDescription", "")),
-                }
-
-                # Add to file_info dictionary after basic metadata
-                if getattr(ds, "Modality", "") in {"SM", "WSI"}:
-                    file_info.update({
-                        "modality": getattr(ds, "Modality", ""),
-                        "is_pyramidal": True,
-                        "num_frames": int(getattr(ds, "NumberOfFrames", 1)),
-                        "optical_paths": len(getattr(ds, "OpticalPathSequence", [])),
-                        "focal_planes": len(getattr(ds, "DimensionIndexSequence", [])),
-                        "total_pixel_matrix": (
-                            int(getattr(ds, "TotalPixelMatrixColumns", 0)),
-                            int(getattr(ds, "TotalPixelMatrixRows", 0)),
-                        ),
-                    })
-                elif getattr(ds, "Modality", "") == "ANN":
-                    ann = hd.ann.MicroscopyBulkSimpleAnnotations.from_dataset(ds)
-                    group_infos = []
-                    groups = ann.get_annotation_groups()
-                    for group in groups:
-                        # Calculate min/max coordinates for all points
-                        col_min = row_min = float("inf")  # Initialize to positive infinity
-                        col_max = row_max = float("-inf")  # Initialize to negative infinity
-                        graphic_data_len = float("-inf")
-                        first = None
-
-                        if verbose:
-                            graphic_data = group.get_graphic_data(ann.annotation_coordinate_type)
-                            graphic_data_len = len(graphic_data)
-                            first = graphic_data[0]
-                            if graphic_data:
-                                if group.graphic_type == hd.ann.GraphicTypeValues.POINT:
-                                    # For points, each item is a single coordinate
-                                    for point in graphic_data:
-                                        col_min = min(col_min, point[0])
-                                        col_max = max(col_max, point[0])
-                                        row_min = min(row_min, point[1])
-                                        row_max = max(row_max, point[1])
-                                else:
-                                    # For polygons/polylines, process all polygons
-                                    for polygon in graphic_data:
-                                        for point in polygon:
-                                            col_min = min(col_min, point[0])
-                                            col_max = max(col_max, point[0])
-                                            row_min = min(row_min, point[1])
-                                            row_max = max(row_max, point[1])
-
-                        group_infos.append({
-                            "uid": group.uid,
-                            "label": group.label,
-                            "property_type": group.annotated_property_type,
-                            "graphic_type": group.graphic_type,
-                            "count": graphic_data_len,
-                            "first": first,
-                            "col_min": float(col_min),
-                            "row_min": float(row_min),
-                            "col_max": float(col_max),
-                            "row_max": float(row_max),
-                        })
-                    file_info.update({
-                        "modality": "ANN",
-                        "coordinate_type": ann.annotation_coordinate_type,
-                        "annotation_groups": group_infos,
-                    })
-
-                # Extract pyramid levels from frame organization
-                if getattr(ds, "DimensionOrganizationSequence", None):
-                    # Get frame organization
-                    frame_groups = {}
-                    for frame in getattr(ds, "PerFrameFunctionalGroupsSequence", []):
-                        level_idx = frame.DimensionIndexValues[0]
-                        if level_idx not in frame_groups:
-                            frame_groups[level_idx] = {
-                                "count": 0,
-                                "rows": int(frame.get("Rows", 0)),
-                                "columns": int(frame.get("Columns", 0)),
-                            }
-                        frame_groups[level_idx]["count"] += 1
-
-                    # Sort and store pyramid level information
-                    pyramid_info = [
-                        {
-                            "level": int(level_idx),
-                            "frame_count": frame_groups[level_idx]["count"],
-                            "frame_size": (
-                                frame_groups[level_idx]["columns"],
-                                frame_groups[level_idx]["rows"],
-                            ),
-                        }
-                        for level_idx in sorted(frame_groups.keys())
-                    ]
-                    file_info["pyramid_info"] = pyramid_info
-
+                file_info = PydicomHandler._extract_basic_metadata(file_path, ds)
+                PydicomHandler._add_modality_specific_data(file_info, ds, verbose)
+                self._add_pyramid_info(file_info, ds)
                 dicom_files.append(file_info)
 
             except pydicom.errors.InvalidDicomError:
                 continue
 
         return dicom_files
+
+    def _get_files_to_process(self, wsi_only: bool) -> list[Path]:
+        """Determine which DICOM files to process.
+
+        Returns:
+            List of file paths to process.
+        """
+        if self.path.is_file():
+            return [self.path] if self.path.suffix.lower() == ".dcm" else []
+        if wsi_only:
+            return select_dicom_files(self.path)
+        return list(self.path.rglob("*.dcm"))
+
+    @staticmethod
+    def _extract_basic_metadata(file_path: Path, ds: pydicom.Dataset) -> dict[str, Any]:
+        """Extract basic DICOM metadata fields.
+
+        Returns:
+            Dictionary containing basic DICOM metadata.
+        """
+        file_info: dict[str, Any] = {
+            "path": str(file_path),
+            "study_uid": str(getattr(ds, "StudyInstanceUID", "unknown")),
+            "container_id": str(getattr(ds, "ContainerIdentifier", "unknown")),
+            "series_uid": str(getattr(ds, "SeriesInstanceUID", "unknown")),
+            "modality": str(getattr(ds, "Modality", "unknown")),
+            "type": "unknown",
+            "frame_of_reference_uid": str(getattr(ds, "FrameOfReferenceUID", "unknown")),
+        }
+
+        # Try to determine file type using highdicom
+        try:
+            # TODO(Helmut): Check below, hd.sr.is_microscopy_bulk_simple_annotation(ds),
+            # hd.sr.is_microscopy_measurement(ds) for type annotation/measurement
+            if getattr(ds, "Modality", "") in {"SM", "WSI"}:
+                file_info["type"] = "image"
+        except Exception:
+            logger.exception("Failed to analyze DICOM file with highdicom")
+            # If highdicom analysis fails, keep 'unknown' type
+
+        # Add size and basic metadata
+        file_info["size"] = file_path.stat().st_size
+        file_info["metadata"] = {
+            "PatientID": str(getattr(ds, "PatientID", "unknown")),
+            "StudyDate": str(getattr(ds, "StudyDate", "unknown")),
+            "SeriesDescription": str(getattr(ds, "SeriesDescription", "")),
+        }
+
+        return file_info
+
+    @staticmethod
+    def _add_modality_specific_data(file_info: dict[str, Any], ds: pydicom.Dataset, verbose: bool) -> None:
+        """Add modality-specific metadata to file_info."""
+        modality = getattr(ds, "Modality", "")
+
+        if modality in {"SM", "WSI"}:
+            PydicomHandler._add_wsi_metadata(file_info, ds)
+        elif modality == "ANN":
+            PydicomHandler._add_annotation_metadata(file_info, ds, verbose)
+
+    @staticmethod
+    def _add_wsi_metadata(file_info: dict[str, Any], ds: pydicom.Dataset) -> None:
+        """Add WSI-specific metadata."""
+        file_info.update({
+            "modality": getattr(ds, "Modality", ""),
+            "is_pyramidal": True,
+            "num_frames": int(getattr(ds, "NumberOfFrames", 1)),
+            "optical_paths": len(getattr(ds, "OpticalPathSequence", [])),
+            "focal_planes": len(getattr(ds, "DimensionIndexSequence", [])),
+            "total_pixel_matrix": (
+                int(getattr(ds, "TotalPixelMatrixColumns", 0)),
+                int(getattr(ds, "TotalPixelMatrixRows", 0)),
+            ),
+        })
+
+    @staticmethod
+    def _add_annotation_metadata(file_info: dict[str, Any], ds: pydicom.Dataset, verbose: bool) -> None:
+        """Add annotation-specific metadata."""
+        ann = hd.ann.MicroscopyBulkSimpleAnnotations.from_dataset(ds)
+        groups = ann.get_annotation_groups()
+        group_infos = [PydicomHandler._process_annotation_group(group, ann, verbose) for group in groups]
+
+        file_info.update({
+            "modality": "ANN",
+            "coordinate_type": ann.annotation_coordinate_type,
+            "annotation_groups": group_infos,
+        })
+
+    @staticmethod
+    def _process_annotation_group(
+        group: hd.ann.AnnotationGroup, ann: hd.ann.MicroscopyBulkSimpleAnnotations, verbose: bool
+    ) -> dict[str, Any]:
+        """Process a single annotation group.
+
+        Returns:
+            Dictionary containing annotation group metadata.
+        """
+        col_min = row_min = float("inf")
+        col_max = row_max = float("-inf")
+        graphic_data_len = float("-inf")
+        first = None
+
+        if verbose:
+            graphic_data = group.get_graphic_data(ann.annotation_coordinate_type)
+            graphic_data_len = len(graphic_data)
+            first = graphic_data[0] if graphic_data else None
+
+            if graphic_data:
+                col_min, row_min, col_max, row_max = PydicomHandler._calculate_annotation_bounds(
+                    graphic_data, group.graphic_type
+                )
+
+        return {
+            "uid": group.uid,
+            "label": group.label,
+            "property_type": group.annotated_property_type,
+            "graphic_type": group.graphic_type,
+            "count": graphic_data_len,
+            "first": first,
+            "col_min": float(col_min),
+            "row_min": float(row_min),
+            "col_max": float(col_max),
+            "row_max": float(row_max),
+        }
+
+    @staticmethod
+    def _calculate_annotation_bounds(
+        graphic_data: list[Any], graphic_type: hd.ann.GraphicTypeValues
+    ) -> tuple[float, float, float, float]:
+        """Calculate bounding box for annotation graphic data.
+
+        Returns:
+            Tuple of (col_min, row_min, col_max, row_max).
+        """
+        col_min = row_min = float("inf")
+        col_max = row_max = float("-inf")
+
+        if graphic_type == hd.ann.GraphicTypeValues.POINT:
+            for point in graphic_data:
+                col_min = min(col_min, point[0])
+                col_max = max(col_max, point[0])
+                row_min = min(row_min, point[1])
+                row_max = max(row_max, point[1])
+        else:
+            # For polygons/polylines, process all polygons
+            for polygon in graphic_data:
+                for point in polygon:
+                    col_min = min(col_min, point[0])
+                    col_max = max(col_max, point[0])
+                    row_min = min(row_min, point[1])
+                    row_max = max(row_max, point[1])
+
+        return col_min, row_min, col_max, row_max
+
+    def _add_pyramid_info(self, file_info: dict[str, Any], ds: pydicom.Dataset) -> None:
+        """Extract and add pyramid level information if available."""
+        if not getattr(ds, "DimensionOrganizationSequence", None):
+            return
+
+        frame_groups = self._extract_frame_groups(ds)
+        pyramid_info = [
+            {
+                "level": int(level_idx),
+                "frame_count": frame_groups[level_idx]["count"],
+                "frame_size": (
+                    frame_groups[level_idx]["columns"],
+                    frame_groups[level_idx]["rows"],
+                ),
+            }
+            for level_idx in sorted(frame_groups.keys())
+        ]
+        file_info["pyramid_info"] = pyramid_info
+
+    @staticmethod
+    def _extract_frame_groups(ds: pydicom.Dataset) -> dict[int, dict[str, int]]:
+        """Extract frame organization grouped by pyramid level.
+
+        Returns:
+            Dictionary mapping level index to frame count and dimensions.
+        """
+        frame_groups: dict[int, dict[str, int]] = {}
+
+        for frame in getattr(ds, "PerFrameFunctionalGroupsSequence", []):
+            level_idx = frame.DimensionIndexValues[0]
+            if level_idx not in frame_groups:
+                frame_groups[level_idx] = {
+                    "count": 0,
+                    "rows": int(frame.get("Rows", 0)),
+                    "columns": int(frame.get("Columns", 0)),
+                }
+            frame_groups[level_idx]["count"] += 1
+
+        return frame_groups
 
     @staticmethod
     def _organize_by_hierarchy(files: list[dict[str, Any]]) -> dict[str, Any]:

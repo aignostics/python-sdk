@@ -1,6 +1,7 @@
 """Service of the wsi module."""
 
 import io
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,7 @@ from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.utils import BaseService, Health
 
 from ._openslide_handler import DEFAULT_MAX_SAFE_DIMENSION
+from ._utils import select_dicom_files
 
 TIMEOUT = 60  # 1 minutes
 
@@ -175,3 +177,28 @@ class Service(BaseService):
             error_msg = f"Unexpected error converting TIFF to JPEG: {e!s}."
             logger.exception(error_msg)
             raise RuntimeError(error_msg) from e
+
+    @staticmethod
+    def get_wsi_files_to_process(path: Path, extension: str) -> Iterable[Path]:
+        """Get WSI files to process for the specified extension.
+
+        For DICOM files (.dcm), applies filtering to only include WSI files and select
+        only the highest resolution file from multi-file pyramids. For other formats,
+        returns all files matching the extension.
+
+        Args:
+            path: Root directory to search for WSI files.
+            extension: File extension to filter (e.g., ".dcm", ".tiff", ".svs").
+                Must include the leading dot.
+
+        Returns:
+            Iterable of Path objects for files to process.
+        """
+        files_to_process: Iterable[Path]
+        if extension == ".dcm":  # noqa: SIM108
+            # Special handling for DICOM files - filter out auxiliary and redundant files
+            files_to_process = select_dicom_files(path)
+        else:
+            # For non-DICOM formats, process all files with this extension
+            files_to_process = path.glob(f"**/*{extension}")
+        return files_to_process
