@@ -41,6 +41,60 @@ Core system operations and diagnostics:
 
 ## Architecture & Design Patterns
 
+### Health Check Enforcement
+
+The system module's health checks are used by other modules to gate critical operations. This ensures users don't submit runs or upload data when the platform is unavailable.
+
+**Enforcement by Interface:**
+
+| Interface | Behavior When Unhealthy | Override Mechanism |
+|-----------|------------------------|-------------------|
+| **Launchpad (GUI)** | Submit button disabled, tooltip explains issue | Internal users only: "Force" checkbox |
+| **CLI** | Operation aborted with error message (exit code 1) | `--force` flag on upload/submit commands |
+| **Python Library** | No automatic enforcement | User implements own checks |
+
+**GUI Enforcement (in `application/_gui/_page_application_describe.py`):**
+
+```python
+# Check system health and determine if force option should be available
+system_healthy = bool(SystemService.health_static())
+
+# Disable the "Next" button if unhealthy
+if not system_healthy:
+    version_next_button.disable()
+    ui.tooltip("System is unhealthy, you cannot prepare a run at this time.")
+
+    # Internal users can force-skip health checks
+    if is_internal_user:
+        ui.checkbox("Force (skip health check)", on_change=on_force_change)
+```
+
+**CLI Enforcement (in `application/_cli.py`):**
+
+```python
+def _abort_if_system_unhealthy() -> None:
+    health = SystemService.health_static()
+    if not health:
+        logger.error(f"Platform is not healthy: {health.reason}. Aborting.")
+        console.print(f"[error]Error:[/error] Platform is not healthy: {health.reason}. Aborting.")
+        sys.exit(1)
+
+# Called before upload and submit operations unless --force is used
+if not force:
+    _abort_if_system_unhealthy()
+```
+
+**Python Library Usage:**
+
+```python
+from aignostics.system import Service as SystemService
+
+# Manual health check before operations
+health = SystemService().health()
+if not health:
+    raise RuntimeError(f"System unhealthy: {health.reason}")
+```
+
 ### Health Check Aggregation Pattern
 
 The system module's health check aggregates status from **ALL modules** in the SDK by discovering and querying every service that inherits from `BaseService`:

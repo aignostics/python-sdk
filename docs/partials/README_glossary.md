@@ -164,8 +164,11 @@ Architectural style for web services that the Aignostics Platform API follows, e
 **Self-signed URLs**  
 Secure URLs with embedded authentication that allow the platform to access user data without exposing credentials.
 
-**SVS**  
+**SVS**
 Aperio ScanScope Virtual Slide format, commonly used for whole slide images and supported by the platform.
+
+**System Health Check**
+Automated verification that the SDK and Aignostics Platform are operational before critical operations. The Launchpad blocks run submission when unhealthy (no override available for regular users). The CLI blocks uploads and submissions by default but allows override with `--force`. The Python Library does not perform automatic health checks, giving developers full control over health verification logic.
 
 ### T
 
