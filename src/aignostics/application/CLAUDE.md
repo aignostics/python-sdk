@@ -48,6 +48,57 @@ Core application operations:
 
 ## Architecture & Design Patterns
 
+### Health Check Gates
+
+The application module enforces system health checks before critical operations to prevent users from uploading data or submitting runs when the platform is unavailable.
+
+**CLI Health Check Enforcement (`_cli.py`):**
+
+The `_abort_if_system_unhealthy()` function is called before upload and submit operations:
+
+```python
+def _abort_if_system_unhealthy() -> None:
+    """Check system health and abort if unhealthy."""
+    health = SystemService.health_static()
+    if not health:
+        logger.error(f"Platform is not healthy: {health.reason}. Aborting.")
+        console.print(f"[error]Error:[/error] Platform is not healthy: {health.reason}. Aborting.")
+        sys.exit(1)
+```
+
+**Commands with Health Check Gates:**
+
+| Command | Health Check | Override |
+|---------|--------------|----------|
+| `run execute` | Yes | `--force` |
+| `run upload` | Yes | `--force` |
+| `run submit` | Yes | `--force` |
+| `run prepare` | No | N/A |
+| `run list` | No | N/A |
+| `run describe` | No | N/A |
+| `run result download` | No | N/A |
+
+**GUI Health Check Enforcement (`_gui/_page_application_describe.py`):**
+
+The stepper workflow checks health at the application version selection step:
+
+```python
+# Check system health before allowing progression
+system_healthy = bool(SystemService.health_static())
+
+if not system_healthy:
+    version_next_button.disable()
+    ui.tooltip("System is unhealthy, you cannot prepare a run at this time.")
+
+    # Internal users (Aignostics, pre-alpha-org, LMU, Charite) can force-skip
+    if is_internal_user:
+        ui.checkbox("Force (skip health check)", on_change=on_force_change)
+```
+
+**Force Option:**
+
+The `submit_form.force` attribute tracks whether the user has opted to skip health checks. This is only available to internal organization users.
+
 ### Module Structure (NEW in v1.0.0-beta.7)
 
 The application module is organized into focused submodules:
