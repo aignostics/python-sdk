@@ -36,6 +36,7 @@ def test_cli_run_submit_fails_on_invalid_gpu_type(runner: CliRunner, tmp_path: P
             "INVALID_GPU",
             "--tags",
             "test_cli_run_submit_fails_on_invalid_gpu_type",
+            "--force",
         ],
     )
 
@@ -69,6 +70,7 @@ def test_cli_run_submit_fails_on_invalid_gpu_provisioning_mode(runner: CliRunner
             "INVALID_MODE",
             "--tags",
             "test_cli_run_submit_fails_on_invalid_gpu_provisioning_mode",
+            "--force",
         ],
     )
 
@@ -102,6 +104,7 @@ def test_cli_run_submit_fails_on_invalid_cpu_provisioning_mode(runner: CliRunner
             "RESERVED",
             "--tags",
             "test_cli_run_submit_fails_on_invalid_cpu_provisioning_modes",
+            "--force",
         ],
     )
 
@@ -135,6 +138,7 @@ def test_cli_run_submit_fails_on_max_gpus_per_slide_zero(runner: CliRunner, tmp_
             "0",
             "--tags",
             "test_cli_run_submit_fails_on_max_gpus_per_slide_zero",
+            "--force",
         ],
     )
 
@@ -168,6 +172,7 @@ def test_cli_run_submit_fails_on_max_gpus_per_slide_too_high(runner: CliRunner, 
             "9",
             "--tags",
             "test_cli_run_submit_fails_on_max_gpus_per_slide_too_highs",
+            "--force",
         ],
     )
 
@@ -208,6 +213,7 @@ def test_cli_run_submit_succeeds_with_valid_pipeline_config(runner: CliRunner, t
             "ON_DEMAND",
             "--tags",
             "test_cli_run_submit_succeeds_with_valid_pipeline_config",
+            "--force",
         ],
     )
 
@@ -266,6 +272,7 @@ def test_cli_run_submit_succeeds_with_valid_a100_config(runner: CliRunner, tmp_p
             "SPOT",
             "--tags",
             "test_cli_run_submit_succeeds_with_valid_a100_config",
+            "--force",
         ],
     )
 

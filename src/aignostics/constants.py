@@ -37,3 +37,5 @@ HETA_APPLICATION_ID = "he-tme"
 TEST_APP_APPLICATION_ID = "test-app"
 WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}
 WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP = {".tiff"}
+
+WINDOW_TITLE = "Aignostics Launchpad"

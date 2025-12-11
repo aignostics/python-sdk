@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v0.2.231 - built with love in Berlin 🐻 // Python v3.14.1
+🔬 Aignostics Python SDK v0.2.234 - built with love in Berlin 🐻 // Python v3.14.1
 
 **Commands**:
 
@@ -219,6 +219,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--flex-start-max-run-duration-minutes INTEGER RANGE`: Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Ignored when gpu_provisioning_mode is not FLEX_START.  [default: 720; 1&lt;=x&lt;=3600]
 * `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
 * `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-3600).  [default: 30; 1&lt;=x&lt;=3600]
+* `--force / --no-force`: If True, skip the platform health check before proceeding.  [default: no-force]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run prepare`
@@ -277,6 +278,7 @@ $ aignostics application run upload [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
 * `--upload-prefix TEXT`: Prefix for the upload destination. If not given will be set to current milliseconds.  [default: (&lt;current-timestamp-ms&gt;)]
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If set, the run will be onboarded to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
+* `--force / --no-force`: If True, skip the platform health check before proceeding.  [default: no-force]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run submit`
@@ -313,6 +315,7 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--flex-start-max-run-duration-minutes INTEGER RANGE`: Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Ignored when gpu_provisioning_mode is not FLEX_START.  [default: 720; 1&lt;=x&lt;=3600]
 * `--cpu-provisioning-mode TEXT`: CPU provisioning mode (SPOT or ON_DEMAND).  [default: SPOT]
 * `--node-acquisition-timeout-minutes INTEGER RANGE`: Timeout for acquiring compute nodes in minutes (1-3600).  [default: 30; 1&lt;=x&lt;=3600]
+* `--force / --no-force`: If True, skip the platform health check before proceeding.  [default: no-force]
 * `--help`: Show this message and exit.
 
 #### `aignostics application run list`

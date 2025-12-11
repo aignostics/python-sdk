@@ -1,5 +1,6 @@
 """Tests to verify the GUI functionality of the application module."""
 
+import contextlib
 import re
 import tempfile
 from asyncio import sleep
@@ -221,6 +222,9 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
             latest_application_version = application.versions[0] if application.versions else None
             assert latest_application_version is not None, "No application versions found for he-tme"
             await user.should_see(latest_application_version.number)
+            with contextlib.suppress(AssertionError):
+                # Click force checkbox if system is unhealthy (checkbox only appears when unhealthy)
+                user.find(marker="CHECKBOX_FORCE").click()
             user.find(marker="BUTTON_APPLICATION_VERSION_NEXT").click()
 
             # Check the file picker opens and closes

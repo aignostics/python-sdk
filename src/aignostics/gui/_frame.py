@@ -11,7 +11,9 @@ from typing import Any
 
 from html_sanitizer import Sanitizer
 from humanize import naturaldelta
+from loguru import logger
 
+from aignostics.constants import WINDOW_TITLE
 from aignostics.utils import __version__, open_user_data_directory
 
 from ._theme import theme
@@ -20,6 +22,11 @@ FLAT_COLOR_WHITE = "flat color=white"
 
 HEALTH_UPDATE_INTERVAL = 30
 USERINFO_UPDATE_INTERVAL = 60 * 60
+PROPS_CLICKABLE = "clickable"
+PROPS_AVATAR = "avatar"
+CLASSES_FULL_WIDTH = "w-full"
+CLASSES_FULL_HEIGHT = "h-full"
+CLASSES_FULL_SIZE = f"{CLASSES_FULL_WIDTH} {CLASSES_FULL_HEIGHT}"
 
 
 @contextmanager
@@ -47,8 +54,65 @@ def frame(  # noqa: C901, PLR0915
     from aignostics.platform import Service as PlatformService  # noqa: PLC0415
     from aignostics.platform import UserInfo, settings  # noqa: PLC0415
     from aignostics.system import Service as SystemService  # noqa: PLC0415
+    from aignostics.utils import NavItem, gui_get_nav_groups  # noqa: PLC0415
 
     theme()
+
+    def _nav_item(icon: str, label: str, target: str, marker: str, new_tab: bool = True) -> None:
+        """Create a navigation item with icon and link."""
+        with ui.item().props(PROPS_CLICKABLE).classes(CLASSES_FULL_WIDTH):
+            with ui.item_section().props(PROPS_AVATAR):
+                ui.icon(icon, color="primary")
+            with ui.item_section():
+                ui.link(label, target, new_tab=new_tab).mark(marker)
+
+    def _render_nav_item(item: NavItem) -> None:
+        """Render a single NavItem."""
+        _nav_item(item.icon, item.label, item.target, item.marker or "", item.new_tab)
+
+    def _render_nav_groups() -> None:
+        """Render all navigation groups from discovered NavBuilders."""
+        nav_groups = gui_get_nav_groups()
+        for group in nav_groups:
+            if group.use_expansion:
+                with (
+                    ui.expansion(group.name, icon=group.icon, group="nav").classes(CLASSES_FULL_WIDTH),
+                    ui.list().props("dense").classes(CLASSES_FULL_WIDTH),
+                ):
+                    for item in group.items:
+                        _render_nav_item(item)
+            else:
+                # Render items flat without expansion
+                for item in group.items:
+                    _render_nav_item(item)
+
+    def _bring_window_to_front() -> None:
+        """Bring the native window to front after authentication completes.
+
+        Uses platform-specific approaches:
+        - Windows: Uses ctypes to find window by title and call SetForegroundWindow,
+          as pywebview's set_always_on_top/show methods don't reliably bring windows
+          to front and the window handle isn't directly exposed.
+        - macOS/Linux: Uses pywebview's built-in methods.
+        """
+        if not app.native.main_window:
+            return
+        try:
+            if platform.system() == "Windows":
+                import ctypes  # noqa: PLC0415
+
+                # Find window by title since pywebview doesn't expose hwnd directly
+                # FindWindowW(lpClassName, lpWindowName) - use None for class to match any
+                hwnd = ctypes.windll.user32.FindWindowW(None, WINDOW_TITLE)  # type: ignore
+                if hwnd:
+                    ctypes.windll.user32.SetForegroundWindow(hwnd)  # type: ignore
+            else:
+                app.native.main_window.set_always_on_top(True)
+                app.native.main_window.show()
+                app.native.main_window.set_always_on_top(False)
+        except Exception as e:
+            logger.exception(f"Failed to bring window to front: {e}")
+            # Window operations can fail on some platforms
 
     user_info: UserInfo | None = None
     launchpad_healthy: bool | None = None
@@ -93,6 +157,8 @@ def frame(  # noqa: C901, PLR0915
         await ui.context.client.connected()
         app.storage.tab["user_info"] = user_info
         _user_info_ui.refresh()
+        if user_info:
+            _bring_window_to_front()
 
     ui.timer(interval=USERINFO_UPDATE_INTERVAL, callback=_user_info_ui_load, immediate=True)
 
@@ -105,6 +171,8 @@ def frame(  # noqa: C901, PLR0915
         _user_info_ui.refresh()
         with contextlib.suppress(Exception):
             user_info = await run.io_bound(PlatformService.get_user_info, relogin=True)
+            if user_info:
+                _bring_window_to_front()
             app.storage.tab["user_info"] = user_info
         ui.navigate.reload()
 
@@ -247,6 +315,7 @@ def frame(  # noqa: C901, PLR0915
                     ui.label("Manage Cloud Bucket").classes(
                         "font-bold" if context.client.page.path == "/bucket" else "font-normal"
                     )
+            _render_nav_groups()
             with ui.item(on_click=lambda _: ui.navigate.to("/system")).props("clickable"):
                 with ui.item_section().props("avatar"):
                     health_icon()

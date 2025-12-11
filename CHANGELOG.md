@@ -1,6 +1,40 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.231](https://github.com/aignostics/python-sdk/compare/v0.2.230..0.2.231) - 2025-12-09
+# [0.2.234](https://github.com/aignostics/python-sdk/compare/v0.2.233..0.2.234) - 2025-12-10
+
+### ⛰️  Features
+
+- *(gui)* Enable plugins to contribute nav items to right sidebar - ([2d4e327](https://github.com/aignostics/python-sdk/commit/2d4e327beb2ec7bca97cb7d541b351a606ee8289))
+
+
+# [v0.2.233](https://github.com/aignostics/python-sdk/compare/v0.2.232..v0.2.233) - 2025-12-10
+
+### ⛰️  Features
+
+- *(core)* Allow to dynamically inject external (private or public) plugins extending Python SDK dynamically - ([45cdc51](https://github.com/aignostics/python-sdk/commit/45cdc51b9aa4947a3d34971e256bf3f76c07eb0a))
+
+### 🐛 Bug Fixes
+
+- Enable opening artifacts in qupath on Windows ([#335](https://github.com/orhun/git-cliff/issues/335)) - ([878cbb0](https://github.com/aignostics/python-sdk/commit/878cbb0ca84139b6f9f22da6d18460c424ea4ba9))
+
+### 🧪 Testing
+
+- Revert skip failing test ([#329](https://github.com/orhun/git-cliff/issues/329)) - ([0fc5990](https://github.com/aignostics/python-sdk/commit/0fc59904cb5a57e9c5556987055b64c1045a1d25))
+
+
+# [v0.2.232](https://github.com/aignostics/python-sdk/compare/v0.2.231..v0.2.232) - 2025-12-10
+
+### ⚙️ Miscellaneous Tasks
+
+- *(gui)* Don't use windowed mode for launchpad if on Python 3.14 - ([66688c6](https://github.com/aignostics/python-sdk/commit/66688c60d46881d128bfa3b9174a53012199c9a6))
+- *(wsi)* Reject running wsi dicom commands on Python 3.14, given transitive dependency of highdicom not yet supported on that Python version - ([66688c6](https://github.com/aignostics/python-sdk/commit/66688c60d46881d128bfa3b9174a53012199c9a6))
+
+### 🛡️ Security
+
+- *(deps)* Don't use override-dependencies as this is not respected by uvx, but use regular dependency trees - ([66688c6](https://github.com/aignostics/python-sdk/commit/66688c60d46881d128bfa3b9174a53012199c9a6))
+
+
+# [v0.2.231](https://github.com/aignostics/python-sdk/compare/v0.2.230..v0.2.231) - 2025-12-09
 
 ### 🧪 Testing
 
@@ -1068,5 +1102,3 @@
 * @omid-aignostics made their first contribution
 * @idelsink made their first contribution
 * @dependabot[bot] made their first contribution
-
-

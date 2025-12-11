@@ -10,6 +10,7 @@ import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
+from aignostics.constants import WINDOW_TITLE
 from aignostics.utils import (
     __python_version__,
     __version__,
@@ -205,10 +206,16 @@ if find_spec("nicegui"):
 
         # Check that ui.run was called with the expected parameters
         assert mock_ui_run_called, "ui.run was not called"
-        assert mock_ui_run_args["title"] == "Aignostics Launchpad", "title parameter is incorrect"
+        assert mock_ui_run_args["title"] == WINDOW_TITLE, "title parameter is incorrect"
         assert mock_ui_run_args["favicon"] == "🔬", "favicon parameter is incorrect"
         if platform.system() == "Linux":
             assert mock_ui_run_args["native"] is False, "native parameter should be False on Linux"
+            assert mock_ui_run_args["show_welcome_message"] is True, (
+                "show_welcome_message parameter should be True when native is False"
+            )
+            assert mock_ui_run_args["show"] is True, "show parameter should be True when native is False"
+        elif platform.system() == "Windows" and platform.python_version_tuple() >= ("3", "14"):
+            assert mock_ui_run_args["native"] is False, "native parameter should be False on Windows"
             assert mock_ui_run_args["show_welcome_message"] is True, (
                 "show_welcome_message parameter should be True when native is False"
             )

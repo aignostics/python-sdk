@@ -35,9 +35,39 @@ The gui module provides common GUI framework components and theming for the Aign
 
 **Health Monitoring:**
 
-- `HEALTH_UPDATE_INTERVAL` - Configurable health check frequency
-- Real-time service status display in UI
-- Centralized health aggregation and reporting
+- `HEALTH_UPDATE_INTERVAL` - Configurable health check frequency (default: 30 seconds)
+- `USERINFO_UPDATE_INTERVAL` - User info refresh interval (default: 60 minutes)
+- Real-time service status display in UI footer
+- Centralized health aggregation and reporting via `SystemService.health_static()`
+
+**Health Check Enforcement:**
+
+The GUI enforces health checks before allowing critical operations:
+
+- **Footer Health Indicator**: Shows "Launchpad is healthy" (green) or "Launchpad is unhealthy" (red)
+- **Application Run Submission**: The "Next" button in the application workflow stepper is disabled when unhealthy
+- **Tooltip Feedback**: Users see "System is unhealthy, you cannot prepare a run at this time."
+- **Force Override**: Internal users (Aignostics, pre-alpha-org, LMU, Charite organizations) can enable a "Force (skip health check)" checkbox
+
+**Health State Management (`_frame.py`):**
+
+```python
+launchpad_healthy: bool | None = None  # None = loading, True = healthy, False = unhealthy
+
+async def _health_load_and_render() -> None:
+    nonlocal launchpad_healthy
+    with contextlib.suppress(Exception):
+        launchpad_healthy = bool(await run.cpu_bound(SystemService.health_static))
+    health_icon.refresh()
+    health_link.refresh()
+
+ui.timer(interval=HEALTH_UPDATE_INTERVAL, callback=_update_health, immediate=True)
+```
+
+**Health Display Components:**
+
+- `health_icon()` - Settings menu icon (green check or red error)
+- `health_link()` - Footer link with status text and icon
 
 **Error Handling:**
 

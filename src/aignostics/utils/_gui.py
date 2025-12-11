@@ -73,6 +73,12 @@ def gui_run(  # noqa: PLR0913, PLR0917
         native = False
         show = True
 
+    # On Windows with python 3.14 don't use native mode due to pythonnet not yet
+    # supported
+    if native and platform.system() == "Windows" and platform.python_version_tuple() >= ("3", "14"):
+        native = False
+        show = True
+
     gui_register_pages()
 
     ui.run(
