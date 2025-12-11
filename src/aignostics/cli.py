@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 from loguru import logger
 
-from .constants import NOTEBOOK_DEFAULT
+from .constants import NOTEBOOK_DEFAULT, WINDOW_TITLE
 from .utils import (
     __is_running_in_container__,
     __python_version__,
@@ -27,7 +27,7 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
         """Open Aignostics Launchpad, the graphical user interface of the Aignostics Platform."""
         from .utils import gui_run  # noqa: PLC0415
 
-        gui_run(native=True, with_api=False, title="Aignostics Launchpad", icon="🔬")
+        gui_run(native=True, with_api=False, title=WINDOW_TITLE, icon="🔬")
 
 
 if find_spec("marimo"):
