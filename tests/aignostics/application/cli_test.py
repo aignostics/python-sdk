@@ -6,6 +6,7 @@ import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from time import sleep
+from unittest.mock import MagicMock, patch
 
 import pytest
 from loguru import logger
@@ -14,7 +15,7 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
-from aignostics.utils import sanitize_path
+from aignostics.utils import Health, sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
@@ -143,12 +144,12 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     )
 
     # Step 3: Upload the file to the platform
-    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
+    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv), "--force"])
     assert "Upload completed." in normalize_output(result.stdout)
     assert result.exit_code == 0
 
     # Step 3: Submit the run from the metadata file
-    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv)])
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv), "--force"])
     assert result.exit_code == 2
     assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
@@ -167,9 +168,103 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
         "EfIIhA==;8.065226874391001;2054;1529;H&E;LUNG;LUNG_CANCER;\n"
     )
 
-    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv)])
+    result = runner.invoke(cli, ["application", "run", "upload", HETA_APPLICATION_ID, str(metadata_csv), "--force"])
     assert result.exit_code == 2
     assert "Warning: Source file 'missing.file' (row 0) does not exist" in normalize_output(result.stdout)
+
+
+@pytest.mark.unit
+@pytest.mark.timeout(timeout=10)
+@patch("aignostics.application._cli.SystemService.health_static")
+def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
+    mock_health: MagicMock, runner: CliRunner, tmp_path: Path
+) -> None:
+    """Check run submit command exits with code 1 when system is unhealthy and --force is not used."""
+    mock_health.return_value = Health(
+        status=Health.Code.DOWN,
+        reason="Simulated unhealthy system for testing",
+    )
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
+    csv_path = tmp_path / "dummy.csv"
+    csv_path.write_text(csv_content)
+
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+
+
+@pytest.mark.unit
+@pytest.mark.timeout(timeout=10)
+@patch("aignostics.application._cli.SystemService.health_static")
+def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
+    mock_health: MagicMock, runner: CliRunner, tmp_path: Path
+) -> None:
+    """Check run upload command exits with code 1 when system is unhealthy and --force is not used."""
+    mock_health.return_value = Health(
+        status=Health.Code.DOWN,
+        reason="Simulated unhealthy system for testing",
+    )
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
+    csv_path = tmp_path / "dummy.csv"
+    csv_path.write_text(csv_content)
+
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "upload",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+
+
+@pytest.mark.unit
+@pytest.mark.timeout(timeout=10)
+@patch("aignostics.application._cli.SystemService.health_static")
+def test_cli_run_execute_fails_when_system_unhealthy_and_no_force(
+    mock_health: MagicMock, runner: CliRunner, tmp_path: Path
+) -> None:
+    """Check run execute command exits with code 1 when system is unhealthy and --force is not used."""
+    mock_health.return_value = Health(
+        status=Health.Code.DOWN,
+        reason="Simulated unhealthy system for testing",
+    )
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
+    csv_path = tmp_path / "dummy.csv"
+    csv_path.write_text(csv_content)
+
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "execute",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 1
 
 
 @pytest.mark.e2e
@@ -193,6 +288,7 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
             str(csv_path),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+            "--force",
         ],
     )
 
@@ -223,6 +319,7 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
             str(csv_path),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+            "--force",
         ],
     )
 
@@ -251,6 +348,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
             str(csv_path),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
+            "--force",
         ],
     )
 
@@ -287,6 +385,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
             "--onboard-to-aignostics-portal",
+            "--force",
         ],
     )
     output = normalize_output(result.stdout)
@@ -708,6 +807,7 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DUE_DATE_SECONDS)).isoformat(),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(seconds=HETA_APPLICATION_DEADLINE_SECONDS)).isoformat(),
+            "--force",
         ],
     )
 

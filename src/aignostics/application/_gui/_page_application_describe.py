@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
-from nicegui import app, binding, ui  # noq
+from nicegui import app, binding, ui
 from nicegui import run as nicegui_run
+from nicegui.events import ValueChangeEventArguments
 
 from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.platform import (
@@ -20,6 +21,7 @@ from aignostics.platform import (
     DEFAULT_MAX_GPUS_PER_SLIDE,
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
+from aignostics.system import Service as SystemService
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
@@ -68,6 +70,7 @@ class SubmitForm:
     flex_start_max_run_duration_minutes: int = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
     cpu_provisioning_mode: str = DEFAULT_CPU_PROVISIONING_MODE
     node_acquisition_timeout_minutes: int = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES
+    force: bool = False
 
 
 submit_form = SubmitForm()
@@ -274,6 +277,67 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         else:
             ui.notify("No source directory selected", type="warning")
 
+    def _add_application_version_selection_section() -> None:
+        """Add application version selection section."""
+        with ui.step("Select Application Version"):  # noqa: PLR1702
+            with ui.row().classes("w-full justify-center"):
+                with ui.column():
+                    ui.label(
+                        f"Select the version of {application.name} you want to run. Not sure? "
+                        "Click “Next” to auto-select the latest version"
+                    )
+                    unique_versions = list(
+                        dict.fromkeys(
+                            str(version.number) for version in application.versions if version.number is not None
+                        )
+                    )
+                    ui.select(
+                        options={version: version for version in unique_versions},
+                        value=latest_application_version.number if latest_application_version else None,
+                        on_change=lambda _: _info_dialog_content.refresh(),
+                    ).bind_value_to(submit_form, "application_version")
+                ui.space()
+                with ui.column(), ui.button(icon="info", on_click=info_dialog.open):
+                    ui.tooltip("Show changes and input/ouput schema of this application version.")
+            with ui.stepper_navigation():
+                # Check system health and determine if force option should be available
+                system_healthy = bool(SystemService.health_static())
+
+                # Check if user is internal (can use force option)
+                user_info: UserInfo | None = app.storage.tab.get("user_info", None)
+                is_internal_user = (
+                    user_info
+                    and user_info.organization
+                    and user_info.organization.name
+                    and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
+                )
+
+                unhealthy_tooltip = None
+                with ui.button(
+                    "Next",
+                    on_click=lambda: (application_info.close(), stepper.next()),  # type: ignore[func-returns-value]
+                ).mark("BUTTON_APPLICATION_VERSION_NEXT") as version_next_button:
+                    if not system_healthy:
+                        unhealthy_tooltip = ui.tooltip("System is unhealthy, you cannot prepare a run at this time.")
+
+                if not system_healthy:
+                    version_next_button.disable()
+                    # Show force checkbox for internal users
+                    if is_internal_user:
+
+                        def on_force_change(e: ValueChangeEventArguments) -> None:
+                            if e.value:
+                                version_next_button.enable()
+                                if unhealthy_tooltip:
+                                    unhealthy_tooltip.set_visibility(False)
+                            else:
+                                version_next_button.disable()
+                                if unhealthy_tooltip:
+                                    unhealthy_tooltip.set_visibility(True)
+                            submit_form.force = e.value
+
+                        ui.checkbox("Force (skip health check)", on_change=on_force_change).mark("CHECKBOX_FORCE")
+
     @ui.refreshable
     def _info_dialog_content() -> None:
         """Refreshable content for the info dialog."""
@@ -323,30 +387,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
     with ui.stepper().props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
-        with ui.step("Select Application Version"):
-            with ui.row().classes("w-full justify-center"):
-                with ui.column():
-                    ui.label(
-                        f"Select the version of {application.name} you want to run. Not sure? "
-                        "Click “Next” to auto-select the latest version"
-                    )
-                    unique_versions = list(
-                        dict.fromkeys(
-                            str(version.number) for version in application.versions if version.number is not None
-                        )
-                    )
-                    ui.select(
-                        options={version: version for version in unique_versions},
-                        value=latest_application_version.number if latest_application_version else None,
-                        on_change=lambda _: _info_dialog_content.refresh(),
-                    ).bind_value_to(submit_form, "application_version")
-                ui.space()
-                with ui.column(), ui.button(icon="info", on_click=info_dialog.open):
-                    ui.tooltip("Show changes and input/ouput schema of this application version.")
-            with ui.stepper_navigation():
-                ui.button("Next", on_click=lambda: (application_info.close(), stepper.next())).mark(  # type: ignore[func-returns-value]
-                    "BUTTON_APPLICATION_VERSION_NEXT"
-                )
+        _add_application_version_selection_section()
 
         with ui.step("Find Whole Slide Images"):
             submit_form.wsi_step_label = ui.label(
@@ -782,6 +823,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 submit_form.onboard_to_aignostics_portal,
                 str(time.time() * 1000),
                 upload_message_queue,
+                None,  # upload_progress_callable
             )
             message = "Upload to Aignostics Platform completed."
             logger.trace(message)

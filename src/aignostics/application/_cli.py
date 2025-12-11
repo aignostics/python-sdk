@@ -21,6 +21,7 @@ from aignostics.platform import (
     NotFoundException,
     RunState,
 )
+from aignostics.system import Service as SystemService
 from aignostics.utils import console, get_user_data_directory, sanitize_path
 
 from ._models import DownloadProgress, DownloadProgressState
@@ -76,6 +77,11 @@ OnboardToPortalOption = Annotated[
     typer.Option(help="If True, onboard the run to the Aignostics Portal."),
 ]
 
+ForceOption = Annotated[
+    bool,
+    typer.Option(help="If True, skip the platform health check before proceeding."),
+]
+
 GpuTypeOption = Annotated[
     str,
     typer.Option(help="GPU type to use for processing (L4 or A100)."),
@@ -119,6 +125,14 @@ cli.add_typer(run_app, name="run", help="List, submit and manage application run
 
 result_app = typer.Typer()
 run_app.add_typer(result_app, name="result", help="Download or delete run results.")
+
+
+def _abort_if_system_unhealthy() -> None:
+    health = SystemService.health_static()
+    if not health:
+        logger.error(f"Platform is not healthy: {health.reason}. Aborting.")
+        console.print(f"[error]Error:[/error] Platform is not healthy: {health.reason}. Aborting.")
+        sys.exit(1)
 
 
 @cli.command("list")
@@ -457,6 +471,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
     flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
     node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    force: ForceOption = False,
 ) -> None:
     """Prepare metadata, upload data to platform, and submit an application run, then incrementally download results.
 
@@ -473,6 +488,8 @@ def run_execute(  # noqa: PLR0913, PLR0917
         by default waiting for the run to complete
         and downloading results incrementally.
     """
+    if not force:
+        _abort_if_system_unhealthy()
     run_prepare(
         application_id=application_id,
         metadata_csv=metadata_csv_file,
@@ -486,6 +503,7 @@ def run_execute(  # noqa: PLR0913, PLR0917
         application_version=application_version,
         upload_prefix=upload_prefix,
         onboard_to_aignostics_portal=onboard_to_aignostics_portal,
+        force=force,
     )
     run_id = run_submit(
         application_id=application_id,
@@ -591,7 +609,7 @@ def run_prepare(
 
 
 @run_app.command(name="upload")
-def run_upload(
+def run_upload(  # noqa: PLR0913, PLR0917
     application_id: Annotated[
         str,
         typer.Argument(help="Id of the application to upload data for. "),
@@ -627,6 +645,7 @@ def run_upload(
             help="If set, the run will be onboarded to the Aignostics Portal.",
         ),
     ] = False,
+    force: ForceOption = False,
 ) -> None:
     """Upload files referenced in the metadata CSV file to the Aignostics platform.
 
@@ -644,6 +663,9 @@ def run_upload(
         TotalFileSizeColumn,
         TransferSpeedColumn,
     )
+
+    if not force:
+        _abort_if_system_unhealthy()
 
     metadata_dict = read_metadata_csv_to_dict(metadata_csv_file=metadata_csv_file)
     if not metadata_dict:
@@ -732,6 +754,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
     flex_start_max_run_duration_minutes: FlexStartMaxRunDurationOption = DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     cpu_provisioning_mode: CpuProvisioningModeOption = DEFAULT_CPU_PROVISIONING_MODE,
     node_acquisition_timeout_minutes: NodeAcquisitionTimeoutOption = DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    force: ForceOption = False,
 ) -> str:
     """Submit run by referencing the metadata CSV file.
 
@@ -740,6 +763,9 @@ def run_submit(  # noqa: PLR0913, PLR0917
     Returns:
         The ID of the submitted application run.
     """
+    if not force:
+        _abort_if_system_unhealthy()
+
     try:
         app_version = Service().application_version(
             application_id=application_id, application_version=application_version
