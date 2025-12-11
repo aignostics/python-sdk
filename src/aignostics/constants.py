@@ -41,6 +41,3 @@ WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP = {".tiff"}
 WINDOW_TITLE = "Aignostics Launchpad"
 # Organizations with internal/advanced access (e.g., platform-wide queue visibility, GPU config)
 INTERNAL_ORGS = {"aignostics", "pre-alpha-org", "lmu", "charite"}
-# Sentinel value indicating a queue position was redacted for non-internal users
-# Distinct from None (no data available) to allow display logic to differentiate
-REDACTED_QUEUE_POSITION = -1

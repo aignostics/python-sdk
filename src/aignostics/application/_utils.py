@@ -228,52 +228,33 @@ def _format_run_statistics(statistics: RunItemStatistics) -> str:
 def _format_queue_position(run: RunData) -> str:
     """Format queue position information for a run.
 
-    Displays queue position information based on available data:
-    - If both positions are None: Shows "N/A"
-    - If platform position is REDACTED_QUEUE_POSITION (-1): Shows only org position (external users)
-    - If platform position is available (>=0): Shows both org and platform positions (internal users)
-
-    The run data should come from `Run.details_for_user_display()` which handles
-    redaction of platform-wide queue position for external users by setting it to REDACTED_QUEUE_POSITION.
+    Only displays queue position when the run is in PENDING or PROCESSING state.
+    Shows organization position, and platform position if available.
 
     Args:
-        run (RunData): Run data containing queue position info (with redaction already applied)
+        run (RunData): Run data containing queue position info
 
     Returns:
         str: Formatted queue position string
     """
-    from aignostics.constants import REDACTED_QUEUE_POSITION  # noqa: PLC0415
-
-    org_position = run.num_preceding_items_org
-    platform_position = run.num_preceding_items_platform
-
-    # Check if platform position was redacted (external user)
-    is_platform_redacted = platform_position == REDACTED_QUEUE_POSITION
-
-    # If no queue data available (both None or only redacted), show N/A with explanation
-    if org_position is None and (platform_position is None or is_platform_redacted):
+    if run.state not in {RunState.PENDING, RunState.PROCESSING}:
         return "[bold]Queue Position:[/bold] N/A\n"
 
-    org_str = str(org_position)
+    org_position = str(run.num_preceding_items_org) if run.num_preceding_items_org else "N/A"
+    queue_position_str = f"{org_position} items ahead within your organization"
 
-    if platform_position is not None and not is_platform_redacted:
-        # Show both org and platform positions (internal users only)
-        return (
-            f"[bold]Queue Position:[/bold] {org_str} items ahead within your organization, "
-            f"{platform_position} items ahead across the entire platform\n"
-        )
-    # Show only org position (external users - platform position was redacted)
-    return f"[bold]Queue Position:[/bold] {org_str} items ahead in your organization's queue\n"
+    if run.num_preceding_items_platform:
+        platform_position = str(run.num_preceding_items_platform)
+        queue_position_str += f", {platform_position} items ahead across the entire platform"
+
+    return f"[bold]Queue Position:[/bold] {queue_position_str}\n"
 
 
 def _format_run_details(run: RunData) -> str:
     """Format detailed run information as a single string.
 
-    The run data should come from `Run.details_for_user_display()` which handles
-    redaction of platform-wide queue position for external users.
-
     Args:
-        run (RunData): Run data to format (with redaction already applied)
+        run (RunData): Run data to format
 
     Returns:
         str: Formatted run details
@@ -286,7 +267,6 @@ def _format_run_details(run: RunData) -> str:
         f"[bold]Application (Version):[/bold] {run.application_id} ({run.version_number})\n"
     )
 
-    # Add queue position info
     output += _format_queue_position(run)
 
     output += f"[bold]Status (Termination Reason):[/bold] {status_str}\n[bold]Output:[/bold] {run.output.value}\n"
@@ -305,18 +285,15 @@ def _format_run_details(run: RunData) -> str:
     return output
 
 
-def retrieve_and_print_run_details(run_handle: Run) -> None:
+def retrieve_and_print_run_details(run_handle: Run, hide_platform_queue_position: bool) -> None:
     """Retrieve and print detailed information about a run.
-
-    Uses `Run.details_for_user_display()` to get run data with appropriate redaction
-    applied for the current user (e.g., hiding platform queue position for
-    non-internal users).
 
     Args:
         run_handle (Run): The Run handle
+        hide_platform_queue_position (bool): Whether to hide platform-wide queue position
 
     """
-    run = run_handle.details_for_user_display()
+    run = run_handle.details(hide_platform_queue_position=hide_platform_queue_position)
 
     run_details = _format_run_details(run)
     output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"

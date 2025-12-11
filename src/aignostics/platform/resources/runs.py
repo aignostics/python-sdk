@@ -134,7 +134,7 @@ class Run:
 
         return cls(Client.get_api_client(cache_token=cache_token), run_id)
 
-    def details(self, nocache: bool = False) -> RunData:
+    def details(self, nocache: bool = False, hide_platform_queue_position: bool = False) -> RunData:
         """Retrieves the current status of the application run.
 
         Retries on network and server errors.
@@ -142,6 +142,8 @@ class Run:
         Args:
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            hide_platform_queue_position (bool): If True, hides the platform queue position
+                in the returned run data. Defaults to False.
 
         Returns:
             RunData: The run data.
@@ -166,40 +168,10 @@ class Run:
                 )
             )
 
-        return details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
-
-    def details_for_user_display(self, nocache: bool = False) -> RunData:
-        """Retrieves the current status of the application run, obfuscating internal data for non-internal users.
-
-        This method wraps `details()` and applies user-based access control:
-        - For internal users (Aignostics org members): Returns full run data including platform queue position
-        - For external users: Returns run data with `num_preceding_items_platform` set to REDACTED_QUEUE_POSITION (-1)
-
-        Use this method instead of `details()` when exposing run data to users via CLI or GUI
-        to ensure consistent redaction of platform-wide queue positions.
-
-        Retries on network and server errors.
-
-        Args:
-            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
-                The fresh result will still be cached for subsequent calls. Defaults to False.
-
-        Returns:
-            RunData: The run data with appropriate redaction applied.
-
-        Raises:
-            Exception: If the API request fails.
-        """
-        from aignostics.constants import REDACTED_QUEUE_POSITION  # noqa: PLC0415
-        from aignostics.platform._utils import is_internal_user  # noqa: PLC0415
-
-        run_data = self.details(nocache=nocache)
-
-        if is_internal_user():
-            return run_data
-
-        # For non-internal users, redact platform queue position with sentinel value
-        return run_data.model_copy(update={"num_preceding_items_platform": REDACTED_QUEUE_POSITION})
+        run_data: RunData = details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
+        if hide_platform_queue_position:
+            run_data.num_preceding_items_platform = None
+        return run_data
 
     # TODO(Andreas): Low Prio / existed prior to API migration: Please check if this still fails with
     #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.

@@ -20,6 +20,8 @@ from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
+    from aignx.codegen.models import RunReadResponse
+
     from aignostics.platform import UserInfo
 
 from .._models import DownloadProgressState  # noqa: TID252
@@ -70,7 +72,16 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     run = await nicegui_run.io_bound(service.application_run, run_id)
-    run_data = await nicegui_run.io_bound(run.details_for_user_display) if run else None
+    await ui.context.client.connected()  # Wait for client connection before accessing app.storage
+    user_info: UserInfo | None = app.storage.tab.get("user_info", None)
+    run_data: RunReadResponse | None = (
+        await nicegui_run.io_bound(
+            run.details,
+            hide_platform_queue_position=not (user_info and user_info.is_internal_user),
+        )
+        if run
+        else None
+    )
     spinner.set_visibility(False)
 
     if run and run_data:
@@ -539,8 +550,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         ui.navigate.reload()  # TODO(Helmut): Find out why this workaround works. Was just a hunch ...
 
     if run_data:  # noqa: PLR1702
-        user_info: UserInfo | None = app.storage.tab.get("user_info", None)
-
         with ui.row().classes("w-full justify-center"):
             expansion = ui.expansion(text=f"Run {run.run_id}", icon="info")
             expansion.on_value_change(
@@ -560,27 +569,13 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     status_str = f"{run_data.state.value}"
 
-                # Build queue position string for non-terminated runs
-                # Note: run_data is already redacted via details_for_user_display() - platform position
-                # is REDACTED_QUEUE_POSITION (-1) for external users, so we format based on that
-                from aignostics.constants import REDACTED_QUEUE_POSITION  # noqa: PLC0415
-
                 queue_position_str = "N/A"
                 if run_data.state in {RunState.PENDING, RunState.PROCESSING}:
-                    org_pos = run_data.num_preceding_items_org
-                    platform_pos = run_data.num_preceding_items_platform
-                    is_platform_redacted = platform_pos == REDACTED_QUEUE_POSITION
-
-                    if platform_pos is not None and not is_platform_redacted:
-                        # Internal users see both positions
-                        org_str = str(org_pos) if org_pos is not None else "N/A"
-                        queue_position_str = (
-                            f"{org_str} items ahead within your organization, "
-                            f"{platform_pos} items ahead across the entire platform"
-                        )
-                    elif org_pos is not None:
-                        # External users see only org position
-                        queue_position_str = f"{org_pos} items ahead within your organization"
+                    org_position = str(run_data.num_preceding_items_org) if run_data.num_preceding_items_org else "N/A"
+                    queue_position_str = f"{org_position} items ahead within your organization"
+                    if run_data.num_preceding_items_platform:
+                        platform_position = str(run_data.num_preceding_items_platform)
+                        queue_position_str += f", {platform_position} items ahead across the entire platform"
 
                 ui.code(
                     f"""

@@ -23,9 +23,6 @@ from aignostics.platform.resources.runs import (
 )
 from aignostics.platform.resources.utils import PAGE_SIZE
 
-# Patch path for Client used in is_internal_user tests
-_CLIENT_PATCH_PATH = "aignostics.platform._client.Client"
-
 
 @pytest.fixture
 def mock_api() -> Mock:
@@ -581,18 +578,11 @@ def test_runs_list_delegates_to_list_data(runs, mock_api) -> None:
 
 
 @pytest.mark.unit
-def test_run_details_for_user_display_redacts_platform_position_for_external_user(app_run, mock_api) -> None:
-    """Test that details_for_user_display() hides platform queue position for external users.
-
-    When the current user is not from an internal organization, the platform
-    queue position should be set to REDACTED_QUEUE_POSITION (-1) to prevent exposing internal metrics.
-    """
+def test_run_details_can_hide_platform_queue_position(app_run, mock_api) -> None:
+    """Test that details(hide_platform_queue_position=True) sets platform queue position to None."""
     from datetime import UTC, datetime
-    from unittest.mock import patch
 
     from aignx.codegen.models import RunItemStatistics, RunOutput, RunState
-
-    from aignostics.constants import REDACTED_QUEUE_POSITION
 
     # Create mock run data with both queue positions
     mock_run_data = RunReadResponse(
@@ -622,30 +612,22 @@ def test_run_details_for_user_display_redacts_platform_position_for_external_use
         num_preceding_items_platform=100,
     )
 
-    # Mock both details() (to avoid authentication) and is_internal_user (external user)
-    with (
-        patch.object(app_run, "details", return_value=mock_run_data),
-        patch("aignostics.platform._utils.is_internal_user", return_value=False),
-    ):
-        result = app_run.details_for_user_display()
+    mock_api.get_run_v1_runs_run_id_get.return_value = mock_run_data
 
-    # Platform position should be redacted (set to REDACTED_QUEUE_POSITION)
+    result = app_run.details(hide_platform_queue_position=True)
+
+    # Platform position should be set to None
     assert result.num_preceding_items_org == 5
-    assert result.num_preceding_items_platform == REDACTED_QUEUE_POSITION
+    assert result.num_preceding_items_platform is None
     # Original data should be preserved
     assert result.run_id == "test-run-id"
     assert result.application_id == "he-tme"
 
 
 @pytest.mark.unit
-def test_run_details_for_user_display_preserves_platform_position_for_internal_user(app_run, mock_api) -> None:
-    """Test that details_for_user_display() preserves platform queue position for internal users.
-
-    When the current user is from an internal organization (e.g., Aignostics),
-    both org and platform queue positions should be visible.
-    """
+def test_run_details_can_preserve_platform_queue_position(app_run, mock_api) -> None:
+    """Test that details() preserves platform queue position by default."""
     from datetime import UTC, datetime
-    from unittest.mock import patch
 
     from aignx.codegen.models import RunItemStatistics, RunOutput, RunState
 
@@ -677,56 +659,11 @@ def test_run_details_for_user_display_preserves_platform_position_for_internal_u
         num_preceding_items_platform=100,
     )
 
-    # Mock both details() (to avoid authentication) and is_internal_user (internal user)
-    with (
-        patch.object(app_run, "details", return_value=mock_run_data),
-        patch("aignostics.platform._utils.is_internal_user", return_value=True),
-    ):
-        result = app_run.details_for_user_display()
+    mock_api.get_run_v1_runs_run_id_get.return_value = mock_run_data
 
-    # Both positions should be preserved for internal users
+    result = app_run.details()
+
+    # Both positions should be preserved
     assert result.num_preceding_items_org == 5
     assert result.num_preceding_items_platform == 100
     assert result.run_id == "test-run-id"
-
-
-@pytest.mark.unit
-def test_is_internal_user_returns_true_for_aignostics_org() -> None:
-    """Test that is_internal_user returns True for Aignostics organization."""
-    from unittest.mock import MagicMock, patch
-
-    from aignostics.platform._utils import is_internal_user
-
-    mock_me = MagicMock()
-    mock_me.organization.name = "Aignostics"
-
-    with patch(_CLIENT_PATCH_PATH) as mock_client:
-        mock_client.return_value.me.return_value = mock_me
-        assert is_internal_user() is True
-
-
-@pytest.mark.unit
-def test_is_internal_user_returns_false_for_external_org() -> None:
-    """Test that is_internal_user returns False for external organizations."""
-    from unittest.mock import MagicMock, patch
-
-    from aignostics.platform._utils import is_internal_user
-
-    mock_me = MagicMock()
-    mock_me.organization.name = "External Company"
-
-    with patch(_CLIENT_PATCH_PATH) as mock_client:
-        mock_client.return_value.me.return_value = mock_me
-        assert is_internal_user() is False
-
-
-@pytest.mark.unit
-def test_is_internal_user_returns_false_on_exception() -> None:
-    """Test that is_internal_user returns False when an exception occurs."""
-    from unittest.mock import patch
-
-    from aignostics.platform._utils import is_internal_user
-
-    with patch(_CLIENT_PATCH_PATH) as mock_client:
-        mock_client.side_effect = Exception("Auth failed")
-        assert is_internal_user() is False

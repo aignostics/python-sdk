@@ -206,24 +206,3 @@ def download_temporarily(signed_url: str, verify_checksum: str) -> Generator[IO[
     with tempfile.NamedTemporaryFile() as file:
         download_file(signed_url, file.name, verify_checksum)
         yield file
-
-
-def is_internal_user() -> bool:
-    """Check if the current authenticated user is from an internal organization.
-
-    This function checks whether the current user belongs to an internal organization
-    (e.g., Aignostics). It's used for feature gating and access control decisions.
-
-    Returns:
-        bool: True if user is from an internal org, False otherwise or on any error.
-    """
-    try:
-        from aignostics.constants import INTERNAL_ORGS  # noqa: PLC0415
-        from aignostics.platform._client import Client  # noqa: PLC0415
-
-        me = Client().me()
-        if me and me.organization and me.organization.name:
-            return me.organization.name.lower() in INTERNAL_ORGS
-    except Exception:
-        logger.debug("Could not determine user organization")
-    return False

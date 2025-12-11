@@ -21,6 +21,7 @@ from aignostics.platform import (
     NotFoundException,
     RunState,
 )
+from aignostics.platform import Service as PlatformService
 from aignostics.system import Service as SystemService
 from aignostics.utils import console, get_user_data_directory, sanitize_path
 
@@ -923,13 +924,14 @@ def run_describe(
     logger.trace("Describing run with ID '{}'", run_id)
 
     try:
+        user_info = PlatformService.get_user_info()
         run = Service().application_run(run_id)
         if format == "json":
-            # Get run details with appropriate redaction of the platform-wide queue position for the current user
-            run_details = run.details_for_user_display()
+            # Get run details and output as JSON
+            run_details = run.details(hide_platform_queue_position=not user_info.is_internal_user)
             print(json.dumps(run_details.model_dump(mode="json"), indent=2, default=str))
         else:
-            retrieve_and_print_run_details(run)
+            retrieve_and_print_run_details(run, hide_platform_queue_position=not user_info.is_internal_user)
         logger.debug("Described run with ID '{}'", run_id)
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' not found.")
