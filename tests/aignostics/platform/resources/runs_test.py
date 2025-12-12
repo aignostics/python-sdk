@@ -592,12 +592,11 @@ def test_run_details_can_hide_platform_queue_position(
     expected_platform_queue_position: int | None,
 ) -> None:
     """Test that Run.details handles hide_platform_queue_position correctly."""
-    mock_run_data = Mock(
-        spec=RunReadResponse,
+    run_data = RunReadResponse.model_construct(
         num_preceding_items_org=5,
         num_preceding_items_platform=100,
     )
-    mock_api.get_run_v1_runs_run_id_get.return_value = mock_run_data
+    mock_api.get_run_v1_runs_run_id_get.return_value = run_data
     result = app_run.details(hide_platform_queue_position=hide_platform_queue_position)
-    assert result.num_preceding_items_org == 5
+    assert result.num_preceding_items_org == run_data.num_preceding_items_org
     assert result.num_preceding_items_platform == expected_platform_queue_position
