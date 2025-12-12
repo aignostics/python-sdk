@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 from .._models import DownloadProgressState  # noqa: TID252
 from .._service import Service  # noqa: TID252
-from .._utils import get_mime_type_for_artifact  # noqa: TID252
+from .._utils import get_mime_type_for_artifact, queue_position_string_from_run  # noqa: TID252
 from ._frame import _frame
 from ._utils import (
     mime_type_to_icon,
@@ -569,20 +569,12 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     status_str = f"{run_data.state.value}"
 
-                queue_position_str = "N/A"
-                if run_data.state in {RunState.PENDING, RunState.PROCESSING}:
-                    org_position = str(run_data.num_preceding_items_org) if run_data.num_preceding_items_org else "N/A"
-                    queue_position_str = f"{org_position} items ahead within your organization"
-                    if run_data.num_preceding_items_platform:
-                        platform_position = str(run_data.num_preceding_items_platform)
-                        queue_position_str += f", {platform_position} items ahead across the entire platform"
-
                 ui.code(
                     f"""
                     * Run ID: {run_data.run_id}
                     * Application: {run_data.application_id} ({run_data.version_number})
                     * Status: {status_str}
-                    * Queue Position: {queue_position_str}
+                    * Queue Position: {queue_position_string_from_run(run_data)}
                     * Output: {run_data.output.name}
                         - {run_data.statistics.item_count} items
                         - {run_data.statistics.item_pending_count} pending

@@ -13,6 +13,7 @@ from aignostics.application._utils import (
     is_not_terminated_with_deadline_exceeded,
     print_runs_non_verbose,
     print_runs_verbose,
+    queue_position_string_from_run,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
     validate_mappings,
@@ -739,3 +740,50 @@ def test_validate_mappings_raises_with_correct_index_for_second_invalid() -> Non
             TEST_MAPPING_TIFF_HE,  # Valid
             "*.svs:tissue=LUNG",  # Invalid (index 1)
         ])
+
+
+# Tests for queue_position_string_from_run
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_org_and_platform_position() -> None:
+    """Test queue position string with both org and platform positions."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=5,
+        num_preceding_items_platform=20,
+    )
+    assert queue_position_string_from_run(run) == (
+        "5 items ahead within your organization, 20 items ahead across the entire platform"
+    )
+
+
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_no_position() -> None:
+    """Test queue position string with no positions."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=None,
+        num_preceding_items_platform=None,
+    )
+    assert queue_position_string_from_run(run) == "N/A"
+
+
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_only_org_position() -> None:
+    """Test queue position string with only org position."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=3,
+        num_preceding_items_platform=None,
+    )
+    assert queue_position_string_from_run(run) == "3 items ahead within your organization"
+
+
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_only_platform_position() -> None:
+    """Test queue position string with only platform position."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=None,
+        num_preceding_items_platform=15,
+    )
+    assert queue_position_string_from_run(run) == "15 items ahead across the entire platform"

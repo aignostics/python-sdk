@@ -574,6 +574,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
     assert "Status (Termination Reason): PENDING" in normalize_output(
         describe_result.stdout
     ) or "Status (Termination Reason): PROCESSING" in normalize_output(describe_result.stdout)
+    assert "Queue Position:" in normalize_output(describe_result.stdout)
     assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
         describe_result.stdout
     )

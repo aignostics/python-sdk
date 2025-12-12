@@ -225,29 +225,21 @@ def _format_run_statistics(statistics: RunItemStatistics) -> str:
     )
 
 
-def _format_queue_position(run: RunData) -> str:
-    """Format queue position information for a run.
-
-    Only displays queue position when the run is in PENDING or PROCESSING state.
-    Shows organization position, and platform position if available.
+def queue_position_string_from_run(run: RunData) -> str:
+    """Generate a queue position string from run data.
 
     Args:
-        run (RunData): Run data containing queue position info
+        run (RunData): Run data containing queue position
 
     Returns:
-        str: Formatted queue position string
+        str: Queue position string
     """
-    if run.state not in {RunState.PENDING, RunState.PROCESSING}:
-        return "[bold]Queue Position:[/bold] N/A\n"
-
-    org_position = str(run.num_preceding_items_org) if run.num_preceding_items_org else "N/A"
-    queue_position_str = f"{org_position} items ahead within your organization"
-
-    if run.num_preceding_items_platform:
-        platform_position = str(run.num_preceding_items_platform)
-        queue_position_str += f", {platform_position} items ahead across the entire platform"
-
-    return f"[bold]Queue Position:[/bold] {queue_position_str}\n"
+    queue_position_parts = []
+    if run.num_preceding_items_org is not None:
+        queue_position_parts.append(f"{run.num_preceding_items_org} items ahead within your organization")
+    if run.num_preceding_items_platform is not None:
+        queue_position_parts.append(f"{run.num_preceding_items_platform} items ahead across the entire platform")
+    return ", ".join(queue_position_parts) or "N/A"
 
 
 def _format_run_details(run: RunData) -> str:
@@ -267,7 +259,7 @@ def _format_run_details(run: RunData) -> str:
         f"[bold]Application (Version):[/bold] {run.application_id} ({run.version_number})\n"
     )
 
-    output += _format_queue_position(run)
+    output += f"[bold]Queue Position:[/bold] {queue_position_string_from_run(run)}\n"
 
     output += f"[bold]Status (Termination Reason):[/bold] {status_str}\n[bold]Output:[/bold] {run.output.value}\n"
 
