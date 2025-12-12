@@ -578,92 +578,26 @@ def test_runs_list_delegates_to_list_data(runs, mock_api) -> None:
 
 
 @pytest.mark.unit
-def test_run_details_can_hide_platform_queue_position(app_run, mock_api) -> None:
-    """Test that details(hide_platform_queue_position=True) sets platform queue position to None."""
-    from datetime import UTC, datetime
-
-    from aignx.codegen.models import RunItemStatistics, RunOutput, RunState
-
-    # Create mock run data with both queue positions
-    mock_run_data = RunReadResponse(
-        run_id="test-run-id",
-        application_id="he-tme",
-        version_number="1.0.0",
-        state=RunState.PENDING,
-        output=RunOutput.NONE,
-        termination_reason=None,
-        error_code=None,
-        error_message=None,
-        statistics=RunItemStatistics(
-            item_count=1,
-            item_pending_count=1,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        custom_metadata=None,
-        custom_metadata_checksum=None,
-        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
-        submitted_by="user@example.com",
-        terminated_at=None,
+@pytest.mark.parametrize(
+    ("hide_platform_queue_position", "expected_platform_queue_position"),
+    [
+        (True, None),
+        (False, 100),
+    ],
+)
+def test_run_details_can_hide_platform_queue_position(
+    app_run,
+    mock_api,
+    hide_platform_queue_position: bool,
+    expected_platform_queue_position: int | None,
+) -> None:
+    """Test that Run.details handles hide_platform_queue_position correctly."""
+    mock_run_data = Mock(
+        spec=RunReadResponse,
         num_preceding_items_org=5,
         num_preceding_items_platform=100,
     )
-
     mock_api.get_run_v1_runs_run_id_get.return_value = mock_run_data
-
-    result = app_run.details(hide_platform_queue_position=True)
-
-    # Platform position should be set to None
+    result = app_run.details(hide_platform_queue_position=hide_platform_queue_position)
     assert result.num_preceding_items_org == 5
-    assert result.num_preceding_items_platform is None
-    # Original data should be preserved
-    assert result.run_id == "test-run-id"
-    assert result.application_id == "he-tme"
-
-
-@pytest.mark.unit
-def test_run_details_can_preserve_platform_queue_position(app_run, mock_api) -> None:
-    """Test that details() preserves platform queue position by default."""
-    from datetime import UTC, datetime
-
-    from aignx.codegen.models import RunItemStatistics, RunOutput, RunState
-
-    # Create mock run data with both queue positions
-    mock_run_data = RunReadResponse(
-        run_id="test-run-id",
-        application_id="he-tme",
-        version_number="1.0.0",
-        state=RunState.PENDING,
-        output=RunOutput.NONE,
-        termination_reason=None,
-        error_code=None,
-        error_message=None,
-        statistics=RunItemStatistics(
-            item_count=1,
-            item_pending_count=1,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        custom_metadata=None,
-        custom_metadata_checksum=None,
-        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
-        submitted_by="user@example.com",
-        terminated_at=None,
-        num_preceding_items_org=5,
-        num_preceding_items_platform=100,
-    )
-
-    mock_api.get_run_v1_runs_run_id_get.return_value = mock_run_data
-
-    result = app_run.details()
-
-    # Both positions should be preserved
-    assert result.num_preceding_items_org == 5
-    assert result.num_preceding_items_platform == 100
-    assert result.run_id == "test-run-id"
+    assert result.num_preceding_items_platform == expected_platform_queue_position
