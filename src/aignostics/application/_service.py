@@ -14,9 +14,7 @@ import requests
 from loguru import logger
 
 from aignostics.bucket import Service as BucketService
-from aignostics.constants import (
-    TEST_APP_APPLICATION_ID,
-)
+from aignostics.constants import TEST_APP_APPLICATION_ID
 from aignostics.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -32,9 +30,7 @@ from aignostics.platform import (
     RunOutput,
     RunState,
 )
-from aignostics.platform import (
-    Service as PlatformService,
-)
+from aignostics.platform import Service as PlatformService
 from aignostics.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
@@ -324,39 +320,35 @@ class Service(BaseService):  # noqa: PLR0904
         """Generate metadata from the source directory.
 
         Steps:
-        1. Recursively files ending with supported extensions in the source directory
-        2. Creates a dict with the following columns
+        1. Recursively scans files ending with supported extensions in the source directory
+        2. For DICOM files (.dcm), filters out auxiliary and redundant files
+        3. Creates a dict for each file with the following fields:
             - external_id (str): The external_id of the file, by default equivalent to the absolute file name
             - source (str): The absolute filename
-            - checksum_base64_crc32c (str): The CRC32C checksum of the file constructed, base64 encoded
+            - checksum_base64_crc32c (str): The CRC32C checksum of the file, base64 encoded
             - resolution_mpp (float): The microns per pixel, inspecting the base layer
-            - height_px: The height of the image in pixels, inspecting the base layer
-            - width_px: The width of the image in pixels, inspecting the base layer
-            - Further attributes depending on the application and it's version
-        3. Applies the optional mappings to fill in additional metadata fields in the dict.
+            - height_px (int): The height of the image in pixels, inspecting the base layer
+            - width_px (int): The width of the image in pixels, inspecting the base layer
+            - Further attributes depending on the application and its version
+        4. Applies the optional mappings to fill in additional metadata fields in the dict
 
         Args:
-            source_directory (Path): The source directory to generate metadata from.
-            application_id (str): The ID of the application.
-            application_version (str|None): The version of the application (semver).
-                If not given latest version is used.
-            with_gui_metadata (bool): If True, include additional metadata for GUI.
-            mappings (list[str]): Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
+            source_directory: The source directory to generate metadata from.
+            application_id: The ID of the application.
+            application_version: The version of the application (semver).
+                If not given, latest version is used.
+            with_gui_metadata: If True, include additional metadata for GUI display.
+            mappings: Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
                 The regular expression is matched against the external_id attribute of the entry.
                 The key/value pairs are applied to the entry if the pattern matches.
-            with_extra_metadata (bool): If True, include extra metadata from the WSIService.
+            with_extra_metadata: If True, include extra metadata from the WSIService.
 
         Returns:
-            dict[str, Any]: The generated metadata.
+            List of metadata dictionaries, one per processable file found.
 
         Raises:
-            Exception: If the metadata cannot be generated.
-
-        Raises:
-            NotFoundError: If the application version with the given ID is not found.
-            ValueError: If
-                the source directory does not exist
-                or is not a directory.
+            NotFoundException: If the application version with the given ID is not found.
+            ValueError: If the source directory does not exist or is not a directory.
             RuntimeError: If the metadata generation fails unexpectedly.
         """
         logger.trace("Generating metadata from source directory: {}", source_directory)
@@ -364,20 +356,24 @@ class Service(BaseService):  # noqa: PLR0904
         # TODO(Helmut): Use it
         _ = Service().application_version(application_id, application_version)
 
-        metadata = []
+        metadata: list[dict[str, Any]] = []
+        wsi_service = WSIService()
 
         try:
             extensions = get_supported_extensions_for_application(application_id)
             for extension in extensions:
-                for file_path in source_directory.glob(f"**/*{extension}"):
+                files_to_process = wsi_service.get_wsi_files_to_process(source_directory, extension)
+
+                for file_path in files_to_process:
                     # Generate CRC32C checksum with crc32c and encode as base64
                     hash_sum = crc32c.CRC32CHash()
                     with file_path.open("rb") as f:
                         while chunk := f.read(1024):
                             hash_sum.update(chunk)
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")
+
                     try:
-                        image_metadata = WSIService().get_metadata(file_path)
+                        image_metadata = wsi_service.get_metadata(file_path)
                         width = image_metadata["dimensions"]["width"]
                         height = image_metadata["dimensions"]["height"]
                         mpp = image_metadata["resolution"]["mpp_x"]

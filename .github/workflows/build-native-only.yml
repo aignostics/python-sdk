@@ -39,9 +39,12 @@ jobs:
             COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
           fi
           # Export for use in other steps (multiline-safe)
-          echo "commit_message<<EOF" >> $GITHUB_OUTPUT
-          echo "$COMMIT_MESSAGE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Use printf with %s to avoid interpreting special characters
+          {
+            echo "commit_message<<EOF"
+            printf "%s\n" "$COMMIT_MESSAGE"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
   check-trigger-condition:
     runs-on: ubuntu-latest

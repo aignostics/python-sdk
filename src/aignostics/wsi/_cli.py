@@ -132,6 +132,7 @@ def dicom_inspect(
     ],
     verbose: Annotated[bool, typer.Option(help="Verbose output")] = False,
     summary: Annotated[bool, typer.Option(help="Show only summary information")] = False,
+    wsi_only: Annotated[bool, typer.Option(help="Filter to WSI files only")] = False,
 ) -> None:  # pylint: disable=W0613
     """Inspect DICOM files at any hierarchy level."""
     if not _check_highdicom_available():
@@ -142,7 +143,7 @@ def dicom_inspect(
 
     try:
         with PydicomHandler.from_file(str(path)) as handler:
-            metadata = handler.get_metadata(verbose)
+            metadata = handler.get_metadata(verbose, wsi_only)
 
             if metadata["type"] == "empty":
                 console.print("[bold red]No DICOM files found in the specified path.[/bold red]")

@@ -327,6 +327,21 @@ QuPath integration provides the most powerful way to visualize and interact with
 
 **Congratulations!** You have successfully downloaded a public dataset, submitted an Atlas H&E-TME analysis run, and learned how to access and inspect your results.
 
+### System Health Checks
+
+The Launchpad automatically monitors system health before allowing run submissions. If the system is unhealthy (e.g., network connectivity issues, authentication problems, or platform unavailability), the submission workflow is blocked:
+
+- A tooltip displays "System is unhealthy, you cannot prepare a run at this time."
+- The "Next" button in the application workflow is disabled.
+- The health status is shown in the footer bar at the bottom of the Launchpad.
+
+To resolve health issues:
+
+1. Check the health status indicator in the footer bar
+2. Click "Info and Settings" in the menu to see detailed health information
+3. Verify your network connection and authentication status
+4. Check the [Aignostics Platform Status](https://status.aignostics.com) page
+
 ### Advanced Setup: Extensions
 
 > 💡 The Launchpad features a growing ecosystem of extensions that seamlessly integrate with standard digital pathology tools. To use the Launchpad with all available extensions, run `uvx --from "aignostics[qupath,marimo]" aignostics launchpad`. Currently available extensions are:
@@ -400,6 +415,28 @@ Check out our
 [CLI reference documentation](https://aignostics.readthedocs.io/en/latest/cli_reference.html)
 to learn about all commands and options available.
 
+### System Health Checks
+
+The CLI automatically checks system health before uploading slides or submitting runs. If the system is unhealthy, the operation is blocked and an error message is displayed:
+
+```
+Error: Platform is not healthy: <reason>. Aborting.
+```
+
+To override this behavior (not recommended for production use), add the `--force` flag:
+
+```shell
+uvx aignostics application run upload he-tme metadata.csv --force
+uvx aignostics application run submit he-tme metadata.csv --force
+uvx aignostics application run execute he-tme metadata.csv data/ --force
+```
+
+To manually check system health before running commands:
+
+```shell
+uvx aignostics system health
+```
+
 ## Python Library: Call the Aignostics Platform API from your Python scripts
 
 The Python SDK includes the *Aignostics Python Library* for integration with your Python codebase.
@@ -464,6 +501,30 @@ Please look at the notebooks in the `example` folder for a more detailed example
 and read the
 [client reference documentation](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 to learn about all classes and methods.
+
+### System Health Checks
+
+The low-level Python SDK does **not** perform automated health checks before operations. If health verification is required for your use case, you should implement checks in your application logic:
+
+```python
+from aignostics import platform
+from aignostics.system import Service as SystemService
+
+# Check system health before submitting runs
+health = SystemService().health()
+if not health:
+    raise RuntimeError(f"System is unhealthy: {health.reason}")
+
+# Proceed with run submission
+client = platform.Client()
+run = client.runs.submit(...)
+```
+
+This design gives you full control over health check behavior, allowing you to:
+
+- Implement custom retry logic for transient failures
+- Log health status for monitoring and debugging
+- Gracefully handle unhealthy states in your application
 
 ### Example Notebooks: Interact with the Aignostics Platform from your Python Notebook environment
 
@@ -856,8 +917,11 @@ Architectural style for web services that the Aignostics Platform API follows, e
 **Self-signed URLs**  
 Secure URLs with embedded authentication that allow the platform to access user data without exposing credentials.
 
-**SVS**  
+**SVS**
 Aperio ScanScope Virtual Slide format, commonly used for whole slide images and supported by the platform.
+
+**System Health Check**
+Automated verification that the SDK and Aignostics Platform are operational before critical operations. The Launchpad blocks run submission when unhealthy (no override available for regular users). The CLI blocks uploads and submissions by default but allows override with `--force`. The Python Library does not perform automatic health checks, giving developers full control over health verification logic.
 
 ### T
 
