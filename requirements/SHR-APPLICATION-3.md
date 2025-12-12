@@ -3,6 +3,7 @@ itemId: SHR-APPLICATION-3
 itemTitle: Application Results Management
 itemType: Requirement
 Requirement type: ENVIRONMENT
+itemIntroducesRisk: PYSDK-32, PYSDK-49, PYSDK-50, PYSDK-51
 ---
 
 ## Description
