@@ -159,6 +159,22 @@ components:
           title: Custom Metadata Checksum
       title: CustomMetadataUpdateRequest
       type: object
+    CustomMetadataUpdateResponse:
+      properties:
+        custom_metadata_checksum:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'The checksum of the updated custom metadata. If the `custom_metadata`
+            is None,
+
+            the checksum also None.'
+          readOnly: true
+          title: Custom Metadata Checksum
+      required:
+      - custom_metadata_checksum
+      title: CustomMetadataUpdateResponse
+      type: object
     HTTPValidationError:
       properties:
         detail:
@@ -349,6 +365,18 @@ components:
             $ref: '#/components/schemas/OutputArtifactResultReadResponse'
           title: Output Artifacts
           type: array
+        queue_position_org:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The position of the item in the organization's queue.
+          title: Queue Position Org
+        queue_position_platform:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The position of the item in the platform's queue.
+          title: Queue Position Platform
         state:
           $ref: '#/components/schemas/ItemState'
           description: "\nThe item moves from `PENDING` to `PROCESSING` to `TERMINATED`\
@@ -802,6 +830,20 @@ components:
           examples:
           - Run canceled given errors on more than 10 items.
           title: Error Message
+        num_preceding_items_org:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: How many Items from other Runs in the same Organization are
+            due to begin processing before this Run's next Item does.
+          title: Num Preceding Items Org
+        num_preceding_items_platform:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: How many Items from other Runs are due to begin processing
+            before this Run's next Item does.
+          title: Num Preceding Items Platform
         output:
           $ref: '#/components/schemas/RunOutput'
           description: 'The status of the output of the run. When 0 items are successfully
@@ -1059,7 +1101,7 @@ info:
     \ only need to authorize once per session. The lock icons next to endpoints will\
     \ show green when authorized.\n\n"
   title: Aignostics Platform API
-  version: 1.0.0.beta7
+  version: 1.0.0-ga
 openapi: 3.1.0
 paths:
   /v1/applications:
@@ -1222,11 +1264,11 @@ paths:
       - Public
   /v1/applications/{application_id}/versions/{version}:
     get:
-      description: 'Get the application version details
+      description: 'Get the application version details.
 
 
-        Allows caller to  retrieve information about application version based on
-        provided application version ID.'
+        Allows caller to retrieve information about application version based on provided
+        application version ID.'
       operationId: application_version_details_v1_applications__application_id__versions__version__get
       parameters:
       - in: path
@@ -1476,26 +1518,26 @@ paths:
           \ custom_metadata.\n#### URL Encoding Required\n**Important**: JSONPath\
           \ expressions contain special characters that must be URL-encoded when used\
           \ in query parameters. Most HTTP clients handle this automatically, but\
-          \ when constructing URLs manually, ensure proper encoding.\n\n#### Examples\
-          \ (Clear Format):\n- **Field existence**: `$.study` - Runs that have a study\
-          \ field defined\n- **Exact value match**: `$.study ? (@ == \"high\")` -\
-          \ Runs with specific study value\n- **Numeric comparison**: `$.confidence_score\
-          \ ? (@ > 0.75)` - Runs with confidence score greater than 0.75\n- **Array\
-          \ operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing\
-          \ \"draft\"\n- **Complex conditions**: `$.resources ? (@.gpu_count > 2 &&\
-          \ @.memory_gb >= 16)` - Runs with high resource requirements\n\n#### Examples\
-          \ (URL-Encoded Format):\n- **Field existence**: `%24.study`\n- **Exact value\
-          \ match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)`\n- **Numeric\
-          \ comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)`\n- **Array\
-          \ operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)`\n\
+          \ when constructing URLs manually, please ensure proper encoding.\n\n####\
+          \ Examples (Clear Format):\n- **Field existence**: `$.study` - Runs that\
+          \ have a study field defined\n- **Exact value match**: `$.study ? (@ ==\
+          \ \"high\")` - Runs with specific study value\n- **Numeric comparison**:\
+          \ `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater\
+          \ than 0.75\n- **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs\
+          \ with tags array containing \"draft\"\n- **Complex conditions**: `$.resources\
+          \ ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements\n\
+          \n#### Examples (URL-Encoded Format):\n- **Field existence**: `%24.study`\n\
+          - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)`\n\
+          - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)`\n\
+          - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)`\n\
           - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`\n\
           \n#### Notes\n- JSONPath expressions are evaluated using PostgreSQL's `@?`\
           \ operator\n- The `$.` prefix is automatically added to root-level field\
           \ references if missing\n- String values in conditions must be enclosed\
           \ in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n\
-          - Regular expressions use `like_regex` with standard regex syntax\n- **Remember\
-          \ to URL-encode the entire JSONPath expression when making HTTP requests**\n\
-          \n            "
+          - Regular expressions use `like_regex` with standard regex syntax\n- **Please\
+          \ remember to URL-encode the entire JSONPath expression when making HTTP\
+          \ requests**\n\n            "
         examples:
           array_operations:
             description: Check if an array contains a certain value
@@ -1533,10 +1575,10 @@ paths:
             \ custom_metadata.\n#### URL Encoding Required\n**Important**: JSONPath\
             \ expressions contain special characters that must be URL-encoded when\
             \ used in query parameters. Most HTTP clients handle this automatically,\
-            \ but when constructing URLs manually, ensure proper encoding.\n\n####\
-            \ Examples (Clear Format):\n- **Field existence**: `$.study` - Runs that\
-            \ have a study field defined\n- **Exact value match**: `$.study ? (@ ==\
-            \ \"high\")` - Runs with specific study value\n- **Numeric comparison**:\
+            \ but when constructing URLs manually, please ensure proper encoding.\n\
+            \n#### Examples (Clear Format):\n- **Field existence**: `$.study` - Runs\
+            \ that have a study field defined\n- **Exact value match**: `$.study ?\
+            \ (@ == \"high\")` - Runs with specific study value\n- **Numeric comparison**:\
             \ `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater\
             \ than 0.75\n- **Array operations**: `$.tags[*] ? (@ == \"draft\")` -\
             \ Runs with tags array containing \"draft\"\n- **Complex conditions**:\
@@ -1550,9 +1592,9 @@ paths:
             \ `@?` operator\n- The `$.` prefix is automatically added to root-level\
             \ field references if missing\n- String values in conditions must be enclosed\
             \ in double quotes\n- Use `&&` for AND operations and `||` for OR operations\n\
-            - Regular expressions use `like_regex` with standard regex syntax\n- **Remember\
-            \ to URL-encode the entire JSONPath expression when making HTTP requests**\n\
-            \n            "
+            - Regular expressions use `like_regex` with standard regex syntax\n- **Please\
+            \ remember to URL-encode the entire JSONPath expression when making HTTP\
+            \ requests**\n\n            "
           title: Custom Metadata
       - in: query
         name: page
@@ -1579,15 +1621,21 @@ paths:
 
           - `run_id`
 
-          - `application_version_id`
+          - `application_id`
 
-          - `organization_id`
+          - `version_number`
 
-          - `status`
+          - `custom_metadata`
+
+          - `statistics`
 
           - `submitted_at`
 
           - `submitted_by`
+
+          - `terminated_at`
+
+          - `termination_reason`
 
 
           **Examples:**
@@ -1596,7 +1644,7 @@ paths:
 
           - `?sort=-submitted_at` - Sort by creation time (descending)
 
-          - `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending)
+          - `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)
 
           '
         in: query
@@ -1616,15 +1664,21 @@ paths:
 
             - `run_id`
 
-            - `application_version_id`
+            - `application_id`
 
-            - `organization_id`
+            - `version_number`
 
-            - `status`
+            - `custom_metadata`
+
+            - `statistics`
 
             - `submitted_at`
 
             - `submitted_by`
+
+            - `terminated_at`
+
+            - `termination_reason`
 
 
             **Examples:**
@@ -1633,7 +1687,7 @@ paths:
 
             - `?sort=-submitted_at` - Sort by creation time (descending)
 
-            - `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending)
+            - `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)
 
             '
           title: Sort
@@ -1665,8 +1719,7 @@ paths:
         \ and version, and returns a `run_id` for tracking purposes.\n\nSlide processing\
         \ occurs asynchronously, allowing you to retrieve results for individual slides\
         \ as soon as they\ncomplete processing. The system typically processes slides\
-        \ in batches of four, though this number may be reduced\nduring periods of\
-        \ high demand.\nBelow is an example of the required payload for initiating\
+        \ in batches.\nBelow is an example of the required payload for initiating\
         \ an Atlas H&E TME processing run.\n\n\n### Payload\n\nThe payload includes\
         \ `application_id`, optional `version_number`, and `items` base fields.\n\n\
         `application_id` is the unique identifier for the application.\n`version_number`\
@@ -1676,45 +1729,47 @@ paths:
         \ by the API, plus the custom_metadata, specific to the\nchosen application.\n\
         \nExample payload structure with the comments:\n```\n{\n    application_id:\
         \ \"he-tme\",\n    version_number: \"1.0.0-beta\",\n    items: [{\n      \
-        \  \"external_id\": \"slide_1\",\n        \"input_artifacts\": [{\n      \
-        \      \"name\": \"user_slide\",\n            \"download_url\": \"https://...\"\
-        ,\n            \"custom_metadata\": {\n                \"specimen\": {\n \
-        \                 \"disease\": \"LUNG_CANCER\",\n                  \"tissue\"\
-        : \"LUNG\"\n                },\n                \"staining_method\": \"H&E\"\
-        ,\n                \"width_px\": 136223,\n                \"height_px\": 87761,\n\
+        \  \"external_id\": \"slide_1\",\n        \"custom_metadata\": {\"project\"\
+        : \"sample-study\"},\n        \"input_artifacts\": [{\n            \"name\"\
+        : \"user_slide\",\n            \"download_url\": \"https://...\",\n      \
+        \      \"metadata\": {\n                \"specimen\": {\n                \
+        \  \"disease\": \"LUNG_CANCER\",\n                  \"tissue\": \"LUNG\"\n\
+        \                },\n                \"staining_method\": \"H&E\",\n     \
+        \           \"width_px\": 136223,\n                \"height_px\": 87761,\n\
         \                \"resolution_mpp\": 0.2628238,\n                \"media-type\"\
         :\"image/tiff\",\n                \"checksum_base64_crc32c\": \"64RKKA==\"\
         \n            }\n        }]\n    }]\n}\n```\n\n| Parameter  | Description\
         \ |\n| :---- | :---- |\n| `application_id` required | Unique ID for the application\
         \ |\n| `version_number` optional | Semantic version of the application. If\
         \ not provided, the latest available version will be used |\n| `items` required\
-        \ | List of submitted items (WSIs) with parameters described below. |\n| `external_id`\
-        \ required | Unique WSI name or ID for easy reference to items, provided by\
-        \ the caller. The external_id should be unique across all items of the run.\
-        \  |\n| `input_artifacts` required | List of provided artifacts for a WSI;\
-        \ at the moment Atlas H&E-TME receives only 1 artifact per slide (the slide\
-        \ itself), but for some other applications this can be a slide and an segmentation\
-        \ map  |\n| `name` required | Type of artifact; Atlas H&E-TME supports only\
-        \ `\"input_slide\"` |\n| `download_url` required | Signed URL to the input\
-        \ file in the S3 or GCS; Should be valid for at least 6 days |\n| `specimen:\
-        \ disease` required | Supported cancer types for Atlas H&E-TME (see full list\
-        \ in Atlas H&E-TME manual) |\n| `specimen: tissue` required | Supported tissue\
-        \ types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) |\n| `staining_method`\
-        \ required | WSI stain /bio-marker; Atlas H&E-TME supports only `\"H&E\"`\
-        \ |\n| `width_px` required | Integer value. Number of pixels of the WSI in\
-        \ the X dimension. |\n| `height_px` required | Integer value. Number of pixels\
-        \ of the WSI in the Y dimension. |\n| `resolution_mpp` required | Resolution\
-        \ of WSI in micrometers per pixel; check allowed range in Atlas H&E-TME manual\
-        \ |\n| `media-type` required | Supported media formats; available values are:\
-        \ image/tiff  (for .tiff or .tif WSI) application/dicom (for DICOM ) application/zip\
-        \ (for zipped DICOM) application/octet-stream  (for .svs WSI) |\n| `checksum_base64_crc32c`\
-        \ required | Base64 encoded big-endian CRC32C checksum of the WSI image |\n\
-        \n\n\n### Response\n\nThe endpoint returns the run UUID. After that the job\
-        \ is scheduled for the\nexecution in the background.\n\nTo check the status\
-        \ of the run call `v1/runs/{run_id}`.\n\n### Rejection\n\nApart from the authentication,\
-        \ authorization and malformed input error, the request can be\nrejected when\
-        \ the quota limit is exceeded. More details on quotas is described in the\n\
-        documentation"
+        \ | List of submitted items i.e. whole slide images (WSIs) with parameters\
+        \ described below. |\n| `external_id` required | Unique WSI name or ID for\
+        \ easy reference to items, provided by the caller. The `external_id` should\
+        \ be unique across all items of the run.  |\n| `input_artifacts` required\
+        \ | List of provided artifacts for a WSI; at the moment Atlas H&E-TME receives\
+        \ only 1 artifact per slide (the slide itself), but for some other applications\
+        \ this can be a slide and a segmentation map  |\n| `name` required | Type\
+        \ of artifact; Atlas H&E-TME supports only `\"input_slide\"` |\n| `download_url`\
+        \ required | Signed URL to the input file in the S3 or GCS; Should be valid\
+        \ for at least 6 days |\n| `specimen: disease` required | Supported cancer\
+        \ types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) |\n| `specimen:\
+        \ tissue` required | Supported tissue types for Atlas H&E-TME (see full list\
+        \ in Atlas H&E-TME manual) |\n| `staining_method` required | WSI stain bio-marker;\
+        \ Atlas H&E-TME supports only `\"H&E\"` |\n| `width_px` required | Integer\
+        \ value. Number of pixels of the WSI in the X dimension. |\n| `height_px`\
+        \ required | Integer value. Number of pixels of the WSI in the Y dimension.\
+        \ |\n| `resolution_mpp` required | Resolution of WSI in micrometers per pixel;\
+        \ check allowed range in Atlas H&E-TME manual |\n| `media-type` required |\
+        \ Supported media formats; available values are: image/tiff  (for .tiff or\
+        \ .tif WSI), application/dicom (for DICOM ), application/zip (for zipped DICOM),\
+        \ and application/octet-stream  (for .svs WSI) |\n| `checksum_base64_crc32c`\
+        \ required | Base64-encoded big-endian CRC32C checksum of the WSI image |\n\
+        \n\n\n### Response\n\nThe endpoint returns the run UUID. After that, the job\
+        \ is scheduled for the execution in the background.\n\nTo check the status\
+        \ of the run, call `GET v1/runs/{run_id}` endpoint with the returned run UUID.\n\
+        \n### Rejection\n\nApart from the authentication, authorization, and malformed\
+        \ input error, the request can be\nrejected when specific quota limit is exceeded.\
+        \ More details on quotas is described in the\ndocumentation"
       operationId: create_run_v1_runs_post
       requestBody:
         content:
@@ -1750,17 +1805,18 @@ paths:
     get:
       description: "This endpoint allows the caller to retrieve the current status\
         \ of a run along with other relevant run details.\n A run becomes available\
-        \ immediately after it is created through the POST `/runs/` endpoint.\n\n\
-        \ To download the output results, use GET `/runs/{run_id}/` items to get outputs\
-        \ for all slides.\nAccess to a run is restricted to the user who created it."
+        \ immediately after it is created through the `POST /v1/runs/` endpoint.\n\
+        \n To download the output results, use `GET /v1/runs/{run_id}/` items to get\
+        \ outputs for all slides.\nAccess to a run is restricted to the user who created\
+        \ it."
       operationId: get_run_v1_runs__run_id__get
       parameters:
-      - description: Run id, returned by `POST /runs/` endpoint
+      - description: Run id, returned by `POST /v1/runs/` endpoint
         in: path
         name: run_id
         required: true
         schema:
-          description: Run id, returned by `POST /runs/` endpoint
+          description: Run id, returned by `POST /v1/runs/` endpoint
           format: uuid
           title: Run Id
           type: string
@@ -1788,11 +1844,17 @@ paths:
       - Public
   /v1/runs/{run_id}/artifacts:
     delete:
-      description: "This endpoint allows the caller to explicitly delete artifacts\
-        \ generated by a run.\nIt can only be invoked when the run has reached a final\
-        \ state\n(PROCESSED, CANCELED_SYSTEM, CANCELED_USER).\nNote that by default,\
-        \ all artifacts are automatically deleted 30 days after the run finishes,\n\
-        \ regardless of whether the caller explicitly requests deletion."
+      description: 'This endpoint allows the caller to explicitly delete artifacts
+        generated by a run.
+
+        It can only be invoked when the run has reached a final state, i.e.
+
+        `PROCESSED`, `CANCELED_SYSTEM`, or `CANCELED_USER`.
+
+        Note that by default, all artifacts are automatically deleted 30 days after
+        the run finishes,
+
+        regardless of whether the caller explicitly requests such deletion.'
       operationId: delete_run_items_v1_runs__run_id__artifacts_delete
       parameters:
       - description: Run id, returned by `POST /runs/` endpoint
@@ -1828,14 +1890,15 @@ paths:
       description: 'The run can be canceled by the user who created the run.
 
 
-        The execution can be canceled any time while the application is not in a final
+        The execution can be canceled any time while the run is not in the terminated
         state. The
 
-        pending items will not be processed and will not add to the cost.
+        pending items of a canceled run will not be processed and will not add to
+        the cost.
 
 
-        When the application is canceled, the already completed items stay available
-        for download.'
+        When the run is canceled, the already completed items remain available for
+        download.'
       operationId: cancel_run_v1_runs__run_id__cancel_post
       parameters:
       - description: Run id, returned by `POST /runs/` endpoint
@@ -1872,6 +1935,31 @@ paths:
       - Public
   /v1/runs/{run_id}/custom-metadata:
     put:
+      description: 'Update the custom metadata of a run with the specified `run_id`.
+
+
+        Optionally, a checksum may be provided along the custom metadata JSON.
+
+        It can be used to verify if the custom metadata was updated since the last
+        time it was accessed.
+
+        If the checksum is provided, it must match the existing custom metadata in
+        the system, ensuring that the current
+
+        custom metadata value to be overwritten is acknowledged by the user.
+
+        If no checksum is provided, submitted metadata directly overwrites the existing
+        metadata, without any checks.
+
+
+        The latest custom metadata and checksum can be retrieved for the run via the
+        `GET /v1/runs/{run_id}` endpoint.
+
+
+        **Note on deadlines:** Run deadlines must be set during run creation and cannot
+        be modified afterward.
+
+        Any deadline changes in custom metadata will be ignored by the system.'
       operationId: put_run_custom_metadata_v1_runs__run_id__custom_metadata_put
       parameters:
       - description: Run id, returned by `POST /runs/` endpoint
@@ -1893,10 +1981,16 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
-          description: Successful Response
+              schema:
+                $ref: '#/components/schemas/CustomMetadataUpdateResponse'
+          description: Custom metadata successfully updated
+        '403':
+          description: Forbidden - You don't have permission to update this run
         '404':
           description: Run not found
+        '412':
+          description: Precondition Failed - Checksum mismatch, resource has been
+            modified
         '422':
           content:
             application/json:
@@ -1915,7 +2009,8 @@ paths:
 
         Returns paginated items within a specific run. Results can be filtered
 
-        by item IDs, external_ids, status, and custom_metadata using JSONPath expressions.
+        by `item_id`, `external_ids`, `custom_metadata`, `terminated_at`, and `termination_reason`
+        using JSONPath expressions.
 
 
         ## JSONPath Metadata Filtering
@@ -1952,12 +2047,12 @@ paths:
         - Use `&&` for AND operations and `||` for OR operations'
       operationId: list_run_items_v1_runs__run_id__items_get
       parameters:
-      - description: Run id, returned by `POST /runs/` endpoint
+      - description: Run id, returned by `POST /v1/runs/` endpoint
         in: path
         name: run_id
         required: true
         schema:
-          description: Run id, returned by `POST /runs/` endpoint
+          description: Run id, returned by `POST /v1/runs/` endpoint
           format: uuid
           title: Run Id
           type: string
@@ -2063,10 +2158,11 @@ paths:
           type: integer
       - description: "Sort the items by one or more fields. Use `+` for ascending\
           \ and `-` for descending order.\n                **Available fields:**\n\
-          - `item_id`\n- `run_id`\n- `external_id`\n- `custom_metadata`\n\n**Examples:**\n\
-          - `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-external_id`\
-          \ - Sort by external ID (descending)\n- `?sort=custom_metadata&sort=-external_id`\
-          \ - Sort by metadata, then by external ID (descending)"
+          - `item_id`\n- `external_id`\n- `custom_metadata`\n- `terminated_at`\n-\
+          \ `termination_reason`\n\n**Examples:**\n- `?sort=item_id` - Sort by id\
+          \ of the item (ascending)\n- `?sort=-external_id` - Sort by external ID\
+          \ (descending)\n- `?sort=custom_metadata&sort=-external_id` - Sort by metadata,\
+          \ then by external ID (descending)"
         in: query
         name: sort
         required: false
@@ -2078,10 +2174,11 @@ paths:
           - type: 'null'
           description: "Sort the items by one or more fields. Use `+` for ascending\
             \ and `-` for descending order.\n                **Available fields:**\n\
-            - `item_id`\n- `run_id`\n- `external_id`\n- `custom_metadata`\n\n**Examples:**\n\
-            - `?sort=item_id` - Sort by id of the item (ascending)\n- `?sort=-external_id`\
-            \ - Sort by external ID (descending)\n- `?sort=custom_metadata&sort=-external_id`\
-            \ - Sort by metadata, then by external ID (descending)"
+            - `item_id`\n- `external_id`\n- `custom_metadata`\n- `terminated_at`\n\
+            - `termination_reason`\n\n**Examples:**\n- `?sort=item_id` - Sort by id\
+            \ of the item (ascending)\n- `?sort=-external_id` - Sort by external ID\
+            \ (descending)\n- `?sort=custom_metadata&sort=-external_id` - Sort by\
+            \ metadata, then by external ID (descending)"
           title: Sort
       responses:
         '200':
@@ -2155,6 +2252,16 @@ paths:
       - Public
   /v1/runs/{run_id}/items/{external_id}/custom-metadata:
     put:
+      description: "Update the custom metadata of the item with the specified `external_id`,\
+        \ belonging to the specified run.\n\nOptionally, a checksum may be provided\
+        \ along the custom metadata JSON.\nIt can be used to verify if the custom\
+        \ metadata was updated since the last time it was accessed.\nIf the checksum\
+        \ is provided, it must match the existing custom metadata in the system, ensuring\
+        \ that the current\ncustom metadata value to be overwritten is acknowledged\
+        \ by the user.\nIf no checksum is provided, submitted metadata directly overwrites\
+        \ the existing metadata, without any checks.\n\nThe latest custom metadata\
+        \ and checksum can be retrieved\n    for individual items via `GET /v1/runs/{run_id}/items/{external_id}`,\n\
+        \    and for all items of a run via `GET /v1/runs/{run_id}/items`."
       operationId: put_item_custom_metadata_by_run_v1_runs__run_id__items__external_id__custom_metadata_put
       parameters:
       - description: The run id, returned by `POST /runs/` endpoint
@@ -2186,8 +2293,15 @@ paths:
         '200':
           content:
             application/json:
-              schema: {}
-          description: Successful Response
+              schema:
+                $ref: '#/components/schemas/CustomMetadataUpdateResponse'
+          description: Custom metadata successfully updated
+        '403':
+          description: Forbidden - You don't have permission to update this item
+        '404':
+          description: Item not found
+        '412':
+          description: Precondition Failed - Checksum mismatch
         '422':
           content:
             application/json:

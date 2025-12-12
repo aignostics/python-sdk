@@ -1,5 +1,5 @@
 # API v1 Reference
-## Aignostics Platform API v1.0.0.beta7
+## Aignostics Platform API v1.0.0-ga
 
 > Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
 
@@ -334,9 +334,9 @@ fetch('/api/v1/applications/{application_id}/versions/{version}',
 
 *Application Version Details*
 
-Get the application version details
+Get the application version details.
 
-Allows caller to  retrieve information about application version based on provided application version ID.
+Allows caller to retrieve information about application version based on provided application version ID.
 
 #### Parameters
 
@@ -719,7 +719,7 @@ Returns paginated runs that were submitted by the user.
 
 **custom_metadata**: Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.
 ##### URL Encoding Required
-**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.
+**Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, please ensure proper encoding.
 
 ##### Examples (Clear Format):
 - **Field existence**: `$.study` - Runs that have a study field defined
@@ -741,7 +741,7 @@ Returns paginated runs that were submitted by the user.
 - String values in conditions must be enclosed in double quotes
 - Use `&&` for AND operations and `||` for OR operations
 - Regular expressions use `like_regex` with standard regex syntax
-- **Remember to URL-encode the entire JSONPath expression when making HTTP requests**
+- **Please remember to URL-encode the entire JSONPath expression when making HTTP requests**
 
             
 
@@ -749,16 +749,19 @@ Returns paginated runs that were submitted by the user.
 
 **Available fields:**
 - `run_id`
-- `application_version_id`
-- `organization_id`
-- `status`
+- `application_id`
+- `version_number`
+- `custom_metadata`
+- `statistics`
 - `submitted_at`
 - `submitted_by`
+- `terminated_at`
+- `termination_reason`
 
 **Examples:**
 - `?sort=submitted_at` - Sort by creation time (ascending)
 - `?sort=-submitted_at` - Sort by creation time (descending)
-- `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending)
+- `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)
 
 > Example responses
 
@@ -775,6 +778,8 @@ Returns paginated runs that were submitted by the user.
     "custom_metadata_checksum": "f54fe109",
     "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
     "error_message": "Run canceled given errors on more than 10 items.",
+    "num_preceding_items_org": 0,
+    "num_preceding_items_platform": 0,
     "output": "NONE",
     "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
     "state": "PENDING",
@@ -876,6 +881,42 @@ Status Code **200**
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» num_preceding_items_org|any|false|none|How many Items from other Runs in the same Organization are due to begin processing before this Run's next Item does.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|integer|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» num_preceding_items_platform|any|false|none|How many Items from other Runs are due to begin processing before this Run's next Item does.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|integer|false|none|none|
 
 *or*
 
@@ -1036,8 +1077,7 @@ fetch('/api/v1/runs',
 This endpoint initiates a processing run for a selected application and version, and returns a `run_id` for tracking purposes.
 
 Slide processing occurs asynchronously, allowing you to retrieve results for individual slides as soon as they
-complete processing. The system typically processes slides in batches of four, though this number may be reduced
-during periods of high demand.
+complete processing. The system typically processes slides in batches.
 Below is an example of the required payload for initiating an Atlas H&E TME processing run.
 
 #### Payload
@@ -1058,10 +1098,11 @@ Example payload structure with the comments:
     version_number: "1.0.0-beta",
     items: [{
         "external_id": "slide_1",
+        "custom_metadata": {"project": "sample-study"},
         "input_artifacts": [{
             "name": "user_slide",
             "download_url": "https://...",
-            "custom_metadata": {
+            "metadata": {
                 "specimen": {
                   "disease": "LUNG_CANCER",
                   "tissue": "LUNG"
@@ -1082,31 +1123,30 @@ Example payload structure with the comments:
 | :---- | :---- |
 | `application_id` required | Unique ID for the application |
 | `version_number` optional | Semantic version of the application. If not provided, the latest available version will be used |
-| `items` required | List of submitted items (WSIs) with parameters described below. |
-| `external_id` required | Unique WSI name or ID for easy reference to items, provided by the caller. The external_id should be unique across all items of the run.  |
-| `input_artifacts` required | List of provided artifacts for a WSI; at the moment Atlas H&E-TME receives only 1 artifact per slide (the slide itself), but for some other applications this can be a slide and an segmentation map  |
+| `items` required | List of submitted items i.e. whole slide images (WSIs) with parameters described below. |
+| `external_id` required | Unique WSI name or ID for easy reference to items, provided by the caller. The `external_id` should be unique across all items of the run.  |
+| `input_artifacts` required | List of provided artifacts for a WSI; at the moment Atlas H&E-TME receives only 1 artifact per slide (the slide itself), but for some other applications this can be a slide and a segmentation map  |
 | `name` required | Type of artifact; Atlas H&E-TME supports only `"input_slide"` |
 | `download_url` required | Signed URL to the input file in the S3 or GCS; Should be valid for at least 6 days |
 | `specimen: disease` required | Supported cancer types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) |
 | `specimen: tissue` required | Supported tissue types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) |
-| `staining_method` required | WSI stain /bio-marker; Atlas H&E-TME supports only `"H&E"` |
+| `staining_method` required | WSI stain bio-marker; Atlas H&E-TME supports only `"H&E"` |
 | `width_px` required | Integer value. Number of pixels of the WSI in the X dimension. |
 | `height_px` required | Integer value. Number of pixels of the WSI in the Y dimension. |
 | `resolution_mpp` required | Resolution of WSI in micrometers per pixel; check allowed range in Atlas H&E-TME manual |
-| `media-type` required | Supported media formats; available values are: image/tiff  (for .tiff or .tif WSI) application/dicom (for DICOM ) application/zip (for zipped DICOM) application/octet-stream  (for .svs WSI) |
-| `checksum_base64_crc32c` required | Base64 encoded big-endian CRC32C checksum of the WSI image |
+| `media-type` required | Supported media formats; available values are: image/tiff  (for .tiff or .tif WSI), application/dicom (for DICOM ), application/zip (for zipped DICOM), and application/octet-stream  (for .svs WSI) |
+| `checksum_base64_crc32c` required | Base64-encoded big-endian CRC32C checksum of the WSI image |
 
 #### Response
 
-The endpoint returns the run UUID. After that the job is scheduled for the
-execution in the background.
+The endpoint returns the run UUID. After that, the job is scheduled for the execution in the background.
 
-To check the status of the run call `v1/runs/{run_id}`.
+To check the status of the run, call `GET v1/runs/{run_id}` endpoint with the returned run UUID.
 
 #### Rejection
 
-Apart from the authentication, authorization and malformed input error, the request can be
-rejected when the quota limit is exceeded. More details on quotas is described in the
+Apart from the authentication, authorization, and malformed input error, the request can be
+rejected when specific quota limit is exceeded. More details on quotas is described in the
 documentation
 
 > Body parameter
@@ -1221,16 +1261,16 @@ fetch('/api/v1/runs/{run_id}',
 *Get run details*
 
 This endpoint allows the caller to retrieve the current status of a run along with other relevant run details.
- A run becomes available immediately after it is created through the POST `/runs/` endpoint.
+ A run becomes available immediately after it is created through the `POST /v1/runs/` endpoint.
 
- To download the output results, use GET `/runs/{run_id}/` items to get outputs for all slides.
+ To download the output results, use `GET /v1/runs/{run_id}/` items to get outputs for all slides.
 Access to a run is restricted to the user who created it.
 
 #### Parameters
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /v1/runs/` endpoint|
 
 > Example responses
 
@@ -1246,6 +1286,8 @@ Access to a run is restricted to the user who created it.
   "custom_metadata_checksum": "f54fe109",
   "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
   "error_message": "Run canceled given errors on more than 10 items.",
+  "num_preceding_items_org": 0,
+  "num_preceding_items_platform": 0,
   "output": "NONE",
   "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
   "state": "PENDING",
@@ -1325,10 +1367,10 @@ fetch('/api/v1/runs/{run_id}/artifacts',
 *Delete Run Items*
 
 This endpoint allows the caller to explicitly delete artifacts generated by a run.
-It can only be invoked when the run has reached a final state
-(PROCESSED, CANCELED_SYSTEM, CANCELED_USER).
+It can only be invoked when the run has reached a final state, i.e.
+`PROCESSED`, `CANCELED_SYSTEM`, or `CANCELED_USER`.
 Note that by default, all artifacts are automatically deleted 30 days after the run finishes,
- regardless of whether the caller explicitly requests deletion.
+regardless of whether the caller explicitly requests such deletion.
 
 #### Parameters
 
@@ -1405,10 +1447,10 @@ fetch('/api/v1/runs/{run_id}/cancel',
 
 The run can be canceled by the user who created the run.
 
-The execution can be canceled any time while the application is not in a final state. The
-pending items will not be processed and will not add to the cost.
+The execution can be canceled any time while the run is not in the terminated state. The
+pending items of a canceled run will not be processed and will not add to the cost.
 
-When the application is canceled, the already completed items stay available for download.
+When the run is canceled, the already completed items remain available for download.
 
 #### Parameters
 
@@ -1493,6 +1535,19 @@ fetch('/api/v1/runs/{run_id}/custom-metadata',
 
 *Put Run Custom Metadata*
 
+Update the custom metadata of a run with the specified `run_id`.
+
+Optionally, a checksum may be provided along the custom metadata JSON.
+It can be used to verify if the custom metadata was updated since the last time it was accessed.
+If the checksum is provided, it must match the existing custom metadata in the system, ensuring that the current
+custom metadata value to be overwritten is acknowledged by the user.
+If no checksum is provided, submitted metadata directly overwrites the existing metadata, without any checks.
+
+The latest custom metadata and checksum can be retrieved for the run via the `GET /v1/runs/{run_id}` endpoint.
+
+**Note on deadlines:** Run deadlines must be set during run creation and cannot be modified afterward.
+Any deadline changes in custom metadata will be ignored by the system.
+
 > Body parameter
 
 ```json
@@ -1517,18 +1572,20 @@ fetch('/api/v1/runs/{run_id}/custom-metadata',
 > 200 Response
 
 ```json
-null
+{
+  "custom_metadata_checksum": "string"
+}
 ```
 
 #### Responses
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Custom metadata successfully updated|[CustomMetadataUpdateResponse](#schemacustommetadataupdateresponse)|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to update this run|None|
 |404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
+|412|[Precondition Failed](https://tools.ietf.org/html/rfc7232#section-4.2)|Precondition Failed - Checksum mismatch, resource has been modified|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-#### Response Schema
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -1582,7 +1639,7 @@ fetch('/api/v1/runs/{run_id}/items',
 List items in a run with filtering, sorting, and pagination capabilities.
 
 Returns paginated items within a specific run. Results can be filtered
-by item IDs, external_ids, status, and custom_metadata using JSONPath expressions.
+by `item_id`, `external_ids`, `custom_metadata`, `terminated_at`, and `termination_reason` using JSONPath expressions.
 
 ### JSONPath Metadata Filtering
 Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
@@ -1604,7 +1661,7 @@ Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
 
 |Name|In|Type|Required|Description|
 |---|---|---|---|---|
-|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /v1/runs/` endpoint|
 |item_id__in|query|any|false|Filter for item ids|
 |external_id__in|query|any|false|Filter for items by their external_id from the input payload|
 |state|query|any|false|Filter items by their state|
@@ -1619,9 +1676,10 @@ Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
 **sort**: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.
                 **Available fields:**
 - `item_id`
-- `run_id`
 - `external_id`
 - `custom_metadata`
+- `terminated_at`
+- `termination_reason`
 
 **Examples:**
 - `?sort=item_id` - Sort by id of the item (ascending)
@@ -1655,6 +1713,8 @@ Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
         "termination_reason": "SUCCEEDED"
       }
     ],
+    "queue_position_org": 0,
+    "queue_position_platform": 0,
     "state": "PENDING",
     "terminated_at": "2024-01-15T10:30:45.123Z",
     "termination_reason": "SUCCEEDED"
@@ -1851,6 +1911,42 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|»» queue_position_org|any|false|none|The position of the item in the organization's queue.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|integer|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» queue_position_platform|any|false|none|The position of the item in the platform's queue.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|integer|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |»» state|[ItemState](#schemaitemstate)|true|none|none|
 |»» terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
 
@@ -1993,6 +2089,8 @@ Retrieve details of a specific item (slide) by its external ID and the run ID.
       "termination_reason": "SUCCEEDED"
     }
   ],
+  "queue_position_org": 0,
+  "queue_position_platform": 0,
   "state": "PENDING",
   "terminated_at": "2024-01-15T10:30:45.123Z",
   "termination_reason": "SUCCEEDED"
@@ -2065,6 +2163,18 @@ fetch('/api/v1/runs/{run_id}/items/{external_id}/custom-metadata',
 
 *Put Item Custom Metadata By Run*
 
+Update the custom metadata of the item with the specified `external_id`, belonging to the specified run.
+
+Optionally, a checksum may be provided along the custom metadata JSON.
+It can be used to verify if the custom metadata was updated since the last time it was accessed.
+If the checksum is provided, it must match the existing custom metadata in the system, ensuring that the current
+custom metadata value to be overwritten is acknowledged by the user.
+If no checksum is provided, submitted metadata directly overwrites the existing metadata, without any checks.
+
+The latest custom metadata and checksum can be retrieved
+    for individual items via `GET /v1/runs/{run_id}/items/{external_id}`,
+    and for all items of a run via `GET /v1/runs/{run_id}/items`.
+
 > Body parameter
 
 ```json
@@ -2090,17 +2200,20 @@ fetch('/api/v1/runs/{run_id}/items/{external_id}/custom-metadata',
 > 200 Response
 
 ```json
-null
+{
+  "custom_metadata_checksum": "string"
+}
 ```
 
 #### Responses
 
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Custom metadata successfully updated|[CustomMetadataUpdateResponse](#schemacustommetadataupdateresponse)|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to update this item|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Item not found|None|
+|412|[Precondition Failed](https://tools.ietf.org/html/rfc7232#section-4.2)|Precondition Failed - Checksum mismatch|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-#### Response Schema
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -2364,6 +2477,40 @@ or
 |---|---|---|---|---|
 |» *anonymous*|null|false|none|none|
 
+### CustomMetadataUpdateResponse
+
+
+
+
+
+
+```json
+{
+  "custom_metadata_checksum": "string"
+}
+
+```
+
+CustomMetadataUpdateResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|custom_metadata_checksum|any|true|read-only|The checksum of the updated custom metadata. If the `custom_metadata` is None,the checksum also None.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
 ### HTTPValidationError
 
 
@@ -2570,6 +2717,8 @@ ItemOutput
       "termination_reason": "SUCCEEDED"
     }
   ],
+  "queue_position_org": 0,
+  "queue_position_platform": 0,
   "state": "PENDING",
   "terminated_at": "2024-01-15T10:30:45.123Z",
   "termination_reason": "SUCCEEDED"
@@ -2659,6 +2808,42 @@ continued
 |item_id|string(uuid)|true|none|Item UUID generated by the Platform|
 |output|[ItemOutput](#schemaitemoutput)|true|none|The output status of the item (NONE, FULL)|
 |output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|The list of the results generated by the application algorithm. The number of files and theirtypes depend on the particular application version, call `/v1/versions/{version_id}` to getthe details.|
+|queue_position_org|any|false|none|The position of the item in the organization's queue.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|queue_position_platform|any|false|none|The position of the item in the platform's queue.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |state|[ItemState](#schemaitemstate)|true|none|The item moves from `PENDING` to `PROCESSING` to `TERMINATED` state.When terminated, consult the `termination_reason` property to see whether it was successful.|
 |terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
 
@@ -3245,6 +3430,8 @@ RunOutput
   "custom_metadata_checksum": "f54fe109",
   "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
   "error_message": "Run canceled given errors on more than 10 items.",
+  "num_preceding_items_org": 0,
+  "num_preceding_items_platform": 0,
   "output": "NONE",
   "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
   "state": "PENDING",
@@ -3334,6 +3521,42 @@ anyOf
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|num_preceding_items_org|any|false|none|How many Items from other Runs in the same Organization are due to begin processing before this Run's next Item does.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|num_preceding_items_platform|any|false|none|How many Items from other Runs are due to begin processing before this Run's next Item does.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|integer|false|none|none|
 
 or
 

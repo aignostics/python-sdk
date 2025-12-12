@@ -1498,6 +1498,7 @@ $ aignostics wsi dicom inspect [OPTIONS] PATH
 
 * `--verbose / --no-verbose`: Verbose output  [default: no-verbose]
 * `--summary / --no-summary`: Show only summary information  [default: no-summary]
+* `--wsi-only / --no-wsi-only`: Filter to WSI files only  [default: no-wsi-only]
 * `--help`: Show this message and exit.
 
 #### `aignostics wsi dicom geojson_import`
