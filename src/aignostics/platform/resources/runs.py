@@ -170,6 +170,7 @@ class Run:
 
         run_data: RunData = details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
         if hide_platform_queue_position:
+            run_data = run_data.model_copy(deep=True)
             run_data.num_preceding_items_platform = None
         return run_data
 
