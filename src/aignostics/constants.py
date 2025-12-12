@@ -39,3 +39,5 @@ WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}
 WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP = {".tiff"}
 
 WINDOW_TITLE = "Aignostics Launchpad"
+# Organizations with internal/advanced access (e.g., platform-wide queue visibility, GPU config)
+INTERNAL_ORGS = {"aignostics", "pre-alpha-org", "lmu", "charite"}

@@ -2,6 +2,7 @@
 
 import json
 import time
+from functools import cached_property
 from http import HTTPStatus
 from typing import Any
 
@@ -12,6 +13,7 @@ from aignx.codegen.models import UserReadResponse as User
 from loguru import logger
 from pydantic import BaseModel, computed_field
 
+from aignostics.constants import INTERNAL_ORGS
 from aignostics.utils import BaseService, Health, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
@@ -92,6 +94,15 @@ class UserInfo(BaseModel):
             user=me.user,
             organization=me.organization,
         )
+
+    @cached_property
+    def is_internal_user(self) -> bool:
+        """Check if the user is an internal user.
+
+        Returns:
+            bool: True if it is an internal user, False otherwise.
+        """
+        return bool(self.organization and self.organization.name and self.organization.name.lower() in INTERNAL_ORGS)
 
     def model_dump_secrets_masked(self) -> dict[str, Any]:
         """Dump model to dict with sensitive organization and user secrets masked.

@@ -20,11 +20,13 @@ from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
+    from aignx.codegen.models import RunReadResponse
+
     from aignostics.platform import UserInfo
 
 from .._models import DownloadProgressState  # noqa: TID252
 from .._service import Service  # noqa: TID252
-from .._utils import get_mime_type_for_artifact  # noqa: TID252
+from .._utils import get_mime_type_for_artifact, queue_position_string_from_run  # noqa: TID252
 from ._frame import _frame
 from ._utils import (
     mime_type_to_icon,
@@ -70,7 +72,16 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
     spinner = ui.spinner(size="xl").classes("fixed inset-0 m-auto")
     run = await nicegui_run.io_bound(service.application_run, run_id)
-    run_data = await nicegui_run.io_bound(run.details) if run else None
+    await ui.context.client.connected()  # Wait for client connection before accessing app.storage
+    user_info: UserInfo | None = app.storage.tab.get("user_info", None)
+    run_data: RunReadResponse | None = (
+        await nicegui_run.io_bound(
+            run.details,
+            hide_platform_queue_position=not (user_info and user_info.is_internal_user),
+        )
+        if run
+        else None
+    )
     spinner.set_visibility(False)
 
     if run and run_data:
@@ -563,6 +574,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     * Run ID: {run_data.run_id}
                     * Application: {run_data.application_id} ({run_data.version_number})
                     * Status: {status_str}
+                    * Queue Position: {queue_position_string_from_run(run_data)}
                     * Output: {run_data.output.name}
                         - {run_data.statistics.item_count} items
                         - {run_data.statistics.item_pending_count} pending
@@ -577,7 +589,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     """,
                     language="markdown",
                 ).classes("full-width").mark("CODE_RUN_METADATA")
-                user_info: UserInfo | None = app.storage.tab.get("user_info", None)
                 if run_data.custom_metadata:
                     is_editable = user_info and user_info.role in {"admin", "super_admin"}
                     properties = {

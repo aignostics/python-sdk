@@ -575,3 +575,28 @@ def test_runs_list_delegates_to_list_data(runs, mock_api) -> None:
     assert call_kwargs["page_size"] == page_size
     # nocache is handled by caching decorator, not passed to API
     assert "nocache" not in call_kwargs
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("hide_platform_queue_position", "expected_platform_queue_position"),
+    [
+        (True, None),
+        (False, 100),
+    ],
+)
+def test_run_details_can_hide_platform_queue_position(
+    app_run,
+    mock_api,
+    hide_platform_queue_position: bool,
+    expected_platform_queue_position: int | None,
+) -> None:
+    """Test that Run.details handles hide_platform_queue_position correctly."""
+    run_data = RunReadResponse.model_construct(
+        num_preceding_items_org=5,
+        num_preceding_items_platform=100,
+    )
+    mock_api.get_run_v1_runs_run_id_get.return_value = run_data
+    result = app_run.details(hide_platform_queue_position=hide_platform_queue_position)
+    assert result.num_preceding_items_org == run_data.num_preceding_items_org
+    assert result.num_preceding_items_platform == expected_platform_queue_position

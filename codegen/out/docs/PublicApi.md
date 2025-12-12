@@ -24,7 +24,7 @@ Method | HTTP request | Description
 
 Application Version Details
 
-Get the application version details  Allows caller to  retrieve information about application version based on provided application version ID.
+Get the application version details.  Allows caller to retrieve information about application version based on provided application version ID.
 
 ### Example
 
@@ -104,7 +104,7 @@ Name | Type | Description  | Notes
 
 Cancel Run
 
-The run can be canceled by the user who created the run.  The execution can be canceled any time while the application is not in a final state. The pending items will not be processed and will not add to the cost.  When the application is canceled, the already completed items stay available for download.
+The run can be canceled by the user who created the run.  The execution can be canceled any time while the run is not in the terminated state. The pending items of a canceled run will not be processed and will not add to the cost.  When the run is canceled, the already completed items remain available for download.
 
 ### Example
 
@@ -182,7 +182,7 @@ Name | Type | Description  | Notes
 
 Initiate Run
 
-This endpoint initiates a processing run for a selected application and version, and returns a `run_id` for tracking purposes.  Slide processing occurs asynchronously, allowing you to retrieve results for individual slides as soon as they complete processing. The system typically processes slides in batches of four, though this number may be reduced during periods of high demand. Below is an example of the required payload for initiating an Atlas H&E TME processing run.   ### Payload  The payload includes `application_id`, optional `version_number`, and `items` base fields.  `application_id` is the unique identifier for the application. `version_number` is the semantic version to use. If not provided, the latest available version will be used.  `items` includes the list of the items to process (slides, in case of HETA application). Every item has a set of standard fields defined by the API, plus the custom_metadata, specific to the chosen application.  Example payload structure with the comments: ``` {     application_id: \"he-tme\",     version_number: \"1.0.0-beta\",     items: [{         \"external_id\": \"slide_1\",         \"input_artifacts\": [{             \"name\": \"user_slide\",             \"download_url\": \"https://...\",             \"custom_metadata\": {                 \"specimen\": {                   \"disease\": \"LUNG_CANCER\",                   \"tissue\": \"LUNG\"                 },                 \"staining_method\": \"H&E\",                 \"width_px\": 136223,                 \"height_px\": 87761,                 \"resolution_mpp\": 0.2628238,                 \"media-type\":\"image/tiff\",                 \"checksum_base64_crc32c\": \"64RKKA==\"             }         }]     }] } ```  | Parameter  | Description | | :---- | :---- | | `application_id` required | Unique ID for the application | | `version_number` optional | Semantic version of the application. If not provided, the latest available version will be used | | `items` required | List of submitted items (WSIs) with parameters described below. | | `external_id` required | Unique WSI name or ID for easy reference to items, provided by the caller. The external_id should be unique across all items of the run.  | | `input_artifacts` required | List of provided artifacts for a WSI; at the moment Atlas H&E-TME receives only 1 artifact per slide (the slide itself), but for some other applications this can be a slide and an segmentation map  | | `name` required | Type of artifact; Atlas H&E-TME supports only `\"input_slide\"` | | `download_url` required | Signed URL to the input file in the S3 or GCS; Should be valid for at least 6 days | | `specimen: disease` required | Supported cancer types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) | | `specimen: tissue` required | Supported tissue types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) | | `staining_method` required | WSI stain /bio-marker; Atlas H&E-TME supports only `\"H&E\"` | | `width_px` required | Integer value. Number of pixels of the WSI in the X dimension. | | `height_px` required | Integer value. Number of pixels of the WSI in the Y dimension. | | `resolution_mpp` required | Resolution of WSI in micrometers per pixel; check allowed range in Atlas H&E-TME manual | | `media-type` required | Supported media formats; available values are: image/tiff  (for .tiff or .tif WSI) application/dicom (for DICOM ) application/zip (for zipped DICOM) application/octet-stream  (for .svs WSI) | | `checksum_base64_crc32c` required | Base64 encoded big-endian CRC32C checksum of the WSI image |    ### Response  The endpoint returns the run UUID. After that the job is scheduled for the execution in the background.  To check the status of the run call `v1/runs/{run_id}`.  ### Rejection  Apart from the authentication, authorization and malformed input error, the request can be rejected when the quota limit is exceeded. More details on quotas is described in the documentation
+This endpoint initiates a processing run for a selected application and version, and returns a `run_id` for tracking purposes.  Slide processing occurs asynchronously, allowing you to retrieve results for individual slides as soon as they complete processing. The system typically processes slides in batches. Below is an example of the required payload for initiating an Atlas H&E TME processing run.   ### Payload  The payload includes `application_id`, optional `version_number`, and `items` base fields.  `application_id` is the unique identifier for the application. `version_number` is the semantic version to use. If not provided, the latest available version will be used.  `items` includes the list of the items to process (slides, in case of HETA application). Every item has a set of standard fields defined by the API, plus the custom_metadata, specific to the chosen application.  Example payload structure with the comments: ``` {     application_id: \"he-tme\",     version_number: \"1.0.0-beta\",     items: [{         \"external_id\": \"slide_1\",         \"custom_metadata\": {\"project\": \"sample-study\"},         \"input_artifacts\": [{             \"name\": \"user_slide\",             \"download_url\": \"https://...\",             \"metadata\": {                 \"specimen\": {                   \"disease\": \"LUNG_CANCER\",                   \"tissue\": \"LUNG\"                 },                 \"staining_method\": \"H&E\",                 \"width_px\": 136223,                 \"height_px\": 87761,                 \"resolution_mpp\": 0.2628238,                 \"media-type\":\"image/tiff\",                 \"checksum_base64_crc32c\": \"64RKKA==\"             }         }]     }] } ```  | Parameter  | Description | | :---- | :---- | | `application_id` required | Unique ID for the application | | `version_number` optional | Semantic version of the application. If not provided, the latest available version will be used | | `items` required | List of submitted items i.e. whole slide images (WSIs) with parameters described below. | | `external_id` required | Unique WSI name or ID for easy reference to items, provided by the caller. The `external_id` should be unique across all items of the run.  | | `input_artifacts` required | List of provided artifacts for a WSI; at the moment Atlas H&E-TME receives only 1 artifact per slide (the slide itself), but for some other applications this can be a slide and a segmentation map  | | `name` required | Type of artifact; Atlas H&E-TME supports only `\"input_slide\"` | | `download_url` required | Signed URL to the input file in the S3 or GCS; Should be valid for at least 6 days | | `specimen: disease` required | Supported cancer types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) | | `specimen: tissue` required | Supported tissue types for Atlas H&E-TME (see full list in Atlas H&E-TME manual) | | `staining_method` required | WSI stain bio-marker; Atlas H&E-TME supports only `\"H&E\"` | | `width_px` required | Integer value. Number of pixels of the WSI in the X dimension. | | `height_px` required | Integer value. Number of pixels of the WSI in the Y dimension. | | `resolution_mpp` required | Resolution of WSI in micrometers per pixel; check allowed range in Atlas H&E-TME manual | | `media-type` required | Supported media formats; available values are: image/tiff  (for .tiff or .tif WSI), application/dicom (for DICOM ), application/zip (for zipped DICOM), and application/octet-stream  (for .svs WSI) | | `checksum_base64_crc32c` required | Base64-encoded big-endian CRC32C checksum of the WSI image |    ### Response  The endpoint returns the run UUID. After that, the job is scheduled for the execution in the background.  To check the status of the run, call `GET v1/runs/{run_id}` endpoint with the returned run UUID.  ### Rejection  Apart from the authentication, authorization, and malformed input error, the request can be rejected when specific quota limit is exceeded. More details on quotas is described in the documentation
 
 ### Example
 
@@ -262,7 +262,7 @@ Name | Type | Description  | Notes
 
 Delete Run Items
 
-This endpoint allows the caller to explicitly delete artifacts generated by a run. It can only be invoked when the run has reached a final state (PROCESSED, CANCELED_SYSTEM, CANCELED_USER). Note that by default, all artifacts are automatically deleted 30 days after the run finishes,  regardless of whether the caller explicitly requests deletion.
+This endpoint allows the caller to explicitly delete artifacts generated by a run. It can only be invoked when the run has reached a final state, i.e. `PROCESSED`, `CANCELED_SYSTEM`, or `CANCELED_USER`. Note that by default, all artifacts are automatically deleted 30 days after the run finishes, regardless of whether the caller explicitly requests such deletion.
 
 ### Example
 
@@ -489,7 +489,7 @@ This endpoint does not need any parameter.
 
 Get run details
 
-This endpoint allows the caller to retrieve the current status of a run along with other relevant run details.  A run becomes available immediately after it is created through the POST `/runs/` endpoint.   To download the output results, use GET `/runs/{run_id}/` items to get outputs for all slides. Access to a run is restricted to the user who created it.
+This endpoint allows the caller to retrieve the current status of a run along with other relevant run details.  A run becomes available immediately after it is created through the `POST /v1/runs/` endpoint.   To download the output results, use `GET /v1/runs/{run_id}/` items to get outputs for all slides. Access to a run is restricted to the user who created it.
 
 ### Example
 
@@ -518,7 +518,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.PublicApi(api_client)
-    run_id = 'run_id_example' # str | Run id, returned by `POST /runs/` endpoint
+    run_id = 'run_id_example' # str | Run id, returned by `POST /v1/runs/` endpoint
 
     try:
         # Get run details
@@ -536,7 +536,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **run_id** | **str**| Run id, returned by &#x60;POST /runs/&#x60; endpoint | 
+ **run_id** | **str**| Run id, returned by &#x60;POST /v1/runs/&#x60; endpoint | 
 
 ### Return type
 
@@ -648,7 +648,7 @@ Name | Type | Description  | Notes
 
 List Run Items
 
-List items in a run with filtering, sorting, and pagination capabilities.  Returns paginated items within a specific run. Results can be filtered by item IDs, external_ids, status, and custom_metadata using JSONPath expressions.  ## JSONPath Metadata Filtering Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.  ### Examples: - **Field existence**: `$.case_id` - Results that have a case_id field defined - **Exact value match**: `$.priority ? (@ == \"high\")` - Results with high priority - **Numeric comparison**: `$.confidence_score ? (@ > 0.95)` - Results with high confidence - **Array operations**: `$.flags[*] ? (@ == \"reviewed\")` - Results flagged as reviewed - **Complex conditions**: `$.metrics ? (@.accuracy > 0.9 && @.recall > 0.8)` - Results meeting performance thresholds  ## Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations
+List items in a run with filtering, sorting, and pagination capabilities.  Returns paginated items within a specific run. Results can be filtered by `item_id`, `external_ids`, `custom_metadata`, `terminated_at`, and `termination_reason` using JSONPath expressions.  ## JSONPath Metadata Filtering Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.  ### Examples: - **Field existence**: `$.case_id` - Results that have a case_id field defined - **Exact value match**: `$.priority ? (@ == \"high\")` - Results with high priority - **Numeric comparison**: `$.confidence_score ? (@ > 0.95)` - Results with high confidence - **Array operations**: `$.flags[*] ? (@ == \"reviewed\")` - Results flagged as reviewed - **Complex conditions**: `$.metrics ? (@.accuracy > 0.9 && @.recall > 0.8)` - Results meeting performance thresholds  ## Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations
 
 ### Example
 
@@ -679,7 +679,7 @@ configuration.access_token = os.environ["ACCESS_TOKEN"]
 with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.PublicApi(api_client)
-    run_id = 'run_id_example' # str | Run id, returned by `POST /runs/` endpoint
+    run_id = 'run_id_example' # str | Run id, returned by `POST /v1/runs/` endpoint
     item_id__in = ['item_id__in_example'] # List[str] | Filter for item ids (optional)
     external_id__in = ['external_id__in_example'] # List[str] | Filter for items by their external_id from the input payload (optional)
     state = aignx.codegen.ItemState() # ItemState | Filter items by their state (optional)
@@ -687,7 +687,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     custom_metadata = '$' # str | JSONPath expression to filter items by their custom_metadata (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
-    sort = ['sort_example'] # List[str] | Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `run_id` - `external_id` - `custom_metadata`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending) (optional)
+    sort = ['sort_example'] # List[str] | Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.                 **Available fields:** - `item_id` - `external_id` - `custom_metadata` - `terminated_at` - `termination_reason`  **Examples:** - `?sort=item_id` - Sort by id of the item (ascending) - `?sort=-external_id` - Sort by external ID (descending) - `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending) (optional)
 
     try:
         # List Run Items
@@ -705,7 +705,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **run_id** | **str**| Run id, returned by &#x60;POST /runs/&#x60; endpoint | 
+ **run_id** | **str**| Run id, returned by &#x60;POST /v1/runs/&#x60; endpoint | 
  **item_id__in** | [**List[str]**](str.md)| Filter for item ids | [optional] 
  **external_id__in** | [**List[str]**](str.md)| Filter for items by their external_id from the input payload | [optional] 
  **state** | [**ItemState**](.md)| Filter items by their state | [optional] 
@@ -713,7 +713,7 @@ Name | Type | Description  | Notes
  **custom_metadata** | **str**| JSONPath expression to filter items by their custom_metadata | [optional] 
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **sort** | [**List[str]**](str.md)| Sort the items by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.                 **Available fields:** - &#x60;item_id&#x60; - &#x60;run_id&#x60; - &#x60;external_id&#x60; - &#x60;custom_metadata&#x60;  **Examples:** - &#x60;?sort&#x3D;item_id&#x60; - Sort by id of the item (ascending) - &#x60;?sort&#x3D;-external_id&#x60; - Sort by external ID (descending) - &#x60;?sort&#x3D;custom_metadata&amp;sort&#x3D;-external_id&#x60; - Sort by metadata, then by external ID (descending) | [optional] 
+ **sort** | [**List[str]**](str.md)| Sort the items by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.                 **Available fields:** - &#x60;item_id&#x60; - &#x60;external_id&#x60; - &#x60;custom_metadata&#x60; - &#x60;terminated_at&#x60; - &#x60;termination_reason&#x60;  **Examples:** - &#x60;?sort&#x3D;item_id&#x60; - Sort by id of the item (ascending) - &#x60;?sort&#x3D;-external_id&#x60; - Sort by external ID (descending) - &#x60;?sort&#x3D;custom_metadata&amp;sort&#x3D;-external_id&#x60; - Sort by metadata, then by external ID (descending) | [optional] 
 
 ### Return type
 
@@ -775,10 +775,10 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     application_id = 'application_id_example' # str | Optional application ID filter (optional)
     application_version = 'application_version_example' # str | Optional Version Name (optional)
     external_id = 'external_id_example' # str | Optionally filter runs by items with this external ID (optional)
-    custom_metadata = '$' # str | Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**               (optional)
+    custom_metadata = '$' # str | Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, please ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Please remember to URL-encode the entire JSONPath expression when making HTTP requests**               (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
-    sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_version_id` - `organization_id` - `status` - `submitted_at` - `submitted_by`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=status&sort=-submitted_at` - Sort by status, then by time (descending)  (optional)
+    sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_id` - `version_number` - `custom_metadata` - `statistics` - `submitted_at` - `submitted_by` - `terminated_at` - `termination_reason`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)  (optional)
 
     try:
         # List Runs
@@ -799,10 +799,10 @@ Name | Type | Description  | Notes
  **application_id** | **str**| Optional application ID filter | [optional] 
  **application_version** | **str**| Optional Version Name | [optional] 
  **external_id** | **str**| Optionally filter runs by items with this external ID | [optional] 
- **custom_metadata** | **str**| Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: &#x60;$.study&#x60; - Runs that have a study field defined - **Exact value match**: &#x60;$.study ? (@ &#x3D;&#x3D; \&quot;high\&quot;)&#x60; - Runs with specific study value - **Numeric comparison**: &#x60;$.confidence_score ? (@ &gt; 0.75)&#x60; - Runs with confidence score greater than 0.75 - **Array operations**: &#x60;$.tags[*] ? (@ &#x3D;&#x3D; \&quot;draft\&quot;)&#x60; - Runs with tags array containing \&quot;draft\&quot; - **Complex conditions**: &#x60;$.resources ? (@.gpu_count &gt; 2 &amp;&amp; @.memory_gb &gt;&#x3D; 16)&#x60; - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: &#x60;%24.study&#x60; - **Exact value match**: &#x60;%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)&#x60; - **Numeric comparison**: &#x60;%24.confidence_score%20%3F%20(%40%20%3E%200.75)&#x60; - **Array operations**: &#x60;%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)&#x60; - **Complex conditions**: &#x60;%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)&#x60;  #### Notes - JSONPath expressions are evaluated using PostgreSQL&#39;s &#x60;@?&#x60; operator - The &#x60;$.&#x60; prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use &#x60;&amp;&amp;&#x60; for AND operations and &#x60;||&#x60; for OR operations - Regular expressions use &#x60;like_regex&#x60; with standard regex syntax - **Remember to URL-encode the entire JSONPath expression when making HTTP requests**               | [optional] 
+ **custom_metadata** | **str**| Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, please ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: &#x60;$.study&#x60; - Runs that have a study field defined - **Exact value match**: &#x60;$.study ? (@ &#x3D;&#x3D; \&quot;high\&quot;)&#x60; - Runs with specific study value - **Numeric comparison**: &#x60;$.confidence_score ? (@ &gt; 0.75)&#x60; - Runs with confidence score greater than 0.75 - **Array operations**: &#x60;$.tags[*] ? (@ &#x3D;&#x3D; \&quot;draft\&quot;)&#x60; - Runs with tags array containing \&quot;draft\&quot; - **Complex conditions**: &#x60;$.resources ? (@.gpu_count &gt; 2 &amp;&amp; @.memory_gb &gt;&#x3D; 16)&#x60; - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: &#x60;%24.study&#x60; - **Exact value match**: &#x60;%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)&#x60; - **Numeric comparison**: &#x60;%24.confidence_score%20%3F%20(%40%20%3E%200.75)&#x60; - **Array operations**: &#x60;%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)&#x60; - **Complex conditions**: &#x60;%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)&#x60;  #### Notes - JSONPath expressions are evaluated using PostgreSQL&#39;s &#x60;@?&#x60; operator - The &#x60;$.&#x60; prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use &#x60;&amp;&amp;&#x60; for AND operations and &#x60;||&#x60; for OR operations - Regular expressions use &#x60;like_regex&#x60; with standard regex syntax - **Please remember to URL-encode the entire JSONPath expression when making HTTP requests**               | [optional] 
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.  **Available fields:** - &#x60;run_id&#x60; - &#x60;application_version_id&#x60; - &#x60;organization_id&#x60; - &#x60;status&#x60; - &#x60;submitted_at&#x60; - &#x60;submitted_by&#x60;  **Examples:** - &#x60;?sort&#x3D;submitted_at&#x60; - Sort by creation time (ascending) - &#x60;?sort&#x3D;-submitted_at&#x60; - Sort by creation time (descending) - &#x60;?sort&#x3D;status&amp;sort&#x3D;-submitted_at&#x60; - Sort by status, then by time (descending)  | [optional] 
+ **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.  **Available fields:** - &#x60;run_id&#x60; - &#x60;application_id&#x60; - &#x60;version_number&#x60; - &#x60;custom_metadata&#x60; - &#x60;statistics&#x60; - &#x60;submitted_at&#x60; - &#x60;submitted_by&#x60; - &#x60;terminated_at&#x60; - &#x60;termination_reason&#x60;  **Examples:** - &#x60;?sort&#x3D;submitted_at&#x60; - Sort by creation time (ascending) - &#x60;?sort&#x3D;-submitted_at&#x60; - Sort by creation time (descending) - &#x60;?sort&#x3D;state&amp;sort&#x3D;-submitted_at&#x60; - Sort by state, then by time (descending)  | [optional] 
 
 ### Return type
 
@@ -828,9 +828,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put**
-> object put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put(run_id, external_id, custom_metadata_update_request)
+> CustomMetadataUpdateResponse put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put(run_id, external_id, custom_metadata_update_request)
 
 Put Item Custom Metadata By Run
+
+Update the custom metadata of the item with the specified `external_id`, belonging to the specified run.  Optionally, a checksum may be provided along the custom metadata JSON. It can be used to verify if the custom metadata was updated since the last time it was accessed. If the checksum is provided, it must match the existing custom metadata in the system, ensuring that the current custom metadata value to be overwritten is acknowledged by the user. If no checksum is provided, submitted metadata directly overwrites the existing metadata, without any checks.  The latest custom metadata and checksum can be retrieved     for individual items via `GET /v1/runs/{run_id}/items/{external_id}`,     and for all items of a run via `GET /v1/runs/{run_id}/items`.
 
 ### Example
 
@@ -839,6 +841,7 @@ Put Item Custom Metadata By Run
 ```python
 import aignx.codegen
 from aignx.codegen.models.custom_metadata_update_request import CustomMetadataUpdateRequest
+from aignx.codegen.models.custom_metadata_update_response import CustomMetadataUpdateResponse
 from aignx.codegen.rest import ApiException
 from pprint import pprint
 
@@ -885,7 +888,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**object**
+[**CustomMetadataUpdateResponse**](CustomMetadataUpdateResponse.md)
 
 ### Authorization
 
@@ -900,15 +903,20 @@ Name | Type | Description  | Notes
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Successful Response |  -  |
+**200** | Custom metadata successfully updated |  -  |
+**403** | Forbidden - You don&#39;t have permission to update this item |  -  |
+**404** | Item not found |  -  |
+**412** | Precondition Failed - Checksum mismatch |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **put_run_custom_metadata_v1_runs_run_id_custom_metadata_put**
-> object put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(run_id, custom_metadata_update_request)
+> CustomMetadataUpdateResponse put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(run_id, custom_metadata_update_request)
 
 Put Run Custom Metadata
+
+Update the custom metadata of a run with the specified `run_id`.  Optionally, a checksum may be provided along the custom metadata JSON. It can be used to verify if the custom metadata was updated since the last time it was accessed. If the checksum is provided, it must match the existing custom metadata in the system, ensuring that the current custom metadata value to be overwritten is acknowledged by the user. If no checksum is provided, submitted metadata directly overwrites the existing metadata, without any checks.  The latest custom metadata and checksum can be retrieved for the run via the `GET /v1/runs/{run_id}` endpoint.  **Note on deadlines:** Run deadlines must be set during run creation and cannot be modified afterward. Any deadline changes in custom metadata will be ignored by the system.
 
 ### Example
 
@@ -917,6 +925,7 @@ Put Run Custom Metadata
 ```python
 import aignx.codegen
 from aignx.codegen.models.custom_metadata_update_request import CustomMetadataUpdateRequest
+from aignx.codegen.models.custom_metadata_update_response import CustomMetadataUpdateResponse
 from aignx.codegen.rest import ApiException
 from pprint import pprint
 
@@ -961,7 +970,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**object**
+[**CustomMetadataUpdateResponse**](CustomMetadataUpdateResponse.md)
 
 ### Authorization
 
@@ -976,8 +985,10 @@ Name | Type | Description  | Notes
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Successful Response |  -  |
+**200** | Custom metadata successfully updated |  -  |
 **404** | Run not found |  -  |
+**403** | Forbidden - You don&#39;t have permission to update this run |  -  |
+**412** | Precondition Failed - Checksum mismatch, resource has been modified |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

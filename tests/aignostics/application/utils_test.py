@@ -13,6 +13,7 @@ from aignostics.application._utils import (
     is_not_terminated_with_deadline_exceeded,
     print_runs_non_verbose,
     print_runs_verbose,
+    queue_position_string_from_run,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
     validate_mappings,
@@ -518,7 +519,7 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
     mock_run.details.return_value = run_data
     mock_run.results.return_value = [item_result]
 
-    retrieve_and_print_run_details(mock_run)
+    retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False)
 
     # Verify console.print was called multiple times (for run details and items)
     assert mock_console.print.call_count >= 2
@@ -563,12 +564,63 @@ def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     mock_run.details.return_value = run_data
     mock_run.results.return_value = []
 
-    retrieve_and_print_run_details(mock_run)
+    retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False)
 
     # Should print run details and "No item results available"
     assert mock_console.print.call_count >= 2
     last_call = str(mock_console.print.call_args_list[-1])
     assert "No item results available" in last_call
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "hide_platform_queue_position",
+    [True, False],
+)
+@patch("aignostics.application._utils.console")
+def test_retrieve_and_print_run_details_can_hide_platform_position(
+    mock_console: Mock, hide_platform_queue_position: bool
+) -> None:
+    """Test that platform queue position can be hidden or shown."""
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+
+    run_data = RunData(
+        run_id="run-empty",
+        application_id="test-app",
+        version_number="0.0.1",
+        state=RunState.PENDING,
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=0,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
+        num_preceding_items_org=10,
+        num_preceding_items_platform=100 if not hide_platform_queue_position else None,
+    )
+
+    mock_run = MagicMock()
+    mock_run.details.return_value = run_data
+    mock_run.results.return_value = []
+
+    retrieve_and_print_run_details(mock_run, hide_platform_queue_position=hide_platform_queue_position)
+
+    first_call = str(mock_console.print.call_args_list[0])
+    if not hide_platform_queue_position:
+        assert "platform" in first_call
+    else:
+        assert "platform" not in first_call
 
 
 # Tests for validate_mappings
@@ -688,3 +740,50 @@ def test_validate_mappings_raises_with_correct_index_for_second_invalid() -> Non
             TEST_MAPPING_TIFF_HE,  # Valid
             "*.svs:tissue=LUNG",  # Invalid (index 1)
         ])
+
+
+# Tests for queue_position_string_from_run
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_org_and_platform_position() -> None:
+    """Test queue position string with both org and platform positions."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=5,
+        num_preceding_items_platform=20,
+    )
+    assert queue_position_string_from_run(run) == (
+        "5 items ahead within your organization, 20 items ahead across the entire platform"
+    )
+
+
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_no_position() -> None:
+    """Test queue position string with no positions."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=None,
+        num_preceding_items_platform=None,
+    )
+    assert queue_position_string_from_run(run) == "N/A"
+
+
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_only_org_position() -> None:
+    """Test queue position string with only org position."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=3,
+        num_preceding_items_platform=None,
+    )
+    assert queue_position_string_from_run(run) == "3 items ahead within your organization"
+
+
+@pytest.mark.unit
+def test_queue_position_string_from_run_with_only_platform_position() -> None:
+    """Test queue position string with only platform position."""
+    run = Mock(
+        spec=RunData,
+        num_preceding_items_org=None,
+        num_preceding_items_platform=15,
+    )
+    assert queue_position_string_from_run(run) == "15 items ahead across the entire platform"

@@ -134,7 +134,7 @@ class Run:
 
         return cls(Client.get_api_client(cache_token=cache_token), run_id)
 
-    def details(self, nocache: bool = False) -> RunData:
+    def details(self, nocache: bool = False, hide_platform_queue_position: bool = False) -> RunData:
         """Retrieves the current status of the application run.
 
         Retries on network and server errors.
@@ -142,6 +142,8 @@ class Run:
         Args:
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            hide_platform_queue_position (bool): If True, hides the platform queue position
+                in the returned run data. Defaults to False.
 
         Returns:
             RunData: The run data.
@@ -166,7 +168,11 @@ class Run:
                 )
             )
 
-        return details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
+        run_data: RunData = details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
+        if hide_platform_queue_position:
+            run_data = run_data.model_copy(deep=True)
+            run_data.num_preceding_items_platform = None
+        return run_data
 
     # TODO(Andreas): Low Prio / existed prior to API migration: Please check if this still fails with
     #  Internal Server Error if run was already canceled, should rather fail with 400 bad request in that state.

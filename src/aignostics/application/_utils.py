@@ -225,6 +225,23 @@ def _format_run_statistics(statistics: RunItemStatistics) -> str:
     )
 
 
+def queue_position_string_from_run(run: RunData) -> str:
+    """Generate a queue position string from run data.
+
+    Args:
+        run (RunData): Run data containing queue position
+
+    Returns:
+        str: Queue position string
+    """
+    queue_position_parts = []
+    if run.num_preceding_items_org is not None:
+        queue_position_parts.append(f"{run.num_preceding_items_org} items ahead within your organization")
+    if run.num_preceding_items_platform is not None:
+        queue_position_parts.append(f"{run.num_preceding_items_platform} items ahead across the entire platform")
+    return ", ".join(queue_position_parts) or "N/A"
+
+
 def _format_run_details(run: RunData) -> str:
     """Format detailed run information as a single string.
 
@@ -240,9 +257,11 @@ def _format_run_details(run: RunData) -> str:
     output = (
         f"[bold]Run ID:[/bold] {run.run_id}\n"
         f"[bold]Application (Version):[/bold] {run.application_id} ({run.version_number})\n"
-        f"[bold]Status (Termination Reason):[/bold] {status_str}\n"
-        f"[bold]Output:[/bold] {run.output.value}\n"
     )
+
+    output += f"[bold]Queue Position:[/bold] {queue_position_string_from_run(run)}\n"
+
+    output += f"[bold]Status (Termination Reason):[/bold] {status_str}\n[bold]Output:[/bold] {run.output.value}\n"
 
     if run.error_message or run.error_code:
         output += f"[bold]Error Message (Code):[/bold] {run.error_message or 'N/A'} ({run.error_code or 'N/A'})\n"
@@ -258,16 +277,18 @@ def _format_run_details(run: RunData) -> str:
     return output
 
 
-def retrieve_and_print_run_details(run_handle: Run) -> None:
+def retrieve_and_print_run_details(run_handle: Run, hide_platform_queue_position: bool) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
         run_handle (Run): The Run handle
+        hide_platform_queue_position (bool): Whether to hide platform-wide queue position
 
     """
-    run = run_handle.details()
+    run = run_handle.details(hide_platform_queue_position=hide_platform_queue_position)
 
-    output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{_format_run_details(run)}\n\n[bold]Items:[/bold]"
+    run_details = _format_run_details(run)
+    output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"
 
     console.print(output)
     _retrieve_and_print_run_items(run_handle)

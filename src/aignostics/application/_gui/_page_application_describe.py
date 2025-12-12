@@ -279,6 +279,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
 
     def _add_application_version_selection_section() -> None:
         """Add application version selection section."""
+        user_info: UserInfo | None = app.storage.tab.get("user_info", None)
         with ui.step("Select Application Version"):  # noqa: PLR1702
             with ui.row().classes("w-full justify-center"):
                 with ui.column():
@@ -302,16 +303,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             with ui.stepper_navigation():
                 # Check system health and determine if force option should be available
                 system_healthy = bool(SystemService.health_static())
-
-                # Check if user is internal (can use force option)
-                user_info: UserInfo | None = app.storage.tab.get("user_info", None)
-                is_internal_user = (
-                    user_info
-                    and user_info.organization
-                    and user_info.organization.name
-                    and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
-                )
-
                 unhealthy_tooltip = None
                 with ui.button(
                     "Next",
@@ -323,7 +314,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 if not system_healthy:
                     version_next_button.disable()
                     # Show force checkbox for internal users
-                    if is_internal_user:
+                    if user_info and user_info.is_internal_user:
 
                         def on_force_change(e: ValueChangeEventArguments) -> None:
                             if e.value:
@@ -839,12 +830,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 # Allow users of some organisations to request onboarding slides to Portal
                 user_info: UserInfo | None = app.storage.tab.get("user_info", None)
                 with ui.row().classes("full-width mt-4 mb-4"):
-                    if (
-                        user_info
-                        and user_info.organization
-                        and user_info.organization.name
-                        and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
-                    ):
+                    if user_info and user_info.is_internal_user:
                         ui.checkbox(
                             text="Onboard Slides and Output to Aignostics Portal",
                         ).bind_value(submit_form, "onboard_to_aignostics_portal").mark(
@@ -879,12 +865,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
 
         with ui.step("Pipeline"):
             user_info: UserInfo | None = app.storage.tab.get("user_info", None)
-            can_configure_pipeline = (
-                user_info
-                and user_info.organization
-                and user_info.organization.name
-                and user_info.organization.name.lower() in {"aignostics", "pre-alpha-org", "lmu", "charite"}
-            )
+            can_configure_pipeline = user_info and user_info.is_internal_user
 
             if can_configure_pipeline:
                 with ui.column(align_items="start").classes("w-full"):
