@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [0.2.235](https://github.com/aignostics/python-sdk/compare/v0.2.234..0.2.235) - 2025-12-12
+# [1.0.0](https://github.com/aignostics/python-sdk/compare/v0.2.235..1.0.0) - 2025-12-16
+
+### 📚 Documentation
+
+- Update risk introduction info for requirements [skip:ci, skip:test:long-running, skip:test:matrix-runner, skip:test:very-long-running] - ([2cef198](https://github.com/aignostics/python-sdk/commit/2cef198129c02dc40d1e98b47fc01b3cde62f8f2))
+
+
+# [v0.2.235](https://github.com/aignostics/python-sdk/compare/v0.2.234..v0.2.235) - 2025-12-12
 
 ### ⛰️  Features
 
