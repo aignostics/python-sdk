@@ -1,6 +1,13 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [1.0.0](https://github.com/aignostics/python-sdk/compare/v0.2.235..1.0.0) - 2025-12-16
+# [1.0.1](https://github.com/aignostics/python-sdk/compare/v1.0.0..1.0.1) - 2025-12-17
+
+### 🛡️ Security
+
+- Pin filelock>=3.20.1 ([#351](https://github.com/orhun/git-cliff/issues/351)) - ([aa82858](https://github.com/aignostics/python-sdk/commit/aa82858025709deea122f4b9af2ddde4a37aa618))
+
+
+# [v1.0.0](https://github.com/aignostics/python-sdk/compare/v0.2.235..v1.0.0) - 2025-12-16
 
 ### 📚 Documentation
 
