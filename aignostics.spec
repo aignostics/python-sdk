@@ -124,7 +124,7 @@ if is_darwin:
         name='aignostics.app',
         icon='logo.ico',
         bundle_identifier='com.aignostics.launchpad',
-        version='1.0.1',
+        version='1.0.2',
         info_plist={
             'NSPrincipalClass': 'NSApplication',
             'NSAppleScriptEnabled': False,
