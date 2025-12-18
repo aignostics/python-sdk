@@ -207,7 +207,7 @@ jobs:
           rm -rf ./test-results/coverage_html
           gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./test-results/* ./audit-results/*   \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
-            
+
       - name: Create GitHub release (no test results)
         if: |
           (contains(inputs.commit_message, 'skip:test:all')) ||
