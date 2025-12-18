@@ -35,7 +35,7 @@ from aignostics.utils import (
 
 from ._settings import Settings
 
-QUPATH_VERSION = "0.6.0-rc5"
+QUPATH_VERSION = "0.6.0"
 DOWNLOAD_CHUNK_SIZE = 10 * 1024 * 1024
 QUPATH_LAUNCH_MAX_WAIT_TIME = 30  # seconds, maximum wait time for QuPath to start
 QUPATH_SCRIPT_MAX_EXECUTION_TIME = 60 * 60 * 2  # seconds, maximum wait time for QuPath to run a script
