@@ -987,7 +987,7 @@ $ aignostics qupath install [OPTIONS]
 
 **Options**:
 
-* `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.6.0-rc5]
+* `--version TEXT`: Version of QuPath to install. Do not change this unless you know what you are doing.  [default: 0.6.0]
 * `--path DIRECTORY`: Path to install QuPath to. If not specified, the default installation path will be used.Do not change this unless you know what you are doing.  [default: (~/Library/Application Support/aignostics)]
 * `--reinstall / --no-reinstall`: Reinstall QuPath even if it is already installed. This will overwrite the existing installation.  [default: reinstall]
 * `--platform-system TEXT`: Override the system to assume for the installation. This is useful for testing purposes.  [default: Darwin]
