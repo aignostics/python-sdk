@@ -93,7 +93,7 @@ jobs:
 
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
-        uses: anthropics/claude-code-action@v1.0.22
+        uses: anthropics/claude-code-action@v1.0.27
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
