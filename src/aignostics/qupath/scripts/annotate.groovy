@@ -8,17 +8,15 @@ import java.awt.Color
 import java.io.File
 
 // Parse command line arguments
-if (args.length < 2) {
-    println("Usage: annotate.groovy <image_name> <geojson_path>")
+if (args.length < 1) {
+    println("Usage: annotate.groovy <geojson_path>")
     println("Arguments provided: " + args.join(", "))
     return
 }
 
-def imageName = args[0]
-def jsonPath = args[1]
+def jsonPath = args[0]
 
 println("Script arguments:")
-println("  Image name: " + imageName)
 println("  GeoJSON path: " + jsonPath)
 
 // Check we are in a project
@@ -28,20 +26,15 @@ if (project == null) {
     return
 }
 
-// Load the image data
-println("Looking for image: " + imageName)
-def imageEntry = project.getImageList().find { entry ->
-    entry.getImageName().contains(imageName)
-}
-if (imageEntry == null) {
-    println("Image not found in project. Available images:")
-    project.getImageList().each { entry ->
-        println("  - " + entry.getImageName())
-    }
+// Get the current image data (already loaded by -i flag)
+def imageData = getCurrentImageData()
+if (imageData == null) {
+    println("No image loaded! Did you launch this script with -i?")
     return
 }
-println("Found image: " + imageEntry.getImageName())
-def imageData = imageEntry.readImageData()
+
+def imageName = imageData.getServer().getMetadata().getName()
+println("Processing image: " + imageName)
 
 // Open the geojson
 println("Loading annotations from: " + jsonPath)
@@ -114,5 +107,6 @@ println("Added " + newObjects.size() + " annotations from GeoJSON")
 
 // Save image
 println("Saving image ...")
-imageEntry.saveImageData(imageData)
+imageData.getServer().getMetadata().getName()  // Get image name for logging
+project.getEntry(imageData).saveImageData(imageData)
 println("Saved image.")

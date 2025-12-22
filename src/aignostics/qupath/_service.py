@@ -1224,8 +1224,9 @@ class Service(BaseService):
 
         pid = Service.execute_qupath(
             project=project,
+            image=image.name,
             script=Service._find_groovy_script("annotate"),
-            script_args=[image.name, str(annotations.as_posix())],
+            script_args=[str(annotations.as_posix())],
         )
         if not pid:
             message = "Failed to execute QuPath script for annotations."
