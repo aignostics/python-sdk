@@ -45,7 +45,7 @@ class PageBuilder(BasePageBuilder):
                         if progress.status is InstallProgressState.DOWNLOADING:
                             if progress.archive_path and progress.archive_size:
                                 install_info.set_text(
-                                    f"Downloading QuPath v{progress.archive_version} "
+                                    f"Downloading QuPath {progress.archive_version} "
                                     f"({humanize.naturalsize(float(progress.archive_size))}) "
                                     f"to {progress.archive_path}"
                                 )

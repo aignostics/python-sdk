@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "1.0.1"
+version = "1.0.2"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -110,7 +110,7 @@ dependencies = [
     "pandas>=2.3.3,<3",
     "platformdirs>=4.3.2,<5",
     "procrastinate>=3.5.3",
-    "fastparquet>=2024.11.0; python_version < '3.14'",
+    "fastparquet>=2024.11.0,<2025.12.0; python_version < '3.14'",
     "pyarrow>=22.0.0,<23; python_version >= '3.14'",
     "pyjwt[crypto]>=2.10.1,<3",
     "python-dateutil>=2.9.0.post0,<3",
@@ -396,7 +396,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "1.0.1"
+current_version = "1.0.2"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
@@ -540,7 +540,7 @@ footer = """
 trim = true
 # postprocessors
 postprocessors = [
-    { pattern = '<REPO>', replace = "https://github.com/orhun/git-cliff" }, # replace repository URL
+    { pattern = '<REPO>', replace = "https://github.com/aignostics/python-sdk" },
 ]
 
 

@@ -53,7 +53,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a # v7.1.5
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -83,7 +83,7 @@ jobs:
         run: make dist_native
 
       - name: Upload dist_native artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
         with:
           name: dist_native-${{ matrix.runner }}
@@ -103,7 +103,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a # v7.1.5
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
         with:
           version-file: "pyproject.toml"
           cache-dependency-glob: uv.lock
@@ -114,7 +114,7 @@ jobs:
         run: .github/workflows/_install_dev_tools.bash
 
       - name: Download native distribution artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: dist_native-*
           path: dist_native_all/
@@ -156,7 +156,7 @@ jobs:
         run: make docs
 
       - name: Generate release notes
-        uses: orhun/git-cliff-action@d77b37db2e3f7398432d34b72a12aa3e2ba87e51 # v4.6.0
+        uses: orhun/git-cliff-action@e16f179f0be49ecdfe63753837f20b9531642772 # v4.7.0
         id: git-cliff
         with:
           config: pyproject.toml
@@ -185,13 +185,13 @@ jobs:
         if: |
           (!contains(inputs.commit_message, 'skip:test:all')) &&
           (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: test-results-ubuntu-latest
           path: test-results
 
       - name: Download audit results generated in _audit.yml
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: audit-results
           path: audit-results
@@ -207,7 +207,7 @@ jobs:
           rm -rf ./test-results/coverage_html
           gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./test-results/* ./audit-results/*   \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
-            
+
       - name: Create GitHub release (no test results)
         if: |
           (contains(inputs.commit_message, 'skip:test:all')) ||
