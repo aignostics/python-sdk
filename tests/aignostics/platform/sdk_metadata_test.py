@@ -709,11 +709,99 @@ class TestItemSdkMetadata:
     @pytest.mark.unit
     @staticmethod
     def test_build_item_metadata_basic() -> None:
-        """Test that basic item metadata structure is created correctly."""
+        """Test that basic item metadata structure is created correctly.
+
+        When building from scratch (no existing metadata), platform_bucket
+        and tags should not be present.
+        """
         metadata = build_item_sdk_metadata()
 
         assert metadata["schema_version"] == ITEM_SDK_METADATA_SCHEMA_VERSION
         assert "platform_bucket" not in metadata
+        assert "tags" not in metadata
+        assert "created_at" in metadata
+        assert "updated_at" in metadata
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_build_item_metadata_preserves_existing_platform_bucket() -> None:
+        """Test that build_item_sdk_metadata() preserves existing platform_bucket.
+
+        This test verifies the fix for the bug where platform_bucket metadata
+        set by the application service was being lost when SDK metadata was
+        updated with timestamps during run submission.
+        """
+        # Arrange: Create existing metadata with platform_bucket (as set by application service)
+        existing_metadata = {
+            "schema_version": "0.0.1",  # Old version
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "platform_bucket": {
+                "bucket_name": "my-bucket",
+                "object_key": "user/upload-123/heta/1.0.0/slide.svs",
+                "signed_download_url": "https://storage.googleapis.com/signed-url",
+            },
+        }
+
+        # Act: Build metadata with existing data (as done in _amend_input_items_with_sdk_metadata)
+        metadata = build_item_sdk_metadata(existing_metadata)
+
+        # Assert: platform_bucket should be preserved
+        assert "platform_bucket" in metadata
+        assert metadata["platform_bucket"]["bucket_name"] == "my-bucket"
+        assert metadata["platform_bucket"]["object_key"] == "user/upload-123/heta/1.0.0/slide.svs"
+        assert metadata["platform_bucket"]["signed_download_url"] == "https://storage.googleapis.com/signed-url"
+
+        # Assert: Version and timestamps should be updated
+        assert metadata["schema_version"] == ITEM_SDK_METADATA_SCHEMA_VERSION  # Updated to current
+        assert metadata["created_at"] == "2025-01-01T00:00:00+00:00"  # Preserved
+        assert "updated_at" in metadata  # New timestamp
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_build_item_metadata_preserves_existing_tags() -> None:
+        """Test that build_item_sdk_metadata() preserves existing tags."""
+        existing_metadata = {
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "tags": {"experiment-1", "batch-A"},
+        }
+
+        metadata = build_item_sdk_metadata(existing_metadata)
+
+        # Assert: tags should be preserved
+        assert "tags" in metadata
+        assert metadata["tags"] == {"experiment-1", "batch-A"}
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_build_item_metadata_preserves_all_fields() -> None:
+        """Test that build_item_sdk_metadata() preserves ALL existing fields.
+
+        This test verifies that the spread operator pattern (**existing_sdk)
+        correctly preserves all fields including platform_bucket, tags, and
+        any future fields that may be added to the schema.
+        """
+        existing_metadata = {
+            "schema_version": "0.0.1",
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "updated_at": "2025-01-01T12:00:00+00:00",
+            "tags": {"test-tag"},
+            "platform_bucket": {
+                "bucket_name": "bucket",
+                "object_key": "key",
+                "signed_download_url": "https://example.com",
+            },
+        }
+
+        metadata = build_item_sdk_metadata(existing_metadata)
+
+        # All existing fields should be preserved
+        assert metadata["platform_bucket"] == existing_metadata["platform_bucket"]
+        assert metadata["tags"] == existing_metadata["tags"]
+        assert metadata["created_at"] == existing_metadata["created_at"]
+
+        # These fields should be updated
+        assert metadata["schema_version"] == ITEM_SDK_METADATA_SCHEMA_VERSION
+        assert "updated_at" in metadata
 
     @pytest.mark.unit
     @staticmethod
