@@ -438,10 +438,12 @@ def build_item_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> 
     """Build SDK metadata to attach to individual items.
 
     Args:
-        existing_metadata (dict[str, Any] | None): Existing SDK metadata to preserve created_at.
+      existing_metadata (dict[str, Any] | None): Existing SDK metadata to preserve.
+          All fields are preserved (platform_bucket, tags, etc.) while schema_version
+          and updated_at are always refreshed.
 
     Returns:
-        dict[str, Any]: Dictionary containing item SDK metadata including platform bucket information.
+      dict[str, Any]: Dictionary containing item SDK metadata including platform bucket information.
     """
     now = datetime.now(UTC).isoformat(timespec="seconds")
     existing_sdk = existing_metadata or {}
@@ -450,6 +452,7 @@ def build_item_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> 
     created_at = existing_sdk.get("created_at", now)
 
     metadata: dict[str, Any] = {
+        **existing_sdk,
         "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
         "created_at": created_at,
         "updated_at": now,
