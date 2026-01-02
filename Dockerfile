@@ -5,7 +5,7 @@ FROM python:3.14.1-slim-trixie AS base
 FROM base AS builder
 
 # Copy in UV
-COPY --from=ghcr.io/astral-sh/uv:0.9.14 /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.9.18 /uv /bin/uv
 
 # We use the system interpreter managed by uv
 ENV UV_PYTHON_DOWNLOADS=0
