@@ -175,7 +175,7 @@ requires-dist = [
     { name = "html-sanitizer", specifier = ">=2.6.0,<3" },
     { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "humanize", specifier = ">=4.14.0,<5" },
-    { name = "idc-index-data", specifier = "==23.0.2" },
+    { name = "idc-index-data", specifier = "==23.0.3" },
     { name = "ijson", specifier = ">=3.4.0.post0,<4" },
     { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.8.0,<10" },
     { name = "jsf", specifier = ">=0.11.2,<1" },
@@ -2532,14 +2532,14 @@ wheels = [
 
 [[package]]
 name = "idc-index-data"
-version = "23.0.2"
+version = "23.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "google-cloud-bigquery" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a2/2f/7902b0cb94c338a31901754f7591e9c4e5bc40248f84c90cc8eacbd45116/idc_index_data-23.0.2.tar.gz", hash = "sha256:0d8b1558a420ef64163fc5251585df9c83a200176b8e33418adf37b2006c5c6b", size = 29043, upload-time = "2025-12-10T20:08:04.994Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/e8/dadd2938328e61f3a8800ca9822cd9a1054cd5b8ce2fd984ab5123a5a046/idc_index_data-23.0.3.tar.gz", hash = "sha256:8b104e34738f11e3356868b02f438c1650c5e79e205b23343939dc89c8f797bd", size = 29040, upload-time = "2025-12-19T23:18:54.936Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/99/82fcd224d5fb7b0559f6fe44af466e845f91c4c3600c8c630043acbee9e9/idc_index_data-23.0.2-py3-none-any.whl", hash = "sha256:df3ee9c5db6a984ede91b5d83d2f9866bd4911613600233cfe3156a8cc134450", size = 85336248, upload-time = "2025-12-10T20:08:01.816Z" },
+    { url = "https://files.pythonhosted.org/packages/6b/65/174ffadf52b0b05ec26f9f97b1ec64dd1a7379367ee102bbf346deafc95b/idc_index_data-23.0.3-py3-none-any.whl", hash = "sha256:6974223e65125ae418848e94c58d41657a33686219bd4053e93ee013918f01ff", size = 85346528, upload-time = "2025-12-19T23:18:52.166Z" },
 ]
 
 [[package]]
