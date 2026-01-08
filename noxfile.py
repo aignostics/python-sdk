@@ -157,7 +157,7 @@ def audit(session: nox.Session) -> None:
             "--ignore-vuln",
             "GHSA-4xh5-x5gv-qwph",  # https://pyinstaller.org/en/stable/license.html
             "--ignore-vuln",
-            "GHSA-xm59-rqc7-hhvf",  # nbconvert CVE-2025-53000: no fix available
+            "CVE-2025-53000",  # no fix available
         )
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")
