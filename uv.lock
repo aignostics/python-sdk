@@ -188,7 +188,7 @@ requires-dist = [
     { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.18.4,<1" },
     { name = "marshmallow", specifier = ">=3.26.2" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
-    { name = "nicegui", extras = ["native"], specifier = ">=3.4.0,<4" },
+    { name = "nicegui", extras = ["native"], specifier = ">=3.5.0,<4" },
     { name = "openslide-bin", specifier = ">=4.0.0.10,<5" },
     { name = "openslide-python", specifier = ">=1.4.3,<2" },
     { name = "packaging", specifier = ">=25.0,<26" },
@@ -4123,7 +4123,7 @@ wheels = [
 
 [[package]]
 name = "nicegui"
-version = "3.4.0"
+version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -4148,9 +4148,9 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/7c/a62af72b921061323dee084b61d7a5892f1df5b8f58eaa97fa7a3f6626ad/nicegui-3.4.0.tar.gz", hash = "sha256:b63e8efdd73cb6e7354b390561b4dcb988394c756a67c7048f6bb560c18d23e4", size = 21016145, upload-time = "2025-12-08T16:39:35.009Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/09/ace5c379c1bcd4e454fe01e32f14e4649456b5f60efb5f73c5737e8cd208/nicegui-3.5.0.tar.gz", hash = "sha256:de802505d76ac3235088b19a32dba0f15cf51caf0d5b0fa6e196bfa0bc247af6", size = 21177233, upload-time = "2026-01-08T09:18:26.646Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/e9/9edacbc746cbb8a59fb475c8be86ca5cb254bb671c13621f0728f1f6ab7c/nicegui-3.4.0-py3-none-any.whl", hash = "sha256:8c4f3500fc716e24b2ae4fe9ef68b7748164aac606339907b9ec88d35c3c8ab5", size = 21677367, upload-time = "2025-12-08T16:39:38.705Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/24/ff7ebfc2da4336687ba86813f96791dbd42e6d23a15301105d8353cc4652/nicegui-3.5.0-py3-none-any.whl", hash = "sha256:27d1659bbeeb543c96a9dad0c4da586896becbfec117bf8ed122a6e5b696340c", size = 21839035, upload-time = "2026-01-08T09:18:23.953Z" },
 ]
 
 [package.optional-dependencies]
