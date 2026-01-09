@@ -133,6 +133,7 @@ jobs:
   ketryx_report_and_check:
     needs: [get-commit-message, lint, audit, test, codeql]
     if: |
+      github.actor != 'dependabot[bot]' &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
       !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
