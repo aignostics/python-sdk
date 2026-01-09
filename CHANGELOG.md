@@ -1,6 +1,64 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [1.0.2](https://github.com/aignostics/python-sdk/compare/v1.0.1..1.0.2) - 2025-12-18
+# [1.0.3](https://github.com/aignostics/python-sdk/compare/v1.0.2..1.0.3) - 2026-01-09
+
+### 🐛 Bug Fixes
+
+- *(ci)* Skip Ketryx reporting for Dependabot PRs ([#381](https://github.com/aignostics/python-sdk/issues/381)) - ([9b7631b](https://github.com/aignostics/python-sdk/commit/9b7631b95955073c59f967b1c5fc7eda0b833452))
+- *(deps)* Update dependency idc-index-data to v23.0.3 ([#358](https://github.com/aignostics/python-sdk/issues/358)) - ([0ff4fc0](https://github.com/aignostics/python-sdk/commit/0ff4fc0c487dea21627b079c2337afd83f9de323))
+- *(deps)* Update dependency fastparquet to v2025 ([#370](https://github.com/aignostics/python-sdk/issues/370)) - ([2fa4f3a](https://github.com/aignostics/python-sdk/commit/2fa4f3adc49a59f82674ebdb2409b23d06b55086))
+- *(platform)* Preserve platform_bucket in item SDK metadata ([#362](https://github.com/aignostics/python-sdk/issues/362)) - ([aca8db0](https://github.com/aignostics/python-sdk/commit/aca8db0ac086b93c311ab358ad06d5edc205fd5f))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([0ff4fc0](https://github.com/aignostics/python-sdk/commit/0ff4fc0c487dea21627b079c2337afd83f9de323))
+- Oliver Meyer <42039965+olivermeyer@users.noreply.github.com> - ([0ff4fc0](https://github.com/aignostics/python-sdk/commit/0ff4fc0c487dea21627b079c2337afd83f9de323))
+- Pin fastparquet<2025.12.0 ([#356](https://github.com/aignostics/python-sdk/issues/356)) - ([d0c77d8](https://github.com/aignostics/python-sdk/commit/d0c77d89f5290cd78369fddb9aec314e014cebae))
+
+### 📚 Documentation
+
+- Update ATTRIBUTIONS.md ([#382](https://github.com/aignostics/python-sdk/issues/382)) - ([5c5a869](https://github.com/aignostics/python-sdk/commit/5c5a869d91004a324e785bdae9fdf23a1f28bcbd))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump getsentry/action-release from 3.4.0 to 3.5.0 ([#371](https://github.com/aignostics/python-sdk/issues/371)) - ([0f18961](https://github.com/aignostics/python-sdk/commit/0f189614f8d2e45635656c499ef697e835b958d1))
+- *(deps)* Bump idc-index-data from 23.0.3 to 23.2.7 ([#373](https://github.com/aignostics/python-sdk/issues/373)) - ([31cabfb](https://github.com/aignostics/python-sdk/commit/31cabfbc23d43b3b60fbf56fcc5c6789b83a6163))
+- *(deps)* Bump astral-sh/setup-uv from 7.1.6 to 7.2.0 ([#375](https://github.com/aignostics/python-sdk/issues/375)) - ([b05aed8](https://github.com/aignostics/python-sdk/commit/b05aed8d0fed345dc67f6b14493e4cf780146084))
+- *(deps)* Update anthropics/claude-code-action action to v1.0.29 ([#377](https://github.com/aignostics/python-sdk/issues/377)) - ([673b138](https://github.com/aignostics/python-sdk/commit/673b138f1b88d789d094c01edd198c602de47264))
+- *(deps)* Update dependency pyright to >=1.1.408,<1.1.409 ([#378](https://github.com/aignostics/python-sdk/issues/378)) - ([e842971](https://github.com/aignostics/python-sdk/commit/e8429713dd6fe34b528d6fa9c760ccb277daaafd))
+- *(deps)* Update ghcr.io/astral-sh/uv docker tag to v0.9.18 ([#357](https://github.com/aignostics/python-sdk/issues/357)) - ([8ce35c9](https://github.com/aignostics/python-sdk/commit/8ce35c9f1d0294a3d15393b1b4709a1db680d930))
+- *(deps)* Update docker/setup-buildx-action action to v3.12.0 ([#366](https://github.com/aignostics/python-sdk/issues/366)) - ([8c9e964](https://github.com/aignostics/python-sdk/commit/8c9e964954817ae592b80f255950b4a1ed73fd16))
+- *(deps)* Update dependency scalene to v2 ([#367](https://github.com/aignostics/python-sdk/issues/367)) - ([e8f5ff2](https://github.com/aignostics/python-sdk/commit/e8f5ff2975de30cc1109f4b8493b5bf8e6ba44aa))
+- *(deps)* Update dependency sphinx-inline-tabs to v2025 ([#369](https://github.com/aignostics/python-sdk/issues/369)) - ([f0b2762](https://github.com/aignostics/python-sdk/commit/f0b2762e645a31a8cbb738a01a7812b705042d04))
+- *(deps)* Bump marshmallow to 3.26.2 due to CVE-2025-68480 - ([d26e075](https://github.com/aignostics/python-sdk/commit/d26e07505500461192d17a8197d59f4861b0acf6))
+- *(deps)* Update anthropics/claude-code-action action to v1.0.27 ([#352](https://github.com/aignostics/python-sdk/issues/352)) - ([9bd8588](https://github.com/aignostics/python-sdk/commit/9bd85880c1048549ee616b0265cfa64979f7882f))
+- *(deps)* Bump codecov/test-results-action from 1.1.1 to 1.2.1 ([#348](https://github.com/aignostics/python-sdk/issues/348)) - ([d71f990](https://github.com/aignostics/python-sdk/commit/d71f990e7405545b2d093c8f398dbc5b719af667))
+- *(deps)* Bump orhun/git-cliff-action from 4.6.0 to 4.7.0 ([#347](https://github.com/aignostics/python-sdk/issues/347)) - ([ba2601d](https://github.com/aignostics/python-sdk/commit/ba2601d78ce31f40e26a662fc1169653747b69d6))
+- *(deps)* Bump actions/upload-artifact from 5.0.0 to 6.0.0 ([#346](https://github.com/aignostics/python-sdk/issues/346)) - ([0263859](https://github.com/aignostics/python-sdk/commit/02638598b5b9d084417b39226e81a53cd31c0812))
+- *(deps)* Bump actions/download-artifact from 6.0.0 to 7.0.0 ([#345](https://github.com/aignostics/python-sdk/issues/345)) - ([2a204df](https://github.com/aignostics/python-sdk/commit/2a204dfe9fe7dc3b1d0c22447d91d153723309b5))
+- *(deps)* Bump astral-sh/setup-uv from 7.1.5 to 7.1.6 ([#344](https://github.com/aignostics/python-sdk/issues/344)) - ([3e575fc](https://github.com/aignostics/python-sdk/commit/3e575fcdc9de9fc21166ee871dc2aee4e3430429))
+- Getsentry/action-release - ([0f18961](https://github.com/aignostics/python-sdk/commit/0f189614f8d2e45635656c499ef697e835b958d1))
+- Dependabot[bot] <support@github.com> - ([0f18961](https://github.com/aignostics/python-sdk/commit/0f189614f8d2e45635656c499ef697e835b958d1))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([0f18961](https://github.com/aignostics/python-sdk/commit/0f189614f8d2e45635656c499ef697e835b958d1))
+- Idc-index-data - ([31cabfb](https://github.com/aignostics/python-sdk/commit/31cabfbc23d43b3b60fbf56fcc5c6789b83a6163))
+- Astral-sh/setup-uv - ([b05aed8](https://github.com/aignostics/python-sdk/commit/b05aed8d0fed345dc67f6b14493e4cf780146084))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([673b138](https://github.com/aignostics/python-sdk/commit/673b138f1b88d789d094c01edd198c602de47264))
+- Bump NiceGUI lower bound for CVEs ([#380](https://github.com/aignostics/python-sdk/issues/380)) - ([734f30b](https://github.com/aignostics/python-sdk/commit/734f30b474322505209bb15574d9f123bb3d4c03))
+- Update aiohttp ([#374](https://github.com/aignostics/python-sdk/issues/374)) - ([8cdf228](https://github.com/aignostics/python-sdk/commit/8cdf2284c8d8fd09df6b46b9d26bd0498176ae9a))
+- Oliver Meyer <42039965+olivermeyer@users.noreply.github.com> - ([8ce35c9](https://github.com/aignostics/python-sdk/commit/8ce35c9f1d0294a3d15393b1b4709a1db680d930))
+- //github.com/aignostics/python-sdk/actions/runs/20456374041/job/58779266640 - ([520acd1](https://github.com/aignostics/python-sdk/commit/520acd10b968bed25610d760e47a5896cd253fcd))
+- //uptime.betterstack.com/team/t344596/incidents/899992471 - ([520acd1](https://github.com/aignostics/python-sdk/commit/520acd10b968bed25610d760e47a5896cd253fcd))
+- Codecov/test-results-action - ([d71f990](https://github.com/aignostics/python-sdk/commit/d71f990e7405545b2d093c8f398dbc5b719af667))
+- Orhun/git-cliff-action - ([ba2601d](https://github.com/aignostics/python-sdk/commit/ba2601d78ce31f40e26a662fc1169653747b69d6))
+- Actions/upload-artifact - ([0263859](https://github.com/aignostics/python-sdk/commit/02638598b5b9d084417b39226e81a53cd31c0812))
+- Actions/download-artifact - ([2a204df](https://github.com/aignostics/python-sdk/commit/2a204dfe9fe7dc3b1d0c22447d91d153723309b5))
+
+### 🛡️ Security
+
+- Address CVE-2025-53000 and CVE-2026-21441 ([#376](https://github.com/aignostics/python-sdk/issues/376)) - ([1ff7283](https://github.com/aignostics/python-sdk/commit/1ff7283f0287bb49c3b63415ee3f242c3d3cc13f))
+
+
+
+* @mk0x9 made their first contribution
+
+# [v1.0.2](https://github.com/aignostics/python-sdk/compare/v1.0.1..v1.0.2) - 2025-12-18
 
 ### 🐛 Bug Fixes
 
