@@ -157,6 +157,10 @@ marimo = [
     "shapely>=2.1.0,<3",
 ]
 qupath = []
+mcp = [
+    "mcp>=1.0.0,<2",
+    # duckdb is already a main dependency
+]
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0,<3",

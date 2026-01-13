@@ -311,3 +311,18 @@ class Service(BaseService):
             message = f"Error during login: {e!s}"
             logger.exception(message)
             raise
+
+    @staticmethod
+    def get_token() -> str:
+        """Get the cached authentication token.
+
+        Returns the raw JWT token for use in external systems (e.g., MCP clients).
+        If no valid token is cached, triggers a login flow.
+
+        Returns:
+            str: The JWT access token.
+
+        Raises:
+            RuntimeError: If token retrieval fails.
+        """
+        return get_token(use_cache=True)

@@ -8,7 +8,22 @@
 			},
 			"gallery": "https://api.mcp.github.com",
 			"version": "1.0.0"
-		}
+		},
+		"aignostics": {
+			"type": "stdio",
+			"command": "uv",
+			"args": [
+				"run",
+				"--with",
+				"aignostics[mcp]",
+				"python",
+				"-m",
+				"aignostics.mcp"
+			],
+			"env": {
+				"AIGNOSTICS_API_ROOT": "https://platform.aignostics.com"
+			}
+		},
 	},
 	"inputs": [
 		{

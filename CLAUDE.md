@@ -50,6 +50,7 @@ Every module has detailed CLAUDE.md documentation. For module-specific guidance,
 * [src/aignostics/notebook/CLAUDE.md](src/aignostics/notebook/CLAUDE.md) - Marimo notebook integration
 * [src/aignostics/qupath/CLAUDE.md](src/aignostics/qupath/CLAUDE.md) - QuPath bioimage analysis
 * [src/aignostics/system/CLAUDE.md](src/aignostics/system/CLAUDE.md) - System diagnostics
+* [src/aignostics/mcp/CLAUDE.md](src/aignostics/mcp/CLAUDE.md) - MCP server for LLM integration
 * [tests/CLAUDE.md](tests/CLAUDE.md) - Test suite documentation
 
 ## Development Commands

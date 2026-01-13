@@ -16,6 +16,7 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 | **notebook** | Marimo notebook server | ❌ | ✅ | ✅ |
 | **qupath** | QuPath integration | ✅ | ✅ | ✅ |
 | **system** | System information | ✅ | ✅ | ✅ |
+| **mcp** | MCP server for LLM integration | ❌ | ❌ | ✅ |
 
 ## Module Descriptions
 
@@ -122,6 +123,16 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 - **CLI**: `info` command for system diagnostics
 - **Dependencies**: `utils` (logging)
 
+### 🤖 mcp
+
+**MCP server for LLM integration**
+
+- **Core Features**: Run management tools, readout querying via DuckDB SQL, compound workflow skills
+- **Operating Mode**: Local stdio for Claude Desktop, VS Code with GitHub Copilot, and Claude Code
+- **Tools**: 12 tools across tiers (Core, Query, Auth, Skills)
+- **Dependencies**: `platform` (auth), `mcp` package, `duckdb`
+- **Run**: `python -m aignostics.mcp`
+
 ## Module Interaction Patterns
 
 ### Architecture: Service Layer with Dual Presentation Layers
@@ -222,6 +233,7 @@ utils.locate_implementations(BaseService)
 - **notebook** → `utils`, `marimo` (external)
 - **qupath** → `utils`
 - **system** → All modules (for health checks)
+- **mcp** → `platform`, `mcp` (external), `duckdb`, `fastmcp` (optional external)
 
 ### Shared Resources
 
@@ -276,6 +288,7 @@ For detailed information about each module, see:
 - [notebook/CLAUDE.md](notebook/CLAUDE.md) - Marimo notebook integration
 - [qupath/CLAUDE.md](qupath/CLAUDE.md) - QuPath integration
 - [system/CLAUDE.md](system/CLAUDE.md) - System diagnostics
+- [mcp/CLAUDE.md](mcp/CLAUDE.md) - MCP server for LLM integration
 
 ## Development Guidelines
 

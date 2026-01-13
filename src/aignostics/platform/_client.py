@@ -267,6 +267,51 @@ class Client:
         """
         return Run(self._api, run_id)
 
+    @classmethod
+    def _from_token(cls, token: str) -> "Client":
+        """Create a client with a pre-validated token.
+
+        This method is used by the remote MCP server to create a client
+        using a token that has already been validated and stored server-side.
+
+        Unlike the normal Client() constructor which goes through the
+        authentication flow, this method directly uses the provided token.
+
+        Args:
+            token: A valid OAuth access token.
+
+        Returns:
+            A Client instance configured to use the provided token.
+
+        Note:
+            This is an internal method used by the MCP server.
+            External code should use the normal Client() constructor.
+        """
+        ca_file = os.getenv("REQUESTS_CA_BUNDLE")
+
+        def token_provider() -> str:
+            return token
+
+        config = _OAuth2TokenProviderConfiguration(
+            host=settings().api_root,
+            ssl_ca_cert=ca_file,
+            token_provider=token_provider,
+        )
+        config.proxy = getproxies().get("https")
+
+        api_client = ApiClient(config)
+        api_client.user_agent = user_agent()
+        api = PublicApi(api_client)
+
+        # Create instance without going through __init__
+        instance = cls.__new__(cls)
+        instance._api = api  # noqa: SLF001 - Intentional for factory method
+        instance.applications = Applications(api)
+        instance.runs = Runs(api)
+        instance.versions = Versions(api)
+
+        return instance
+
     @staticmethod
     def get_api_client(cache_token: bool = True) -> PublicApi:
         """Create and configure an authenticated API client.

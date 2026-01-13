@@ -222,6 +222,15 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Building custom analysis pipeline in Python for repeated usage and processing large datasets (10s-1000s of slides) |
 | **Get started** | <a href="#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment">Run example notebooks</a> or <a href="#python-library-call-the-aignostics-platform-api-from-your-python-scripts">call the Aignostics Platform API from your Python scripts</a> |
 
+### 🤖 MCP Server (AI/LLM Integration)
+
+| | |
+|---|---|
+| **What it is** | MCP server enabling AI assistants like Claude and GitHub Copilot to interact with the Aignostics Platform |
+| **Best for** | Users who want to query runs and analyze readout data through natural language |
+| **Use when** | Exploring results conversationally, performing analyses on readout data, or getting quick summaries of runs |
+| **Get started** | <a href="#mcp-server-use-ai-assistants-to-interact-with-the-aignostics-platform">Configure your AI assistant</a> |
+
 > 💡 Launchpad and CLI handle authentication automatically. Python Library requires manual setup (see [authentication section](#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment)).
 
 ## Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
@@ -608,6 +617,84 @@ Self-signed URLs for files in google storage buckets can be generated using the
 [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
 for the Google Storage Bucket**
 
+## MCP Server: Use AI assistants to interact with the Aignostics Platform
+
+The **Aignostics MCP Server** enables AI assistants like Claude and GitHub Copilot to interact with the Aignostics Platform via natural language. Query your application runs, analyze cell and slide readout data with SQL, and explore results through conversational AI.
+
+> 💡 If you haven't logged in before, run `uvx aignostics user login` first. The MCP server uses your cached credentials automatically.
+
+### Claude Desktop
+
+Add to your Claude Desktop configuration file:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "aignostics": {
+      "command": "uvx",
+      "args": ["--from", "aignostics[mcp]", "python", "-m", "aignostics.mcp"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving the configuration.
+
+### VS Code with GitHub Copilot
+
+Add to your VS Code settings (`settings.json`) or workspace `.vscode/settings.json`:
+
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "aignostics": {
+      "command": "uvx",
+      "args": ["--from", "aignostics[mcp]", "python", "-m", "aignostics.mcp"]
+    }
+  }
+}
+```
+
+### Claude Code (CLI)
+
+Add to `~/.claude/claude_mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "aignostics": {
+      "command": "uvx",
+      "args": ["--from", "aignostics[mcp]", "python", "-m", "aignostics.mcp"]
+    }
+  }
+}
+```
+
+### Example Conversations
+
+Once configured, you can interact with the platform through natural language:
+
+```
+You: Show me my recent runs in the Aignostics Platform
+Assistant: Here are your 5 most recent runs...
+
+You: What's the status of run abc-123?
+Assistant: This run completed with 10 items processed...
+
+You: Download the readouts and show me the cell distribution
+Assistant: Downloaded 2 files. Here's the summary:
+          - Total cells: 45,231
+          - Carcinoma cells: 12,456 (27.5%)
+          ...
+
+You: How many cells are in carcinoma regions?
+Assistant: There are 23,456 cells in carcinoma regions.
+```
+
 ## Next Steps
 
 Now that you have an overview of the Aignostics Python SDK and its interfaces, here are some recommended next steps to deepen your understanding and get the most out of the platform:
@@ -635,7 +722,11 @@ Aignostics Platform offers key features designed to maximize value for its users
 4. **High-throughput processing with incremental results delivery:** Submit up to 500 whole slide images (WSI) in one batch request. Access results for individual slides as they completed processing, without having to wait for the entire batch to finish.
 5. **Standard formats:** Support for commonly used image formats in digital pathology such as pyramidal DICOM, TIFF, and SVS. Results provided in standard formats like QuPath GeoJSON (polygons), TIFF (heatmaps) and CSV (measurements and statistics).
 
-### Registration and User Access
+### **MCP (Model Context Protocol)**
+Open protocol enabling AI assistants to interact with external tools and data sources. The Aignostics MCP Server allows LLMs like Claude and GitHub Copilot to query runs and analyze readout data.
+
+**MCP Server**
+See Aignostics MCP Server.Registration and User Access
 
 To start using the Aignostics Platform and its advanced applications, your organization must be registered by our business support team:
 
@@ -767,8 +858,11 @@ Python library for seamless integration of the Aignostics Platform with enterpri
 **Aignostics Console**  
 Web-based user interface for managing organizations, applications, quotas, users, and monitoring platform usage.
 
-**Aignostics Launchpad**  
+**Aignostics Launchpad**
 Graphical desktop application (available for Mac OS X, Windows, and Linux) that allows users to run computational pathology applications on whole slide images and inspect results with QuPath and Python Notebooks.
+
+**Aignostics MCP Server**
+MCP (Model Context Protocol) server that enables AI assistants like Claude and GitHub Copilot to interact with the Aignostics Platform, query application runs, and analyze readout data through natural language.
 
 **Aignostics Platform**  
 Comprehensive cloud-based service providing standardized, secure interface for accessing advanced computational pathology applications without requiring specialized expertise or complex infrastructure.
@@ -866,7 +960,7 @@ Laboratory systems that can be integrated with the Aignostics Platform for workf
 
 ### M
 
-**Marimo**  
+**Marimo**
 Modern notebook environment supported by the Aignostics Platform as an alternative to Jupyter.
 
 **Metadata**  

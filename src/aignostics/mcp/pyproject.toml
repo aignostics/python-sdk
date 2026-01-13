@@ -1,0 +1,71 @@
+[project]
+name = "aignostics-mcp"
+version = "0.1.0"
+description = "MCP server for Aignostics Platform - enables LLMs to analyze readout data via natural language"
+readme = "README.md"
+authors = [
+    { name = "Aignostics GmbH", email = "support@aignostics.com" },
+]
+license = { text = "MIT" }
+
+keywords = [
+    "aignostics",
+    "mcp",
+    "model-context-protocol",
+    "llm",
+    "claude",
+    "pathology",
+    "readouts",
+    "duckdb",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+requires-python = ">=3.11"
+
+dependencies = [
+    "aignostics>=1.0.0",      # Main SDK for platform access
+    "mcp>=1.0.0,<2",          # MCP server framework
+    "duckdb>=1.0.0",          # SQL querying (may already be in aignostics)
+    "requests>=2.28.0",       # HTTP client for downloads
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4.0",
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+aignostics-mcp = "aignostics.mcp:run_server"
+
+[project.urls]
+Homepage = "https://github.com/aignostics/python-sdk"
+Documentation = "https://github.com/aignostics/python-sdk/tree/main/src/aignostics/mcp"
+Repository = "https://github.com/aignostics/python-sdk"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aignostics/mcp"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "S", "B", "C4", "SIM"]
+ignore = ["S608", "S110"]  # SQL injection and try-except-pass (intentional for MCP)

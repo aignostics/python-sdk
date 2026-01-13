@@ -85,6 +85,27 @@ def whoami(
         logger.exception(message)
         console.print(message, style="error")
         sys.exit(1)
+
+
+@cli_user.command("token")
+def token() -> None:
+    """Print the cached authentication token.
+
+    Outputs the raw JWT token to stdout for use in scripts or environment variables.
+    If no valid token is cached, triggers a login flow.
+
+    Example usage:
+        export AIGNOSTICS_TOKEN=$(aignostics user token)
+    """
+    service = _get_service()
+    try:
+        token_value = service.get_token()
+        # Print raw token to stdout (no formatting) for easy capture
+        print(token_value)
+    except Exception as e:
+        message = f"Error getting token: {e!s}"
+        logger.exception(message)
+        print(message, file=sys.stderr)
         sys.exit(1)
 
 
