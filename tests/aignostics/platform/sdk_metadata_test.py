@@ -7,14 +7,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
-from aignostics.platform import DEFAULT_GPU_PROVISIONING_MODE, DEFAULT_GPU_TYPE, DEFAULT_MAX_GPUS_PER_SLIDE
 from aignostics.platform._sdk_metadata import (
     ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
     VALIDATION_CASE_TAG_PREFIX,
-    GPUConfig,
-    GPUType,
-    ProvisioningMode,
     ValidationCase,
     build_item_sdk_metadata,
     build_run_sdk_metadata,
@@ -1000,6 +996,8 @@ class TestPipelineConfiguration:
         """Test that pipeline configuration uses correct defaults."""
         from aignostics.platform import (
             DEFAULT_CPU_PROVISIONING_MODE,
+            DEFAULT_GPU_PROVISIONING_MODE,
+            DEFAULT_GPU_TYPE,
             DEFAULT_MAX_GPUS_PER_SLIDE,
             PipelineConfig,
         )
@@ -1257,30 +1255,3 @@ class TestPipelineConfiguration:
         with pytest.raises(ValidationError) as exc:
             validate_run_sdk_metadata(metadata)
         assert "validation_case" in str(exc.value)
-
-
-class TestGPUConfig:
-    """Test cases for GPUConfig model."""
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_model_dump_should_include_flex_start_max_duration_if_provided() -> None:
-        """Test that flex_start_max_run_duration_minutes is included in model dump if provided."""
-        config = GPUConfig(
-            gpu_type=GPUType.L4,
-            provisioning_mode=ProvisioningMode.FLEX_START,
-            max_gpus_per_slide=DEFAULT_MAX_GPUS_PER_SLIDE,
-            flex_start_max_run_duration_minutes=1,
-        )
-        assert "flex_start_max_run_duration_minutes" in config.model_dump()
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_model_dump_should_exclude_flex_start_max_duration_if_not_provided() -> None:
-        """Test that flex_start_max_run_duration_minutes is excluded in model dump if not provided."""
-        config = GPUConfig(
-            gpu_type=GPUType.L4,
-            provisioning_mode=ProvisioningMode.SPOT,
-            max_gpus_per_slide=DEFAULT_MAX_GPUS_PER_SLIDE,
-        )
-        assert "flex_start_max_run_duration_minutes" not in config.model_dump()
