@@ -86,7 +86,6 @@ class GPUConfig(BaseModel):
         le=60 * 60,
         description="Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). "
         "Required when provisioning_mode is FLEX_START, must be None otherwise.",
-        exclude_if=lambda v: v is None,  # Exclude from serialization if None
     )
 
     @model_validator(mode="after")
