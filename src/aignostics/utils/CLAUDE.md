@@ -17,11 +17,12 @@ The utils module provides core infrastructure and shared utilities used across a
 
 **Core Infrastructure:**
 
+- `_service.py` - `BaseService` abstract base class for service discovery
 - `_di.py` - Dependency injection container with service discovery
 - `_settings.py` - Settings management with Pydantic validation
 - `_log.py` - Structured logging configuration
 - `_health.py` - Health check framework
-- `_user_agent.py` - **Enhanced user agent generation with CI/CD context** (NEW)
+- `_user_agent.py` - Enhanced user agent generation with CI/CD context
 - `boot.py` - Application bootstrap and initialization
 
 **System Utilities:**
@@ -31,11 +32,16 @@ The utils module provides core infrastructure and shared utilities used across a
 - `_constants.py` - Project metadata and environment detection
 - `_console.py` - Rich console interface
 
+**Navigation & GUI:**
+
+- `_nav.py` - Navigation infrastructure (`NavItem`, `NavGroup`, `BaseNavBuilder`, `gui_get_nav_groups`)
+- `_gui.py` - GUI utilities and NiceGUI helpers (conditional on `nicegui`)
+- `_notebook.py` - Marimo notebook utilities (conditional on `marimo`)
+
 **Integration Services:**
 
-- `_sentry.py` - Sentry error monitoring
-- `_notebook.py` - Jupyter notebook utilities
-- `_gui.py` - GUI utilities and NiceGUI helpers
+- `_sentry.py` - Sentry error monitoring (conditional on `sentry`)
+- `_mcp.py` - MCP server utilities for AI agent integration
 
 ## Usage Patterns
 
@@ -67,13 +73,13 @@ from aignostics.utils import user_agent
 
 # Generate enhanced user agent with CI/CD context
 ua = user_agent()
-# Format: {project_name}/{version} ({platform}; {pytest_test}; {github_run_url})
+# Format: {project_name}-python-sdk/{version} ({platform}; +{repository_url}; {pytest_test}; {github_run_url})
 
 # Examples:
-# "aignostics/1.0.0-beta.7 (darwin)"
-# "aignostics/1.0.0-beta.7 (linux; tests/platform/test_auth.py::test_login)"
-# "aignostics/1.0.0-beta.7 (linux; +https://github.com/org/repo/actions/runs/123)"
-# "aignostics/1.0.0-beta.7 (linux; tests/.../test_e2e.py; +https://github.com/org/repo/actions/runs/456)"
+# "aignostics-python-sdk/1.0.0-beta.7 (macOS-15.0-arm64-arm-64bit; +https://github.com/aignostics/python-sdk)"
+# "aignostics-python-sdk/1.0.0-beta.7 (Linux-6.1-x86_64; +https://github.com/aignostics/python-sdk; tests/platform/test_auth.py::test_login)"
+# "aignostics-python-sdk/1.0.0-beta.7 (Linux-6.1-x86_64; +https://github.com/aignostics/python-sdk; +https://github.com/org/repo/actions/runs/123)"
+# "aignostics-python-sdk/1.0.0-beta.7 (Linux-6.1-x86_64; +https://github.com/aignostics/python-sdk; tests/.../test_e2e.py; +https://github.com/org/repo/actions/runs/456)"
 
 # Used automatically by:
 # - SDK metadata system (platform._sdk_metadata)
@@ -115,47 +121,52 @@ class MyService(BaseService):
         )
 ```
 
+**MCP Server Utilities:**
+
+```python
+from aignostics.utils import (
+    MCP_SERVER_NAME,
+    MCP_TRANSPORT,
+    mcp_create_server,
+    mcp_run,
+    mcp_list_tools,
+    mcp_discover_servers,
+)
+
+# Constants
+print(MCP_SERVER_NAME)  # "Central Aignostics MCP Server"
+print(MCP_TRANSPORT)    # "stdio"
+
+# Create and configure MCP server
+server = mcp_create_server()
+server = mcp_create_server(server_name="Custom Server")
+
+# Run MCP server (blocking)
+mcp_run()
+
+# List available tools
+tools = mcp_list_tools()
+for tool in tools:
+    print(f"{tool['name']}: {tool['description']}")
+
+# Discover all MCP servers from SDK and plugins
+servers = mcp_discover_servers()
+```
+
 ## Technical Implementation
 
 **User Agent System (`_user_agent.py`):**
 
-**NEW FEATURE**: Enhanced user agent generation with automatic CI/CD context detection.
+Enhanced user agent generation with automatic CI/CD context detection.
 
-```python
-def user_agent() -> str:
-    """Generate user agent string for HTTP requests.
+**Format:** `{project_name}-python-sdk/{version_full} ({platform}; +{repository_url}; {optional_parts})`
 
-    Format: {project_name}/{version} ({platform}; {current_test}; {github_run})
+**Detection:**
 
-    Detection:
-    - Platform: sys.platform (darwin, linux, win32)
-    - Pytest: PYTEST_CURRENT_TEST environment variable
-    - GitHub Actions: GITHUB_RUN_ID, GITHUB_REPOSITORY environment variables
-
-    Returns:
-        str: User agent string with contextual information
-    """
-    current_test = os.getenv("PYTEST_CURRENT_TEST")  # e.g., "tests/test_foo.py::test_bar"
-    github_run_id = os.getenv("GITHUB_RUN_ID")  # GitHub Actions workflow run ID
-    github_repository = os.getenv("GITHUB_REPOSITORY")  # e.g., "owner/repo"
-
-    optional_parts = []
-
-    # Add test context if running under pytest
-    if current_test:
-        optional_parts.append(current_test)
-
-    # Add GitHub Actions context if available
-    if github_run_id and github_repository:
-        github_run_url = f"+https://github.com/{github_repository}/actions/runs/{github_run_id}"
-        optional_parts.append(github_run_url)
-
-    # Build user agent
-    base = f"{PROJECT_NAME}/{VERSION} ({sys.platform})"
-    if optional_parts:
-        return f"{base}; {'; '.join(optional_parts)}"
-    return base
-```
+- **Platform**: `platform.platform()` (e.g., `macOS-15.0-arm64-arm-64bit`, `Linux-6.1-x86_64`)
+- **Repository URL**: From package metadata (`__repository_url__`)
+- **Pytest**: `PYTEST_CURRENT_TEST` environment variable
+- **GitHub Actions**: `GITHUB_RUN_ID` + `GITHUB_REPOSITORY` environment variables
 
 **Usage in SDK:**
 
@@ -169,7 +180,7 @@ def user_agent() -> str:
 - **Automatic Context Detection**: No manual configuration required
 - **CI/CD Integration**: Captures GitHub Actions workflow context with direct links to runs
 - **Test Traceability**: Links API requests to specific pytest tests
-- **Platform Identification**: Operating system detection for debugging platform-specific issues
+- **Platform Identification**: Detailed OS detection via `platform.platform()` for debugging
 - **Lightweight**: Minimal performance overhead, simple environment variable reads
 
 **Service Discovery System:**
@@ -208,9 +219,12 @@ def user_agent() -> str:
 
 - `__init__.py` - Public API exports and module coordination
 - `boot.py` - Application initialization and setup
+- `_service.py` - `BaseService` abstract base class
 - `_di.py` - Dependency injection implementation
 - `_settings.py` - Configuration management
 - `_log.py` - Logging infrastructure
+- `_health.py` - Health check framework
+- `_user_agent.py` - User agent string generation
 
 **System Utilities:**
 
@@ -218,13 +232,17 @@ def user_agent() -> str:
 - `_process.py` - Process utilities
 - `_constants.py` - Environment and metadata
 - `_console.py` - Console interface
-- `_health.py` - Health check framework
+
+**Navigation & GUI:**
+
+- `_nav.py` - Navigation infrastructure for GUI sidebar
+- `_gui.py` - GUI framework utilities (conditional on `nicegui`)
+- `_notebook.py` - Marimo notebook integration (conditional on `marimo`)
 
 **Integration Modules:**
 
-- `_sentry.py` - Error monitoring
-- `_notebook.py` - Jupyter integration
-- `_gui.py` - GUI framework utilities
+- `_sentry.py` - Error monitoring (conditional on `sentry`)
+- `_mcp.py` - MCP server utilities
 
 ## Development Notes
 
@@ -272,3 +290,64 @@ def user_agent() -> str:
 - Process creation flags
 - File system permissions
 - Environment variable handling
+
+## MCP Server System (`_mcp.py`)
+
+The MCP module provides utilities for creating and running Model Context Protocol servers that expose SDK functionality to AI agents.
+
+**Functions:**
+
+- `mcp_discover_servers()` - Discover all FastMCP server instances from SDK and plugins
+- `mcp_create_server(server_name)` - Create and configure the MCP server with discovered plugins
+- `mcp_run(server_name)` - Run the MCP server using stdio transport
+- `mcp_list_tools(server_name)` - List all available MCP tools
+
+**CLI Commands:**
+
+```bash
+uv run aignostics mcp run         # Run MCP server
+uv run aignostics mcp list-tools  # List all discovered tools
+```
+
+**Claude Desktop Integration:**
+
+```json
+{
+  "mcpServers": {
+    "aignostics": {
+      "command": "uvx",
+      "args": ["aignostics", "mcp", "run"]
+    }
+  }
+}
+```
+
+## MCP Plugin Development
+
+Plugins can expose MCP tools by:
+
+1. Registering via entry points in `pyproject.toml`:
+   ```toml
+   [project.entry-points."aignostics.plugins"]
+   my_plugin = "my_plugin"
+   ```
+
+2. Creating a FastMCP instance in `_mcp.py`:
+   ```python
+   from fastmcp import FastMCP
+
+   mcp = FastMCP("my_plugin")
+
+   @mcp.tool
+   def my_tool(param: str) -> str:
+       """Tool description."""
+       return f"Result: {param}"
+   ```
+
+3. Exporting the instance in `__init__.py`:
+   ```python
+   from ._mcp import mcp
+   __all__ = ["mcp"]
+   ```
+
+Tools are namespaced automatically (e.g., `my_plugin_my_tool`).
