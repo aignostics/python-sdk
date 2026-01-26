@@ -3,7 +3,7 @@ itemId: SPEC-UTILS-SERVICE
 itemTitle: Utils Module Specification
 itemType: Software Item Spec
 itemIsRelatedTo: SPEC-GUI-SERVICE, SPEC-BUCKET-SERVICE, SPEC-DATASET-SERVICE, SPEC-NOTEBOOK-SERVICE, SPEC-PLATFORM-SERVICE, SPEC-QUPATH-SERVICE, SPEC-SYSTEM-SERVICE, SPEC-WSI-SERVICE
-itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-2-1, SWR-APPLICATION-2-2, SWR-APPLICATION-2-3, SWR-APPLICATION-2-4, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-8, SWR-APPLICATION-2-9, SWR-APPLICATION-2-10, SWR-APPLICATION-2-11, SWR-APPLICATION-2-12, SWR-APPLICATION-2-13, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3, SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3, SWR-BUCKET-1-4, SWR-BUCKET-1-5, SWR-BUCKET-1-6, SWR-BUCKET-1-7, SWR-BUCKET-1-8, SWR-BUCKET-1-9, SWR-DATASET-1-1, SWR-DATASET-1-2, SWR-DATASET-1-3, SWR-NOTEBOOK-1-1, SWR-VISUALIZATION-1-1, SWR-VISUALIZATION-1-2, SWR-VISUALIZATION-1-3, SWR-VISUALIZATION-1-4, SWR_SYSTEM_CLI_HEALTH_1, SWR_SYSTEM_GUI_HEALTH_1, SWR_SYSTEM_GUI_SETTINGS_1
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-2-1, SWR-APPLICATION-2-2, SWR-APPLICATION-2-3, SWR-APPLICATION-2-4, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-8, SWR-APPLICATION-2-9, SWR-APPLICATION-2-10, SWR-APPLICATION-2-11, SWR-APPLICATION-2-12, SWR-APPLICATION-2-13, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3, SWR-BUCKET-1-1, SWR-BUCKET-1-2, SWR-BUCKET-1-3, SWR-BUCKET-1-4, SWR-BUCKET-1-5, SWR-BUCKET-1-6, SWR-BUCKET-1-7, SWR-BUCKET-1-8, SWR-BUCKET-1-9, SWR-DATASET-1-1, SWR-DATASET-1-2, SWR-DATASET-1-3, SWR-NOTEBOOK-1-1, SWR-UTILS-1-1, SWR-VISUALIZATION-1-1, SWR-VISUALIZATION-1-2, SWR-VISUALIZATION-1-3, SWR-VISUALIZATION-1-4, SWR_SYSTEM_CLI_HEALTH_1, SWR_SYSTEM_GUI_HEALTH_1, SWR_SYSTEM_GUI_SETTINGS_1
 Layer: Infrastructure Service
 Version: 1.0.0
 Date: 2025-10-13
@@ -28,6 +28,7 @@ The Utils Module shall:
 - **[FR-07]** Implement settings management with validation, serialization, and sensitive data handling
 - **[FR-08]** Provide file system utilities for user data directory management and path sanitization
 - **[FR-09]** Support process information gathering and runtime environment detection
+- **[FR-10]** Provide a central MCP server with auto-discovery of plugin tools, namespace isolation, and CLI commands for running the server and listing available tools
 
 ### 1.3 Non-Functional Requirements
 
@@ -65,6 +66,7 @@ utils/
 ├── _console.py         # Rich console configuration
 ├── _logfire.py         # Logfire integration (optional)
 ├── _sentry.py          # Sentry integration (optional)
+├── _mcp.py             # MCP server with auto-discovery and plugin mounting
 ├── _notebook.py        # Marimo notebook utilities (optional)
 └── boot.py            # Application bootstrap and initialization
 ```
@@ -220,6 +222,8 @@ uvx aignostics [module-name] [subcommand] [options]
 | ---------------- | ----------------------------- | ------------------ | ---------------------- |
 | `prepare_cli()`  | Dynamic command registration  | Typer instance     | Configured CLI         |
 | Service commands | Module-specific functionality | Service parameters | Module-specific output |
+| `mcp run`        | Start MCP server (stdio)      | None               | Running MCP server     |
+| `mcp list-tools` | Enumerate registered tools    | None               | Tool name/description  |
 
 ### 4.3 GUI Interface
 
@@ -253,6 +257,7 @@ uvx aignostics [module-name] [subcommand] [options]
 | `nicegui`           | ^1.0        | GUI framework support              | Optional          | CLI-only mode              |
 | `logfire`           | ^0.41       | Observability and monitoring       | Optional          | Standard logging           |
 | `sentry-sdk`        | ^2.0        | Error tracking and performance     | Optional          | Local error handling       |
+| `fastmcp`           | >=2.0,<3    | MCP server framework               | Required          | N/A - MCP functionality    |
 | `marimo`            | ^0.8        | Notebook utilities                 | Optional          | Notebook features disabled |
 
 _Note: For exact version requirements, refer to `pyproject.toml` and dependency lock files._
