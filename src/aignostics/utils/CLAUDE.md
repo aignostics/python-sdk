@@ -36,6 +36,7 @@ The utils module provides core infrastructure and shared utilities used across a
 - `_sentry.py` - Sentry error monitoring
 - `_notebook.py` - Jupyter notebook utilities
 - `_gui.py` - GUI utilities and NiceGUI helpers
+- `_mcp.py` - MCP server utilities for AI agent integration
 
 ## Usage Patterns
 
@@ -113,6 +114,38 @@ class MyService(BaseService):
             status=Health.Code.UP,
             details={"database": "connected"}
         )
+```
+
+**MCP Server Utilities:**
+
+```python
+from aignostics.utils import (
+    MCP_SERVER_NAME,
+    MCP_TRANSPORT,
+    create_server,
+    run,
+    list_tools,
+    discover_mcp_servers,
+)
+
+# Constants
+print(MCP_SERVER_NAME)  # "Central Aignostics MCP Server"
+print(MCP_TRANSPORT)    # "stdio"
+
+# Create and configure MCP server
+server = create_server()
+server = create_server(server_name="Custom Server")
+
+# Run MCP server (blocking)
+run()
+
+# List available tools
+tools = list_tools()
+for tool in tools:
+    print(f"{tool['name']}: {tool['description']}")
+
+# Discover all MCP servers from SDK and plugins
+servers = discover_mcp_servers()
 ```
 
 ## Technical Implementation
@@ -225,6 +258,7 @@ def user_agent() -> str:
 - `_sentry.py` - Error monitoring
 - `_notebook.py` - Jupyter integration
 - `_gui.py` - GUI framework utilities
+- `_mcp.py` - MCP server utilities
 
 ## Development Notes
 
@@ -272,3 +306,64 @@ def user_agent() -> str:
 - Process creation flags
 - File system permissions
 - Environment variable handling
+
+## MCP Server System (`_mcp.py`)
+
+The MCP module provides utilities for creating and running Model Context Protocol servers that expose SDK functionality to AI agents.
+
+**Functions:**
+
+- `discover_mcp_servers()` - Discover all FastMCP server instances from SDK and plugins
+- `create_server(server_name)` - Create and configure the MCP server with discovered plugins
+- `run(server_name)` - Run the MCP server using stdio transport
+- `list_tools(server_name)` - List all available MCP tools
+
+**CLI Commands:**
+
+```bash
+uv run aignostics mcp run         # Run MCP server
+uv run aignostics mcp list-tools  # List all discovered tools
+```
+
+**Claude Desktop Integration:**
+
+```json
+{
+  "mcpServers": {
+    "aignostics": {
+      "command": "uvx",
+      "args": ["aignostics", "mcp", "run"]
+    }
+  }
+}
+```
+
+## MCP Plugin Development
+
+Plugins can expose MCP tools by:
+
+1. Registering via entry points in `pyproject.toml`:
+   ```toml
+   [project.entry-points."aignostics.plugins"]
+   my_plugin = "my_plugin"
+   ```
+
+2. Creating a FastMCP instance in `_mcp.py`:
+   ```python
+   from fastmcp import FastMCP
+
+   mcp = FastMCP("my_plugin")
+
+   @mcp.tool
+   def my_tool(param: str) -> str:
+       """Tool description."""
+       return f"Result: {param}"
+   ```
+
+3. Exporting the instance in `__init__.py`:
+   ```python
+   from ._mcp import mcp
+   __all__ = ["mcp"]
+   ```
+
+Tools are namespaced automatically (e.g., `my_plugin_my_tool`).

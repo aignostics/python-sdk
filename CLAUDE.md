@@ -45,7 +45,7 @@ Every module has detailed CLAUDE.md documentation. For module-specific guidance,
 * [src/aignostics/wsi/CLAUDE.md](src/aignostics/wsi/CLAUDE.md) - Whole slide image processing
 * [src/aignostics/dataset/CLAUDE.md](src/aignostics/dataset/CLAUDE.md) - Dataset operations
 * [src/aignostics/bucket/CLAUDE.md](src/aignostics/bucket/CLAUDE.md) - Cloud storage management
-* [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure
+* [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure and MCP server
 * [src/aignostics/gui/CLAUDE.md](src/aignostics/gui/CLAUDE.md) - Desktop interface
 * [src/aignostics/notebook/CLAUDE.md](src/aignostics/notebook/CLAUDE.md) - Marimo notebook integration
 * [src/aignostics/qupath/CLAUDE.md](src/aignostics/qupath/CLAUDE.md) - QuPath bioimage analysis
@@ -269,7 +269,7 @@ comprehensive view of the entire SDK's operational status.
 | **wsi** | ✅ | ✅ | ✅ | Medical image processing |
 | **dataset** | ✅ | ✅ | ✅ | Dataset downloads |
 | **bucket** | ✅ | ✅ | ✅ | Cloud storage |
-| **utils** | ✅ | ❌ | ❌ | Infrastructure |
+| **utils** | ✅ | ✅ | ❌ | Core Infrastructure |
 | **gui** | ✅ | ❌ | ✅ | Desktop launchpad |
 | **notebook** | ✅ | ❌ | ✅ | Marimo notebooks |
 | **qupath** | ✅ | ✅ | ✅ | QuPath integration |

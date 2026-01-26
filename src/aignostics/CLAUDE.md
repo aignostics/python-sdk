@@ -11,7 +11,7 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 | **wsi** | Whole slide image processing | ✅ | ✅ | ✅ |
 | **dataset** | IDC dataset downloads | ✅ | ✅ | ✅ |
 | **bucket** | Cloud storage operations | ✅ | ✅ | ✅ |
-| **utils** | Core utilities & DI | ❌ | ❌ | ✅ |
+| **utils** | Core utilities & DI | ✅ | ❌ | ✅ |
 | **gui** | Desktop launchpad | ❌ | ✅ | ✅ |
 | **notebook** | Marimo notebook server | ❌ | ✅ | ✅ |
 | **qupath** | QuPath integration | ✅ | ✅ | ✅ |
@@ -83,7 +83,6 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
   - **Enhanced User Agent** (NEW): Context-aware user agent with CI/CD tracking
 - **Service Discovery**: `locate_implementations()`, `locate_subclasses()`
 - **User Agent**: Generates `{name}/{version} ({platform}; {test}; {github_run_url})`
-- **No CLI/GUI**: Infrastructure module
 - **Used By**: All modules; platform module for SDK metadata
 
 ### 🖥️ gui
