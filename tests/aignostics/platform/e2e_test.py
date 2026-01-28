@@ -25,7 +25,6 @@ from sentry_sdk import metrics
 
 from aignostics import platform
 from aignostics.platform import Run, RunSdkMetadata
-from aignostics.platform._sdk_metadata import GPUConfig
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
@@ -281,12 +280,6 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
 
     logger.trace(f"Submitting application run for {application_id} version {application_version}")
     client = platform.Client()
-    gpu_config = GPUConfig(
-        gpu_type=PIPELINE_GPU_TYPE,
-        provisioning_mode=PIPELINE_GPU_PROVISIONING_MODE,
-        max_gpus_per_slide=PIPELINE_MAX_GPUS_PER_SLIDE,
-        flex_start_max_run_duration_minutes=PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES,
-    )
     custom_metadata = {
         "sdk": {
             "tags": tags or set(),
@@ -295,7 +288,11 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
                 "deadline": deadline.isoformat(),
             },
             "pipeline": {
-                "gpu": gpu_config.model_dump(),
+                "gpu": {
+                    "gpu_type": PIPELINE_GPU_TYPE,
+                    "provisioning_mode": PIPELINE_GPU_PROVISIONING_MODE,
+                    "max_gpus_per_slide": PIPELINE_MAX_GPUS_PER_SLIDE,
+                },
                 "cpu": {
                     "provisioning_mode": PIPELINE_CPU_PROVISIONING_MODE,
                 },
@@ -303,6 +300,11 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
             },
         }
     }
+    # TODO(oliverm): remove this conditional when applications handle null flex_start_max_run_duration_minutes
+    if PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES:
+        custom_metadata["sdk"]["pipeline"]["gpu"]["flex_start_max_run_duration_minutes"] = (
+            PIPELINE_GPU_FLEX_START_MAX_RUN_DURATION_MINUTES
+        )
     run = client.runs.submit(
         application_id=application_id,
         application_version=application_version,
