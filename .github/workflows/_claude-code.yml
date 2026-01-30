@@ -79,7 +79,6 @@ jobs:
         if: inputs.mode == 'interactive'
         uses: anthropics/claude-code-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
           additional_permissions: |
@@ -95,7 +94,6 @@ jobs:
         if: inputs.mode == 'automation'
         uses: anthropics/claude-code-action@v1.0.29
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
           use_sticky_comment: ${{ inputs.use_sticky_comment }}
