@@ -13,10 +13,10 @@ Example:
     uv run aignostics mcp list-tools
 
     # Use programmatically
-    from aignostics.utils import mcp_create_server, mcp_run, mcp_list_tools
+    from aignostics.utils import mcp_create_server, mcp_run_server, mcp_list_tools
 
     server = mcp_create_server()
-    mcp_run()
+    mcp_run_server()
 """
 
 from __future__ import annotations
@@ -42,9 +42,9 @@ def mcp_discover_servers() -> list[FastMCP]:
     - Searches all registered plugin packages via entry points
 
     Returns:
-        list[FastMCP]: List of discovered FastMCP server instances.
+        list: List of discovered FastMCP server instances.
     """
-    servers = locate_implementations(FastMCP)
+    servers: list[FastMCP] = locate_implementations(FastMCP)
     logger.debug(f"Discovered {len(servers)} MCP servers")
     return servers
 
@@ -64,7 +64,7 @@ def mcp_create_server(server_name: str = MCP_SERVER_NAME) -> FastMCP:
     """
     mcp = FastMCP(name=server_name, version=__version__)
 
-    # Mount discovered servers
+    # Mount all discovered FastMCP servers
     servers = mcp_discover_servers()
     seen_names: set[str] = set()
     count = 0
@@ -76,14 +76,14 @@ def mcp_create_server(server_name: str = MCP_SERVER_NAME) -> FastMCP:
                 continue
             seen_names.add(server.name)
             logger.info(f"Mounting MCP server: {server.name}")
-            mcp.mount(server, prefix=server.name)
+            mcp.mount(server, namespace=server.name)
             count += 1
 
     logger.info(f"Mounted {count} MCP servers")
     return mcp
 
 
-def mcp_run(server_name: str = MCP_SERVER_NAME) -> None:
+def mcp_run_server(server_name: str = MCP_SERVER_NAME) -> None:
     """Run the MCP server using stdio transport.
 
     Starts an MCP server that exposes SDK functionality to AI agents.
@@ -115,7 +115,7 @@ def mcp_list_tools(server_name: str = MCP_SERVER_NAME) -> list[dict[str, Any]]:
             'name' and 'description' keys.
     """
     server = mcp_create_server(server_name)
-    # FastMCP's get_tools() is async because mounted servers may need to
+    # FastMCP's list_tools() is async because mounted servers may need to
     # lazily initialize resources. We use asyncio.run() to bridge sync/async.
-    tools = asyncio.run(server.get_tools())
-    return [{"name": name, "description": tool.description or ""} for name, tool in tools.items()]
+    tools = asyncio.run(server.list_tools())
+    return [{"name": tool.name, "description": tool.description or ""} for tool in tools]

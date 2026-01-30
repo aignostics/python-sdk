@@ -26,7 +26,14 @@ from ._di import discover_plugin_packages, load_modules, locate_implementations,
 from ._fs import get_user_data_directory, open_user_data_directory, sanitize_path, sanitize_path_component
 from ._health import Health
 from ._log import LogSettings
-from ._mcp import MCP_SERVER_NAME, MCP_TRANSPORT, mcp_create_server, mcp_discover_servers, mcp_list_tools, mcp_run
+from ._mcp import (
+    MCP_SERVER_NAME,
+    MCP_TRANSPORT,
+    mcp_create_server,
+    mcp_discover_servers,
+    mcp_list_tools,
+    mcp_run_server,
+)
 from ._nav import BaseNavBuilder, NavGroup, NavItem, gui_get_nav_groups
 from ._process import SUBPROCESS_CREATION_FLAGS, ProcessInfo, get_process_info
 from ._service import BaseService
@@ -78,7 +85,7 @@ __all__ = [
     "mcp_create_server",
     "mcp_discover_servers",
     "mcp_list_tools",
-    "mcp_run",
+    "mcp_run_server",
     "open_user_data_directory",
     "prepare_cli",
     "sanitize_path",

@@ -3,6 +3,7 @@
 import sys
 from importlib.util import find_spec
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from loguru import logger
@@ -31,8 +32,6 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
 
 
 if find_spec("marimo"):
-    from typing import Annotated
-
     from aignostics.utils import create_marimo_app
 
     @cli.command()
@@ -68,20 +67,99 @@ if find_spec("marimo"):
 mcp_cli = typer.Typer(name="mcp", help="MCP (Model Context Protocol) server for AI agent integration.")
 
 
+@mcp_cli.command("install")
+def mcp_install() -> None:
+    """Configure Claude Desktop to use the Aignostics MCP server.
+
+    This command automatically adds the Aignostics MCP server configuration
+    to your Claude Desktop config file on macOS. After running this command,
+    restart Claude Desktop to load the MCP server.
+
+    The configuration uses uvx, so no local installation is required.
+
+    Examples:
+        aignostics mcp install
+
+    Raises:
+        Exit: If not on macOS, if uvx is not found, or if user cancels.
+    """
+    import json  # noqa: PLC0415
+    import platform  # noqa: PLC0415
+    import shutil  # noqa: PLC0415
+
+    if platform.system() != "Darwin":
+        console.print("[red]Error:[/red] This command is only supported on macOS.", style="error")
+        raise typer.Exit(1)
+
+    # Claude Desktop config path on macOS
+    config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+
+    # Find uvx binary
+    uvx_path = shutil.which("uvx")
+    if not uvx_path:
+        console.print("[red]Error:[/red] Could not find 'uvx' binary. Please install uv first.", style="error")
+        raise typer.Exit(1)
+
+    # Build the server configuration using uvx
+    server_config = {
+        "command": uvx_path,
+        "args": ["aignostics", "mcp", "run"],
+    }
+
+    # Load existing config or create new one
+    if config_path.exists():
+        with config_path.open() as f:
+            config = json.load(f)
+        console.print(f"[dim]Found existing config at {config_path}[/dim]")
+    else:
+        config = {}
+        # Ensure parent directory exists
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        console.print(f"[dim]Creating new config at {config_path}[/dim]")
+
+    # Initialize mcpServers if not present
+    if "mcpServers" not in config:
+        config["mcpServers"] = {}
+
+    # Check if aignostics is already configured
+    if "aignostics" in config["mcpServers"]:
+        existing = config["mcpServers"]["aignostics"]
+        console.print("[yellow]Warning:[/yellow] Aignostics MCP server is already configured:")
+        console.print(f"  command: {existing.get('command')}")
+        console.print(f"  args: {existing.get('args')}")
+        if not typer.confirm("Do you want to overwrite the existing configuration?"):
+            console.print("[dim]Configuration unchanged.[/dim]")
+            raise typer.Exit(0)
+
+    # Add or update the aignostics server config
+    config["mcpServers"]["aignostics"] = server_config
+
+    # Write the config back
+    with config_path.open("w") as f:
+        json.dump(config, f, indent=2)
+
+    console.print("\n[green]✓[/green] Claude Desktop configured successfully!")
+    console.print(f"\n[bold]Configuration written to:[/bold] {config_path}")
+    console.print("\n[bold]Server configuration:[/bold]")
+    console.print(f"  command: {server_config['command']}")
+    console.print(f"  args: {server_config['args']}")
+    console.print("\n[yellow]→[/yellow] Please restart Claude Desktop to load the MCP server.")
+
+
 @mcp_cli.command("run")
 def mcp_run() -> None:
-    """Run the MCP server.
+    """Run the MCP server with all tools including MCP Apps.
 
-    Starts an MCP server using `stdio` transport that exposes SDK functionality
-    to AI agents. The server automatically discovers and mounts tools from
-    the SDK and any installed plugins.
+    Starts an MCP server using stdio transport that exposes SDK functionality
+    to AI agents. The server discovers and mounts all available MCP servers,
+    including those with MCP Apps for interactive visualizations.
 
     Examples:
         uv run aignostics mcp run
     """
-    from aignostics.utils import mcp_run  # noqa: PLC0415
+    from aignostics.utils import mcp_run_server  # noqa: PLC0415
 
-    mcp_run()
+    mcp_run_server()
 
 
 @mcp_cli.command("list-tools")

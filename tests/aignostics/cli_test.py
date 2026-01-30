@@ -289,7 +289,7 @@ if find_spec("marimo") and find_spec("fastapi"):
 # =============================================================================
 
 PATCH_MCP_LOCATE_IMPLEMENTATIONS = "aignostics.utils._mcp.locate_implementations"
-PATCH_RUN = "aignostics.utils.mcp_run"
+PATCH_RUN = "aignostics.utils.mcp_run_server"
 
 
 @pytest.mark.unit

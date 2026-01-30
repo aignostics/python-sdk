@@ -621,7 +621,17 @@ for the Google Storage Bucket**
 
 The Python SDK includes an MCP (Model Context Protocol) server that exposes SDK functionality to AI agents like Claude. This enables AI assistants to help you interact with the Aignostics Platform through natural conversation.
 
-### Quick Start with Claude Desktop
+### Quick Start with Claude Desktop (macOS)
+
+Run the following command to automatically configure Claude Desktop:
+
+```bash
+uvx aignostics mcp install
+```
+
+This command adds the Aignostics MCP server to your Claude Desktop configuration file at `~/Library/Application Support/Claude/claude_desktop_config.json`. Restart Claude Desktop after running this command.
+
+**Manual configuration (Windows or custom setup):**
 
 Add the following to your Claude Desktop configuration file:
 
@@ -644,8 +654,13 @@ Restart Claude Desktop after adding this configuration.
 ### CLI Commands
 
 ```bash
-# Using uvx (no installation required)
+# Configure Claude Desktop (macOS)
+uvx aignostics mcp install
+
+# Run the MCP server manually
 uvx aignostics mcp run
+
+# List available tools
 uvx aignostics mcp list-tools
 ```
 

@@ -87,8 +87,8 @@ def test_mcp_create_server_mounts_discovered() -> None:
         assert isinstance(server, FastMCP)
         assert server.name == MCP_SERVER_NAME
         # Verify exactly 2 tools from both plugins are mounted with namespacing
-        tools = asyncio.run(server.get_tools())
-        tool_names = list(tools.keys())
+        tools = asyncio.run(server.list_tools())
+        tool_names = [tool.name for tool in tools]
         assert len(tool_names) == 2
         # Verify namespacing: tools should be prefixed with server name
         plugin1_tools = [n for n in tool_names if "plugin1" in n]
@@ -127,8 +127,8 @@ def test_mcp_create_server_skips_duplicate_names(caplog: pytest.LogCaptureFixtur
         # Verify warning was logged for duplicate
         assert "Duplicate MCP server name 'duplicate_name'" in caplog.text
         # Verify only first duplicate and unique server were mounted (2 servers, not 3)
-        tools = asyncio.run(server.get_tools())
-        tool_names = list(tools.keys())
+        tools = asyncio.run(server.list_tools())
+        tool_names = [tool.name for tool in tools]
         assert len(tool_names) == 2
         # dup1_tool should be present (first occurrence)
         assert any("dup1_tool" in name for name in tool_names)
