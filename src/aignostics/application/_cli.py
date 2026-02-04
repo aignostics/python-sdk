@@ -923,6 +923,7 @@ def run_describe(
         bool,
         typer.Option(
             "--summarize",
+            "-s",
             help="Show only run and item status summary (external ID, state, error message)",
         ),
     ] = False,
