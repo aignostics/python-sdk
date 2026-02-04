@@ -10,29 +10,37 @@ from pydantic import ValidationError as PydanticValidationError
 
 from aignostics.platform import (
     API_ROOT_DEV,
-    API_ROOT_PRODUCTION,
+    API_ROOT_TEST,
     API_ROOT_STAGING,
+    API_ROOT_PRODUCTION,
     AUDIENCE_DEV,
-    AUDIENCE_PRODUCTION,
+    AUDIENCE_TEST,
     AUDIENCE_STAGING,
+    AUDIENCE_PRODUCTION,
     AUTHORIZATION_BASE_URL_DEV,
-    AUTHORIZATION_BASE_URL_PRODUCTION,
+    AUTHORIZATION_BASE_URL_TEST,
     AUTHORIZATION_BASE_URL_STAGING,
+    AUTHORIZATION_BASE_URL_PRODUCTION,
     CLIENT_ID_INTERACTIVE_DEV,
-    CLIENT_ID_INTERACTIVE_PRODUCTION,
+    CLIENT_ID_INTERACTIVE_TEST,
     CLIENT_ID_INTERACTIVE_STAGING,
+    CLIENT_ID_INTERACTIVE_PRODUCTION,
     DEVICE_URL_DEV,
-    DEVICE_URL_PRODUCTION,
+    DEVICE_URL_TEST,
     DEVICE_URL_STAGING,
+    DEVICE_URL_PRODUCTION,
     JWS_JSON_URL_DEV,
-    JWS_JSON_URL_PRODUCTION,
+    JWS_JSON_URL_TEST,
     JWS_JSON_URL_STAGING,
+    JWS_JSON_URL_PRODUCTION,
     REDIRECT_URI_DEV,
-    REDIRECT_URI_PRODUCTION,
+    REDIRECT_URI_TEST,
     REDIRECT_URI_STAGING,
+    REDIRECT_URI_PRODUCTION,
     TOKEN_URL_DEV,
-    TOKEN_URL_PRODUCTION,
+    TOKEN_URL_TEST,
     TOKEN_URL_STAGING,
+    TOKEN_URL_PRODUCTION,
     UNKNOWN_ENDPOINT_URL,
     Settings,
     settings,
@@ -128,6 +136,26 @@ def test_authentication_settings_dev(record_property, mock_env_vars) -> None:
     assert settings.redirect_uri == REDIRECT_URI_DEV
     assert settings.device_url == DEVICE_URL_DEV
     assert settings.jws_json_url == JWS_JSON_URL_DEV
+
+
+@pytest.mark.unit
+def test_authentication_settings_test(record_property, mock_env_vars) -> None:
+    """Test authentication settings with test API root."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        api_root=API_ROOT_TEST,
+    )
+
+    assert settings.api_root == API_ROOT_TEST
+    assert settings.client_id_interactive == CLIENT_ID_INTERACTIVE_TEST
+    assert settings.client_id_device.get_secret_value() == "test-client-id-device"
+    assert settings.audience == AUDIENCE_TEST
+    assert settings.authorization_base_url == AUTHORIZATION_BASE_URL_TEST
+    assert settings.token_url == TOKEN_URL_TEST
+    assert settings.redirect_uri == REDIRECT_URI_TEST
+    assert settings.device_url == DEVICE_URL_TEST
+    assert settings.jws_json_url == JWS_JSON_URL_TEST
 
 
 @pytest.mark.unit
