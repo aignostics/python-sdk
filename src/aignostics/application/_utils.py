@@ -26,6 +26,7 @@ from aignostics.constants import (
 )
 from aignostics.platform import (
     InputArtifactData,
+    ItemState,
     OutputArtifactData,
     OutputArtifactElement,
     Run,
@@ -174,17 +175,17 @@ class OutputFormat(StrEnum):
     JSON = "json"
 
 
-def _format_status_string(state: RunState, termination_reason: str | None = None) -> str:
+def _format_status_string(state: RunState | ItemState, termination_reason: str | None = None) -> str:
     """Format status string with optional termination reason.
 
     Args:
-        state (RunState): The run state
+        state (RunState | ItemState): The run or item state
         termination_reason (str | None): Optional termination reason
 
     Returns:
         str: Formatted status string
     """
-    if state is RunState.TERMINATED and termination_reason:
+    if (state.value == RunState.TERMINATED or state.value == ItemState.TERMINATED) and termination_reason:
         return f"{state.value} ({termination_reason})"
     return f"{state.value}"
 
@@ -277,21 +278,26 @@ def _format_run_details(run: RunData) -> str:
     return output
 
 
-def retrieve_and_print_run_details(run_handle: Run, hide_platform_queue_position: bool) -> None:
+def retrieve_and_print_run_details(
+    run_handle: Run, hide_platform_queue_position: bool, *, summarize: bool = False
+) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
         run_handle (Run): The Run handle
         hide_platform_queue_position (bool): Whether to hide platform-wide queue position
+        summarize (bool): If True, show only status summary (external ID, state, error message)
 
     """
     run = run_handle.details(hide_platform_queue_position=hide_platform_queue_position)
 
-    run_details = _format_run_details(run)
-    output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"
-
-    console.print(output)
-    _retrieve_and_print_run_items(run_handle)
+    if summarize:
+        _print_run_summary(run, run_handle)
+    else:
+        run_details = _format_run_details(run)
+        output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"
+        console.print(output)
+        _retrieve_and_print_run_items(run_handle)
 
 
 def _retrieve_and_print_run_items(run_handle: Run) -> None:
@@ -326,6 +332,54 @@ def _retrieve_and_print_run_items(run_handle: Run) -> None:
             item_output += artifacts_output
 
         console.print(f"{item_output}\n")
+
+
+def _print_run_summary(run: RunData, run_handle: Run) -> None:
+    """Print a concise summary of run and item statuses.
+
+    Shows only the essential status information: external ID, state, and error message
+    for each item, plus overall run statistics.
+
+    Args:
+        run (RunData): Run data object
+        run_handle (Run): The Run handle for fetching item results
+    """
+    status_str = _format_status_string(run.state, run.termination_reason)
+    duration_str = _format_duration_string(run.submitted_at, run.terminated_at)
+
+    # Run summary header
+    output = (
+        f"[bold]Run Summary for {run.run_id}[/bold]\n"
+        f"{'=' * 80}\n"
+        f"[bold]Application (Version):[/bold] {run.application_id} ({run.version_number})\n"
+        f"[bold]Status:[/bold] {status_str}\n"
+        f"[bold]Duration:[/bold] {duration_str}\n"
+    )
+
+    if run.error_message or run.error_code:
+        output += f"[bold]Error:[/bold] {run.error_message or 'N/A'} ({run.error_code or 'N/A'})\n"
+
+    output += f"[bold]Statistics:[/bold]\n{_format_run_statistics(run.statistics)}\n"
+    console.print(output)
+
+    # Items summary
+    console.print("[bold]Items:[/bold]")
+    results = run_handle.results()
+    if not results:
+        console.print("  No item results available.")
+        return
+
+    for item in results:
+        item_status = _format_status_string(item.state, item.termination_reason)
+        item_line = f"  [bold]{item.external_id}[/bold]: {item_status}"
+
+        if item.error_message or item.error_code:
+            error_info = item.error_message or item.error_code or ""
+            if item.error_message and item.error_code:
+                error_info = f"{item.error_message} ({item.error_code})"
+            item_line += f" - [red]{error_info}[/red]"
+
+        console.print(item_line)
 
 
 def print_runs_verbose(runs: list[RunData]) -> None:

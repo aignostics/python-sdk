@@ -787,3 +787,248 @@ def test_queue_position_string_from_run_with_only_platform_position() -> None:
         num_preceding_items_platform=15,
     )
     assert queue_position_string_from_run(run) == "15 items ahead across the entire platform"
+
+
+# Tests for retrieve_and_print_run_details with summarize option
+
+
+@pytest.mark.unit
+@patch("aignostics.application._utils.console")
+def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> None:
+    """Test summarize mode shows concise output with external ID, state, and errors."""
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
+
+    run_data = RunData(
+        run_id="run-summarize-test",
+        application_id="he-tme",
+        version_number="1.0.0",
+        state=RunState.TERMINATED,
+        termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
+        output=RunOutput.FULL,
+        statistics=RunItemStatistics(
+            item_count=2,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=1,
+            item_user_error_count=1,
+            item_system_error_count=0,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=terminated_at,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
+    )
+
+    from aignx.codegen.models import ItemOutput
+
+    item_success = ItemResult(
+        item_id="item-001",
+        external_id="slide-success.svs",
+        state=ItemState.TERMINATED,
+        termination_reason=ItemTerminationReason.SUCCEEDED,
+        output=ItemOutput.FULL,
+        error_message=None,
+        error_code=None,
+        custom_metadata=None,
+        custom_metadata_checksum=None,
+        terminated_at=terminated_at,
+        output_artifacts=[],
+    )
+
+    item_error = ItemResult(
+        item_id="item-002",
+        external_id="slide-error.svs",
+        state=ItemState.TERMINATED,
+        termination_reason=ItemTerminationReason.USER_ERROR,
+        output=ItemOutput.NONE,
+        error_message="Invalid file format",
+        error_code="INVALID_FORMAT",
+        custom_metadata=None,
+        custom_metadata_checksum=None,
+        terminated_at=terminated_at,
+        output_artifacts=[],
+    )
+
+    mock_run = MagicMock()
+    mock_run.details.return_value = run_data
+    mock_run.results.return_value = [item_success, item_error]
+
+    retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False, summarize=True)
+
+    # Collect all printed output
+    all_output = " ".join(str(call) for call in mock_console.print.call_args_list)
+
+    # Verify summary header is present
+    assert "Run Summary for run-summarize-test" in all_output
+    # Verify application info is present
+    assert "he-tme" in all_output
+    # Verify items are listed with external IDs
+    assert "slide-success.svs" in all_output
+    assert "slide-error.svs" in all_output
+    # Verify error message is shown for failed item
+    assert "Invalid file format" in all_output
+    # Verify artifact details are NOT shown (they are omitted in summary)
+    assert "Download URL" not in all_output
+    assert "Artifact ID" not in all_output
+
+
+@pytest.mark.unit
+@patch("aignostics.application._utils.console")
+def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -> None:
+    """Test summarize mode with no items shows appropriate message."""
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+
+    run_data = RunData(
+        run_id="run-no-items",
+        application_id="test-app",
+        version_number="0.0.1",
+        state=RunState.PENDING,
+        termination_reason=None,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=0,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=None,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
+    )
+
+    mock_run = MagicMock()
+    mock_run.details.return_value = run_data
+    mock_run.results.return_value = []
+
+    retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False, summarize=True)
+
+    all_output = " ".join(str(call) for call in mock_console.print.call_args_list)
+    assert "Run Summary for run-no-items" in all_output
+    assert "No item results available" in all_output
+
+
+@pytest.mark.unit
+@patch("aignostics.application._utils.console")
+def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: Mock) -> None:
+    """Test summarize mode shows run-level errors."""
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    terminated_at = datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC)
+
+    run_data = RunData(
+        run_id="run-with-error",
+        application_id="test-app",
+        version_number="0.0.1",
+        state=RunState.TERMINATED,
+        termination_reason=RunTerminationReason.CANCELED_BY_SYSTEM,
+        output=RunOutput.NONE,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=1,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=terminated_at,
+        custom_metadata=None,
+        error_message="System error occurred",
+        error_code="SYS_ERROR",
+    )
+
+    mock_run = MagicMock()
+    mock_run.details.return_value = run_data
+    mock_run.results.return_value = []
+
+    retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False, summarize=True)
+
+    all_output = " ".join(str(call) for call in mock_console.print.call_args_list)
+    assert "System error occurred" in all_output
+    assert "SYS_ERROR" in all_output
+
+
+@pytest.mark.unit
+@patch("aignostics.application._utils.console")
+def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) -> None:
+    """Test that default mode (summarize=False) shows detailed output with artifacts."""
+    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
+
+    run_data = RunData(
+        run_id="run-detailed-test",
+        application_id="he-tme",
+        version_number="1.0.0",
+        state=RunState.TERMINATED,
+        termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
+        output=RunOutput.FULL,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=1,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        submitted_at=submitted_at,
+        submitted_by="user@example.com",
+        terminated_at=terminated_at,
+        custom_metadata=None,
+        error_message=None,
+        error_code=None,
+    )
+
+    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
+
+    item_result = ItemResult(
+        item_id="item-123",
+        external_id="slide-001.svs",
+        state=ItemState.TERMINATED,
+        termination_reason=ItemTerminationReason.SUCCEEDED,
+        output=ItemOutput.FULL,
+        error_message=None,
+        error_code=None,
+        custom_metadata=None,
+        custom_metadata_checksum=None,
+        terminated_at=terminated_at,
+        output_artifacts=[
+            OutputArtifactElement(
+                output_artifact_id="artifact-abc",
+                name="result.parquet",
+                download_url="https://example.com/result.parquet",
+                metadata={"media_type": "application/vnd.apache.parquet"},
+                state=ArtifactState.TERMINATED,
+                termination_reason=ArtifactTerminationReason.SUCCEEDED,
+                output=ArtifactOutput.AVAILABLE,
+                error_code=None,
+                error_message=None,
+            )
+        ],
+    )
+
+    mock_run = MagicMock()
+    mock_run.details.return_value = run_data
+    mock_run.results.return_value = [item_result]
+
+    # Call without summarize parameter (default is False)
+    retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False)
+
+    all_output = " ".join(str(call) for call in mock_console.print.call_args_list)
+
+    # Verify detailed output shows "Run Details" not "Run Summary"
+    assert "Run Details for run-detailed-test" in all_output
+    # Verify artifact details ARE shown in detailed mode
+    assert "Download URL" in all_output
+    assert "Artifact ID" in all_output

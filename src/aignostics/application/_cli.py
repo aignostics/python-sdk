@@ -919,6 +919,13 @@ def run_describe(
         str,
         typer.Option(help="Output format: 'text' (default) or 'json'"),
     ] = "text",
+    summarize: Annotated[
+        bool,
+        typer.Option(
+            "--summarize",
+            help="Show only run and item status summary (external ID, state, error message)",
+        ),
+    ] = False,
 ) -> None:
     """Describe run."""
     logger.trace("Describing run with ID '{}'", run_id)
@@ -931,7 +938,9 @@ def run_describe(
             run_details = run.details(hide_platform_queue_position=not user_info.is_internal_user)
             print(json.dumps(run_details.model_dump(mode="json"), indent=2, default=str))
         else:
-            retrieve_and_print_run_details(run, hide_platform_queue_position=not user_info.is_internal_user)
+            retrieve_and_print_run_details(
+                run, hide_platform_queue_position=not user_info.is_internal_user, summarize=summarize
+            )
         logger.debug("Described run with ID '{}'", run_id)
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' not found.")
