@@ -291,20 +291,18 @@ def retrieve_and_print_run_details(
     """
     run = run_handle.details(hide_platform_queue_position=hide_platform_queue_position)
 
-    if summarize:
-        _print_run_summary(run, run_handle)
-    else:
-        run_details = _format_run_details(run)
-        output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"
-        console.print(output)
-        _retrieve_and_print_run_items(run_handle)
+    run_details = _format_run_details(run)
+    output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"
+    console.print(output)
+    _retrieve_and_print_run_items(run_handle, summarize)
 
 
-def _retrieve_and_print_run_items(run_handle: Run) -> None:
+def _retrieve_and_print_run_items(run_handle: Run, summarize: bool = False) -> None:
     """Retrieve and print information about items in a run.
 
     Args:
         run_handle (Run): The Run handle
+        summarize (bool): If True, show only status summary without output artifacts
     """
     results = run_handle.results()
     if not results:
@@ -320,7 +318,7 @@ def _retrieve_and_print_run_items(run_handle: Run) -> None:
             f"  [bold]Custom Metadata:[/bold] {item.custom_metadata or 'None'}"
         )
 
-        if item.output_artifacts:
+        if not summarize and item.output_artifacts:
             artifacts_output = "\n  [bold]Output Artifacts:[/bold]"
             for artifact in item.output_artifacts:
                 artifacts_output += (
@@ -332,54 +330,6 @@ def _retrieve_and_print_run_items(run_handle: Run) -> None:
             item_output += artifacts_output
 
         console.print(f"{item_output}\n")
-
-
-def _print_run_summary(run: RunData, run_handle: Run) -> None:
-    """Print a concise summary of run and item statuses.
-
-    Shows only the essential status information: external ID, state, and error message
-    for each item, plus overall run statistics.
-
-    Args:
-        run (RunData): Run data object
-        run_handle (Run): The Run handle for fetching item results
-    """
-    status_str = _format_status_string(run.state, run.termination_reason)
-    duration_str = _format_duration_string(run.submitted_at, run.terminated_at)
-
-    # Run summary header
-    output = (
-        f"[bold]Run Summary for {run.run_id}[/bold]\n"
-        f"{'=' * 80}\n"
-        f"[bold]Application (Version):[/bold] {run.application_id} ({run.version_number})\n"
-        f"[bold]Status:[/bold] {status_str}\n"
-        f"[bold]Duration:[/bold] {duration_str}\n"
-    )
-
-    if run.error_message or run.error_code:
-        output += f"[bold]Error:[/bold] {run.error_message or 'N/A'} ({run.error_code or 'N/A'})\n"
-
-    output += f"[bold]Statistics:[/bold]\n{_format_run_statistics(run.statistics)}\n"
-    console.print(output)
-
-    # Items summary
-    console.print("[bold]Items:[/bold]")
-    results = run_handle.results()
-    if not results:
-        console.print("  No item results available.")
-        return
-
-    for item in results:
-        item_status = _format_status_string(item.state, item.termination_reason)
-        item_line = f"  [bold]{item.external_id}[/bold]: {item_status}"
-
-        if item.error_message or item.error_code:
-            error_info = item.error_message or item.error_code or ""
-            if item.error_message and item.error_code:
-                error_info = f"{item.error_message} ({item.error_code})"
-            item_line += f" - [red]{error_info}[/red]"
-
-        console.print(item_line)
 
 
 def print_runs_verbose(runs: list[RunData]) -> None:

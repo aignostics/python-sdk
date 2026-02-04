@@ -862,8 +862,8 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
     # Collect all printed output
     all_output = " ".join(str(call) for call in mock_console.print.call_args_list)
 
-    # Verify summary header is present
-    assert "Run Summary for run-summarize-test" in all_output
+    # Verify run details header is present
+    assert "Run Details for run-summarize-test" in all_output
     # Verify application info is present
     assert "he-tme" in all_output
     # Verify items are listed with external IDs
@@ -913,7 +913,7 @@ def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False, summarize=True)
 
     all_output = " ".join(str(call) for call in mock_console.print.call_args_list)
-    assert "Run Summary for run-no-items" in all_output
+    assert "Run Details for run-no-items" in all_output
     assert "No item results available" in all_output
 
 
