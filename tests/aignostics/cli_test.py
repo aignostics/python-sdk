@@ -129,6 +129,10 @@ def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
 
 
 if find_spec("nicegui"):
+    # Import module explicitly to ensure it's loaded before monkeypatching with string paths.
+    # Without this, monkeypatch.setattr("aignostics.utils._gui...") fails in CI because
+    # pytest-xdist workers may not have aignostics.utils loaded as an attribute yet.
+    import aignostics.utils._gui as _utils_gui
 
     @pytest.mark.integration
     def test_cli_gui_help(runner: CliRunner) -> None:
@@ -186,7 +190,7 @@ if find_spec("nicegui"):
 
         # Apply the mocks
         monkeypatch.setattr("nicegui.ui.run", mock_ui_run)
-        monkeypatch.setattr("aignostics.utils._gui.gui_register_pages", mock_gui_register_pages)
+        monkeypatch.setattr(_utils_gui, "gui_register_pages", mock_gui_register_pages)
         monkeypatch.setattr("nicegui.app.mount", mock_app_mount)
 
         # Create a mock for native_app.find_open_port()
