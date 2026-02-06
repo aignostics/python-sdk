@@ -185,7 +185,7 @@ def _format_status_string(state: RunState | ItemState, termination_reason: str |
     Returns:
         str: Formatted status string
     """
-    if (state.value == RunState.TERMINATED or state.value == ItemState.TERMINATED) and termination_reason:
+    if state.value in {RunState.TERMINATED, ItemState.TERMINATED} and termination_reason:
         return f"{state.value} ({termination_reason})"
     return f"{state.value}"
 
