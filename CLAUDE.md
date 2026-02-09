@@ -45,7 +45,7 @@ Every module has detailed CLAUDE.md documentation. For module-specific guidance,
 * [src/aignostics/wsi/CLAUDE.md](src/aignostics/wsi/CLAUDE.md) - Whole slide image processing
 * [src/aignostics/dataset/CLAUDE.md](src/aignostics/dataset/CLAUDE.md) - Dataset operations
 * [src/aignostics/bucket/CLAUDE.md](src/aignostics/bucket/CLAUDE.md) - Cloud storage management
-* [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure
+* [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure and MCP server
 * [src/aignostics/gui/CLAUDE.md](src/aignostics/gui/CLAUDE.md) - Desktop interface
 * [src/aignostics/notebook/CLAUDE.md](src/aignostics/notebook/CLAUDE.md) - Marimo notebook integration
 * [src/aignostics/qupath/CLAUDE.md](src/aignostics/qupath/CLAUDE.md) - QuPath bioimage analysis
@@ -151,9 +151,12 @@ Module/
 **utils** - Infrastructure module providing:
 
 * Dependency injection container (`locate_implementations`, `locate_subclasses`)
-* Structured logging (`get_logger`)
+* Structured logging (via `loguru.logger`)
 * Settings management (Pydantic-based)
 * Health check framework (`BaseService`, `Health`)
+* MCP server with auto-discovery of plugin tools (`mcp_create_server`, `mcp_run`, `mcp_list_tools`)
+* GUI navigation infrastructure (`BaseNavBuilder`, `NavItem`, `NavGroup`)
+* Enhanced user agent generation with CI/CD context (`user_agent`)
 
 ### API Layer
 
@@ -269,7 +272,7 @@ comprehensive view of the entire SDK's operational status.
 | **wsi** | ✅ | ✅ | ✅ | Medical image processing |
 | **dataset** | ✅ | ✅ | ✅ | Dataset downloads |
 | **bucket** | ✅ | ✅ | ✅ | Cloud storage |
-| **utils** | ✅ | ❌ | ❌ | Infrastructure |
+| **utils** | ✅ | ✅ | ❌ | Core Infrastructure |
 | **gui** | ✅ | ❌ | ✅ | Desktop launchpad |
 | **notebook** | ✅ | ❌ | ✅ | Marimo notebooks |
 | **qupath** | ✅ | ✅ | ✅ | QuPath integration |
@@ -333,6 +336,10 @@ aignostics qupath launch --project my_project.qpproj
 
 # System diagnostics
 aignostics system health
+
+# MCP server (AI agent integration)
+aignostics mcp run
+aignostics mcp list-tools
 ```
 
 ### GUI Launch
