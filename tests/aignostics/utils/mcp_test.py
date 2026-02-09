@@ -25,8 +25,9 @@ PATCH_LOCATE_IMPLEMENTATIONS = "aignostics.utils._mcp.locate_implementations"
 
 
 @pytest.mark.unit
-def test_mcp_discover_servers_returns_list() -> None:
+def test_mcp_discover_servers_returns_list(record_property) -> None:
     """Test that mcp_discover_servers returns a list of servers."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     test_server = FastMCP("test_server")
     with patch(PATCH_LOCATE_IMPLEMENTATIONS, return_value=[test_server]) as mock_locate:
         servers = mcp_discover_servers()
@@ -36,16 +37,18 @@ def test_mcp_discover_servers_returns_list() -> None:
 
 
 @pytest.mark.unit
-def test_mcp_discover_servers_empty() -> None:
+def test_mcp_discover_servers_empty(record_property) -> None:
     """Test that mcp_discover_servers handles no servers found."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(PATCH_LOCATE_IMPLEMENTATIONS, return_value=[]):
         servers = mcp_discover_servers()
         assert servers == []
 
 
 @pytest.mark.integration
-def test_mcp_discover_servers_real_discovery() -> None:
+def test_mcp_discover_servers_real_discovery(record_property) -> None:
     """Test discovery without mocking."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     servers = mcp_discover_servers()
     assert isinstance(servers, list)
     for server in servers:
@@ -58,8 +61,9 @@ def test_mcp_discover_servers_real_discovery() -> None:
 
 
 @pytest.mark.unit
-def test_mcp_create_server() -> None:
+def test_mcp_create_server(record_property) -> None:
     """Test server creation."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(PATCH_LOCATE_IMPLEMENTATIONS, return_value=[]):
         server = mcp_create_server()
         assert isinstance(server, FastMCP)
@@ -67,8 +71,9 @@ def test_mcp_create_server() -> None:
 
 
 @pytest.mark.unit
-def test_mcp_create_server_mounts_discovered() -> None:
+def test_mcp_create_server_mounts_discovered(record_property) -> None:
     """Test that mcp_create_server mounts discovered servers with their tools."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     plugin1 = FastMCP("plugin1")
     plugin2 = FastMCP("plugin2")
 
@@ -100,8 +105,9 @@ def test_mcp_create_server_mounts_discovered() -> None:
 
 
 @pytest.mark.unit
-def test_mcp_create_server_skips_duplicate_names(caplog: pytest.LogCaptureFixture) -> None:
+def test_mcp_create_server_skips_duplicate_names(caplog: pytest.LogCaptureFixture, record_property) -> None:
     """Test that servers with duplicate names are skipped with warning."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     dup1 = FastMCP("duplicate_name")
     dup2 = FastMCP("duplicate_name")
     unique = FastMCP("unique_name")
@@ -144,8 +150,9 @@ def test_mcp_create_server_skips_duplicate_names(caplog: pytest.LogCaptureFixtur
 
 
 @pytest.mark.unit
-def test_mcp_list_tools_returns_tool_info() -> None:
+def test_mcp_list_tools_returns_tool_info(record_property) -> None:
     """Test that mcp_list_tools returns correct tool information."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     test_server = FastMCP("test")
 
     @test_server.tool
@@ -161,8 +168,9 @@ def test_mcp_list_tools_returns_tool_info() -> None:
 
 
 @pytest.mark.unit
-def test_mcp_list_tools_empty() -> None:
+def test_mcp_list_tools_empty(record_property) -> None:
     """Test mcp_list_tools with no discovered tools."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(PATCH_LOCATE_IMPLEMENTATIONS, return_value=[]):
         tools = mcp_list_tools()
         # Should return empty list when no plugins have tools

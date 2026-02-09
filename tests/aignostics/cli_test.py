@@ -297,16 +297,18 @@ PATCH_RUN = "aignostics.utils.mcp_run"
 
 
 @pytest.mark.unit
-def test_cli_mcp_run_command(runner: CliRunner) -> None:
+def test_cli_mcp_run_command(runner: CliRunner, record_property) -> None:
     """Test run command starts the MCP server."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(PATCH_RUN) as mock_run:
         runner.invoke(cli, ["mcp", "run"])
         mock_run.assert_called_once()
 
 
 @pytest.mark.unit
-def test_cli_mcp_list_tools(runner: CliRunner) -> None:
+def test_cli_mcp_list_tools(runner: CliRunner, record_property) -> None:
     """Test list-tools command displays discovered tools."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     test_server = FastMCP("test")
 
     @test_server.tool
@@ -322,8 +324,9 @@ def test_cli_mcp_list_tools(runner: CliRunner) -> None:
 
 
 @pytest.mark.unit
-def test_cli_mcp_list_tools_empty(runner: CliRunner) -> None:
+def test_cli_mcp_list_tools_empty(runner: CliRunner, record_property) -> None:
     """Test list-tools command with no tools."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with patch(PATCH_MCP_LOCATE_IMPLEMENTATIONS, return_value=[]):
         result = runner.invoke(cli, ["mcp", "list-tools"])
         assert result.exit_code == 0
