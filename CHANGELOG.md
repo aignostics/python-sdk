@@ -1,6 +1,46 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
-# [1.0.3](https://github.com/aignostics/python-sdk/compare/v1.0.2..1.0.3) - 2026-01-09
+# [1.1.0](https://github.com/aignostics/python-sdk/compare/v1.0.3..1.1.0) - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- Revert exclude null flex_start_max_run_duration_minutes in GPUConfig ([#394](https://github.com/aignostics/python-sdk/issues/394)) - ([1a6cc82](https://github.com/aignostics/python-sdk/commit/1a6cc82d0aa4f8f145259e302e48df19aab02927))
+- Exclude null flex_start_max_run_duration_minutes in GPUConfig ([#391](https://github.com/aignostics/python-sdk/issues/391)) - ([420c548](https://github.com/aignostics/python-sdk/commit/420c548d9d6a9f1be1ddf44a38042de2b86b5845))
+
+### 🧪 Testing
+
+- Fix import order in test_cli_gui_run ([#419](https://github.com/aignostics/python-sdk/issues/419)) - ([283d2f8](https://github.com/aignostics/python-sdk/commit/283d2f8c4f02c61ac20906e15a82256bddadec01))
+- Unset flex_start_max_run_duration_minutes when null or zero ([#403](https://github.com/aignostics/python-sdk/issues/403)) - ([3f69353](https://github.com/aignostics/python-sdk/commit/3f6935325bcc21dee86676ca8a1cff27ad4a2669))
+- Use GPUConfig in E2E test ([#393](https://github.com/aignostics/python-sdk/issues/393)) - ([2e89ef3](https://github.com/aignostics/python-sdk/commit/2e89ef3e8446ae58df23660ea6a4d5f843179cd9))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(deps)* Bump python-multipart from 0.0.20 to 0.0.22 ([#402](https://github.com/aignostics/python-sdk/issues/402)) - ([4a8bc60](https://github.com/aignostics/python-sdk/commit/4a8bc601d42555a85ebe3ba99881bf904d5ce4cc))
+- *(deps)* Bump pyasn1 from 0.6.1 to 0.6.2 ([#389](https://github.com/aignostics/python-sdk/issues/389)) - ([48dbe6d](https://github.com/aignostics/python-sdk/commit/48dbe6d769355ba533618c8d56a31722f823acbd))
+- *(deps)* Bump filelock from 3.20.1 to 3.20.3 ([#386](https://github.com/aignostics/python-sdk/issues/386)) - ([6b66c8f](https://github.com/aignostics/python-sdk/commit/6b66c8fdd459d3e312f98b823cff117c7b51bb7b))
+- *(deps)* Bump virtualenv from 20.35.4 to 20.36.1 ([#385](https://github.com/aignostics/python-sdk/issues/385)) - ([683201e](https://github.com/aignostics/python-sdk/commit/683201ea4a0a9d84999ed39b887b656e65aee0db))
+- Fix Claude sticky comments in PR reviews ([#407](https://github.com/aignostics/python-sdk/issues/407)) - ([61474b8](https://github.com/aignostics/python-sdk/commit/61474b8070b0c91f2e0e2d70987f6d9c6d27ef36))
+- Python-multipart - ([4a8bc60](https://github.com/aignostics/python-sdk/commit/4a8bc601d42555a85ebe3ba99881bf904d5ce4cc))
+- Dependabot[bot] <support@github.com> - ([4a8bc60](https://github.com/aignostics/python-sdk/commit/4a8bc601d42555a85ebe3ba99881bf904d5ce4cc))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([4a8bc60](https://github.com/aignostics/python-sdk/commit/4a8bc601d42555a85ebe3ba99881bf904d5ce4cc))
+- Ignore CVE-2026-0994 - ([bef31d1](https://github.com/aignostics/python-sdk/commit/bef31d1f01e986e64559da14320396bfc63f1255))
+- Pyasn1 - ([48dbe6d](https://github.com/aignostics/python-sdk/commit/48dbe6d769355ba533618c8d56a31722f823acbd))
+- Filelock - ([6b66c8f](https://github.com/aignostics/python-sdk/commit/6b66c8fdd459d3e312f98b823cff117c7b51bb7b))
+- Virtualenv - ([683201e](https://github.com/aignostics/python-sdk/commit/683201ea4a0a9d84999ed39b887b656e65aee0db))
+
+### 🛡️ Security
+
+- *(deps)* Update dependency nicegui to v3.7.0 [security] ([#418](https://github.com/aignostics/python-sdk/issues/418)) - ([783bd86](https://github.com/aignostics/python-sdk/commit/783bd8633901e3a74d009330457a9880e6dd5dd2))
+- *(deps)* Update dependency pip to v26 [security] - ([3e5b9a8](https://github.com/aignostics/python-sdk/commit/3e5b9a8002e0ac701140fd57e52dcf9833f25790))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([783bd86](https://github.com/aignostics/python-sdk/commit/783bd8633901e3a74d009330457a9880e6dd5dd2))
+
+### Task
+
+- *(BE-5757)* Create central MCP server with auto-disocovery of plugin tools ([#401](https://github.com/aignostics/python-sdk/issues/401)) - ([90f4c00](https://github.com/aignostics/python-sdk/commit/90f4c0053a46ef95ea262c79188548d60d6e5d9c))
+- Link tests for MCP SISs ([#423](https://github.com/aignostics/python-sdk/issues/423)) - ([266149c](https://github.com/aignostics/python-sdk/commit/266149c38f84d22a20a3bc6887991d0f183503f7))
+
+
+# [v1.0.3](https://github.com/aignostics/python-sdk/compare/v1.0.2..v1.0.3) - 2026-01-09
 
 ### 🐛 Bug Fixes
 
