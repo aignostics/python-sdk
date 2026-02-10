@@ -26,6 +26,7 @@ from aignostics.constants import (
 )
 from aignostics.platform import (
     InputArtifactData,
+    ItemState,
     OutputArtifactData,
     OutputArtifactElement,
     Run,
@@ -174,17 +175,17 @@ class OutputFormat(StrEnum):
     JSON = "json"
 
 
-def _format_status_string(state: RunState, termination_reason: str | None = None) -> str:
+def _format_status_string(state: RunState | ItemState, termination_reason: str | None = None) -> str:
     """Format status string with optional termination reason.
 
     Args:
-        state (RunState): The run state
+        state (RunState | ItemState): The run or item state
         termination_reason (str | None): Optional termination reason
 
     Returns:
         str: Formatted status string
     """
-    if state is RunState.TERMINATED and termination_reason:
+    if state.value in {RunState.TERMINATED, ItemState.TERMINATED} and termination_reason:
         return f"{state.value} ({termination_reason})"
     return f"{state.value}"
 
@@ -277,28 +278,31 @@ def _format_run_details(run: RunData) -> str:
     return output
 
 
-def retrieve_and_print_run_details(run_handle: Run, hide_platform_queue_position: bool) -> None:
+def retrieve_and_print_run_details(
+    run_handle: Run, hide_platform_queue_position: bool, *, summarize: bool = False
+) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
         run_handle (Run): The Run handle
         hide_platform_queue_position (bool): Whether to hide platform-wide queue position
+        summarize (bool): If True, show only status summary (external ID, state, error message)
 
     """
     run = run_handle.details(hide_platform_queue_position=hide_platform_queue_position)
 
     run_details = _format_run_details(run)
     output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"
-
     console.print(output)
-    _retrieve_and_print_run_items(run_handle)
+    _retrieve_and_print_run_items(run_handle, summarize)
 
 
-def _retrieve_and_print_run_items(run_handle: Run) -> None:
+def _retrieve_and_print_run_items(run_handle: Run, summarize: bool = False) -> None:
     """Retrieve and print information about items in a run.
 
     Args:
         run_handle (Run): The Run handle
+        summarize (bool): If True, show only status summary without output artifacts
     """
     results = run_handle.results()
     if not results:
@@ -314,7 +318,7 @@ def _retrieve_and_print_run_items(run_handle: Run) -> None:
             f"  [bold]Custom Metadata:[/bold] {item.custom_metadata or 'None'}"
         )
 
-        if item.output_artifacts:
+        if not summarize and item.output_artifacts:
             artifacts_output = "\n  [bold]Output Artifacts:[/bold]"
             for artifact in item.output_artifacts:
                 artifacts_output += (

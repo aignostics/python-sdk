@@ -356,6 +356,7 @@ $ aignostics application run describe [OPTIONS] RUN_ID
 **Options**:
 
 * `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
+* `--summarize, -s`: Show run details without output artifacts for items
 * `--help`: Show this message and exit.
 
 #### `aignostics application run dump-metadata`
