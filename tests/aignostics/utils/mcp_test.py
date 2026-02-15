@@ -3,17 +3,26 @@
 from __future__ import annotations
 
 import asyncio
+import subprocess
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from fastmcp import FastMCP
+from fastmcp import Client, FastMCP
 
 from aignostics.utils import (
     MCP_SERVER_NAME,
+    discover_plugin_packages,
     mcp_create_server,
     mcp_discover_servers,
     mcp_list_tools,
 )
+from aignostics.utils._di import _implementation_cache
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # Patch targets
 PATCH_LOCATE_IMPLEMENTATIONS = "aignostics.utils._mcp.locate_implementations"
@@ -175,3 +184,78 @@ def test_mcp_list_tools_empty(record_property) -> None:
         tools = mcp_list_tools()
         # Should return empty list when no plugins have tools
         assert tools == []
+
+
+# =============================================================================
+# E2E Plugin Auto-Discovery Tests
+# =============================================================================
+
+DUMMY_PLUGIN_DIR = Path(__file__).resolve().parents[2] / "resources" / "mcp_dummy_plugin"
+
+
+def _clear_mcp_discovery_caches() -> None:
+    """Invalidate DI and plugin caches so MCP discovery starts fresh."""
+    _implementation_cache.pop(FastMCP, None)
+    discover_plugin_packages.cache_clear()
+
+
+@pytest.fixture(scope="session")
+def install_dummy_mcp_plugin() -> Iterator[None]:
+    """Install the dummy MCP plugin in editable mode and make it importable.
+
+    Refreshes site-packages so the running interpreter sees the new package
+    and its entry points without a process restart.
+    """
+    import importlib
+    import site
+
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "-e", str(DUMMY_PLUGIN_DIR)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+
+    importlib.invalidate_caches()
+    for sp in site.getsitepackages():
+        site.addsitedir(sp)
+
+    yield
+
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+
+
+@pytest.fixture
+def clear_mcp_caches() -> Iterator[None]:
+    """Clear MCP discovery caches before and after the test."""
+    _clear_mcp_discovery_caches()
+    yield
+    _clear_mcp_discovery_caches()
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
+def test_mcp_server_discovers_and_serves_plugin_tools(
+    install_dummy_mcp_plugin, clear_mcp_caches, record_property
+) -> None:
+    """Full E2E: entry point registration -> discovery -> mount -> client round-trip."""
+    record_property("tested-item-id", "TC-UTILS-MCP-01")
+
+    server = mcp_create_server()
+    tool_names = list(asyncio.run(server.get_tools()).keys())
+
+    assert "dummy_plugin_dummy_echo" in tool_names
+    assert "dummy_plugin_dummy_add" in tool_names
+
+    async def _call_tools() -> tuple[str, str]:
+        async with Client(server) as client:
+            echo_result = await client.call_tool("dummy_plugin_dummy_echo", {"message": "hello"})
+            add_result = await client.call_tool("dummy_plugin_dummy_add", {"a": 2, "b": 3})
+            return echo_result.content[0].text, add_result.content[0].text
+
+    echo_text, add_text = asyncio.run(_call_tools())
+    assert echo_text == "hello"
+    assert add_text == "5"
