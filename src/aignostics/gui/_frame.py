@@ -14,6 +14,7 @@ from humanize import naturaldelta
 from loguru import logger
 
 from aignostics.constants import WINDOW_TITLE
+from aignostics.platform import API_ROOT_PRODUCTION, API_ROOT_STAGING
 from aignostics.utils import __version__, open_user_data_directory
 
 from ._theme import theme
@@ -27,6 +28,24 @@ PROPS_AVATAR = "avatar"
 CLASSES_FULL_WIDTH = "w-full"
 CLASSES_FULL_HEIGHT = "h-full"
 CLASSES_FULL_SIZE = f"{CLASSES_FULL_WIDTH} {CLASSES_FULL_HEIGHT}"
+
+
+def get_status_page_url(api_root: str) -> str | None:
+    """Get the status page URL based on the API root environment.
+
+    Args:
+        api_root: The API root URL to determine the environment
+
+    Returns:
+        The status page URL for production/staging, or None for dev/test
+    """
+    if api_root == API_ROOT_PRODUCTION:
+        return "https://status.platform.aignostics.com"
+    elif api_root == API_ROOT_STAGING:
+        return "https://status.platform-staging.aignostics.com"
+    else:
+        # No status page for dev and test environments
+        return None
 
 
 @contextmanager
@@ -213,7 +232,9 @@ def frame(  # noqa: C901, PLR0915
             coroutine=_health_load_and_render(),
             name="_health_load_and_render",
         )
-        ui.run_javascript("document.getElementById('betterstack').src = document.getElementById('betterstack').src;")
+        # Only refresh the status iframe if it exists (production/staging)
+        if get_status_page_url(settings().api_root):
+            ui.run_javascript("document.getElementById('betterstack').src = document.getElementById('betterstack').src;")
 
     ui.timer(interval=HEALTH_UPDATE_INTERVAL, callback=_update_health, immediate=True)
 
@@ -342,13 +363,15 @@ def frame(  # noqa: C901, PLR0915
                     ui.link("Get Support", "https://platform.aignostics.com/support", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
-            with ui.item().props("clickable"):
-                with ui.item_section().props("avatar"):
-                    ui.icon("check_circle", color="primary")
-                with ui.item_section():
-                    ui.link("Check Platform Status", "https://status.aignostics.com", new_tab=True).mark(
-                        "LINK_DOCUMENTATION"
-                    )
+            status_url = get_status_page_url(settings().api_root)
+            if status_url:
+                with ui.item().props("clickable"):
+                    with ui.item_section().props("avatar"):
+                        ui.icon("check_circle", color="primary")
+                    with ui.item_section():
+                        ui.link("Check Platform Status", status_url, new_tab=True).mark(
+                            "LINK_DOCUMENTATION"
+                        )
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("handshake", color="primary")
@@ -368,14 +391,16 @@ def frame(  # noqa: C901, PLR0915
         ui.row(align_items="center").classes("justify-start w-full"),
     ):
         health_link()
-        with ui.row().style("padding: 0"):
-            ui.html(
-                '<iframe id="betterstack" src="https://status.aignostics.com/badge?theme=dark" '
-                'width="250" height="30" frameborder="0" scrolling="no" '
-                'style="color-scheme: dark"></iframe>',
-                sanitize=False,
-            ).style("margin-left: 0px;")
-            ui.tooltip("Check Platform Status")
+        status_url = get_status_page_url(settings().api_root)
+        if status_url:
+            with ui.row().style("padding: 0"):
+                ui.html(
+                    f'<iframe id="betterstack" src="{status_url}/badge?theme=dark" '
+                    'width="250" height="30" frameborder="0" scrolling="no" '
+                    'style="color-scheme: dark"></iframe>',
+                    sanitize=False,
+                ).style("margin-left: 0px;")
+                ui.tooltip("Check Platform Status")
         ui.space()
         with ui.row():
             flavor = " (native)" if getattr(sys, "frozen", False) else ""
