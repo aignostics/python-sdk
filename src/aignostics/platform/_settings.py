@@ -50,6 +50,10 @@ from ._constants import (
     REDIRECT_URI_TEST,
     REDIRECT_URI_STAGING,
     REDIRECT_URI_PRODUCTION,
+    STATUS_PAGE_URL_DEV,
+    STATUS_PAGE_URL_TEST,
+    STATUS_PAGE_URL_STAGING,
+    STATUS_PAGE_URL_PRODUCTION,
     TOKEN_URL_DEV,
     TOKEN_URL_TEST,
     TOKEN_URL_STAGING,
@@ -205,6 +209,9 @@ class Settings(OpaqueSettings):
         str, BeforeValidator(_validate_url), Field(description="JWS key set URL for token verification")
     ]
     client_id_interactive: Annotated[str, Field(description="OAuth client ID for interactive flows")]
+    status_page_url: Annotated[
+        str | None, Field(description="Status page URL for monitoring platform health", default=None)
+    ] = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -509,6 +516,20 @@ class Settings(OpaqueSettings):
         """
         # See https://github.com/pydantic/pydantic/issues/9789
         api_root = values.get("api_root", API_ROOT_PRODUCTION)
+
+        # Set status_page_url based on environment (independent of auth fields)
+        if "status_page_url" not in values:
+            match api_root:
+                case x if x == API_ROOT_DEV:
+                    values["status_page_url"] = STATUS_PAGE_URL_DEV
+                case x if x == API_ROOT_TEST:
+                    values["status_page_url"] = STATUS_PAGE_URL_TEST
+                case x if x == API_ROOT_STAGING:
+                    values["status_page_url"] = STATUS_PAGE_URL_STAGING
+                case x if x == API_ROOT_PRODUCTION:
+                    values["status_page_url"] = STATUS_PAGE_URL_PRODUCTION
+                case _:
+                    values["status_page_url"] = None
 
         # Check if all required auth fields are already provided
         auth_fields = [

@@ -8,6 +8,7 @@ TOKEN_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"  # noqa:
 REDIRECT_URI_DEV = "http://localhost:8989/"
 DEVICE_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_DEV = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/.well-known/jwks.json"
+STATUS_PAGE_URL_DEV = None  # No dedicated status page for dev environment
 
 API_ROOT_TEST = "https://platform-test.aignostics.ai"
 CLIENT_ID_INTERACTIVE_TEST = "gqduveFvx7LX90drQPGzr4JGUYdh24gA"  # not a secret, but a public client ID (same as dev)
@@ -17,6 +18,7 @@ TOKEN_URL_TEST = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/token"  # noqa
 REDIRECT_URI_TEST = "http://localhost:8989/"
 DEVICE_URL_TEST = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_TEST = "https://dev-8ouohmmrbuh2h4vu.eu.auth0.com/.well-known/jwks.json"
+STATUS_PAGE_URL_TEST = None  # No dedicated status page for test environment
 
 API_ROOT_STAGING = "https://platform-staging.aignostics.com"
 CLIENT_ID_INTERACTIVE_STAGING = "fQkbvYzQPPVwLxc3uque5JsyFW00rJ7b"  # not a secret, but a public client ID
@@ -26,6 +28,7 @@ TOKEN_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/oauth/toke
 REDIRECT_URI_STAGING = "http://localhost:8989/"
 DEVICE_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_STAGING = "https://aignostics-platform-staging.eu.auth0.com/.well-known/jwks.json"
+STATUS_PAGE_URL_STAGING = "https://status.platform-staging.aignostics.com"
 
 API_ROOT_PRODUCTION = "https://platform.aignostics.com"
 CLIENT_ID_INTERACTIVE_PRODUCTION = "YtJ7F9lAtxx16SZGQlYPe6wcjlXB78MM"  # not a secret, but a public client ID
@@ -35,6 +38,7 @@ TOKEN_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/oauth/token"  #
 REDIRECT_URI_PRODUCTION = "http://localhost:8989/"
 DEVICE_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/oauth/device/code"
 JWS_JSON_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/.well-known/jwks.json"
+STATUS_PAGE_URL_PRODUCTION = "https://status.platform.aignostics.com"
 
 # Pipeline orchestration defaults
 DEFAULT_GPU_TYPE = "L4"
