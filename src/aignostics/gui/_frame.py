@@ -41,11 +41,10 @@ def get_status_page_url(api_root: str) -> str | None:
     """
     if api_root == API_ROOT_PRODUCTION:
         return "https://status.platform.aignostics.com"
-    elif api_root == API_ROOT_STAGING:
+    if api_root == API_ROOT_STAGING:
         return "https://status.platform-staging.aignostics.com"
-    else:
-        # No status page for dev and test environments
-        return None
+    # No status page for dev and test environments
+    return None
 
 
 @contextmanager
