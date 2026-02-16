@@ -209,10 +209,11 @@ def install_dummy_mcp_plugin() -> Iterator[None]:
     import importlib
     import site
 
-    subprocess.check_call(
+    result = subprocess.run(
         [sys.executable, "-m", "pip", "install", "-e", str(DUMMY_PLUGIN_DIR)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
     importlib.invalidate_caches()
@@ -221,10 +222,11 @@ def install_dummy_mcp_plugin() -> Iterator[None]:
 
     yield
 
-    subprocess.check_call(
+    result = subprocess.run(
         [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
 
