@@ -1,4 +1,4 @@
-"""Dummy MCP plugin for E2E testing of plugin auto-discovery."""
+"""Dummy MCP plugin for integration testing of plugin auto-discovery."""
 
 from ._mcp import mcp
 

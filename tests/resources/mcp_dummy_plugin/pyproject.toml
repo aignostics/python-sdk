@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mcp-dummy-plugin"
 version = "0.0.1"
-description = "Dummy MCP plugin for E2E testing of plugin auto-discovery."
+description = "Dummy MCP plugin for integration testing of plugin auto-discovery."
 requires-python = ">=3.11"
 dependencies = ["fastmcp>=2.0.0,<3"]
 

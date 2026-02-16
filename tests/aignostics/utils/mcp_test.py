@@ -187,7 +187,7 @@ def test_mcp_list_tools_empty(record_property) -> None:
 
 
 # =============================================================================
-# E2E Plugin Auto-Discovery Tests
+# Integration Plugin Auto-Discovery Tests
 # =============================================================================
 
 DUMMY_PLUGIN_DIR = Path(__file__).resolve().parents[2] / "resources" / "mcp_dummy_plugin"
@@ -209,10 +209,19 @@ def install_dummy_mcp_plugin() -> Iterator[None]:
     import importlib
     import site
 
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "-e", str(DUMMY_PLUGIN_DIR)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-deps",
+            "-e",
+            str(DUMMY_PLUGIN_DIR),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
     importlib.invalidate_caches()
@@ -221,10 +230,11 @@ def install_dummy_mcp_plugin() -> Iterator[None]:
 
     yield
 
-    subprocess.check_call(
+    subprocess.run(
         [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
+        check=True,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -236,26 +246,28 @@ def clear_mcp_caches() -> Iterator[None]:
     _clear_mcp_discovery_caches()
 
 
-@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.sequential
 @pytest.mark.timeout(timeout=60)
 def test_mcp_server_discovers_and_serves_plugin_tools(
     install_dummy_mcp_plugin, clear_mcp_caches, record_property
 ) -> None:
-    """Full E2E: entry point registration -> discovery -> mount -> client round-trip."""
+    """Integration: entry point registration -> discovery -> mount -> client round-trip."""
     record_property("tested-item-id", "TC-UTILS-MCP-01")
 
     server = mcp_create_server()
-    tool_names = list(asyncio.run(server.get_tools()).keys())
+
+    async def _call_tools() -> tuple[list[str], str, str]:
+        async with Client(server) as client:
+            tools = await client.list_tools()
+            tool_names = [t.name for t in tools]
+            echo_result = await client.call_tool("dummy_plugin_dummy_echo", {"message": "hello"})
+            add_result = await client.call_tool("dummy_plugin_dummy_add", {"a": 2, "b": 3})
+            return tool_names, echo_result.content[0].text, add_result.content[0].text
+
+    tool_names, echo_text, add_text = asyncio.run(_call_tools())
 
     assert "dummy_plugin_dummy_echo" in tool_names
     assert "dummy_plugin_dummy_add" in tool_names
-
-    async def _call_tools() -> tuple[str, str]:
-        async with Client(server) as client:
-            echo_result = await client.call_tool("dummy_plugin_dummy_echo", {"message": "hello"})
-            add_result = await client.call_tool("dummy_plugin_dummy_add", {"a": 2, "b": 3})
-            return echo_result.content[0].text, add_result.content[0].text
-
-    echo_text, add_text = asyncio.run(_call_tools())
     assert echo_text == "hello"
     assert add_text == "5"

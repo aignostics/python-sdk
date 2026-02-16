@@ -1,4 +1,4 @@
-"""Dummy MCP tools for E2E testing."""
+"""Dummy MCP tools for integration testing."""
 
 from fastmcp import FastMCP
 
