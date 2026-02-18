@@ -92,6 +92,7 @@ exclude_patterns = []
 
 html_theme = "furo"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 html_logo = "../../logo.png"
 html_theme_options = {
     "announcement": (

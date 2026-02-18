@@ -120,6 +120,7 @@ The Aignostics Platform delivers enterprise-grade computational pathology throug
 - **NVIDIA® GPU clusters**: Dedicated compute provisioned per application run for maximum security and compliance
 
 ```mermaid
+%%{init: {'theme':'dark', 'themeVariables': { 'fontSize':'18px', 'fontFamily':'arial', 'darkMode':'true', 'background':'#1e1e1e', 'primaryColor':'#4a4a4a', 'primaryTextColor':'#ffffff', 'primaryBorderColor':'#ffffff', 'lineColor':'#ffffff', 'secondaryColor':'#3a3a3a', 'tertiaryColor':'#2a2a2a', 'actorBkg':'#4a4a4a', 'actorBorder':'#ffffff', 'actorTextColor':'#ffffff', 'actorLineColor':'#ffffff', 'signalColor':'#ffffff', 'signalTextColor':'#ffffff', 'labelBoxBkgColor':'#3a3a3a', 'labelBoxBorderColor':'#ffffff', 'labelTextColor':'#ffffff', 'noteBkgColor':'#4a4a4a', 'noteTextColor':'#ffffff', 'noteBorderColor':'#ffffff', 'sequenceNumberColor':'#000000'}}}%%
 sequenceDiagram
     autonumber
     actor User as User<br/>(Organization Member)
@@ -221,15 +222,6 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Best for** | Data scientists and developers who want to integrate the platform into Python-based workflows |
 | **Use when** | Building custom analysis pipeline in Python for repeated usage and processing large datasets (10s-1000s of slides) |
 | **Get started** | <a href="#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment">Run example notebooks</a> or <a href="#python-library-call-the-aignostics-platform-api-from-your-python-scripts">call the Aignostics Platform API from your Python scripts</a> |
-
-### 🤖 MCP Server (AI Agent Integration)
-
-| | |
-|---|---|
-| **What it is** | Model Context Protocol server that exposes SDK functionality to AI agents like Claude |
-| **Best for** | Users who want AI assistants to help with platform operations |
-| **Use when** | Working with Claude Desktop or other MCP-compatible AI tools to manage datasets, submit runs, or query results |
-| **Get started** | <a href="#mcp-server-integrate-with-ai-agents">Configure Claude Desktop for MCP integration</a> |
 
 > 💡 Launchpad and CLI handle authentication automatically. Python Library requires manual setup (see [authentication section](#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment)).
 
@@ -617,56 +609,6 @@ Self-signed URLs for files in google storage buckets can be generated using the
 [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials)
 for the Google Storage Bucket**
 
-## MCP Server: Integrate with AI Agents
-
-The Python SDK includes an MCP (Model Context Protocol) server that exposes SDK functionality to AI agents like Claude. This enables AI assistants to help you interact with the Aignostics Platform through natural conversation.
-
-### Quick Start with Claude Desktop
-
-Add the following to your Claude Desktop configuration file:
-
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "aignostics": {
-      "command": "uvx",
-      "args": ["aignostics", "mcp", "run"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop after adding this configuration.
-
-### CLI Commands
-
-```bash
-# Using uvx (no installation required)
-uvx aignostics mcp run
-uvx aignostics mcp list-tools
-```
-
-### Using Plugins
-
-The MCP server supports plugins that extend its functionality with additional tools. To run the MCP server with a plugin installed:
-
-```bash
-# With a local plugin
-uv run --with /path/to/plugin aignostics mcp run
-
-# With a plugin from a git repository
-uvx --with git+ssh://git@github.com/org/plugin aignostics mcp run
-```
-
-Plugins register themselves via Python entry points and their tools are automatically discovered and namespaced by the MCP server.
-
-### What AI Agents Can Do
-
-Once configured, AI agents can help you with platform operations through natural language, with access to tools from the SDK and any installed plugins.
-
 ## Next Steps
 
 Now that you have an overview of the Aignostics Python SDK and its interfaces, here are some recommended next steps to deepen your understanding and get the most out of the platform:
@@ -925,11 +867,8 @@ Laboratory systems that can be integrated with the Aignostics Platform for workf
 
 ### M
 
-**Marimo**
+**Marimo**  
 Modern notebook environment supported by the Aignostics Platform as an alternative to Jupyter.
-
-**MCP (Model Context Protocol)**
-Protocol that enables AI agents like Claude to interact with external tools and services. The Aignostics SDK includes an MCP server that exposes platform functionality to AI assistants.
 
 **Metadata**  
 Descriptive information about whole slide images including dimensions, resolution, tissue type, and disease information required for processing.
