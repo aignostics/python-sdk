@@ -935,9 +935,11 @@ def run_describe(
         user_info = PlatformService.get_user_info()
         run = Service().application_run(run_id)
         if format == "json":
-            # Get run details and output as JSON
+            # Get run details and items, output as JSON
             run_details = run.details(hide_platform_queue_position=not user_info.is_internal_user)
-            print(json.dumps(run_details.model_dump(mode="json"), indent=2, default=str))
+            run_data = run_details.model_dump(mode="json")
+            run_data["items"] = [item.model_dump(mode="json") for item in run.results()]
+            print(json.dumps(run_data, indent=2, default=str))
         else:
             retrieve_and_print_run_details(
                 run, hide_platform_queue_position=not user_info.is_internal_user, summarize=summarize

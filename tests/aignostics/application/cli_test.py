@@ -696,6 +696,90 @@ def test_cli_run_describe_not_found(runner: CliRunner, record_property) -> None:
     assert "Warning: Run with ID '00000000000000000000000000000000' not found." in normalize_output(result.stdout)
 
 
+@pytest.mark.integration
+def test_cli_run_describe_json_includes_items(runner: CliRunner) -> None:
+    """Check run describe --format=json includes items in output."""
+    from aignx.codegen.models import (
+        ItemOutput,
+        ItemResultReadResponse,
+        ItemState,
+        ItemTerminationReason,
+        RunItemStatistics,
+        RunOutput,
+        RunReadResponse,
+        RunState,
+        RunTerminationReason,
+    )
+
+    mock_run_data = RunReadResponse(
+        run_id="test-run-id-123",
+        application_id="test-app",
+        version_number="1.0.0",
+        state=RunState.TERMINATED,
+        output=RunOutput.FULL,
+        termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
+        error_code=None,
+        error_message=None,
+        statistics=RunItemStatistics(
+            item_count=1,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=1,
+        ),
+        custom_metadata=None,
+        submitted_at=datetime(2025, 1, 1, tzinfo=UTC),
+        submitted_by="test-user",
+        terminated_at=datetime(2025, 1, 1, 0, 5, tzinfo=UTC),
+    )
+
+    mock_item = ItemResultReadResponse(
+        item_id="item-id-456",
+        external_id="slide-001.svs",
+        custom_metadata={"key": "value"},
+        state=ItemState.TERMINATED,
+        output=ItemOutput.FULL,
+        termination_reason=ItemTerminationReason.SUCCEEDED,
+        error_message=None,
+        error_code=None,
+        output_artifacts=[],
+    )
+
+    mock_user_info = MagicMock()
+    mock_user_info.is_internal_user = False
+
+    mock_run_handle = MagicMock()
+    mock_run_handle.details.return_value = mock_run_data
+    mock_run_handle.results.return_value = iter([mock_item])
+
+    with (
+        patch("aignostics.application._cli.PlatformService.get_user_info", return_value=mock_user_info),
+        patch("aignostics.application._cli.Service") as mock_service_cls,
+    ):
+        mock_service_cls.return_value.application_run.return_value = mock_run_handle
+
+        result = runner.invoke(cli, ["application", "run", "describe", "test-run-id-123", "--format", "json"])
+
+    assert result.exit_code == 0, f"Command failed with output: {result.stdout}"
+    output_data = json.loads(result.stdout)
+
+    # Verify run-level fields are present
+    assert output_data["run_id"] == "test-run-id-123"
+    assert output_data["application_id"] == "test-app"
+
+    # Verify items are included
+    assert "items" in output_data, "JSON output must include 'items' key"
+    assert len(output_data["items"]) == 1
+    item = output_data["items"][0]
+    assert item["item_id"] == "item-id-456"
+    assert item["external_id"] == "slide-001.svs"
+    assert item["custom_metadata"] == {"key": "value"}
+    assert item["state"] == "TERMINATED"
+    assert item["termination_reason"] == "SUCCEEDED"
+
+
 @pytest.mark.e2e
 def test_cli_run_cancel_invalid_run_id(runner: CliRunner, record_property) -> None:
     """Check run cancel command fails as expected on run not found."""
