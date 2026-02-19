@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       commit_message:
-        description: 'Commit message to check for skip markers'
+        description: "Commit message to check for skip markers"
         required: false
         type: string
     secrets:
@@ -66,11 +66,11 @@ jobs:
       - name: Validate installation
         shell: bash
         run: |
-            OUTPUT=$(uv run --all-extras --no-dev aignostics --help)
-            if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
-            echo "Output does not contain 'built with love in Berlin'"
-            exit 1
-            fi
+          OUTPUT=$(uv run --all-extras --no-dev aignostics --help)
+          if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
+          echo "Output does not contain 'built with love in Berlin'"
+          exit 1
+          fi
 
       - name: Install upx for native Windows version
         if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'windows-11-arm' }}
@@ -219,7 +219,7 @@ jobs:
           rm -rf ./test-results/coverage_html
           gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./audit-results/*   \
             --notes-file ${{ steps.git-cliff.outputs.changelog }}
-            
+
       - name: Inform Sentry about release
         uses: getsentry/action-release@dab6548b3c03c4717878099e43782cf5be654289 # v3.5.0
         env:
@@ -230,6 +230,19 @@ jobs:
           environment: production
           release: ${{ github.ref_name }}
 
+      - name: Convert release notes from Markdown to Slack mrkdwn
+        id: slack-notes
+        shell: bash
+        run: |
+          # Convert Markdown links [text](url) to Slack mrkdwn <url|text>
+          # Convert bold **text** to *text*
+          SLACK_RELEASE_NOTES=$(echo '${{ toJSON(steps.git-cliff.outputs.content) }}' | \
+            sed -E 's/\[([^]]+)\]\(([^)]+)\)/<\2|\1>/g' | \
+            sed -E 's/\*\*([^*]+)\*\*/*\1*/g')
+          echo "content<<SLACKEOF" >> "$GITHUB_OUTPUT"
+          echo "$SLACK_RELEASE_NOTES" >> "$GITHUB_OUTPUT"
+          echo "SLACKEOF" >> "$GITHUB_OUTPUT"
+
       - name: Release Announcement
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
@@ -238,7 +251,7 @@ jobs:
           payload: |
             "repository": "${{ github.repository }}",
             "version": "${{ steps.git-cliff.outputs.version }}",
-            "release_notes": ${{ toJSON(steps.git-cliff.outputs.content) }},
+            "release_notes": ${{ steps.slack-notes.outputs.content }},
             "channel_id": "${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}"
 
       - name: Allow other workflows to trigger on release
