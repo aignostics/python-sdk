@@ -20,6 +20,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 
 * `launchpad`: Open Aignostics Launchpad, the graphical...
 * `notebook`: Run Python notebook server based on Marimo.
+* `mcp`: MCP (Model Context Protocol) server for AI...
 * `application`: List and inspect applications on...
 * `bucket`: Operations on cloud bucket on Aignostics...
 * `dataset`: Download datasets from National Institute...
@@ -62,6 +63,67 @@ $ aignostics notebook [OPTIONS] [NOTEBOOK]
 * `--host TEXT`: Host to bind the server to  [default: 127.0.0.1]
 * `--port INTEGER`: Port to bind the server to  [default: 8001]
 * `--override-if-exists / --no-override-if-exists`: Override the notebook in the user data directory if it already exists.  [default: no-override-if-exists]
+* `--help`: Show this message and exit.
+
+## `aignostics mcp`
+
+MCP (Model Context Protocol) server for AI agent integration.
+
+**Usage**:
+
+```console
+$ aignostics mcp [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `run`: Run the MCP server.
+* `list-tools`: List all available MCP tools.
+
+### `aignostics mcp run`
+
+Run the MCP server.
+
+Starts an MCP server using `stdio` transport that exposes SDK functionality
+to AI agents. The server automatically discovers and mounts tools from
+the SDK and any installed plugins.
+
+Examples:
+    uv run aignostics mcp run
+
+**Usage**:
+
+```console
+$ aignostics mcp run [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `aignostics mcp list-tools`
+
+List all available MCP tools.
+
+Shows all tools available in the MCP server, including tools from
+the SDK and any installed plugins. Each tool is displayed with its
+name and description.
+
+Examples:
+    uv run aignostics mcp list-tools
+
+**Usage**:
+
+```console
+$ aignostics mcp list-tools [OPTIONS]
+```
+
+**Options**:
+
 * `--help`: Show this message and exit.
 
 ## `aignostics application`
@@ -356,7 +418,7 @@ $ aignostics application run describe [OPTIONS] RUN_ID
 **Options**:
 
 * `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
-* `--summarize, -s`: Show run details without output artifacts for items
+* `-s, --summarize`: Show only run and item status summary (external ID, state, error message)
 * `--help`: Show this message and exit.
 
 #### `aignostics application run dump-metadata`
@@ -518,7 +580,7 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results. 
 The QuPath project will be created in a subfolder of the destination directory. 
-This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...` 
+This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...`
 This options requires installation of the QuPath application: Run uvx --with &quot;aignostics&quot; aignostics qupath install  [default: no-qupath-project]
 * `--help`: Show this message and exit.
 
