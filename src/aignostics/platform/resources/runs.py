@@ -245,14 +245,12 @@ class Run:
             )
 
         filter_kwargs: dict[str, object] = {}
-        if item_ids is not None:
+        if item_ids:
             filter_kwargs["item_id__in"] = item_ids
-        if external_ids is not None:
+        if external_ids:
             filter_kwargs["external_id__in"] = external_ids
 
-        return paginate(
-            lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **filter_kwargs, **kwargs)
-        )
+        return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **filter_kwargs, **kwargs))
 
     def download_to_folder(  # noqa: C901
         self,

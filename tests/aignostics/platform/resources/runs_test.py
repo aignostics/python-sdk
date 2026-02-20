@@ -8,12 +8,15 @@ from unittest.mock import Mock
 
 import pytest
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.models import (InputArtifactCreationRequest,
-                                  ItemCreationRequest, ItemResultReadResponse,
-                                  RunCreationResponse, RunReadResponse)
+from aignx.codegen.models import (
+    InputArtifactCreationRequest,
+    ItemCreationRequest,
+    ItemResultReadResponse,
+    RunCreationResponse,
+    RunReadResponse,
+)
 
-from aignostics.platform.resources.runs import (
-    LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Run, Runs)
+from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Run, Runs
 from aignostics.platform.resources.utils import PAGE_SIZE
 
 
@@ -608,6 +611,21 @@ def test_application_run_results_without_filters_omits_filter_kwargs(app_run, mo
     list(app_run.results())
 
     # Assert
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert "item_id__in" not in call_kwargs
+    assert "external_id__in" not in call_kwargs
+
+
+@pytest.mark.unit
+def test_application_run_results_with_empty_list_filters_omits_filter_kwargs(app_run, mock_api) -> None:
+    """Test that Run.results() treats empty lists same as None (no filter applied)."""
+    # Arrange
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    # Act - empty lists should behave like None
+    list(app_run.results(item_ids=[], external_ids=[]))
+
+    # Assert - filter kwargs should NOT be present
     call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
     assert "item_id__in" not in call_kwargs
     assert "external_id__in" not in call_kwargs
