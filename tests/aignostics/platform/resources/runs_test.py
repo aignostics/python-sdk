@@ -600,3 +600,71 @@ def test_run_details_can_hide_platform_queue_position(
     result = app_run.details(hide_platform_queue_position=hide_platform_queue_position)
     assert result.num_preceding_items_org == run_data.num_preceding_items_org
     assert result.num_preceding_items_platform == expected_platform_queue_position
+
+
+@pytest.mark.unit
+def test_run_details_retries_on_not_found_then_succeeds(app_run, mock_api) -> None:
+    """Test that Run.details retries on NotFoundException and succeeds when the run becomes available.
+
+    This verifies the outer retry logic that handles read replica lag by retrying
+    NotFoundException until the run is found.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    from aignx.codegen.exceptions import NotFoundException
+
+    run_data = RunReadResponse.model_construct(run_id="test-run-id")
+    mock_api.get_run_v1_runs_run_id_get.side_effect = [
+        NotFoundException(),
+        NotFoundException(),
+        run_data,
+    ]
+
+    result = app_run.details()
+
+    assert result.run_id == "test-run-id"
+    assert mock_api.get_run_v1_runs_run_id_get.call_count == 3
+
+
+@pytest.mark.unit
+def test_run_details_raises_not_found_after_timeout(app_run, mock_api) -> None:
+    """Test that Run.details re-raises NotFoundException after the retry timeout expires.
+
+    This verifies that the outer retry gives up after the configured delay and
+    surfaces the NotFoundException to the caller.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    from aignx.codegen.exceptions import NotFoundException
+
+    mock_api.get_run_v1_runs_run_id_get.side_effect = NotFoundException()
+
+    with pytest.raises(NotFoundException):
+        app_run.details()
+
+    assert mock_api.get_run_v1_runs_run_id_get.call_count > 1
+
+
+@pytest.mark.unit
+def test_run_details_does_not_retry_other_exceptions(app_run, mock_api) -> None:
+    """Test that the outer retry does not catch non-NotFoundException errors.
+
+    This verifies that exceptions like ForbiddenException pass straight through
+    the outer retry without being retried.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    from aignx.codegen.exceptions import ForbiddenException
+
+    mock_api.get_run_v1_runs_run_id_get.side_effect = ForbiddenException()
+
+    with pytest.raises(ForbiddenException):
+        app_run.details()
+
+    assert mock_api.get_run_v1_runs_run_id_get.call_count == 1
