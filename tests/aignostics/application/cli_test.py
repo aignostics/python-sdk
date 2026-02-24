@@ -20,6 +20,12 @@ from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    SPOT_0_CRC32C,
+    SPOT_0_FILENAME,
+    SPOT_0_GS_URL,
+    SPOT_0_HEIGHT,
+    SPOT_0_RESOLUTION_MPP,
+    SPOT_0_WIDTH,
     SPOT_1_EXPECTED_RESULT_FILES,
     SPOT_1_FILENAME,
     SPOT_1_FILESIZE,
@@ -367,7 +373,10 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
     record_property("tested-item-id", "TC-APPLICATION-CLI-02")
     csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
-    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
+    csv_content += (
+        f"{SPOT_0_FILENAME};{SPOT_0_CRC32C};{SPOT_0_RESOLUTION_MPP};{SPOT_0_WIDTH};{SPOT_0_HEIGHT}"
+        f";H&E;LUNG;LUNG_CANCER;{SPOT_0_GS_URL}"
+    )
     csv_path = tmp_path / "dummy.csv"
     csv_path.write_text(csv_content)
     result = runner.invoke(

@@ -218,7 +218,12 @@ class Run:
         )
         operation_cache_clear()  # Clear all caches since we added a new run
 
-    def results(self, nocache: bool = False) -> t.Iterator[ItemResultData]:
+    def results(
+        self,
+        nocache: bool = False,
+        item_ids: list[str] | None = None,
+        external_ids: list[str] | None = None,
+    ) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
 
         Retries on network and server errors.
@@ -226,9 +231,11 @@ class Run:
         Args:
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            item_ids (list[str] | None): Optional list of item IDs to filter results by.
+            external_ids (list[str] | None): Optional list of external IDs to filter results by.
 
         Returns:
-            list[ItemResultData]: A list of item results.
+            Iterator[ItemResultData]: An iterator over item results.
 
         Raises:
             Exception: If the API request fails.
@@ -253,7 +260,13 @@ class Run:
                 )
             )
 
-        return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **kwargs))
+        filter_kwargs: dict[str, object] = {}
+        if item_ids:
+            filter_kwargs["item_id__in"] = item_ids
+        if external_ids:
+            filter_kwargs["external_id__in"] = external_ids
+
+        return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **filter_kwargs, **kwargs))
 
     def download_to_folder(  # noqa: C901
         self,
