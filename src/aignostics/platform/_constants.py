@@ -37,7 +37,7 @@ DEVICE_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/oauth/device/c
 JWS_JSON_URL_PRODUCTION = "https://aignostics-platform.eu.auth0.com/.well-known/jwks.json"
 
 # Pipeline orchestration defaults
-DEFAULT_GPU_TYPE = "L4"
+DEFAULT_GPU_TYPE = "A100"
 DEFAULT_MAX_GPUS_PER_SLIDE = 1
 DEFAULT_GPU_PROVISIONING_MODE = "SPOT"
 DEFAULT_CPU_PROVISIONING_MODE = "SPOT"
