@@ -2,9 +2,11 @@
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
 
 from aignostics.application._utils import (
     application_run_status_to_str,
@@ -38,6 +40,82 @@ from aignostics.platform import (
 )
 
 TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
+
+
+def _make_run_data(**overrides: Any) -> RunData:  # noqa: ANN401
+    """Create a RunData with sensible defaults for testing.
+
+    Defaults to PENDING state, zero statistics, and test-app application.
+    Override any field by passing it as a keyword argument.
+    """
+    defaults: dict[str, Any] = {
+        "run_id": "run-test",
+        "application_id": "test-app",
+        "version_number": "0.0.1",
+        "state": RunState.PENDING,
+        "termination_reason": None,
+        "output": RunOutput.NONE,
+        "statistics": RunItemStatistics(
+            item_count=0,
+            item_pending_count=0,
+            item_processing_count=0,
+            item_skipped_count=0,
+            item_succeeded_count=0,
+            item_user_error_count=0,
+            item_system_error_count=0,
+        ),
+        "submitted_at": datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        "submitted_by": "user@example.com",
+        "terminated_at": None,
+        "custom_metadata": None,
+        "error_message": None,
+        "error_code": None,
+    }
+    defaults.update(overrides)
+    return RunData(**defaults)
+
+
+def _make_item_result(**overrides: Any) -> ItemResult:  # noqa: ANN401
+    """Create an ItemResult with a succeeded item and one output artifact.
+
+    Defaults to SUCCEEDED state, slide-001.svs external ID, and one parquet artifact.
+    Override any field by passing it as a keyword argument.
+    """
+    defaults: dict[str, Any] = {
+        "item_id": "item-123",
+        "external_id": "slide-001.svs",
+        "state": ItemState.TERMINATED,
+        "termination_reason": ItemTerminationReason.SUCCEEDED,
+        "output": ItemOutput.FULL,
+        "error_message": None,
+        "error_code": None,
+        "custom_metadata": None,
+        "custom_metadata_checksum": None,
+        "terminated_at": datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC),
+        "output_artifacts": [
+            OutputArtifactElement(
+                output_artifact_id="artifact-abc",
+                name="result.parquet",
+                download_url="https://example.com/result.parquet",
+                metadata={"media_type": "application/vnd.apache.parquet"},
+                state=ArtifactState.TERMINATED,
+                termination_reason=ArtifactTerminationReason.SUCCEEDED,
+                output=ArtifactOutput.AVAILABLE,
+                error_code=None,
+                error_message=None,
+            )
+        ],
+    }
+    defaults.update(overrides)
+    return ItemResult(**defaults)
+
+
+def _make_mock_run(run_data: RunData, results: list[ItemResult] | None = None) -> MagicMock:
+    """Create a MagicMock run handle pre-configured with the given run data and results."""
+    mock_run = MagicMock()
+    mock_run.details.return_value = run_data
+    mock_run.results.return_value = results if results is not None else []
+    return mock_run
 
 
 @pytest.mark.unit
@@ -311,8 +389,6 @@ def test_get_mime_type_for_output_artifact() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
     """Test getting MIME type from OutputArtifactElement with media_type in metadata."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
     artifact = OutputArtifactElement(
         output_artifact_id="artifact-456",
         name="data.json",
@@ -332,8 +408,6 @@ def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
     """Test getting MIME type from OutputArtifactElement with mime_type in metadata."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
     artifact = OutputArtifactElement(
         output_artifact_id="artifact-789",
         name="data.csv",
@@ -353,8 +427,6 @@ def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_default() -> None:
     """Test getting MIME type defaults to application/octet-stream."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
     artifact = OutputArtifactElement(
         output_artifact_id="artifact-999",
         name="unknown.bin",
@@ -457,11 +529,9 @@ def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with items."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    # Mock run data
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-789",
         application_id="he-tme",
         version_number="1.0.0",
@@ -477,47 +547,10 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
             item_user_error_count=0,
             item_system_error_count=0,
         ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
-
-    # Mock item results
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
-
-    item_result = ItemResult(
-        item_id="item-123",
-        external_id="slide-001",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
-        terminated_at=terminated_at,
-        output_artifacts=[
-            OutputArtifactElement(
-                output_artifact_id="artifact-abc",
-                name="result.parquet",
-                download_url="https://example.com/result.parquet",
-                metadata={"media_type": "application/vnd.apache.parquet"},
-                state=ArtifactState.TERMINATED,
-                termination_reason=ArtifactTerminationReason.SUCCEEDED,
-                output=ArtifactOutput.AVAILABLE,
-                error_code=None,
-                error_message=None,
-            )
-        ],
-    )
-
-    # Create mock run handle
-    mock_run = MagicMock()
-    mock_run.details.return_value = run_data
-    mock_run.results.return_value = [item_result]
+    item_result = _make_item_result(external_id="slide-001", terminated_at=terminated_at)
+    mock_run = _make_mock_run(run_data, [item_result])
 
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False)
 
@@ -534,35 +567,8 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with no items."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
-        run_id="run-empty",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
-    )
-
-    mock_run = MagicMock()
-    mock_run.details.return_value = run_data
-    mock_run.results.return_value = []
+    run_data = _make_run_data(run_id="run-empty")
+    mock_run = _make_mock_run(run_data)
 
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False)
 
@@ -582,37 +588,12 @@ def test_retrieve_and_print_run_details_can_hide_platform_position(
     mock_console: Mock, hide_platform_queue_position: bool
 ) -> None:
     """Test that platform queue position can be hidden or shown."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-empty",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
         num_preceding_items_org=10,
         num_preceding_items_platform=100 if not hide_platform_queue_position else None,
     )
-
-    mock_run = MagicMock()
-    mock_run.details.return_value = run_data
-    mock_run.results.return_value = []
+    mock_run = _make_mock_run(run_data)
 
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=hide_platform_queue_position)
 
@@ -796,10 +777,9 @@ def test_queue_position_string_from_run_with_only_platform_position() -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> None:
     """Test summarize mode shows concise output with external ID, state, and errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-summarize-test",
         application_id="he-tme",
         version_number="1.0.0",
@@ -815,47 +795,25 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
             item_user_error_count=1,
             item_system_error_count=0,
         ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
-
-    from aignx.codegen.models import ItemOutput
-
-    item_success = ItemResult(
+    item_success = _make_item_result(
         item_id="item-001",
         external_id="slide-success.svs",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
         output_artifacts=[],
     )
-
-    item_error = ItemResult(
+    item_error = _make_item_result(
         item_id="item-002",
         external_id="slide-error.svs",
-        state=ItemState.TERMINATED,
         termination_reason=ItemTerminationReason.USER_ERROR,
         output=ItemOutput.NONE,
         error_message="Invalid file format",
         error_code="INVALID_FORMAT",
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
         output_artifacts=[],
     )
-
-    mock_run = MagicMock()
-    mock_run.details.return_value = run_data
-    mock_run.results.return_value = [item_success, item_error]
+    mock_run = _make_mock_run(run_data, [item_success, item_error])
 
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False, summarize=True)
 
@@ -880,35 +838,8 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -> None:
     """Test summarize mode with no items shows appropriate message."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
-        run_id="run-no-items",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
-    )
-
-    mock_run = MagicMock()
-    mock_run.details.return_value = run_data
-    mock_run.results.return_value = []
+    run_data = _make_run_data(run_id="run-no-items")
+    mock_run = _make_mock_run(run_data)
 
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False, summarize=True)
 
@@ -921,16 +852,10 @@ def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: Mock) -> None:
     """Test summarize mode shows run-level errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-    terminated_at = datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC)
-
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-with-error",
-        application_id="test-app",
-        version_number="0.0.1",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_SYSTEM,
-        output=RunOutput.NONE,
         statistics=RunItemStatistics(
             item_count=1,
             item_pending_count=0,
@@ -940,17 +865,11 @@ def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: M
             item_user_error_count=0,
             item_system_error_count=1,
         ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=terminated_at,
-        custom_metadata=None,
+        terminated_at=datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC),
         error_message="System error occurred",
         error_code="SYS_ERROR",
     )
-
-    mock_run = MagicMock()
-    mock_run.details.return_value = run_data
-    mock_run.results.return_value = []
+    mock_run = _make_mock_run(run_data)
 
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False, summarize=True)
 
@@ -963,10 +882,7 @@ def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: M
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) -> None:
     """Test that default mode (summarize=False) shows detailed output with artifacts."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-    terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-detailed-test",
         application_id="he-tme",
         version_number="1.0.0",
@@ -982,45 +898,10 @@ def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) 
             item_user_error_count=0,
             item_system_error_count=0,
         ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
+        terminated_at=datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC),
     )
-
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
-
-    item_result = ItemResult(
-        item_id="item-123",
-        external_id="slide-001.svs",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
-        terminated_at=terminated_at,
-        output_artifacts=[
-            OutputArtifactElement(
-                output_artifact_id="artifact-abc",
-                name="result.parquet",
-                download_url="https://example.com/result.parquet",
-                metadata={"media_type": "application/vnd.apache.parquet"},
-                state=ArtifactState.TERMINATED,
-                termination_reason=ArtifactTerminationReason.SUCCEEDED,
-                output=ArtifactOutput.AVAILABLE,
-                error_code=None,
-                error_message=None,
-            )
-        ],
-    )
-
-    mock_run = MagicMock()
-    mock_run.details.return_value = run_data
-    mock_run.results.return_value = [item_result]
+    item_result = _make_item_result()
+    mock_run = _make_mock_run(run_data, [item_result])
 
     # Call without summarize parameter (default is False)
     retrieve_and_print_run_details(mock_run, hide_platform_queue_position=False)
