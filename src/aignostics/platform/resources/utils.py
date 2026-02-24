@@ -40,6 +40,8 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
         >>> items = list(paginate(list_items))
         >>> print(len(items))
     """
+    if page_size <= 0:
+        raise ValueError(f"page_size must be a positive integer, got {page_size}")
     page = 1
     while True:
         try:
