@@ -13,6 +13,7 @@ from time import sleep
 from typing import Any, cast
 
 from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.exceptions import NotFoundException
 from aignx.codegen.exceptions import ServiceException
 from aignx.codegen.models import (
     CustomMetadataUpdateRequest,
@@ -42,6 +43,7 @@ from tenacity import (
     Retrying,
     retry_if_exception_type,
     stop_after_attempt,
+    stop_after_delay,
     wait_exponential_jitter,
 )
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
@@ -137,7 +139,8 @@ class Run:
     def details(self, nocache: bool = False, hide_platform_queue_position: bool = False) -> RunData:
         """Retrieves the current status of the application run.
 
-        Retries on network and server errors.
+        Retries on network and server errors. Additionally retries on
+        NotFoundException for up to 5 seconds to handle read replica lag.
 
         Args:
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
@@ -149,24 +152,37 @@ class Run:
             RunData: The run data.
 
         Raises:
+            NotFoundException: If the run is not found after retries.
             Exception: If the API request fails.
         """
 
         @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
         def details_with_retry(run_id: str) -> RunData:
+            def _fetch() -> RunData:
+                return Retrying(
+                    retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                    stop=stop_after_attempt(settings().run_retry_attempts),
+                    wait=wait_exponential_jitter(
+                        initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max
+                    ),
+                    before_sleep=_log_retry_attempt,
+                    reraise=True,
+                )(
+                    lambda: self._api.get_run_v1_runs_run_id_get(
+                        run_id,
+                        _request_timeout=settings().run_timeout,
+                        _headers={"User-Agent": user_agent()},
+                    )
+                )
+
+            # NOTE(nahua): Outer retry handles NotFoundException (read replica lag)
             return Retrying(
-                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-                stop=stop_after_attempt(settings().run_retry_attempts),
-                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+                retry=retry_if_exception_type(exception_types=(NotFoundException,)),
+                stop=stop_after_delay(5),
+                wait=wait_exponential_jitter(initial=0.5, max=3),
                 before_sleep=_log_retry_attempt,
                 reraise=True,
-            )(
-                lambda: self._api.get_run_v1_runs_run_id_get(
-                    run_id,
-                    _request_timeout=settings().run_timeout,
-                    _headers={"User-Agent": user_agent()},
-                )
-            )
+            )(_fetch)
 
         run_data: RunData = details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
         if hide_platform_queue_position:
