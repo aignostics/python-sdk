@@ -219,7 +219,7 @@ class Run:
             external_ids (list[str] | None): Optional list of external IDs to filter results by.
 
         Returns:
-            list[ItemResultData]: A list of item results.
+            Iterator[ItemResultData]: An iterator over item results.
 
         Raises:
             Exception: If the API request fails.
