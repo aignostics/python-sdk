@@ -321,6 +321,91 @@ class Service(BaseService):
         return prefix or None
 
     @staticmethod
+    def _compile_patterns(patterns: list[str]) -> list[re.Pattern[str]]:
+        """Compile a list of regex pattern strings, raising ValueError on invalid patterns.
+
+        Args:
+            patterns (list[str]): List of regex pattern strings to compile.
+
+        Returns:
+            list[re.Pattern[str]]: Compiled regex patterns.
+
+        Raises:
+            ValueError: If any pattern is invalid regex.
+        """
+        compiled: list[re.Pattern[str]] = []
+        for pattern in patterns:
+            try:
+                compiled.append(re.compile(pattern))
+            except re.error as e:
+                msg = f"Invalid regex pattern '{pattern}': {e}"
+                logger.warning(msg)
+                raise ValueError(msg) from e
+        return compiled
+
+    @staticmethod
+    def _matches_criteria(
+        item_key: str,
+        what: list[str],
+        what_is_key: bool,
+        compiled_patterns: list[re.Pattern[str]],
+    ) -> bool:
+        """Return True if item_key satisfies the search criteria.
+
+        Args:
+            item_key (str): The S3 object key to test.
+            what (list[str]): Exact keys or pattern strings.
+            what_is_key (bool): If True, match by exact key membership; else by regex.
+            compiled_patterns (list[re.Pattern[str]]): Pre-compiled patterns (used when not what_is_key).
+
+        Returns:
+            bool: True if the item matches any criterion.
+        """
+        if what_is_key:
+            return item_key in what
+        return any(pattern.match(item_key) for pattern in compiled_patterns)
+
+    def _build_result_item(
+        self,
+        item: dict[str, Any],
+        detail: bool,
+        include_signed_urls: bool,
+    ) -> str | dict[str, Any]:
+        """Build the result entry for a single S3 object.
+
+        Args:
+            item (dict[str, Any]): Raw S3 object metadata from the paginator.
+            detail (bool): If True, return full metadata dict; else return only the key.
+            include_signed_urls (bool): If True, include a pre-signed download URL.
+
+        Returns:
+            str | dict[str, Any]: Either the object key string or a metadata dict.
+        """
+        item_key: str = item["Key"]
+
+        if detail:
+            size_bytes = item.get("Size", 0)
+            item_data: dict[str, Any] = {
+                "key": item_key,
+                "size": size_bytes,
+                "size_human": humanize.naturalsize(size_bytes),
+                "last_modified": item.get("LastModified"),
+                "etag": item.get("ETag", "").strip('"'),
+                "storage_class": item.get("StorageClass", ""),
+            }
+            if include_signed_urls:
+                item_data["signed_download_url"] = self.create_signed_download_url(item_key)
+            return item_data
+
+        if include_signed_urls:
+            return {
+                "key": item_key,
+                "signed_download_url": self.create_signed_download_url(item_key),
+            }
+
+        return item_key
+
+    @staticmethod
     def find_static(
         what: list[str] | None = None,
         what_is_key: bool = False,
@@ -343,7 +428,7 @@ class Service(BaseService):
         """
         return Service().find(what, what_is_key, detail, include_signed_urls)
 
-    def find(  # noqa: C901, PLR0912
+    def find(
         self,
         what: list[str] | None,
         what_is_key: bool = False,
@@ -372,15 +457,7 @@ class Service(BaseService):
             bucket_prefix = f"{self.get_bucket_name()}/"
             what = [key.removeprefix(bucket_prefix) for key in what]
 
-        compiled_patterns: list[re.Pattern[str]] = []
-        if not what_is_key:
-            for pattern in what:
-                try:
-                    compiled_patterns.append(re.compile(pattern))
-                except re.error as e:
-                    msg = f"Invalid regex pattern '{pattern}': {e}"
-                    logger.warning(msg)
-                    raise ValueError(msg) from e
+        compiled_patterns = [] if what_is_key else self._compile_patterns(what)
 
         s3c = self._get_s3_client()
         paginator = s3c.get_paginator("list_objects_v2")
@@ -393,38 +470,10 @@ class Service(BaseService):
         result: list[str | dict[str, Any]] = []
 
         for page in pages:
-            contents = page.get("Contents", [])
-
-            for item in contents:
-                item_key = item["Key"]
-
-                # Check if item matches criteria
-                matches = (
-                    item_key in what if what_is_key else any(pattern.match(item_key) for pattern in compiled_patterns)
-                )
-                if not matches:
+            for item in page.get("Contents", []):
+                if not self._matches_criteria(item["Key"], what, what_is_key, compiled_patterns):
                     continue
-
-                if detail:
-                    size_bytes = item.get("Size", 0)
-                    item_data = {
-                        "key": item_key,
-                        "size": size_bytes,
-                        "size_human": humanize.naturalsize(size_bytes),
-                        "last_modified": item.get("LastModified"),
-                        "etag": item.get("ETag", "").strip('"'),
-                        "storage_class": item.get("StorageClass", ""),
-                    }
-                    if include_signed_urls:
-                        item_data["signed_download_url"] = self.create_signed_download_url(item_key)
-                    result.append(item_data)
-                elif include_signed_urls:
-                    result.append({
-                        "key": item_key,
-                        "signed_download_url": self.create_signed_download_url(item_key),
-                    })
-                else:
-                    result.append(item_key)
+                result.append(self._build_result_item(item, detail, include_signed_urls))
 
         return result
 
