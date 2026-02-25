@@ -20,6 +20,7 @@ from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    PIPELINE_GPU_TYPE,
     SPOT_0_CRC32C,
     SPOT_0_FILENAME,
     SPOT_0_GS_URL,
@@ -155,9 +156,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     assert result.exit_code == 0
 
     # Step 3: Submit the run from the metadata file
-    result = runner.invoke(
-        cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv), "--gpu-type", "L4", "--force"]
-    )
+    result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv), "--force"])
     assert result.exit_code == 2
     assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
     assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
@@ -296,8 +295,6 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
             str(csv_path),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
-            "--gpu-type",
-            "L4",
             "--force",
         ],
     )
@@ -329,8 +326,6 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
             str(csv_path),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
-            "--gpu-type",
-            "L4",
             "--force",
         ],
     )
@@ -360,8 +355,6 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
             str(csv_path),
             "--deadline",
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
-            "--gpu-type",
-            "L4",
             "--force",
         ],
     )
@@ -403,7 +396,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             (datetime.now(tz=UTC) + timedelta(minutes=10)).isoformat(),
             "--onboard-to-aignostics-portal",
             "--gpu-type",
-            "L4",
+            PIPELINE_GPU_TYPE,
             "--force",
         ],
     )
@@ -1372,7 +1365,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
             "--note",
             "Testing JSON format output",
             "--gpu-type",
-            "L4",
+            PIPELINE_GPU_TYPE,
         ],
     )
     output = normalize_output(result.stdout)
@@ -1475,7 +1468,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                 "--note",
                 "Testing JSON format output - run 2",
                 "--gpu-type",
-                "L4",
+                PIPELINE_GPU_TYPE,
             ],
         )
         assert submit_result_2.exit_code == 0
