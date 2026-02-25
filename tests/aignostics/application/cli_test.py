@@ -1316,7 +1316,7 @@ def list_runs_by_tag(tag: str, runner: CliRunner, expected_count: int = 1) -> li
 
 
 @pytest.mark.e2e
-@pytest.mark.timeout(timeout=60)
+@pytest.mark.timeout(timeout=180)
 def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PLR0914
     runner: CliRunner, tmp_path: Path, silent_logging, record_property
 ) -> None:
@@ -1590,23 +1590,32 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
             logger.info("Successfully canceled both runs using cancel-by-filter")
 
             # Step 13: Verify runs ARE canceled by describing them again
+            # Use retry to handle read-replica lag and slow API responses after cancel.
             logger.info("Step 13: Verifying runs ARE canceled after actual cancel")
             runs_to_verify = [run_id] + ([run_id_2] if run_id_2 else [])
             for idx, rid in enumerate(runs_to_verify, 1):
-                describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
-                assert describe_result.exit_code == 0, (
-                    f"Failed to describe run {idx} after cancel: {describe_result.stdout}"
-                )
-                described_run = json.loads(describe_result.stdout)
-                # Verify run is now TERMINATED
-                assert described_run["state"] == "TERMINATED", (
-                    f"Run {idx} was not canceled (state: {described_run['state']})"
-                )
-                # termination_reason is a top-level field, not nested under output
-                assert described_run["termination_reason"] == "CANCELED_BY_USER", (
-                    f"Run {idx} has unexpected termination reason: {described_run.get('termination_reason')}"
-                )
-                logger.info("Run {} successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
+                for attempt in Retrying(
+                    wait=wait_exponential(multiplier=2, min=1, max=15),
+                    stop=stop_after_attempt(5),
+                    reraise=True,
+                ):
+                    with attempt:
+                        describe_result = runner.invoke(
+                            cli, ["application", "run", "describe", rid, "--format", "json"]
+                        )
+                        assert describe_result.exit_code == 0, (
+                            f"Failed to describe run {idx} after cancel: {describe_result.stdout}"
+                        )
+                        described_run = json.loads(describe_result.stdout)
+                        # Verify run is now TERMINATED
+                        assert described_run["state"] == "TERMINATED", (
+                            f"Run {idx} was not canceled, state: {described_run['state']}"
+                        )
+                        # termination_reason is a top-level field, not nested under output
+                        assert described_run["termination_reason"] == "CANCELED_BY_USER", (
+                            f"Run {idx} has unexpected termination reason: {described_run.get('termination_reason')}"
+                        )
+                        logger.info("Run {} successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
         else:
             # Fallback: cancel individually if we couldn't get the version
             runs_to_cancel = [run_id] + ([run_id_2] if run_id_2 else [])
