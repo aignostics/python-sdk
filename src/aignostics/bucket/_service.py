@@ -1,6 +1,7 @@
 """Service of the bucket module."""
 
 import hashlib
+import os
 import re
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -285,6 +286,41 @@ class Service(BaseService):
         return results
 
     @staticmethod
+    def _compute_s3_prefix(
+        what: list[str],
+        what_is_key: bool,
+        compiled_patterns: list[re.Pattern[str]],  # noqa: ARG004
+    ) -> str | None:
+        """Compute the longest common S3 object prefix for server-side filtering.
+
+        When a useful prefix can be determined, passing it to the S3 paginator reduces
+        the number of pages fetched and dramatically improves performance on large buckets.
+
+        Args:
+            what (list[str]): Exact keys (when what_is_key=True) or regex pattern strings.
+            what_is_key (bool): If True, treat entries as exact keys; else as regex patterns.
+            compiled_patterns (list[re.Pattern[str]]): Pre-compiled patterns (reserved for future use).
+
+        Returns:
+            str | None: The longest common prefix, or None if no useful prefix can be inferred.
+        """
+        re_meta = re.compile(r"[.+*?^${}()\[\]|\\]")
+
+        if what_is_key:
+            prefix = os.path.commonprefix(what)
+        else:
+            literal_prefixes: list[str] = []
+            for pattern in what:
+                m = re_meta.search(pattern)
+                literal_prefix = pattern[: m.start()] if m else pattern
+                if not literal_prefix:
+                    return None
+                literal_prefixes.append(literal_prefix)
+            prefix = os.path.commonprefix(literal_prefixes)
+
+        return prefix or None
+
+    @staticmethod
     def find_static(
         what: list[str] | None = None,
         what_is_key: bool = False,
@@ -307,7 +343,7 @@ class Service(BaseService):
         """
         return Service().find(what, what_is_key, detail, include_signed_urls)
 
-    def find(  # noqa: C901
+    def find(  # noqa: C901, PLR0912
         self,
         what: list[str] | None,
         what_is_key: bool = False,
@@ -348,7 +384,11 @@ class Service(BaseService):
 
         s3c = self._get_s3_client()
         paginator = s3c.get_paginator("list_objects_v2")
-        pages = paginator.paginate(Bucket=self.get_bucket_name())
+        paginate_kwargs: dict[str, Any] = {"Bucket": self.get_bucket_name()}
+        prefix = Service._compute_s3_prefix(what, what_is_key, compiled_patterns)
+        if prefix is not None:
+            paginate_kwargs["Prefix"] = prefix
+        pages = paginator.paginate(**paginate_kwargs)
 
         result: list[str | dict[str, Any]] = []
 
