@@ -13,8 +13,7 @@ from time import sleep
 from typing import Any, cast
 
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.exceptions import NotFoundException
-from aignx.codegen.exceptions import ServiceException
+from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import (
     CustomMetadataUpdateRequest,
     ItemCreationRequest,

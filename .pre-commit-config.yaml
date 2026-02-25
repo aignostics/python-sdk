@@ -57,9 +57,9 @@ repos:
       - id: uv-lock
   - repo: local
     hooks:
-      - id: make
-        name: make
-        entry: make
+      - id: lint
+        name: lint
+        entry: make lint
         language: system
         pass_filenames: false
         always_run: true
