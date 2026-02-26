@@ -205,7 +205,7 @@ class Service(BaseService):
             http = self._get_http_pool()
             response = http.request(
                 method="GET",
-                url=f"{self._settings.api_root}/api/v1/health",
+                url=f"{self._settings.api_root}/health",
                 headers={"User-Agent": user_agent()},
                 timeout=urllib3.Timeout(total=self._settings.health_timeout),
             )
