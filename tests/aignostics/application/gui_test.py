@@ -21,6 +21,7 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    PIPELINE_GPU_TYPE,
     SPOT_0_EXPECTED_RESULT_FILES,
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
@@ -116,6 +117,8 @@ async def test_gui_cli_submit_to_run_result_delete(
                 "test_gui_cli_submit_to_run_result_delete",
                 "--deadline",
                 (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
+                "--gpu-type",
+                PIPELINE_GPU_TYPE,
             ],
         )
         assert result.exit_code == 0
