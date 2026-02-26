@@ -29,6 +29,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Additionally, HTTP requests have been updated to include retry logic with exponential backoff
+for transient failures.
 """
 
 # pylint: disable=too-many-lines
@@ -49,6 +52,13 @@ import idc_index_data
 import platformdirs
 import psutil
 import requests
+from tenacity import (
+    RetryCallState,
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 from packaging.version import Version
 from tqdm import tqdm
 
@@ -59,6 +69,40 @@ aws_endpoint_url = "https://s3.amazonaws.com"
 gcp_endpoint_url = "https://storage.googleapis.com"
 asset_endpoint_url = f"https://github.com/ImagingDataCommons/idc-index-data/releases/download/{idc_index_data.__version__}"
 
+_RETRY_ATTEMPTS = 4
+_RETRY_WAIT_MIN = 0.1
+_RETRY_WAIT_MAX = 10.0
+
+
+def _is_retryable_request_error(exception: BaseException) -> bool:
+    if isinstance(exception, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+        return True
+    if isinstance(exception, requests.exceptions.HTTPError):
+        response = exception.response
+        return response is not None and response.status_code >= 500
+    return False
+
+
+def _log_retry_attempt(retry_state: RetryCallState) -> None:
+    logger.warning(
+        "Retrying HTTP request in {} seconds (attempt {} failed with: {})",
+        retry_state.next_action.sleep if retry_state.next_action else 0,
+        retry_state.attempt_number,
+        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
+    )
+
+
+@retry(
+    retry=retry_if_exception(_is_retryable_request_error),
+    stop=stop_after_attempt(_RETRY_ATTEMPTS),
+    wait=wait_exponential_jitter(initial=_RETRY_WAIT_MIN, max=_RETRY_WAIT_MAX),
+    before_sleep=_log_retry_attempt,
+    reraise=True,
+)
+def _requests_get_with_retry(url: str, **kwargs: object) -> requests.Response:
+    response = requests.get(url, **kwargs)
+    response.raise_for_status()
+    return response
 
 
 # TODO(Helmut): Clean solution for no-verify-ssl
@@ -379,34 +423,35 @@ class IDCClient:
             )
         else:
             logger.debug("Fetching index {}", index_name)
-            response = requests.get(
-                self.indices_overview[index_name]["url"], timeout=30
+            try:
+                response = _requests_get_with_retry(
+                    self.indices_overview[index_name]["url"], timeout=30
+                )
+            except requests.exceptions.RequestException:
+                logger.exception(
+                    "Failed to fetch index from URL {}",
+                    self.indices_overview[index_name]["url"],
+                )
+                return
+            filepath = os.path.join(
+                self.indices_data_dir,
+                f"{index_name}.parquet",
             )
-            if response.status_code == 200:
-                filepath = os.path.join(
-                    self.indices_data_dir,
-                    f"{index_name}.parquet",
-                )
 
-                os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                with open(filepath, mode="wb") as file:
-                    file.write(response.content)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            with open(filepath, mode="wb") as file:
+                file.write(response.content)
 
-                index_table = pd.read_parquet(filepath)
-                # index_table = index_table.merge(
-                #    self.index[["series_aws_url", "SeriesInstanceUID"]],
-                #    on="SeriesInstanceUID", how="left"
-                # )
-                # TODO: consider switching to class variable!
-                # setattr(self.__class__, index_name, index_table)
-                setattr(self, index_name, index_table)
-                self.indices_overview[index_name]["installed"] = True
-                self.indices_overview[index_name]["file_path"] = filepath
-
-            else:
-                logger.error(
-                    f"Failed to fetch index from URL {self.indices_overview[index_name]['url']}: {response.status_code}"
-                )
+            index_table = pd.read_parquet(filepath)
+            # index_table = index_table.merge(
+            #    self.index[["series_aws_url", "SeriesInstanceUID"]],
+            #    on="SeriesInstanceUID", how="left"
+            # )
+            # TODO: consider switching to class variable!
+            # setattr(self.__class__, index_name, index_table)
+            setattr(self, index_name, index_table)
+            self.indices_overview[index_name]["installed"] = True
+            self.indices_overview[index_name]["file_path"] = filepath
         # if clinical_index is requested, likely the user will need clinical data
         # download it here, given that the size is small (<2MB as of IDC v19)
         if index_name == "clinical_index":
@@ -1773,22 +1818,19 @@ Destination folder is not empty and sync size is less than total size.
 
                 logger.trace(f"Requesting citation for DOI: {doi}")
 
-                response = requests.get(url, headers=headers, timeout=timeout)
+                try:
+                    response = _requests_get_with_retry(url, headers=headers, timeout=timeout)
+                except requests.exceptions.RequestException:
+                    logger.exception("Failed to get citation for DOI: {}", url)
+                    continue
 
                 logger.trace("Received response: " + str(response.status_code))
 
-                if response.status_code == 200:
-                    if citation_format == self.CITATION_FORMAT_JSON:
-                        citations.append(response.json())
-                    else:
-                        citations.append(response.text)
-                    logger.trace("Received citation: " + citations[-1])
-
+                if citation_format == self.CITATION_FORMAT_JSON:
+                    citations.append(response.json())
                 else:
-                    logger.error(f"Failed to get citation for DOI: {url}")
-                    logger.error(
-                        f"DOI server response status code: {response.status_code}"
-                    )
+                    citations.append(response.text)
+                logger.trace("Received citation: " + citations[-1])
 
         return citations
 
