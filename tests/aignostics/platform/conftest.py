@@ -7,6 +7,7 @@ import pytest
 
 from aignostics.platform._client import Client
 from aignostics.platform._operation_cache import _operation_cache
+from aignostics.platform._service import Service
 
 
 @pytest.fixture
@@ -54,12 +55,21 @@ def mock_api_client() -> MagicMock:
 
 
 @pytest.fixture(autouse=True)
-def clear_cache() -> None:
-    """Clear the operation cache before each test.
+def clear_cache() -> t.Generator[None, None, None]:
+    """Clear the operation cache and API client singletons before and after each test.
 
-    This ensures tests don't interfere with each other through shared cache state.
+    This ensures tests don't interfere with each other through shared cache state
+    or shared urllib3 connection pools (which could cause response cross-contamination).
     """
     _operation_cache.clear()
+    Client._api_client_cached = None
+    Client._api_client_uncached = None
+    Service._http_pool = None
+    yield
+    _operation_cache.clear()
+    Client._api_client_cached = None
+    Client._api_client_uncached = None
+    Service._http_pool = None
 
 
 @pytest.fixture

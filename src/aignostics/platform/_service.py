@@ -222,21 +222,27 @@ class Service(BaseService):
         return Health(status=Health.Code.UP)
 
     def _determine_api_authenticated_health(self) -> Health:
-        """Determine healthiness and reachability of Aignostics Platform API via authenticated API client.
+        """Determine healthiness and reachability of Aignostics Platform API via authenticated request.
 
-        - Checks if health endpoint is reachable and returns 200 OK
+        Uses a dedicated HTTP pool (separate from the API client's connection pool) to prevent
+        connection-level cross-contamination between health checks and API calls.
 
         Returns:
-            Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated API client.
+            Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated request.
         """
         try:
-            api_client = Client.get_api_client(cache_token=True).api_client
-            response = api_client.call_api(
-                url=self._settings.api_root + "/api/v1/health",
+            token = get_token(use_cache=True)
+            http = self._get_http_pool()
+            response = http.request(
                 method="GET",
-                header_params={"User-Agent": user_agent()},
-                _request_timeout=self._settings.health_timeout,
+                url=f"{self._settings.api_root}/health",
+                headers={
+                    "User-Agent": user_agent(),
+                    "Authorization": f"Bearer {token}",
+                },
+                timeout=urllib3.Timeout(total=self._settings.health_timeout),
             )
+
             if response.status != HTTPStatus.OK:
                 logger.error("Aignostics Platform API (authenticated) returned '{}'", response.status)
                 return Health(status=Health.Code.DOWN, reason=f"Aignostics Platform API returned '{response.status}'")
