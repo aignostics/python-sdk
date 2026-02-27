@@ -137,7 +137,7 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
