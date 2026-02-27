@@ -540,7 +540,7 @@ def _generate_api_reference(session: nox.Session) -> None:
         FileNotFoundError: If the OpenAPI schema file for a version is not found
     """
     for version in API_VERSIONS:
-        openapi_path = Path(f"docs/source/_static/openapi_{version}.yaml")
+        openapi_path = Path(f"docs/source/_static/openapi_{version}.json")
 
         if not openapi_path.exists():
             error_message = f"OpenAPI schema for {version} not found at {openapi_path}"
@@ -551,7 +551,7 @@ def _generate_api_reference(session: nox.Session) -> None:
             "npx",
             "--yes",
             "widdershins",
-            f"docs/source/_static/openapi_{version}.yaml",
+            f"docs/source/_static/openapi_{version}.json",
             "--omitHeader",
             "--search",
             "false",
