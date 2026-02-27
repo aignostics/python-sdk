@@ -223,6 +223,15 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Building custom analysis pipeline in Python for repeated usage and processing large datasets (10s-1000s of slides) |
 | **Get started** | <a href="#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment">Run example notebooks</a> or <a href="#python-library-call-the-aignostics-platform-api-from-your-python-scripts">call the Aignostics Platform API from your Python scripts</a> |
 
+### 🤖 MCP Server (AI Agent Integration)
+
+| | |
+|---|---|
+| **What it is** | Model Context Protocol server that exposes SDK functionality to AI agents like Claude |
+| **Best for** | Users who want AI assistants to help with platform operations |
+| **Use when** | Working with Claude Desktop or other MCP-compatible AI tools to manage datasets, submit runs, or query results |
+| **Get started** | <a href="#mcp-server-integrate-with-ai-agents">Configure Claude Desktop for MCP integration</a> |
+
 > 💡 Launchpad and CLI handle authentication automatically. Python Library requires manual setup (see [authentication section](#example-notebooks-interact-with-the-aignostics-platform-from-your-python-notebook-environment)).
 
 ## Launchpad: Run your first computational pathology analysis in 10 minutes from your desktop
