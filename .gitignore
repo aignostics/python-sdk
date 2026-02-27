@@ -58,6 +58,7 @@ reports/*
 .idea/
 *.swp
 *.swo
+.vscode/*
 
 # macOS
 .DS_Store
