@@ -78,6 +78,7 @@ node_modules/
 # AI workflow
 .fixme
 CLAUDE.local.md
+**/settings.local.json
 
 # Copier
 *.rej
