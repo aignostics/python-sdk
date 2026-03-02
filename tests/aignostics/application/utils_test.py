@@ -42,6 +42,55 @@ TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
 SUBMITTED_BY = "user@example.com"
 
 
+def _make_run_data(  # noqa: PLR0913
+    *,
+    run_id: str = "run-test",
+    application_id: str = "test-app",
+    version_number: str = "0.0.1",
+    state: RunState = RunState.PENDING,
+    termination_reason: RunTerminationReason | None = None,
+    output: RunOutput = RunOutput.NONE,
+    item_count: int = 0,
+    item_succeeded_count: int = 0,
+    item_user_error_count: int = 0,
+    item_system_error_count: int = 0,
+    item_skipped_count: int = 0,
+    item_pending_count: int = 0,
+    item_processing_count: int = 0,
+    submitted_at: datetime | None = None,
+    submitted_by: str = SUBMITTED_BY,
+    terminated_at: datetime | None = None,
+    custom_metadata: dict | None = None,
+    error_message: str | None = None,
+    error_code: str | None = None,
+    **kwargs: object,
+) -> RunData:
+    return RunData(
+        run_id=run_id,
+        application_id=application_id,
+        version_number=version_number,
+        state=state,
+        termination_reason=termination_reason,
+        output=output,
+        statistics=RunItemStatistics(
+            item_count=item_count,
+            item_pending_count=item_pending_count,
+            item_processing_count=item_processing_count,
+            item_skipped_count=item_skipped_count,
+            item_succeeded_count=item_succeeded_count,
+            item_user_error_count=item_user_error_count,
+            item_system_error_count=item_system_error_count,
+        ),
+        submitted_at=submitted_at or datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by=submitted_by,
+        terminated_at=terminated_at,
+        custom_metadata=custom_metadata,
+        error_message=error_message,
+        error_code=error_code,
+        **kwargs,
+    )
+
+
 @pytest.mark.unit
 def test_get_supported_extensions_for_heta_application() -> None:
     """Test that HETA application returns the correct set of supported extensions."""
