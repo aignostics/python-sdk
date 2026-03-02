@@ -8,7 +8,9 @@ import os
 
 TEST_SUITE = "AIGNOSTICS"
 
-SPOT_0_GS_URL = "gs://platform-api-application-test-data/heta/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
+SPOT_0_GS_URL = (
+    "gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
+)
 SPOT_0_FILENAME = "8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 SPOT_0_CRC32C = "5onqtA=="
 SPOT_0_FILESIZE = 10562338
@@ -16,7 +18,9 @@ SPOT_0_RESOLUTION_MPP = 0.26268186053789266
 SPOT_0_WIDTH = 7447
 SPOT_0_HEIGHT = 7196
 
-SPOT_1_GS_URL = "gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+SPOT_1_GS_URL = (
+    "gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+)
 SPOT_1_FILENAME = "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
 SPOT_1_CRC32C = "9l3NNQ=="
 SPOT_1_FILESIZE = 14681750
@@ -24,14 +28,18 @@ SPOT_1_RESOLUTION_MPP = 0.46499982
 SPOT_1_WIDTH = 3728
 SPOT_1_HEIGHT = 3640
 
-SPOT_2_GS_URL = "gs://aignx-storage-service-dev/sample_data_formatted/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
+SPOT_2_GS_URL = (
+    "gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
+)
 SPOT_2_FILENAME = "8c7b079e-8b8a-4036-bfde-5818352b503a.tiff"
 SPOT_2_CRC32C = "w+ud3g=="
 SPOT_2_RESOLUTION_MPP = 0.46499982
 SPOT_2_WIDTH = 3616
 SPOT_2_HEIGHT = 3400
 
-SPOT_3_GS_URL = "gs://aignx-storage-service-dev/sample_data_formatted/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
+SPOT_3_GS_URL = (
+    "gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
+)
 SPOT_3_FILENAME = "1f4f366f-a2c5-4407-9f5e-23400b22d50e.tiff"
 SPOT_3_CRC32C = "Zmx0wA=="
 SPOT_3_RESOLUTION_MPP = 0.46499982
