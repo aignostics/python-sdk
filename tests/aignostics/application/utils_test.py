@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
 
 from aignostics.application._utils import (
     application_run_status_to_str,
@@ -38,6 +39,7 @@ from aignostics.platform import (
 )
 
 TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
+SUBMITTED_BY = "user@example.com"
 
 
 @pytest.mark.unit
@@ -311,8 +313,6 @@ def test_get_mime_type_for_output_artifact() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
     """Test getting MIME type from OutputArtifactElement with media_type in metadata."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
     artifact = OutputArtifactElement(
         output_artifact_id="artifact-456",
         name="data.json",
@@ -332,8 +332,6 @@ def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
     """Test getting MIME type from OutputArtifactElement with mime_type in metadata."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
     artifact = OutputArtifactElement(
         output_artifact_id="artifact-789",
         name="data.csv",
@@ -353,8 +351,6 @@ def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_default() -> None:
     """Test getting MIME type defaults to application/octet-stream."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
     artifact = OutputArtifactElement(
         output_artifact_id="artifact-999",
         name="unknown.bin",
@@ -398,7 +394,7 @@ def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=terminated_at,
         custom_metadata=None,
         error_message=None,
@@ -437,7 +433,7 @@ def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=None,
         custom_metadata={"key": "value"},
         error_message="User canceled the run",
@@ -478,7 +474,7 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=terminated_at,
         custom_metadata=None,
         error_message=None,
@@ -486,8 +482,6 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
     )
 
     # Mock item results
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
-
     item_result = ItemResult(
         item_id="item-123",
         external_id="slide-001",
@@ -553,7 +547,7 @@ def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=None,
         custom_metadata=None,
         error_message=None,
@@ -601,7 +595,7 @@ def test_retrieve_and_print_run_details_can_hide_platform_position(
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=None,
         custom_metadata=None,
         error_message=None,
@@ -816,14 +810,12 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=terminated_at,
         custom_metadata=None,
         error_message=None,
         error_code=None,
     )
-
-    from aignx.codegen.models import ItemOutput
 
     item_success = ItemResult(
         item_id="item-001",
@@ -899,7 +891,7 @@ def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=None,
         custom_metadata=None,
         error_message=None,
@@ -941,7 +933,7 @@ def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: M
             item_system_error_count=1,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=terminated_at,
         custom_metadata=None,
         error_message="System error occurred",
@@ -983,14 +975,12 @@ def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) 
             item_system_error_count=0,
         ),
         submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        submitted_by=SUBMITTED_BY,
         terminated_at=terminated_at,
         custom_metadata=None,
         error_message=None,
         error_code=None,
     )
-
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
 
     item_result = ItemResult(
         item_id="item-123",
