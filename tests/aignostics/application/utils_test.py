@@ -91,6 +91,60 @@ def _make_run_data(  # noqa: PLR0913
     )
 
 
+def _make_artifact(  # noqa: PLR0913
+    *,
+    output_artifact_id: str = "artifact-abc",
+    name: str = "result.parquet",
+    download_url: str = "https://example.com/result.parquet",
+    metadata: dict | None = None,
+    state: ArtifactState = ArtifactState.TERMINATED,
+    termination_reason: ArtifactTerminationReason = ArtifactTerminationReason.SUCCEEDED,
+    output: ArtifactOutput = ArtifactOutput.AVAILABLE,
+    error_code: str | None = None,
+    error_message: str | None = None,
+) -> OutputArtifactElement:
+    return OutputArtifactElement(
+        output_artifact_id=output_artifact_id,
+        name=name,
+        download_url=download_url,
+        metadata=metadata or {"media_type": "application/vnd.apache.parquet"},
+        state=state,
+        termination_reason=termination_reason,
+        output=output,
+        error_code=error_code,
+        error_message=error_message,
+    )
+
+
+def _make_item_result(  # noqa: PLR0913
+    *,
+    item_id: str = "item-001",
+    external_id: str = "slide-001.svs",
+    state: ItemState = ItemState.TERMINATED,
+    termination_reason: ItemTerminationReason = ItemTerminationReason.SUCCEEDED,
+    output: ItemOutput = ItemOutput.FULL,
+    error_message: str | None = None,
+    error_code: str | None = None,
+    custom_metadata: dict | None = None,
+    custom_metadata_checksum: str | None = None,
+    terminated_at: datetime | None = None,
+    output_artifacts: list[OutputArtifactElement] | None = None,
+) -> ItemResult:
+    return ItemResult(
+        item_id=item_id,
+        external_id=external_id,
+        state=state,
+        termination_reason=termination_reason,
+        output=output,
+        error_message=error_message,
+        error_code=error_code,
+        custom_metadata=custom_metadata,
+        custom_metadata_checksum=custom_metadata_checksum,
+        terminated_at=terminated_at,
+        output_artifacts=output_artifacts if output_artifacts is not None else [],
+    )
+
+
 @pytest.mark.unit
 def test_get_supported_extensions_for_heta_application() -> None:
     """Test that HETA application returns the correct set of supported extensions."""
