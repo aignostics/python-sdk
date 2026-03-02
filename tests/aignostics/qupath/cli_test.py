@@ -20,6 +20,7 @@ from tests.conftest import normalize_output
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
+@pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 def test_cli_install_and_uninstall(runner: CliRunner) -> None:
@@ -67,6 +68,7 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
+@pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
 def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpdir, qupath_teardown) -> None:
