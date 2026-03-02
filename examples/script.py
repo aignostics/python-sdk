@@ -3,13 +3,6 @@
 import tempfile
 
 from aignostics import platform
-from tests.constants_test import (
-    SPOT_1_CRC32C,
-    SPOT_1_GS_URL,
-    SPOT_1_HEIGHT,
-    SPOT_1_RESOLUTION_MPP,
-    SPOT_1_WIDTH,
-)
 
 # initialize the client
 client = platform.Client()
@@ -23,12 +16,14 @@ application_run = client.runs.submit(
             input_artifacts=[
                 platform.InputArtifact(
                     name="user_slide",
-                    download_url=platform.generate_signed_url(SPOT_1_GS_URL),
+                    download_url=platform.generate_signed_url(
+                        "gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+                    ),
                     metadata={
-                        "checksum_base64_crc32c": SPOT_1_CRC32C,
-                        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-                        "width_px": SPOT_1_WIDTH,
-                        "height_px": SPOT_1_HEIGHT,
+                        "checksum_base64_crc32c": "N+LWCg==",
+                        "resolution_mpp": 0.46499982,
+                        "width_px": 3728,
+                        "height_px": 3640,
                     },
                 )
             ],
