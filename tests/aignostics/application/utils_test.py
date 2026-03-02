@@ -107,7 +107,7 @@ def _make_artifact(  # noqa: PLR0913
         output_artifact_id=output_artifact_id,
         name=name,
         download_url=download_url,
-        metadata=metadata or {"media_type": "application/vnd.apache.parquet"},
+        metadata={"media_type": "application/vnd.apache.parquet"} if metadata is None else metadata,
         state=state,
         termination_reason=termination_reason,
         output=output,
@@ -416,16 +416,11 @@ def test_get_mime_type_for_output_artifact() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
     """Test getting MIME type from OutputArtifactElement with media_type in metadata."""
-    artifact = OutputArtifactElement(
+    artifact = _make_artifact(
         output_artifact_id="artifact-456",
         name="data.json",
         download_url="https://example.com/download",
         metadata={"media_type": "application/json"},
-        state=ArtifactState.TERMINATED,
-        termination_reason=ArtifactTerminationReason.SUCCEEDED,
-        output=ArtifactOutput.AVAILABLE,
-        error_code=None,
-        error_message=None,
     )
 
     result = get_mime_type_for_artifact(artifact)
@@ -435,16 +430,11 @@ def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
     """Test getting MIME type from OutputArtifactElement with mime_type in metadata."""
-    artifact = OutputArtifactElement(
+    artifact = _make_artifact(
         output_artifact_id="artifact-789",
         name="data.csv",
         download_url="https://example.com/download",
         metadata={"mime_type": "text/csv"},
-        state=ArtifactState.TERMINATED,
-        termination_reason=ArtifactTerminationReason.SUCCEEDED,
-        output=ArtifactOutput.AVAILABLE,
-        error_code=None,
-        error_message=None,
     )
 
     result = get_mime_type_for_artifact(artifact)
@@ -454,16 +444,11 @@ def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_default() -> None:
     """Test getting MIME type defaults to application/octet-stream."""
-    artifact = OutputArtifactElement(
+    artifact = _make_artifact(
         output_artifact_id="artifact-999",
         name="unknown.bin",
         download_url="https://example.com/download",
         metadata={},
-        state=ArtifactState.TERMINATED,
-        termination_reason=ArtifactTerminationReason.SUCCEEDED,
-        output=ArtifactOutput.AVAILABLE,
-        error_code=None,
-        error_message=None,
     )
 
     result = get_mime_type_for_artifact(artifact)
@@ -477,31 +462,16 @@ def test_get_mime_type_for_output_artifact_element_default() -> None:
 @patch("aignostics.application._utils.console")
 def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
     """Test verbose printing of a single run."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-    terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
-
-    run = RunData(
+    run = _make_run_data(
         run_id="run-123",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=5,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=5,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
-        terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
+        item_count=5,
+        item_succeeded_count=5,
+        terminated_at=datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC),
     )
 
     print_runs_verbose([run])
@@ -517,27 +487,14 @@ def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
     """Test non-verbose printing of runs with errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run = RunData(
+    run = _make_run_data(
         run_id="run-456",
-        application_id="test-app",
-        version_number="0.0.1",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_USER,
         output=RunOutput.PARTIAL,
-        statistics=RunItemStatistics(
-            item_count=3,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=1,
-            item_user_error_count=2,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
-        terminated_at=None,
+        item_count=3,
+        item_succeeded_count=1,
+        item_user_error_count=2,
         custom_metadata={"key": "value"},
         error_message="User canceled the run",
         error_code="USER_CANCELED",
@@ -556,59 +513,25 @@ def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with items."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    # Mock run data
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-789",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=2,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=2,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
+        item_count=2,
+        item_succeeded_count=2,
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
 
-    # Mock item results
-    item_result = ItemResult(
+    item_result = _make_item_result(
         item_id="item-123",
         external_id="slide-001",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[
-            OutputArtifactElement(
-                output_artifact_id="artifact-abc",
-                name="result.parquet",
-                download_url="https://example.com/result.parquet",
-                metadata={"media_type": "application/vnd.apache.parquet"},
-                state=ArtifactState.TERMINATED,
-                termination_reason=ArtifactTerminationReason.SUCCEEDED,
-                output=ArtifactOutput.AVAILABLE,
-                error_code=None,
-                error_message=None,
-            )
-        ],
+        output_artifacts=[_make_artifact()],
     )
 
     # Create mock run handle
@@ -631,31 +554,7 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with no items."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
-        run_id="run-empty",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
-    )
+    run_data = _make_run_data(run_id="run-empty")
 
     mock_run = MagicMock()
     mock_run.details.return_value = run_data
@@ -679,30 +578,8 @@ def test_retrieve_and_print_run_details_can_hide_platform_position(
     mock_console: Mock, hide_platform_queue_position: bool
 ) -> None:
     """Test that platform queue position can be hidden or shown."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-empty",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
         num_preceding_items_org=10,
         num_preceding_items_platform=100 if not hide_platform_queue_position else None,
     )
@@ -893,59 +770,34 @@ def test_queue_position_string_from_run_with_only_platform_position() -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> None:
     """Test summarize mode shows concise output with external ID, state, and errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-summarize-test",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=2,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=1,
-            item_user_error_count=1,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
+        item_count=2,
+        item_succeeded_count=1,
+        item_user_error_count=1,
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
 
-    item_success = ItemResult(
-        item_id="item-001",
+    item_success = _make_item_result(
         external_id="slide-success.svs",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[],
     )
 
-    item_error = ItemResult(
+    item_error = _make_item_result(
         item_id="item-002",
         external_id="slide-error.svs",
-        state=ItemState.TERMINATED,
         termination_reason=ItemTerminationReason.USER_ERROR,
         output=ItemOutput.NONE,
         error_message="Invalid file format",
         error_code="INVALID_FORMAT",
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[],
     )
 
     mock_run = MagicMock()
@@ -975,31 +827,7 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -> None:
     """Test summarize mode with no items shows appropriate message."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
-        run_id="run-no-items",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
-    )
+    run_data = _make_run_data(run_id="run-no-items")
 
     mock_run = MagicMock()
     mock_run.details.return_value = run_data
@@ -1016,29 +844,13 @@ def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: Mock) -> None:
     """Test summarize mode shows run-level errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-    terminated_at = datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC)
-
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-with-error",
-        application_id="test-app",
-        version_number="0.0.1",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_SYSTEM,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=1,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=1,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
-        terminated_at=terminated_at,
-        custom_metadata=None,
+        item_count=1,
+        item_system_error_count=1,
+        terminated_at=datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC),
         error_message="System error occurred",
         error_code="SYS_ERROR",
     )
@@ -1058,57 +870,24 @@ def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: M
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) -> None:
     """Test that default mode (summarize=False) shows detailed output with artifacts."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-detailed-test",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=1,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=1,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by=SUBMITTED_BY,
+        item_count=1,
+        item_succeeded_count=1,
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
 
-    item_result = ItemResult(
+    item_result = _make_item_result(
         item_id="item-123",
-        external_id="slide-001.svs",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[
-            OutputArtifactElement(
-                output_artifact_id="artifact-abc",
-                name="result.parquet",
-                download_url="https://example.com/result.parquet",
-                metadata={"media_type": "application/vnd.apache.parquet"},
-                state=ArtifactState.TERMINATED,
-                termination_reason=ArtifactTerminationReason.SUCCEEDED,
-                output=ArtifactOutput.AVAILABLE,
-                error_code=None,
-                error_message=None,
-            )
-        ],
+        output_artifacts=[_make_artifact()],
     )
 
     mock_run = MagicMock()
