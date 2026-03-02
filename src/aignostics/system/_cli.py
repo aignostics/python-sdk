@@ -162,7 +162,7 @@ def openapi(
         case OutputFormat.JSON:
             console.print_json(data=schema)
         case OutputFormat.YAML:
-            console.print(yaml.dump(schema, default_flow_style=False), end="")
+            print(yaml.dump(schema, default_flow_style=False, allow_unicode=True, width=float("inf")), end="")
 
 
 @cli.command()
