@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -42,6 +43,27 @@ TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
 SUBMITTED_BY = "user@example.com"
 
 
+def _make_statistics(  # noqa: PLR0913
+    *,
+    item_count: int = 0,
+    item_succeeded_count: int = 0,
+    item_user_error_count: int = 0,
+    item_system_error_count: int = 0,
+    item_skipped_count: int = 0,
+    item_pending_count: int = 0,
+    item_processing_count: int = 0,
+) -> RunItemStatistics:
+    return RunItemStatistics(
+        item_count=item_count,
+        item_pending_count=item_pending_count,
+        item_processing_count=item_processing_count,
+        item_skipped_count=item_skipped_count,
+        item_succeeded_count=item_succeeded_count,
+        item_user_error_count=item_user_error_count,
+        item_system_error_count=item_system_error_count,
+    )
+
+
 def _make_run_data(  # noqa: PLR0913
     *,
     run_id: str = "run-test",
@@ -50,17 +72,9 @@ def _make_run_data(  # noqa: PLR0913
     state: RunState = RunState.PENDING,
     termination_reason: RunTerminationReason | None = None,
     output: RunOutput = RunOutput.NONE,
-    item_count: int = 0,
-    item_succeeded_count: int = 0,
-    item_user_error_count: int = 0,
-    item_system_error_count: int = 0,
-    item_skipped_count: int = 0,
-    item_pending_count: int = 0,
-    item_processing_count: int = 0,
-    submitted_at: datetime | None = None,
-    submitted_by: str = SUBMITTED_BY,
+    statistics: RunItemStatistics | None = None,
     terminated_at: datetime | None = None,
-    custom_metadata: dict | None = None,
+    custom_metadata: dict[str, Any] | None = None,
     error_message: str | None = None,
     error_code: str | None = None,
     **kwargs: object,
@@ -72,17 +86,9 @@ def _make_run_data(  # noqa: PLR0913
         state=state,
         termination_reason=termination_reason,
         output=output,
-        statistics=RunItemStatistics(
-            item_count=item_count,
-            item_pending_count=item_pending_count,
-            item_processing_count=item_processing_count,
-            item_skipped_count=item_skipped_count,
-            item_succeeded_count=item_succeeded_count,
-            item_user_error_count=item_user_error_count,
-            item_system_error_count=item_system_error_count,
-        ),
-        submitted_at=submitted_at or datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
-        submitted_by=submitted_by,
+        statistics=statistics or _make_statistics(),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by=SUBMITTED_BY,
         terminated_at=terminated_at,
         custom_metadata=custom_metadata,
         error_message=error_message,
@@ -96,7 +102,7 @@ def _make_artifact(  # noqa: PLR0913
     output_artifact_id: str = "artifact-abc",
     name: str = "result.parquet",
     download_url: str = "https://example.com/result.parquet",
-    metadata: dict | None = None,
+    metadata: dict[str, Any] | None = None,
     state: ArtifactState = ArtifactState.TERMINATED,
     termination_reason: ArtifactTerminationReason = ArtifactTerminationReason.SUCCEEDED,
     output: ArtifactOutput = ArtifactOutput.AVAILABLE,
@@ -125,7 +131,7 @@ def _make_item_result(  # noqa: PLR0913
     output: ItemOutput = ItemOutput.FULL,
     error_message: str | None = None,
     error_code: str | None = None,
-    custom_metadata: dict | None = None,
+    custom_metadata: dict[str, Any] | None = None,
     custom_metadata_checksum: str | None = None,
     terminated_at: datetime | None = None,
     output_artifacts: list[OutputArtifactElement] | None = None,
@@ -469,8 +475,7 @@ def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        item_count=5,
-        item_succeeded_count=5,
+        statistics=_make_statistics(item_count=5, item_succeeded_count=5),
         terminated_at=datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC),
     )
 
@@ -492,9 +497,7 @@ def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_USER,
         output=RunOutput.PARTIAL,
-        item_count=3,
-        item_succeeded_count=1,
-        item_user_error_count=2,
+        statistics=_make_statistics(item_count=3, item_succeeded_count=1, item_user_error_count=2),
         custom_metadata={"key": "value"},
         error_message="User canceled the run",
         error_code="USER_CANCELED",
@@ -522,8 +525,7 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        item_count=2,
-        item_succeeded_count=2,
+        statistics=_make_statistics(item_count=2, item_succeeded_count=2),
         terminated_at=terminated_at,
     )
 
@@ -779,9 +781,7 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        item_count=2,
-        item_succeeded_count=1,
-        item_user_error_count=1,
+        statistics=_make_statistics(item_count=2, item_succeeded_count=1, item_user_error_count=1),
         terminated_at=terminated_at,
     )
 
@@ -848,8 +848,7 @@ def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: M
         run_id="run-with-error",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_SYSTEM,
-        item_count=1,
-        item_system_error_count=1,
+        statistics=_make_statistics(item_count=1, item_system_error_count=1),
         terminated_at=datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC),
         error_message="System error occurred",
         error_code="SYS_ERROR",
@@ -879,8 +878,7 @@ def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) 
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        item_count=1,
-        item_succeeded_count=1,
+        statistics=_make_statistics(item_count=1, item_succeeded_count=1),
         terminated_at=terminated_at,
     )
 
