@@ -13,6 +13,26 @@ from aignostics.cli import cli
 from aignostics.qupath import QUPATH_VERSION
 from tests.conftest import normalize_output
 
+_SKIP_IF_WINDOWS = pytest.mark.skipif(platform.system() == "Windows", reason="not supported on Windows")
+_INSTALL_UNINSTALL_PLATFORM_CONFIGS = [
+    pytest.param({"system": "Windows"}, id="windows"),
+    pytest.param(
+        {"system": "Linux"},
+        id="linux",
+        marks=_SKIP_IF_WINDOWS,
+    ),
+    pytest.param(
+        {"system": "Darwin", "machine": "amd64"},
+        id="darwin-amd64",
+        marks=_SKIP_IF_WINDOWS,
+    ),
+    pytest.param(
+        {"system": "Darwin", "machine": "arm64"},
+        id="darwin-arm64",
+        marks=_SKIP_IF_WINDOWS,
+    ),
+]
+
 
 @pytest.mark.e2e
 @pytest.mark.long_running
@@ -21,37 +41,24 @@ from tests.conftest import normalize_output
     reason="QuPath is not supported on ARM64 Linux",
 )
 @pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
-@pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
-def test_cli_install_and_uninstall(runner: CliRunner, qupath_save_restore: None) -> None:
+@pytest.mark.parametrize("platform_config", _INSTALL_UNINSTALL_PLATFORM_CONFIGS)
+def test_cli_install_and_uninstall(runner: CliRunner, qupath_save_restore: None, platform_config: dict) -> None:
     """Check (un)install works for Windows, Mac and Linux package."""
-    # Test installation and uninstallation on different platforms
-    if platform.system() == "Windows":
-        platforms_to_test = [
-            {"system": "Windows"},
-        ]
-    else:
-        platforms_to_test = [
-            {"system": "Windows"},
-            {"system": "Linux"},
-            {"system": "Darwin", "machine": "amd64"},
-            {"system": "Darwin", "machine": "arm64"},
-        ]
+    install_args = ["qupath", "install", "--platform-system", platform_config["system"]]
+    uninstall_args = ["qupath", "uninstall", "--platform-system", platform_config["system"]]
+    if "machine" in platform_config:
+        install_args.extend(["--platform-machine", platform_config["machine"]])
+        uninstall_args.extend(["--platform-machine", platform_config["machine"]])
 
-    for platform_config in platforms_to_test:
-        install_args = ["qupath", "install", "--platform-system", platform_config["system"]]
-        uninstall_args = ["qupath", "uninstall", "--platform-system", platform_config["system"]]
-        if "machine" in platform_config:
-            install_args.extend(["--platform-machine", platform_config["machine"]])
-            uninstall_args.extend(["--platform-machine", platform_config["machine"]])
+    result = runner.invoke(cli, install_args)
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
+    assert result.exit_code == 0
 
-        result = runner.invoke(cli, install_args)
-        assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
-        assert result.exit_code == 0
-
-        result = runner.invoke(cli, uninstall_args)
-        assert "QuPath uninstalled successfully." in normalize_output(result.output)
-        assert result.exit_code == 0
+    result = runner.invoke(cli, uninstall_args)
+    assert "QuPath uninstalled successfully." in normalize_output(result.output)
+    assert result.exit_code == 0
 
 
 @pytest.mark.e2e
