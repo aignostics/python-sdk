@@ -518,7 +518,7 @@ class Service(BaseService):
                                 install_progress_queue.put_nowait(progress)
             logger.trace("Downloaded QuPath archive to '{}'", filepath)
         except requests.RequestException as e:
-            message = f"Failed to download QuPath from {url}="
+            message = f"Failed to download QuPath from {url}"
             logger.exception(message)
             raise RuntimeError(message) from e
         except Exception:
