@@ -23,12 +23,8 @@ from tests.conftest import normalize_output
 @pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-def test_cli_install_and_uninstall(runner: CliRunner) -> None:
+def test_cli_install_and_uninstall(runner: CliRunner, qupath_save_restore: None) -> None:
     """Check (un)install works for Windows, Mac and Linux package."""
-    # Uninstall QuPath if it exists to have a clean state for the test
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    was_installed = result.exit_code == 0
-
     # Test installation and uninstallation on different platforms
     if platform.system() == "Windows":
         platforms_to_test = [
@@ -57,10 +53,6 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
         assert "QuPath uninstalled successfully." in normalize_output(result.output)
         assert result.exit_code == 0
 
-    # Reinstall QuPath if it was installed before
-    if was_installed:
-        result = runner.invoke(cli, ["qupath", "install"])
-
 
 @pytest.mark.e2e
 @pytest.mark.long_running
@@ -71,12 +63,10 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
 @pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpdir, qupath_teardown) -> None:
+def test_cli_install_launch_project_annotations_headless(
+    runner: CliRunner, tmpdir, qupath_teardown, qupath_save_restore: None
+) -> None:
     """Check (un)install, launching headless, creating project and adding annotations works."""
-    # Uninstall QuPath if it exists to have a clean state for the test
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    was_installed = result.exit_code == 0
-
     # Step 1: System info determines QuPath is not installed
     result = runner.invoke(cli, ["system", "info"])
     output_data = json.loads(result.stdout)
@@ -128,10 +118,6 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
     assert output_data["qupath"]["app"]["version"] is None
     assert result.exit_code == 0
 
-    # Step 9: Reinstall QuPath if it was installed before
-    if was_installed:
-        result = runner.invoke(cli, ["qupath", "install"])
-
 
 @pytest.mark.e2e
 @pytest.mark.long_running
@@ -142,12 +128,8 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
 @pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
+def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown, qupath_save_restore: None) -> None:
     """Check (un)install and launching UI versin of QuPath works."""
-    # Uninstall QuPath if it exists to have a clean state for the test
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    was_installed = result.exit_code == 0
-
     # Step 1: Check QuPath launch fails if not installed
     result = runner.invoke(cli, ["qupath", "launch"])
     assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in normalize_output(
@@ -203,7 +185,3 @@ def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
         result.output
     )
     assert result.exit_code == 2
-
-    # Step 9: Reinstall QuPath if it was installed before
-    if was_installed:
-        result = runner.invoke(cli, ["qupath", "install"])
