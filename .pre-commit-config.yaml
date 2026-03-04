@@ -41,7 +41,7 @@ repos:
         exclude: "^tests/fixtures/|.json|^codegen"
       - id: mixed-line-ending
       - id: name-tests-test
-        exclude: "^(tests/main\.py|tests/resources/)"
+        exclude: "^(tests/main\\.py|tests/resources/)"
       - id: requirements-txt-fixer
       - id: trailing-whitespace
         exclude: "docs/source/_static|ATTRIBUTIONS.md||API_REFEREENCE"
