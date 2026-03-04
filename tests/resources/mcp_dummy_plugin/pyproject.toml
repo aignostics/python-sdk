@@ -7,7 +7,7 @@ name = "mcp-dummy-plugin"
 version = "0.0.1"
 description = "Dummy MCP plugin for integration testing of plugin auto-discovery."
 requires-python = ">=3.11"
-dependencies = ["fastmcp>=2.0.0,<3"]
+dependencies = ["fastmcp>=2.0.0,<3", "typer>=0.12", "aignostics"]
 
 [project.entry-points."aignostics.plugins"]
 mcp_dummy_plugin = "mcp_dummy_plugin"
