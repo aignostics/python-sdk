@@ -204,9 +204,7 @@ def clear_mcp_caches() -> Iterator[None]:
 @pytest.mark.integration
 @pytest.mark.sequential
 @pytest.mark.timeout(timeout=60)
-def test_mcp_server_discovers_and_serves_plugin_tools(
-    install_dummy_plugin, clear_mcp_caches, record_property
-) -> None:
+def test_mcp_server_discovers_and_serves_plugin_tools(install_dummy_plugin, clear_mcp_caches, record_property) -> None:
     """Integration: entry point registration -> discovery -> mount -> client round-trip."""
     record_property("tested-item-id", "TC-UTILS-MCP-01")
 
