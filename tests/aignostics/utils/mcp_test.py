@@ -187,6 +187,7 @@ def test_mcp_list_tools_empty(record_property) -> None:
 # Integration Plugin Auto-Discovery Tests
 # =============================================================================
 
+
 def _clear_mcp_discovery_caches() -> None:
     """Invalidate DI and plugin caches so MCP discovery starts fresh."""
     _implementation_cache.pop(FastMCP, None)
