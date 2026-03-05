@@ -28,7 +28,7 @@ The Utils Module shall:
 - **[FR-07]** Implement settings management with validation, serialization, and sensitive data handling
 - **[FR-08]** Provide file system utilities for user data directory management and path sanitization
 - **[FR-09]** Support process information gathering and runtime environment detection
-- **[FR-10]** Provide a central MCP server with auto-discovery of plugin tools, namespace isolation, and CLI commands for running the server and listing available tools
+- **[FR-10]** Automatically register MCP servers contributed by plugin modules into the SDK MCP server
 - **[FR-11]** Discover and load externally installed plugin modules at runtime without requiring changes to the core SDK codebase
 - **[FR-12]** Automatically register CLI commands contributed by plugin modules into the SDK command-line interface
 - **[FR-13]** Automatically register GUI pages contributed by plugin modules into the SDK graphical user interface
