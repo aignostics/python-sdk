@@ -35,12 +35,14 @@ def install_dummy_plugin() -> Iterator[None]:
             a reason other than the package already being absent.
     """
     uv = shutil.which("uv")
-    if uv:
-        install_cmd = [uv, "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)]
-        uninstall_cmd = [uv, "pip", "uninstall", "-y", "mcp-dummy-plugin"]
-    else:
-        install_cmd = [sys.executable, "-m", "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)]
-        uninstall_cmd = [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"]
+    install_cmd = (
+        [uv, "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)]
+        if uv
+        else [sys.executable, "-m", "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)]
+    )
+    # Always use pip for uninstall: uv pip uninstall can fail with exit code 2
+    # for editable installs it did not itself create the dist-info for.
+    uninstall_cmd = [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"]
 
     subprocess.run(install_cmd, check=True, capture_output=True, text=True)
 
