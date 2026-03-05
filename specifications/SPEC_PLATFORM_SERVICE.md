@@ -22,7 +22,7 @@ The Platform Module shall:
 - **[FR-01]** Provide secure OAuth 2.0 authentication with support for both Authorization Code with PKCE and Device Authorization flows
 - **[FR-02]** Manage JWT token lifecycle including acquisition, caching, validation, and refresh operations
 - **[FR-03]** Configure and provide authenticated API clients for interaction with Aignostics Platform services
-- **[FR-04]** Support multiple deployment environments (production, staging, development) with automatic endpoint configuration
+- **[FR-04]** Support multiple deployment environments (production, staging, development, test) with automatic endpoint configuration
 - **[FR-05]** Provide CLI commands for user authentication operations (login, logout, whoami)
 - **[FR-06]** Handle authentication errors with retry mechanisms and fallback flows
 - **[FR-07]** Support proxy configurations and SSL certificate handling for enterprise environments
@@ -313,8 +313,13 @@ class ApplicationRun:
     def cancel(self) -> None:
         """Cancels the application run."""
 
-    def results(self) -> Iterator[ItemResultData]:
-        """Retrieves the results of all items in the run."""
+    def results(
+        self,
+        nocache: bool = False,
+        item_ids: list[str] | None = None,
+        external_ids: list[str] | None = None,
+    ) -> Iterator[ItemResultData]:
+        """Retrieves the results of items in the run, optionally filtered by item or external IDs."""
 
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run."""
