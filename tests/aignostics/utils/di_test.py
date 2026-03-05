@@ -240,7 +240,7 @@ def clear_di_caches() -> Generator[None, None, None]:
 @pytest.mark.unit
 def test_discover_plugin_packages_returns_tuple(clear_di_caches, record_property) -> None:
     """Test that discover_plugin_packages returns a tuple."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     result = discover_plugin_packages()
     assert isinstance(result, tuple)
 
@@ -248,7 +248,7 @@ def test_discover_plugin_packages_returns_tuple(clear_di_caches, record_property
 @pytest.mark.unit
 def test_discover_plugin_packages_uses_correct_entry_point_group(clear_di_caches, record_property) -> None:
     """Test that discover_plugin_packages uses the correct entry point group."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     assert PLUGIN_ENTRY_POINT_GROUP == "aignostics.plugins"
 
 
@@ -258,7 +258,7 @@ def test_discover_plugin_packages_extracts_values_from_entry_points(
     mock_entry_points: Mock, clear_di_caches, record_property
 ) -> None:
     """Test that discover_plugin_packages extracts values from entry points."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     # Setup mock entry points
     mock_ep1 = MagicMock()
     mock_ep1.value = "plugin_one"
@@ -280,7 +280,7 @@ def test_discover_plugin_packages_returns_empty_tuple_when_no_plugins(
     mock_entry_points: Mock, clear_di_caches, record_property
 ) -> None:
     """Test that discover_plugin_packages returns empty tuple when no plugins registered."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     mock_entry_points.return_value = []
 
     result = discover_plugin_packages()
@@ -292,7 +292,7 @@ def test_discover_plugin_packages_returns_empty_tuple_when_no_plugins(
 @patch("aignostics.utils._di.entry_points")
 def test_discover_plugin_packages_is_cached(mock_entry_points: Mock, clear_di_caches, record_property) -> None:
     """Test that discover_plugin_packages caches results."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     mock_ep = MagicMock()
     mock_ep.value = "cached_plugin"
     mock_entry_points.return_value = [mock_ep]
@@ -308,21 +308,17 @@ def test_discover_plugin_packages_is_cached(mock_entry_points: Mock, clear_di_ca
 
 @pytest.mark.unit
 def test_locate_implementations_searches_plugins(clear_di_caches, record_property) -> None:
-    """Test that locate_implementations searches plugin packages."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    """Test that locate_implementations shallow-scans plugin packages for top-level exports."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     plugin_instance = AnotherDummyBase()
-    mock_plugin_package = MagicMock()
-    mock_plugin_package.__path__ = ["/fake/path"]
-    mock_plugin_module = ModuleType("test_plugin.submodule")
-    mock_plugin_module.plugin_instance = plugin_instance  # type: ignore[attr-defined]
+    mock_plugin_package = ModuleType("test_plugin")
+    mock_plugin_package.plugin_instance = plugin_instance  # type: ignore[attr-defined]
 
     def import_side_effect(name: str) -> ModuleType:
         if name == "test_plugin":
             return mock_plugin_package
-        if name == "test_plugin.submodule":
-            return mock_plugin_module
         mock_aig = MagicMock()
         mock_aig.__path__ = []
         return mock_aig
@@ -330,7 +326,7 @@ def test_locate_implementations_searches_plugins(clear_di_caches, record_propert
     with (
         patch.object(di_module, "discover_plugin_packages", return_value=("test_plugin",)),
         patch.object(di_module.importlib, "import_module", side_effect=import_side_effect),
-        patch.object(di_module.pkgutil, "iter_modules", side_effect=[[("", "submodule", False)], []]),
+        patch.object(di_module.pkgutil, "iter_modules", return_value=[]),
     ):
         result = locate_implementations(AnotherDummyBase)
         assert plugin_instance in result
@@ -339,7 +335,7 @@ def test_locate_implementations_searches_plugins(clear_di_caches, record_propert
 @pytest.mark.unit
 def test_locate_implementations_caches_results(clear_di_caches, record_property) -> None:
     """Test that locate_implementations caches results."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
@@ -358,23 +354,19 @@ def test_locate_implementations_caches_results(clear_di_caches, record_property)
 
 @pytest.mark.unit
 def test_locate_subclasses_searches_plugins(clear_di_caches, record_property) -> None:
-    """Test that locate_subclasses searches plugin packages."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    """Test that locate_subclasses shallow-scans plugin packages for top-level exports."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     class PluginSubClass(AnotherDummyBase):
         pass
 
-    mock_plugin_package = MagicMock()
-    mock_plugin_package.__path__ = ["/fake/path"]
-    mock_plugin_module = ModuleType("test_plugin.submodule")
-    mock_plugin_module.PluginSubClass = PluginSubClass  # type: ignore[attr-defined]
+    mock_plugin_package = ModuleType("test_plugin")
+    mock_plugin_package.PluginSubClass = PluginSubClass  # type: ignore[attr-defined]
 
     def import_side_effect(name: str) -> ModuleType:
         if name == "test_plugin":
             return mock_plugin_package
-        if name == "test_plugin.submodule":
-            return mock_plugin_module
         mock_aig = MagicMock()
         mock_aig.__path__ = []
         return mock_aig
@@ -382,7 +374,7 @@ def test_locate_subclasses_searches_plugins(clear_di_caches, record_property) ->
     with (
         patch.object(di_module, "discover_plugin_packages", return_value=("test_plugin",)),
         patch.object(di_module.importlib, "import_module", side_effect=import_side_effect),
-        patch.object(di_module.pkgutil, "iter_modules", side_effect=[[("", "submodule", False)], []]),
+        patch.object(di_module.pkgutil, "iter_modules", return_value=[]),
     ):
         result = locate_subclasses(AnotherDummyBase)
         assert PluginSubClass in result
@@ -391,7 +383,7 @@ def test_locate_subclasses_searches_plugins(clear_di_caches, record_property) ->
 @pytest.mark.unit
 def test_locate_subclasses_excludes_base_class(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses excludes the base class itself."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
@@ -411,7 +403,7 @@ def test_locate_subclasses_excludes_base_class(clear_di_caches, record_property)
 @pytest.mark.unit
 def test_locate_subclasses_caches_results(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses caches results."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
@@ -431,7 +423,7 @@ def test_locate_subclasses_caches_results(clear_di_caches, record_property) -> N
 @pytest.mark.unit
 def test_locate_subclasses_handles_plugin_import_error(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses handles ImportError for plugin packages gracefully."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
@@ -453,7 +445,7 @@ def test_locate_subclasses_handles_plugin_import_error(clear_di_caches, record_p
 @pytest.mark.unit
 def test_locate_subclasses_handles_module_import_error(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses handles ImportError for individual modules gracefully."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
@@ -482,7 +474,7 @@ def test_locate_implementations_and_subclasses_search_both_plugins_and_main_pack
     record_property,
 ) -> None:
     """Test that both functions search plugins first, then main package."""
-    record_property("tested-item-id", "SPEC-UTILS-DI")
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     import aignostics.utils._di as di_module
 
     import_order: list[str] = []
