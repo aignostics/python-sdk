@@ -6,6 +6,7 @@ import importlib
 import shutil
 import site
 import subprocess
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -29,13 +30,15 @@ def install_dummy_plugin() -> Iterator[None]:
     discovery must pair this fixture with clear_plugin_caches to ensure caches
     are reset before and after each test.
     """
-    uv = shutil.which("uv") or "uv"
-    subprocess.run(
-        [uv, "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    uv = shutil.which("uv")
+    if uv:
+        install_cmd = [uv, "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)]
+        uninstall_cmd = [uv, "pip", "uninstall", "-y", "mcp-dummy-plugin"]
+    else:
+        install_cmd = [sys.executable, "-m", "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)]
+        uninstall_cmd = [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"]
+
+    subprocess.run(install_cmd, check=True, capture_output=True, text=True)
 
     importlib.invalidate_caches()
     for sp in site.getsitepackages():
@@ -43,9 +46,4 @@ def install_dummy_plugin() -> Iterator[None]:
 
     yield
 
-    subprocess.run(
-        [uv, "pip", "uninstall", "-y", "mcp-dummy-plugin"],
-        check=False,  # best-effort: if already absent, that's fine
-        capture_output=True,
-        text=True,
-    )
+    subprocess.run(uninstall_cmd, check=False, capture_output=True, text=True)  # best-effort
