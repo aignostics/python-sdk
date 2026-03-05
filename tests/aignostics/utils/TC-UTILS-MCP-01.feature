@@ -4,7 +4,7 @@ Feature: MCP Server Plugin Auto-Discovery
   points, mounts them with namespace isolation, and serves them to MCP clients.
 
   @tests:SPEC-UTILS-SERVICE
-  @tests:SWR-UTILS-1-1
+  @tests:SWR-UTILS-2-4
   @id:TC-UTILS-MCP-01
   Scenario: Server discovers plugin tools via entry points and serves them to a client
     Given a plugin package registers an entry point under "aignostics.plugins"
