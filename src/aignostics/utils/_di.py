@@ -44,7 +44,7 @@ def load_modules() -> None:
 
 def _scan_packages_deep(package_name: str, predicate: Callable[[object], bool]) -> list[Any]:
     """
-    Deep-scan a package by walking all submodules via pkgutil.iter_modules.
+    Deep-scan a package by walking all top-level submodules via pkgutil.iter_modules.
 
     Discovers objects by importing the package, iterating through all submodules,
     and checking each module's members against the predicate. Used for the main
@@ -115,9 +115,8 @@ def locate_implementations(_class: type[Any]) -> list[Any]:
     """
     Dynamically discover all instances of some class.
 
-    Searches plugin packages using a shallow scan (top-level __init__.py exports only)
-    and the main project package using a deep scan (all submodules via pkgutil). The
-    shallow scan for plugins prevents over-discovering objects from plugin submodules.
+    Searches plugin packages using a shallow scan and the main project package using
+    a deep scan.
 
     Args:
         _class (type[Any]): Class to search for.
@@ -144,9 +143,8 @@ def locate_subclasses(_class: type[Any]) -> list[Any]:
     """
     Dynamically discover all classes that are subclasses of some type.
 
-    Searches plugin packages using a shallow scan (top-level __init__.py exports only)
-    and the main project package using a deep scan (all submodules via pkgutil). The
-    shallow scan for plugins prevents over-discovering classes from plugin submodules.
+    Searches plugin packages using a shallow scan and the main project package using
+    a deep scan.
 
     Args:
         _class (type[Any]): Parent class of subclasses to search for.
