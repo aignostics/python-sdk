@@ -45,7 +45,7 @@ def install_dummy_plugin() -> Iterator[None]:
 
     subprocess.run(
         [uv, "pip", "uninstall", "-y", "mcp-dummy-plugin"],
-        check=True,
+        check=False,  # best-effort: if already absent, that's fine
         capture_output=True,
         text=True,
     )
