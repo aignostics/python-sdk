@@ -97,7 +97,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         TEST_APPLICATION_VERSION = "0.0.6"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "1.0.0"
+        HETA_APPLICATION_VERSION = "1.1.0"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
         PIPELINE_GPU_TYPE = "L4"
@@ -125,15 +125,15 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
 
         SPOT_1_EXPECTED_RESULT_FILES = [
-            ("tissue_qc_segmentation_map_image.tiff", 440122, 10),
-            ("tissue_qc_geojson_polygons.json", 139943, 10),
-            ("tissue_segmentation_geojson_polygons.json", 175419, 10),
-            ("readout_generation_slide_readouts.csv", 300408, 10),
-            ("readout_generation_cell_readouts.csv", 2384271, 10),
-            ("cell_classification_geojson_polygons.json", 16384866, 10),
-            ("tissue_segmentation_segmentation_map_image.tiff", 508552, 10),
-            ("tissue_segmentation_csv_class_information.csv", 443, 10),
-            ("tissue_qc_csv_class_information.csv", 284, 10),
+            ("tissue_qc_segmentation_map_image.tiff", 469040, 10),
+            ("tissue_qc_geojson_polygons.json", 177779, 10),
+            ("tissue_segmentation_geojson_polygons.json", 205951, 10),
+            ("readout_generation_slide_readouts.csv", 299654, 10),
+            ("readout_generation_cell_readouts.csv", 2387860, 10),
+            ("cell_classification_geojson_polygons.json", 16687724, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 536582, 10),
+            ("tissue_segmentation_csv_class_information.csv", 441, 10),
+            ("tissue_qc_csv_class_information.csv", 286, 10),
         ]
 
     case _:
