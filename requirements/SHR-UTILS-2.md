@@ -7,4 +7,4 @@ Requirement type: ENVIRONMENT
 
 ## Description
 
-Developers shall be able to extend the Python SDK at runtime with custom plugin modules that contribute business logic, CLI commands, and UI pages.
+Developers shall be able to extend the Python SDK at runtime with custom plugin modules that contribute business logic, CLI commands, UI pages, and MCP servers.
