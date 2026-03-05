@@ -1,7 +1,7 @@
 ---
-itemId: SWR-UTILS-1-1
+itemId: SWR-UTILS-2-4
 itemTitle: MCP Server with Auto-Discovery and CLI Commands
-itemHasParent: SHR-UTILS-1
+itemHasParent: SHR-UTILS-2
 itemType: Requirement
 Requirement type: FUNCTIONAL
 Layer: System (backend logic)
