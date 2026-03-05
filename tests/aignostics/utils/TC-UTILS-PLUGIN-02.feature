@@ -8,5 +8,5 @@ Feature: Plugin CLI Command Integration
   Scenario: Plugin CLI commands are registered in the SDK CLI after installation
     Given a plugin package registers an entry point under "aignostics.plugins"
     And the plugin exposes a Typer CLI instance
-    When the SDK CLI is prepared via prepare_cli()
-    Then the plugin's CLI is registered in the SDK command-line interface
+    When the plugin is installed
+    Then the plugin's CLI commands are available in the SDK command-line interface

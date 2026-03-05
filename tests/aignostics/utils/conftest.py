@@ -23,6 +23,11 @@ def install_dummy_plugin() -> Iterator[None]:
 
     Refreshes site-packages so the running interpreter sees the new package
     and its entry points without a process restart.
+
+    Note: Plugin discovery caches (discover_plugin_packages, DI caches) may have
+    been populated before this fixture runs. Tests that rely on post-install
+    discovery must pair this fixture with clear_plugin_caches to ensure caches
+    are reset before and after each test.
     """
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)],
