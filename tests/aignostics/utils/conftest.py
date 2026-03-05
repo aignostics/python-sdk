@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import importlib
+import shutil
 import site
 import subprocess
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -29,8 +29,9 @@ def install_dummy_plugin() -> Iterator[None]:
     discovery must pair this fixture with clear_plugin_caches to ensure caches
     are reset before and after each test.
     """
+    uv = shutil.which("uv") or "uv"
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)],
+        [uv, "pip", "install", "--no-deps", "-e", str(DUMMY_PLUGIN_DIR)],
         check=True,
         capture_output=True,
         text=True,
@@ -43,7 +44,7 @@ def install_dummy_plugin() -> Iterator[None]:
     yield
 
     subprocess.run(
-        [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"],
+        [uv, "pip", "uninstall", "-y", "mcp-dummy-plugin"],
         check=True,
         capture_output=True,
         text=True,
