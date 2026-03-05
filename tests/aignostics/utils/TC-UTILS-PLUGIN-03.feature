@@ -1,4 +1,4 @@
-Feature: Plugin GUI Page Integration
+Feature: Plugin GUI Navigation Integration
 
   The SDK automatically registers GUI navigation entries contributed by plugin
   modules into the SDK graphical user interface when the plugin is installed.
