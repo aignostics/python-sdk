@@ -31,7 +31,7 @@ The Utils Module shall:
 - **[FR-10]** Automatically register MCP servers contributed by plugin modules into the SDK MCP server
 - **[FR-11]** Discover and load externally installed plugin modules at runtime without requiring changes to the core SDK codebase
 - **[FR-12]** Automatically register CLI commands contributed by plugin modules into the SDK command-line interface
-- **[FR-13]** Automatically register GUI pages contributed by plugin modules into the SDK graphical user interface
+- **[FR-13]** Automatically register GUI navigation entries contributed by plugin modules into the SDK graphical user interface
 
 ### 1.3 Non-Functional Requirements
 
