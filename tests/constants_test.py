@@ -112,15 +112,15 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         SPECIAL_APPLICATION_VERSION = "0.99.0"
 
         SPOT_0_EXPECTED_RESULT_FILES = [
-            ("tissue_qc_segmentation_map_image.tiff", 1540764, 10),
-            ("tissue_qc_geojson_polygons.json", 160668, 10),
-            ("tissue_segmentation_geojson_polygons.json", 853784, 10),
-            ("readout_generation_slide_readouts.csv", 302252, 10),
-            ("readout_generation_cell_readouts.csv", 1472661, 10),
-            ("cell_classification_geojson_polygons.json", 9939791, 10),
-            ("tissue_segmentation_segmentation_map_image.tiff", 2807584, 10),
-            ("tissue_segmentation_csv_class_information.csv", 451, 10),
-            ("tissue_qc_csv_class_information.csv", 284, 10),
+            ("tissue_qc_segmentation_map_image.tiff", 1642856, 10),
+            ("tissue_qc_geojson_polygons.json", 259955, 10),
+            ("tissue_segmentation_geojson_polygons.json", 887003, 10),
+            ("readout_generation_slide_readouts.csv", 303217, 10),
+            ("readout_generation_cell_readouts.csv", 1658344, 10),
+            ("cell_classification_geojson_polygons.json", 11218951, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 2945078, 10),
+            ("tissue_segmentation_csv_class_information.csv", 452, 10),
+            ("tissue_qc_csv_class_information.csv", 285, 10),
         ]
         SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
 
