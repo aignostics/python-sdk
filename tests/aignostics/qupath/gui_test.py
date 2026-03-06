@@ -302,7 +302,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         # Check for (1) spot added to QuPath project, (2) heatmaps added, (3) spot annotated
         try:
             project_info = json.loads(output)
-            annotations_total = 0
             spot_found = False
             spot_width = None
             spot_height = None
@@ -329,7 +328,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
             ), (
                 f"Expected approximately {SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]} "
                 f"({SPOT_0_EXPECTED_CELLS_CLASSIFIED[1]}% tolerance) annotations in the QuPath results, "
-                f"but found {annotations_total}"
+                f"but found {spot_annotations}"
             )
         except json.JSONDecodeError as e:
             pytest.fail(f"Failed to parse QuPath inspect output as JSON: {e}\nOutput: {output!r}\n")
