@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import subprocess
-import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -190,52 +187,11 @@ def test_mcp_list_tools_empty(record_property) -> None:
 # Integration Plugin Auto-Discovery Tests
 # =============================================================================
 
-DUMMY_PLUGIN_DIR = Path(__file__).resolve().parents[2] / "resources" / "mcp_dummy_plugin"
-
 
 def _clear_mcp_discovery_caches() -> None:
     """Invalidate DI and plugin caches so MCP discovery starts fresh."""
     _implementation_cache.pop(FastMCP, None)
     discover_plugin_packages.cache_clear()
-
-
-@pytest.fixture(scope="session")
-def install_dummy_mcp_plugin() -> Iterator[None]:
-    """Install the dummy MCP plugin in editable mode and make it importable.
-
-    Refreshes site-packages so the running interpreter sees the new package
-    and its entry points without a process restart.
-    """
-    import importlib
-    import site
-
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--no-deps",
-            "-e",
-            str(DUMMY_PLUGIN_DIR),
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-    importlib.invalidate_caches()
-    for sp in site.getsitepackages():
-        site.addsitedir(sp)
-
-    yield
-
-    subprocess.run(
-        [sys.executable, "-m", "pip", "uninstall", "-y", "mcp-dummy-plugin"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
 
 
 @pytest.fixture
@@ -249,9 +205,7 @@ def clear_mcp_caches() -> Iterator[None]:
 @pytest.mark.integration
 @pytest.mark.sequential
 @pytest.mark.timeout(timeout=60)
-def test_mcp_server_discovers_and_serves_plugin_tools(
-    install_dummy_mcp_plugin, clear_mcp_caches, record_property
-) -> None:
+def test_mcp_server_discovers_and_serves_plugin_tools(install_dummy_plugin, clear_mcp_caches, record_property) -> None:
     """Integration: entry point registration -> discovery -> mount -> client round-trip."""
     record_property("tested-item-id", "TC-UTILS-MCP-01")
 
