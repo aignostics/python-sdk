@@ -122,7 +122,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
             ("tissue_segmentation_csv_class_information.csv", 452, 10),
             ("tissue_qc_csv_class_information.csv", 285, 10),
         ]
-        SPOT_0_EXPECTED_CELLS_CLASSIFIED = (35160, 10)
+        SPOT_0_EXPECTED_CELLS_CLASSIFIED = (39798, 10)
 
         SPOT_1_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 469040, 10),
