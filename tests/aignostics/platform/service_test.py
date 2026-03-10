@@ -51,6 +51,7 @@ def test_determine_api_authenticated_health_success() -> None:
     """Health.UP returned when the dedicated pool responds 200 with auth token."""
     mock_response = MagicMock()
     mock_response.status = HTTPStatus.OK
+    mock_response.data = b'{"status": "UP"}'
 
     mock_pool = MagicMock()
     mock_pool.request.return_value = mock_response
@@ -94,21 +95,6 @@ def test_determine_api_authenticated_health_handles_exception() -> None:
 
 
 @pytest.mark.unit
-def test_determine_api_public_health_success() -> None:
-    """Health.UP returned when the public pool responds 200."""
-    mock_response = MagicMock()
-    mock_response.status = HTTPStatus.OK
-
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
-
-    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
-        result = Service()._determine_api_public_health()
-
-    assert result.status == Health.Code.UP
-
-
-@pytest.mark.unit
 def test_determine_api_public_health_non_200() -> None:
     """Health.DOWN returned when the public pool responds with non-200."""
     mock_response = MagicMock()
@@ -134,6 +120,93 @@ def test_determine_api_public_health_handles_exception() -> None:
         result = Service()._determine_api_public_health()
 
     assert result.status == Health.Code.DOWN
+    assert result.reason is not None
+
+
+@pytest.mark.unit
+def test_determine_api_public_health_up_response() -> None:
+    """HTTP 200 + {"status": "UP"} body → Health.UP (explicit JSON body check)."""
+    mock_response = MagicMock()
+    mock_response.status = HTTPStatus.OK
+    mock_response.data = b'{"status": "UP"}'
+
+    mock_pool = MagicMock()
+    mock_pool.request.return_value = mock_response
+
+    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
+        result = Service()._determine_api_public_health()
+
+    assert result.status == Health.Code.UP
+
+
+@pytest.mark.unit
+def test_determine_api_public_health_degraded_response() -> None:
+    """HTTP 200 + {"status": "DEGRADED"} body → Health.DEGRADED with reason set."""
+    mock_response = MagicMock()
+    mock_response.status = HTTPStatus.OK
+    mock_response.data = b'{"status": "DEGRADED"}'
+
+    mock_pool = MagicMock()
+    mock_pool.request.return_value = mock_response
+
+    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
+        result = Service()._determine_api_public_health()
+
+    assert result.status == Health.Code.DEGRADED
+    assert result.reason is not None
+
+
+@pytest.mark.unit
+def test_determine_api_public_health_degraded_response_with_reason() -> None:
+    """HTTP 200 + {"status": "DEGRADED", "reason": "DB slow"} → reason == "DB slow"."""
+    mock_response = MagicMock()
+    mock_response.status = HTTPStatus.OK
+    mock_response.data = b'{"status": "DEGRADED", "reason": "DB slow"}'
+
+    mock_pool = MagicMock()
+    mock_pool.request.return_value = mock_response
+
+    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
+        result = Service()._determine_api_public_health()
+
+    assert result.status == Health.Code.DEGRADED
+    assert result.reason == "DB slow"
+
+
+@pytest.mark.unit
+def test_determine_api_public_health_unknown_status_is_down() -> None:
+    """HTTP 200 + {"status": "UNKNOWN"} body → Health.DOWN."""
+    mock_response = MagicMock()
+    mock_response.status = HTTPStatus.OK
+    mock_response.data = b'{"status": "UNKNOWN"}'
+
+    mock_pool = MagicMock()
+    mock_pool.request.return_value = mock_response
+
+    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
+        result = Service()._determine_api_public_health()
+
+    assert result.status == Health.Code.DOWN
+    assert result.reason is not None
+
+
+@pytest.mark.unit
+def test_determine_api_authenticated_health_degraded_response() -> None:
+    """HTTP 200 + {"status": "DEGRADED"} body → Health.DEGRADED with reason set."""
+    mock_response = MagicMock()
+    mock_response.status = HTTPStatus.OK
+    mock_response.data = b'{"status": "DEGRADED"}'
+
+    mock_pool = MagicMock()
+    mock_pool.request.return_value = mock_response
+
+    with (
+        patch.object(Service, "_get_http_pool", return_value=mock_pool),
+        patch(_PATCH_AUTH_GETTER, return_value="test-token"),
+    ):
+        result = Service()._determine_api_authenticated_health()
+
+    assert result.status == Health.Code.DEGRADED
     assert result.reason is not None
 
 

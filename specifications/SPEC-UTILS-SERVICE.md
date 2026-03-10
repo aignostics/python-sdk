@@ -151,12 +151,12 @@ health:
   properties:
     status:
       type: string
-      enum: [UP, DOWN]
+      enum: [UP, DEGRADED, DOWN]
       description: Service health status
     reason:
       type: string
       nullable: true
-      description: Optional reason for status
+      description: Required reason for DOWN or DEGRADED status; must be null for UP
     components:
       type: object
       description: Hierarchical component health
