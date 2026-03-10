@@ -180,7 +180,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
     assert "Warning: Source file 'missing.file' (row 0) does not exist" in normalize_output(result.stdout)
 
 
-@pytest.mark.unit
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
 @patch("aignostics.application._cli.SystemService.health_static")
 def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
@@ -211,7 +211,47 @@ def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
     assert result.exit_code == 1
 
 
-@pytest.mark.unit
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=10)
+@patch("aignostics.application._cli.SystemService.health_static")
+def test_cli_run_submit_succeeds_when_system_degraded_and_no_force(
+    mock_health: MagicMock, runner: CliRunner, tmp_path: Path
+) -> None:
+    """Check run submit command succeeds when system is degraded and --force is not used."""
+    mock_health.return_value = Health(
+        status=Health.Code.DEGRADED,
+        reason="Simulated degraded system for testing",
+    )
+    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
+    csv_content += "platform_bucket_url\n"
+    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
+    csv_path = tmp_path / "dummy.csv"
+    csv_path.write_text(csv_content)
+
+    result = runner.invoke(
+        cli,
+        [
+            "application",
+            "run",
+            "submit",
+            HETA_APPLICATION_ID,
+            str(csv_path),
+            "--deadline",
+            (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
+        ],
+    )
+
+    assert result.exit_code == 0
+
+    # cancel the run
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", normalize_output(result.stdout))
+    assert run_id_match, f"Failed to extract run ID from output '{normalize_output(result.stdout)}'"
+    run_id = run_id_match.group(1)
+    cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
+    assert cancel_result.exit_code == 0
+
+
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
 @patch("aignostics.application._cli.SystemService.health_static")
 def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
