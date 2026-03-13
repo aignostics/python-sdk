@@ -211,7 +211,7 @@ def test_determine_api_authenticated_health_degraded_response() -> None:
 
 
 @pytest.mark.unit
-def test_health_returns_both_components() -> None:
+async def test_health_returns_both_components() -> None:
     """health() aggregates api_public and api_authenticated component keys."""
     public_health = Health(status=Health.Code.UP)
     auth_health = Health(status=Health.Code.UP)
@@ -221,7 +221,7 @@ def test_health_returns_both_components() -> None:
         patch.object(service, "_determine_api_public_health", return_value=public_health),
         patch.object(service, "_determine_api_authenticated_health", return_value=auth_health),
     ):
-        result = service.health()
+        result = await service.health()
 
     assert result.components is not None
     assert "api_public" in result.components

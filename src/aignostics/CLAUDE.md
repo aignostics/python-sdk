@@ -294,10 +294,10 @@ For detailed information about each module, see:
    from aignostics.utils import BaseService
 
    class Service(BaseService):
-       def health(self) -> Health:
+       async def health(self) -> Health:
            return Health(status=Health.Code.UP)
 
-       def info(self, mask_secrets=True) -> dict:
+       async def info(self, mask_secrets=True) -> dict:
            return {"version": "1.0.0"}
    ```
 

@@ -171,7 +171,7 @@ class Service(BaseService):
             )
         return cls._http_pool
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
 
         Args:
@@ -278,7 +278,7 @@ class Service(BaseService):
             logger.exception("Issue with Aignostics Platform API")
             return Health(status=Health.Code.DOWN, reason=f"Issue with Aignostics Platform API: '{e}'")
 
-    def health(self) -> Health:
+    async def health(self) -> Health:
         """Determine health of this service.
 
         Returns:

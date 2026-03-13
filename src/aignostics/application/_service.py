@@ -73,7 +73,7 @@ class Service(BaseService):  # noqa: PLR0904
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -84,7 +84,7 @@ class Service(BaseService):  # noqa: PLR0904
         """
         return {}
 
-    def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
 
         Returns:

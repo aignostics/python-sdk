@@ -134,7 +134,7 @@ class Service(BaseService):
         return Health(status=Health.Code.UP)
 
     @staticmethod
-    def health_static() -> Health:
+    async def health_static() -> Health:
         """Determine health of the system.
 
         - This method is static and does not require an instance of the service.
@@ -143,9 +143,9 @@ class Service(BaseService):
         Returns:
             Health: The health of the system.
         """
-        return Service().health()
+        return await Service().health()
 
-    def health(self) -> Health:
+    async def health(self) -> Health:
         """Determine aggregate health of the system.
 
         - Health exposed by implementations of BaseService in other
@@ -158,7 +158,7 @@ class Service(BaseService):
         components: dict[str, Health] = {}
         for service_class in locate_subclasses(BaseService):
             if service_class is not Service:
-                components[f"{service_class.__module__}.{service_class.__name__}"] = service_class().health()
+                components[f"{service_class.__module__}.{service_class.__name__}"] = await service_class().health()
         components["network"] = self._determine_network_health()
 
         # Set the system health status based on is_healthy attribute
@@ -291,7 +291,7 @@ class Service(BaseService):
         return {k: settings[k] for k in sorted(settings)}
 
     @staticmethod
-    def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:  # type: ignore[override]
+    async def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:  # type: ignore[override]
         """
         Get info about configuration of service.
 
@@ -417,7 +417,7 @@ class Service(BaseService):
         for service_class in locate_subclasses(BaseService):
             if service_class is not Service:
                 service = service_class()
-                result_dict[service.key()] = service.info(mask_secrets=mask_secrets)
+                result_dict[service.key()] = await service.info(mask_secrets=mask_secrets)
 
         logger.debug("Service info: {}", result_dict)
         return result_dict
