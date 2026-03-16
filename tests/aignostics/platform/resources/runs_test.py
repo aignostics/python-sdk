@@ -4,9 +4,10 @@ This module contains unit tests for the Runs class and Run class,
 verifying their functionality for listing, creating, and managing application runs.
 """
 
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+import requests
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.models import (
     InputArtifactCreationRequest,
@@ -701,6 +702,150 @@ def test_run_details_raises_not_found_after_timeout(app_run, mock_api) -> None:
         app_run.details()
 
     assert mock_api.get_run_v1_runs_run_id_get.call_count > 1
+
+
+@pytest.fixture
+def mock_serialize(mock_api) -> Mock:
+    """Configure the serialize method on mock_api to return a valid (method, url, headers) tuple.
+
+    Returns:
+        Mock: The configured serialize mock.
+    """
+    serialize = Mock(return_value=("GET", "https://api.example.com/v1/runs/test-run-id/artifacts/art-1/file", {}, None))
+    mock_api._get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get_serialize = serialize
+    return serialize
+
+
+@pytest.mark.unit
+def test_get_artifact_download_url_returns_location_on_307(app_run, mock_serialize) -> None:
+    """Test that get_artifact_download_url returns the Location header value on a 307 redirect.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_serialize: Mock serializer configured on the API.
+    """
+    # Arrange
+    presigned_url = "https://storage.example.com/artifact?sig=abc123"
+    mock_response = MagicMock()
+    mock_response.__enter__ = Mock(return_value=mock_response)
+    mock_response.__exit__ = Mock(return_value=False)
+    mock_response.status_code = requests.codes.temporary_redirect
+    mock_response.headers = {"Location": presigned_url}
+
+    with patch("aignostics.platform.resources.runs.requests.get", return_value=mock_response) as mock_get:
+        # Act
+        result = app_run.get_artifact_download_url("art-1")
+
+    # Assert
+    assert result == presigned_url
+    mock_get.assert_called_once_with(
+        "https://api.example.com/v1/runs/test-run-id/artifacts/art-1/file",
+        headers={},
+        allow_redirects=False,
+        timeout=mock_get.call_args[1]["timeout"],
+    )
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected_message"),
+    [
+        (200, "Unexpected status 200 from artifact URL endpoint"),
+        (307, "307 redirect received but Location header is absent"),
+        (404, "Unexpected status 404 from artifact URL endpoint for artifact 'art-1'; expected 307 redirect"),
+    ],
+)
+@pytest.mark.unit
+def test_get_artifact_download_url_errors(app_run, mock_serialize, status_code, expected_message) -> None:
+    """Test that get_artifact_download_url raises RuntimeError after unexpected result.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_serialize: Mock serializer configured on the API.
+        status_code: The HTTP status code to simulate in the response.
+        expected_message: The expected error message to be included in the RuntimeError.
+    """
+    # Arrange
+    mock_response = MagicMock()
+    mock_response.__enter__ = Mock(return_value=mock_response)
+    mock_response.__exit__ = Mock(return_value=False)
+    mock_response.status_code = status_code
+    mock_response.headers = {}  # No Location header
+
+    with (
+        patch("aignostics.platform.resources.runs.requests.get", return_value=mock_response),
+        pytest.raises(RuntimeError, match=expected_message),
+    ):
+        app_run.get_artifact_download_url("art-1")
+
+
+@pytest.mark.unit
+def test_get_artifact_download_url_passes_correct_artifact_id(app_run, mock_api) -> None:
+    """Test that get_artifact_download_url passes the artifact_id to the serializer.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    # Arrange
+    artifact_id = "specific-artifact-xyz"
+    serialize = Mock(
+        return_value=(
+            "GET",
+            "https://api.example.com/v1/runs/test-run-id/artifacts/specific-artifact-xyz/file",
+            {},
+            None,
+        )
+    )
+    mock_api._get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get_serialize = serialize
+
+    presigned_url = "https://storage.example.com/file?sig=xyz"
+    mock_response = MagicMock()
+    mock_response.__enter__ = Mock(return_value=mock_response)
+    mock_response.__exit__ = Mock(return_value=False)
+    mock_response.status_code = requests.codes.temporary_redirect
+    mock_response.headers = {"Location": presigned_url}
+
+    with patch("aignostics.platform.resources.runs.requests.get", return_value=mock_response):
+        # Act
+        result = app_run.get_artifact_download_url(artifact_id)
+
+    # Assert
+    assert result == presigned_url
+    serialize.assert_called_once()
+    call_kwargs = serialize.call_args[1]
+    assert call_kwargs["run_id"] == app_run.run_id
+    assert call_kwargs["artifact_id"] == artifact_id
+
+
+@pytest.mark.unit
+def test_get_artifact_download_url_uses_headers_from_serializer(app_run, mock_api) -> None:
+    """Test that get_artifact_download_url passes serializer-provided headers to requests.get.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    # Arrange
+    auth_headers = [("Authorization", "Bearer token123"), ("X-Custom", "header-value")]
+    serialize = Mock(
+        return_value=("GET", "https://api.example.com/v1/runs/test-run-id/artifacts/art-1/file", auth_headers, None)
+    )
+    mock_api._get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get_serialize = serialize
+
+    mock_response = MagicMock()
+    mock_response.__enter__ = Mock(return_value=mock_response)
+    mock_response.__exit__ = Mock(return_value=False)
+    mock_response.status_code = requests.codes.temporary_redirect
+    mock_response.headers = {"Location": "https://storage.example.com/file"}
+
+    with patch("aignostics.platform.resources.runs.requests.get", return_value=mock_response) as mock_get:
+        # Act
+        app_run.get_artifact_download_url("art-1")
+
+    # Assert
+    call_kwargs = mock_get.call_args[1]
+    assert call_kwargs["headers"] == dict(auth_headers)
+    assert call_kwargs["allow_redirects"] is False
 
 
 @pytest.mark.unit

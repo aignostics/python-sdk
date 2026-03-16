@@ -292,6 +292,8 @@ class Run:
             RuntimeError: If the redirect ``Location`` header is missing or the
                 response status is unexpected.
         """
+        # Generated client follows redirect automatically which prevents us from getting the presigned URL,
+        # but we need the presigned URL to get query the metadata of the file (e.g. checksum) before downloading it.
         serialize = (
             self._api._get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get_serialize  # noqa: SLF001
         )
@@ -303,24 +305,23 @@ class Run:
             _headers={"User-Agent": user_agent()},
             _host_index=0,
         )
-        response = requests.get(
+        with requests.get(
             url,
             headers=dict(header_params),
             allow_redirects=False,
             timeout=settings().run_timeout,
-        )
-        if response.status_code == requests.codes.temporary_redirect:
-            location = response.headers.get("Location")
-            if not location:
-                msg = f"307 redirect received but Location header is absent for artifact {artifact_id!r}"
-                raise RuntimeError(msg)
-            return location
-        response.raise_for_status()
-        msg = (
-            f"Unexpected status {response.status_code} from artifact URL endpoint "
-            f"for artifact {artifact_id!r}; expected 307 redirect"
-        )
-        raise RuntimeError(msg)
+        ) as response:
+            if response.status_code == requests.codes.temporary_redirect:
+                location = response.headers.get("Location")
+                if not location:
+                    msg = f"307 redirect received but Location header is absent for artifact {artifact_id!r}"
+                    raise RuntimeError(msg)
+                return location
+            msg = (
+                f"Unexpected status {response.status_code} from artifact URL endpoint "
+                f"for artifact {artifact_id!r}; expected 307 redirect"
+            )
+            raise RuntimeError(msg)
 
     def download_to_folder(  # noqa: C901
         self,
