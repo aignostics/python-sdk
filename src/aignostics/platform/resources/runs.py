@@ -12,9 +12,11 @@ from pathlib import Path
 from time import sleep
 from typing import Any, cast
 
+import requests
 from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import (
+    ArtifactOutput,
     CustomMetadataUpdateRequest,
     ItemCreationRequest,
     ItemOutput,
@@ -267,6 +269,59 @@ class Run:
 
         return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **filter_kwargs, **kwargs))
 
+    def get_artifact_download_url(self, artifact_id: str) -> str:
+        """Fetch a fresh presigned download URL for a specific output artifact.
+
+        Calls ``GET /v1/runs/{run_id}/artifacts/{artifact_id}/file``.  The
+        endpoint responds with a ``307 Temporary Redirect`` whose ``Location``
+        header carries the presigned download URL.  Because urllib3 follows
+        redirects automatically the URL is captured by intercepting the redirect
+        with ``requests`` (``allow_redirects=False``), using the endpoint URL
+        and auth headers obtained from the generated client's serializer so that
+        no path strings are hardcoded here.
+
+        Args:
+            artifact_id: The ``output_artifact_id`` from
+                :class:`~aignx.codegen.models.OutputArtifactResultReadResponse`.
+
+        Returns:
+            str: A time-limited presigned URL that can be used to download the
+            file.
+
+        Raises:
+            RuntimeError: If the redirect ``Location`` header is missing or the
+                response status is unexpected.
+        """
+        serialize = (
+            self._api._get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get_serialize  # noqa: SLF001
+        )
+        _method, url, header_params, *_ = serialize(
+            run_id=self.run_id,
+            artifact_id=artifact_id,
+            _request_auth=None,
+            _content_type=None,
+            _headers={"User-Agent": user_agent()},
+            _host_index=0,
+        )
+        response = requests.get(
+            url,
+            headers=dict(header_params),
+            allow_redirects=False,
+            timeout=settings().run_timeout,
+        )
+        if response.status_code == requests.codes.temporary_redirect:
+            location = response.headers.get("Location")
+            if not location:
+                msg = f"307 redirect received but Location header is absent for artifact {artifact_id!r}"
+                raise RuntimeError(msg)
+            return location
+        response.raise_for_status()
+        msg = (
+            f"Unexpected status {response.status_code} from artifact URL endpoint "
+            f"for artifact {artifact_id!r}; expected 307 redirect"
+        )
+        raise RuntimeError(msg)
+
     def download_to_folder(  # noqa: C901
         self,
         download_base: Path | str,
@@ -344,8 +399,8 @@ class Run:
             msg = f"Download operation failed unexpectedly for run {self.run_id}: {e}"
             raise RuntimeError(msg) from e
 
-    @staticmethod
     def ensure_artifacts_downloaded(
+        self,
         base_folder: Path,
         item: ItemResultReadResponse,
         checksum_attribute_key: str = "checksum_base64_crc32c",
@@ -354,6 +409,8 @@ class Run:
         """Ensures all artifacts for an item are downloaded.
 
         Downloads missing or partially downloaded artifacts and verifies their integrity.
+        Uses ``GET /v1/runs/{run_id}/artifacts/{artifact_id}/file`` to obtain fresh
+        presigned download URLs instead of the deprecated ``download_url`` field.
 
         Args:
             base_folder (Path): Base directory to download artifacts to.
@@ -369,7 +426,7 @@ class Run:
 
         downloaded_at_least_one_artifact = False
         for artifact in item.output_artifacts:
-            if artifact.download_url:
+            if artifact.output == ArtifactOutput.AVAILABLE:
                 item_dir.mkdir(exist_ok=True, parents=True)
                 file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
                 file_path = item_dir / f"{artifact.name}{file_ending}"
@@ -395,8 +452,8 @@ class Run:
                     logger.trace("Download for {} to {}", artifact.name, file_path)
                     print(f"> Download for {artifact.name} to {file_path}") if print_status else None
 
-                # if file is not there at all or only partially downloaded yet
-                download_file(artifact.download_url, str(file_path), checksum)
+                artifact_download_url = self.get_artifact_download_url(artifact.output_artifact_id)
+                download_file(artifact_download_url, str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
             logger.trace("Downloaded results for item: {} to {}", item.external_id, item_dir)

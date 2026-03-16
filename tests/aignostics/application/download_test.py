@@ -1,12 +1,18 @@
 """Tests for download utility functions in the application module."""
 
+import base64
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import crc32c
 import pytest
 import requests
 
-from aignostics.application._download import download_url_to_file_with_progress, extract_filename_from_url
+from aignostics.application._download import (
+    download_item_artifact,
+    download_url_to_file_with_progress,
+    extract_filename_from_url,
+)
 from aignostics.application._models import DownloadProgress, DownloadProgressState
 
 
@@ -397,3 +403,87 @@ def test_download_url_to_file_with_progress_https_with_chunked(tmp_path: Path) -
 
         # Verify direct URL was used (no signed URL generation)
         mock_get.assert_called_once_with(https_url, stream=True, timeout=60)
+
+
+# ---------------------------------------------------------------------------
+# download_item_artifact tests
+# ---------------------------------------------------------------------------
+
+
+def _make_crc32c_checksum(data: bytes) -> str:
+    """Compute a base64-encoded CRC32C checksum matching the SDK's format."""
+    h = crc32c.CRC32CHash()
+    h.update(data)
+    return base64.b64encode(h.digest()).decode("ascii")
+
+
+@pytest.mark.unit
+def test_download_item_artifact_success(tmp_path: Path) -> None:
+    """Test that download_item_artifact fetches a URL from the run and downloads the file."""
+    file_content = b"artifact file content"
+    presigned_url = "https://storage.example.com/presigned/artifact.tiff"
+    checksum = _make_crc32c_checksum(file_content)
+
+    mock_run = Mock()
+    mock_run.get_artifact_download_url.return_value = presigned_url
+
+    artifact = Mock()
+    artifact.name = "result"
+    artifact.output_artifact_id = "artifact-uuid-123"
+    artifact.metadata = {"checksum_base64_crc32c": checksum, "media_type": "image/tiff"}
+
+    progress = DownloadProgress()
+
+    with patch("aignostics.application._download.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.__enter__ = Mock(return_value=mock_response)
+        mock_response.__exit__ = Mock(return_value=False)
+        mock_response.raise_for_status = Mock()
+        mock_response.headers = {"content-length": str(len(file_content))}
+        mock_response.iter_content = Mock(return_value=[file_content])
+        mock_get.return_value = mock_response
+
+        with patch("aignostics.application._utils.get_file_extension_for_artifact", return_value=".tiff"):
+            download_item_artifact(progress, mock_run, artifact, tmp_path)
+
+    mock_run.get_artifact_download_url.assert_called_once_with("artifact-uuid-123")
+    assert (tmp_path / "result.tiff").exists()
+
+
+@pytest.mark.unit
+def test_download_item_artifact_no_checksum_raises(tmp_path: Path) -> None:
+    """Test that download_item_artifact raises ValueError when no checksum metadata is present."""
+    mock_run = Mock()
+    artifact = Mock()
+    artifact.name = "result"
+    artifact.metadata = {}  # no checksum
+
+    progress = DownloadProgress()
+
+    with pytest.raises(ValueError, match="No checksum metadata found"):
+        download_item_artifact(progress, mock_run, artifact, tmp_path)
+
+    mock_run.get_artifact_download_url.assert_not_called()
+
+
+@pytest.mark.unit
+def test_download_item_artifact_skips_existing_correct_checksum(tmp_path: Path) -> None:
+    """Test that download_item_artifact skips download when file exists with correct checksum."""
+    file_content = b"existing artifact content"
+    checksum = _make_crc32c_checksum(file_content)
+
+    mock_run = Mock()
+    artifact = Mock()
+    artifact.name = "result"
+    artifact.output_artifact_id = "artifact-uuid-456"
+    artifact.metadata = {"checksum_base64_crc32c": checksum, "media_type": "image/tiff"}
+
+    progress = DownloadProgress()
+
+    with patch("aignostics.application._utils.get_file_extension_for_artifact", return_value=".tiff"):
+        existing_file = tmp_path / "result.tiff"
+        existing_file.write_bytes(file_content)
+
+        download_item_artifact(progress, mock_run, artifact, tmp_path)
+
+    mock_run.get_artifact_download_url.assert_not_called()
