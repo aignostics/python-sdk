@@ -281,8 +281,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             await user.should_see("Hard Deadline")
             await user.should_see("The platform might cancel the run if not completed by this time.", retries=100)
+            time_due_date: ui.time = user.find(marker="TIME_DUE_DATE").elements.pop()
+            time_due_date.value = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
             time_deadline: ui.time = user.find(marker="TIME_DEADLINE").elements.pop()
-            time_deadline.value = (datetime.now().astimezone() + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M")
+            time_deadline.value = (datetime.now().astimezone() + timedelta(hours=12)).strftime("%Y-%m-%d %H:%M")
 
             user.find(marker="BUTTON_SCHEDULING_NEXT").click()
             await assert_notified(user, "Prepared upload UI.")

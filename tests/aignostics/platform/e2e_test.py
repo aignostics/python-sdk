@@ -20,6 +20,7 @@ from aignx.codegen.models import (
     RunOutput,
     RunState,
 )
+from aignx.codegen.models.run_read_response import RunReadResponse
 from loguru import logger
 from sentry_sdk import metrics
 
@@ -280,13 +281,13 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
 
     logger.trace(f"Submitting application run for {application_id} version {application_version}")
     client = platform.Client()
+    scheduling = {
+        "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
+        "deadline": deadline.isoformat(),
+    }
     custom_metadata = {
         "sdk": {
             "tags": tags or set(),
-            "scheduling": {
-                "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
-                "deadline": deadline.isoformat(),
-            },
             "pipeline": {
                 "gpu": {
                     "gpu_type": PIPELINE_GPU_TYPE,
@@ -310,9 +311,10 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
         application_version=application_version,
         items=payload,
         custom_metadata=custom_metadata,
+        scheduling=scheduling,
     )
 
-    # Let's validate we can fiond the run by id
+    # Let's validate we can find the run by id
     details = run.details()
     assert details.run_id == run.run_id, "Run ID mismatch after submission"
     assert details.application_id == application_id, "Application ID mismatch after submission"
@@ -381,6 +383,21 @@ def _submit_and_wait(  # noqa: PLR0913, PLR0917
         _validate_output(run, Path(temp_dir), checksum_attribute_key)
 
 
+def _resolve_run_deadline(details: RunReadResponse, sdk_metadata: RunSdkMetadata) -> datetime:
+    """Extract the run deadline from the API scheduling field, falling back to custom_metadata.
+
+    Raises:
+        ValueError: If no deadline is found in either the API scheduling field or sdk_metadata.scheduling.
+    """
+    if getattr(details, "scheduling", None) is not None and getattr(details.scheduling, "deadline", None) is not None:
+        deadline = details.scheduling.deadline
+        return deadline if isinstance(deadline, datetime) else datetime.fromisoformat(str(deadline))
+    if getattr(sdk_metadata, "scheduling", None) is None or getattr(sdk_metadata.scheduling, "deadline", None) is None:
+        msg = "No deadline found in API scheduling field or sdk_metadata.scheduling"
+        raise ValueError(msg)
+    return datetime.fromisoformat(str(sdk_metadata.scheduling.deadline))
+
+
 def _find_and_validate(
     application_id: str,
     application_version: str,
@@ -430,9 +447,8 @@ def _find_and_validate(
         sdk_metadata = RunSdkMetadata.model_validate(details.custom_metadata.get("sdk", {}))
         logger.trace(sdk_metadata.model_dump_json(indent=2))
         print(sdk_metadata.model_dump_json(indent=2))
-        allowed_duration = datetime.fromisoformat(sdk_metadata.scheduling.deadline) - datetime.fromisoformat(
-            sdk_metadata.submission.date
-        )
+        run_deadline = _resolve_run_deadline(details, sdk_metadata)
+        allowed_duration = run_deadline - datetime.fromisoformat(sdk_metadata.submission.date)
         allowed_hours = round(allowed_duration.total_seconds() / (60 * 60))
         deadline_met = details.state is RunState.TERMINATED
         metrics_run_attributes = {
@@ -441,7 +457,7 @@ def _find_and_validate(
             "application_version": application_version,
             "allowed_hours": allowed_hours,
             "submitted_at": sdk_metadata.submission.date,
-            "deadline": sdk_metadata.scheduling.deadline,
+            "deadline": run_deadline.isoformat(),
             "state": details.state.value,
             "error_message": details.error_message,
             "error_code": details.error_code,
@@ -454,13 +470,13 @@ def _find_and_validate(
                 value=1,
                 attributes=metrics_run_attributes,
             )
-            completed_duration_seconds = (
-                details.terminated_at - datetime.fromisoformat(sdk_metadata.submission.date)
-            ).total_seconds()
-            message = f"Run completed in {completed_duration_seconds} seconds"
-            logger.trace(message)
-            print(message)
             if details.terminated_at:
+                completed_duration_seconds = (
+                    details.terminated_at - datetime.fromisoformat(sdk_metadata.submission.date)
+                ).total_seconds()
+                message = f"Run completed in {completed_duration_seconds} seconds"
+                logger.trace(message)
+                print(message)
                 metrics.distribution(
                     name="aignostics.platform.tests.run.completed.duration",
                     value=completed_duration_seconds,

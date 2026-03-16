@@ -23,6 +23,7 @@ from aignx.codegen.models import (
     RunCreationRequest,
     RunCreationResponse,
     RunState,
+    SchedulingRequest,
 )
 from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
@@ -528,6 +529,7 @@ class Runs:
         items: list[ItemCreationRequest],
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
+        scheduling: SchedulingRequest | None = None,
     ) -> Run:
         """Submit a new application run.
 
@@ -537,6 +539,9 @@ class Runs:
             application_version (str|None): The version of the application to use.
                 If None, the latest version is used.
             custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
+            scheduling (SchedulingRequest | None): Optional scheduling constraints for the run.
+                Supports 'due_date' (requested completion time, ISO 8601) and
+                'deadline' (hard deadline, ISO 8601).
 
         Returns:
             Run: The submitted application run.
@@ -557,6 +562,7 @@ class Runs:
             version_number=application_version,
             custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
             items=items,
+            scheduling=scheduling,
         )
         current_settings = settings()
         self._validate_input_items(payload)
