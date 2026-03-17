@@ -61,8 +61,7 @@ The Build Chain and CI/CD Module shall:
 │   ├── _docker-publish.yml  # Container image publishing
 │   ├── _codeql.yml     # GitHub CodeQL security analysis
 │   └── _ketryx_report_and_check.yml # Compliance reporting
-├── copilot-instructions.md # AI pair programming guidelines
-└── dependabot.yml      # Automated dependency updates
+└── copilot-instructions.md # AI pair programming guidelines
 
 Makefile                # Local development task orchestration
 noxfile.py             # Python environment management and task automation

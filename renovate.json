@@ -4,7 +4,7 @@
     "config:recommended"
   ],
   "timezone": "Europe/Berlin",
-  "schedule": "before 2am every weekday",
+  "schedule": ["at any time"],
   "labels": [
     "bot",
     "renovate",
@@ -12,7 +12,21 @@
     "skip:test:long_running",
     "skip:codecov"
   ],
-  "ignorePaths": [
-    "plugins/manifest/package.json"
+  "enabledManagers": ["pep621", "github-actions"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on monday"]
+  },
+  "packageRules": [
+    {
+      "groupName": "minor and patch dependencies",
+      "matchManagers": ["pep621"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "separateMajorMinor": false
+    }
   ]
 }
