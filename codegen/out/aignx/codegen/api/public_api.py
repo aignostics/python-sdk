@@ -319,7 +319,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/applications/{application_id}/versions/{version}',
+            resource_path='/api/v1/applications/{application_id}/versions/{version}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -592,7 +592,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='POST',
-            resource_path='/v1/runs/{run_id}/cancel',
+            resource_path='/api/v1/runs/{run_id}/cancel',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -878,7 +878,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='POST',
-            resource_path='/v1/runs',
+            resource_path='/api/v1/runs',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1145,7 +1145,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='DELETE',
-            resource_path='/v1/runs/{run_id}/artifacts',
+            resource_path='/api/v1/runs/{run_id}/artifacts',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1436,7 +1436,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/runs/{run_id}/artifacts/{artifact_id}/file',
+            resource_path='/api/v1/runs/{run_id}/artifacts/{artifact_id}/file',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1721,7 +1721,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/runs/{run_id}/items/{external_id}',
+            resource_path='/api/v1/runs/{run_id}/items/{external_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1967,7 +1967,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/me',
+            resource_path='/api/v1/me',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2237,7 +2237,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/runs/{run_id}',
+            resource_path='/api/v1/runs/{run_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2541,7 +2541,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/applications',
+            resource_path='/api/v1/applications',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2947,7 +2947,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/runs/{run_id}/items',
+            resource_path='/api/v1/runs/{run_id}/items',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3336,7 +3336,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/runs',
+            resource_path='/api/v1/runs',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3652,7 +3652,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='PUT',
-            resource_path='/v1/runs/{run_id}/items/{external_id}/custom-metadata',
+            resource_path='/api/v1/runs/{run_id}/items/{external_id}/custom-metadata',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3953,7 +3953,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='PUT',
-            resource_path='/v1/runs/{run_id}/custom-metadata',
+            resource_path='/api/v1/runs/{run_id}/custom-metadata',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -4223,7 +4223,7 @@ class PublicApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/v1/applications/{application_id}',
+            resource_path='/api/v1/applications/{application_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
