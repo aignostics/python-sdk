@@ -325,7 +325,6 @@ def _retrieve_and_print_run_items(run_handle: Run, summarize: bool = False) -> N
                     f"\n    - Name: {artifact.name}"
                     f"\n      MIME Type: {get_mime_type_for_artifact(artifact)}"
                     f"\n      Artifact ID: {artifact.output_artifact_id}"
-                    f"\n      Download URL: {artifact.download_url}"
                 )
             item_output += artifacts_output
 

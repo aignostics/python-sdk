@@ -15,9 +15,10 @@ from nicegui import (
 )
 from nicegui import run as nicegui_run
 
-from aignostics.platform import ItemOutput, ItemResult, ItemState, RunState
+from aignostics.platform import ItemOutput, ItemResult, ItemState, RunState, Run
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
+from aignx.codegen.models import ArtifactOutput
 
 if TYPE_CHECKING:
     from aignx.codegen.models import RunReadResponse
@@ -430,9 +431,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=csv_view_dialog.close)
 
-    def csv_dialog_open(title: str, url: str) -> None:
+    def csv_dialog_open(title: str, artifact_id: str) -> None:
         """Open the CSV dialog."""
-        csv_view_dialog_content.refresh(title=title, url=url)
+        download_url = Run.for_run_id(run_id).get_artifact_download_url(artifact_id)
+        csv_view_dialog_content.refresh(title=title, url=download_url)
         csv_view_dialog.open()
 
     @ui.refreshable
@@ -478,15 +480,16 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=tiff_view_dialog.close)
 
-    def tiff_dialog_open(title: str, url: str) -> None:
+    def tiff_dialog_open(title: str, artifact_id: str) -> None:
         """Open the TIFF dialog.
 
         Args:
             title (str): The title of the TIFF dialog.
-            url (str): The URL of the TIFF image.
+            artifact_id: (str): The ID of the artifact containing the TIFF to display.
 
         """
-        tiff_view_dialog_content.refresh(title=title, url=url)
+        download_url = Run.for_run_id(run_id).get_artifact_download_url(artifact_id)
+        tiff_view_dialog_content.refresh(title=title, url=download_url)
         tiff_view_dialog.open()
 
     @ui.refreshable
@@ -515,6 +518,10 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         """Open the Custom Metadata dialog."""
         custom_metadata_dialog_content.refresh(title=title, custom_metadata=custom_metadata)
         custom_metadata_dialog.open()
+
+    def open_browser(_, artifact_id):
+        download_url = Run.for_run_id(run_id).get_artifact_download_url(artifact_id)
+        webbrowser.open(download_url)
 
     async def open_qupath(
         project: Path | None = None, image: Path | str | None = None, button: ui.button | None = None
@@ -760,8 +767,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 icon=mime_type_to_icon(mime_type),
                                 group="artifacts",
                             ).classes("w-full"):
-                                if artifact.download_url:
-                                    url = artifact.download_url
+                                if artifact.output == ArtifactOutput.AVAILABLE:
+                                    artifact_id = artifact.output_artifact_id
                                     title = artifact.name
                                     metadata = artifact.metadata
                                     with ui.button_group():
@@ -769,20 +776,19 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                             ui.button(
                                                 "Preview",
                                                 icon=mime_type_to_icon(mime_type),
-                                                on_click=lambda _, url=url, title=title: tiff_dialog_open(title, url),
+                                                on_click=lambda _, artifact_id=artifact_id, title=title: tiff_dialog_open(title, artifact_id),
                                             )
                                         if mime_type == "text/csv":
                                             ui.button(
                                                 "Preview",
                                                 icon=mime_type_to_icon(mime_type),
-                                                on_click=lambda _, url=url, title=title: csv_dialog_open(title, url),
+                                                on_click=lambda _, artifact_id=artifact_id, title=title: csv_dialog_open(title, artifact_id),
                                             )
-                                        if url:
-                                            ui.button(
-                                                text="Download",
-                                                icon="cloud_download",
-                                                on_click=lambda _, url=url: webbrowser.open(url),
-                                            )
+                                        ui.button(
+                                            text="Download",
+                                            icon="cloud_download",
+                                            on_click=lambda _, artifact_id=artifact_id: open_browser(_, artifact_id),
+                                        )
                                         if metadata:
                                             ui.button(
                                                 text="Schema",
