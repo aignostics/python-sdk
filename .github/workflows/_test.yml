@@ -190,7 +190,7 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / regular (multiple Python versions)
-        id: e2e
+        id: e2e_regular
         continue-on-error: true
         if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
@@ -202,7 +202,7 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / long running (single Python version)
-        id: long_running
+        id: e2e_long_running
         continue-on-error: true
         if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
@@ -214,7 +214,7 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / very long running (single Python version)
-        id: very_long_running
+        id: e2e_very_long_running
         continue-on-error: true
         if: |
           !cancelled() && (
@@ -279,11 +279,11 @@ jobs:
         shell: bash
         run: |
           failed=()
-          [[ "${{ steps.unit.outcome }}"              == "failure" ]] && failed+=("unit")
-          [[ "${{ steps.integration.outcome }}"       == "failure" ]] && failed+=("integration")
-          [[ "${{ steps.e2e.outcome }}"               == "failure" ]] && failed+=("e2e")
-          [[ "${{ steps.long_running.outcome }}"      == "failure" ]] && failed+=("long-running")
-          [[ "${{ steps.very_long_running.outcome }}" == "failure" ]] && failed+=("very-long-running")
+          [[ "${{ steps.unit.outcome }}"                  == "failure" ]] && failed+=("unit")
+          [[ "${{ steps.integration.outcome }}"           == "failure" ]] && failed+=("integration")
+          [[ "${{ steps.e2e_regular.outcome }}"           == "failure" ]] && failed+=("e2e_regular")
+          [[ "${{ steps.e2e_long_running.outcome }}"      == "failure" ]] && failed+=("e2e_long_running")
+          [[ "${{ steps.e2e_very_long_running.outcome }}" == "failure" ]] && failed+=("e2e_very_long_running")
           if [[ ${#failed[@]} -gt 0 ]]; then
             echo "The following test suites failed: ${failed[*]}"
             exit 1
