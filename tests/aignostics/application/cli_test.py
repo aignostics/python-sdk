@@ -17,6 +17,7 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
+from aignostics.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
 from aignostics.utils import Health, sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
@@ -516,6 +517,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--query",
                 "note_of_this_complex_test",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -531,6 +534,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--query",
                 "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -546,6 +551,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--query",
                 "another_tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -561,6 +568,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--note-regex",
                 "note_of_this_complex_test",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -576,6 +585,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--note-regex",
                 "other_note",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -591,6 +602,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--tags",
                 "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -606,6 +619,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--tags",
                 "other-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -621,6 +636,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--tags",
                 "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -636,6 +653,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--tags",
                 "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -651,6 +670,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "list",
                 "--tags",
                 "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag,non-existing-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
@@ -668,6 +689,8 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
                 "note_of_this_complex_test",
                 "--tags",
                 "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
             ],
         )
         assert list_result.exit_code == 0
