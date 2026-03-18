@@ -281,9 +281,9 @@ jobs:
           failed=()
           [[ "${{ steps.unit.outcome }}"              == "failure" ]] && failed+=("unit")
           [[ "${{ steps.integration.outcome }}"       == "failure" ]] && failed+=("integration")
-          [[ "${{ steps.e2e.outcome }}"               == "failure" ]] && failed+=("e2e")
-          [[ "${{ steps.long_running.outcome }}"      == "failure" ]] && failed+=("long-running")
-          [[ "${{ steps.very_long_running.outcome }}" == "failure" ]] && failed+=("very-long-running")
+          [[ "${{ steps.e2e.outcome }}"               == "failure" ]] && failed+=("e2e-regular")
+          [[ "${{ steps.long_running.outcome }}"      == "failure" ]] && failed+=("e2e-long-running")
+          [[ "${{ steps.very_long_running.outcome }}" == "failure" ]] && failed+=("e2e-very-long-running")
           if [[ ${#failed[@]} -gt 0 ]]; then
             echo "The following test suites failed: ${failed[*]}"
             exit 1
