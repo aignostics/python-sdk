@@ -84,6 +84,39 @@ def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture, r
         assert secret_found, "Expected secret value to be present in unmasked output, but it was not found"
 
 
+@pytest.mark.unit
+@patch("aignostics.system._cli._service")
+def test_cli_health_up_exits_zero(mock_service: MagicMock, runner: CliRunner) -> None:
+    """Check health command exits with code 0 when status is UP."""
+    from aignostics.utils import Health
+
+    mock_service.health.return_value = Health(status=Health.Code.UP)
+    result = runner.invoke(cli, ["system", "health"])
+    assert result.exit_code == 0
+
+
+@pytest.mark.unit
+@patch("aignostics.system._cli._service")
+def test_cli_health_degraded_exits_zero(mock_service: MagicMock, runner: CliRunner) -> None:
+    """Check health command exits with code 0 when status is DEGRADED."""
+    from aignostics.utils import Health
+
+    mock_service.health.return_value = Health(status=Health.Code.DEGRADED, reason="some component degraded")
+    result = runner.invoke(cli, ["system", "health"])
+    assert result.exit_code == 0
+
+
+@pytest.mark.unit
+@patch("aignostics.system._cli._service")
+def test_cli_health_down_exits_one(mock_service: MagicMock, runner: CliRunner) -> None:
+    """Check health command exits with code 1 when status is DOWN."""
+    from aignostics.utils import Health
+
+    mock_service.health.return_value = Health(status=Health.Code.DOWN, reason="service unavailable")
+    result = runner.invoke(cli, ["system", "health"])
+    assert result.exit_code == 1
+
+
 @pytest.mark.integration
 @patch("aignostics.utils._gui.gui_register_pages")
 @patch("nicegui.ui.run")
