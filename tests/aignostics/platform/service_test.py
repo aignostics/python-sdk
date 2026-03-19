@@ -9,6 +9,7 @@ from aignostics.platform._service import Service, UserInfo
 from aignostics.utils import Health
 
 _PATCH_AUTH_GETTER = "aignostics.platform._service.get_token"
+_PATCH_HTTPX_ASYNC_CLIENT = "aignostics.platform._service.httpx.AsyncClient"
 
 
 @pytest.mark.unit
@@ -22,7 +23,7 @@ async def test_determine_api_authenticated_health_success() -> None:
     mock_client.get.return_value = mock_response
 
     with (
-        patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls,
+        patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls,
         patch(_PATCH_AUTH_GETTER, return_value="test-token"),
     ):
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
@@ -42,7 +43,7 @@ async def test_determine_api_authenticated_health_non_200() -> None:
     mock_client.get.return_value = mock_response
 
     with (
-        patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls,
+        patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls,
         patch(_PATCH_AUTH_GETTER, return_value="test-token"),
     ):
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
@@ -72,7 +73,7 @@ async def test_determine_api_public_health_non_200() -> None:
     mock_client = AsyncMock()
     mock_client.get.return_value = mock_response
 
-    with patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls:
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
         mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
         result = await Service()._determine_api_public_health()
@@ -87,7 +88,7 @@ async def test_determine_api_public_health_handles_exception() -> None:
     mock_client = AsyncMock()
     mock_client.get.side_effect = ConnectionError("unreachable")
 
-    with patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls:
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
         mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
         result = await Service()._determine_api_public_health()
@@ -106,7 +107,7 @@ async def test_determine_api_public_health_up_response() -> None:
     mock_client = AsyncMock()
     mock_client.get.return_value = mock_response
 
-    with patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls:
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
         mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
         result = await Service()._determine_api_public_health()
@@ -124,7 +125,7 @@ async def test_determine_api_public_health_degraded_response() -> None:
     mock_client = AsyncMock()
     mock_client.get.return_value = mock_response
 
-    with patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls:
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
         mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
         result = await Service()._determine_api_public_health()
@@ -143,7 +144,7 @@ async def test_determine_api_public_health_degraded_response_with_reason() -> No
     mock_client = AsyncMock()
     mock_client.get.return_value = mock_response
 
-    with patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls:
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
         mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
         result = await Service()._determine_api_public_health()
@@ -162,7 +163,7 @@ async def test_determine_api_public_health_unknown_status_is_down() -> None:
     mock_client = AsyncMock()
     mock_client.get.return_value = mock_response
 
-    with patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls:
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
         mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
         result = await Service()._determine_api_public_health()
@@ -182,7 +183,7 @@ async def test_determine_api_authenticated_health_degraded_response() -> None:
     mock_client.get.return_value = mock_response
 
     with (
-        patch("aignostics.platform._service.httpx.AsyncClient") as mock_cls,
+        patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls,
         patch(_PATCH_AUTH_GETTER, return_value="test-token"),
     ):
         mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
