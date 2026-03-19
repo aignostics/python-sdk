@@ -112,7 +112,6 @@ jobs:
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics
 
   codeql:
@@ -130,8 +129,34 @@ jobs:
       packages: read
       security-events: write
 
+  sonarcloud:
+    needs: [get-commit-message]
+    if: |
+      (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
+      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
+      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
+      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      statuses: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        if: ${{ env.GITHUB_WORKFLOW_RUNTIME != 'ACT' }}
+        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   ketryx_report_and_check:
-    needs: [get-commit-message, lint, audit, test, codeql]
+    needs: [get-commit-message, lint, audit, test, codeql, sonarcloud]
     if: |
       github.actor != 'dependabot[bot]' &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
