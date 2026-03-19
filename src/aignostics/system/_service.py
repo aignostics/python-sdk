@@ -270,6 +270,27 @@ class Service(BaseService):
         return {k: settings[k] for k in sorted(settings)}
 
     @staticmethod
+    def _get_cpu_freq_info() -> dict[str, float | None]:
+        """Measure CPU frequency, handling platforms where it is unavailable.
+
+        Returns:
+            dict[str, float | None]: A dict with keys ``current``, ``min``, ``max`` in MHz,
+            or ``None`` for each if the measurement is unavailable.
+        """
+        import psutil  # noqa: PLC0415
+
+        cpu_freq = None
+        try:
+            cpu_freq = psutil.cpu_freq() if hasattr(psutil, "cpu_freq") else None
+        except RuntimeError:
+            logger.warning("Failed to get CPU frequency.")  # Happens on macOS VM on GHA
+        return {
+            "current": cpu_freq.current if cpu_freq else None,
+            "min": cpu_freq.min if cpu_freq else None,
+            "max": cpu_freq.max if cpu_freq else None,
+        }
+
+    @staticmethod
     async def info(include_environ: bool = False, mask_secrets: bool = True) -> dict[str, Any]:  # type: ignore[override]
         """
         Get info about configuration of service.
@@ -298,12 +319,6 @@ class Service(BaseService):
         await asyncio.sleep(MEASURE_INTERVAL_SECONDS)
         cpu_percent = psutil.cpu_percent(interval=None)
         cpu_times_percent = psutil.cpu_times_percent(interval=None)
-        cpu_freq = None
-        try:
-            cpu_freq = psutil.cpu_freq() if hasattr(psutil, "cpu_freq") else None  # Happens on macOS latest VM on GHA
-        except RuntimeError:
-            logger.warning("Failed to get CPU frequency.")  # Happens on macOS VM on GHA
-
         rtn: InfoDict = {
             "package": {
                 "version": __version__,
@@ -336,11 +351,7 @@ class Service(BaseService):
                             "arch": platform.machine(),
                             "processor": platform.processor(),
                             "count": os.cpu_count(),
-                            "frequency": {
-                                "current": cpu_freq.current if cpu_freq else None,
-                                "min": cpu_freq.min if cpu_freq else None,
-                                "max": cpu_freq.max if cpu_freq else None,
-                            },
+                            "frequency": Service._get_cpu_freq_info(),
                         },
                         "memory": {
                             "percent": vmem.percent,

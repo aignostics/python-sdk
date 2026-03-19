@@ -1,11 +1,48 @@
 """Tests of the system service."""
 
 import os
+from typing import Any
 from unittest import mock
 
 import pytest
 
 from aignostics.system._service import Service
+
+
+@pytest.mark.unit
+def test_get_cpu_freq_info_returns_dict_with_expected_keys() -> None:
+    """Test that _get_cpu_freq_info returns a dict with exactly the keys current, min, max."""
+    result = Service._get_cpu_freq_info()
+    assert set(result.keys()) == {"current", "min", "max"}
+
+
+@pytest.mark.unit
+def test_get_cpu_freq_info_handles_runtime_error() -> None:
+    """Test that a RuntimeError from psutil.cpu_freq is caught and all values are None."""
+    import psutil
+
+    with mock.patch.object(psutil, "cpu_freq", side_effect=RuntimeError("unavailable")):
+        result = Service._get_cpu_freq_info()
+
+    assert result == {"current": None, "min": None, "max": None}
+
+
+@pytest.mark.unit
+def test_get_cpu_freq_info_handles_missing_cpu_freq() -> None:
+    """Test that a missing cpu_freq attribute on psutil is handled and all values are None."""
+    import psutil
+
+    had_cpu_freq = hasattr(psutil, "cpu_freq")
+    original: Any = getattr(psutil, "cpu_freq", None)
+    if had_cpu_freq:
+        delattr(psutil, "cpu_freq")
+    try:
+        result = Service._get_cpu_freq_info()
+    finally:
+        if had_cpu_freq:
+            psutil.cpu_freq = original  # type: ignore[attr-defined]
+
+    assert result == {"current": None, "min": None, "max": None}
 
 
 @pytest.mark.unit
