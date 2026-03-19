@@ -224,17 +224,22 @@ def test_application_runs_query_with_tags_raises() -> None:
 def test_application_runs_query_searches_note_and_tags(mock_get_client: MagicMock) -> None:
     """Test that query parameter searches both note and tags with union semantics."""
     # Create mock runs
+    base_time = datetime(2024, 1, 1, tzinfo=UTC)
+
     run_from_note = MagicMock(spec=RunData)
     run_from_note.run_id = "run-note-123"
     run_from_note.output = RunOutput.FULL
+    run_from_note.submitted_at = base_time + timedelta(days=1)
 
     run_from_tag = MagicMock(spec=RunData)
     run_from_tag.run_id = "run-tag-456"
     run_from_tag.output = RunOutput.FULL
+    run_from_tag.submitted_at = base_time + timedelta(days=2)
 
     run_from_both = MagicMock(spec=RunData)
     run_from_both.run_id = "run-both-789"
     run_from_both.output = RunOutput.FULL
+    run_from_both.submitted_at = base_time + timedelta(days=3)
 
     # Mock the platform client to return different runs for note and tag searches
     mock_client = MagicMock()
@@ -285,6 +290,7 @@ def test_application_runs_query_deduplicates_results(mock_get_client: MagicMock)
     run_from_both = MagicMock(spec=RunData)
     run_from_both.run_id = "run-both-123"
     run_from_both.output = RunOutput.FULL
+    run_from_both.submitted_at = datetime(2024, 1, 1, tzinfo=UTC)
 
     # Mock the platform client to return the same run from both searches
     mock_client = MagicMock()
@@ -310,33 +316,178 @@ def test_application_runs_query_deduplicates_results(mock_get_client: MagicMock)
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
 def test_application_runs_query_respects_limit(mock_get_client: MagicMock) -> None:
-    """Test that query parameter respects the limit parameter."""
-    # Create mock runs
-    runs = []
-    for i in range(10):
-        run = MagicMock(spec=RunData)
-        run.run_id = f"run-{i}"
-        run.output = RunOutput.FULL
-        runs.append(run)
+    """Test that query parameter respects the limit parameter and returns the newest runs."""
+    base_time = datetime(2024, 1, 10, tzinfo=UTC)
 
-    # Mock the platform client to return many runs
+    # Note runs are older (days 0..4), tag runs are newer (days 5..9)
+    note_runs = []
+    for i in range(5):
+        run = MagicMock(spec=RunData)
+        run.run_id = f"run-note-{i}"
+        run.output = RunOutput.FULL
+        run.submitted_at = base_time + timedelta(days=i)
+        note_runs.append(run)
+
+    tag_runs = []
+    for i in range(5):
+        run = MagicMock(spec=RunData)
+        run.run_id = f"run-tag-{i}"
+        run.output = RunOutput.FULL
+        run.submitted_at = base_time + timedelta(days=5 + i)
+        tag_runs.append(run)
+
     mock_client = MagicMock()
     mock_runs = MagicMock()
-
-    # Note search returns 5 runs, tag search returns 5 runs
+    # API returns newest-first; reverse the lists to simulate that behaviour
     mock_runs.list_data.side_effect = [
-        iter(runs[:5]),  # Note search results
-        iter(runs[5:]),  # Tag search results
+        iter(reversed(note_runs)),
+        iter(reversed(tag_runs)),
     ]
-
     mock_client.runs = mock_runs
     mock_get_client.return_value = mock_client
 
     service = ApplicationService()
     results = service.application_runs(query="test", limit=3)
 
-    # Verify we only got 3 runs despite having 10 total
+    # With limit=3 each search stops after 3 items (newest-first).
+    # Note search: note-4(day4), note-3(day3), note-2(day2) → stops.
+    # Tag search: tag-4(day9), tag-3(day8), tag-2(day7) → stops.
+    # After merge+sort+slice: tag-4(9), tag-3(8), tag-2(7) are the 3 newest.
     assert len(results) == 3
+    result_ids = {r.run_id for r in results}
+    assert result_ids == {"run-tag-2", "run-tag-3", "run-tag-4"}
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_query_tag_search_has_independent_limit(mock_get_client: MagicMock) -> None:
+    """Tag search gets its own N-slot budget; a full note search does not starve the tag search."""
+    base_time = datetime(2024, 1, 1, tzinfo=UTC)
+
+    # Note search fills its quota of N=3
+    note_runs = []
+    for i in range(3):
+        run = MagicMock(spec=RunData)
+        run.run_id = f"run-note-{i}"
+        run.output = RunOutput.FULL
+        run.submitted_at = base_time + timedelta(days=i)
+        note_runs.append(run)
+
+    # Tag search has 3 unique (non-overlapping) newer runs
+    tag_runs = []
+    for i in range(3):
+        run = MagicMock(spec=RunData)
+        run.run_id = f"run-tag-{i}"
+        run.output = RunOutput.FULL
+        run.submitted_at = base_time + timedelta(days=10 + i)
+        tag_runs.append(run)
+
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+    # API returns newest-first; reverse the lists to simulate that behaviour
+    mock_runs.list_data.side_effect = [
+        iter(reversed(note_runs)),
+        iter(reversed(tag_runs)),
+    ]
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    results = service.application_runs(query="test", limit=3)
+
+    # Note search (budget=3): fetches note-2(day2), note-1(day1), note-0(day0) → stops.
+    # Tag search (independent budget=3): fetches tag-2(day12), tag-1(day11), tag-0(day10) → stops.
+    # After merge+sort+slice: tag-2, tag-1, tag-0 are the 3 newest.
+    assert len(results) == 3
+    result_ids = {r.run_id for r in results}
+    assert result_ids == {"run-tag-0", "run-tag-1", "run-tag-2"}
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_query_sorts_results_by_submitted_at(mock_get_client: MagicMock) -> None:
+    """No-limit case: mixed note+tag results are returned newest-first regardless of which search found them."""
+    base_time = datetime(2024, 3, 1, tzinfo=UTC)
+
+    run_note = MagicMock(spec=RunData)
+    run_note.run_id = "note-recent"
+    run_note.output = RunOutput.FULL
+    run_note.submitted_at = base_time + timedelta(days=5)
+
+    run_tag_a = MagicMock(spec=RunData)
+    run_tag_a.run_id = "tag-middle"
+    run_tag_a.output = RunOutput.FULL
+    run_tag_a.submitted_at = base_time + timedelta(days=3)
+
+    run_tag_b = MagicMock(spec=RunData)
+    run_tag_b.run_id = "tag-oldest"
+    run_tag_b.output = RunOutput.FULL
+    run_tag_b.submitted_at = base_time + timedelta(days=1)
+
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+    mock_runs.list_data.side_effect = [
+        iter([run_note]),
+        iter([run_tag_a, run_tag_b]),
+    ]
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    results = service.application_runs(query="test")
+
+    assert len(results) == 3
+    assert results[0].run_id == "note-recent"
+    assert results[1].run_id == "tag-middle"
+    assert results[2].run_id == "tag-oldest"
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_query_deduplicates_with_independent_budget(mock_get_client: MagicMock) -> None:
+    """A run matching both note and tag appears exactly once.
+
+    The duplicate does not consume the tag search's quota — the search continues to find
+    the next unique tag-only run.
+    """
+    base_time = datetime(2024, 4, 1, tzinfo=UTC)
+
+    run_both = MagicMock(spec=RunData)
+    run_both.run_id = "run-both"
+    run_both.output = RunOutput.FULL
+    run_both.submitted_at = base_time + timedelta(days=2)
+
+    run_tag_only = MagicMock(spec=RunData)
+    run_tag_only.run_id = "run-tag-only"
+    run_tag_only.output = RunOutput.FULL
+    run_tag_only.submitted_at = base_time + timedelta(days=1)
+
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+    # Tag search sees run_both first (dup, skipped) then run_tag_only (unique)
+    mock_runs.list_data.side_effect = [
+        iter([run_both]),
+        iter([run_both, run_tag_only]),
+    ]
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    # limit=1 for tag_runs_dict; the duplicate doesn't consume the slot, so run_tag_only is found
+    results = service.application_runs(query="test", limit=1)
+
+    # After merge (run_both + run_tag_only), sort, slice to 1 → newest wins (run_both, day 2)
+    assert len(results) == 1
+    assert results[0].run_id == "run-both"
+
+    # With limit=2: both should appear, confirming tag search found run_tag_only
+    mock_runs.list_data.side_effect = [
+        iter([run_both]),
+        iter([run_both, run_tag_only]),
+    ]
+    results_limit2 = ApplicationService().application_runs(query="test", limit=2)
+    result_ids = {r.run_id for r in results_limit2}
+    assert result_ids == {"run-both", "run-tag-only"}
 
 
 @pytest.mark.unit
