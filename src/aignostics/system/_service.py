@@ -1,5 +1,6 @@
 """System service."""
 
+import asyncio
 import json
 import os
 import platform
@@ -10,10 +11,10 @@ import typing as t
 from http import HTTPStatus
 from pathlib import Path
 from socket import AF_INET, SOCK_DGRAM, socket
-from typing import Any, ClassVar, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 from urllib.request import getproxies
 
-import urllib3
+import httpx
 from dotenv import set_key as dotenv_set_key
 from dotenv import unset_key as dotenv_unset_key
 from loguru import logger
@@ -70,27 +71,10 @@ class Service(BaseService):
     """System service."""
 
     _settings: Settings
-    _http_pool: ClassVar[urllib3.PoolManager | None] = None
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)
-
-    @classmethod
-    def _get_http_pool(cls) -> urllib3.PoolManager:
-        """Get or create the shared HTTP pool manager.
-
-        All service instances share the same urllib3.PoolManager for efficient connection reuse.
-
-        Returns:
-            urllib3.PoolManager: Shared connection pool manager.
-        """
-        if cls._http_pool is None:
-            cls._http_pool = urllib3.PoolManager(
-                maxsize=10,  # Max connections per host
-                block=False,  # Don't block if pool is full
-            )
-        return cls._http_pool
 
     @staticmethod
     def _is_healthy() -> bool:
@@ -102,29 +86,28 @@ class Service(BaseService):
         return True
 
     @staticmethod
-    def _determine_network_health() -> Health:
+    async def _determine_network_health() -> Health:
         """Determine we can reach a well known and secure endpoint.
 
         - Checks if health endpoint is reachable and returns 200 OK
-        - Uses urllib3 for a direct connection check without authentication
+        - Uses httpx for an async connection check without authentication
 
         Returns:
             Health: The healthiness of the network connection via basic unauthenticated request.
         """
         try:
-            http = Service._get_http_pool()
-            response = http.request(
-                method="GET",
-                url=IPIFY_URL,
-                headers={"User-Agent": user_agent()},
-                timeout=urllib3.Timeout(total=NETWORK_TIMEOUT),
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    IPIFY_URL,
+                    headers={"User-Agent": user_agent()},
+                    timeout=NETWORK_TIMEOUT,
+                )
 
-            if response.status != HTTPStatus.OK:
-                logger.error(f"'{IPIFY_URL}' returned '{response.status}'")
+            if response.status_code != HTTPStatus.OK:
+                logger.error(f"'{IPIFY_URL}' returned '{response.status_code}'")
                 return Health(
                     status=Health.Code.DOWN,
-                    reason=f"'{IPIFY_URL}' returned status '{response.status}'",
+                    reason=f"'{IPIFY_URL}' returned status '{response.status_code}'",
                 )
         except Exception as e:
             message = f"Issue reaching {IPIFY_URL}: {e}"
@@ -159,7 +142,7 @@ class Service(BaseService):
         for service_class in locate_subclasses(BaseService):
             if service_class is not Service:
                 components[f"{service_class.__module__}.{service_class.__name__}"] = await service_class().health()
-        components["network"] = self._determine_network_health()
+        components["network"] = await self._determine_network_health()
 
         # Set the system health status based on is_healthy attribute
         status = Health.Code.UP if self._is_healthy() else Health.Code.DOWN
@@ -178,7 +161,7 @@ class Service(BaseService):
         return token == self._settings.token.get_secret_value()
 
     @staticmethod
-    def _get_public_ipv4(timeout: int = NETWORK_TIMEOUT) -> str | None:
+    async def _get_public_ipv4(timeout: int = NETWORK_TIMEOUT) -> str | None:
         """Get the public IPv4 address of the system.
 
         Args:
@@ -188,16 +171,12 @@ class Service(BaseService):
             str | None: The public IPv4 address, or None if failed.
         """
         try:
-            http = Service._get_http_pool()
-            response = http.request(
-                method="GET",
-                url=IPIFY_URL,
-                timeout=urllib3.Timeout(total=timeout),
-            )
-            if response.status != HTTPStatus.OK:
-                logger.error(f"Failed to get public IP: HTTP {response.status}")
+            async with httpx.AsyncClient() as client:
+                response = await client.get(IPIFY_URL, timeout=timeout)
+            if response.status_code != HTTPStatus.OK:
+                logger.error(f"Failed to get public IP: HTTP {response.status_code}")
                 return None
-            return response.data.decode("utf-8")
+            return response.text
         except Exception as e:
             message = f"Failed to get public IP: {e}"
             logger.exception(message)
@@ -314,8 +293,11 @@ class Service(BaseService):
         bootdatetime = boottime()
         vmem = psutil.virtual_memory()
         swap = psutil.swap_memory()
-        cpu_percent = psutil.cpu_percent(interval=MEASURE_INTERVAL_SECONDS)
-        cpu_times_percent = psutil.cpu_times_percent(interval=MEASURE_INTERVAL_SECONDS)
+        psutil.cpu_percent(interval=None)  # prime the counter
+        psutil.cpu_times_percent(interval=None)  # prime the counter
+        await asyncio.sleep(MEASURE_INTERVAL_SECONDS)
+        cpu_percent = psutil.cpu_percent(interval=None)
+        cpu_times_percent = psutil.cpu_times_percent(interval=None)
         cpu_freq = None
         try:
             cpu_freq = psutil.cpu_freq() if hasattr(psutil, "cpu_freq") else None  # Happens on macOS latest VM on GHA
@@ -377,7 +359,7 @@ class Service(BaseService):
                     "network": {
                         "hostname": platform.node(),
                         "local_ipv4": Service._get_local_ipv4(),
-                        "public_ipv4": Service._get_public_ipv4(),
+                        "public_ipv4": await Service._get_public_ipv4(),
                         "proxies": getproxies(),
                         "requests_ca_bundle": os.getenv("REQUESTS_CA_BUNDLE"),
                         "ssl_cert_file": os.getenv("SSL_CERT_FILE"),
