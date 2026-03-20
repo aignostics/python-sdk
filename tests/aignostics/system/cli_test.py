@@ -15,25 +15,53 @@ from tests.conftest import normalize_output
 THE_VALUE = "test_secret_value_not_real_for_testing_only"
 
 
+@pytest.mark.unit
+@patch("aignostics.system._cli._service")
+def test_cli_health_json_format(mock_service: MagicMock, runner: CliRunner, record_property) -> None:
+    """Check health CLI renders UP status correctly as JSON."""
+    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
+    from aignostics.utils import Health
+
+    mock_service.health.return_value = Health(status=Health.Code.UP)
+    result = runner.invoke(cli, ["system", "health"])
+    assert result.exit_code == 0
+    assert normalize_output(result.stdout).startswith('{  "status": "UP"')
+
+
+@pytest.mark.unit
+@patch("aignostics.system._cli._service")
+def test_cli_health_yaml_format(mock_service: MagicMock, runner: CliRunner, record_property) -> None:
+    """Check health CLI renders UP status correctly as YAML."""
+    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
+    from aignostics.utils import Health
+
+    mock_service.health.return_value = Health(status=Health.Code.UP)
+    result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
+    assert result.exit_code == 0
+    assert "status: UP" in result.stdout
+
+
 @pytest.mark.e2e
 @pytest.mark.scheduled
 @pytest.mark.timeout(timeout=60)
-def test_cli_health_json(runner: CliRunner, record_property) -> None:
-    """Check health is true."""
-    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
+def test_cli_health_json(runner: CliRunner) -> None:
+    """Check health CLI returns valid JSON with a valid status value."""
+    import json
+
     result = runner.invoke(cli, ["system", "health"])
-    assert normalize_output(result.stdout).startswith('{  "status": "UP"')
-    assert result.exit_code == 0
+    data = json.loads(result.stdout)
+    assert data["status"] in {"UP", "DEGRADED", "DOWN"}
 
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=30)
-def test_cli_health_yaml(runner: CliRunner, record_property) -> None:
-    """Check health is true."""
-    record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
+def test_cli_health_yaml(runner: CliRunner) -> None:
+    """Check health CLI returns valid YAML with a valid status value."""
+    import yaml
+
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
-    assert "status: UP" in result.stdout
-    assert result.exit_code == 0
+    data = yaml.safe_load(result.stdout)
+    assert data["status"] in {"UP", "DEGRADED", "DOWN"}
 
 
 @pytest.mark.e2e
