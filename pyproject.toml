@@ -125,6 +125,7 @@ dependencies = [
     "truststore>=0.10.4,<1",
     "urllib3>=2.6.3,<3", # CVE-2026-21441 requires >= 2.6.3
     "wsidicom>=0.28.1,<1",
+    "fastmcp>=3.0.0,<4",
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "rfc3987; sys_platform == 'never'", # GPLv3
@@ -138,7 +139,6 @@ dependencies = [
     "lxml>=6.0.2",                      # For python 3.14 pre-built wheels
     "filelock>=3.20.1",                 # CVE-2025-68146
     "marshmallow>=3.26.2",              # CVE-2025-68480
-    "fastmcp>=2.0.0,<3",                # MCP server - Major version 3 is in beta as of 26/01/2026 and has not been released on PyPI. Upgrade once a stable release is out.
 ]
 
 [project.optional-dependencies]
