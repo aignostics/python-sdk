@@ -192,10 +192,47 @@ class Service(BaseService):
             else None,
         }
 
+    @staticmethod
+    def _health_from_response(response: urllib3.BaseHTTPResponse) -> Health:
+        """Map a PAPI health response to a Health status.
+
+        Handles non-200 status codes, unparseable bodies, and the three recognised
+        ``status`` values (``"UP"``, ``"DEGRADED"``, ``"DOWN"``).
+
+        Args:
+            response: urllib3 response from the ``/health`` endpoint.
+
+        Returns:
+            Health: ``UP``, ``DEGRADED``, or ``DOWN`` derived from the response.
+        """
+        if response.status != HTTPStatus.OK:
+            logger.error("Aignostics Platform API returned '{}'", response.status)
+            return Health(
+                status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status}'"
+            )
+
+        try:
+            body = json.loads(response.data)
+        except Exception:
+            return Health(status=Health.Code.DOWN, reason="Aignostics Platform API returned unparseable response")
+
+        api_status = body.get("status")
+        if api_status == "UP":
+            return Health(status=Health.Code.UP)
+        if api_status == "DEGRADED":
+            reason = body.get("reason") or "Aignostics Platform API is DEGRADED"
+            logger.warning("Aignostics Platform API is DEGRADED: {}", reason)
+            return Health(status=Health.Code.DEGRADED, reason=reason)
+        return Health(
+            status=Health.Code.DOWN,
+            reason=f"Aignostics Platform API returned unknown status '{api_status}'",
+        )
+
     def _determine_api_public_health(self) -> Health:
         """Determine healthiness and reachability of Aignostics Platform API.
 
         - Checks if health endpoint is reachable and returns 200 OK
+        - Parses the response body to detect DEGRADED status
         - Uses urllib3 for a direct connection check without authentication
 
         Returns:
@@ -209,23 +246,17 @@ class Service(BaseService):
                 headers={"User-Agent": user_agent()},
                 timeout=urllib3.Timeout(total=self._settings.health_timeout),
             )
-
-            if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (public) returned '{}'", response.status)
-                return Health(
-                    status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status}'"
-                )
+            return self._health_from_response(response)
         except Exception as e:
             logger.exception("Issue with Aignostics Platform API")
             return Health(status=Health.Code.DOWN, reason=f"Issue with Aignostics Platform API: '{e}'")
-
-        return Health(status=Health.Code.UP)
 
     def _determine_api_authenticated_health(self) -> Health:
         """Determine healthiness and reachability of Aignostics Platform API via authenticated request.
 
         Uses a dedicated HTTP pool (separate from the API client's connection pool) to prevent
         connection-level cross-contamination between health checks and API calls.
+        Parses the response body to detect DEGRADED status.
 
         Returns:
             Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated request.
@@ -242,14 +273,10 @@ class Service(BaseService):
                 },
                 timeout=urllib3.Timeout(total=self._settings.health_timeout),
             )
-
-            if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (authenticated) returned '{}'", response.status)
-                return Health(status=Health.Code.DOWN, reason=f"Aignostics Platform API returned '{response.status}'")
+            return self._health_from_response(response)
         except Exception as e:
             logger.exception("Issue with Aignostics Platform API")
             return Health(status=Health.Code.DOWN, reason=f"Issue with Aignostics Platform API: '{e}'")
-        return Health(status=Health.Code.UP)
 
     def health(self) -> Health:
         """Determine health of this service.

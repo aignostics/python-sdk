@@ -679,14 +679,13 @@ class Service(BaseService):  # noqa: PLR0904
                     # Add to dict if not already present from note search
                     if run.run_id not in note_runs_dict:
                         tag_runs_dict[run.run_id] = run
-                    if limit is not None and len(note_runs_dict) + len(tag_runs_dict) >= limit:
+                    if limit is not None and len(tag_runs_dict) >= limit:
                         break
 
-                # Union of results from both searches
+                # Union of results from both searches, sorted newest-first
                 runs = list(note_runs_dict.values()) + list(tag_runs_dict.values())
-
-                # Apply limit after union
-                if limit is not None and len(runs) > limit:
+                runs.sort(key=lambda r: r.submitted_at, reverse=True)
+                if limit is not None:
                     runs = runs[:limit]
 
                 return runs

@@ -11,7 +11,7 @@ import typer
 import yaml
 
 from ..constants import API_VERSIONS  # noqa: TID252
-from ..utils import Health, console  # noqa: TID252
+from ..utils import console  # noqa: TID252
 from ._service import Service
 
 cli = typer.Typer(name="system", help="Determine health, info and further utillities.")
@@ -60,7 +60,7 @@ def health(
                 yaml.dump(data=json.loads(health.model_dump_json()), width=80, default_flow_style=False),
                 end="",
             )
-    if health.status is not Health.Code.UP:
+    if not health:
         sys.exit(1)
 
 

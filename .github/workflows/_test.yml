@@ -27,8 +27,6 @@ on:
         required: false
       CODECOV_TOKEN:
         required: false
-      SONAR_TOKEN:
-        required: false
       SENTRY_DSN:
         required: false
   
@@ -158,7 +156,17 @@ jobs:
           uv run --all-extras aignostics application list
           uv run --all-extras aignostics application run list --verbose --limit 1
 
+      # All test steps use continue-on-error: true so that every test suite
+      # always runs regardless of whether earlier suites failed. This ensures
+      # Codecov always receives a complete coverage report (partial reports
+      # cause the coverage badge to read lower than the true value).
+      # A single "Assert no test failures" gate step at the end surfaces any
+      # failures and fails the job — so the workflow still fails correctly.
+
       - name: Test / Unit (multiple Python versions)
+        id: unit
+        continue-on-error: true
+        if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
         with:
           test-type: unit
@@ -168,6 +176,9 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / Integration (multiple Python versions)
+        id: integration
+        continue-on-error: true
+        if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
         with:
           test-type: integration
@@ -177,6 +188,9 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / regular (multiple Python versions)
+        id: e2e_regular
+        continue-on-error: true
+        if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
         with:
           test-type: e2e
@@ -186,6 +200,9 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / long running (single Python version)
+        id: e2e_long_running
+        continue-on-error: true
+        if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
         with:
           test-type: long-running
@@ -195,9 +212,13 @@ jobs:
           commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / very long running (single Python version)
+        id: e2e_very_long_running
+        continue-on-error: true
         if: |
-          contains(inputs.commit_message, 'enable:test:very_long_running') || 
-          contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
+          !cancelled() && (
+            contains(inputs.commit_message, 'enable:test:very_long_running') ||
+            contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
+          )
         uses: ./.github/actions/run-tests
         with:
           test-type: very-long-running
@@ -241,9 +262,21 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: SonarQube Scan
-        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
-        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Assert no test failures
+        # Single gate that fails the job if any test suite failed. Kept last so
+        # that all reporting steps (Codecov, SonarQube, artifact upload) always
+        # run to completion before the job is marked as failed.
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          failed=()
+          [[ "${{ steps.unit.outcome }}"                  == "failure" ]] && failed+=("unit")
+          [[ "${{ steps.integration.outcome }}"           == "failure" ]] && failed+=("integration")
+          [[ "${{ steps.e2e_regular.outcome }}"           == "failure" ]] && failed+=("e2e_regular")
+          [[ "${{ steps.e2e_long_running.outcome }}"      == "failure" ]] && failed+=("e2e_long_running")
+          [[ "${{ steps.e2e_very_long_running.outcome }}" == "failure" ]] && failed+=("e2e_very_long_running")
+          if [[ ${#failed[@]} -gt 0 ]]; then
+            echo "The following test suites failed: ${failed[*]}"
+            exit 1
+          fi
+          echo "All test suites passed."

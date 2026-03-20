@@ -1,8 +1,10 @@
 """Tests to verify the CLI functionality of the application module."""
 
+import contextlib
 import json
 import platform
 import re
+from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from time import sleep
@@ -15,6 +17,7 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
+from aignostics.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
 from aignostics.utils import Health, sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
@@ -44,6 +47,96 @@ HETA_APPLICATION_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hour
 HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
 
 RUN_CSV_FILENAME = "run.csv"
+
+# Full SPOT_0 CSV - single source of truth for all run submissions in this test file.
+CSV_CONTENT_SPOT0 = (
+    "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;"
+    "staining_method;tissue;disease;platform_bucket_url\n"
+    f"{SPOT_0_FILENAME};{SPOT_0_CRC32C};{SPOT_0_RESOLUTION_MPP};{SPOT_0_WIDTH};{SPOT_0_HEIGHT}"
+    f";H&E;LUNG;LUNG_CANCER;{SPOT_0_GS_URL}"
+)
+
+# Source directory for `prepare` tests (contains small-pyramidal.dcm).
+PREPARE_SOURCE_DIR = Path(__file__).parent.parent.parent / "resources" / "run"
+
+
+@contextlib.contextmanager
+def submitted_run(
+    runner: CliRunner,
+    tmp_path: Path,
+    csv_content: str,
+    application_id: str = HETA_APPLICATION_ID,
+    extra_args: list[str] | None = None,
+) -> Generator[str, None, None]:
+    """Context manager that submits a run, yields its ID, then cancels it on exit.
+
+    Submits an application run via the CLI, yields the extracted run ID to the caller,
+    and attempts to cancel the run on exit. Cancellation failures are logged but do not
+    raise, so test assertions are never masked by cleanup errors.
+
+    A 5-minute deadline is automatically appended unless ``extra_args`` already contains
+    ``--deadline``.
+
+    Args:
+        runner: Typer CliRunner to invoke CLI commands.
+        tmp_path: Temporary directory used to write the CSV file.
+        csv_content: Full CSV content (header + rows) for the run submission.
+        application_id: Application ID to submit against. Defaults to HETA_APPLICATION_ID.
+        extra_args: Additional CLI arguments forwarded to the ``submit`` command,
+            e.g. ``["--tags", "my-tag", "--deadline", "..."]``.
+
+    Yields:
+        The run ID string extracted from the submission output.
+
+    Raises:
+        AssertionError: If the submit command fails or the run ID cannot be extracted.
+    """
+    csv_path = tmp_path / "run.csv"
+    csv_path.write_text(csv_content)
+
+    extra = list(extra_args or [])
+    if "--deadline" not in extra:
+        extra += ["--deadline", (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat()]
+
+    args = ["application", "run", "submit", application_id, str(csv_path), *extra]
+    result = runner.invoke(cli, args)
+    assert result.exit_code == 0, f"Run submission failed (exit {result.exit_code}):\n{result.stdout}"
+
+    output = normalize_output(result.stdout)
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
+    assert run_id_match, f"Could not extract run ID from submission output:\n{output}"
+    run_id = run_id_match.group(1)
+
+    try:
+        yield run_id
+    finally:
+        cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
+        if cancel_result.exit_code != 0:
+            logger.warning(
+                "Failed to cancel run '{}' during cleanup (exit {}): {}",
+                run_id,
+                cancel_result.exit_code,
+                normalize_output(cancel_result.stdout),
+            )
+
+
+def _cancel_run_if_submitted(runner: CliRunner, output: str) -> None:
+    """Cancel any run that was unexpectedly created, for use in error-path cleanup.
+
+    Args:
+        runner: Typer CliRunner to invoke CLI commands.
+        output: stdout from the submit invocation to search for a run ID.
+    """
+    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", normalize_output(output))
+    if run_id_match:
+        cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id_match.group(1)])
+        if cancel_result.exit_code != 0:
+            logger.warning(
+                "Defensive cancel of run '{}' failed (exit {}): {}",
+                run_id_match.group(1),
+                cancel_result.exit_code,
+                normalize_output(cancel_result.stdout),
+            )
 
 
 @pytest.mark.e2e
@@ -126,7 +219,7 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
     """Check application run prepare command and upload works and submit fails on mpp not supported."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-01")
     # Step 1: Prepare the file, by scanning for wsi and generating metadata
-    source_directory = Path(__file__).parent.parent.parent / "resources" / "run"
+    source_directory = PREPARE_SOURCE_DIR
     metadata_csv = tmp_path / "metadata.csv"
     result = runner.invoke(
         cli, ["application", "run", "prepare", HETA_APPLICATION_ID, str(metadata_csv), str(source_directory)]
@@ -157,9 +250,12 @@ def test_cli_application_run_prepare_upload_submit_fail_on_mpp(
 
     # Step 3: Submit the run from the metadata file
     result = runner.invoke(cli, ["application", "run", "submit", HETA_APPLICATION_ID, str(metadata_csv), "--force"])
-    assert result.exit_code == 2
-    assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
-    assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
+    try:
+        assert result.exit_code == 2
+        assert "Invalid metadata for artifact `whole_slide_image`" in normalize_output(result.stdout)
+        assert "8.065226874391001 is greater than" in normalize_output(result.stdout)
+    finally:
+        _cancel_run_if_submitted(runner, result.stdout)
 
 
 @pytest.mark.integration
@@ -180,7 +276,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
     assert "Warning: Source file 'missing.file' (row 0) does not exist" in normalize_output(result.stdout)
 
 
-@pytest.mark.unit
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
 @patch("aignostics.application._cli.SystemService.health_static")
 def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
@@ -207,11 +303,28 @@ def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
             str(csv_path),
         ],
     )
+    try:
+        assert result.exit_code == 1
+    finally:
+        _cancel_run_if_submitted(runner, result.stdout)
 
-    assert result.exit_code == 1
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=10)
+@patch("aignostics.application._cli.SystemService.health_static")
+def test_cli_run_submit_succeeds_when_system_degraded_and_no_force(
+    mock_health: MagicMock, runner: CliRunner, tmp_path: Path
+) -> None:
+    """Check run submit command succeeds when system is degraded and --force is not used."""
+    mock_health.return_value = Health(
+        status=Health.Code.DEGRADED,
+        reason="Simulated degraded system for testing",
+    )
+    with submitted_run(runner, tmp_path, CSV_CONTENT_SPOT0):
+        pass  # submission success is asserted by the context manager
 
 
-@pytest.mark.unit
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
 @patch("aignostics.application._cli.SystemService.health_static")
 def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
@@ -242,7 +355,7 @@ def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
     assert result.exit_code == 1
 
 
-@pytest.mark.unit
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
 @patch("aignostics.application._cli.SystemService.health_static")
 def test_cli_run_execute_fails_when_system_unhealthy_and_no_force(
@@ -298,11 +411,13 @@ def test_cli_run_submit_fails_on_application_not_found(runner: CliRunner, tmp_pa
             "--force",
         ],
     )
-
-    assert result.exit_code == 2
-    assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
-    assert "Warning: Could not find application" in normalize_output(result.stdout)
-    assert result.exit_code == 2
+    try:
+        assert result.exit_code == 2
+        assert 'HTTP response body: {"detail":"application not found"}' in normalize_output(result.stdout)
+        assert "Warning: Could not find application" in normalize_output(result.stdout)
+        assert result.exit_code == 2
+    finally:
+        _cancel_run_if_submitted(runner, result.stdout)
 
 
 @pytest.mark.e2e
@@ -329,9 +444,11 @@ def test_cli_run_submit_fails_on_unsupported_cloud(runner: CliRunner, tmp_path: 
             "--force",
         ],
     )
-
-    assert result.exit_code == 2
-    assert "Invalid platform bucket URL: 'aws://bucket/test'" in normalize_output(result.stdout)
+    try:
+        assert result.exit_code == 2
+        assert "Invalid platform bucket URL: 'aws://bucket/test'" in normalize_output(result.stdout)
+    finally:
+        _cancel_run_if_submitted(runner, result.stdout)
 
 
 @pytest.mark.e2e
@@ -358,9 +475,11 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
             "--force",
         ],
     )
-
-    assert result.exit_code == 2
-    assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
+    try:
+        assert result.exit_code == 2
+        assert "Invalid platform bucket URL: ''" in normalize_output(result.stdout)
+    finally:
+        _cancel_run_if_submitted(runner, result.stdout)
 
 
 @pytest.mark.e2e
@@ -372,22 +491,11 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
 ) -> None:
     """Check run submit command runs successfully."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-02")
-    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    csv_content += "platform_bucket_url\n"
-    csv_content += (
-        f"{SPOT_0_FILENAME};{SPOT_0_CRC32C};{SPOT_0_RESOLUTION_MPP};{SPOT_0_WIDTH};{SPOT_0_HEIGHT}"
-        f";H&E;LUNG;LUNG_CANCER;{SPOT_0_GS_URL}"
-    )
-    csv_path = tmp_path / "dummy.csv"
-    csv_path.write_text(csv_content)
-    result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "submit",
-            HETA_APPLICATION_ID,
-            str(csv_path),
+    with submitted_run(
+        runner,
+        tmp_path,
+        CSV_CONTENT_SPOT0,
+        extra_args=[
             "--note",
             "note_of_this_complex_test",
             "--tags",
@@ -399,254 +507,266 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
             PIPELINE_GPU_TYPE,
             "--force",
         ],
-    )
-    output = normalize_output(result.stdout)
-    assert re.search(
-        r"Submitted run with id '[0-9a-f-]+' for '",
-        output,
-    ), f"Output '{output}' doesn't match expected pattern"
-    assert result.exit_code == 0
+    ) as run_id:
+        # Test that we can find this run by it's note via the query parameter
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--query",
+                "note_of_this_complex_test",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note via query"
 
-    # Extract run ID from the output
-    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
-    assert run_id_match, f"Failed to extract run ID from output '{output}'"
-    run_id = run_id_match.group(1)
+        # Test that we can find this run by it's tag via the query parameter
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--query",
+                "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by tag via query"
 
-    # Test that we can find this run by it's note via the query parameter
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--query",
-            "note_of_this_complex_test",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note via query"
+        # Test that we cannot find this run by another tag via the query parameter
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--query",
+                "another_tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by another tag via query"
 
-    # Test that we can find this run by it's tag via the query parameter
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--query",
-            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by tag via query"
+        # Test that we can find this run by it's note
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--note-regex",
+                "note_of_this_complex_test",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note"
 
-    # Test that we cannot find this run by another tag via the query parameter
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--query",
-            "another_tag",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by another tag via query"
+        # but not another note
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--note-regex",
+                "other_note",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other note"
 
-    # Test that we can find this run by it's note
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--note-regex",
-            "note_of_this_complex_test",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by note"
+        # Test that we can find this run by one of its tags
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--tags",
+                "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by one tag"
 
-    # but not another note
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--note-regex",
-            "other_note",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other note"
+        # but not another tag
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--tags",
+                "other-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other tag"
 
-    # Test that we can find this run by one of its tags
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--tags",
-            "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by one tag"
+        # Test that we can find this run by two of its tags
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--tags",
+                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by two tags"
 
-    # but not another tag
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--tags",
-            "other-tag",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by other tag"
+        # Test that we can find this run by all of its tags
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--tags",
+                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags"
 
-    # Test that we can find this run by two of its tags
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--tags",
-            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by two tags"
+        # Test that we cannot find this run by all of its tags and a non-existent tag
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--tags",
+                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag,non-existing-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by all tags"
 
-    # Test that we can find this run by all of its tags
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--tags",
-            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags"
+        # Test that we can find this run by all of its tags and it's note
+        list_result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "list",
+                "--note-regex",
+                "note_of_this_complex_test",
+                "--tags",
+                "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
+                "--limit",
+                str(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE),
+            ],
+        )
+        assert list_result.exit_code == 0
+        list_output = normalize_output(list_result.stdout)
+        assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags and note"
 
-    # Test that we cannot find this run by all of its tags and a non-existent tag
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--tags",
-            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag,non-existing-tag",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id not in list_output, f"Run ID '{run_id}' found when filtering by all tags"
+        # Test the describe command with the extracted run ID
+        describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
+        assert describe_result.exit_code == 0
+        assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
+        assert "Status (Termination Reason): PENDING" in normalize_output(
+            describe_result.stdout
+        ) or "Status (Termination Reason): PROCESSING" in normalize_output(describe_result.stdout)
+        assert "Queue Position:" in normalize_output(describe_result.stdout)
+        assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
+            describe_result.stdout
+        )
 
-    # Test that we can find this run by all of its tags and it's note
-    list_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "list",
-            "--note-regex",
-            "note_of_this_complex_test",
-            "--tags",
-            "cli-test,test_cli_run_submit_and_describe_and_cancel_and_download_and_delete,further-tag",
-        ],
-    )
-    assert list_result.exit_code == 0
-    list_output = normalize_output(list_result.stdout)
-    assert run_id in list_output, f"Run ID '{run_id}' not found when filtering by all tags and note"
-
-    # Test the describe command with the extracted run ID
-    describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
-    assert describe_result.exit_code == 0
-    assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status (Termination Reason): PENDING" in normalize_output(
-        describe_result.stdout
-    ) or "Status (Termination Reason): PROCESSING" in normalize_output(describe_result.stdout)
-    assert "Queue Position:" in normalize_output(describe_result.stdout)
-    assert "test_cli_run_submit_and_describe_and_cancel_and_download_and_delete" in normalize_output(
-        describe_result.stdout
-    )
-
-    # Test the download command spots the run is still running
-    download_result = runner.invoke(
-        cli, ["application", "run", "result", "download", run_id, str(tmp_path), "--no-wait-for-completion"]
-    )
-    assert download_result.exit_code == 0
-    assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
-
-    # Test the cancel command with the extracted run ID
-    cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
-    assert cancel_result.exit_code == 0
-    assert f"Run with ID '{run_id}' has been canceled." in normalize_output(cancel_result.stdout)
-
-    # Test the describe command with the extracted run ID on canceled run
-    describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
-    assert describe_result.exit_code == 0
-    assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status (Termination Reason): TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(
-        describe_result.stdout
-    )
-
-    download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, str(tmp_path)])
-    assert download_result.exit_code == 0
-
-    # Verify the download message and path
-    assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
-    # TODO(andreas): Would also be great to check if it is canceled by user
-    assert "status: terminated" in normalize_output(download_result.stdout)
-
-    # More robust path verification - normalize paths and check if the destination path is mentioned in the output
-    normalized_tmp_path = str(Path(tmp_path).resolve())
-    normalized_output = normalize_output(download_result.stdout).replace(" ", "")
-    normalized_path_in_output = normalized_tmp_path.replace(" ", "")
-
-    assert normalized_path_in_output in normalized_output, (
-        f"Expected path '{normalized_tmp_path}' not found in output: '{download_result.output}'"
-    )
-
-    download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, "/4711"])
-    if platform.system() == "Windows":
+        # Test the download command spots the run is still running
+        download_result = runner.invoke(
+            cli, ["application", "run", "result", "download", run_id, str(tmp_path), "--no-wait-for-completion"]
+        )
         assert download_result.exit_code == 0
-    else:
-        assert download_result.exit_code == 2
-        assert f"Failed to create destination directory '/4711/{run_id}'" in normalize_output(download_result.stdout)
+        assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
 
-    # Test the result delete command with the extracted run ID
-    delete_result = runner.invoke(cli, ["application", "run", "result", "delete", run_id])
-    assert delete_result.exit_code == 0
-    assert f"Results for run with ID '{run_id}' have been deleted." in normalize_output(delete_result.stdout)
+        # Test the cancel command with the extracted run ID
+        cancel_result = runner.invoke(cli, ["application", "run", "cancel", run_id])
+        assert cancel_result.exit_code == 0
+        assert f"Run with ID '{run_id}' has been canceled." in normalize_output(cancel_result.stdout)
 
-    # Test the describe command with the extracted run ID on deleted run
-    describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
-    assert describe_result.exit_code == 0
-    assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
-    assert "Status (Termination Reason): TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(
-        describe_result.stdout
-    )
+        # Test the describe command with the extracted run ID on canceled run
+        describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
+        assert describe_result.exit_code == 0
+        assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
+        assert "Status (Termination Reason): TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(
+            describe_result.stdout
+        )
+
+        download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, str(tmp_path)])
+        assert download_result.exit_code == 0
+
+        # Verify the download message and path
+        assert f"Downloaded results of run '{run_id}'" in normalize_output(download_result.stdout)
+        # TODO(andreas): Would also be great to check if it is canceled by user
+        assert "status: terminated" in normalize_output(download_result.stdout)
+
+        # More robust path verification - normalize paths and check if destination path is mentioned in output
+        normalized_tmp_path = str(Path(tmp_path).resolve())
+        normalized_output = normalize_output(download_result.stdout).replace(" ", "")
+        normalized_path_in_output = normalized_tmp_path.replace(" ", "")
+
+        assert normalized_path_in_output in normalized_output, (
+            f"Expected path '{normalized_tmp_path}' not found in output: '{download_result.output}'"
+        )
+
+        download_result = runner.invoke(cli, ["application", "run", "result", "download", run_id, "/4711"])
+        if platform.system() == "Windows":
+            assert download_result.exit_code == 0
+        else:
+            assert download_result.exit_code == 2
+            assert f"Failed to create destination directory '/4711/{run_id}'" in normalize_output(
+                download_result.stdout
+            )
+
+        # Test the result delete command with the extracted run ID
+        delete_result = runner.invoke(cli, ["application", "run", "result", "delete", run_id])
+        assert delete_result.exit_code == 0
+        assert f"Results for run with ID '{run_id}' have been deleted." in normalize_output(delete_result.stdout)
+
+        # Test the describe command with the extracted run ID on deleted run
+        describe_result = runner.invoke(cli, ["application", "run", "describe", run_id])
+        assert describe_result.exit_code == 0
+        assert f"Run Details for {run_id}" in normalize_output(describe_result.stdout)
+        assert "Status (Termination Reason): TERMINATED (RunTerminationReason.CANCELED_BY_USER)" in normalize_output(
+            describe_result.stdout
+        )
 
 
 # TODO(Helmut): Activate when PAPI fixed
@@ -1029,40 +1149,13 @@ def test_cli_run_update_item_metadata_not_dict(runner: CliRunner) -> None:
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=180)
 @pytest.mark.sequential
-def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner, tmp_path: Path) -> None:  # noqa: PLR0914, PLR0915
+def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner, tmp_path: Path) -> None:
     """Test dumping and updating custom metadata via CLI commands."""
     import json
     import random
 
-    # Submit a dedicated run with a unique tag to avoid shared-state race conditions
-    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    csv_content += "platform_bucket_url\n"
-    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
-    csv_path = tmp_path / "dummy.csv"
-    csv_path.write_text(csv_content)
-
     unique_tag = f"test_metadata_{datetime.now(tz=UTC).timestamp()}"
-    submit_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "submit",
-            HETA_APPLICATION_ID,
-            str(csv_path),
-            "--tags",
-            unique_tag,
-            "--deadline",
-            (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
-        ],
-    )
-    assert submit_result.exit_code == 0
-    submit_output = normalize_output(submit_result.stdout)
-    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", submit_output)
-    assert run_id_match, f"Failed to extract run ID from submit output '{submit_output}'"
-    run_id = run_id_match.group(1)
-
-    try:
+    with submitted_run(runner, tmp_path, CSV_CONTENT_SPOT0, extra_args=["--tags", unique_tag]) as run_id:
         # Step 1: Dump initial custom metadata of run
         result = runner.invoke(cli, ["application", "run", "dump-metadata", run_id])
         assert result.exit_code == 0
@@ -1144,48 +1237,20 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner, tmp_path: Pa
         # when operations are performed. Instead, verify the random field was removed
         # and the structure remains consistent.
         assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
-    finally:
-        runner.invoke(cli, ["application", "run", "cancel", run_id])
 
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=240)
 @pytest.mark.sequential
-def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner, tmp_path: Path) -> None:  # noqa: PLR0914, PLR0915
+def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner, tmp_path: Path) -> None:  # noqa: PLR0915
     """Test dumping and updating item custom metadata via CLI commands."""
     import json
     import random
 
-    # Submit a dedicated run with a unique tag to avoid shared-state race conditions.
-    # Use a non-empty external_id so describe output contains a matchable "Item External ID: `...`".
-    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    csv_content += "platform_bucket_url\n"
-    csv_content += "dummy-item-001;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
-    csv_path = tmp_path / "dummy.csv"
-    csv_path.write_text(csv_content)
-
     unique_tag = f"test_item_metadata_{datetime.now(tz=UTC).timestamp()}"
-    submit_result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "submit",
-            HETA_APPLICATION_ID,
-            str(csv_path),
-            "--tags",
-            unique_tag,
-            "--deadline",
-            (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
-        ],
-    )
-    assert submit_result.exit_code == 0
-    submit_output = normalize_output(submit_result.stdout)
-    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", submit_output)
-    assert run_id_match, f"Failed to extract run ID from submit output '{submit_output}'"
-    run_id = run_id_match.group(1)
-
-    try:
+    # CSV_CONTENT_SPOT0 uses SPOT_0_FILENAME as external_id, which the describe output surfaces
+    # as "Item External ID: `...`" — the get_external_id() helper below captures it dynamically.
+    with submitted_run(runner, tmp_path, CSV_CONTENT_SPOT0, extra_args=["--tags", unique_tag]) as run_id:
         # Wait for items to appear in the run (describe until external_id is available)
         @retry(wait=wait_exponential(multiplier=1, max=15), stop=stop_after_attempt(8))
         def get_external_id() -> str:
@@ -1275,8 +1340,6 @@ def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner, tmp_pat
         # Note: Similar to run metadata, we verify the structure remains consistent
         # rather than doing exact equality comparison due to dynamic fields
         assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
-    finally:
-        runner.invoke(cli, ["application", "run", "cancel", run_id])
 
 
 @retry(wait=wait_exponential(multiplier=2, max=10), stop=stop_after_attempt(5))
@@ -1378,40 +1441,14 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
     assert "description" in app_details
 
     # Step 3: Submit a run with custom tag
-    csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
-    csv_content += "platform_bucket_url\n"
-    csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
-    csv_path = tmp_path / "dummy.csv"
-    csv_path.write_text(csv_content)
-
     unique_tag = f"test_json_format_{datetime.now(tz=UTC).timestamp()}"
 
-    result = runner.invoke(
-        cli,
-        [
-            "application",
-            "run",
-            "submit",
-            HETA_APPLICATION_ID,
-            str(csv_path),
-            "--tags",
-            unique_tag,
-            "--note",
-            "Testing JSON format output",
-            "--gpu-type",
-            PIPELINE_GPU_TYPE,
-        ],
-    )
-    output = normalize_output(result.stdout)
-    assert result.exit_code == 0
-
-    # Extract run ID from the output
-    run_id_match = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output)
-    assert run_id_match, f"Failed to extract run ID from output '{output}'"
-    run_id = run_id_match.group(1)
-    run_id_2: str | None = None  # Initialize before try block to avoid UnboundLocalError in finally
-
-    try:
+    with submitted_run(
+        runner,
+        tmp_path,
+        CSV_CONTENT_SPOT0,
+        extra_args=["--tags", unique_tag, "--note", "Testing JSON format output", "--gpu-type", PIPELINE_GPU_TYPE],
+    ) as run_id:
         # Step 4: List runs with JSON format and filter by tag
         runs_data = list_runs_by_tag(unique_tag, runner, expected_count=1)
 
@@ -1449,14 +1486,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
         # Step 7: Test run describe with JSON format
         describe_result = runner.invoke(
             cli,
-            [
-                "application",
-                "run",
-                "describe",
-                run_id,
-                "--format",
-                "json",
-            ],
+            ["application", "run", "describe", run_id, "--format", "json"],
         )
         assert describe_result.exit_code == 0
 
@@ -1473,15 +1503,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
         # Step 8: Test empty result with JSON format
         empty_result = runner.invoke(
             cli,
-            [
-                "application",
-                "run",
-                "list",
-                "--tags",
-                "non_existent_tag_12345",
-                "--format",
-                "json",
-            ],
+            ["application", "run", "list", "--tags", "non_existent_tag_12345", "--format", "json"],
         )
         assert empty_result.exit_code == 0
         empty_runs = json.loads(empty_result.stdout)
@@ -1489,14 +1511,11 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
         assert len(empty_runs) == 0, "Should return empty list for non-existent tag"
 
         # Step 9: Submit a second run with same tags for testing cancel-by-filter
-        submit_result_2 = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "submit",
-                HETA_APPLICATION_ID,
-                str(csv_path),
+        with submitted_run(
+            runner,
+            tmp_path,
+            CSV_CONTENT_SPOT0,
+            extra_args=[
                 "--tags",
                 unique_tag,
                 "--note",
@@ -1504,33 +1523,19 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                 "--gpu-type",
                 PIPELINE_GPU_TYPE,
             ],
-        )
-        assert submit_result_2.exit_code == 0
-        output_2 = submit_result_2.stdout
-        run_id_match_2 = re.search(r"Submitted run with id '([0-9a-f-]+)' for '", output_2)
-        assert run_id_match_2, f"Failed to extract run ID from output '{output_2}'"
-        run_id_2 = run_id_match_2.group(1)
+        ) as run_id_2:
+            # Wait for both runs to appear in the list (handles eventual consistency)
+            list_runs_by_tag(unique_tag, runner, expected_count=2)
 
-        # Wait for both runs to appear in the list (handles eventual consistency)
-        list_runs_by_tag(unique_tag, runner, expected_count=2)
+            # Step 10: Test dry-run mode - verify it shows what would be canceled without actually canceling
+            logger.info("Step 10: Testing dry-run mode for cancel-by-filter")
 
-    finally:
-        # Step 10: Test dry-run mode - verify it shows what would be canceled without actually canceling
-        logger.info("Step 10: Testing dry-run mode for cancel-by-filter")
-
-        # First get the application version from the first run
-        app_version_result = runner.invoke(
-            cli,
-            [
-                "application",
-                "run",
-                "describe",
-                run_id,
-                "--format",
-                "json",
-            ],
-        )
-        if app_version_result.exit_code == 0:
+            # First get the application version from the first run
+            app_version_result = runner.invoke(
+                cli,
+                ["application", "run", "describe", run_id, "--format", "json"],
+            )
+            assert app_version_result.exit_code == 0, f"Failed to describe run: {app_version_result.stdout}"
             run_details = json.loads(app_version_result.stdout)
             app_version = run_details["version_number"]
 
@@ -1556,8 +1561,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
 
             # Step 11: Verify runs are NOT canceled after dry-run by describing them
             logger.info("Step 11: Verifying runs are NOT canceled after dry-run")
-            runs_to_check = [run_id] + ([run_id_2] if run_id_2 else [])
-            for idx, rid in enumerate(runs_to_check, 1):
+            for idx, rid in enumerate([run_id, run_id_2], 1):
                 describe_result = runner.invoke(cli, ["application", "run", "describe", rid, "--format", "json"])
                 assert describe_result.exit_code == 0, f"Failed to describe run {idx}: {describe_result.stdout}"
                 described_run = json.loads(describe_result.stdout)
@@ -1584,7 +1588,6 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                     app_version,
                 ],
             )
-            # Should succeed (exit code 0)
             assert cancel_by_filter_result.exit_code == 0
             assert "Successfully canceled 2 run(s)" in cancel_by_filter_result.stdout
             logger.info("Successfully canceled both runs using cancel-by-filter")
@@ -1592,8 +1595,7 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
             # Step 13: Verify runs ARE canceled by describing them again
             # Use retry to handle read-replica lag and slow API responses after cancel.
             logger.info("Step 13: Verifying runs ARE canceled after actual cancel")
-            runs_to_verify = [run_id] + ([run_id_2] if run_id_2 else [])
-            for idx, rid in enumerate(runs_to_verify, 1):
+            for idx, rid in enumerate([run_id, run_id_2], 1):
                 for attempt in Retrying(
                     wait=wait_exponential(multiplier=2, min=1, max=15),
                     stop=stop_after_attempt(5),
@@ -1616,8 +1618,3 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
                             f"Run {idx} has unexpected termination reason: {described_run.get('termination_reason')}"
                         )
                         logger.info("Run {} successfully canceled (state: TERMINATED, reason: CANCELED_BY_USER)", idx)
-        else:
-            # Fallback: cancel individually if we couldn't get the version
-            runs_to_cancel = [run_id] + ([run_id_2] if run_id_2 else [])
-            for rid in runs_to_cancel:
-                runner.invoke(cli, ["application", "run", "cancel", rid])

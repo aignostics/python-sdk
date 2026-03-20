@@ -107,27 +107,6 @@ _Note: For detailed implementation, refer to the source code in the `src/aignost
 
 ### 3.3 Data Schemas
 
-**Health Status Schema:**
-
-```yaml
-Health:
-  type: object
-  properties:
-    status:
-      type: string
-      enum: [UP, DOWN]
-      description: "Overall system health status"
-    components:
-      type: object
-      description: "Health status of individual components"
-      additionalProperties:
-        $ref: "#/definitions/Health"
-    reason:
-      type: string
-      description: "Reason for DOWN status, null for UP"
-  required: [status]
-```
-
 **System Info Schema:**
 
 ```yaml
