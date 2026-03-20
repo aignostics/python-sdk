@@ -1155,7 +1155,7 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner, tmp_path: Pa
     import random
 
     unique_tag = f"test_metadata_{datetime.now(tz=UTC).timestamp()}"
-    with submitted_run(runner, tmp_path, CSV_CONTENT_SPOT0, extra_args=["--tags", unique_tag]) as run_id:
+    with submitted_run(runner, tmp_path, CSV_CONTENT_SPOT0, extra_args=["--tags", unique_tag, "--force"]) as run_id:
         # Step 1: Dump initial custom metadata of run
         result = runner.invoke(cli, ["application", "run", "dump-metadata", run_id])
         assert result.exit_code == 0

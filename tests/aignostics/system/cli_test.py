@@ -22,7 +22,7 @@ def test_cli_health_json_format(mock_service: MagicMock, runner: CliRunner, reco
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
     from aignostics.utils import Health
 
-    mock_service.health.return_value = Health(status=Health.Code.UP)
+    mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
     assert normalize_output(result.stdout).startswith('{  "status": "UP"')
@@ -35,7 +35,7 @@ def test_cli_health_yaml_format(mock_service: MagicMock, runner: CliRunner, reco
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
     from aignostics.utils import Health
 
-    mock_service.health.return_value = Health(status=Health.Code.UP)
+    mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
     assert result.exit_code == 0
     assert "status: UP" in result.stdout

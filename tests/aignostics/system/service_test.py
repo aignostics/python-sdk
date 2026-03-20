@@ -21,7 +21,7 @@ def test_get_cpu_freq_info_handles_runtime_error() -> None:
     """Test that a RuntimeError from psutil.cpu_freq is caught and all values are None."""
     import psutil
 
-    with mock.patch.object(psutil, "cpu_freq", side_effect=RuntimeError("unavailable")):
+    with mock.patch.object(psutil, "cpu_freq", create=True, side_effect=RuntimeError("unavailable")):
         result = Service._get_cpu_freq_info()
 
     assert result == {"current": None, "min": None, "max": None}
