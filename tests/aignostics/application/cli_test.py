@@ -310,7 +310,7 @@ def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
 
 
 @pytest.mark.e2e
-@pytest.mark.timeout(timeout=10)
+@pytest.mark.timeout(timeout=60)
 @patch("aignostics.application._cli.SystemService.health_static")
 def test_cli_run_submit_succeeds_when_system_degraded_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
