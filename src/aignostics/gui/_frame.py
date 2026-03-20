@@ -204,7 +204,7 @@ def frame(  # noqa: C901, PLR0915
     async def _health_load_and_render() -> None:
         nonlocal launchpad_healthy
         with contextlib.suppress(Exception):
-            launchpad_healthy = bool(await run.cpu_bound(SystemService.health_static))
+            launchpad_healthy = bool(await SystemService.health_static())
         health_icon.refresh()
         health_link.refresh()
 

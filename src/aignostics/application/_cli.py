@@ -1,5 +1,6 @@
 """CLI of application module."""
 
+import asyncio
 import json
 import sys
 import time
@@ -129,7 +130,7 @@ run_app.add_typer(result_app, name="result", help="Download or delete run result
 
 
 def _abort_if_system_unhealthy() -> None:
-    health = SystemService.health_static()
+    health = asyncio.run(SystemService.health_static())
     if not health:
         logger.error(f"Platform is not healthy: {health.reason}. Aborting.")
         console.print(f"[error]Error:[/error] Platform is not healthy: {health.reason}. Aborting.")

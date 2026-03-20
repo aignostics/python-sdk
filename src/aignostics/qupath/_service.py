@@ -209,7 +209,7 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -228,7 +228,7 @@ class Service(BaseService):
             }
         }
 
-    def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
 
         Returns:

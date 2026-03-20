@@ -3,7 +3,7 @@
 import contextlib
 import re
 import tempfile
-from asyncio import sleep
+from asyncio import sleep, to_thread
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -101,7 +101,8 @@ async def test_gui_cli_submit_to_run_result_delete(
         csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
         csv_path = tmp_path / "dummy.csv"
         csv_path.write_text(csv_content)
-        result = runner.invoke(
+        result = await to_thread(
+            runner.invoke,
             cli,
             [
                 "application",

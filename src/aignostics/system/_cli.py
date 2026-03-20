@@ -1,5 +1,6 @@
 """System CLI commands."""
 
+import asyncio
 import json
 import sys
 from enum import StrEnum
@@ -51,7 +52,7 @@ def health(
     Args:
         output_format (OutputFormat): Output format (JSON or YAML).
     """
-    health = _service.health()
+    health = asyncio.run(_service.health())
     match output_format:
         case OutputFormat.JSON:
             console.print_json(data=health.model_dump())
@@ -79,7 +80,7 @@ def info(
         mask_secrets (bool): Mask values for variables identified as secrets.
         output_format (OutputFormat): Output format (JSON or YAML).
     """
-    info = _service.info(include_environ=include_environ, mask_secrets=mask_secrets)
+    info = asyncio.run(_service.info(include_environ=include_environ, mask_secrets=mask_secrets))
     match output_format:
         case OutputFormat.JSON:
             console.print_json(data=info)

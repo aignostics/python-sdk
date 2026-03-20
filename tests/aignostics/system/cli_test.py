@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -22,7 +22,7 @@ def test_cli_health_json_format(mock_service: MagicMock, runner: CliRunner, reco
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
     from aignostics.utils import Health
 
-    mock_service.health.return_value = Health(status=Health.Code.UP)
+    mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
     assert normalize_output(result.stdout).startswith('{  "status": "UP"')
@@ -35,7 +35,7 @@ def test_cli_health_yaml_format(mock_service: MagicMock, runner: CliRunner, reco
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
     from aignostics.utils import Health
 
-    mock_service.health.return_value = Health(status=Health.Code.UP)
+    mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
     assert result.exit_code == 0
     assert "status: UP" in result.stdout
@@ -118,7 +118,7 @@ def test_cli_health_up_exits_zero(mock_service: MagicMock, runner: CliRunner) ->
     """Check health command exits with code 0 when status is UP."""
     from aignostics.utils import Health
 
-    mock_service.health.return_value = Health(status=Health.Code.UP)
+    mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
 
@@ -129,7 +129,7 @@ def test_cli_health_degraded_exits_zero(mock_service: MagicMock, runner: CliRunn
     """Check health command exits with code 0 when status is DEGRADED."""
     from aignostics.utils import Health
 
-    mock_service.health.return_value = Health(status=Health.Code.DEGRADED, reason="some component degraded")
+    mock_service.health = AsyncMock(return_value=Health(status=Health.Code.DEGRADED, reason="some component degraded"))
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 0
 
@@ -140,7 +140,7 @@ def test_cli_health_down_exits_one(mock_service: MagicMock, runner: CliRunner) -
     """Check health command exits with code 1 when status is DOWN."""
     from aignostics.utils import Health
 
-    mock_service.health.return_value = Health(status=Health.Code.DOWN, reason="service unavailable")
+    mock_service.health = AsyncMock(return_value=Health(status=Health.Code.DOWN, reason="service unavailable"))
     result = runner.invoke(cli, ["system", "health"])
     assert result.exit_code == 1
 

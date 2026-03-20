@@ -1,7 +1,7 @@
 """Tests for the platform service module."""
 
 from http import HTTPStatus
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -9,219 +9,203 @@ from aignostics.platform._service import Service, UserInfo
 from aignostics.utils import Health
 
 _PATCH_AUTH_GETTER = "aignostics.platform._service.get_token"
+_PATCH_HTTPX_ASYNC_CLIENT = "aignostics.platform._service.httpx.AsyncClient"
 
 
 @pytest.mark.unit
-def test_http_pool_is_shared() -> None:
-    """Test that Service._get_http_pool returns the same instance across multiple calls.
-
-    This ensures that all service instances share the same urllib3.PoolManager
-    for efficient connection reuse.
-    """
-    # Get pool instance
-    pool1 = Service._get_http_pool()
-
-    # Get pool instance again (should return same instance)
-    pool2 = Service._get_http_pool()
-
-    # Verify both calls return the same instance
-    assert pool1 is pool2, "Service._get_http_pool should return the same PoolManager instance"
-
-
-@pytest.mark.unit
-def test_http_pool_singleton() -> None:
-    """Test that Service._http_pool maintains a singleton pattern.
-
-    Multiple service instances should share the same connection pool.
-    """
-    # Create two service instances
-    service1 = Service()
-    service2 = Service()
-
-    # Get pool from each service's perspective
-    pool_from_service1 = service1._get_http_pool()
-    pool_from_service2 = service2._get_http_pool()
-
-    # Verify they share the same pool
-    assert pool_from_service1 is pool_from_service2, "Service instances should share the same HTTP pool"
-
-
-@pytest.mark.unit
-def test_determine_api_authenticated_health_success() -> None:
-    """Health.UP returned when the dedicated pool responds 200 with auth token."""
+async def test_determine_api_authenticated_health_success() -> None:
+    """Health.UP returned when httpx responds 200 with auth token."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.OK
-    mock_response.data = b'{"status": "UP"}'
+    mock_response.status_code = HTTPStatus.OK
+    mock_response.json.return_value = {"status": "UP"}
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
     with (
-        patch.object(Service, "_get_http_pool", return_value=mock_pool),
+        patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls,
         patch(_PATCH_AUTH_GETTER, return_value="test-token"),
     ):
-        result = Service()._determine_api_authenticated_health()
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_authenticated_health()
 
     assert result.status == Health.Code.UP
 
 
 @pytest.mark.unit
-def test_determine_api_authenticated_health_non_200() -> None:
-    """Health.DOWN returned when the dedicated pool responds with non-200."""
+async def test_determine_api_authenticated_health_non_200() -> None:
+    """Health.DOWN returned when httpx responds with non-200."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.SERVICE_UNAVAILABLE
+    mock_response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
     with (
-        patch.object(Service, "_get_http_pool", return_value=mock_pool),
+        patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls,
         patch(_PATCH_AUTH_GETTER, return_value="test-token"),
     ):
-        result = Service()._determine_api_authenticated_health()
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_authenticated_health()
 
     assert result.status == Health.Code.DOWN
     assert result.reason is not None
 
 
 @pytest.mark.unit
-def test_determine_api_authenticated_health_handles_exception() -> None:
+async def test_determine_api_authenticated_health_handles_exception() -> None:
     """Health.DOWN with reason when get_token raises."""
     with patch(_PATCH_AUTH_GETTER, side_effect=RuntimeError("no auth")):
-        result = Service()._determine_api_authenticated_health()
+        result = await Service()._determine_api_authenticated_health()
 
     assert result.status == Health.Code.DOWN
     assert result.reason is not None
 
 
 @pytest.mark.unit
-def test_determine_api_public_health_non_200() -> None:
-    """Health.DOWN returned when the public pool responds with non-200."""
+async def test_determine_api_public_health_non_200() -> None:
+    """Health.DOWN returned when httpx responds with non-200."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.SERVICE_UNAVAILABLE
+    mock_response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
-    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
-        result = Service()._determine_api_public_health()
-
-    assert result.status == Health.Code.DOWN
-    assert result.reason is not None
-
-
-@pytest.mark.unit
-def test_determine_api_public_health_handles_exception() -> None:
-    """Health.DOWN returned when the public pool raises."""
-    mock_pool = MagicMock()
-    mock_pool.request.side_effect = ConnectionError("unreachable")
-
-    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
-        result = Service()._determine_api_public_health()
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_public_health()
 
     assert result.status == Health.Code.DOWN
     assert result.reason is not None
 
 
 @pytest.mark.unit
-def test_determine_api_public_health_up_response() -> None:
+async def test_determine_api_public_health_handles_exception() -> None:
+    """Health.DOWN returned when httpx raises."""
+    mock_client = AsyncMock()
+    mock_client.get.side_effect = ConnectionError("unreachable")
+
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_public_health()
+
+    assert result.status == Health.Code.DOWN
+    assert result.reason is not None
+
+
+@pytest.mark.unit
+async def test_determine_api_public_health_up_response() -> None:
     """HTTP 200 + {"status": "UP"} body → Health.UP (explicit JSON body check)."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.OK
-    mock_response.data = b'{"status": "UP"}'
+    mock_response.status_code = HTTPStatus.OK
+    mock_response.json.return_value = {"status": "UP"}
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
-    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
-        result = Service()._determine_api_public_health()
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_public_health()
 
     assert result.status == Health.Code.UP
 
 
 @pytest.mark.unit
-def test_determine_api_public_health_degraded_response() -> None:
+async def test_determine_api_public_health_degraded_response() -> None:
     """HTTP 200 + {"status": "DEGRADED"} body → Health.DEGRADED with reason set."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.OK
-    mock_response.data = b'{"status": "DEGRADED"}'
+    mock_response.status_code = HTTPStatus.OK
+    mock_response.json.return_value = {"status": "DEGRADED"}
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
-    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
-        result = Service()._determine_api_public_health()
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_public_health()
 
     assert result.status == Health.Code.DEGRADED
     assert result.reason is not None
 
 
 @pytest.mark.unit
-def test_determine_api_public_health_degraded_response_with_reason() -> None:
+async def test_determine_api_public_health_degraded_response_with_reason() -> None:
     """HTTP 200 + {"status": "DEGRADED", "reason": "DB slow"} → reason == "DB slow"."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.OK
-    mock_response.data = b'{"status": "DEGRADED", "reason": "DB slow"}'
+    mock_response.status_code = HTTPStatus.OK
+    mock_response.json.return_value = {"status": "DEGRADED", "reason": "DB slow"}
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
-    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
-        result = Service()._determine_api_public_health()
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_public_health()
 
     assert result.status == Health.Code.DEGRADED
     assert result.reason == "DB slow"
 
 
 @pytest.mark.unit
-def test_determine_api_public_health_unknown_status_is_down() -> None:
+async def test_determine_api_public_health_unknown_status_is_down() -> None:
     """HTTP 200 + {"status": "UNKNOWN"} body → Health.DOWN."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.OK
-    mock_response.data = b'{"status": "UNKNOWN"}'
+    mock_response.status_code = HTTPStatus.OK
+    mock_response.json.return_value = {"status": "UNKNOWN"}
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
-    with patch.object(Service, "_get_http_pool", return_value=mock_pool):
-        result = Service()._determine_api_public_health()
+    with patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls:
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_public_health()
 
     assert result.status == Health.Code.DOWN
     assert result.reason is not None
 
 
 @pytest.mark.unit
-def test_determine_api_authenticated_health_degraded_response() -> None:
+async def test_determine_api_authenticated_health_degraded_response() -> None:
     """HTTP 200 + {"status": "DEGRADED"} body → Health.DEGRADED with reason set."""
     mock_response = MagicMock()
-    mock_response.status = HTTPStatus.OK
-    mock_response.data = b'{"status": "DEGRADED"}'
+    mock_response.status_code = HTTPStatus.OK
+    mock_response.json.return_value = {"status": "DEGRADED"}
 
-    mock_pool = MagicMock()
-    mock_pool.request.return_value = mock_response
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
 
     with (
-        patch.object(Service, "_get_http_pool", return_value=mock_pool),
+        patch(_PATCH_HTTPX_ASYNC_CLIENT) as mock_cls,
         patch(_PATCH_AUTH_GETTER, return_value="test-token"),
     ):
-        result = Service()._determine_api_authenticated_health()
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+        result = await Service()._determine_api_authenticated_health()
 
     assert result.status == Health.Code.DEGRADED
     assert result.reason is not None
 
 
 @pytest.mark.unit
-def test_health_returns_both_components() -> None:
+async def test_health_returns_both_components() -> None:
     """health() aggregates api_public and api_authenticated component keys."""
     public_health = Health(status=Health.Code.UP)
     auth_health = Health(status=Health.Code.UP)
 
     service = Service()
     with (
-        patch.object(service, "_determine_api_public_health", return_value=public_health),
-        patch.object(service, "_determine_api_authenticated_health", return_value=auth_health),
+        patch.object(service, "_determine_api_public_health", new=AsyncMock(return_value=public_health)),
+        patch.object(service, "_determine_api_authenticated_health", new=AsyncMock(return_value=auth_health)),
     ):
-        result = service.health()
+        result = await service.health()
 
     assert result.components is not None
     assert "api_public" in result.components
