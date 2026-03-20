@@ -1,6 +1,5 @@
 """Tests for BaseService.get_service() and settings() methods."""
 
-import contextlib
 import inspect
 from typing import Any
 
@@ -76,8 +75,6 @@ def test_get_service_dependency_yields_instance(record_property) -> None:
     gen = dep()
     instance = next(gen)
     assert isinstance(instance, _ConcreteService)
-    with contextlib.suppress(StopIteration):
-        next(gen)
 
 
 @pytest.mark.unit
