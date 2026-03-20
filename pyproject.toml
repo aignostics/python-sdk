@@ -138,7 +138,7 @@ dependencies = [
     "lxml>=6.0.2",                      # For python 3.14 pre-built wheels
     "filelock>=3.20.1",                 # CVE-2025-68146
     "marshmallow>=3.26.2",              # CVE-2025-68480
-    "fastmcp>=2.0.0,<3",                # MCP server - Major version 3 is in beta as of 26/01/2026 and has not been released on PyPI. Upgrade once a stable release is out.
+    "fastmcp>=3.1.1,<4",                # MCP server - Major version 3 is in beta as of 26/01/2026 and has not been released on PyPI. Upgrade once a stable release is out.
 ]
 
 [project.optional-dependencies]
