@@ -202,7 +202,7 @@ def test_cli_run_submit_succeeds_with_valid_pipeline_config(runner: CliRunner, t
             HETA_APPLICATION_ID,
             str(csv_path),
             "--deadline",
-            (datetime.now(tz=UTC) + timedelta(seconds=0)).isoformat(),
+            (datetime.now(tz=UTC) + timedelta(seconds=5)).isoformat(),
             "--gpu-type",
             "L4",
             "--gpu-provisioning-mode",

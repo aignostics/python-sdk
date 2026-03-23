@@ -152,8 +152,8 @@ dist_native:
 # Project specific targets
 ## codegen
 codegen:
-	# Download openapi.json from https://platform.aignostics.com/api/v1/openapi.json, 
-	# format via jq, and save as codegen/in/openapi_$version.json, with the 
+	# Download openapi.json from https://platform.aignostics.com/api/v1/openapi.json,
+	# format via jq, and save as codegen/in/openapi_$version.json, with the
 	# version extracted from the info.version field in the JSON
 	mkdir -p codegen/in/archive
 	# curl -s https://platform.aignostics.com/api/v1/openapi.json | jq . > codegen/in/openapi.json
@@ -176,9 +176,9 @@ codegen:
 	find codegen/out/aignx/codegen/models/ -name "[a-z]*.py" -type f | sed 's|.*/\(.*\)\.py|\1|' | xargs -I{} echo "from .{} import *" > codegen/out/aignx/codegen/models/__init__.py
 	# fix resource patch
 	# in codegen/out/public_api.py replace all occurrences of resource_path='/v1 with resource_path='/api/v1
-	# Use portable sed syntax: -i'' works on both macOS and Linux
-	sed -i"" "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py
-	
+	# Use portable sed syntax: try GNU-style -i'' first, then BSD/macOS-style -i ''
+	sed -i'' "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py || sed -i '' "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py
+
 # Special rule to catch any arguments (like patch, minor, major, pdf, Python versions, or x.y.z)
 # This prevents "No rule to make target" errors when passing arguments to make commands
 .PHONY: %

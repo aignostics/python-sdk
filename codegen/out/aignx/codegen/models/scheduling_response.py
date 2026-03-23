@@ -17,27 +17,19 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List
-from typing_extensions import Annotated
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class InputArtifact(BaseModel):
+class SchedulingResponse(BaseModel):
     """
-    InputArtifact
+    Scheduling fields returned in run responses.
     """ # noqa: E501
-    name: StrictStr
-    mime_type: Annotated[str, Field(strict=True)]
-    metadata_schema: Dict[str, Any]
-    __properties: ClassVar[List[str]] = ["name", "mime_type", "metadata_schema"]
-
-    @field_validator('mime_type')
-    def mime_type_validate_regular_expression(cls, value):
-        """Validates the regular expression"""
-        if not re.match(r"^\w+\/\w+[-+.|\w+]+\w+$", value):
-            raise ValueError(r"must validate the regular expression /^\w+\/\w+[-+.|\w+]+\w+$/")
-        return value
+    due_date: Optional[datetime] = None
+    deadline: Optional[datetime] = None
+    __properties: ClassVar[List[str]] = ["due_date", "deadline"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -57,7 +49,7 @@ class InputArtifact(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of InputArtifact from a JSON string"""
+        """Create an instance of SchedulingResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,11 +70,21 @@ class InputArtifact(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if due_date (nullable) is None
+        # and model_fields_set contains the field
+        if self.due_date is None and "due_date" in self.model_fields_set:
+            _dict['due_date'] = None
+
+        # set to None if deadline (nullable) is None
+        # and model_fields_set contains the field
+        if self.deadline is None and "deadline" in self.model_fields_set:
+            _dict['deadline'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of InputArtifact from a dict"""
+        """Create an instance of SchedulingResponse from a dict"""
         if obj is None:
             return None
 
@@ -90,9 +92,8 @@ class InputArtifact(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "mime_type": obj.get("mime_type"),
-            "metadata_schema": obj.get("metadata_schema")
+            "due_date": obj.get("due_date"),
+            "deadline": obj.get("deadline")
         })
         return _obj
 

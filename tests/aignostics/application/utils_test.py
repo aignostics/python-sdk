@@ -1,6 +1,6 @@
 """Tests to verify the utility functions of the application module."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, Mock, patch
@@ -18,7 +18,10 @@ from aignostics.application._utils import (
     queue_position_string_from_run,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
+    validate_deadline,
+    validate_due_date,
     validate_mappings,
+    validate_scheduling_constraints,
     write_metadata_dict_to_csv,
 )
 from aignostics.constants import (
@@ -41,6 +44,7 @@ from aignostics.platform import (
 
 TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
 SUBMITTED_BY = "user@example.com"
+_ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 
 def _make_statistics(  # noqa: PLR0913
@@ -229,26 +233,98 @@ def test_application_run_status_to_str_terminated() -> None:
 # Tests for is_not_terminated_with_deadline_exceeded
 
 
+# --- Tests using scheduling response object (new primary path) ---
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_terminated_run() -> None:
+    """Test that terminated runs always return None regardless of scheduling deadline."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    scheduling = Mock(deadline=past_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.TERMINATED, scheduling=scheduling)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_pending_future() -> None:
+    """Test that a pending run with scheduling deadline in the future returns False."""
+    from datetime import timedelta
+
+    future_deadline = datetime.now(tz=UTC) + timedelta(hours=1)
+    scheduling = Mock(deadline=future_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling)
+    assert result is False
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_pending_past() -> None:
+    """Test that a pending run with scheduling deadline in the past returns True."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    scheduling = Mock(deadline=past_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_processing_past() -> None:
+    """Test that a processing run with scheduling deadline in the past returns True."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    scheduling = Mock(deadline=past_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PROCESSING, scheduling=scheduling)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_none_deadline() -> None:
+    """Test that scheduling object with None deadline returns None."""
+    scheduling = Mock(deadline=None)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_none() -> None:
+    """Test that None scheduling and None metadata returns None."""
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=None, custom_metadata=None)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_takes_precedence() -> None:
+    """Test that scheduling object takes precedence over custom_metadata."""
+    from datetime import timedelta
+
+    # scheduling says future (not exceeded), custom_metadata says past (exceeded)
+    future_deadline = datetime.now(tz=UTC) + timedelta(hours=1)
+    scheduling = Mock(deadline=future_deadline)
+    metadata = {"sdk": {"scheduling": {"deadline": "2020-01-01T12:00:00Z"}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling, custom_metadata=metadata)
+    assert result is False  # scheduling wins
+
+
+# --- Tests using custom_metadata fallback (backward compatibility for older runs) ---
+
+
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_terminated_run() -> None:
     """Test that terminated runs always return None regardless of deadline."""
     past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.TERMINATED, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.TERMINATED, custom_metadata=metadata)
     assert result is None
 
 
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_none_metadata() -> None:
     """Test that None metadata returns None."""
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, None)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=None)
     assert result is None
 
 
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_empty_metadata() -> None:
     """Test that empty metadata returns None."""
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, {})
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata={})
     assert result is None
 
 
@@ -256,7 +332,7 @@ def test_is_not_terminated_with_deadline_exceeded_empty_metadata() -> None:
 def test_is_not_terminated_with_deadline_exceeded_no_sdk_key() -> None:
     """Test that metadata without 'sdk' key returns None."""
     metadata = {"other_key": "other_value"}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -264,7 +340,7 @@ def test_is_not_terminated_with_deadline_exceeded_no_sdk_key() -> None:
 def test_is_not_terminated_with_deadline_exceeded_no_scheduling_key() -> None:
     """Test that metadata without 'scheduling' key returns None."""
     metadata = {"sdk": {"other_key": "other_value"}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -272,19 +348,18 @@ def test_is_not_terminated_with_deadline_exceeded_no_scheduling_key() -> None:
 def test_is_not_terminated_with_deadline_exceeded_no_deadline_key() -> None:
     """Test that metadata without 'deadline' key returns None."""
     metadata = {"sdk": {"scheduling": {"other_key": "other_value"}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_pending_deadline_in_future() -> None:
     """Test that a pending run with deadline in the future returns False."""
-    # Create a deadline 1 hour in the future
     from datetime import timedelta
 
     future_deadline = datetime.now(tz=UTC) + timedelta(hours=1)
     metadata = {"sdk": {"scheduling": {"deadline": future_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is False
 
 
@@ -293,7 +368,7 @@ def test_is_not_terminated_with_deadline_exceeded_pending_deadline_in_past() -> 
     """Test that a pending run with deadline in the past returns True."""
     past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is True
 
 
@@ -302,7 +377,7 @@ def test_is_not_terminated_with_deadline_exceeded_processing_deadline_in_past() 
     """Test that a processing run with deadline in the past returns True."""
     past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PROCESSING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PROCESSING, custom_metadata=metadata)
     assert result is True
 
 
@@ -310,7 +385,7 @@ def test_is_not_terminated_with_deadline_exceeded_processing_deadline_in_past() 
 def test_is_not_terminated_with_deadline_exceeded_invalid_datetime_format() -> None:
     """Test that invalid datetime format returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": "not-a-valid-datetime"}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -319,7 +394,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_with_z_suffix() -> No
     """Test that deadline with Z suffix (UTC) is handled correctly for pending run."""
     past_deadline = "2020-01-01T12:00:00Z"
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is True
 
 
@@ -328,7 +403,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_with_timezone_offset(
     """Test that deadline with timezone offset is handled correctly for pending run."""
     past_deadline = "2020-01-01T12:00:00+00:00"
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is True
 
 
@@ -336,7 +411,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_with_timezone_offset(
 def test_is_not_terminated_with_deadline_exceeded_deadline_empty_string() -> None:
     """Test that empty string deadline returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": ""}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -344,7 +419,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_empty_string() -> Non
 def test_is_not_terminated_with_deadline_exceeded_deadline_none_value() -> None:
     """Test that None deadline value returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": None}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -352,7 +427,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_none_value() -> None:
 def test_is_not_terminated_with_deadline_exceeded_deadline_numeric_value() -> None:
     """Test that numeric deadline value returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": 123456789}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -902,3 +977,208 @@ def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) 
     # Verify artifact details ARE shown in detailed mode
     assert "Download URL" in all_output
     assert "Artifact ID" in all_output
+
+
+@pytest.mark.unit
+def test_validate_due_date_none() -> None:
+    """Test that None is accepted (optional parameter)."""
+    # Should not raise any exception
+    validate_due_date(None)
+
+
+@pytest.mark.unit
+def test_validate_due_date_valid_formats() -> None:
+    """Test that valid ISO 8601 formats in the future are accepted."""
+    # Create a datetime 2 hours in the future
+    future_time = datetime.now(tz=UTC) + timedelta(hours=2)
+
+    valid_formats = [
+        future_time.isoformat(),  # With timezone offset like +00:00
+        future_time.strftime(_ISO_8601_FORMAT) + "Z",  # With Z suffix
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "Z",  # With microseconds and Z
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "+00:00",  # With microseconds and colon-separated offset
+    ]
+
+    for time_str in valid_formats:
+        # Should not raise any exception
+        try:
+            validate_due_date(time_str)
+        except ValueError as e:
+            pytest.fail(f"Valid ISO 8601 format '{time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_due_date_invalid_format() -> None:
+    """Test that invalid ISO 8601 formats are rejected."""
+    invalid_formats = [
+        "2025-10-19",  # Date only
+        "19:53:00",  # Time only
+        "2025/10/19 19:53:00",  # Wrong separators
+        "2025-10-19 19:53:00",  # Space instead of T
+        "not-a-date",  # Completely invalid
+        "2025-13-45T25:70:99Z",  # Invalid values
+    ]
+
+    for time_str in invalid_formats:
+        with pytest.raises(ValueError, match=r"Invalid ISO 8601 format"):
+            validate_due_date(time_str)
+
+
+@pytest.mark.unit
+def test_validate_due_date_past_datetime() -> None:
+    """Test that datetimes in the past are rejected."""
+    # Create a datetime 2 hours in the past
+    past_time = datetime.now(tz=UTC) - timedelta(hours=2)
+
+    past_formats = [
+        past_time.isoformat(),
+        past_time.strftime(_ISO_8601_FORMAT) + "Z",
+    ]
+
+    for time_str in past_formats:
+        with pytest.raises(ValueError, match=r"due_date must be in the future"):
+            validate_due_date(time_str)
+
+
+@pytest.mark.unit
+def test_validate_due_date_current_time() -> None:
+    """Test that current time (not future) is rejected."""
+    # Get current time - should be rejected as it's not in the future
+    current_time = datetime.now(tz=UTC)
+    current_time_str = current_time.isoformat()
+
+    with pytest.raises(ValueError, match=r"due_date must be in the future"):
+        validate_due_date(current_time_str)
+
+
+@pytest.mark.unit
+def test_validate_due_date_edge_case_one_second_future() -> None:
+    """Test that a datetime 1 second in the future is accepted."""
+    # Create a datetime 1 second in the future
+    future_time = datetime.now(tz=UTC) + timedelta(seconds=1)
+    future_time_str = future_time.isoformat()
+
+    # Should not raise any exception
+    try:
+        validate_due_date(future_time_str)
+    except ValueError as e:
+        pytest.fail(f"Future datetime '{future_time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_deadline_none() -> None:
+    """Test that None is accepted (optional parameter)."""
+    # Should not raise any exception
+    validate_deadline(None)
+
+
+@pytest.mark.unit
+def test_validate_deadline_valid_formats() -> None:
+    """Test that valid ISO 8601 formats in the future are accepted."""
+    future_time = datetime.now(tz=UTC) + timedelta(hours=2)
+
+    valid_formats = [
+        future_time.isoformat(),
+        future_time.strftime(_ISO_8601_FORMAT) + "Z",
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "Z",
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "+00:00",  # With microseconds and colon-separated offset
+    ]
+
+    for time_str in valid_formats:
+        try:
+            validate_deadline(time_str)
+        except ValueError as e:
+            pytest.fail(f"Valid ISO 8601 format '{time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_deadline_invalid_format() -> None:
+    """Test that invalid ISO 8601 formats are rejected."""
+    invalid_formats = [
+        "2025-10-19",
+        "19:53:00",
+        "2025/10/19 19:53:00",
+        "2025-10-19 19:53:00",
+        "not-a-date",
+        "2025-13-45T25:70:99Z",
+    ]
+
+    for time_str in invalid_formats:
+        with pytest.raises(ValueError, match=r"Invalid ISO 8601 format"):
+            validate_deadline(time_str)
+
+
+@pytest.mark.unit
+def test_validate_deadline_past_datetime() -> None:
+    """Test that datetimes in the past are rejected."""
+    past_time = datetime.now(tz=UTC) - timedelta(hours=2)
+
+    past_formats = [
+        past_time.isoformat(),
+        past_time.strftime(_ISO_8601_FORMAT) + "Z",
+    ]
+
+    for time_str in past_formats:
+        with pytest.raises(ValueError, match=r"deadline must be in the future"):
+            validate_deadline(time_str)
+
+
+@pytest.mark.unit
+def test_validate_deadline_current_time() -> None:
+    """Test that current time (not future) is rejected."""
+    current_time = datetime.now(tz=UTC)
+    current_time_str = current_time.isoformat()
+
+    with pytest.raises(ValueError, match=r"deadline must be in the future"):
+        validate_deadline(current_time_str)
+
+
+@pytest.mark.unit
+def test_validate_deadline_edge_case_one_second_future() -> None:
+    """Test that a datetime 1 second in the future is accepted."""
+    future_time = datetime.now(tz=UTC) + timedelta(seconds=1)
+    future_time_str = future_time.isoformat()
+
+    try:
+        validate_deadline(future_time_str)
+    except ValueError as e:
+        pytest.fail(f"Future datetime '{future_time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_both_none() -> None:
+    """Test that both None values are accepted."""
+    validate_scheduling_constraints(None, None)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_one_none() -> None:
+    """Test that a single None value is accepted (no cross-field check needed)."""
+    future_time = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    validate_scheduling_constraints(future_time, None)
+    validate_scheduling_constraints(None, future_time)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_due_date_before_deadline() -> None:
+    """Test that due_date before deadline is accepted."""
+    due_date = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    deadline = (datetime.now(tz=UTC) + timedelta(hours=4)).isoformat()
+    validate_scheduling_constraints(due_date, deadline)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_due_date_after_deadline() -> None:
+    """Test that due_date after deadline is rejected."""
+    due_date = (datetime.now(tz=UTC) + timedelta(hours=4)).isoformat()
+    deadline = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    with pytest.raises(ValueError, match=r"due_date must be before deadline"):
+        validate_scheduling_constraints(due_date, deadline)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_due_date_equal_deadline() -> None:
+    """Test that due_date equal to deadline is rejected."""
+    same_time = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    with pytest.raises(ValueError, match=r"due_date must be before deadline"):
+        validate_scheduling_constraints(same_time, same_time)

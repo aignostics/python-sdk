@@ -4,6 +4,7 @@ import base64
 import re
 import time
 from collections.abc import Callable, Generator
+from datetime import datetime
 from http import HTTPStatus
 from importlib.util import find_spec
 from pathlib import Path
@@ -46,7 +47,9 @@ from ._utils import (
     get_mime_type_for_artifact,
     get_supported_extensions_for_application,
     is_not_terminated_with_deadline_exceeded,
+    validate_deadline,
     validate_due_date,
+    validate_scheduling_constraints,
 )
 
 has_qupath_extra = find_spec("ijson")
@@ -569,7 +572,9 @@ class Service(BaseService):  # noqa: PLR0904
                 "item_succeeded_count": run.statistics.item_succeeded_count,
                 "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
                 "is_not_terminated_with_deadline_exceeded": is_not_terminated_with_deadline_exceeded(
-                    run.state, run.custom_metadata
+                    run.state,
+                    scheduling=getattr(run, "scheduling", None),
+                    custom_metadata=run.custom_metadata,
                 ),
             }
             for run in Service().application_runs(
@@ -1004,10 +1009,15 @@ class Service(BaseService):  # noqa: PLR0904
                 the application version ID is invalid
                 or items invalid
                 or due_date not ISO 8601
-                or due_date not in the future.
+                or due_date not in the future
+                or deadline not ISO 8601
+                or deadline not in the future
+                or due_date not before deadline.
             RuntimeError: If submitting the run failed unexpectedly.
         """
         validate_due_date(due_date)
+        validate_deadline(deadline)
+        validate_scheduling_constraints(due_date, deadline)
         try:
             if custom_metadata is None:
                 custom_metadata = {}
@@ -1021,12 +1031,20 @@ class Service(BaseService):  # noqa: PLR0904
                 sdk_metadata["workflow"] = {
                     "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
                 }
+            # Build scheduling payload for the top-level request field (not custom_metadata)
+            scheduling = None
             if due_date or deadline:
-                sdk_metadata["scheduling"] = {}
-                if due_date:
-                    sdk_metadata["scheduling"]["due_date"] = due_date
-                if deadline:
-                    sdk_metadata["scheduling"]["deadline"] = deadline
+                from aignx.codegen.models import SchedulingRequest  # noqa: PLC0415
+
+                def _parse_iso(value: str | None) -> datetime | None:
+                    if value is None:
+                        return None
+                    return datetime.fromisoformat(value)
+
+                scheduling = SchedulingRequest(
+                    due_date=_parse_iso(due_date),
+                    deadline=_parse_iso(deadline),
+                )
 
             has_gpu_config = (
                 gpu_type or gpu_provisioning_mode or max_gpus_per_slide or flex_start_max_run_duration_minutes
@@ -1069,6 +1087,7 @@ class Service(BaseService):  # noqa: PLR0904
                 items=items,
                 application_version=application_version,
                 custom_metadata=custom_metadata,
+                scheduling=scheduling,
             )
         except ValueError as e:
             message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
