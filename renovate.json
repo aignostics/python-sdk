@@ -4,7 +4,7 @@
     "config:recommended"
   ],
   "timezone": "Europe/Berlin",
-  "schedule": ["at any time"],
+  "schedule": ["* 0-5 * * *"],
   "labels": [
     "bot",
     "renovate",
