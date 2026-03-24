@@ -632,7 +632,7 @@ def test_platform_special_app_submit() -> None:
 
     The test behavior varies based on the current minute when triggered by cron (*/10):
     - Minutes 0-9 (every 6th run): Uses 1000 items instead of 100
-    - Minutes 40-49 (every 4th run): Uses 3h due date/deadline instead of 24h
+    - Minutes 40-49 (every 4th run): Uses 2h due date / 3h deadline instead of 20h due date / 24h deadline
 
     Raises:
         AssertionError: If any of the validation checks fail.
