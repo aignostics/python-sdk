@@ -67,8 +67,8 @@ TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
     60 * 60
 )  # 1 hour - timeout should never happen if cancel on deadline exceeded works
 
-TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 1  # 1 hours
-TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 1  # 1 hours
+TEST_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 30  # 30 minutes
+TEST_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 1  # 1 hour
 TEST_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
 TEST_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 
@@ -78,7 +78,7 @@ HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS = (
     60 * 60 * 5
 )  # 5 hours - timeout should never happen if cancel on deadline exceeded works
 
-HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 24 hours
+HETA_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 20  # 20 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
 HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 10  # 10 minutes
 HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
@@ -89,10 +89,10 @@ HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 100
 SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 2000  # Minute 0..9
 SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20 = 2000  # Minute 20..29
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 24  # 1 day(s)
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 1 day(s)
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours; Minute 40..49
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours; Minute 40..49
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 20  # 20 hours
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 2  # 2 hours
+SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
 SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
 SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 60  # 60 minutes
 
@@ -273,7 +273,9 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
         ValueError: If more than one tag is provided.
     """
     tags = tags or set()
-    deadline = datetime.now(tz=UTC) + timedelta(seconds=deadline_seconds)
+    now = datetime.now(tz=UTC)
+    due_date = now + timedelta(seconds=due_date_seconds)
+    deadline = now + timedelta(seconds=deadline_seconds)
     find_and_validate_at = deadline + timedelta(hours=1)
     tags.add(
         f"find_and_validate:{find_and_validate_at.month}_{find_and_validate_at.day}_{find_and_validate_at.hour}"
@@ -282,7 +284,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
     logger.trace(f"Submitting application run for {application_id} version {application_version}")
     client = platform.Client()
     scheduling = {
-        "due_date": (datetime.now(tz=UTC) + timedelta(seconds=due_date_seconds)).isoformat(),
+        "due_date": due_date.isoformat(),
         "deadline": deadline.isoformat(),
     }
     custom_metadata = {
@@ -630,7 +632,7 @@ def test_platform_special_app_submit() -> None:
 
     The test behavior varies based on the current minute when triggered by cron (*/10):
     - Minutes 0-9 (every 6th run): Uses 1000 items instead of 100
-    - Minutes 40-49 (every 4th run): Uses 3h due date/deadline instead of 24h
+    - Minutes 40-49 (every 4th run): Uses 2h due date / 3h deadline instead of 20h due date / 24h deadline
 
     Raises:
         AssertionError: If any of the validation checks fail.
