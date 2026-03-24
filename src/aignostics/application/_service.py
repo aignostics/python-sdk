@@ -1483,6 +1483,19 @@ class Service(BaseService):  # noqa: PLR0904
         update_progress(progress, download_progress_callable, download_progress_queue)
 
         downloaded_items: set[str] = set()  # Track downloaded items to avoid re-downloading
+
+        def _get_artifact_download_url(run_id: str, artifact_id: str) -> str:
+            """Resolve artifact download URL via the new API endpoint.
+
+            Args:
+                run_id (str): The run ID.
+                artifact_id (str): The artifact ID.
+
+            Returns:
+                str: The presigned download URL.
+            """
+            return self._get_platform_client().run(run_id).get_artifact_download_url(artifact_id)
+
         while True:
             run_details = application_run.details()  # (Re)load current run details
             progress.run = run_details
@@ -1496,6 +1509,7 @@ class Service(BaseService):  # noqa: PLR0904
                 create_subdirectory_per_item,
                 download_progress_queue,
                 download_progress_callable,
+                get_artifact_download_url=_get_artifact_download_url,
             )
 
             if run_details.state == RunState.TERMINATED:
