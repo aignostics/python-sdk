@@ -596,12 +596,12 @@ class Runs:
         self,
         application_id: str | None = None,
         application_version: str | None = None,
-        for_organization: str | None = None,
         external_id: str | None = None,
         custom_metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
         nocache: bool = False,
+        for_organization: str | None = None,
     ) -> Iterator[Run]:
         """Find application runs, optionally filtered by application id and/or version.
 
@@ -611,13 +611,13 @@ class Runs:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version to filter by.
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
-            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
-                that match the filter criteria. If None, only the runs of the user are returned.
             custom_metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
 
         Returns:
             Iterator[Run]: An iterator yielding application run handles.
@@ -644,12 +644,12 @@ class Runs:
         self,
         application_id: str | None = None,
         application_version: str | None = None,
-        for_organization: str | None = None,
         external_id: str | None = None,
         custom_metadata: str | None = None,
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
         nocache: bool = False,
+        for_organization: str | None = None,
     ) -> t.Iterator[RunData]:
         """Fetch application runs, optionally filtered by application version.
 
@@ -658,14 +658,14 @@ class Runs:
         Args:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version ID to filter by.
-            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
-                that match the filter criteria. If None, only the runs of the user are returned.
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             custom_metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
 
         Returns:
             Iterator[RunData]: Iterator yielding application run data.
