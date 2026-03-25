@@ -160,6 +160,8 @@ def audit(session: nox.Session) -> None:
             "CVE-2025-53000",  # no fix available
             "--ignore-vuln",
             "CVE-2025-69872",  # no fix available
+            "--ignore-vuln",
+            "CVE-2026-4539",  # no fix available
         )
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")
