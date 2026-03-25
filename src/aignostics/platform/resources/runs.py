@@ -596,6 +596,7 @@ class Runs:
         self,
         application_id: str | None = None,
         application_version: str | None = None,
+        for_organization: str | None = None,
         external_id: str | None = None,
         custom_metadata: str | None = None,
         sort: str | None = None,
@@ -610,6 +611,8 @@ class Runs:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version to filter by.
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
             custom_metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
             page_size (int): Number of items per page, defaults to max
@@ -628,6 +631,7 @@ class Runs:
             for response in self.list_data(
                 application_id=application_id,
                 application_version=application_version,
+                for_organization=for_organization,
                 external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=sort,
@@ -640,6 +644,7 @@ class Runs:
         self,
         application_id: str | None = None,
         application_version: str | None = None,
+        for_organization: str | None = None,
         external_id: str | None = None,
         custom_metadata: str | None = None,
         sort: str | None = None,
@@ -653,6 +658,8 @@ class Runs:
         Args:
             application_id (str | None): Optional application ID to filter by.
             application_version (str | None): Optional application version ID to filter by.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
             external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
             custom_metadata (str | None): Optional metadata filter in JSONPath format.
             sort (str | None): Optional field to sort by. Prefix with '-' for descending order.
@@ -693,6 +700,7 @@ class Runs:
             lambda **kwargs: list_data_with_retry(
                 application_id=application_id,
                 application_version=application_version,
+                for_organization=for_organization,
                 external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=[sort] if sort else None,
