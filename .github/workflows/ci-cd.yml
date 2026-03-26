@@ -43,13 +43,17 @@ jobs:
       - name: Get commit message
         id: get-commit-message
         shell: bash
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             # For PR events, get the commit message from the PR head SHA
-            COMMIT_MESSAGE=$(git log -1 --format=%B ${{ github.event.pull_request.head.sha }})
+            COMMIT_MESSAGE=$(git log -1 --format=%B $PR_HEAD_SHA)
           else
             # For push events, use the head commit message
-            COMMIT_MESSAGE='${{ github.event.head_commit.message }}'
+            COMMIT_MESSAGE="$HEAD_COMMIT_MESSAGE"
           fi
           # Export for use in other steps (multiline-safe)
           # Use printf with %s to avoid interpreting special characters
