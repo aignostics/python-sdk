@@ -115,7 +115,7 @@ dependencies = [
     "pyjwt[crypto]>=2.10.1,<3",
     "python-dateutil>=2.9.0.post0,<3",
     # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
-    "requests>=2.32.5,<3",
+    "requests>=2.33.0,<3", # CVE-2026-25645 requires >= 2.33.0
     "requests-oauthlib>=2.0.0,<3",
     "s5cmd>=0.3.3,<1",
     "semver>=3.0.4,<4",
