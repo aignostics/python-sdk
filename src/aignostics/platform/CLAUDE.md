@@ -96,8 +96,8 @@ class Client:
     runs: Runs
     # Note: No separate 'versions' accessor - versions accessed via applications
 
-    def __init__(self, cache_token: bool = True):
-        self._api = Client.get_api_client(cache_token=cache_token)
+    def __init__(self, cache_token: bool = True, token_provider: Callable[[], str] | None = None):
+        self._api = Client.get_api_client(cache_token=cache_token, token_provider=token_provider)
         self.applications = Applications(self._api)
         self.runs = Runs(self._api)
 
@@ -236,35 +236,35 @@ class Runs:
 ┌────────────────────────────────────────────────────┐
 │           SDK Metadata System                      │
 ├────────────────────────────────────────────────────┤
-│  Pydantic Models (Validation + Schema Generation) │
-│  ├─ RunSdkMetadata (run-level metadata)          │
-│  │   ├─ SubmissionMetadata (how/when submitted)   │
-│  │   ├─ UserMetadata (organization/user info)     │
-│  │   ├─ CIMetadata (GitHub Actions + pytest)      │
-│  │   ├─ WorkflowMetadata (control flags)          │
-│  │   ├─ SchedulingMetadata (due dates/deadlines)  │
-│  │   ├─ tags (set[str]) - NEW                     │
-│  │   ├─ created_at (timestamp) - NEW              │
-│  │   └─ updated_at (timestamp) - NEW              │
-│  └─ ItemSdkMetadata (item-level metadata) - NEW   │
-│      ├─ PlatformBucketMetadata (storage info)     │
-│      ├─ tags (set[str])                           │
-│      ├─ created_at (timestamp)                    │
-│      └─ updated_at (timestamp)                    │
+│  Pydantic Models (Validation + Schema Generation)  │
+│  ├─ RunSdkMetadata (run-level metadata)            │
+│  │   ├─ SubmissionMetadata (how/when submitted)    │
+│  │   ├─ UserMetadata (organization/user info)      │
+│  │   ├─ CIMetadata (GitHub Actions + pytest)       │
+│  │   ├─ WorkflowMetadata (control flags)           │
+│  │   ├─ SchedulingMetadata (due dates/deadlines)   │
+│  │   ├─ tags (set[str]) - NEW                      │
+│  │   ├─ created_at (timestamp) - NEW               │
+│  │   └─ updated_at (timestamp) - NEW               │
+│  └─ ItemSdkMetadata (item-level metadata) - NEW    │
+│      ├─ PlatformBucketMetadata (storage info)      │
+│      ├─ tags (set[str])                            │
+│      ├─ created_at (timestamp)                     │
+│      └─ updated_at (timestamp)                     │
 ├────────────────────────────────────────────────────┤
 │  Runtime Functions                                 │
-│  ├─ build_run_sdk_metadata() → dict               │
-│  ├─ validate_run_sdk_metadata() → bool            │
-│  ├─ get_run_sdk_metadata_json_schema() → dict     │
-│  ├─ build_item_sdk_metadata() → dict - NEW        │
-│  ├─ validate_item_sdk_metadata() → bool - NEW     │
-│  └─ get_item_sdk_metadata_json_schema() → dict    │
+│  ├─ build_run_sdk_metadata() → dict                │
+│  ├─ validate_run_sdk_metadata() → bool             │
+│  ├─ get_run_sdk_metadata_json_schema() → dict      │
+│  ├─ build_item_sdk_metadata() → dict - NEW         │
+│  ├─ validate_item_sdk_metadata() → bool - NEW      │
+│  └─ get_item_sdk_metadata_json_schema() → dict     │
 ├────────────────────────────────────────────────────┤
 │  JSON Schema (Versioned)                           │
-│  ├─ Run schema version: 0.0.4                     │
-│  └─ Item schema version: 0.0.3                    │
+│  ├─ Run schema version: 0.0.4                      │
+│  └─ Item schema version: 0.0.3                     │
 │     Published at: docs/source/_static/             │
-│     URLs: sdk_{run|item}_custom_metadata_schema_* │
+│     URLs: sdk_{run|item}_custom_metadata_schema_*  │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -633,24 +633,24 @@ Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`:
 
 ```
 ┌────────────────────────────────────────────────────┐
-│           Operation Caching System                  │
+│           Operation Caching System                 │
 ├────────────────────────────────────────────────────┤
 │  Cache Storage: dict[cache_key, (result, expiry)]  │
-│  ├─ Token-aware caching (per-user isolation)      │
+│  ├─ Token-aware caching (per-user isolation)       │
 │  ├─ TTL-based expiration                           │
 │  └─ Automatic invalidation on mutations            │
 ├────────────────────────────────────────────────────┤
 │  Decorator: @cached_operation                      │
-│  ├─ ttl: Time-to-live in seconds                  │
-│  ├─ use_token: Include auth token in key         │
-│  └─ instance_attrs: Per-instance caching          │
+│  ├─ ttl: Time-to-live in seconds                   │
+│  ├─ token_provider: Callable for per-user key      │
+│  └─ instance_attrs: Per-instance caching           │
 ├────────────────────────────────────────────────────┤
 │  Cache Key Generation                              │
-│  ├─ cache_key(): func_name:args:kwargs            │
-│  └─ cache_key_with_token(): token_hash:...        │
+│  ├─ cache_key(): func_name:args:kwargs             │
+│  └─ token_hash prefix when token_provider set      │
 ├────────────────────────────────────────────────────┤
 │  Cache Invalidation                                │
-│  └─ operation_cache_clear(): Clear on mutations   │
+│  └─ operation_cache_clear(): Clear on mutations    │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -663,12 +663,16 @@ Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`:
 _operation_cache: dict[str, tuple[Any, float]] = {}
 
 
-def cached_operation(ttl: int, *, use_token: bool = True, instance_attrs: tuple[str, ...] | None = None) -> Callable:
+def cached_operation(
+    ttl: int, *, token_provider: Callable[[], str] | None = None, instance_attrs: tuple[str, ...] | None = None
+) -> Callable:
     """Decorator for caching function results with TTL.
 
     Args:
         ttl: Time-to-live for cache in seconds
-        use_token: Include authentication token in cache key for per-user isolation
+        token_provider: Callable that returns the current access token; when provided,
+            its result is hashed into the cache key for per-user isolation.
+            Pass None (default) for anonymous / token-independent caching.
         instance_attrs: Instance attributes to include in key (e.g., 'run_id')
 
     Behavior:
@@ -679,12 +683,13 @@ def cached_operation(ttl: int, *, use_token: bool = True, instance_attrs: tuple[
     """
 
     def decorator(func):
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Build cache key
             func_qualified_name = func.__qualname__  # e.g., "Client.me"
 
-            if use_token:
-                token_hash = hashlib.sha256(get_token().encode()).hexdigest()[:16]
+            if token_provider is not None:
+                token_hash = hashlib.sha256(token_provider().encode()).hexdigest()[:16]
                 key = f"{token_hash}:{func_qualified_name}:{args}:{sorted(kwargs.items())}"
             else:
                 key = f"{func_qualified_name}:{args}:{sorted(kwargs.items())}"
@@ -757,13 +762,13 @@ auth_jwk_set_cache_ttl: int = 86400  # 1 day
 
 ```python
 # From _client.py
-@cached_operation(ttl=settings().me_cache_ttl, use_token=True)
+@cached_operation(ttl=settings().me_cache_ttl, token_provider=self._api.token_provider)
 def me_with_retry() -> Me:
     return Retrying(...)(lambda: self._api.get_me_v1_me_get(...))
 
 
 # From resources/runs.py
-@cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+@cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
 def details_with_retry(run_id: str) -> RunData:
     return Retrying(...)(lambda: self._api.get_run_v1_runs_run_id_get(run_id, ...))
 ```
@@ -796,10 +801,10 @@ def delete(self) -> None:
 **Key Design Decisions:**
 
 1. **Global Cache Clearing**: All caches are cleared on ANY mutation to ensure consistency
-2. **Token-Aware**: Caching is per-user by default (use_token=True), preventing data leakage
+2. **Token-Aware**: Caching is per-user when `token_provider` is supplied (the default for all resource classes), preventing data leakage between users
 3. **No Partial Invalidation**: Simplicity over optimization - clear everything on write
 4. **TTL-Based Expiration**: Stale data automatically expires after configured TTL
-5. **Token Changes**: Cache keys include token hash, so token refresh creates new cache namespace
+5. **Token Changes**: Cache keys include a hash of the token, so token refresh creates a new cache namespace automatically
 
 **Operations That Are Cached:**
 
@@ -878,26 +883,26 @@ Comprehensive test suite in `tests/aignostics/platform/client_cache_test.py`:
 
 ```
 ┌────────────────────────────────────────────────────┐
-│         Retry and Timeout System (Tenacity)       │
+│         Retry and Timeout System (Tenacity)        │
 ├────────────────────────────────────────────────────┤
 │  Retry Policy                                      │
-│  ├─ Exponential backoff with jitter               │
-│  ├─ Configurable max attempts (default: 4)        │
-│  ├─ Configurable wait times (0.1s - 60s)         │
-│  └─ Logs warnings before sleep                    │
+│  ├─ Exponential backoff with jitter                │
+│  ├─ Configurable max attempts (default: 4)         │
+│  ├─ Configurable wait times (0.1s - 60s)           │
+│  └─ Logs warnings before sleep                     │
 ├────────────────────────────────────────────────────┤
 │  Retryable Exceptions                              │
-│  ├─ ServiceException (5xx errors)                 │
-│  ├─ Urllib3TimeoutError                           │
-│  ├─ PoolError                                     │
-│  ├─ IncompleteRead                                │
-│  ├─ ProtocolError                                 │
-│  └─ ProxyError                                    │
+│  ├─ ServiceException (5xx errors)                  │
+│  ├─ Urllib3TimeoutError                            │
+│  ├─ PoolError                                      │
+│  ├─ IncompleteRead                                 │
+│  ├─ ProtocolError                                  │
+│  └─ ProxyError                                     │
 ├────────────────────────────────────────────────────┤
 │  Timeout Configuration                             │
-│  ├─ Per-operation timeouts (default: 30s)        │
-│  ├─ Range: 0.1s - 300s                           │
-│  └─ Separate timeouts for mutating ops            │
+│  ├─ Per-operation timeouts (default: 30s)          │
+│  ├─ Range: 0.1s - 300s                             │
+│  └─ Separate timeouts for mutating ops             │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -919,7 +924,7 @@ RETRYABLE_EXCEPTIONS = (
 
 ```python
 # Standard retry pattern used throughout the codebase
-@cached_operation(ttl=settings().me_cache_ttl, use_token=True)
+@cached_operation(ttl=settings().me_cache_ttl, token_provider=self._api.token_provider)
 def me_with_retry() -> Me:
     return Retrying(
         retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -1288,8 +1293,16 @@ Updated test suite in `tests/aignostics/platform/e2e_test.py`:
 ```python
 from aignostics.platform import Client
 
-# Initialize with automatic authentication
+# Initialize with automatic authentication (internal OAuth)
 client = Client(cache_token=True)
+
+
+# Initialize with an external token provider (e.g. machine-to-machine)
+def my_token_provider() -> str:
+    return fetch_token_from_my_system()
+
+
+client = Client(token_provider=my_token_provider)
 
 # Get user info
 me = client.me()

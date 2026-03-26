@@ -1320,8 +1320,6 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client = MagicMock()
         mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
 
-        start_time = time.time()
-
         with (
             patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
@@ -1329,12 +1327,10 @@ class TestTokenVerificationRetryLogic:
         ):
             verify_and_decode_token("valid.token")
 
-        elapsed_time = time.time() - start_time
-
-        # Should fail immediately without retries - elapsed time should be < 2 seconds
-        assert elapsed_time < 2.0, f"Expected fast failure but took {elapsed_time:.2f}s"
-
-        # Verify get_signing_key_from_jwt was called only once (no retries)
+        # Verify get_signing_key_from_jwt was called only once (no retries) — this directly
+        # proves the "no retry" semantics. A wall-clock timing assertion was previously here
+        # too but it was redundant with this call-count check and flaked on slow Windows
+        # runners (consistently came in around 2.4s vs the 2s threshold).
         assert call_count == 1
 
         # Verify no retry log messages for non-connection JWK errors

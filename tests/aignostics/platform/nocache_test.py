@@ -25,7 +25,7 @@ class TestNocacheDecoratorBehavior:
         """Test that decorated function uses cache by default (nocache=False)."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -47,7 +47,7 @@ class TestNocacheDecoratorBehavior:
         """Test that nocache=False explicitly uses cache."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -69,7 +69,7 @@ class TestNocacheDecoratorBehavior:
         """Test that nocache=True skips reading from cache."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -91,7 +91,7 @@ class TestNocacheDecoratorBehavior:
         """Test that nocache=True still writes the result to cache."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -118,7 +118,7 @@ class TestNocacheDecoratorBehavior:
         """Test that nocache parameter is intercepted and not passed to the decorated function."""
         received_kwargs = {}
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func(**kwargs: bool) -> dict:
             nonlocal received_kwargs
             received_kwargs = kwargs
@@ -136,7 +136,7 @@ class TestNocacheDecoratorBehavior:
         """Test that nocache works alongside other keyword arguments."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func(param1: str = "default", param2: int = 0) -> tuple:
             nonlocal call_count
             call_count += 1
@@ -163,7 +163,7 @@ class TestNocacheDecoratorBehavior:
         """Test that nocache respects different cache keys (different args)."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func(key: str) -> tuple:
             nonlocal call_count
             call_count += 1
@@ -512,7 +512,7 @@ class TestNocacheEdgeCases:
         """Test nocache behavior when cache entry has expired."""
         call_count = 0
 
-        @cached_operation(ttl=1, use_token=False)  # 1 second TTL
+        @cached_operation(ttl=1)  # 1 second TTL
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -537,7 +537,7 @@ class TestNocacheEdgeCases:
         """Test that nocache properly handles expired entries."""
         call_count = 0
 
-        @cached_operation(ttl=1, use_token=False)
+        @cached_operation(ttl=1)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -565,7 +565,7 @@ class TestNocacheEdgeCases:
         """Test multiple consecutive calls with nocache=True."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -594,7 +594,7 @@ class TestNocacheEdgeCases:
         """Test interleaving nocache=True with normal cached calls."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -640,7 +640,7 @@ class TestNocacheWithClearCache:
         """Test that nocache works correctly after cache has been cleared."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -667,7 +667,7 @@ class TestNocacheWithClearCache:
         """Test that cache clear removes entries populated with nocache=True."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1

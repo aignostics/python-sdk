@@ -4,24 +4,25 @@ from typing import ClassVar
 from urllib.request import getproxies
 
 import semver
-from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.api_client import ApiClient
-from aignx.codegen.configuration import AuthSettings, Configuration
-from aignx.codegen.exceptions import NotFoundException, ServiceException
+from aignx.codegen.exceptions import NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 from loguru import logger
 from tenacity import (
-    RetryCallState,
     Retrying,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
 )
-from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
-from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._api import (
+    RETRYABLE_EXCEPTIONS,
+    _AuthenticatedApi,
+    _log_retry_attempt,
+    _OAuth2TokenProviderConfiguration,
+)
 from aignostics.platform._authentication import get_token
 from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform.resources.applications import Applications, Versions
@@ -30,61 +31,9 @@ from aignostics.utils import user_agent
 
 from ._settings import settings
 
-RETRYABLE_EXCEPTIONS = (
-    ServiceException,
-    Urllib3TimeoutError,
-    PoolError,
-    IncompleteRead,
-    ProtocolError,
-    ProxyError,
-)
-
-
-def _log_retry_attempt(retry_state: RetryCallState) -> None:
-    """Custom callback for logging retry attempts with loguru.
-
-    Args:
-        retry_state: The retry state from tenacity.
-    """
-    fn = retry_state.fn
-    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
-    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
-    logger.warning(
-        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
-        fn_module,
-        fn_name,
-        retry_state.next_action.sleep if retry_state.next_action else 0,
-        retry_state.attempt_number,
-        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
-    )
-
-
-class _OAuth2TokenProviderConfiguration(Configuration):
-    """
-    Overwrites the original Configuration to call a function to obtain a refresh token.
-
-    The base class does not support callbacks. This is necessary for integrations where
-    tokens may expire or need to be refreshed automatically.
-    """
-
-    def __init__(
-        self, host: str, ssl_ca_cert: str | None = None, token_provider: Callable[[], str] | None = None
-    ) -> None:
-        super().__init__(host=host, ssl_ca_cert=ssl_ca_cert)
-        self.token_provider = token_provider
-
-    def auth_settings(self) -> AuthSettings:
-        token = self.token_provider() if self.token_provider else None
-        if not token:
-            return {}
-        return {
-            "OAuth2AuthorizationCodeBearer": {
-                "type": "oauth2",
-                "in": "header",
-                "key": "Authorization",
-                "value": f"Bearer {token}",
-            }
-        }
+# Safety bound for the external token-provider cache.  In normal usage callers
+# reuse a single provider reference, so this limit should never be reached.
+_MAX_EXTERNAL_CLIENTS = 16
 
 
 class Client:
@@ -92,29 +41,41 @@ class Client:
 
     - Provides access to platform resources like applications, versions, and runs.
     - Handles authentication and API client configuration.
+    - Supports external token providers for machine-to-machine or custom auth flows.
     - Retries on network and server errors for specific operations.
     - Caches operation results for specific operations.
     """
 
-    _api_client_cached: ClassVar[PublicApi | None] = None
-    _api_client_uncached: ClassVar[PublicApi | None] = None
+    _api_client_cached: ClassVar[_AuthenticatedApi | None] = None
+    _api_client_uncached: ClassVar[_AuthenticatedApi | None] = None
+    _api_client_external: ClassVar[dict[Callable[[], str], _AuthenticatedApi]] = {}
 
+    _api: _AuthenticatedApi
     applications: Applications
     versions: Versions
     runs: Runs
 
-    def __init__(self, cache_token: bool = True) -> None:
+    def __init__(self, cache_token: bool = True, token_provider: Callable[[], str] | None = None) -> None:
         """Initializes a client instance with authenticated API access.
 
         Args:
-            cache_token (bool): If True, caches the authentication token.
-                Defaults to True.
+            cache_token: If True, caches the authentication token. Defaults to True.
+                Ignored when ``token_provider`` is supplied.
+            token_provider: Optional external token provider callable. When provided,
+                bypasses internal OAuth authentication entirely. The callable must
+                return a raw access token string (without the ``Bearer `` prefix).
+                When set, ``cache_token`` has no effect because the external provider
+                manages its own token lifecycle.
 
         Sets up resource accessors for applications, versions, and runs.
         """
         try:
-            logger.trace("Initializing client with cache_token={}", cache_token)
-            self._api = Client.get_api_client(cache_token=cache_token)
+            logger.trace(
+                "Initializing client with cache_token={}, token_provider={}",
+                cache_token,
+                type(token_provider).__name__ if token_provider is not None else None,
+            )
+            self._api = Client.get_api_client(cache_token=cache_token, token_provider=token_provider)
             self.applications: Applications = Applications(self._api)
             self.runs: Runs = Runs(self._api)
             self.versions: Versions = Versions(self._api)
@@ -143,7 +104,7 @@ class Client:
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
 
-        @cached_operation(ttl=settings().me_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().me_cache_ttl, token_provider=self._api.token_provider)
         def me_with_retry() -> Me:
             return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -177,7 +138,7 @@ class Client:
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
 
-        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_cache_ttl, token_provider=self._api.token_provider)
         def application_with_retry(application_id: str) -> Application:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -234,7 +195,7 @@ class Client:
             raise ValueError(message)
 
         # Make the API call with retry logic and caching
-        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_version_cache_ttl, token_provider=self._api.token_provider)
         def application_version_with_retry(application_id: str, version: str) -> ApplicationVersion:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -268,44 +229,64 @@ class Client:
         return Run(self._api, run_id)
 
     @staticmethod
-    def get_api_client(cache_token: bool = True) -> PublicApi:
+    def get_api_client(cache_token: bool = True, token_provider: Callable[[], str] | None = None) -> _AuthenticatedApi:
         """Create and configure an authenticated API client.
 
         API client instances are shared across all Client instances for efficient connection reuse.
-        Two separate instances are maintained: one for cached tokens and one for uncached tokens.
+        Three pools are maintained: cached-token, uncached-token, and external-provider (keyed by
+        the provider callable — callers should reuse a stable ``token_provider`` reference for
+        connection reuse).
 
         Args:
-            cache_token (bool): If True, caches the authentication token.
-                Defaults to True.
+            cache_token: If True, caches the authentication token. Defaults to True.
+            token_provider: Optional external token provider. When provided, bypasses
+                internal OAuth and uses this callable to obtain bearer tokens.
 
         Returns:
-            PublicApi: Configured API client with authentication token.
+            _AuthenticatedApi: Configured API client with authentication token.
 
         Raises:
             RuntimeError: If authentication fails.
         """
-        # Return cached instance if available
-        if cache_token and Client._api_client_cached is not None:
+        # Check singleton caches first
+        if token_provider is not None:
+            if token_provider in Client._api_client_external:
+                return Client._api_client_external[token_provider]
+        elif cache_token and Client._api_client_cached is not None:
             return Client._api_client_cached
-        if not cache_token and Client._api_client_uncached is not None:
+        elif not cache_token and Client._api_client_uncached is not None:
             return Client._api_client_uncached
 
-        def token_provider() -> str:
-            return get_token(use_cache=cache_token)
+        # Resolve the effective token provider
+        effective_provider: Callable[[], str] = (
+            token_provider if token_provider is not None else (lambda: get_token(use_cache=cache_token))
+        )
 
+        # Build the API client
         ca_file = os.getenv("REQUESTS_CA_BUNDLE")  # point to .cer file of proxy if defined
         config = _OAuth2TokenProviderConfiguration(
-            host=settings().api_root, ssl_ca_cert=ca_file, token_provider=token_provider
+            host=settings().api_root, ssl_ca_cert=ca_file, token_provider=effective_provider
         )
         config.proxy = getproxies().get("https")  # use system proxy
-        client = ApiClient(
-            config,
-        )
+        client = ApiClient(config)
         client.user_agent = user_agent()
-        api_client = PublicApi(client)
+        api_client = _AuthenticatedApi(client, effective_provider)
 
-        # Cache the instance
-        if cache_token:
+        # Store in the appropriate singleton cache.
+        # For external providers we use a simple bounded dict rather than LRU:
+        # switching providers is rare in practice, and a full clear is simpler
+        # than tracking access order while still bounding memory.
+        if token_provider is not None:
+            if len(Client._api_client_external) >= _MAX_EXTERNAL_CLIENTS:
+                logger.warning(
+                    "External token provider cache exceeded {} entries; clearing to prevent resource leak. "
+                    "Pass a stable (module-level or instance) callable — each new lambda is a distinct "
+                    "key and will re-trigger this eviction.",
+                    _MAX_EXTERNAL_CLIENTS,
+                )
+                Client._api_client_external.clear()
+            Client._api_client_external[token_provider] = api_client
+        elif cache_token:
             Client._api_client_cached = api_client
         else:
             Client._api_client_uncached = api_client

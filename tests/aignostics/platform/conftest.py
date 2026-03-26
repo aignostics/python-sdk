@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from aignostics.platform._api import _AuthenticatedApi
 from aignostics.platform._client import Client
 from aignostics.platform._operation_cache import _operation_cache
 from aignostics.platform._service import Service
@@ -49,9 +50,9 @@ def mock_api_client() -> MagicMock:
     """Provide a mock API client.
 
     Returns:
-        MagicMock: A mock of the PublicApi client.
+        MagicMock: A mock of the _AuthenticatedApi client.
     """
-    return MagicMock()
+    return MagicMock(spec=_AuthenticatedApi)
 
 
 @pytest.fixture(autouse=True)
@@ -64,11 +65,13 @@ def clear_cache() -> t.Generator[None, None, None]:
     _operation_cache.clear()
     Client._api_client_cached = None
     Client._api_client_uncached = None
+    Client._api_client_external.clear()
     Service._http_pool = None
     yield
     _operation_cache.clear()
     Client._api_client_cached = None
     Client._api_client_uncached = None
+    Client._api_client_external.clear()
     Service._http_pool = None
 
 
@@ -88,6 +91,7 @@ def client_with_mock_api(mock_api_client: MagicMock) -> t.Generator[Client, None
         "exp": 9999999999,
         "iss": "test-issuer",
     }
+    mock_api_client.token_provider = lambda: "test-token-123"
     with (
         patch("aignostics.platform._client.get_token", return_value="test-token-123"),
         patch("aignostics.platform._authentication.verify_and_decode_token", return_value=mock_token_claims),
