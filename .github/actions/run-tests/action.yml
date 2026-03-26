@@ -30,9 +30,12 @@ runs:
         (!contains(inputs.commit-message, 'skip:test:all')) &&
         (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
       shell: bash
+      env:
+        MAKE_TARGET: ${{ inputs.make-target }}
+        SUMMARY_TITLE: ${{ inputs.summary-title }}
       run: |
         set +e
-        make ${{ inputs.make-target }}
+        make $MAKE_TARGET
         EXIT_CODE=$?
         # Show test execution in GitHub Job summary
         found_files=0
@@ -44,7 +47,7 @@ runs:
         fi
         done
         if [ $found_files -eq 0 ]; then
-          echo "# ${{ inputs.summary-title }}" >> $GITHUB_STEP_SUMMARY
+          echo "# $SUMMARY_TITLE" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
         fi
         # Show test coverage in GitHub Job summary
