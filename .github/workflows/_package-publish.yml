@@ -167,7 +167,9 @@ jobs:
 
       - name: Print the release notes
         shell: bash
-        run: cat "${{ steps.git-cliff.outputs.changelog }}"
+        env:
+          GIT_CLIFF_CHANGELOG: ${{ steps.git-cliff.outputs.changelog }}
+        run: cat "$GIT_CLIFF_CHANGELOG"
 
       - name: Build distribution into dist/
         shell: bash
@@ -202,11 +204,13 @@ jobs:
           (!contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REF_NAME: ${{ github.ref_name }}
+          GIT_CLIFF_CHANGELOG: ${{ steps.git-cliff.outputs.changelog }}
         shell: bash
         run: |
           rm -rf ./test-results/coverage_html
-          gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./test-results/* ./audit-results/*   \
-            --notes-file ${{ steps.git-cliff.outputs.changelog }}
+          gh release create "$GH_REF_NAME" ./dist/* ./dist_native_zipped/* ./test-results/* ./audit-results/*   \
+            --notes-file "$GIT_CLIFF_CHANGELOG"
 
       - name: Create GitHub release (no test results)
         if: |
@@ -214,11 +218,13 @@ jobs:
           (contains(github.event.pull_request.labels.*.name, 'skip:test:all'))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REF_NAME: ${{ github.ref_name }}
+          GIT_CLIFF_CHANGELOG: ${{ steps.git-cliff.outputs.changelog }}
         shell: bash
         run: |
           rm -rf ./test-results/coverage_html
-          gh release create ${{ github.ref_name }} ./dist/* ./dist_native_zipped/* ./audit-results/*   \
-            --notes-file ${{ steps.git-cliff.outputs.changelog }}
+          gh release create "$GH_REF_NAME" ./dist/* ./dist_native_zipped/* ./audit-results/*   \
+            --notes-file "$GIT_CLIFF_CHANGELOG"
 
       - name: Inform Sentry about release
         uses: getsentry/action-release@dab6548b3c03c4717878099e43782cf5be654289 # v3.5.0
@@ -233,10 +239,12 @@ jobs:
       - name: Convert release notes from Markdown to Slack mrkdwn
         id: slack-notes
         shell: bash
+        env:
+          GIT_CLIFF_CONTENT: ${{ steps.git-cliff.outputs.content }}
         run: |
           # Convert Markdown links [text](url) to Slack mrkdwn <url|text>
           # Convert bold **text** to *text*
-          SLACK_RELEASE_NOTES=$(echo '${{ toJSON(steps.git-cliff.outputs.content) }}' | \
+          SLACK_RELEASE_NOTES=$(printf '%s\n' "$GIT_CLIFF_CONTENT" | \
             sed -E 's/\[([^]]+)\]\(([^)]+)\)/<\2|\1>/g' | \
             sed -E 's/\*\*([^*]+)\*\*/*\1*/g')
           echo "content<<SLACKEOF" >> "$GITHUB_OUTPUT"
