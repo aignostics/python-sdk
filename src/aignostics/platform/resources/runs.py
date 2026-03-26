@@ -14,7 +14,6 @@ from time import sleep
 from typing import Any, cast
 
 import requests
-from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
     ArtifactOutput,
@@ -43,16 +42,19 @@ from jsonschema.validators import validate
 from loguru import logger
 from sentry_sdk import metrics
 from tenacity import (
-    RetryCallState,
     Retrying,
     retry_if_exception_type,
     stop_after_attempt,
     stop_after_delay,
     wait_exponential_jitter,
 )
-from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
-from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._api import (
+    RETRYABLE_EXCEPTIONS,
+    _AuthenticatedApi,
+    _AuthenticatedResource,
+    _log_retry_attempt,
+)
 from aignostics.platform._authentication import get_token
 from aignostics.platform._operation_cache import cached_operation, operation_cache_clear
 from aignostics.platform._sdk_metadata import (
@@ -73,35 +75,6 @@ from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import user_agent
 
-RETRYABLE_EXCEPTIONS = (
-    ServiceException,  # TODO(Helmut): Do we want this down the road?
-    Urllib3TimeoutError,
-    PoolError,
-    IncompleteRead,
-    ProtocolError,
-    ProxyError,
-)
-
-
-def _log_retry_attempt(retry_state: RetryCallState) -> None:
-    """Custom callback for logging retry attempts with loguru.
-
-    Args:
-        retry_state: The retry state from tenacity.
-    """
-    fn = retry_state.fn
-    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
-    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
-    logger.warning(
-        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
-        fn_module,
-        fn_name,
-        retry_state.next_action.sleep if retry_state.next_action else 0,
-        retry_state.attempt_number,
-        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
-    )
-
-
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 
@@ -119,22 +92,22 @@ _REDIRECT_STATUSES = frozenset({
 })
 
 
-class Artifact:
+class Artifact(_AuthenticatedResource):
     """Represents a single output artifact belonging to a run.
 
     Provides operations to resolve a fresh presigned download URL via the
     ``GET /api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` endpoint.
     """
 
-    def __init__(self, api: PublicApi, run_id: str, artifact_id: str) -> None:
+    def __init__(self, api: _AuthenticatedApi, run_id: str, artifact_id: str) -> None:
         """Initializes an Artifact instance.
 
         Args:
-            api (PublicApi): The configured API client.
+            api (_AuthenticatedApi): The configured API client.
             run_id (str): The ID of the parent run.
             artifact_id (str): The ID of the output artifact.
         """
-        self._api = api
+        super().__init__(api)
         self.run_id = run_id
         self.artifact_id = artifact_id
 
@@ -263,20 +236,20 @@ class Artifact:
             ) from e
 
 
-class Run:
+class Run(_AuthenticatedResource):
     """Represents a single application run.
 
     Provides operations to check status, retrieve results, and download artifacts.
     """
 
-    def __init__(self, api: PublicApi, run_id: str) -> None:
-        """Initializes an Run instance.
+    def __init__(self, api: _AuthenticatedApi, run_id: str) -> None:
+        """Initializes a Run instance.
 
         Args:
-            api (PublicApi): The configured API client.
+            api (_AuthenticatedApi): The configured API client.
             run_id (str): The ID of the application run.
         """
-        self._api = api
+        super().__init__(api)
         self.run_id = run_id
 
     @classmethod
@@ -314,7 +287,7 @@ class Run:
             Exception: If the API request fails.
         """
 
-        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
         def details_with_retry(run_id: str) -> RunData:
             def _fetch() -> RunData:
                 return Retrying(
@@ -410,7 +383,7 @@ class Run:
 
         # Create a wrapper function that applies retry logic and caching to each API call
         # Caching at this level ensures having a fresh iterator on cache hits
-        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
         def results_with_retry(run_id: str, **kwargs: object) -> list[ItemResultData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -712,22 +685,22 @@ class Run:
         )
 
 
-class Runs:
+class Runs(_AuthenticatedResource):
     """Resource class for managing application runs.
 
     Provides operations to submit, find, and retrieve runs.
     """
 
-    def __init__(self, api: PublicApi) -> None:
+    def __init__(self, api: _AuthenticatedApi) -> None:
         """Initializes the Runs resource with the API client.
 
         Args:
-            api (PublicApi): The configured API client.
+            api (_AuthenticatedApi): The configured API client.
         """
-        self._api = api
+        super().__init__(api)
 
     def __call__(self, run_id: str) -> Run:
-        """Retrieves an Run instance for an existing run.
+        """Retrieves a Run instance for an existing run.
 
         Args:
             run_id (str): The ID of the application run.
@@ -894,7 +867,7 @@ class Runs:
             )
             raise ValueError(message)
 
-        @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
         def list_data_with_retry(**kwargs: object) -> builtins.list[RunData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),

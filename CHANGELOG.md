@@ -1621,5 +1621,3 @@
 * @idelsink made their first contribution
 * @dependabot[bot] made their first contribution
 * @ari-nz made their first contribution
-
-

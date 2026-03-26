@@ -361,7 +361,7 @@ class TestNocacheDecoratorBehavior:
         """Verify default behavior uses cache."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60, token_provider=None)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -381,7 +381,7 @@ class TestNocacheDecoratorBehavior:
         """Verify nocache=True skips cache read."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60, token_provider=None)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -400,7 +400,7 @@ class TestNocacheDecoratorBehavior:
         """Verify nocache=True still writes result to cache."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60, token_provider=None)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -423,7 +423,7 @@ class TestNocacheDecoratorBehavior:
         """Verify nocache is intercepted and not passed to decorated function."""
         received_kwargs = {}
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60, token_provider=None)
         def test_func(**kwargs: bool) -> dict:
             nonlocal received_kwargs
             received_kwargs = kwargs
@@ -506,7 +506,7 @@ class TestNocacheEdgeCases:
     def test_nocache_with_expired_cache_entry() -> None:
         """Test nocache behavior when cache entry expired."""
 
-        @cached_operation(ttl=1, use_token=False)  # 1 second TTL
+        @cached_operation(ttl=1, token_provider=None)  # 1 second TTL
         def test_func() -> int:
             return time.time_ns()
 
@@ -524,7 +524,7 @@ class TestNocacheEdgeCases:
         """Test multiple consecutive calls with nocache=True."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60, token_provider=None)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -544,7 +544,7 @@ class TestNocacheEdgeCases:
         """Test interleaving nocache=True with normal cached calls."""
         call_count = 0
 
-        @cached_operation(ttl=60, use_token=False)
+        @cached_operation(ttl=60, token_provider=None)
         def test_func() -> int:
             nonlocal call_count
             call_count += 1
@@ -702,7 +702,7 @@ docker compose ls --format json | jq -r '.[].Name' | grep ^pytest | xargs -I {} 
 @pytest.fixture
 def mock_api():
     """Mock aignx.codegen API client."""
-    api = Mock(spec=PublicApi)
+    api = Mock(spec=_AuthenticatedApi)
     api.list_applications.return_value = [...]
     return api
 

@@ -11,12 +11,12 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.exceptions import NotFoundException
 from aignx.codegen.models.application_read_response import ApplicationReadResponse
 from aignx.codegen.models.version_document_response import VersionDocumentResponse
 from aignx.codegen.models.version_document_visibility import VersionDocumentVisibility
 
+from aignostics.platform._api import _AuthenticatedApi
 from aignostics.platform._operation_cache import operation_cache_clear
 from aignostics.platform.resources.applications import (
     Applications,
@@ -42,7 +42,10 @@ def mock_api() -> Mock:
     Returns:
         Mock: A mock instance of ExternalsApi.
     """
-    return Mock(spec=PublicApi)
+    api = Mock(spec=_AuthenticatedApi)
+    api.token_provider = lambda: "test-token"
+    api.api_client = Mock()
+    return api
 
 
 @pytest.fixture

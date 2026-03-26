@@ -290,8 +290,8 @@ class TestCacheWithDifferentTokens:
         mock_me_response_2 = {"user_id": "user-2", "org_id": "org-2"}
 
         # Client with token-1
+        mock_api_client.token_provider = lambda: "token-1"
         with (
-            patch("aignostics.platform._operation_cache.get_token", return_value="token-1"),
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -304,8 +304,8 @@ class TestCacheWithDifferentTokens:
             assert mock_api_client.get_me_v1_me_get.call_count == 1
 
         # Client with token-2
+        mock_api_client.token_provider = lambda: "token-2"
         with (
-            patch("aignostics.platform._operation_cache.get_token", return_value="token-2"),
             patch("aignostics.platform._client.get_token", return_value="token-2"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -330,13 +330,15 @@ class TestCacheWithDifferentTokens:
         mock_me_response_1 = {"user_id": "user-1", "org_id": "org-1"}
         mock_me_response_2 = {"user_id": "user-2", "org_id": "org-2"}
 
+        # Use a mutable container so the token provider can be changed mid-test
+        token_holder = ["token-1"]
+        mock_api_client.token_provider = lambda: token_holder[0]
+
         # First call with token-1
         with (
-            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
-            mock_get_token.return_value = "token-1"
             client = Client(cache_token=False)
             client._api = mock_api_client
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_1
@@ -346,7 +348,7 @@ class TestCacheWithDifferentTokens:
             assert mock_api_client.get_me_v1_me_get.call_count == 1
 
             # Second call with token-2 (simulating token refresh)
-            mock_get_token.return_value = "token-2"
+            token_holder[0] = "token-2"
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_2
 
             result2 = client.me()
@@ -361,13 +363,13 @@ class TestCacheWithDifferentTokens:
         Multiple clients with the same token should share cached values.
         """
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
+        mock_api_client.token_provider = lambda: "token-123"
 
-        # First client with token-123
         with (
-            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
+            # First client with token-123
             client1 = Client(cache_token=False)
             client1._api = mock_api_client
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response
@@ -376,12 +378,7 @@ class TestCacheWithDifferentTokens:
             assert result1 == mock_me_response
             assert mock_api_client.get_me_v1_me_get.call_count == 1
 
-        # Second client with same token-123
-        with (
-            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
-            patch("aignostics.platform._client.get_token", return_value="token-123"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
-        ):
+            # Second client with same token-123
             client2 = Client(cache_token=False)
             client2._api = mock_api_client
 
@@ -544,9 +541,9 @@ class TestCacheConcurrency:
         The _operation_cache should be a class variable, not an instance variable.
         """
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
+        mock_api_client.token_provider = lambda: "token-123"
 
         with (
-            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -575,9 +572,9 @@ class TestCacheConcurrency:
         Since cache is class-level, clearing it should affect all instances.
         """
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
+        mock_api_client.token_provider = lambda: "token-123"
 
         with (
-            patch("aignostics.platform._operation_cache.get_token", return_value="token-123"),
             patch("aignostics.platform._client.get_token", return_value="token-123"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -685,9 +682,9 @@ class TestCacheEdgeCases:
         Cache key should hash long tokens to keep key size manageable.
         """
         long_token = "x" * 10000  # Very long token
+        mock_api_client.token_provider = lambda: long_token
 
         with (
-            patch("aignostics.platform._operation_cache.get_token", return_value=long_token),
             patch("aignostics.platform._client.get_token", return_value=long_token),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
@@ -707,19 +704,19 @@ class TestCacheIntegrationWithAuthentication:
 
     @pytest.mark.unit
     @staticmethod
-    def test_cache_uses_current_token_from_get_token(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
-        """Test that cache always uses the current token from get_token().
+    def test_cache_uses_current_token_from_token_provider(mock_settings: MagicMock, mock_api_client: MagicMock) -> None:
+        """Test that cache always uses the current token from the token provider.
 
-        The cache should call get_token() on each operation to get the current token.
+        The cache should call the token provider on each operation to get the current token.
         """
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
+        token_holder = ["token-1"]
+        mock_api_client.token_provider = lambda: token_holder[0]
 
         with (
-            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
             patch("aignostics.platform._client.get_token", return_value="token-1"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
-            mock_get_token.return_value = "token-1"
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response
 
             client = Client(cache_token=False)
@@ -727,10 +724,9 @@ class TestCacheIntegrationWithAuthentication:
 
             # First call with token-1
             client.me()
-            assert mock_get_token.call_count >= 1
 
             # Change token
-            mock_get_token.return_value = "token-2"
+            token_holder[0] = "token-2"
             mock_me_response_2 = {"user_id": "test-user-2", "org_id": "test-org-2"}
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_2
 
@@ -748,14 +744,13 @@ class TestCacheIntegrationWithAuthentication:
         """
         mock_me_response_1 = {"user_id": "user-1", "org_id": "org-1"}
         mock_me_response_2 = {"user_id": "user-2", "org_id": "org-2"}
+        token_holder = ["token-initial"]
+        mock_api_client.token_provider = lambda: token_holder[0]
 
         with (
-            patch("aignostics.platform._operation_cache.get_token") as mock_get_token,
             patch("aignostics.platform._client.get_token", return_value="token-initial"),
             patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
-            # Initial token
-            mock_get_token.return_value = "token-initial"
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_1
 
             client = Client(cache_token=False)
@@ -772,7 +767,7 @@ class TestCacheIntegrationWithAuthentication:
             assert mock_api_client.get_me_v1_me_get.call_count == 1
 
             # Token refresh happens
-            mock_get_token.return_value = "token-refreshed"
+            token_holder[0] = "token-refreshed"
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_2
 
             # Call 3: New token means cache miss, fetches new data

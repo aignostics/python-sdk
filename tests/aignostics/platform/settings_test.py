@@ -67,17 +67,14 @@ def mock_env_vars():  # noqa: ANN201
 @pytest.fixture
 def reset_cached_settings():  # noqa: ANN201
     """Reset the cached authentication settings."""
-    from aignostics.platform._settings import __cached_settings
+    import aignostics.platform._settings as _settings_module
 
-    # Store original
-    original = __cached_settings
-
-    settings.__cached_settings = None
+    original = _settings_module.__cached_settings
+    _settings_module.__cached_settings = None
 
     yield
 
-    # Restore original
-    settings.__cached_settings = original
+    _settings_module.__cached_settings = original
 
 
 @pytest.mark.unit

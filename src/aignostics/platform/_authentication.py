@@ -17,13 +17,13 @@ from pydantic import BaseModel, SecretStr
 from requests.exceptions import HTTPError, JSONDecodeError, RequestException
 from requests_oauthlib import OAuth2Session
 from tenacity import (
-    RetryCallState,
     Retrying,
     retry_if_exception,
     stop_after_attempt,
     wait_exponential_jitter,
 )
 
+from aignostics.platform._api import _log_retry_attempt
 from aignostics.platform._messages import (
     AUTHENTICATION_FAILED,
     AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
@@ -31,26 +31,6 @@ from aignostics.platform._messages import (
     INVALID_REDIRECT_URI,
 )
 from aignostics.platform._settings import settings
-
-
-def _log_retry_attempt(retry_state: RetryCallState) -> None:
-    """Custom callback for logging retry attempts with loguru.
-
-    Args:
-        retry_state: The retry state from tenacity.
-    """
-    fn = retry_state.fn
-    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
-    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
-    logger.warning(
-        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
-        fn_module,
-        fn_name,
-        retry_state.next_action.sleep if retry_state.next_action else 0,
-        retry_state.attempt_number,
-        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
-    )
-
 
 CALLBACK_PORT_RETRY_COUNT = 20
 CALLBACK_PORT_BACKOFF_DELAY = 1

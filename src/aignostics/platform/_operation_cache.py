@@ -11,13 +11,16 @@ The caching mechanism:
 - Supports selective cache clearing by function
 """
 
+from __future__ import annotations
+
+import functools
 import hashlib
 import time
 import typing as t
-from collections.abc import Callable
-from typing import Any, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
-from ._authentication import get_token
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Cache storage for operation results
 _operation_cache: dict[str, tuple[Any, float]] = {}
@@ -92,16 +95,19 @@ def cache_key_with_token(token: str, func_qualified_name: str, *args: object, **
 
 
 def cached_operation(
-    ttl: int, *, use_token: bool = True, instance_attrs: tuple[str, ...] | None = None
+    ttl: int,
+    *,
+    token_provider: Callable[[], str] | None = None,
+    instance_attrs: tuple[str, ...] | None = None,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Caches the result of a function call for a specified time-to-live (TTL).
 
     Args:
         ttl (int): Time-to-live for the cache in seconds.
-        use_token (bool): If True, includes the authentication token in the cache key.
-            This is useful for Client methods that should cache per-user.
-            When use_token is True and no instance_attrs are specified, the 'self'
-            argument is excluded from the cache key to enable cache sharing across instances.
+        token_provider (Callable[[], str] | None): A callable returning the current
+            authentication token string. When provided, the token is included in the
+            cache key for per-user isolation. Pass ``None`` to omit the token from
+            the cache key.
         instance_attrs (tuple[str, ...] | None): Instance attributes to include in the cache key.
             This is useful for instance methods where caching should be per-instance based on
             specific attributes (e.g., 'run_id' for Run.details()).
@@ -116,6 +122,7 @@ def cached_operation(
     """
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Check if nocache is requested and remove it from kwargs before passing to func
             nocache = kwargs.pop("nocache", False)
@@ -132,8 +139,9 @@ def cached_operation(
                 instance_values = tuple(getattr(instance, attr) for attr in instance_attrs)
                 cache_args = instance_values + args[1:]
 
-            if use_token:
-                key = cache_key_with_token(get_token(True), func_qualified_name, *cache_args, **kwargs)
+            if token_provider is not None:
+                token = token_provider()
+                key = cache_key_with_token(token, func_qualified_name, *cache_args, **kwargs)
             else:
                 key = cache_key(func_qualified_name, *cache_args, **kwargs)
 

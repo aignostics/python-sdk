@@ -16,25 +16,26 @@ from urllib.parse import quote
 
 import requests
 import semver
-from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import ApplicationVersion as VersionTuple
 from aignx.codegen.models import VersionDocumentResponse as VersionDocumentData
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
-from loguru import logger
 from pydantic import BaseModel, ConfigDict
 from tenacity import (
-    RetryCallState,
     Retrying,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
 )
-from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
-from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._api import (
+    RETRYABLE_EXCEPTIONS,
+    _AuthenticatedApi,
+    _AuthenticatedResource,
+    _log_retry_attempt,
+)
 from aignostics.platform._authentication import get_token
 from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform._settings import settings
@@ -43,48 +44,12 @@ from aignostics.utils import user_agent
 
 _DOCUMENT_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1 MB
 
-RETRYABLE_EXCEPTIONS = (
-    ServiceException,
-    Urllib3TimeoutError,
-    PoolError,
-    IncompleteRead,
-    ProtocolError,
-    ProxyError,
-)
 
-
-def _log_retry_attempt(retry_state: RetryCallState) -> None:
-    """Custom callback for logging retry attempts with loguru.
-
-    Args:
-        retry_state: The retry state from tenacity.
-    """
-    fn = retry_state.fn
-    fn_module = fn.__module__ if fn and hasattr(fn, "__module__") else "<unknown>"
-    fn_name = fn.__name__ if fn and hasattr(fn, "__name__") else "<unknown>"
-    logger.warning(
-        "Retrying {}.{} in {} seconds as attempt {} ended with: {}",
-        fn_module,
-        fn_name,
-        retry_state.next_action.sleep if retry_state.next_action else 0,
-        retry_state.attempt_number,
-        retry_state.outcome.exception() if retry_state.outcome else "<no outcome>",
-    )
-
-
-class Versions:
+class Versions(_AuthenticatedResource):
     """Resource class for managing application versions.
 
     Provides operations to list and retrieve application versions.
     """
-
-    def __init__(self, api: PublicApi) -> None:
-        """Initializes the Versions resource with the API platform.
-
-        Args:
-            api (PublicApi): The configured API platform.
-        """
-        self._api = api
 
     def _get_application_version_validated(
         self, application_id: str, application_version: VersionTuple | str | None
@@ -134,7 +99,7 @@ class Versions:
         """
         application_id = application.application_id if isinstance(application, Application) else application
 
-        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_cache_ttl, token_provider=self._api.token_provider)
         def list_with_retry(app_id: str) -> Application:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -180,7 +145,7 @@ class Versions:
         application_version = self._get_application_version_validated(application_id, application_version)
 
         # Make the API call with retry logic and caching
-        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_version_cache_ttl, token_provider=self._api.token_provider)
         def details_with_retry(app_id: str, app_version: str) -> ApplicationVersion:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -317,11 +282,11 @@ class Documents:
     integrity is bounded by HTTPS transport and the signed-URL lifetime.
     """
 
-    def __init__(self, api: PublicApi, application_id: str, application_version: str | VersionTuple) -> None:
+    def __init__(self, api: _AuthenticatedApi, application_id: str, application_version: str | VersionTuple) -> None:
         """Initializes the Documents resource bound to an application version.
 
         Args:
-            api (PublicApi): The configured API client.
+            api (_AuthenticatedApi): The configured API client.
             application_id (str): The ID of the application (e.g. "heta").
             application_version (str | VersionTuple): The semantic version number (e.g. "1.0.0") or a VersionTuple.
         """
@@ -349,7 +314,7 @@ class Documents:
             aignx.codegen.exceptions.ApiException: If the API request fails.
         """
 
-        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_version_cache_ttl, token_provider=self._api.token_provider)
         def list_with_retry(application_id: str, application_version: str) -> builtins.list[VersionDocumentData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -390,7 +355,7 @@ class Documents:
             aignx.codegen.exceptions.ApiException: If the API request fails.
         """
 
-        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_version_cache_ttl, token_provider=self._api.token_provider)
         def details_with_retry(
             application_id: str, application_version: str, document_name: str
         ) -> VersionDocumentData:
@@ -658,19 +623,19 @@ class Documents:
         )(_stream_to_buffer)
 
 
-class Applications:
+class Applications(_AuthenticatedResource):
     """Resource class for managing applications.
 
     Provides operations to list applications and access version resources.
     """
 
-    def __init__(self, api: PublicApi) -> None:
+    def __init__(self, api: _AuthenticatedApi) -> None:
         """Initializes the Applications resource with the API platform.
 
         Args:
-            api (PublicApi): The configured API platform.
+            api (_AuthenticatedApi): The configured API platform.
         """
-        self._api = api
+        super().__init__(api)
         self.versions: Versions = Versions(self._api)
 
     def details(self, application_id: str, nocache: bool = False) -> Application:
@@ -691,7 +656,7 @@ class Applications:
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
 
-        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_cache_ttl, token_provider=self._api.token_provider)
         def details_with_retry(application_id: str) -> Application:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -716,10 +681,12 @@ class Applications:
 
         Retries on network and server errors for each page.
 
+        Args:
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
+
         Returns:
             Iterator[ApplicationSummary]: An iterator over the available applications.
-            notcache (bool): If True, skip reading from cache and fetch fresh data from the API.
-                The fresh result will still be cached for subsequent calls. Defaults to False.
 
         Raises:
             aignx.codegen.exceptions.ApiException: If the API request fails.
@@ -727,7 +694,7 @@ class Applications:
 
         # Create a wrapper function that applies retry logic and caching to each API call
         # Caching at this level ensures having a fresh iterator on cache hits
-        @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
+        @cached_operation(ttl=settings().application_cache_ttl, token_provider=self._api.token_provider)
         def list_with_retry(**kwargs: object) -> builtins.list[ApplicationSummary]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),

@@ -32,6 +32,7 @@ The Platform Module shall:
 - **[FR-11]** Download and verify file integrity using CRC32C checksums for run artifacts
 - **[FR-12]** Generate signed URLs for secure Google Cloud Storage access
 - **[FR-13]** Provide user and organization information retrieval with sensitive data masking options
+- **[FR-14]** Support external token providers to bypass internal OAuth 2.0 flows for machine-to-machine, service account, or custom token lifecycle scenarios.
 
 ### 1.3 Non-Functional Requirements
 
@@ -44,7 +45,6 @@ The Platform Module shall:
 ### 1.4 Constraints and Limitations
 
 - OAuth 2.0 dependency: Requires external Auth0 service for authentication, creating external dependency
-- Browser dependency: Interactive flow requires web browser availability, limiting headless deployment options
 - Network dependency: Requires internet connectivity for initial authentication and token validation
 - Platform-specific: Designed specifically for Aignostics Platform API integration
 
@@ -58,6 +58,7 @@ The Platform Module shall:
 platform/
 ├── _service.py          # Core service implementation with health monitoring
 ├── _client.py           # API client factory and configuration management
+├── _api.py              # Authenticated API wrapper (_AuthenticatedApi, _AuthenticatedResource)
 ├── _authentication.py   # OAuth flows and token management
 ├── _cli.py             # Command-line interface for user operations
 ├── _settings.py        # Environment-specific configuration management
@@ -90,7 +91,7 @@ platform/
 
 - **Factory Pattern**: `Client.get_api_client()` creates configured API clients based on environment settings
 - **Service Layer Pattern**: Business logic encapsulated in service classes with clean separation from API details
-- **Strategy Pattern**: Multiple authentication flows (Authorization Code vs Device Flow) selected based on environment capabilities
+- **Strategy Pattern**: Multiple authentication flows (Authorization Code vs Device Flow) selected based on environment capabilities; external token provider as a fully independent alternative strategy
 - **Template Method Pattern**: Base authentication flow with specific implementations for different OAuth grant types
 
 ---
@@ -109,10 +110,10 @@ platform/
 
 ### 3.2 Outputs
 
-| Output Type      | Destination         | Format/Type            | Success Criteria                                    | Code Location                                        |
-| ---------------- | ------------------- | ---------------------- | --------------------------------------------------- | ---------------------------------------------------- |
-| JWT Access Token | Token cache/memory  | String                 | Valid JWT with required claims and unexpired        | `_authentication.py::get_token()` return value       |
-| API Client       | Client applications | PublicApi object       | Authenticated and configured for target environment | `_client.py::Client.get_api_client()` factory method |
+| Output Type      | Destination         | Format/Type                  | Success Criteria                                    | Code Location                                        |
+| ---------------- | ------------------- | ---------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| JWT Access Token | Token cache/memory  | String                       | Valid JWT with required claims and unexpired        | `_authentication.py::get_token()` return value       |
+| API Client       | Client applications | `Client` object              | Authenticated and configured for target environment | `_client.py::Client.__init__()` constructor          |
 | User Information | CLI/Application     | UserInfo/Me objects    | Complete user and organization data                 | `_service.py::Service.get_user_info()` method        |
 | Health Status    | Monitoring systems  | Health object          | Accurate service and dependency status              | `_service.py::Service.health()` method               |
 | Downloaded Files | Local filesystem    | Binary/structured data | Verified checksums and complete downloads           | `_utils.py` download functions and `ApplicationRun`  |
@@ -202,7 +203,9 @@ ApplicationVersionDocument:
 
 ```mermaid
 graph TD
-   A[User Request] --> B{Token Cached?}
+   A[User Request] --> X{External Token Provider?}
+   X -->|Yes| I_ext[Create API Client with External Provider]
+   X -->|No| B{Token Cached?}
    B -->|Yes| C[Use Cached Token]
    B -->|No| D[OAuth Authentication]
 
@@ -216,6 +219,7 @@ graph TD
 
    H --> I[Create API Client]
    I --> J[Make API Request]
+   I_ext --> J
    J --> K[Return Results]
 
    L[Health Check] --> M[Check API Status]
@@ -233,7 +237,11 @@ graph TD
 class Client:
     """Main client for interacting with the Aignostics Platform API."""
 
-    def __init__(self, cache_token: bool = True) -> None:
+    def __init__(
+        self,
+        cache_token: bool = True,
+        token_provider: Callable[[], str] | None = None,
+    ) -> None:
         """Initializes authenticated API client with resource accessors."""
 
     def me(self) -> Me:
@@ -246,7 +254,10 @@ class Client:
         """Creates ApplicationRun instance for existing run."""
 
     @staticmethod
-    def get_api_client(cache_token: bool = True) -> PublicApi:
+    def get_api_client(
+        cache_token: bool = True,
+        token_provider: Callable[[], str] | None = None,
+    ) -> _AuthenticatedApi:  # internal subclass of PublicApi; exposes token_provider attribute
         """Creates authenticated API client with proper configuration."""
 ```
 
@@ -273,10 +284,10 @@ class Service(BaseService):
 ```
 
 ```python
-class Applications:
+class Applications(_AuthenticatedResource):
     """Resource class for managing applications."""
 
-    def __init__(self, api: PublicApi) -> None:
+    def __init__(self, api: _AuthenticatedApi) -> None:
         """Initializes the Applications resource with the API client."""
 
     def list(self) -> Iterator[Application]:
@@ -288,11 +299,11 @@ class Applications:
 ```
 
 ```python
-class Versions:
+class Versions(_AuthenticatedResource):
     """Resource class for managing application versions."""
 
-    def __init__(self, api: PublicApi) -> None:
-        """Initializes the Versions resource with the API client."""
+    # Constructor inherited from _AuthenticatedResource
+    # def __init__(self, api: _AuthenticatedApi) -> None:
 
     def list(self, application: Application | str) -> Iterator[ApplicationVersion]:
         """Find all versions for a specific application."""
@@ -378,11 +389,11 @@ class Documents:
 ```
 
 ```python
-class Runs:
+class Runs(_AuthenticatedResource):
     """Resource class for managing application runs."""
 
-    def __init__(self, api: PublicApi) -> None:
-        """Initializes the Runs resource with the API client."""
+    # Constructor inherited from _AuthenticatedResource
+    # def __init__(self, api: _AuthenticatedApi) -> None:
 
     def create(self, application_version: str, items: list[ItemCreationRequest]) -> ApplicationRun:
         """Creates a new application run."""
@@ -442,10 +453,10 @@ class Runs:
 ```
 
 ```python
-class ApplicationRun:
+class ApplicationRun(_AuthenticatedResource):
     """Represents a single application run."""
 
-    def __init__(self, api: PublicApi, application_run_id: str) -> None:
+    def __init__(self, api: _AuthenticatedApi, application_run_id: str) -> None:
         """Initializes an ApplicationRun instance."""
 
     @classmethod

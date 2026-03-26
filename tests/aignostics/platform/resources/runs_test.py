@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import requests
-from aignx.codegen.api.public_api import PublicApi
 from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
     InputArtifactCreationRequest,
@@ -19,6 +18,7 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
+from aignostics.platform._api import _AuthenticatedApi
 from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
 from aignostics.platform.resources.utils import PAGE_SIZE
 
@@ -31,6 +31,28 @@ _PATCH_GET_TOKEN = "aignostics.platform.resources.runs.get_token"  # noqa: S105
 _PATCH_SETTINGS = "aignostics.platform.resources.runs.settings"
 
 
+def _redirect_response(location: str | None, status: int = HTTPStatus.TEMPORARY_REDIRECT) -> MagicMock:
+    """Build a context-manager-shaped Mock response with the given status + Location."""
+    response = MagicMock()
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=False)
+    response.status_code = status
+    response.headers = {"Location": location} if location is not None else {}
+    response.reason = HTTPStatus(status).phrase or "Unknown"
+    return response
+
+
+def _error_response(status: int) -> MagicMock:
+    """Build a context-manager-shaped Mock response with the given non-redirect status."""
+    response = MagicMock()
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=False)
+    response.status_code = status
+    response.headers = {}
+    response.reason = HTTPStatus(status).phrase if status in HTTPStatus._value2member_map_ else "Unknown"
+    return response
+
+
 @pytest.fixture
 def mock_api() -> Mock:
     """Create a mock ExternalsApi object for testing.
@@ -38,7 +60,10 @@ def mock_api() -> Mock:
     Returns:
         Mock: A mock instance of ExternalsApi.
     """
-    return Mock(spec=PublicApi)
+    api = Mock(spec=_AuthenticatedApi)
+    api.token_provider = lambda: "test-token"
+    api.api_client = Mock()
+    return api
 
 
 @pytest.fixture
@@ -64,7 +89,7 @@ def app_run(mock_api) -> Run:
     Returns:
         Run: An Run instance using the mock API.
     """
-    return Run(mock_api, _RUN_ID)
+    return Run(mock_api, "test-run-id")
 
 
 @pytest.fixture
@@ -78,7 +103,6 @@ def configured_api(mock_api) -> Mock:
             Tests that need to verify ``token_provider`` propagation should set
             it explicitly.
     """
-    mock_api.api_client = Mock()
     mock_api.api_client.configuration.host = _PLATFORM_HOST
     mock_api.api_client.configuration.proxy = None
     mock_api.api_client.configuration.ssl_ca_cert = None
@@ -91,28 +115,6 @@ def configured_api(mock_api) -> Mock:
 def artifact(configured_api) -> Artifact:
     """Create an Artifact instance bound to a configured mock API."""
     return Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
-
-
-def _redirect_response(location: str | None, status: int = HTTPStatus.TEMPORARY_REDIRECT) -> MagicMock:
-    """Build a context-manager-shaped Mock response with the given status + Location."""
-    response = MagicMock()
-    response.__enter__ = Mock(return_value=response)
-    response.__exit__ = Mock(return_value=False)
-    response.status_code = status
-    response.headers = {"Location": location} if location is not None else {}
-    response.reason = HTTPStatus(status).phrase or "Unknown"
-    return response
-
-
-def _error_response(status: int) -> MagicMock:
-    """Build a context-manager-shaped Mock response with the given non-redirect status."""
-    response = MagicMock()
-    response.__enter__ = Mock(return_value=response)
-    response.__exit__ = Mock(return_value=False)
-    response.status_code = status
-    response.headers = {}
-    response.reason = HTTPStatus(status).phrase
-    return response
 
 
 @pytest.mark.unit
@@ -892,12 +894,7 @@ def test_artifact_get_download_url_4xx_raises_api_exception(artifact, client_sta
 
 @pytest.mark.unit
 def test_artifact_get_download_url_unexpected_2xx_raises_runtime(artifact) -> None:
-    """A 200 (or other unexpected non-error, non-redirect) is RuntimeError.
-
-    Per Dima's clarification on PR #478: the endpoint never returns 200 in
-    practice. If it ever does, we fail explicitly rather than silently passing
-    a body off to webbrowser.open().
-    """
+    """A 200 (or other unexpected non-error, non-redirect) is RuntimeError."""
     with (
         patch(_PATCH_GET_TOKEN, return_value="t"),
         patch(_PATCH_REQUESTS_GET, return_value=_error_response(HTTPStatus.OK)),
@@ -926,7 +923,7 @@ def test_artifact_get_download_url_5xx_retries_then_succeeds(artifact) -> None:
         url = artifact.get_download_url()
 
     assert url == _PRESIGNED_URL
-    assert mock_get.call_count == 2  # one retry was needed
+    assert mock_get.call_count == 2
 
 
 @pytest.mark.unit
@@ -961,13 +958,9 @@ def test_artifact_get_download_url_5xx_exhausts_retries_then_raises(artifact) ->
     ],
 )
 def test_artifact_get_download_url_network_errors_become_service_exception(artifact, exc_factory) -> None:
-    """`requests` exceptions are wrapped as ServiceException so retry can act on them.
-
-    Without this wrapping the e2e tests in PR #507 hung — `requests.HTTPError`
-    escaped the retry loop and surfaced as a wrong exception type.
-    """
+    """`requests` exceptions are wrapped as ServiceException so retry can act on them."""
     fake_settings = Mock()
-    fake_settings.run_retry_attempts = 1  # don't waste test time on retries
+    fake_settings.run_retry_attempts = 1
     fake_settings.run_retry_wait_min = 0.0
     fake_settings.run_retry_wait_max = 0.0
     fake_settings.run_timeout = 5.0
@@ -983,22 +976,13 @@ def test_artifact_get_download_url_network_errors_become_service_exception(artif
 
 @pytest.mark.unit
 def test_artifact_get_download_url_honors_configuration_token_provider(configured_api) -> None:
-    """When configuration.token_provider is set, Artifact uses it instead of get_token.
-
-    The codegen Client wires up token_provider to call ``get_token(use_cache=cache_token)``.
-    A user who instantiates ``Client(cache_token=False)`` does not want the SDK to
-    read/write the token file when the SDK resolves artifact URLs. This test pins
-    that contract — without it, Copilot's PR review caught us bypassing the user's
-    cache preference.
-    """
+    """When configuration.token_provider is set, Artifact uses it instead of get_token."""
     custom_token_provider = Mock(return_value="cache-disabled-token")
     configured_api.api_client.configuration.token_provider = custom_token_provider
     art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
     response = _redirect_response(_PRESIGNED_URL)
 
     with (
-        # If the implementation falls back to get_token here, the test would still
-        # pass — so we patch get_token to a sentinel value the assertion would catch.
         patch(_PATCH_GET_TOKEN, return_value="WRONG-from-fallback"),
         patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
     ):
@@ -1010,11 +994,7 @@ def test_artifact_get_download_url_honors_configuration_token_provider(configure
 
 @pytest.mark.unit
 def test_artifact_get_download_url_passes_proxy_and_ca_bundle(configured_api) -> None:
-    """Proxy and custom CA bundle from codegen Configuration are honored.
-
-    Enterprise installs frequently set these via env; a previous draft of this
-    code ignored them, which would have broken downloads behind a proxy.
-    """
+    """Proxy and custom CA bundle from codegen Configuration are honored."""
     proxy_url = "https://corp-proxy.local:3128"
     configured_api.api_client.configuration.proxy = proxy_url
     configured_api.api_client.configuration.ssl_ca_cert = "/etc/ssl/corp-ca.pem"
@@ -1030,22 +1010,17 @@ def test_artifact_get_download_url_passes_proxy_and_ca_bundle(configured_api) ->
 
     kwargs = mock_get.call_args.kwargs
     assert kwargs["proxies"] == {"http": proxy_url, "https": proxy_url}
-    # CA bundle path takes precedence over verify_ssl=False
     assert kwargs["verify"] == "/etc/ssl/corp-ca.pem"
 
 
 @pytest.mark.unit
 def test_run_get_artifact_download_url_delegates_to_artifact(app_run, configured_api) -> None:
-    """Run.get_artifact_download_url is the documented entry point and must just delegate.
-
-    Keeping this thin protects callers from internal refactors of `Artifact`.
-    """
+    """Run.get_artifact_download_url is the documented entry point and must just delegate."""
     response = _redirect_response(_PRESIGNED_URL)
     with (
         patch(_PATCH_GET_TOKEN, return_value="t"),
         patch(_PATCH_REQUESTS_GET, return_value=response),
     ):
-        # Replace mock_api on the existing Run with the configured one
         app_run._api = configured_api
         url = app_run.get_artifact_download_url(_ARTIFACT_ID)
     assert url == _PRESIGNED_URL
@@ -1096,11 +1071,7 @@ def _make_item_mock(external_id: str = "slide-1", artifacts: list | None = None)
 
 @pytest.mark.unit
 def test_ensure_artifacts_downloaded_resolves_fresh_url_per_artifact(app_run, tmp_path) -> None:
-    """ensure_artifacts_downloaded must call get_artifact_download_url for AVAILABLE artifacts.
-
-    The deprecated artifact.download_url field is no longer consulted; URL is
-    resolved fresh per artifact via the /file endpoint right before downloading.
-    """
+    """ensure_artifacts_downloaded must call get_artifact_download_url for AVAILABLE artifacts."""
     item = _make_item_mock(artifacts=[_make_artifact_mock(output_artifact_id="art-xyz")])
     app_run.get_artifact_download_url = Mock(return_value=_PRESIGNED_URL)
 
@@ -1110,17 +1081,12 @@ def test_ensure_artifacts_downloaded_resolves_fresh_url_per_artifact(app_run, tm
     app_run.get_artifact_download_url.assert_called_once_with("art-xyz")
     mock_download.assert_called_once()
     call_args = mock_download.call_args.args
-    assert call_args[0] == _PRESIGNED_URL  # First arg is the freshly resolved URL
+    assert call_args[0] == _PRESIGNED_URL
 
 
 @pytest.mark.unit
 def test_ensure_artifacts_downloaded_skips_non_available_artifacts(app_run, tmp_path) -> None:
-    """Non-AVAILABLE artifacts must be skipped — the /file endpoint won't return URLs for them.
-
-    Per Dima on PR #478: the /file endpoint does not return a presigned URL for
-    artifacts whose output is NONE (e.g. deleted, never produced). Calling it
-    would fail the entire download. This test pins the AVAILABLE-gating.
-    """
+    """Non-AVAILABLE artifacts must be skipped."""
     from aignx.codegen.models import ArtifactOutput as _ArtifactOutput
 
     none_artifact = _make_artifact_mock(output_artifact_id="art-none", output=_ArtifactOutput.NONE)
@@ -1136,12 +1102,7 @@ def test_ensure_artifacts_downloaded_skips_non_available_artifacts(app_run, tmp_
 
 @pytest.mark.unit
 def test_ensure_artifacts_downloaded_skips_existing_file_with_matching_checksum(app_run, tmp_path) -> None:
-    """If a local file already matches the metadata checksum, skip the URL fetch and the download.
-
-    Critical: do NOT call get_artifact_download_url when we wouldn't have downloaded
-    anyway. Resolving a presigned URL hits SAMIA; skipping it on resume saves
-    backend load and shortens resume cycles.
-    """
+    """If a local file already matches the metadata checksum, skip the URL fetch and download."""
     item_dir = tmp_path / "slide-1"
     item_dir.mkdir()
     artifact_path = item_dir / "result.csv"
@@ -1150,7 +1111,7 @@ def test_ensure_artifacts_downloaded_skips_existing_file_with_matching_checksum(
     app_run.get_artifact_download_url = Mock()
 
     with (
-        patch(_PATCH_CALC_CRC32C, return_value="AAAA"),  # Matches metadata checksum
+        patch(_PATCH_CALC_CRC32C, return_value="AAAA"),
         patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
         patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
     ):
@@ -1171,7 +1132,7 @@ def test_ensure_artifacts_downloaded_resumes_when_local_checksum_mismatches(app_
     app_run.get_artifact_download_url = Mock(return_value=_PRESIGNED_URL)
 
     with (
-        patch(_PATCH_CALC_CRC32C, return_value="ZZZZ"),  # Mismatch with metadata "AAAA"
+        patch(_PATCH_CALC_CRC32C, return_value="ZZZZ"),
         patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
         patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
     ):
@@ -1183,13 +1144,7 @@ def test_ensure_artifacts_downloaded_resumes_when_local_checksum_mismatches(app_
 
 @pytest.mark.unit
 def test_ensure_artifacts_downloaded_skips_artifact_with_no_metadata(app_run, tmp_path) -> None:
-    """Artifact with empty metadata dict is skipped (no checksum to verify against).
-
-    Per Copilot PR review on #598, the metadata check now runs *before* the
-    MIME lookup, so this test no longer needs to mock through the MIME helpers.
-    Without the reorder, an empty-metadata artifact would raise ``ValueError``
-    from ``mime_type_to_file_ending`` before the early-return could fire.
-    """
+    """Artifact with empty metadata dict is skipped (no checksum to verify against)."""
     item = _make_item_mock(artifacts=[_make_artifact_mock(metadata={})])
     app_run.get_artifact_download_url = Mock()
 
@@ -1202,22 +1157,13 @@ def test_ensure_artifacts_downloaded_skips_artifact_with_no_metadata(app_run, tm
 
 @pytest.mark.unit
 def test_download_to_folder_post_termination_loop_filters_by_item_state(app_run, mock_api, tmp_path) -> None:
-    """Post-termination loop must filter items by state==TERMINATED and output==FULL.
-
-    Regression guard for the latent enum-truthiness bug Sentry flagged on PR #478:
-    the original code had ``if ItemOutput.FULL:`` (always truthy because it's a
-    member-existence check, not a value comparison), which caused
-    ensure_artifacts_downloaded to be called for *every* item regardless of state
-    or output. This test pins that we only download items that are actually
-    terminated with full output.
-    """
+    """Post-termination loop must filter items by state==TERMINATED and output==FULL."""
     from aignx.codegen.models import ItemOutput, ItemState, RunState
 
     terminated_full_item = MagicMock(state=ItemState.TERMINATED, output=ItemOutput.FULL, external_id="ok")
     terminated_none_item = MagicMock(state=ItemState.TERMINATED, output=ItemOutput.NONE, external_id="empty")
     pending_item = MagicMock(state=ItemState.PROCESSING, output=ItemOutput.NONE, external_id="pending")
 
-    # Run is already TERMINATED on first details() call → skip the wait loop, go to post-loop.
     terminated_run_state = MagicMock(state=RunState.TERMINATED)
     app_run.details = Mock(return_value=terminated_run_state)
     app_run.results = Mock(return_value=[terminated_full_item, terminated_none_item, pending_item])
@@ -1225,8 +1171,6 @@ def test_download_to_folder_post_termination_loop_filters_by_item_state(app_run,
 
     app_run.download_to_folder(tmp_path, print_status=False)
 
-    # Only the TERMINATED+FULL item should trigger ensure_artifacts_downloaded.
-    # If the latent enum bug were back, all 3 items would trigger it.
     assert app_run.ensure_artifacts_downloaded.call_count == 1
     forwarded_item = app_run.ensure_artifacts_downloaded.call_args.args[1]
     assert forwarded_item.external_id == "ok"
@@ -1234,14 +1178,8 @@ def test_download_to_folder_post_termination_loop_filters_by_item_state(app_run,
 
 @pytest.mark.unit
 def test_ensure_artifacts_downloaded_is_instance_method_not_static(app_run, tmp_path) -> None:
-    """Regression guard: ensure_artifacts_downloaded must be an instance method.
-
-    PR #478 left it as @staticmethod, which made `self.get_artifact_download_url()`
-    inside the loop impossible. Pinning the bound-method shape so a future refactor
-    cannot accidentally revert.
-    """
+    """Regression guard: ensure_artifacts_downloaded must be an instance method."""
     bound = app_run.ensure_artifacts_downloaded
-    # On a method, __self__ is the instance; on a staticmethod, __self__ doesn't exist.
     assert getattr(bound, "__self__", None) is app_run
 
 
