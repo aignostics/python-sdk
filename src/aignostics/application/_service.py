@@ -23,6 +23,7 @@ from aignostics.platform import (
     ApplicationSummary,
     ApplicationVersion,
     Client,
+    ForbiddenException,
     InputArtifact,
     InputItem,
     NotFoundException,
@@ -533,6 +534,7 @@ class Service(BaseService):  # noqa: PLR0904
         tags: set[str] | None = None,
         query: str | None = None,
         limit: int | None = None,
+        for_organization: str | None = None,
     ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
 
@@ -551,6 +553,8 @@ class Service(BaseService):  # noqa: PLR0904
                 If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
                 Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified
+                organization. If None, only the runs of the current user are returned.
 
         Returns:
             list[RunData]: A list of all application runs.
@@ -587,6 +591,7 @@ class Service(BaseService):  # noqa: PLR0904
                 tags=tags,
                 query=query,
                 limit=limit,
+                for_organization=for_organization,
             )
         ]
 
@@ -601,6 +606,7 @@ class Service(BaseService):  # noqa: PLR0904
         tags: set[str] | None = None,
         query: str | None = None,
         limit: int | None = None,
+        for_organization: str | None = None,
     ) -> list[RunData]:
         """Get a list of all application runs.
 
@@ -619,12 +625,15 @@ class Service(BaseService):  # noqa: PLR0904
                 If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
                 Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified
+                organization. If None, only the runs of the current user are returned.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
             ValueError: If query is used together with custom_metadata, note_regex, or tags.
+            ForbiddenException: If the user is not authorized to list runs for the specified organization.
             RuntimeError: If the application run list cannot be retrieved.
         """
         # Validate that query is not used with other metadata filters
@@ -658,6 +667,7 @@ class Service(BaseService):  # noqa: PLR0904
                     custom_metadata=custom_metadata_note,
                     sort="-submitted_at",
                     page_size=page_size,
+                    for_organization=for_organization,
                 )
                 for run in note_run_iterator:
                     if has_output and run.output == RunOutput.NONE:
@@ -677,6 +687,7 @@ class Service(BaseService):  # noqa: PLR0904
                     custom_metadata=custom_metadata_tags,
                     sort="-submitted_at",
                     page_size=page_size,
+                    for_organization=for_organization,
                 )
                 for run in tag_run_iterator:
                     if has_output and run.output == RunOutput.NONE:
@@ -731,6 +742,7 @@ class Service(BaseService):  # noqa: PLR0904
                 custom_metadata=custom_metadata,
                 sort="-submitted_at",
                 page_size=page_size,
+                for_organization=for_organization,
             )
             for run in run_iterator:
                 if has_output and run.output == RunOutput.NONE:
@@ -770,6 +782,8 @@ class Service(BaseService):  # noqa: PLR0904
                 if limit is not None and len(runs) >= limit:
                     break
             return runs
+        except ForbiddenException:
+            raise
         except Exception as e:
             message = f"Failed to retrieve application runs: {e}"
             logger.exception(message)

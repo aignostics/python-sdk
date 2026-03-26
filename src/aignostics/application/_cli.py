@@ -19,6 +19,7 @@ from aignostics.platform import (
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    ForbiddenException,
     NotFoundException,
     RunState,
 )
@@ -872,6 +873,13 @@ def run_list(  # noqa: PLR0913, PLR0917
     ] = None,
     query: Annotated[str | None, typer.Option(help="Optional query string to filter runs by note OR tags.")] = None,
     note_case_insensitive: Annotated[bool, typer.Option(help="Make note regex search case-insensitive.")] = True,
+    for_organization: Annotated[
+        str | None,
+        typer.Option(
+            "--for-organization",
+            help="Organization ID to list all runs for. Lists runs from all users in the organization.",
+        ),
+    ] = None,
     format: Annotated[  # noqa: A002
         str,
         typer.Option(help="Output format: 'text' (default) or 'json'"),
@@ -885,6 +893,7 @@ def run_list(  # noqa: PLR0913, PLR0917
             note_regex=note_regex,
             note_query_case_insensitive=note_case_insensitive,
             query=query,
+            for_organization=for_organization,
         )
         if len(runs) == 0:
             if format == "json":
@@ -894,6 +903,8 @@ def run_list(  # noqa: PLR0913, PLR0917
                     message = f"You did not yet create a run matching tags: {tags!r}."
                 elif note_regex:
                     message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+                elif for_organization:
+                    message = f"No runs found for organization '{for_organization}'."
                 else:
                     message = "You did not yet create a run."
                 logger.warning(message)
@@ -908,6 +919,11 @@ def run_list(  # noqa: PLR0913, PLR0917
                 message = f"Listed '{len(runs)}' run(s)."
                 console.print(message, style="info")
             logger.debug(f"Listed '{len(runs)}' run(s).")
+    except ForbiddenException:
+        message = "Access denied: you are not authorized to list runs."
+        logger.warning(message)
+        console.print(f"[error]Error:[/error] {message}")
+        sys.exit(2)
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
