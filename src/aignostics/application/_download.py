@@ -10,7 +10,7 @@ import crc32c
 import requests
 from loguru import logger
 
-from aignostics.platform import ItemOutput, ItemState, OutputArtifactElement, Run, generate_signed_url
+from aignostics.platform import ItemOutput, ItemState, Run, generate_signed_url
 from aignostics.utils import sanitize_path_component
 
 from ._models import DownloadProgress, DownloadProgressState
@@ -146,44 +146,6 @@ def update_progress(
         download_progress_queue.put_nowait(progress)
 
 
-def _resolve_artifact_url(
-    artifact: OutputArtifactElement,
-    run_id: str,
-    get_artifact_download_url: Callable[[str, str], str] | None,
-) -> str | None:
-    """Resolve the download URL for an artifact.
-
-    Tries the new file endpoint first (via get_artifact_download_url), then falls back to
-    the deprecated download_url field on the artifact if the endpoint fails.
-
-    Args:
-        artifact: The artifact object with optional output_artifact_id and download_url.
-        run_id: The run ID, passed to get_artifact_download_url.
-        get_artifact_download_url: Callable for the new endpoint, or None to skip.
-
-    Returns:
-        str | None: The resolved download URL, or None if unavailable.
-
-    Raises:
-        Exception: Re-raises if the new endpoint fails and no fallback download_url exists.
-    """
-    if get_artifact_download_url and artifact.output_artifact_id:
-        try:
-            return get_artifact_download_url(run_id, artifact.output_artifact_id)
-        except Exception as e:
-            fallback_url: str | None = getattr(artifact, "download_url", None)
-            if fallback_url:
-                logger.warning(
-                    "Failed to resolve download URL via file endpoint for artifact {} ({}). "
-                    "Falling back to deprecated download_url field.",
-                    artifact.output_artifact_id,
-                    e,
-                )
-                return fallback_url
-            raise
-    return getattr(artifact, "download_url", None)
-
-
 def download_available_items(  # noqa: PLR0913, PLR0917
     progress: DownloadProgress,
     application_run: Run,
@@ -192,7 +154,6 @@ def download_available_items(  # noqa: PLR0913, PLR0917
     create_subdirectory_per_item: bool = False,
     download_progress_queue: Any | None = None,  # noqa: ANN401
     download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
-    get_artifact_download_url: Callable[[str, str], str] | None = None,
 ) -> None:
     """Download items that are available and not yet downloaded.
 
@@ -204,9 +165,6 @@ def download_available_items(  # noqa: PLR0913, PLR0917
         create_subdirectory_per_item (bool): Whether to create a subdirectory for each item.
         download_progress_queue (Queue | None): Queue for GUI progress updates.
         download_progress_callable (Callable | None): Callback for CLI progress updates.
-        get_artifact_download_url (Callable[[str, str], str] | None): Callback that takes
-            (run_id, artifact_id) and returns a presigned download URL. If None, falls back
-            to artifact.download_url (deprecated).
     """
     items = list(application_run.results())
     progress.item_count = len(items)
@@ -243,16 +201,9 @@ def download_available_items(  # noqa: PLR0913, PLR0917
                 progress.artifact = artifact
                 update_progress(progress, download_progress_callable, download_progress_queue)
 
-                # Resolve artifact download URL via the new file endpoint, with fallback
-                artifact_url = _resolve_artifact_url(artifact, application_run.run_id, get_artifact_download_url)
-                if not artifact_url:
-                    logger.warning("No download URL available for artifact {}", artifact.output_artifact_id)
-                    continue
-
                 download_item_artifact(
                     progress,
                     artifact,
-                    artifact_url,
                     item_directory,
                     item.external_id if not create_subdirectory_per_item else "",
                     download_progress_queue,
@@ -265,7 +216,6 @@ def download_available_items(  # noqa: PLR0913, PLR0917
 def download_item_artifact(  # noqa: PLR0913, PLR0917
     progress: DownloadProgress,
     artifact: Any,  # noqa: ANN401
-    artifact_download_url: str,
     destination_directory: Path,
     prefix: str = "",
     download_progress_queue: Any | None = None,  # noqa: ANN401
@@ -276,7 +226,6 @@ def download_item_artifact(  # noqa: PLR0913, PLR0917
     Args:
         progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
         artifact (Any): The artifact to download.
-        artifact_download_url (str): The presigned URL to download the artifact from.
         destination_directory (Path): Directory to save the file.
         prefix (str): Prefix for the file name, if needed.
         download_progress_queue (Queue | None): Queue for GUI progress updates.
@@ -311,7 +260,7 @@ def download_item_artifact(  # noqa: PLR0913, PLR0917
 
     download_file_with_progress(
         progress,
-        artifact_download_url,
+        artifact.download_url,
         artifact_path,
         metadata_checksum,
         download_progress_queue,
