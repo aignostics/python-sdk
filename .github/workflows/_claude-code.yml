@@ -77,7 +77,7 @@ jobs:
 
       - name: Run Claude Code (Interactive Mode)
         if: inputs.mode == 'interactive'
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@094bd24d575e7b30ac1576024817bf1a97c81262 # v1.0.80
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
@@ -92,7 +92,7 @@ jobs:
 
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
-        uses: anthropics/claude-code-action@v1.0.77
+        uses: anthropics/claude-code-action@ff9acae5886d41a99ed4ec14b7dc147d55834722 # v1.0.77
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
