@@ -14,9 +14,8 @@ from nicegui import (
     ui,  # noq
 )
 from nicegui import run as nicegui_run
-from nicegui.events import ClickEventArguments
 
-from aignostics.platform import ItemOutput, ItemResult, ItemState, Run, RunState
+from aignostics.platform import ItemOutput, ItemResult, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -339,9 +338,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
             # Activate the timer now that download is starting
             progress_timer.activate()
-            download_button.disable()
-            download_button.props(add="loading")
             try:
+                download_button.disable()
+                download_button.props(add="loading")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
@@ -365,24 +364,19 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     ui.notify("Download completed.", type="positive")
                 show_in_file_manager(str(results_folder))
-            except Exception as e:
-                logger.exception(
-                    "Download failed for run {} (qupath_project={}, marimo={}, folder={})",
-                    run.run_id,
-                    current_qupath_project,
-                    current_marimo,
-                    current_folder,
-                )
+            except ValueError as e:
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
-            finally:
                 progress_timer.deactivate()
                 progress_state["queue"] = None
-                download_button.props(remove="loading")
-                download_button.enable()
-                download_item_status.set_visibility(False)
-                download_item_progress.set_visibility(False)
-                download_artifact_status.set_visibility(False)
-                download_artifact_progress.set_visibility(False)
+                return
+            progress_timer.deactivate()
+            progress_state["queue"] = None
+            download_button.props(remove="loading")
+            download_button.enable()
+            download_item_status.set_visibility(False)
+            download_item_progress.set_visibility(False)
+            download_artifact_status.set_visibility(False)
+            download_artifact_progress.set_visibility(False)
 
         ui.separator()
         with ui.row(align_items="end").classes("w-full justify-end"):
@@ -787,85 +781,29 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 icon=mime_type_to_icon(mime_type),
                                 group="artifacts",
                             ).classes("w-full"):
-                                if artifact.output_artifact_id:
-                                    artifact_id = artifact.output_artifact_id
+                                if artifact.download_url:
+                                    url = artifact.download_url
                                     title = artifact.name
                                     metadata = artifact.metadata
-
                                     with ui.button_group():
                                         if mime_type == "image/tiff":
-                                            preview_button = ui.button(
+                                            ui.button(
                                                 "Preview",
                                                 icon=mime_type_to_icon(mime_type),
+                                                on_click=lambda _, url=url, title=title: tiff_dialog_open(title, url),
                                             )
-
-                                            async def _preview_tiff(
-                                                _: ClickEventArguments,
-                                                aid: str = artifact_id,
-                                                t: str = title,
-                                                _run: Run = run,
-                                                _btn: ui.button = preview_button,
-                                            ) -> None:
-                                                try:
-                                                    _btn.props(add="loading")
-                                                    url = await nicegui_run.io_bound(
-                                                        _run.get_artifact_download_url, aid
-                                                    )
-                                                    tiff_dialog_open(t, url)
-                                                except Exception as e:
-                                                    ui.notify(f"Failed to resolve preview URL: {e}", type="warning")
-                                                finally:
-                                                    _btn.props(remove="loading")
-
-                                            preview_button.on_click(_preview_tiff)
-
                                         if mime_type == "text/csv":
-                                            preview_button = ui.button(
+                                            ui.button(
                                                 "Preview",
                                                 icon=mime_type_to_icon(mime_type),
+                                                on_click=lambda _, url=url, title=title: csv_dialog_open(title, url),
                                             )
-
-                                            async def _preview_csv(
-                                                _: ClickEventArguments,
-                                                aid: str = artifact_id,
-                                                t: str = title,
-                                                _run: Run = run,
-                                                _btn: ui.button = preview_button,
-                                            ) -> None:
-                                                try:
-                                                    _btn.props(add="loading")
-                                                    url = await nicegui_run.io_bound(
-                                                        _run.get_artifact_download_url, aid
-                                                    )
-                                                    csv_dialog_open(t, url)
-                                                except Exception as e:
-                                                    ui.notify(f"Failed to resolve preview URL: {e}", type="warning")
-                                                finally:
-                                                    _btn.props(remove="loading")
-
-                                            preview_button.on_click(_preview_csv)
-
-                                        artifact_dl_button = ui.button(
-                                            text="Download",
-                                            icon="cloud_download",
-                                        )
-
-                                        async def _download_artifact(
-                                            _: ClickEventArguments,
-                                            aid: str = artifact_id,
-                                            _run: Run = run,
-                                            _btn: ui.button = artifact_dl_button,
-                                        ) -> None:
-                                            try:
-                                                _btn.props(add="loading")
-                                                url = await nicegui_run.io_bound(_run.get_artifact_download_url, aid)
-                                                webbrowser.open(url)
-                                            except Exception as e:
-                                                ui.notify(f"Failed to resolve download URL: {e}", type="warning")
-                                            finally:
-                                                _btn.props(remove="loading")
-
-                                        artifact_dl_button.on_click(_download_artifact)
+                                        if url:
+                                            ui.button(
+                                                text="Download",
+                                                icon="cloud_download",
+                                                on_click=lambda _, url=url: webbrowser.open(url),
+                                            )
                                         if metadata:
                                             ui.button(
                                                 text="Schema",
