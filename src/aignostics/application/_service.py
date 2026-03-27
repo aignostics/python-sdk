@@ -711,14 +711,18 @@ class Service(BaseService):  # noqa: PLR0904
 
             # Handle tags filter
             if tags:
-                # JSONPath filter to match all of the provided tags in the sdk.tags array
-                # PostgreSQL limitation: Cannot use && between separate path expressions as backend crashes with 500
-                # Workaround: Filter on backend for ANY tag match, then filter client-side for ALL
-                # Use regex alternation to match any of the tags
-                escaped_tags = [tag.replace('"', '\\"').replace("\\", "\\\\") for tag in tags]
-                # Create regex pattern: ^(tag1|tag2|tag3)$
-                regex_pattern = "^(" + "|".join(escaped_tags) + ")$"
-                custom_metadata = f'$.sdk.tags ? (@ like_regex "{regex_pattern}")'
+                # Use equality checks instead of like_regex for exact tag matching.
+                # PostgreSQL GIN indexes (jsonb_path_ops) can accelerate == but not like_regex.
+                # PostgreSQL JSONPath does not support combining separate path expressions
+                # (e.g. $.sdk.tags ? (...) && $.sdk.note ? (...) is invalid JSONPath syntax),
+                # so we can only filter on one path per API call.
+                # Strategy: filter on backend for ANY tag match, then filter client-side for ALL.
+                escaped_tags = [tag.replace("\\", "\\\\").replace('"', '\\"') for tag in tags]
+                if len(escaped_tags) == 1:
+                    custom_metadata = f'$.sdk.tags[*] ? (@ == "{escaped_tags[0]}")'
+                else:
+                    conditions = " || ".join(f'@ == "{t}"' for t in escaped_tags)
+                    custom_metadata = f"$.sdk.tags[*] ? ({conditions})"
 
             run_iterator = self._get_platform_client().runs.list_data(
                 application_id=application_id,
