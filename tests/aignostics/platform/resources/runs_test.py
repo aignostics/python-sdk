@@ -4,7 +4,7 @@ This module contains unit tests for the Runs class and Run class,
 verifying their functionality for listing, creating, and managing application runs.
 """
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from aignx.codegen.api.public_api import PublicApi
@@ -16,8 +16,17 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
-from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Run, Runs
+from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
 from aignostics.platform.resources.utils import PAGE_SIZE
+
+_PLATFORM_HOST = "https://platform.aignostics.com"
+_PATCH_GET_AUTH = "aignostics.platform.resources.runs.get_token"
+_PATCH_REQUESTS_GET = "aignostics.platform.resources.runs.requests.get"
+_PATCH_SETTINGS = "aignostics.platform.resources.runs.settings"
+_PATCH_DOWNLOAD_FILE = "aignostics.platform.resources.runs.download_file"
+_PRESIGNED_URL = "https://storage.googleapis.com/presigned-url"
+_PROXY_URL = "https://corporate-proxy:8080"
+_MIME_TYPE_CSV = "text/csv"
 
 
 @pytest.fixture
@@ -54,6 +63,19 @@ def app_run(mock_api) -> Run:
         Run: An Run instance using the mock API.
     """
     return Run(mock_api, "test-run-id")
+
+
+@pytest.fixture
+def artifact_instance(mock_api) -> Artifact:
+    """Create an Artifact instance with a mock API for testing.
+
+    Args:
+        mock_api: A mock instance of ExternalsApi.
+
+    Returns:
+        Artifact: An Artifact instance using the mock API.
+    """
+    return Artifact(mock_api, "test-run-id", "artifact-123")
 
 
 @pytest.mark.unit
@@ -722,3 +744,466 @@ def test_run_details_does_not_retry_other_exceptions(app_run, mock_api) -> None:
         app_run.details()
 
     assert mock_api.get_run_v1_runs_run_id_get.call_count == 1
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_returns_presigned_url(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url extracts the presigned URL from a 307 redirect.
+
+    The implementation calls GET /api/v1/runs/{run_id}/artifacts/{artifact_id}/file with
+    allow_redirects=False and returns the Location header from the 307 response.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    expected_url = "https://storage.googleapis.com/presigned-url?token=abc"
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    mock_response = Mock()
+    mock_response.status_code = 307
+    mock_response.headers = {"Location": expected_url}
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=mock_response) as mock_get,
+    ):
+        result = artifact_instance.get_download_url()
+
+    assert result == expected_url
+    mock_get.assert_called_once()
+    call_kwargs = mock_get.call_args
+    assert call_kwargs.args[0] == "https://platform.aignostics.com/api/v1/runs/test-run-id/artifacts/artifact-123/file"
+    assert call_kwargs.kwargs["allow_redirects"] is False
+    assert call_kwargs.kwargs["headers"]["Authorization"] == "Bearer test-token"
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_retries_on_service_exception(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url retries when a 5xx response is received.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    error_response = Mock()
+    error_response.status_code = 503
+    error_response.reason = "Service Unavailable"
+
+    success_response = Mock()
+    success_response.status_code = 307
+    success_response.headers = {"Location": _PRESIGNED_URL}
+
+    mock_settings = Mock()
+    mock_settings.run_retry_attempts = 2
+    mock_settings.run_retry_wait_min = 0.0
+    mock_settings.run_retry_wait_max = 0.0
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_SETTINGS, return_value=mock_settings),
+        patch(
+            _PATCH_REQUESTS_GET,
+            side_effect=[error_response, success_response],
+        ) as mock_get,
+    ):
+        result = artifact_instance.get_download_url()
+
+    assert result == _PRESIGNED_URL
+    assert mock_get.call_count == 2
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_raises_not_found(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url raises NotFoundException for a 404 response.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    from aignx.codegen.exceptions import NotFoundException
+
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    not_found_response = Mock()
+    not_found_response.status_code = 404
+    not_found_response.reason = "Not Found"
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=not_found_response),
+        pytest.raises(NotFoundException),
+    ):
+        artifact_instance.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_raises_service_exception_on_timeout(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url wraps requests.Timeout in ServiceException.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    import requests as requests_lib
+    from aignx.codegen.exceptions import ServiceException
+
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(
+            _PATCH_REQUESTS_GET,
+            side_effect=requests_lib.Timeout("Connection timed out"),
+        ),
+        pytest.raises(ServiceException),
+    ):
+        artifact_instance.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_raises_service_exception_on_connection_error(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url wraps requests.ConnectionError in ServiceException.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    import requests as requests_lib
+    from aignx.codegen.exceptions import ServiceException
+
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(
+            _PATCH_REQUESTS_GET,
+            side_effect=requests_lib.ConnectionError("Connection refused"),
+        ),
+        pytest.raises(ServiceException),
+    ):
+        artifact_instance.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_raises_runtime_error_on_missing_location_header(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url raises RuntimeError when redirect has no Location header.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    redirect_response = Mock()
+    redirect_response.status_code = 307
+    redirect_response.headers = {}  # No Location header
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=redirect_response),
+        pytest.raises(RuntimeError, match="missing Location header"),
+    ):
+        artifact_instance.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_raises_api_exception_on_4xx(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url raises ApiException for 4xx client errors.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    from aignx.codegen.exceptions import ApiException
+
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    bad_request_response = Mock()
+    bad_request_response.status_code = 400
+    bad_request_response.reason = "Bad Request"
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=bad_request_response),
+        pytest.raises(ApiException),
+    ):
+        artifact_instance.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_passes_proxy_and_ssl_config(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url forwards proxy and SSL config from the API client.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+    mock_api.api_client.configuration.proxy = _PROXY_URL
+    mock_api.api_client.configuration.ssl_ca_cert = "/path/to/ca-bundle.crt"
+    mock_api.api_client.configuration.verify_ssl = True
+
+    mock_response = Mock()
+    mock_response.status_code = 307
+    mock_response.headers = {"Location": _PRESIGNED_URL}
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=mock_response) as mock_get,
+    ):
+        result = artifact_instance.get_download_url()
+
+    assert result == _PRESIGNED_URL
+    call_kwargs = mock_get.call_args.kwargs
+    assert call_kwargs["proxies"] == {
+        "http": _PROXY_URL,
+        "https": _PROXY_URL,
+    }
+    assert call_kwargs["verify"] == "/path/to/ca-bundle.crt"
+
+
+@pytest.mark.unit
+def test_artifact_download_uses_codegen_client(artifact_instance, mock_api) -> None:
+    """Test that Artifact.download delegates to the codegen API client.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    mock_api.get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get.return_value = b"content"
+
+    result = artifact_instance.download()
+
+    assert result == b"content"
+    mock_api.get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get.assert_called_once()
+    call_kwargs = mock_api.get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get.call_args.kwargs
+    assert call_kwargs["run_id"] == "test-run-id"
+    assert call_kwargs["artifact_id"] == "artifact-123"
+
+
+@pytest.mark.unit
+def test_run_get_artifact_download_url_delegates_to_artifact(app_run, mock_api) -> None:
+    """Test that Run.get_artifact_download_url delegates to Artifact.get_download_url.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    mock_response = Mock()
+    mock_response.status_code = 307
+    mock_response.headers = {"Location": _PRESIGNED_URL}
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=mock_response),
+    ):
+        result = app_run.get_artifact_download_url("artifact-123")
+
+    assert result == _PRESIGNED_URL
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_uses_output_artifact_id(app_run, mock_api, tmp_path) -> None:
+    """Test that ensure_artifacts_downloaded resolves URLs via get_artifact_download_url.
+
+    Verifies that the method uses output_artifact_id to resolve presigned URLs
+    instead of using the deprecated download_url field.
+
+    Args:
+        app_run: Run instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+        tmp_path: Temporary directory for test files.
+    """
+    from aignx.codegen.models import ArtifactOutput, ArtifactState, OutputArtifactResultReadResponse
+
+    artifact = OutputArtifactResultReadResponse.model_construct(
+        output_artifact_id="artifact-abc",
+        name="cell_classification",
+        metadata={"checksum_base64_crc32c": "AAAA", "media_type": _MIME_TYPE_CSV},
+        state=ArtifactState.TERMINATED,
+        output=ArtifactOutput.AVAILABLE,
+    )
+    item = ItemResultReadResponse.model_construct(
+        external_id="slide-1",
+        output_artifacts=[artifact],
+    )
+
+    presigned_url = _PRESIGNED_URL
+
+    with (
+        patch.object(app_run, "get_artifact_download_url", return_value=presigned_url) as mock_get_url,
+        patch(_PATCH_DOWNLOAD_FILE) as mock_download_file,
+        patch("aignostics.platform.resources.runs.get_mime_type_for_artifact", return_value=_MIME_TYPE_CSV),
+        patch("aignostics.platform.resources.runs.mime_type_to_file_ending", return_value=".csv"),
+    ):
+        app_run.ensure_artifacts_downloaded(tmp_path, item)
+
+        mock_get_url.assert_called_once_with("artifact-abc")
+        mock_download_file.assert_called_once_with(
+            presigned_url,
+            str(tmp_path / "slide-1" / "cell_classification.csv"),
+            "AAAA",
+        )
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_skips_artifact_without_id(app_run, tmp_path) -> None:
+    """Test that ensure_artifacts_downloaded skips artifacts with no output_artifact_id.
+
+    Args:
+        app_run: Run instance with mock API.
+        tmp_path: Temporary directory for test files.
+    """
+    from aignx.codegen.models import ArtifactOutput, ArtifactState, OutputArtifactResultReadResponse
+
+    artifact = OutputArtifactResultReadResponse.model_construct(
+        output_artifact_id=None,
+        name="cell_classification",
+        metadata={"checksum_base64_crc32c": "AAAA"},
+        state=ArtifactState.TERMINATED,
+        output=ArtifactOutput.AVAILABLE,
+    )
+    item = ItemResultReadResponse.model_construct(
+        external_id="slide-1",
+        output_artifacts=[artifact],
+    )
+
+    with (
+        patch.object(app_run, "get_artifact_download_url") as mock_get_url,
+        patch(_PATCH_DOWNLOAD_FILE) as mock_download_file,
+    ):
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+        mock_get_url.assert_not_called()
+        mock_download_file.assert_not_called()
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_skips_existing_file_with_matching_checksum(app_run, tmp_path) -> None:
+    """Test that ensure_artifacts_downloaded skips files that already exist with correct checksum.
+
+    Args:
+        app_run: Run instance with mock API.
+        tmp_path: Temporary directory for test files.
+    """
+    from aignx.codegen.models import ArtifactOutput, ArtifactState, OutputArtifactResultReadResponse
+
+    artifact = OutputArtifactResultReadResponse.model_construct(
+        output_artifact_id="artifact-abc",
+        name="result",
+        metadata={"checksum_base64_crc32c": "test_checksum"},
+        state=ArtifactState.TERMINATED,
+        output=ArtifactOutput.AVAILABLE,
+    )
+    item = ItemResultReadResponse.model_construct(
+        external_id="slide-1",
+        output_artifacts=[artifact],
+    )
+
+    # Create the file so it "already exists"
+    item_dir = tmp_path / "slide-1"
+    item_dir.mkdir()
+    existing_file = item_dir / "result.csv"
+    existing_file.write_bytes(b"existing content")
+
+    with (
+        patch.object(app_run, "get_artifact_download_url") as mock_get_url,
+        patch(_PATCH_DOWNLOAD_FILE) as mock_download_file,
+        patch("aignostics.platform.resources.runs.get_mime_type_for_artifact", return_value=_MIME_TYPE_CSV),
+        patch("aignostics.platform.resources.runs.mime_type_to_file_ending", return_value=".csv"),
+        patch("aignostics.platform.resources.runs.calculate_file_crc32c", return_value="test_checksum"),
+    ):
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+        mock_get_url.assert_not_called()
+        mock_download_file.assert_not_called()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_raises_service_exception_on_request_exception(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url wraps generic requests.RequestException in ServiceException.
+
+    Covers the fallback except clause for non-Timeout/ConnectionError request failures,
+    e.g. TooManyRedirects or other requests.RequestException subclasses.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    import requests as requests_lib
+    from aignx.codegen.exceptions import ServiceException
+
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    mock_settings = Mock()
+    mock_settings.run_retry_attempts = 1
+    mock_settings.run_retry_wait_min = 0.0
+    mock_settings.run_retry_wait_max = 0.0
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_SETTINGS, return_value=mock_settings),
+        patch(
+            _PATCH_REQUESTS_GET,
+            side_effect=requests_lib.TooManyRedirects("Too many redirects"),
+        ),
+        pytest.raises(ServiceException),
+    ):
+        artifact_instance.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_raises_runtime_error_on_unexpected_status(artifact_instance, mock_api) -> None:
+    """Test that Artifact.get_download_url raises RuntimeError for unexpected 2xx/3xx status codes.
+
+    The endpoint should only return 307 redirects or error codes; any other status
+    (e.g. 200 OK) is unexpected and should raise a RuntimeError.
+
+    Args:
+        artifact_instance: Artifact instance with mock API.
+        mock_api: Mock ExternalsApi instance.
+    """
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.token_provider = None
+
+    unexpected_response = Mock()
+    unexpected_response.status_code = 200  # Not a redirect, not an error
+
+    mock_settings = Mock()
+    mock_settings.run_retry_attempts = 1
+    mock_settings.run_retry_wait_min = 0.0
+    mock_settings.run_retry_wait_max = 0.0
+
+    with (
+        patch(_PATCH_GET_AUTH, return_value="test-token"),
+        patch(_PATCH_SETTINGS, return_value=mock_settings),
+        patch(_PATCH_REQUESTS_GET, return_value=unexpected_response),
+        pytest.raises(RuntimeError, match="Unexpected status 200"),
+    ):
+        artifact_instance.get_download_url()

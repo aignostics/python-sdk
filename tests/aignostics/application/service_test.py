@@ -1,6 +1,7 @@
 """Tests to verify the service functionality of the application module."""
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -503,3 +504,57 @@ def test_application_run_update_item_custom_metadata_not_found(mock_get_client: 
 
     with pytest.raises(NotFoundException, match="not found"):
         service.application_run_update_item_custom_metadata("run-123", "invalid-item-id", {"key": "value"})
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics.application._service.download_available_items")
+def test_application_run_download_artifact_url_closure_delegates_to_platform_client(
+    mock_download_available_items: MagicMock,
+    mock_get_client: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """Test that the _get_artifact_download_url closure delegates to the platform client."""
+    mock_run_details = MagicMock()
+    mock_run_details.run_id = "run-123"
+    mock_run_details.state = MagicMock()  # Non-TERMINATED, triggers wait_for_completion=False break
+    mock_run_details.error_message = None
+    mock_run_details.error_code = None
+
+    mock_platform_run = MagicMock()
+    mock_platform_run.run_id = "run-123"
+    mock_platform_run.details.return_value = mock_run_details
+    mock_platform_run.results.return_value = []
+    mock_platform_run.get_artifact_download_url.return_value = "https://presigned.example.com/artifact.tiff"
+
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_platform_run
+    mock_get_client.return_value = mock_client
+
+    # Capture the get_artifact_download_url callback passed to download_available_items
+    captured_callback: list[object] = []
+
+    def capture_fn(*args: object, **kwargs: object) -> None:
+        fn = kwargs.get("get_artifact_download_url")
+        if fn is not None:
+            captured_callback.append(fn)
+
+    mock_download_available_items.side_effect = capture_fn
+
+    service = ApplicationService()
+    service.application_run_download(
+        run_id="run-123",
+        destination_directory=tmp_path,
+        wait_for_completion=False,
+        create_subdirectory_for_run=False,
+    )
+
+    # Verify the callback was passed to download_available_items
+    assert len(captured_callback) == 1
+    callback = captured_callback[0]
+
+    # Call the closure to exercise line 1497 and verify it delegates correctly
+    result = callback("run-123", "artifact-456")  # type: ignore[operator]
+
+    mock_platform_run.get_artifact_download_url.assert_called_with("artifact-456")
+    assert result == "https://presigned.example.com/artifact.tiff"
