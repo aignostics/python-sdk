@@ -486,6 +486,13 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=3, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.skipif(
+    (platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"})
+    or (platform.system() in {"Darwin", "Windows"}),
+    reason=(
+        "Only run on Linux x86_64 / GitHub Actions ubuntu-latest to avoid creating unnecessary load on the platform."
+    ),
+)
 def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa: PLR0915
     runner: CliRunner, tmp_path: Path, silent_logging, record_property
 ) -> None:
