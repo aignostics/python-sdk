@@ -274,7 +274,7 @@ dev = [
     { name = "sphinx-toolbox", specifier = ">=4.1.0,<5" },
     { name = "sphinxcontrib-mermaid" },
     { name = "sphinxext-opengraph", specifier = ">=0.9.1,<1" },
-    { name = "swagger-plugin-for-sphinx", specifier = ">=6.1.0,<7" },
+    { name = "swagger-plugin-for-sphinx", specifier = ">=7,<8" },
     { name = "tomli", specifier = ">=2.3.0,<3" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915,<7" },
     { name = "types-requests", specifier = ">=2.32.4.20250913,<3" },
@@ -7388,7 +7388,7 @@ wheels = [
 
 [[package]]
 name = "swagger-plugin-for-sphinx"
-version = "6.1.0"
+version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -7396,9 +7396,9 @@ dependencies = [
     { name = "sphinx" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/f6/f614ba9486177528e954751bf1f7dc481c7f8c061134b33a78a22f549dcb/swagger_plugin_for_sphinx-6.1.0.tar.gz", hash = "sha256:baa523d9eb4538f0e26306359e3b9ca59b8f2923c56fe8b47ac3c6de63f13e4e", size = 15998, upload-time = "2025-12-01T07:21:25.934Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/14/36a4b2172fd6496c646d58dcb11c2877e09cc38e6d206eaa822dad0d0eab/swagger_plugin_for_sphinx-7.0.0.tar.gz", hash = "sha256:86a18b9ec1da2b78a80772fbd5d10549bf393b072f07da9edb5d1eaac02b8d44", size = 106931, upload-time = "2026-02-20T09:10:17.859Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/aa/486371aca5eee1f79336d9c42c73ec62061eb7d084f77b4e2e361a06e5e6/swagger_plugin_for_sphinx-6.1.0-py3-none-any.whl", hash = "sha256:c49651f31a48e8625be863ff345abd6a28a7b78c58ea2ea51daa736dbe9eb37f", size = 11255, upload-time = "2025-12-01T07:21:24.341Z" },
+    { url = "https://files.pythonhosted.org/packages/db/2d/534436c46a992b8f31bb56e591422519e218b970db1d596ff96142776613/swagger_plugin_for_sphinx-7.0.0-py3-none-any.whl", hash = "sha256:e5207f385f5061bf05eb37355a3a83794bab6e41c5404f5cf4905b90efc9684f", size = 11170, upload-time = "2026-02-20T09:10:15.479Z" },
 ]
 
 [[package]]
