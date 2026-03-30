@@ -30,7 +30,7 @@ def _read_python_version() -> str:
     """Read Python version from .python-version file.
 
     Returns:
-        str: Python version string (e.g., "3.14" or "3.14.1")
+        str: Python version string (e.g., "3.14" or "3.14.3")
 
     Raises:
         FileNotFoundError: If .python-version file does not exist
