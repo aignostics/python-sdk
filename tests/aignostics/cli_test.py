@@ -34,9 +34,9 @@ def test_cli_built_with_love(runner) -> None:
 
 @pytest.mark.integration
 def test_cli_python_version_format(runner) -> None:
-    """Check that Python version in epilog is clean format like 'v3.14.1'.
+    """Check that Python version in epilog is clean format like 'v3.14.3'.
 
-    The epilog should show 'Python v3.14.1' not the full sys.version string
+    The epilog should show 'Python v3.14.3' not the full sys.version string
     which includes build info like '(main, Dec 2 2025, 22:17:19) [Clang 21.1.4]'.
     """
     result = runner.invoke(cli, ["--help"])

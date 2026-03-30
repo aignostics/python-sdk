@@ -1603,7 +1603,7 @@ uv run nox --list
 uv run nox -s lint
 
 # Run session with specific Python version
-uv run nox -s test-3.14.1
+uv run nox -s test-3.14.3
 
 # Run multiple sessions
 uv run nox -s lint audit

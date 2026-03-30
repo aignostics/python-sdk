@@ -1,5 +1,5 @@
 # We share the base in the builder and targets
-FROM python:3.14.1-slim-trixie AS base
+FROM python:3.14.3-slim-trixie AS base
 
 # The base of our builder
 FROM base AS builder
@@ -19,7 +19,7 @@ ENV UV_COMPILE_BYTECODE_TIMEOUT=300
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
-# Create and set workdir 
+# Create and set workdir
 WORKDIR /app
 
 
