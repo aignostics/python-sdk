@@ -899,12 +899,13 @@ def run_list(  # noqa: PLR0913, PLR0917
             if format == "json":
                 print(json.dumps([]))
             else:
+                scope = f" for organization '{for_organization}'" if for_organization else ""
                 if tags:
-                    message = f"You did not yet create a run matching tags: {tags!r}."
+                    message = f"No runs found{scope} matching tags: {tags!r}."
                 elif note_regex:
-                    message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+                    message = f"No runs found{scope} matching note pattern: {note_regex!r}."
                 elif for_organization:
-                    message = f"No runs found for organization '{for_organization}'."
+                    message = f"No runs found{scope}."
                 else:
                     message = "You did not yet create a run."
                 logger.warning(message)
@@ -920,7 +921,8 @@ def run_list(  # noqa: PLR0913, PLR0917
                 console.print(message, style="info")
             logger.debug(f"Listed '{len(runs)}' run(s).")
     except ForbiddenException:
-        message = "Access denied: you are not authorized to list runs."
+        scope = f" for organization '{for_organization}'" if for_organization else ""
+        message = f"Access denied: you are not authorized to list runs{scope}."
         logger.warning(message)
         console.print(f"[error]Error:[/error] {message}")
         sys.exit(2)
