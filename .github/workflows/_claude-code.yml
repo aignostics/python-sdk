@@ -51,7 +51,7 @@ jobs:
           fetch-depth: ${{ inputs.mode == 'interactive' && 0 || 1 }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           version-file: "pyproject.toml"
           enable-cache: true
@@ -77,7 +77,7 @@ jobs:
 
       - name: Run Claude Code (Interactive Mode)
         if: inputs.mode == 'interactive'
-        uses: anthropics/claude-code-action@094bd24d575e7b30ac1576024817bf1a97c81262 # v1.0.80
+        uses: anthropics/claude-code-action@88c168b39e7e64da0286d812b6e9fbebb6708185 # v1.0.82
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
@@ -92,7 +92,7 @@ jobs:
 
       - name: Run Claude Code (Automation Mode)
         if: inputs.mode == 'automation'
-        uses: anthropics/claude-code-action@ff9acae5886d41a99ed4ec14b7dc147d55834722 # v1.0.77
+        uses: anthropics/claude-code-action@88c168b39e7e64da0286d812b6e9fbebb6708185 # v1.0.82
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: ${{ inputs.track_progress }}
