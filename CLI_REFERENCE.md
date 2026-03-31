@@ -398,6 +398,7 @@ $ aignostics application run list [OPTIONS]
 * `--note-regex TEXT`: Optional regex pattern to filter runs by note metadata.
 * `--query TEXT`: Optional query string to filter runs by note OR tags.
 * `--note-case-insensitive / --no-note-case-insensitive`: Make note regex search case-insensitive.  [default: note-case-insensitive]
+* `--for-organization TEXT`: Organization ID to list all runs for. Lists runs from all users in the organization.
 * `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
 * `--help`: Show this message and exit.
 
@@ -578,9 +579,9 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
-* `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results.
-The QuPath project will be created in a subfolder of the destination directory.
-This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...`
+* `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results. 
+The QuPath project will be created in a subfolder of the destination directory. 
+This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...` 
 This options requires installation of the QuPath application: Run uvx --with &quot;aignostics&quot; aignostics qupath install  [default: no-qupath-project]
 * `--help`: Show this message and exit.
 
@@ -881,7 +882,7 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 **Arguments**:
 
-* `SOURCE_URL`: URL to download. Example: gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
+* `SOURCE_URL`: URL to download. Example: gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
 * `[DESTINATION_DIRECTORY]`: Destination directory to download to  [default: (~/Library/Application Support/aignostics/datasets/aignostics)]
 
 **Options**:
