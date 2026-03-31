@@ -446,6 +446,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             "LIVER",
                             "LUNG",
                             "LYMPH_NODE",
+                            "OTHER",
                         }
                     ) or (
                         row["disease"]
@@ -554,14 +555,15 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                     "LIVER",
                                     "LUNG",
                                     "LYMPH_NODE",
+                                    "OTHER",
                                 ],
                                 "valueListGap": 10,
                             },
                             "cellClassRules": {
                                 "bg-red-300": "!new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
+                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
                                 "bg-green-300": "new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
+                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
                             },
                         },
                         {
