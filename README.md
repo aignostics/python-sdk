@@ -13,13 +13,6 @@
 [![Coverage](https://codecov.io/gh/aignostics/python-sdk/graph/badge.svg?token=SX34YRP30E)](https://codecov.io/gh/aignostics/python-sdk)
 [![Uptime](https://uptime.betterstack.com/status-badges/v2/monitor/1wbqa.svg)](https://aignostics.betteruptime.com)
 
-> [!NOTE]
-> The Aignostics Python SDK is in alpha, with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) and the [Aignostics Platform](https://platform.aignostics.com) in [early access](https://www.linkedin.com/posts/aignostics_introducing-atlas-he-tme-aignostics-is-activity-7325865745827979265-Sya9?utm_source=share&utm_medium=member_desktop&rcm=ACoAABRmV7cBCGv8eM_ot_kRTrBsb12olQvoLS4). 
-> Watch or star this repository to receive updates on new features and improvements of the SDK.
-
----
-
-
 ## Introduction
 
 The **Aignostics Python SDK** provides multiple ways to interact with the **Aignostics Platform** for running advanced computational pathology applications like [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), which analyzes tumor microenvironments in H&E-stained tissue samples.

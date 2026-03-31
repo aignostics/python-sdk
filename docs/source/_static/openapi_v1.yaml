@@ -90,6 +90,7 @@ components:
           description: The number of the latest version
           examples:
           - 1.0.0
+          pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
           title: Number
           type: string
         released_at:
@@ -131,7 +132,8 @@ components:
       properties:
         custom_metadata:
           anyOf:
-          - type: object
+          - additionalProperties: true
+            type: object
           - type: 'null'
           description: JSON metadata that should be set for the run
           examples:
@@ -175,6 +177,7 @@ components:
     InputArtifact:
       properties:
         metadata_schema:
+          additionalProperties: true
           title: Metadata Schema
           type: object
         mime_type:
@@ -205,6 +208,7 @@ components:
           title: Download Url
           type: string
         metadata:
+          additionalProperties: true
           description: The metadata of the artifact, required by the application version. The JSON schema of the metadata can be requested by `/v1/versions/{application_version_id}`. The schema is located in `input_artifacts.[].metadata_schema`
           examples:
           - checksum_base64_crc32c: 752f9554
@@ -231,7 +235,8 @@ components:
       properties:
         custom_metadata:
           anyOf:
-          - type: object
+          - additionalProperties: true
+            type: object
           - type: 'null'
           description: Optional JSON custom_metadata to store additional information alongside an item.
           examples:
@@ -281,7 +286,8 @@ components:
       properties:
         custom_metadata:
           anyOf:
-          - type: object
+          - additionalProperties: true
+            type: object
           - type: 'null'
           description: The custom_metadata of the item that has been provided by the user on run creation.
           title: Custom Metadata
@@ -301,8 +307,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          description: Error code describing the error that occurred during item processing.
-          readOnly: true
           title: Error Code
         error_message:
           anyOf:
@@ -311,7 +315,8 @@ components:
           description: "\n    The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`\n        "
           examples:
           - This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.
-          - 'The item was not processed because the run was cancelled by the user before the item was processed.User error raised by Application because the input data provided by the user cannot be processed:
+          - The item was not processed because the run was cancelled by the user before the item was processed.
+          - 'User error raised by Application because the input data provided by the user cannot be processed:
 
             The image width is 123000 px, but the maximum width is 100000 px'
           - "A system error occurred during the item execution:\n System went out of memory in cell classification"
@@ -385,7 +390,6 @@ components:
       - state
       - output
       - output_artifacts
-      - error_code
       title: ItemResultReadResponse
       type: object
     ItemState:
@@ -514,6 +518,7 @@ components:
     OutputArtifact:
       properties:
         metadata_schema:
+          additionalProperties: true
           title: Metadata Schema
           type: object
         mime_type:
@@ -546,24 +551,23 @@ components:
             minLength: 1
             type: string
           - type: 'null'
+          deprecated: true
           description: "\nThe download URL to the output file. The URL is valid for 1 hour after the endpoint is called.\nA new URL is generated every time the endpoint is called.\n    "
           title: Download Url
         error_code:
           anyOf:
           - type: string
           - type: 'null'
-          description: Error code describing the error that occurred during artifact processing.
-          readOnly: true
           title: Error Code
         error_message:
           anyOf:
           - type: string
           - type: 'null'
-          description: Error message when artifact is in error state
           title: Error Message
         metadata:
           anyOf:
-          - type: object
+          - additionalProperties: true
+            type: object
           - type: 'null'
           description: The metadata of the output artifact, provided by the application. Can only be None if the artifact itself was deleted.
           title: Metadata
@@ -594,8 +598,6 @@ components:
       - name
       - state
       - output
-      - download_url
-      - error_code
       title: OutputArtifactResultReadResponse
       type: object
     OutputArtifactScope:
@@ -623,7 +625,8 @@ components:
           type: string
         custom_metadata:
           anyOf:
-          - type: object
+          - additionalProperties: true
+            type: object
           - type: 'null'
           description: Optional JSON metadata to store additional information alongside the run
           examples:
@@ -652,6 +655,14 @@ components:
           minItems: 1
           title: Items
           type: array
+        scheduling:
+          anyOf:
+          - $ref: '#/components/schemas/SchedulingRequest'
+          - type: 'null'
+          description: Optional scheduling constraints for this run.
+          examples:
+          - deadline: '2026-03-05T23:59:59Z'
+            due_date: '2026-03-04T23:59:59Z'
         version_number:
           anyOf:
           - type: string
@@ -668,12 +679,13 @@ components:
     RunCreationResponse:
       properties:
         run_id:
-          default: Run id
           examples:
           - 3fa85f64-5717-4562-b3fc-2c963f66afa6
           format: uuid
           title: Run Id
           type: string
+      required:
+      - run_id
       title: RunCreationResponse
       type: object
     RunItemStatistics:
@@ -734,7 +746,8 @@ components:
           type: string
         custom_metadata:
           anyOf:
-          - type: object
+          - additionalProperties: true
+            type: object
           - type: 'null'
           description: Optional JSON metadata that was stored in alongside the run by the user
           examples:
@@ -791,6 +804,11 @@ components:
           format: uuid
           title: Run Id
           type: string
+        scheduling:
+          anyOf:
+          - $ref: '#/components/schemas/SchedulingResponse'
+          - type: 'null'
+          description: Scheduling constraints set for this run.
         state:
           $ref: '#/components/schemas/RunState'
           description: 'When the run request is received by the Platform, the `state` of it is set to
@@ -862,6 +880,46 @@ components:
       - CANCELED_BY_USER
       title: RunTerminationReason
       type: string
+    SchedulingRequest:
+      description: Scheduling constraints for a run.
+      properties:
+        deadline:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          description: Hard deadline. The run will be cancelled if not completed by this time.
+          examples:
+          - '2026-03-05T23:59:59Z'
+          title: Deadline
+        due_date:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          description: Requested completion time. Items are prioritized to meet this target.
+          examples:
+          - '2026-03-04T23:59:59Z'
+          title: Due Date
+      title: SchedulingRequest
+      type: object
+    SchedulingResponse:
+      description: Scheduling fields returned in run responses.
+      properties:
+        deadline:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Deadline
+        due_date:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Due Date
+      title: SchedulingResponse
+      type: object
     UserReadResponse:
       description: 'Part of response schema for User object in `Get current user` endpoint.
 
@@ -944,6 +1002,11 @@ components:
       type: object
     ValidationError:
       properties:
+        ctx:
+          title: Context
+          type: object
+        input:
+          title: Input
         loc:
           items:
             anyOf:
@@ -989,6 +1052,7 @@ components:
           type: string
         version_number:
           description: Semantic version of the application
+          pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
           title: Version Number
           type: string
       required:
@@ -1010,7 +1074,7 @@ components:
 info:
   description: "\nThe Aignostics Platform is a cloud-based service that enables organizations to access advanced computational pathology applications through a secure API.  The platform provides standardized access to Aignostics' portfolio of computational pathology solutions, with Atlas H&E-TME serving as an example of the available API endpoints. \n\nTo begin using the platform, your organization must first be registered by our business support team. If you don't have an account yet, please contact your account manager or email support@aignostics.com to get started. \n\nMore information about our applications can be found on [https://platform.aignostics.com](https://platform.aignostics.com).\n\n**How to authorize and test API endpoints:**\n\n1. Click the \"Authorize\" button in the right corner below\n3. Click \"Authorize\" button in the dialog to log in with your Aignostics Platform credentials\n4. After successful login, you'll be redirected back and can use \"Try it out\" on any endpoint\n\n**Note**: You only need to authorize once per session. The lock icons next to endpoints will show green when authorized.\n\n"
   title: Aignostics Platform API
-  version: 1.0.0-ga
+  version: 1.4.0
 openapi: 3.1.0
 paths:
   /v1/applications:
@@ -1018,7 +1082,7 @@ paths:
       description: 'Returns the list of the applications, available to the caller.
 
 
-        The application is available if any of the versions of the application is assigned to the caller’s organization.
+        The application is available if any of the versions of the application is assigned to the caller''s organization.
 
         The response is paginated and sorted according to the provided parameters.'
       operationId: list_applications_v1_applications_get
@@ -1183,6 +1247,7 @@ paths:
         name: version
         required: true
         schema:
+          pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
           title: Version
           type: string
       responses:
@@ -1465,6 +1530,16 @@ paths:
           minimum: 5
           title: Page Size
           type: integer
+      - description: Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs.
+        in: query
+        name: for_organization
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs.
+          title: For Organization
       - description: 'Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.
 
 
@@ -1477,8 +1552,6 @@ paths:
           - `version_number`
 
           - `custom_metadata`
-
-          - `statistics`
 
           - `submitted_at`
 
@@ -1519,8 +1592,6 @@ paths:
             - `version_number`
 
             - `custom_metadata`
-
-            - `statistics`
 
             - `submitted_at`
 
@@ -1672,6 +1743,63 @@ paths:
       security:
       - OAuth2AuthorizationCodeBearer: []
       summary: Delete Run Items
+      tags:
+      - Public
+  /v1/runs/{run_id}/artifacts/{artifact_id}/file:
+    get:
+      description: 'Download the artifact file with the specified artifact_id, belonging to the specified run.
+
+        The artifact_is is returned by the `GET /v1/runs/{run_id}/items` endpoint as part of the item results, and can also
+
+        be retrieved via `GET /v1/runs/{run_id}/items/{external_id}`.
+
+
+        The endpoint may return a redirect response with a presigned URL to download the artifact file from the storage
+
+        bucket. The presigned URL is valid for a limited time, so it should be used immediately after receiving the response.'
+      operationId: get_artifact_url_v1_runs__run_id__artifacts__artifact_id__file_get
+      parameters:
+      - description: Run id, returned by `POST /runs/` endpoint
+        in: path
+        name: run_id
+        required: true
+        schema:
+          description: Run id, returned by `POST /runs/` endpoint
+          format: uuid
+          title: Run Id
+          type: string
+      - description: The artifact id to download
+        in: path
+        name: artifact_id
+        required: true
+        schema:
+          description: The artifact id to download
+          format: uuid
+          title: Artifact Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '307':
+          description: Temporary Redirect - Redirect to the artifact file URL
+        '403':
+          description: Forbidden - You don't have permission to download this artifact
+        '404':
+          description: Not Found - Artifact not found for the specified run
+        '410':
+          description: Gone - Artifact has been deleted
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - OAuth2AuthorizationCodeBearer: []
+      summary: Get Artifact Url
       tags:
       - Public
   /v1/runs/{run_id}/cancel:
