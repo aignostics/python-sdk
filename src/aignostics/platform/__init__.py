@@ -10,7 +10,7 @@ for manual login, logout and getting information about the authenticated user.
 Higher level abstractions are provided in the application module.
 """
 
-from aignx.codegen.exceptions import ApiException, NotFoundException
+from aignx.codegen.exceptions import ApiException, ForbiddenException, NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import InputArtifact as InputArtifactData
@@ -147,6 +147,7 @@ __all__ = [
     "ApplicationSummary",
     "ApplicationVersion",
     "Client",
+    "ForbiddenException",
     "InputArtifact",
     "InputArtifactData",
     "InputItem",

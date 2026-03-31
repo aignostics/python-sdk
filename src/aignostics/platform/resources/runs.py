@@ -601,6 +601,7 @@ class Runs:
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
         nocache: bool = False,
+        for_organization: str | None = None,
     ) -> Iterator[Run]:
         """Find application runs, optionally filtered by application id and/or version.
 
@@ -615,6 +616,8 @@ class Runs:
             page_size (int): Number of items per page, defaults to max
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
 
         Returns:
             Iterator[Run]: An iterator yielding application run handles.
@@ -628,6 +631,7 @@ class Runs:
             for response in self.list_data(
                 application_id=application_id,
                 application_version=application_version,
+                for_organization=for_organization,
                 external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=sort,
@@ -645,6 +649,7 @@ class Runs:
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
         nocache: bool = False,
+        for_organization: str | None = None,
     ) -> t.Iterator[RunData]:
         """Fetch application runs, optionally filtered by application version.
 
@@ -659,6 +664,8 @@ class Runs:
             page_size (int): Number of items per page, defaults to max
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
 
         Returns:
             Iterator[RunData]: Iterator yielding application run data.
@@ -693,6 +700,7 @@ class Runs:
             lambda **kwargs: list_data_with_retry(
                 application_id=application_id,
                 application_version=application_version,
+                for_organization=for_organization,
                 external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=[sort] if sort else None,

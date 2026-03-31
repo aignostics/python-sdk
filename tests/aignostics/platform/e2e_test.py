@@ -19,6 +19,7 @@ from aignx.codegen.models import (
     ItemState,
     RunOutput,
     RunState,
+    SchedulingRequest,
 )
 from aignx.codegen.models.run_read_response import RunReadResponse
 from loguru import logger
@@ -283,10 +284,7 @@ def _submit_and_validate(  # noqa: PLR0913, PLR0917
 
     logger.trace(f"Submitting application run for {application_id} version {application_version}")
     client = platform.Client()
-    scheduling = {
-        "due_date": due_date.isoformat(),
-        "deadline": deadline.isoformat(),
-    }
+    scheduling = SchedulingRequest(due_date=due_date, deadline=deadline)
     custom_metadata = {
         "sdk": {
             "tags": tags or set(),
