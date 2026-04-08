@@ -1,10 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "timezone": "Europe/Berlin",
   "schedule": ["* 0-5 * * *"],
+  "minimumReleaseAge": "14 days",
+  "internalChecksFilter": "strict",
   "labels": [
     "bot",
     "renovate",
@@ -27,6 +27,28 @@
       "groupName": "GitHub Actions",
       "matchManagers": ["github-actions"],
       "separateMajorMinor": false
+    },
+    {
+      "description": "Bypass delay for security tools",
+      "matchPackageNames": [
+        "trivy",
+        "pip-audit",
+        "aquasecurity/trivy-action",
+        "pypa/pip-audit"
+      ],
+      "minimumReleaseAge": null,
+      "automerge": true,
+      "automergeType": "pr",
+      "schedule": ["at any time"],
+      "groupName": "security-tool-updates"
+    },
+    {
+      "matchVulnerabilities": true,
+      "minimumReleaseAge": null,
+      "automerge": true,
+      "automergeType": "pr",
+      "schedule": ["at any time"],
+      "groupName": "security fixes"
     }
   ]
 }
