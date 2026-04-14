@@ -1,0 +1,46 @@
+name: SRE Incident Response
+
+on:
+  repository_dispatch:
+    types: [betterstack-incident]
+  workflow_dispatch:
+    inputs:
+      incident_id:
+        description: "BetterStack incident ID to triage (leave empty if simulating)"
+        required: false
+      simulate:
+        description: "Use a simulated incident instead of fetching from API"
+        type: boolean
+        default: true
+
+concurrency:
+  group: sre-incident-${{ github.event.client_payload.incident_id || inputs.incident_id || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        working-directory: sre-agent
+        run: uv sync
+
+      - name: Run SRE agent
+        working-directory: sre-agent
+        run: uv run python -m sre_agent.main
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SRE_BETTERSTACK_API_TOKEN: ${{ secrets.BETTERSTACK_API_TOKEN }}
+          SRE_AGENT_ID: ${{ secrets.SRE_AGENT_ID }}
+          SRE_ENVIRONMENT_ID: ${{ secrets.SRE_ENVIRONMENT_ID }}
+          SRE_VAULT_ID: ${{ secrets.SRE_VAULT_ID }}
+          SRE_GITHUB_REPO: aignostics/python-sdk
+          INCIDENT_ID: ${{ github.event.client_payload.incident_id || inputs.incident_id }}
+          SIMULATE: ${{ inputs.simulate || 'false' }}
