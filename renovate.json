@@ -12,6 +12,10 @@
     "skip:test:long_running",
     "skip:codecov"
   ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "automerge": true
+  },
   "enabledManagers": ["pep621", "github-actions"],
   "lockFileMaintenance": {
     "enabled": true,
@@ -41,14 +45,6 @@
       "automergeType": "pr",
       "schedule": ["at any time"],
       "groupName": "security-tool-updates"
-    },
-    {
-      "matchVulnerabilities": true,
-      "minimumReleaseAge": null,
-      "automerge": true,
-      "automergeType": "pr",
-      "schedule": ["at any time"],
-      "groupName": "security fixes"
     }
   ]
 }
