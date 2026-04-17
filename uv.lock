@@ -81,7 +81,6 @@ dependencies = [
     { name = "tqdm" },
     { name = "truststore" },
     { name = "typer" },
-    { name = "uptime" },
     { name = "urllib3" },
     { name = "wsidicom" },
 ]
@@ -222,7 +221,6 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.67.1,<5" },
     { name = "truststore", specifier = ">=0.10.4,<1" },
     { name = "typer", specifier = ">=0.20.0,<1" },
-    { name = "uptime", specifier = ">=3.0.1,<4" },
     { name = "urllib3", specifier = ">=2.5.0" },
     { name = "urllib3", specifier = ">=2.6.3,<3" },
     { name = "wsidicom", specifier = ">=0.28.1,<1" },
@@ -7801,12 +7799,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/eb/21/dd871495af3933e58
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/4d/2e577f6db7aa0f932d19f799c18f604b2b302c65f733419b900ec07dbade/universal_pathlib-0.2.6-py3-none-any.whl", hash = "sha256:700dec2b58ef34b87998513de6d2ae153b22f083197dfafb8544744edabd1b18", size = 50087, upload-time = "2024-12-13T00:58:24.582Z" },
 ]
-
-[[package]]
-name = "uptime"
-version = "3.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ad/53/6c420ddf6949097d6f9406358951c9322505849bea9cb79efe3acc0bb55d/uptime-3.0.1.tar.gz", hash = "sha256:7c300254775b807ce46e3dcbcda30aa3b9a204b9c57a7ac1e79ee6dbe3942973", size = 6630, upload-time = "2013-10-07T14:19:58.456Z" }
 
 [[package]]
 name = "uri-template"

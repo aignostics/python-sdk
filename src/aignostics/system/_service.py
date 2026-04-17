@@ -1,12 +1,14 @@
 """System service."""
 
 import asyncio
+import datetime
 import json
 import os
 import platform
 import re
 import ssl
 import sys
+import time
 import typing as t
 from http import HTTPStatus
 from pathlib import Path
@@ -309,9 +311,9 @@ class Service(BaseService):
             dict[str, Any]: Service configuration.
         """
         import psutil  # noqa: PLC0415
-        from uptime import boottime, uptime  # noqa: PLC0415
 
-        bootdatetime = boottime()
+        boot_ts = psutil.boot_time()
+        bootdatetime = datetime.datetime.fromtimestamp(boot_ts, tz=datetime.UTC)
         vmem = psutil.virtual_memory()
         swap = psutil.swap_memory()
         psutil.cpu_percent(interval=None)  # prime the counter
@@ -378,8 +380,8 @@ class Service(BaseService):
                         "ssl_default_verify_paths": ssl.get_default_verify_paths()._asdict(),
                     },
                     "uptime": {
-                        "seconds": uptime(),
-                        "boottime": bootdatetime.isoformat() if bootdatetime else None,
+                        "seconds": time.time() - boot_ts,
+                        "boottime": bootdatetime.isoformat(),
                     },
                 },
                 "python": {
