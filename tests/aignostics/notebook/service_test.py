@@ -6,8 +6,6 @@ import re
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
-from nicegui import app
 from nicegui.testing import User
 
 from aignostics.notebook._service import MARIMO_SERVER_STARTUP_TIMEOUT, Service, _get_runner, _Runner
@@ -99,7 +97,7 @@ def test_notebook_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.sequential
 @pytest.mark.timeout(timeout=60 * 2)
-def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
+async def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
     """Test notebook serving.
 
     Args:
@@ -112,10 +110,8 @@ def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
     # Set up logging to capture DEBUG level and above
     caplog.set_level(logging.DEBUG)
 
-    client = TestClient(app)
-
     try:
-        response = client.get("/notebook/4711?results_folder=/tmp", timeout=60)
+        response = await user.http_client.get("/notebook/4711?results_folder=/tmp", follow_redirects=True)
         assert response.status_code == 200
         content = response.content.decode("utf-8")
         assert "iframe" in content

@@ -78,7 +78,7 @@ dependencies = [
     # From Template
     "fastapi[all,standard]>=0.123.10",
     "humanize>=4.14.0,<5",
-    "nicegui[native]>=3.5.0,<4",  # CVE-2026-21871, CVE-2026-21871, CVE-2026-21873, CVE-2026-21874 all require >=3.5.0
+    "nicegui[native]>=3.10.0,<4",  # CVE-2026-39844
     "packaging>=25.0,<26",
     "platformdirs>=4.5.1,<5",
     "psutil>=7.1.3,<8",
