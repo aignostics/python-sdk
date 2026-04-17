@@ -87,7 +87,6 @@ dependencies = [
     "pyyaml>=6.0.3,<7",
     "sentry-sdk>=2.47.0,<3",
     "typer>=0.20.0,<1",
-    "uptime>=3.0.1,<4",
     # Custom
     "boto3>=1.42.4,<2",
     "certifi>=2025.11.12",

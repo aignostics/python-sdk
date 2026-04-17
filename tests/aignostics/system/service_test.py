@@ -8,6 +8,72 @@ import pytest
 
 from aignostics.system._service import Service
 
+# ---------------------------------------------------------------------------
+# Helpers shared by uptime tests
+# ---------------------------------------------------------------------------
+
+FIXED_BOOT_TIME = 1_000_000.0  # arbitrary fixed epoch seconds
+
+
+def _make_mock_process() -> mock.MagicMock:
+    proc = mock.MagicMock()
+    proc.username.return_value = "testuser"
+    return proc
+
+
+def _patch_info_dependencies(boot_time: float = FIXED_BOOT_TIME):
+    """Return a context manager stack that patches all external I/O for Service.info()."""
+    import contextlib
+
+    now = boot_time + 3600.0  # pretend system has been up 1 hour
+
+    vmem = mock.MagicMock()
+    vmem.percent = 50.0
+    vmem.total = 8_000_000_000
+    vmem.available = 4_000_000_000
+    vmem.used = 3_500_000_000
+    vmem.free = 500_000_000
+
+    swap = mock.MagicMock()
+    swap.percent = 10.0
+    swap.total = 2_000_000_000
+    swap.used = 200_000_000
+    swap.free = 1_800_000_000
+
+    cpu_times = mock.MagicMock()
+    cpu_times.user = 20.0
+    cpu_times.system = 10.0
+    cpu_times.idle = 70.0
+
+    from aignostics.utils._process import ParentProcessInfo, ProcessInfo
+
+    mock_process_info = ProcessInfo(
+        project_root="/fake/root",
+        pid=1234,
+        parent=ParentProcessInfo(name="pytest", pid=1),
+    )
+
+    @contextlib.contextmanager
+    def _ctx():
+        with (
+            mock.patch("psutil.boot_time", return_value=boot_time),
+            mock.patch("psutil.virtual_memory", return_value=vmem),
+            mock.patch("psutil.swap_memory", return_value=swap),
+            mock.patch("psutil.cpu_percent", return_value=15.0),
+            mock.patch("psutil.cpu_times_percent", return_value=cpu_times),
+            mock.patch("psutil.getloadavg", return_value=(1.0, 1.0, 1.0)),
+            mock.patch("psutil.Process", return_value=_make_mock_process()),
+            mock.patch("aignostics.system._service.get_process_info", return_value=mock_process_info),
+            mock.patch("asyncio.sleep"),
+            mock.patch.object(Service, "_get_public_ipv4", return_value=None),
+            mock.patch.object(Service, "_collect_all_settings", return_value={}),
+            mock.patch("aignostics.system._service.locate_subclasses", return_value=[]),
+            mock.patch("time.time", return_value=now),
+        ):
+            yield
+
+    return _ctx()
+
 
 @pytest.mark.unit
 def test_get_cpu_freq_info_returns_dict_with_expected_keys() -> None:
@@ -397,3 +463,51 @@ def test_is_secret_key_real_world_examples(record_property) -> None:
 
     for key in non_secret_examples:
         assert not Service._is_secret_key(key), f"Expected '{key}' to NOT be identified as a secret key"
+
+
+# ---------------------------------------------------------------------------
+# Uptime tests — verify psutil-based implementation
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_info_uptime_keys_present() -> None:
+    """info() uptime dict contains both 'seconds' and 'boottime' keys with non-None values."""
+    with _patch_info_dependencies():
+        result = await Service.info()
+
+    uptime = result["runtime"]["host"]["uptime"]
+    assert "seconds" in uptime
+    assert "boottime" in uptime
+    assert uptime["seconds"] is not None
+    assert uptime["boottime"] is not None
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_info_uptime_seconds_positive() -> None:
+    """info() uptime seconds is a positive number (time since boot)."""
+    with _patch_info_dependencies():
+        result = await Service.info()
+
+    seconds = result["runtime"]["host"]["uptime"]["seconds"]
+    assert isinstance(seconds, float)
+    assert seconds > 0
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_info_uptime_boottime_is_iso_string() -> None:
+    """info() uptime boottime is a non-empty ISO 8601 string."""
+    import datetime
+
+    with _patch_info_dependencies():
+        result = await Service.info()
+
+    boottime_str = result["runtime"]["host"]["uptime"]["boottime"]
+    assert isinstance(boottime_str, str)
+    assert len(boottime_str) > 0
+    # Must be parseable as an ISO 8601 datetime
+    parsed = datetime.datetime.fromisoformat(boottime_str)
+    assert parsed.tzinfo is not None  # timezone-aware (UTC)
