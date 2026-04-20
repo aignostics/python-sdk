@@ -206,6 +206,8 @@ class Settings(OpaqueSettings):
     ]
     client_id_interactive: Annotated[str, Field(description="OAuth client ID for interactive flows")]
 
+    organization: Annotated[str | None, Field(description="Optional organization for OAuth redirect")] = None
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def tenant_domain(self) -> str:

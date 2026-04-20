@@ -466,6 +466,58 @@ class TestAuthorizationCodeFlow:
             with pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED):
                 _perform_authorization_code_with_pkce_flow()
 
+    @pytest.mark.unit
+    @staticmethod
+    def test_perform_authorization_code_flow_with_organization(record_property, mock_settings) -> None:
+        """Test authorization code flow includes organization parameter when set."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+        mock_settings_instance = mock_settings.return_value
+        mock_settings_instance.organization = "test-org"
+
+        # Mock OAuth session
+        mock_session = MagicMock(spec=OAuth2Session)
+        mock_session.authorization_url.return_value = ("https://test.auth/authorize?code_challenge=abc", None)
+        mock_session.fetch_token.return_value = {"access_token": "pkce.token"}
+
+        # Mock HTTP server
+        mock_server = MagicMock()
+        mock_redirect_parsed = MagicMock()
+        mock_redirect_parsed.hostname = "localhost"
+        mock_redirect_parsed.port = 8000
+
+        class MockHTTPServer:
+            def __init__(self, *args, **kwargs) -> None:
+                pass
+
+            def __enter__(self) -> MagicMock:
+                return mock_server
+
+            def __exit__(self, *args) -> None:
+                pass
+
+        mock_auth_result = MagicMock()
+        mock_auth_result.token = "pkce.token"  # noqa: S105
+        mock_auth_result.error = None
+
+        with (
+            patch("aignostics.platform._authentication.OAuth2Session", return_value=mock_session),
+            patch("aignostics.platform._authentication.HTTPServer", MockHTTPServer),
+            patch("urllib.parse.urlparse", return_value=mock_redirect_parsed),
+            patch("aignostics.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
+        ):
+
+            def handle_request_side_effect():
+                mock_auth_result.token = "pkce.token"  # noqa: S105
+
+            mock_server.handle_request.side_effect = handle_request_side_effect
+            token = _perform_authorization_code_with_pkce_flow()
+
+            # Assertions
+            assert token == "pkce.token"  # noqa: S105
+            # Verify organization was passed to authorization_url
+            call_kwargs = mock_session.authorization_url.call_args[1]
+            assert call_kwargs.get("organization") == "test-org"
+
 
 class TestDeviceFlow:
     """Test cases for the device flow authentication."""

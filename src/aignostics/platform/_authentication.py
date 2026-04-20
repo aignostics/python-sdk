@@ -333,10 +333,18 @@ def _perform_authorization_code_with_pkce_flow() -> str:  # noqa: C901
         redirect_uri=settings().redirect_uri,
         pkce="S256",
     )
+    auth_params = {
+        "access_type": "offline",
+        "audience": settings().audience,
+    }
+    organization = settings().organization
+
+    if organization:
+        auth_params["organization"] = organization
+
     authorization_url, _ = session.authorization_url(
         settings().authorization_base_url,
-        access_type="offline",
-        audience=settings().audience,
+        **auth_params,
     )
 
     authentication_result = AuthenticationResult()
