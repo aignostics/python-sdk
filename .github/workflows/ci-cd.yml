@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "release/v*"
     tags:
       - "v*.*.*"
   pull_request:
@@ -68,7 +69,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_lint.yml
@@ -82,7 +82,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_audit.yml
@@ -96,7 +95,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
@@ -123,7 +121,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_codeql.yml
@@ -138,7 +135,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     runs-on: ubuntu-latest
@@ -165,7 +161,6 @@ jobs:
       github.actor != 'dependabot[bot]' &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_ketryx_report_and_check.yml

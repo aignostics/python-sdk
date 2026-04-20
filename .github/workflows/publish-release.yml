@@ -1,0 +1,148 @@
+name: "Publish Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Release branch name (e.g. "release/v1.1.0"). Auto-detected if omitted.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+        with:
+          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "aignostics-release-bot[bot]"
+          git config --global user.email "aignostics-release-bot[bot]@users.noreply.github.com"
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Resolve release branch
+        id: branch
+        env:
+          INPUT: ${{ inputs.branch }}
+        run: |
+          if [ -n "$INPUT" ]; then
+            BRANCH="$INPUT"
+          else
+            MATCHES=$(git ls-remote --heads origin 'release/v*' | awk '{print $2}' | sed 's|refs/heads/||')
+            if [ -z "$MATCHES" ]; then
+              echo "❌ No release/v* branches found. Run 'make prepare-release' first."
+              exit 1
+            fi
+            COUNT=$(echo "$MATCHES" | wc -l | tr -d ' ')
+            if [ "$COUNT" -gt 1 ]; then
+              echo "❌ Multiple release/v* branches found. Specify one explicitly:"
+              echo "$MATCHES"
+              exit 1
+            fi
+            BRANCH="$MATCHES"
+          fi
+          # Validate branch name pattern
+          if ! echo "$BRANCH" | grep -qE '^release/v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "❌ Branch '${BRANCH}' does not match 'release/vX.Y.Z'. Aborting."
+            exit 1
+          fi
+          # Validate branch exists on origin
+          if ! git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
+            echo "❌ Branch '${BRANCH}' does not exist on origin. Aborting."
+            exit 1
+          fi
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "✅ Using release branch: ${BRANCH}"
+
+      - name: Checkout release branch
+        run: git checkout "${{ steps.branch.outputs.branch }}"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          version-file: "pyproject.toml"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Read version info
+        id: version
+        run: |
+          NEW_VERSION=$(cat VERSION)
+          TAG_NAME="v${NEW_VERSION}"
+          PREV_TAG=$(git describe --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            PREV_VERSION="${PREV_TAG#v}"
+          else
+            PREV_VERSION="(initial)"
+          fi
+          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "prev_version=${PREV_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog
+        run: |
+          PREV_TAG="${{ steps.version.outputs.prev_tag }}"
+          TAG_NAME="${{ steps.version.outputs.tag_name }}"
+          if [ -n "$PREV_TAG" ]; then
+            uv run git-cliff --tag "$TAG_NAME" --prepend CHANGELOG.md "${PREV_TAG}..HEAD"
+          else
+            uv run git-cliff --tag "$TAG_NAME" --output CHANGELOG.md
+          fi
+
+      - name: Commit changelog
+        run: |
+          TAG_NAME="${{ steps.version.outputs.tag_name }}"
+          git add CHANGELOG.md
+          if git diff --staged --quiet; then
+            echo "No changelog changes to commit."
+          else
+            git commit --no-verify -m "chore: update changelog for ${TAG_NAME}"
+          fi
+
+      - name: Create annotated tag
+        run: |
+          git tag -a "${{ steps.version.outputs.tag_name }}" \
+            -m "Bump version: ${{ steps.version.outputs.prev_version }} → ${{ steps.version.outputs.new_version }}"
+
+      - name: Push branch and tag
+        run: git push origin "${{ steps.branch.outputs.branch }}" --follow-tags
+
+      - name: Print job summary
+        run: |
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          TAG_NAME="${{ steps.version.outputs.tag_name }}"
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## ✅ Release published
+
+          | | |
+          |---|---|
+          | **Branch** | \`${BRANCH}\` |
+          | **Tag** | \`${TAG_NAME}\` |
+          | **Version** | ${{ steps.version.outputs.prev_version }} → ${{ steps.version.outputs.new_version }} |
+
+          ### Next steps
+
+          1. Monitor the CI/CD pipeline triggered by the tag:
+             [View CI runs](https://github.com/aignostics/python-sdk/actions)
+          2. Once CI passes and the package is published, merge the release branch:
+             \`\`\`bash
+             make merge-release
+             \`\`\`
+          EOF

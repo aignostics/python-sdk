@@ -405,7 +405,7 @@ replace = "{new_version}"
 regex = false
 ignore_missing_version = false
 ignore_missing_files = false
-tag = true
+tag = false
 sign_tags = false
 tag_name = "v{new_version}"
 allow_dirty = false
@@ -413,16 +413,10 @@ commit = true
 commit_args = "--no-verify"
 tag_message = "Bump version: {current_version} → {new_version}"
 message = "Bump version: {current_version} → {new_version}"
-# Note: Uncomment the following line to avoid running tests and ketryx during version bumps
-#message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
-#tag_message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
 setup_hooks = []
 pre_commit_hooks = [
     "uv sync",
     "git add uv.lock",
-    "uv run git-cliff --tag $BVHOOK_NEW_VERSION",
-    "rm -f CHANGELOG.md.tmp",
-    "git add CHANGELOG.md",
 ]
 post_commit_hooks = []
 
