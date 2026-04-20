@@ -337,10 +337,10 @@ def _perform_authorization_code_with_pkce_flow() -> str:  # noqa: C901
         "access_type": "offline",
         "audience": settings().audience,
     }
-    organization = settings().organization
+    organization_id = settings().organization_id
 
-    if organization:
-        auth_params["organization"] = organization
+    if organization_id:
+        auth_params["organization"] = organization_id
 
     authorization_url, _ = session.authorization_url(
         settings().authorization_base_url,
