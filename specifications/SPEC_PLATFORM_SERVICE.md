@@ -494,7 +494,7 @@ The Platform module provides foundational services but does not directly expose 
 
 ### 9.1 Key Algorithms and Business Logic
 
-- **PKCE Flow**: OAuth 2.0 Authorization Code flow with Proof Key for Code Exchange for enhanced security in public clients. Supports optional `AIGNOSTICS_ORGANIZATION` parameter for Auth0 organization-specific authentication flows
+- **PKCE Flow**: OAuth 2.0 Authorization Code flow with Proof Key for Code Exchange for enhanced security in public clients. Supports optional `AIGNOSTICS_ORGANIZATION_ID` parameter for Auth0 organization-specific authentication flows
 - **Token Caching**: File-based token persistence with expiration tracking and automatic cleanup
 - **Health Monitoring**: Multi-layer health checks including public endpoint availability and authenticated API access
 
