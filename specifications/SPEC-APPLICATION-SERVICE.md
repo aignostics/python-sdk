@@ -285,6 +285,39 @@ class Service:
             RuntimeError: When download operation fails
         """
         pass
+
+    def application_runs(
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        has_output: bool = False,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
+        limit: int | None = None,
+        for_organization: str | None = None,
+    ) -> list[RunData]:
+        """List application runs, optionally scoped to an organization.
+
+        Args:
+            application_id: Filter by application ID.
+            application_version: Filter by application version.
+            external_id: Filter by external ID.
+            has_output: If True, only runs with partial or full output are retrieved.
+            note_regex: Optional regex to filter runs by note metadata.
+            note_query_case_insensitive: If True, note regex matching is case-insensitive.
+            tags: Optional set of tags to filter runs.
+            query: Optional free-text query.
+            limit: Optional maximum number of results to return.
+            for_organization: Return all runs by users of the specified organization
+                              (org admins only). None = current user's runs only.
+
+        Raises:
+            ForbiddenException: When the caller is not an admin of the requested org.
+        """
+        pass
 ```
 
 ### 4.2 CLI Interface
@@ -304,7 +337,7 @@ uvx aignostics application [subcommand] [options]
 - `run prepare`: Generate metadata from source directory
 - `run upload`: Upload files to cloud storage
 - `run submit`: Submit application run
-- `run list`: List application runs
+- `run list [--for-organization ORG_ID]`: List application runs; supports listing all runs for an organization with `--for-organization` (only available to org admins)
 - `run describe`: Get detailed run information
 - `run cancel`: Cancel running application
 - `run result download`: Download run results
@@ -379,13 +412,14 @@ Configuration is managed through environment variables with the prefix `AIGNOSTI
 
 ### 7.1 Error Categories
 
-| Error Type          | Cause                            | Handling Strategy              | User Impact                     |
-| ------------------- | -------------------------------- | ------------------------------ | ------------------------------- |
-| `ValueError`        | Invalid input data or metadata   | Input validation with feedback | Clear validation error messages |
-| `RuntimeError`      | Platform API or operation errors | Retry with exponential backoff | Error details and guidance      |
-| `NotFoundException` | Missing runs or applications     | Graceful rejection with info   | Clear resource not found info   |
-| `FileNotFoundError` | Missing input files              | File validation before upload  | File path verification help     |
-| `ApiException`      | Platform API failures            | Retry mechanism with recovery  | API error details and guidance  |
+| Error Type            | Cause                            | Handling Strategy                                   | User Impact                                |
+| --------------------- | -------------------------------- | --------------------------------------------------- | ------------------------------------------ |
+| `ValueError`          | Invalid input data or metadata   | Input validation with feedback                      | Clear validation error messages            |
+| `RuntimeError`        | Platform API or operation errors | Retry with exponential backoff                      | Error details and guidance                 |
+| `NotFoundException`   | Missing runs or applications     | Graceful rejection with info                        | Clear resource not found info              |
+| `FileNotFoundError`   | Missing input files              | File validation before upload                       | File path verification help                |
+| `ApiException`        | Platform API failures            | Retry mechanism with recovery                       | API error details and guidance             |
+| `ForbiddenException`  | Caller not authorized for the requested org | Caught in CLI; exit 2 with access-denied message | User informed they lack permission    |
 
 ### 7.2 Input Validation
 
