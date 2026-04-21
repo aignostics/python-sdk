@@ -74,14 +74,14 @@ platform/
 ### 2.2 Key Components
 
 | Component        | Type   | Purpose                                                 | Public API                                                                    |
-| ---------------- | ------ | ------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| ---------------- | ------ | ------------------------------------------------------- |-------------------------------------------------------------------------------|
 | `Client`         | Class  | Main entry point for authenticated API operations       | `__init__()`, `me()`, `application()`, `run()`<br/>Static: `get_api_client()` |
 | `Service`        | Class  | Core service with health monitoring and user operations | `login()`, `logout()`, `get_user_info()`, `health()`, `info()`                |
 | `Settings`       | Class  | Environment-aware configuration management              | Property accessors for all auth endpoints                                     |
 | `Applications`   | Class  | Application resource management                         | `list()`, `versions` accessor                                                 |
 | `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`                  |
 | `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`                            |
-| `Runs`           | Class  | Application run management and creation                 | `create()`, `list()`, `list_data()`, `__call__()`                             |
+| `Runs`           | Class  | Application run management and creation                 | `create()`, `list()` / `list_data()`, `__call__()`                            |
 | `utils`          | Module | Resource utility functions and pagination helpers       | `paginate()`                                                                  |
 
 ### 2.3 Design Patterns
@@ -286,11 +286,55 @@ class Runs:
     def create(self, application_version: str, items: list[ItemCreationRequest]) -> ApplicationRun:
         """Creates a new application run."""
 
-    def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
-        """Find application runs, optionally filtered by application version."""
+    def list(
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        custom_metadata: str | None = None,
+        sort: str | None = None,
+        page_size: int = 100,
+        nocache: bool = False,
+        for_organization: str | None = None,
+    ) -> Iterator[ApplicationRun]:
+        """Find application runs, optionally filtered by application version.
 
-    def list_data(self, for_application_version: str | None = None, sort: str | None = None, page_size: int = 100) -> Iterator[ApplicationRunData]:
-        """Fetch application runs data with optional filtering and sorting."""
+        Args:
+            application_id: Filter by application ID.
+            application_version: Filter by application version.
+            external_id: Filter by external ID.
+            custom_metadata: Optional metadata filter in JSONPath format.
+            sort: Optional field to sort by. Prefix with '-' for descending order.
+            page_size: Number of results per page (default 100).
+            nocache: If True, bypass cache and force a fresh API call.
+            for_organization: Return all runs by users of the specified organization (org admins only).
+                              None = current user's runs only.
+        """
+
+    def list_data(
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        custom_metadata: str | None = None,
+        sort: str | None = None,
+        page_size: int = 100,
+        nocache: bool = False,
+        for_organization: str | None = None,
+    ) -> Iterator[ApplicationRunData]:
+        """Fetch application runs data with optional filtering and sorting.
+
+        Args:
+            application_id: Filter by application ID.
+            application_version: Filter by application version.
+            external_id: Filter by external ID.
+            custom_metadata: Optional metadata filter in JSONPath format.
+            sort: Optional field to sort by. Prefix with '-' for descending order.
+            page_size: Number of results per page (default 100).
+            nocache: If True, bypass cache and force a fresh API call.
+            for_organization: Return all runs by users of the specified organization (org admins only).
+                              None = current user's runs only.
+        """
 
     def __call__(self, application_run_id: str) -> ApplicationRun:
         """Retrieves an ApplicationRun instance for an existing run."""
@@ -447,13 +491,14 @@ The Platform module provides foundational services but does not directly expose 
 
 ### 7.1 Error Categories
 
-| Error Type            | Cause                                    | Handling Strategy                                   | User Impact                                  |
-| --------------------- | ---------------------------------------- | --------------------------------------------------- | -------------------------------------------- |
-| `AuthenticationError` | Invalid credentials or network issues    | Retry with exponential backoff; clear cached tokens | User prompted to re-authenticate             |
-| `ConfigurationError`  | Invalid settings or missing endpoints    | Validate on startup; provide clear error messages   | Application fails fast with actionable error |
-| `NetworkError`        | Connection timeouts or proxy issues      | Retry with backoff; fallback to device flow         | Automatic retry or alternative auth flow     |
-| `TokenExpiredError`   | JWT token past expiration                | Automatic refresh using refresh token               | Transparent token renewal                    |
-| `ValidationError`     | Invalid input parameters or file formats | Input sanitization and validation                   | Clear validation error messages              |
+| Error Type             | Cause                                    | Handling Strategy                                   | User Impact                                  |
+| ---------------------- | ---------------------------------------- | --------------------------------------------------- | -------------------------------------------- |
+| `AuthenticationError`  | Invalid credentials or network issues    | Retry with exponential backoff; clear cached tokens | User prompted to re-authenticate             |
+| `ConfigurationError`   | Invalid settings or missing endpoints    | Validate on startup; provide clear error messages   | Application fails fast with actionable error |
+| `NetworkError`         | Connection timeouts or proxy issues      | Retry with backoff; fallback to device flow         | Automatic retry or alternative auth flow     |
+| `TokenExpiredError`    | JWT token past expiration                | Automatic refresh using refresh token               | Transparent token renewal                    |
+| `ValidationError`      | Invalid input parameters or file formats | Input sanitization and validation                   | Clear validation error messages              |
+| `ForbiddenException`   | Caller not authorized for the requested org | Caught in CLI; exit 2 with access-denied message | User informed they lack permission           |
 
 ### 7.2 Input Validation
 
