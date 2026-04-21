@@ -409,14 +409,15 @@ The Platform module provides foundational services but does not directly expose 
 
 ### 6.1 Configuration Parameters
 
-| Parameter                       | Type | Default                           | Description                 | Required |
-| ------------------------------- | ---- | --------------------------------- | --------------------------- | -------- |
-| `api_root`                      | str  | `https://platform.aignostics.com` | Base URL of Aignostics API  | Yes      |
-| `audience`                      | str  | Environment-specific              | OAuth audience claim        | Yes      |
-| `scope`                         | str  | `offline_access`                  | OAuth scopes required       | Yes      |
-| `cache_dir`                     | str  | User cache directory              | Directory for token storage | No       |
-| `request_timeout_seconds`       | int  | 30                                | API request timeout         | No       |
-| `authorization_backoff_seconds` | int  | 3                                 | Retry backoff time          | No       |
+| Parameter                       | Type | Default                           | Description                  | Required |
+| ------------------------------- | ---- | --------------------------------- | ---------------------------- | -------- |
+| `api_root`                      | str  | `https://platform.aignostics.com` | Base URL of Aignostics API   | Yes      |
+| `audience`                      | str  | Environment-specific              | OAuth audience claim         | Yes      |
+| `scope`                         | str  | `offline_access`                  | OAuth scopes required        | Yes      |
+| `organization_id`               | str  | None                              | Auth0 organization for OAuth | No       |
+| `cache_dir`                     | str  | User cache directory              | Directory for token storage  | No       |
+| `request_timeout_seconds`       | int  | 30                                | API request timeout          | No       |
+| `authorization_backoff_seconds` | int  | 3                                 | Retry backoff time           | No       |
 
 ### 6.2 Environment Variables
 
@@ -432,6 +433,7 @@ The Platform module provides foundational services but does not directly expose 
 | `AIGNOSTICS_DEVICE_URL`                    | Custom device authorization URL  | `https://custom.auth0.com/oauth/device/code`     |
 | `AIGNOSTICS_JWS_JSON_URL`                  | Custom JWS key set URL           | `https://custom.auth0.com/.well-known/jwks.json` |
 | `AIGNOSTICS_CLIENT_ID_INTERACTIVE`         | Interactive flow client ID       | `interactive_client_123`                         |
+| `AIGNOSTICS_ORGANIZATION_ID`               | Auth0 organization for OAuth     | `my-organization`                                |
 | `AIGNOSTICS_REFRESH_TOKEN`                 | Long-lived refresh token         | `refresh_token_value`                            |
 | `AIGNOSTICS_CACHE_DIR`                     | Custom cache directory           | `/custom/cache/path`                             |
 | `AIGNOSTICS_REQUEST_TIMEOUT_SECONDS`       | API request timeout              | `60`                                             |
@@ -492,7 +494,7 @@ The Platform module provides foundational services but does not directly expose 
 
 ### 9.1 Key Algorithms and Business Logic
 
-- **PKCE Flow**: OAuth 2.0 Authorization Code flow with Proof Key for Code Exchange for enhanced security in public clients
+- **PKCE Flow**: OAuth 2.0 Authorization Code flow with Proof Key for Code Exchange for enhanced security in public clients. Supports optional `AIGNOSTICS_ORGANIZATION_ID` parameter for Auth0 organization-specific authentication flows
 - **Token Caching**: File-based token persistence with expiration tracking and automatic cleanup
 - **Health Monitoring**: Multi-layer health checks including public endpoint availability and authenticated API access
 
