@@ -893,6 +893,15 @@ def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = F
         marker: Pytest marker expression
         cov_append: Whether to append to existing coverage data
     """
+    # On Windows, uv run sets PYTHONHOME to the managed Python 3.14 install dir when it
+    # starts nox. This leaks into pytest sub-processes for older Python versions (3.11-3.13)
+    # and causes them to load Python 3.14's stdlib, crashing at startup.
+    # Fix: set PYTHONHOME to None in session.env so nox strips it from the subprocess
+    # environment entirely (nox._clean_env filters out None-valued entries before passing
+    # to subprocess.Popen). Unlike os.environ.pop(), this does NOT mutate global process
+    # state; it only affects subprocesses spawned by session.run() / session.run_install().
+    if platform.system() == "Windows":
+        session.env["PYTHONHOME"] = None
     _setup_venv(session)
 
     posargs = session.posargs[:]
