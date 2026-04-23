@@ -51,7 +51,7 @@ jobs:
           INPUT: ${{ inputs.version }}
         run: |
           # Must be an explicit x.y.z semver
-          if ! echo "$INPUT" | grep -qE '^\d+\.\d+\.\d+$'; then
+          if ! echo "$INPUT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "❌ Invalid version: '$INPUT'. Must be an explicit semver like '1.3.0'."
             exit 1
           fi
