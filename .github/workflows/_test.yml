@@ -217,7 +217,8 @@ jobs:
         if: |
           !cancelled() && (
             contains(inputs.commit_message, 'enable:test:very_long_running') ||
-            contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
+            contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running') ||
+            (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/v'))
           )
         uses: ./.github/actions/run-tests
         with:
