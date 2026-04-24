@@ -23,6 +23,9 @@ links:
   - name: '#python-sdk-dev'
     type: CHAT_CHANNEL
     url: https://slack.com/app_redirect?channel=C098D8MH431
+  - name: Ketryx Project
+    type: OTHER_LINK
+    url: https://app.ketryx.com/projects/KXPRJ2Q4PA8AADY975SFMKF276TYV75
   - name: Sentry
     type: OTHER_LINK
     url: https://aignostics.sentry.io/projects/python-sdk/
