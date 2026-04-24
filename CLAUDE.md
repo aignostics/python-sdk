@@ -32,7 +32,7 @@ If you write code yourself, it is a strict requirement to validate your work on 
 
 If you you are creating a pull request yourself:
 
-* Add a label skip:test_long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
+* Add a label skip:test:long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
 
 ## Module Documentation Index
 
@@ -1163,7 +1163,7 @@ git push origin feat/my-feature
 gh pr create --title "feat: add operation caching" --body "Description..."
 
 # IMPORTANT: Add label to skip long-running tests
-gh pr edit --add-label "skip:test_long_running"
+gh pr edit --add-label "skip:test:long_running"
 ```
 
 **PR triggers:**
@@ -1367,7 +1367,7 @@ git commit -m "docs: update README [skip ci]"
 git commit -m "skip:ci: work in progress"
 
 # Add PR label to skip long-running tests
-gh pr edit --add-label "skip:test_long_running"
+gh pr edit --add-label "skip:test:long_running"
 ```
 
 ### IDE Setup Recommendations
