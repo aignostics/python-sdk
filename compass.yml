@@ -10,6 +10,9 @@ links:
   - name: null
     type: REPOSITORY
     url: https://github.com/aignostics/python-sdk
+  - name: Jira Board
+    type: PROJECT_TRACKER
+    url: https://aignx.atlassian.net/jira/software/projects/PYSDK/boards
 relationships:
   DEPENDS_ON: []
 labels:
