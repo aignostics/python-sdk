@@ -23,9 +23,7 @@
     ]
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "context7"
-  ],
+  "enabledMcpjsonServers": [],
   "extraKnownMarketplaces": {
     "aignostics-claude-plugins": {
       "source": {
