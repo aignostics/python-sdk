@@ -162,7 +162,7 @@ gui_watch:
 	uv run runner/gui_watch.py
 
 profile:
-	uv run --all-extras python -m scalene runner/scalene.py
+	uv run --all-extras python -m scalene run runner/scalene.py --outfile tmp/scalene-profile.json && uv run --all-extras python -m scalene view tmp/scalene-profile.json
 
 # Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
 dist_native:
