@@ -18,7 +18,7 @@ links:
     type: PROJECT
     url: https://aignx.atlassian.net/jira/software/c/projects/PYSDK/boards
   - name: Status Page
-    type: OTHER_LINK
+    type: DASHBOARD
     url: https://status.aignostics.com
   - name: '#python-sdk-dev'
     type: CHAT_CHANNEL
@@ -26,8 +26,11 @@ links:
   - name: '#python-sdk-notifications'
     type: CHAT_CHANNEL
     url: https://slack.com/app_redirect?channel=C0AUPTA5QF9
-  - name: Sentry
+  - name: Ketryx Project
     type: OTHER_LINK
+    url: https://app.ketryx.com/projects/KXPRJ2Q4PA8AADY975SFMKF276TYV75
+  - name: Sentry
+    type: DASHBOARD
     url: https://aignostics.sentry.io/projects/python-sdk/
 relationships:
   DEPENDS_ON:
