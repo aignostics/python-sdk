@@ -1,11 +1,15 @@
 name: python-sdk
 id: ari:cloud:compass:fff788d2-8a2a-4c36-a884-dde2bb4a2b49:component/f65912bc-77bd-4e1f-b333-1a9e8f0ac32c/aca547e5-2577-4f9d-9aaa-cf360acc976c
-description: 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
+description: 🔬 Python SDK providing access to the Aignostics Platform. Includes
+  Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line
+  Interface), example notebooks, and Aignostics Client Library.
 configVersion: 1
 typeId: APPLICATION
 ownerId: ari:cloud:identity::team/b1cfb598-3138-4c2a-8b6a-19fb1078645b
 fields:
-  tier: 4
+  tier: 1
+  lifecycle: Active
+  isMonorepoProject: false
 links:
   - name: null
     type: REPOSITORY
@@ -44,25 +48,25 @@ customFields:
     value: false
   - name: Component Key
     type: text
-    value: null
+    value: python-sdk
   - name: Deployment Branch
     type: text
-    value: null
+    value: release/*
   - name: Development Branch
     type: text
-    value: null
+    value: main
   - name: FinOps Label
     type: text
     value: null
   - name: Has external API
     type: boolean
-    value: false
+    value: true
   - name: Has external CLI
     type: boolean
-    value: false
+    value: true
   - name: Has external graphical UI
     type: boolean
-    value: false
+    value: true
   - name: Has internal API
     type: boolean
     value: false
@@ -74,10 +78,12 @@ customFields:
     value: false
   - name: Is independently deployable
     type: boolean
-    value: false
+    value: true
+  - name: Is open source
+    type: true
   - name: Path in Repository
     type: text
-    value: null
+    value: /
   - name: Process Level
     type: single_select
     value: null
