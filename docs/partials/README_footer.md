@@ -3,6 +3,9 @@
 1. Inspect our
    [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
    with detailed documentation of checks, tools and principles.
+   How we handle vulnerabilities in our Python dependency supply chain is
+   documented in
+   [SUPPLY_CHAIN_VULNERABILITIES.md](https://github.com/aignostics/python-sdk/blob/main/SUPPLY_CHAIN_VULNERABILITIES.md).
 1. Inspect how we achieve
    [operational excellence](https://aignostics.readthedocs.io/en/latest/operational_excellence.html)
    with information on our modern toolchain and software architecture.
