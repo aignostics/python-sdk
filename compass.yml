@@ -15,10 +15,10 @@ links:
     type: REPOSITORY
     url: https://github.com/aignostics/python-sdk
   - name: Jira Board
-    type: PROJECT_TRACKER
+    type: PROJECT
     url: https://aignx.atlassian.net/jira/software/projects/PYSDK/boards
   - name: Status Page
-    type: STATUS_PAGE
+    type: OTHER_LINK
     url: https://status.aignostics.com
 relationships:
   DEPENDS_ON: []
@@ -80,7 +80,8 @@ customFields:
     type: boolean
     value: true
   - name: Is open source
-    type: true
+    type: boolean
+    value: true
   - name: Path in Repository
     type: text
     value: /
