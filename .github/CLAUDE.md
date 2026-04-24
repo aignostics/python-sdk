@@ -259,8 +259,8 @@ uv run pytest -m long_running -v
 
 **CI Behavior**:
 
-* **NEVER run by default**
-* **Only run when explicitly enabled** via:
+* **Automatically run on every push to `release/v*` branches** (no opt-in needed)
+* **Otherwise never run by default** — must be explicitly enabled via:
   * PR label `enable:test:very_long_running`, OR
   * Commit message contains `enable:test:very_long_running`
 
