@@ -86,6 +86,8 @@ CLAUDE.local.md
 # Scalene
 profile.json
 profile.html
+scalene-profile.json
+scalene-profile.html
 
 # Nicegui
 .nicegui
