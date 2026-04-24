@@ -23,6 +23,9 @@ links:
   - name: '#python-sdk-dev'
     type: CHAT_CHANNEL
     url: https://slack.com/app_redirect?channel=C098D8MH431
+  - name: Sentry
+    type: OTHER_LINK
+    url: https://aignostics.sentry.io/projects/python-sdk/
 relationships:
   DEPENDS_ON:
     - 'ari:cloud:compass:fff788d2-8a2a-4c36-a884-dde2bb4a2b49:component/f65912bc-77bd-4e1f-b333-1a9e8f0ac32c/638f89c6-24a3-48f4-90ad-1b09ef8d32c6'
