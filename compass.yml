@@ -13,6 +13,9 @@ links:
   - name: Jira Board
     type: PROJECT_TRACKER
     url: https://aignx.atlassian.net/jira/software/projects/PYSDK/boards
+  - name: Status Page
+    type: STATUS_PAGE
+    url: https://status.aignostics.com
 relationships:
   DEPENDS_ON: []
 labels:
