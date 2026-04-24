@@ -16,7 +16,7 @@ links:
     url: https://github.com/aignostics/python-sdk
   - name: Jira Board
     type: PROJECT
-    url: https://aignx.atlassian.net/jira/software/c/projects/PYSDK/boards
+    url: https://aignx.atlassian.net/jira/software/c/projects/PYSDK/boards/1799
   - name: Status Page
     type: DASHBOARD
     url: https://status.aignostics.com
