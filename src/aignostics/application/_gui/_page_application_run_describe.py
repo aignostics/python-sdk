@@ -364,10 +364,23 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     ui.notify("Download completed.", type="positive")
                 show_in_file_manager(str(results_folder))
-            except ValueError as e:
+            except Exception as e:
+                # Catching the broad `Exception` here is intentional: any unhandled exception
+                # in this async event handler would otherwise be silently swallowed by
+                # NiceGUI's app.handle_exception, leaving the dialog stuck in the loading
+                # state with no completion or failure notification. We always want the user
+                # to see *something* — even a generic error — and we always want the timer +
+                # button state to be cleaned up.
+                logger.exception("Download failed for run '{}'", run.run_id)
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
                 progress_timer.deactivate()
                 progress_state["queue"] = None
+                download_button.props(remove="loading")
+                download_button.enable()
+                download_item_status.set_visibility(False)
+                download_item_progress.set_visibility(False)
+                download_artifact_status.set_visibility(False)
+                download_artifact_progress.set_visibility(False)
                 return
             progress_timer.deactivate()
             progress_state["queue"] = None
