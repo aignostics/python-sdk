@@ -6,7 +6,7 @@ This file provides comprehensive guidance for Claude Code and human engineers wo
 
 The Aignostics Python SDK uses a **sophisticated multi-stage CI/CD pipeline** built on GitHub Actions with:
 
-* **19 workflow files** (8 entry points + 11 reusable workflows)
+* **Multiple workflow files**, including both entry-point and reusable workflows
 * **Reusable workflow architecture** for modularity and maintainability
 * **Environment-based testing** (staging/production with scheduled validation)
 * **Multi-category test execution** (unit, integration, e2e, long_running, very_long_running, scheduled)
@@ -21,7 +21,7 @@ The Aignostics Python SDK uses a **sophisticated multi-stage CI/CD pipeline** bu
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    ci-cd.yml (Main Orchestrator)                    │
-│         Triggered on: push to main, PR, release, tag v*.*.*        │
+│   Triggered on: push to main/release/v*, PR, release, tag v*.*.*   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌────────┐  ┌───────┐  ┌────────────────┐  ┌────────┐           │
@@ -56,6 +56,9 @@ The Aignostics Python SDK uses a **sophisticated multi-stage CI/CD pipeline** bu
 ┌───────────────────────────────────────────────────────────────┐
 │                    Parallel Entry Points                       │
 ├───────────────────────────────────────────────────────────────┤
+│  prepare-release.yml      → Create release branch             │
+│  publish-release.yml      → Tag + changelog → CI/CD publish   │
+│  merge-release.yml        → Merge branch into main            │
 │  build-native-only.yml    → Native executables (6 platforms)  │
 │  claude-code-*.yml        → PR reviews + interactive sessions  │
 │  test-scheduled-*.yml     → Staging (6h) + Production (24h)   │
@@ -70,7 +73,10 @@ The Aignostics Python SDK uses a **sophisticated multi-stage CI/CD pipeline** bu
 
 | Workflow | Triggers | Purpose | Calls |
 |----------|----------|---------|-------|
-| **ci-cd.yml** | push(main), PR, release, tag | Main CI/CD pipeline | _lint,_audit, _test,_codeql, _ketryx,_package-publish, _docker-publish |
+| **ci-cd.yml** | push(main, release/v*), PR, release, tag | Main CI/CD pipeline | _lint,_audit, _test,_codeql, _ketryx,_package-publish, _docker-publish |
+| **prepare-release.yml** | workflow_dispatch | Create release branch + bump version | — |
+| **publish-release.yml** | workflow_dispatch | Generate changelog, tag, push → CI/CD | — |
+| **merge-release.yml** | workflow_dispatch | Merge release branch into main | — |
 | **build-native-only.yml** | push, PR, release (if msg contains `build:native:only`) | Native executable builds | _build-native-only |
 | **claude-code-interactive.yml** | workflow_dispatch (manual) | Manual Claude sessions | _claude-code (interactive) |
 | **claude-code-automation-pr-review.yml** | PR opened/sync (excludes bots) | Automated PR reviews | _claude-code (automation) |
@@ -379,7 +385,6 @@ uv run pytest -m "(scheduled or scheduled_only)" -v
 * `build:native:only` - Only build native executables
 * `skip:test:long_running` - Skip long-running tests
 * `enable:test:very_long_running` - Enable very long running tests
-* `Bump version:` - Skip CI (version bump commits)
 
 **Usage**:
 
@@ -398,6 +403,7 @@ git commit -m "fix: issue skip:test:long_running"
 **Triggers**:
 
 * `push` to `main` branch
+* `push` to `release/v*` branches (release branch CI)
 * `pull_request` to `main` (opened, synchronize, reopened)
 * `release` created
 * `tags` matching `v*.*.*`
@@ -415,7 +421,6 @@ Cancels in-progress runs when new commits are pushed to same PR/branch.
 
 * Commit message contains `skip:ci`
 * Commit message contains `build:native:only`
-* Commit starts with `Bump version:`
 * PR has label `skip:ci` or `build:native:only`
 
 **Job Dependencies**:
@@ -1006,26 +1011,39 @@ make dist_native
 
 ### Releasing a Version
 
-1. Ensure `main` branch is clean and all tests pass
-2. Run version bump:
+Releases use a four-phase workflow triggered from the developer's machine via `gh workflow run`. This lets Ketryx compliance approvals be collected *before* the tag (and thus before publishing to PyPI).
 
-   ```bash
-   make bump patch  # or minor, major
-   ```
+**Phase 1 — Prepare the release branch** (triggers `prepare-release.yml`):
 
-3. This creates a commit and git tag
-4. Push with tags:
+```bash
+make prepare-release 1.2.3   # explicit version
+```
 
-   ```bash
-   git push --follow-tags
-   ```
+Creates `release/vX.Y.Z` from `main`, commits version bump + `uv.lock`, pushes. CI runs on the branch automatically.
 
-5. CI detects tag and triggers:
-   * Full CI pipeline (lint, audit, test, CodeQL)
-   * Package build and publish to PyPI
-   * Docker image build and publish
-   * GitHub release creation
-   * Slack notification to team
+**Phase 2 — Collect Ketryx approvals:**
+
+Point the Ketryx release to `release/vX.Y.Z` and collect approvals. Ensure CI is green.
+
+**Phase 3 — Publish** (triggers `publish-release.yml`):
+
+```bash
+make publish-release             # auto-detects release/v* branch
+make publish-release release/v1.2.3  # explicit branch
+```
+
+Generates `CHANGELOG.md`, creates annotated `vX.Y.Z` tag, pushes → CI/CD fires on tag → Ketryx check must pass before PyPI publish.
+
+**Phase 4 — Merge back to main** (triggers `merge-release.yml`):
+
+```bash
+make merge-release             # auto-detects release/v* branch
+make merge-release release/v1.2.3  # explicit branch
+```
+
+Merges `release/vX.Y.Z` into `main` with `--no-ff`, pushes `main`, deletes the release branch.
+
+**Note on branch protection**: `release/v*` branches should be protected so that only the GitHub Actions bot (`aignostics-release-bot[bot]`) can push to them. This enforces the server-side workflow. Configure in GitHub Settings → Branches → Branch protection rules.
 
 ### Manual Testing with Claude
 
@@ -1070,6 +1088,9 @@ make dist_native
 | File | Type | Purpose | Duration |
 |------|------|---------|----------|
 | `ci-cd.yml` | Entry | Main pipeline orchestration | ~20 min |
+| `prepare-release.yml` | Entry | Create release branch + bump version | ~2 min |
+| `publish-release.yml` | Entry | Generate changelog, create tag, push | ~2 min |
+| `merge-release.yml` | Entry | Merge release branch into main | ~1 min |
 | `build-native-only.yml` | Entry | Native build trigger | ~60 min (6 platforms) |
 | `claude-code-interactive.yml` | Entry | Manual Claude sessions | varies |
 | `claude-code-automation-pr-review.yml` | Entry | Automated PR reviews | ~10 min |
