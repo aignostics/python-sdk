@@ -13,7 +13,7 @@ import re
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import humanize
 from loguru import logger
@@ -26,6 +26,7 @@ from aignostics.constants import (
 )
 from aignostics.platform import (
     InputArtifactData,
+    ItemState,
     OutputArtifactData,
     OutputArtifactElement,
     Run,
@@ -36,6 +37,55 @@ from aignostics.platform import (
 from aignostics.utils import console
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
+
+
+def _validate_scheduling_datetime(value: str | None, field_name: str) -> None:
+    """Validate that a scheduling datetime field is in ISO 8601 format and in the future.
+
+    Args:
+        value (str | None): The datetime string to validate.
+        field_name (str): The name of the field (e.g. 'due_date', 'deadline') for error messages.
+
+    Raises:
+        ValueError: If
+            the format is invalid,
+            the datetime is timezone-naive,
+            or the datetime is not in the future.
+    """
+    if value is None:
+        return
+
+    # Try parsing with fromisoformat (handles most ISO 8601 formats)
+    try:
+        # Handle 'Z' suffix by replacing with '+00:00'
+        normalized = value.replace("Z", "+00:00")
+        parsed_dt = datetime.fromisoformat(normalized)
+    except (ValueError, TypeError) as e:
+        message = (
+            f"Invalid ISO 8601 format for {field_name}. "
+            f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+            f"but got: '{value}' (error: {e})"
+        )
+        raise ValueError(message) from e
+
+    # Ensure the datetime is timezone-aware (reject naive datetimes)
+    if parsed_dt.tzinfo is None:
+        message = (
+            f"Invalid ISO 8601 format for {field_name}. "
+            f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
+            f"but got: '{value}' (missing timezone information)"
+        )
+        raise ValueError(message)
+
+    # Check that the datetime is in the future
+    now = datetime.now(UTC)
+    if parsed_dt <= now:
+        message = (
+            f"{field_name} must be in the future. "
+            f"Got '{value}' ({parsed_dt.isoformat()}), "
+            f"but current UTC time is {now.isoformat()}"
+        )
+        raise ValueError(message)
 
 
 def validate_due_date(due_date: str | None) -> None:
@@ -49,38 +99,59 @@ def validate_due_date(due_date: str | None) -> None:
             the format is invalid
             or the due_date is not in the future.
     """
-    if due_date is None:
+    _validate_scheduling_datetime(due_date, "due_date")
+
+
+def validate_deadline(deadline: str | None) -> None:
+    """Validate that deadline is in ISO 8601 format and in the future.
+
+    Args:
+        deadline (str | None): The datetime string to validate.
+
+    Raises:
+        ValueError: If
+            the format is invalid
+            or the deadline is not in the future.
+    """
+    _validate_scheduling_datetime(deadline, "deadline")
+
+
+def _parse_scheduling_datetime(value: str) -> datetime:
+    """Parse an ISO 8601 scheduling datetime string, handling 'Z' suffix.
+
+    Args:
+        value (str): The datetime string to parse.
+
+    Returns:
+        datetime: The parsed timezone-aware datetime.
+    """
+    normalized = value.replace("Z", "+00:00")
+    return datetime.fromisoformat(normalized)
+
+
+def validate_scheduling_constraints(due_date: str | None, deadline: str | None) -> None:
+    """Validate cross-field scheduling constraints.
+
+    When both due_date and deadline are provided, due_date must be before deadline.
+
+    Args:
+        due_date (str | None): The due date string (already individually validated).
+        deadline (str | None): The deadline string (already individually validated).
+
+    Raises:
+        ValueError: If due_date is not before deadline.
+    """
+    if due_date is None or deadline is None:
         return
 
-    # Try parsing with fromisoformat (handles most ISO 8601 formats)
-    try:
-        # Handle 'Z' suffix by replacing with '+00:00'
-        normalized = due_date.replace("Z", "+00:00")
-        parsed_dt = datetime.fromisoformat(normalized)
-    except (ValueError, TypeError) as e:
-        message = (
-            f"Invalid ISO 8601 format for due_date. "
-            f"Expected format like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-            f"but got: '{due_date}' (error: {e})"
-        )
-        raise ValueError(message) from e
+    parsed_due_date = _parse_scheduling_datetime(due_date)
+    parsed_deadline = _parse_scheduling_datetime(deadline)
 
-    # Ensure the datetime is timezone-aware (reject naive datetimes)
-    if parsed_dt.tzinfo is None:
+    if parsed_due_date >= parsed_deadline:
         message = (
-            f"Invalid ISO 8601 format for due_date. "
-            f"Expected format with timezone like '2025-10-19T19:53:00+00:00' or '2025-10-19T19:53:00Z', "
-            f"but got: '{due_date}' (missing timezone information)"
-        )
-        raise ValueError(message)
-
-    # Check that the datetime is in the future
-    now = datetime.now(UTC)
-    if parsed_dt <= now:
-        message = (
-            f"due_date must be in the future. "
-            f"Got '{due_date}' ({parsed_dt.isoformat()}), "
-            f"but current UTC time is {now.isoformat()}"
+            f"due_date must be before deadline. "
+            f"Got due_date='{due_date}' ({parsed_due_date.isoformat()}) "
+            f"and deadline='{deadline}' ({parsed_deadline.isoformat()})"
         )
         raise ValueError(message)
 
@@ -123,9 +194,16 @@ def validate_mappings(mappings: list[str] | None) -> None:
             raise ValueError(msg) from e
 
 
+class _SchedulingLike(Protocol):
+    """Protocol for objects with an optional deadline attribute."""
+
+    deadline: datetime | None
+
+
 def is_not_terminated_with_deadline_exceeded(
     run_state: RunState,
-    custom_metadata: dict[str, Any] | None,
+    scheduling: _SchedulingLike | None = None,
+    custom_metadata: dict[str, Any] | None = None,
 ) -> bool | None:
     """Check if the run is not terminated and the deadline has been exceeded.
 
@@ -134,7 +212,11 @@ def is_not_terminated_with_deadline_exceeded(
 
     Args:
         run_state (RunState): The current state of the run.
-        custom_metadata (dict[str, Any] | None): The custom metadata containing optional deadline information.
+        scheduling: The scheduling response object from the API (has .deadline attribute),
+            or None if no scheduling constraints were set.
+        custom_metadata (dict[str, Any] | None): Legacy fallback - the custom metadata containing
+            optional deadline information in sdk.scheduling.deadline. Used only when scheduling
+            response field is not available.
 
     Returns:
         bool | None: True if run is not terminated and deadline exceeded,
@@ -145,16 +227,29 @@ def is_not_terminated_with_deadline_exceeded(
     if run_state == RunState.TERMINATED:
         return None
 
-    if not custom_metadata:
-        return None
+    # Try the first-class scheduling response field first
+    deadline_value = None
+    if scheduling is not None:
+        deadline_value = getattr(scheduling, "deadline", None)
 
-    deadline_str = custom_metadata.get("sdk", {}).get("scheduling", {}).get("deadline")
-    if not deadline_str:
+    # Fallback to custom_metadata for backward compatibility with older runs
+    if deadline_value is None and custom_metadata:
+        deadline_str = custom_metadata.get("sdk", {}).get("scheduling", {}).get("deadline")
+        if deadline_str:
+            try:
+                deadline_value = _parse_scheduling_datetime(deadline_str)
+            except (ValueError, TypeError, AttributeError):
+                return None
+
+    if deadline_value is None:
         return None
 
     try:
         now = datetime.now(tz=UTC)
-        deadline_dt = datetime.fromisoformat(deadline_str)
+        if isinstance(deadline_value, datetime):
+            return now > deadline_value
+        # Handle string values
+        deadline_dt = _parse_scheduling_datetime(str(deadline_value))
         return now > deadline_dt
     except (ValueError, TypeError, AttributeError):
         # Invalid deadline format, return None
@@ -174,17 +269,17 @@ class OutputFormat(StrEnum):
     JSON = "json"
 
 
-def _format_status_string(state: RunState, termination_reason: str | None = None) -> str:
+def _format_status_string(state: RunState | ItemState, termination_reason: str | None = None) -> str:
     """Format status string with optional termination reason.
 
     Args:
-        state (RunState): The run state
+        state (RunState | ItemState): The run or item state
         termination_reason (str | None): Optional termination reason
 
     Returns:
         str: Formatted status string
     """
-    if state is RunState.TERMINATED and termination_reason:
+    if state.value in {RunState.TERMINATED, ItemState.TERMINATED} and termination_reason:
         return f"{state.value} ({termination_reason})"
     return f"{state.value}"
 
@@ -277,28 +372,31 @@ def _format_run_details(run: RunData) -> str:
     return output
 
 
-def retrieve_and_print_run_details(run_handle: Run, hide_platform_queue_position: bool) -> None:
+def retrieve_and_print_run_details(
+    run_handle: Run, hide_platform_queue_position: bool, *, summarize: bool = False
+) -> None:
     """Retrieve and print detailed information about a run.
 
     Args:
         run_handle (Run): The Run handle
         hide_platform_queue_position (bool): Whether to hide platform-wide queue position
+        summarize (bool): If True, show only status summary (external ID, state, error message)
 
     """
     run = run_handle.details(hide_platform_queue_position=hide_platform_queue_position)
 
     run_details = _format_run_details(run)
     output = f"[bold]Run Details for {run.run_id}[/bold]\n{'=' * 80}\n{run_details}\n\n[bold]Items:[/bold]"
-
     console.print(output)
-    _retrieve_and_print_run_items(run_handle)
+    _retrieve_and_print_run_items(run_handle, summarize)
 
 
-def _retrieve_and_print_run_items(run_handle: Run) -> None:
+def _retrieve_and_print_run_items(run_handle: Run, summarize: bool = False) -> None:
     """Retrieve and print information about items in a run.
 
     Args:
         run_handle (Run): The Run handle
+        summarize (bool): If True, show only status summary without output artifacts
     """
     results = run_handle.results()
     if not results:
@@ -314,7 +412,7 @@ def _retrieve_and_print_run_items(run_handle: Run) -> None:
             f"  [bold]Custom Metadata:[/bold] {item.custom_metadata or 'None'}"
         )
 
-        if item.output_artifacts:
+        if not summarize and item.output_artifacts:
             artifacts_output = "\n  [bold]Output Artifacts:[/bold]"
             for artifact in item.output_artifacts:
                 artifacts_output += (

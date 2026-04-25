@@ -6,7 +6,7 @@ from functools import cached_property
 from http import HTTPStatus
 from typing import Any
 
-import urllib3
+import httpx
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
 from aignx.codegen.models import UserReadResponse as User
@@ -149,29 +149,12 @@ class Service(BaseService):
     """Service of the application module."""
 
     _settings: Settings
-    _http_pool: urllib3.PoolManager | None = None
 
     def __init__(self) -> None:
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    @classmethod
-    def _get_http_pool(cls) -> urllib3.PoolManager:
-        """Get or create the shared HTTP pool manager.
-
-        All service instances share the same urllib3.PoolManager for efficient connection reuse.
-
-        Returns:
-            urllib3.PoolManager: Shared connection pool manager.
-        """
-        if cls._http_pool is None:
-            cls._http_pool = urllib3.PoolManager(
-                maxsize=10,  # Max connections per host
-                block=False,  # Don't block if pool is full
-            )
-        return cls._http_pool
-
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         """Determine info of this service.
 
         Args:
@@ -192,60 +175,89 @@ class Service(BaseService):
             else None,
         }
 
-    def _determine_api_public_health(self) -> Health:
+    @staticmethod
+    def _health_from_response(response: httpx.Response) -> Health:
+        """Map a PAPI health response to a Health status.
+
+        Handles non-200 status codes, unparseable bodies, and the three recognised
+        ``status`` values (``"UP"``, ``"DEGRADED"``, ``"DOWN"``).
+
+        Args:
+            response: httpx response from the ``/health`` endpoint.
+
+        Returns:
+            Health: ``UP``, ``DEGRADED``, or ``DOWN`` derived from the response.
+        """
+        if response.status_code != HTTPStatus.OK:
+            logger.error("Aignostics Platform API returned '{}'", response.status_code)
+            return Health(
+                status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status_code}'"
+            )
+
+        try:
+            body = response.json()
+        except Exception:
+            return Health(status=Health.Code.DOWN, reason="Aignostics Platform API returned unparseable response")
+
+        api_status = body.get("status")
+        if api_status == "UP":
+            return Health(status=Health.Code.UP)
+        if api_status == "DEGRADED":
+            reason = body.get("reason") or "Aignostics Platform API is DEGRADED"
+            logger.warning("Aignostics Platform API is DEGRADED: {}", reason)
+            return Health(status=Health.Code.DEGRADED, reason=reason)
+        return Health(
+            status=Health.Code.DOWN,
+            reason=f"Aignostics Platform API returned unknown status '{api_status}'",
+        )
+
+    async def _determine_api_public_health(self) -> Health:
         """Determine healthiness and reachability of Aignostics Platform API.
 
         - Checks if health endpoint is reachable and returns 200 OK
-        - Uses urllib3 for a direct connection check without authentication
+        - Parses the response body to detect DEGRADED status
+        - Uses httpx for a direct connection check without authentication
 
         Returns:
             Health: The healthiness of the Aignostics Platform API via basic unauthenticated request.
         """
         try:
-            http = self._get_http_pool()
-            response = http.request(
-                method="GET",
-                url=f"{self._settings.api_root}/api/v1/health",
-                headers={"User-Agent": user_agent()},
-                timeout=urllib3.Timeout(total=self._settings.health_timeout),
-            )
-
-            if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (public) returned '{}'", response.status)
-                return Health(
-                    status=Health.Code.DOWN, reason=f"Aignostics Platform API returned status '{response.status}'"
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self._settings.api_root}/health",
+                    headers={"User-Agent": user_agent()},
+                    timeout=self._settings.health_timeout,
                 )
+            return self._health_from_response(response)
         except Exception as e:
             logger.exception("Issue with Aignostics Platform API")
             return Health(status=Health.Code.DOWN, reason=f"Issue with Aignostics Platform API: '{e}'")
 
-        return Health(status=Health.Code.UP)
+    async def _determine_api_authenticated_health(self) -> Health:
+        """Determine healthiness and reachability of Aignostics Platform API via authenticated request.
 
-    def _determine_api_authenticated_health(self) -> Health:
-        """Determine healthiness and reachability of Aignostics Platform API via authenticated API client.
-
-        - Checks if health endpoint is reachable and returns 200 OK
+        Parses the response body to detect DEGRADED status.
 
         Returns:
-            Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated API client.
+            Health: The healthiness of the Aignostics Platform API when trying to reach via authenticated request.
         """
         try:
-            api_client = Client.get_api_client(cache_token=True).api_client
-            response = api_client.call_api(
-                url=self._settings.api_root + "/api/v1/health",
-                method="GET",
-                header_params={"User-Agent": user_agent()},
-                _request_timeout=self._settings.health_timeout,
-            )
-            if response.status != HTTPStatus.OK:
-                logger.error("Aignostics Platform API (authenticated) returned '{}'", response.status)
-                return Health(status=Health.Code.DOWN, reason=f"Aignostics Platform API returned '{response.status}'")
+            token = get_token(use_cache=True)
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self._settings.api_root}/health",
+                    headers={
+                        "User-Agent": user_agent(),
+                        "Authorization": f"Bearer {token}",
+                    },
+                    timeout=self._settings.health_timeout,
+                )
+            return self._health_from_response(response)
         except Exception as e:
             logger.exception("Issue with Aignostics Platform API")
             return Health(status=Health.Code.DOWN, reason=f"Issue with Aignostics Platform API: '{e}'")
-        return Health(status=Health.Code.UP)
 
-    def health(self) -> Health:
+    async def health(self) -> Health:
         """Determine health of this service.
 
         Returns:
@@ -254,8 +266,8 @@ class Service(BaseService):
         return Health(
             status=Health.Code.UP,
             components={
-                "api_public": self._determine_api_public_health(),
-                "api_authenticated": self._determine_api_authenticated_health(),
+                "api_public": await self._determine_api_public_health(),
+                "api_authenticated": await self._determine_api_authenticated_health(),
             },
         )
 

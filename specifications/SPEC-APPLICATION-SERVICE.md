@@ -247,20 +247,99 @@ class Service:
 
     def application_run_submit(
         self,
-        application_version_id: str,
-        items: list[InputItem]
-    ) -> ApplicationRun:
+        application_id: str,
+        items: list[InputItem],
+        application_version: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        tags: set[str] | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
+    ) -> Run:
         """Submit application run with validated inputs
 
         Args:
-            application_version_id: ID of the application version to run
+            application_id: ID of the application to run
             items: List of items to process with metadata
+            application_version: Optional application version (defaults to latest)
+            custom_metadata: Optional custom metadata to attach to the run
+            note: Optional human-readable note
+            tags: Optional set of tags for filtering
+            due_date: Optional ISO 8601 datetime string for requested completion
+                      (e.g. '2025-10-19T19:53:00+00:00'). Must be timezone-aware,
+                      in the future, and before `deadline` when both are provided.
+            deadline: Optional ISO 8601 datetime string for the hard run deadline.
+                      Must be timezone-aware, in the future, and after `due_date`
+                      when both are provided.
+            onboard_to_aignostics_portal: Whether to onboard the run to the portal
+            gpu_type: Optional GPU type for the run
+            gpu_provisioning_mode: Optional GPU provisioning mode
+            max_gpus_per_slide: Optional maximum GPUs per slide
+            flex_start_max_run_duration_minutes: Optional max run duration in minutes
+            cpu_provisioning_mode: Optional CPU provisioning mode
+            node_acquisition_timeout_minutes: Optional node acquisition timeout
 
         Returns:
-            ApplicationRun object with run details
+            Run object with run details
 
         Raises:
-            ValueError: When input validation fails
+            ValueError: When input validation fails (including scheduling date validation)
+            RuntimeError: When submission fails
+        """
+        pass
+
+    def application_run_submit_from_metadata(
+        self,
+        application_id: str,
+        metadata: list[dict[str, Any]],
+        application_version: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        tags: set[str] | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
+    ) -> Run:
+        """Submit application run from prepared metadata dicts
+
+        Delegates to `application_run_submit` after converting metadata dicts
+        to InputItem objects. Accepts the same scheduling parameters.
+
+        Args:
+            application_id: ID of the application to run
+            metadata: List of metadata dicts (as produced by `run prepare`)
+            application_version: Optional application version (defaults to latest)
+            custom_metadata: Optional custom metadata to attach to the run
+            note: Optional human-readable note
+            tags: Optional set of tags for filtering
+            due_date: Optional ISO 8601 datetime string for requested completion
+            deadline: Optional ISO 8601 datetime string for the hard run deadline
+            onboard_to_aignostics_portal: Whether to onboard the run to the portal
+            gpu_type: Optional GPU type for the run
+            gpu_provisioning_mode: Optional GPU provisioning mode
+            max_gpus_per_slide: Optional maximum GPUs per slide
+            flex_start_max_run_duration_minutes: Optional max run duration in minutes
+            cpu_provisioning_mode: Optional CPU provisioning mode
+            node_acquisition_timeout_minutes: Optional node acquisition timeout
+
+        Returns:
+            Run object with run details
+
+        Raises:
+            ValueError: When input validation fails (including scheduling date validation)
             RuntimeError: When submission fails
         """
         pass
@@ -285,6 +364,39 @@ class Service:
             RuntimeError: When download operation fails
         """
         pass
+
+    def application_runs(
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        has_output: bool = False,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
+        limit: int | None = None,
+        for_organization: str | None = None,
+    ) -> list[RunData]:
+        """List application runs, optionally scoped to an organization.
+
+        Args:
+            application_id: Filter by application ID.
+            application_version: Filter by application version.
+            external_id: Filter by external ID.
+            has_output: If True, only runs with partial or full output are retrieved.
+            note_regex: Optional regex to filter runs by note metadata.
+            note_query_case_insensitive: If True, note regex matching is case-insensitive.
+            tags: Optional set of tags to filter runs.
+            query: Optional free-text query.
+            limit: Optional maximum number of results to return.
+            for_organization: Return all runs by users of the specified organization
+                              (org admins only). None = current user's runs only.
+
+        Raises:
+            ForbiddenException: When the caller is not an admin of the requested org.
+        """
+        pass
 ```
 
 ### 4.2 CLI Interface
@@ -304,7 +416,7 @@ uvx aignostics application [subcommand] [options]
 - `run prepare`: Generate metadata from source directory
 - `run upload`: Upload files to cloud storage
 - `run submit`: Submit application run
-- `run list`: List application runs
+- `run list [--for-organization ORG_ID]`: List application runs; supports listing all runs for an organization with `--for-organization` (only available to org admins)
 - `run describe`: Get detailed run information
 - `run cancel`: Cancel running application
 - `run result download`: Download run results
@@ -379,19 +491,21 @@ Configuration is managed through environment variables with the prefix `AIGNOSTI
 
 ### 7.1 Error Categories
 
-| Error Type          | Cause                            | Handling Strategy              | User Impact                     |
-| ------------------- | -------------------------------- | ------------------------------ | ------------------------------- |
-| `ValueError`        | Invalid input data or metadata   | Input validation with feedback | Clear validation error messages |
-| `RuntimeError`      | Platform API or operation errors | Retry with exponential backoff | Error details and guidance      |
-| `NotFoundException` | Missing runs or applications     | Graceful rejection with info   | Clear resource not found info   |
-| `FileNotFoundError` | Missing input files              | File validation before upload  | File path verification help     |
-| `ApiException`      | Platform API failures            | Retry mechanism with recovery  | API error details and guidance  |
+| Error Type            | Cause                            | Handling Strategy                                   | User Impact                                |
+| --------------------- | -------------------------------- | --------------------------------------------------- | ------------------------------------------ |
+| `ValueError`          | Invalid input data or metadata   | Input validation with feedback                      | Clear validation error messages            |
+| `RuntimeError`        | Platform API or operation errors | Retry with exponential backoff                      | Error details and guidance                 |
+| `NotFoundException`   | Missing runs or applications     | Graceful rejection with info                        | Clear resource not found info              |
+| `FileNotFoundError`   | Missing input files              | File validation before upload                       | File path verification help                |
+| `ApiException`        | Platform API failures            | Retry mechanism with recovery                       | API error details and guidance             |
+| `ForbiddenException`  | Caller not authorized for the requested org | Caught in CLI; exit 2 with access-denied message | User informed they lack permission    |
 
 ### 7.2 Input Validation
 
 - **WSI Files**: Format validation, file existence, size limits, and metadata extraction verification
 - **Application Metadata**: Schema validation against application-specific requirements with type checking
 - **Directory Paths**: Path existence, read permissions, and recursive access validation
+- **Scheduling Dates**: ISO 8601 format validation, timezone-awareness check (naive datetimes rejected), future-date assertion (both dates must be after UTC now), and cross-field constraint (`due_date` must be strictly before `deadline` when both are provided)
 
 ### 7.3 Graceful Degradation
 

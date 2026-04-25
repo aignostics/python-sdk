@@ -30,7 +30,7 @@ def _read_python_version() -> str:
     """Read Python version from .python-version file.
 
     Returns:
-        str: Python version string (e.g., "3.14" or "3.14.1")
+        str: Python version string (e.g., "3.14" or "3.14.3")
 
     Raises:
         FileNotFoundError: If .python-version file does not exist
@@ -145,19 +145,18 @@ def audit(session: nox.Session) -> None:
     """Run security audit and license checks."""
     _setup_venv(session)
 
-    # pip-audit to check for vulnerabilities
+    # pip-audit to check for vulnerabilities.
+    # Every --ignore-vuln entry must correspond to a row in SUPPLY_CHAIN_VULNERABILITIES.md
+    # with rationale, scope, downstream-exposure assessment, and removal condition.
     try:
         session.run(
-            # TODO(Helmut): Ignore pip vuln until pip achieved to build v5.3
             "pip-audit",
             "-f",
             "json",
             "-o",
             "reports/vulnerabilities.json",
             "--ignore-vuln",
-            "GHSA-4xh5-x5gv-qwph",  # https://pyinstaller.org/en/stable/license.html
-            "--ignore-vuln",
-            "CVE-2025-53000",  # no fix available
+            "CVE-2026-3219",  # pip archive type confusion; fix in unreleased 26.1. See SUPPLY_CHAIN_VULNERABILITIES.md
         )
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")
@@ -538,7 +537,7 @@ def _generate_api_reference(session: nox.Session) -> None:
         FileNotFoundError: If the OpenAPI schema file for a version is not found
     """
     for version in API_VERSIONS:
-        openapi_path = Path(f"docs/source/_static/openapi_{version}.yaml")
+        openapi_path = Path(f"docs/source/_static/openapi_{version}.json")
 
         if not openapi_path.exists():
             error_message = f"OpenAPI schema for {version} not found at {openapi_path}"
@@ -549,7 +548,7 @@ def _generate_api_reference(session: nox.Session) -> None:
             "npx",
             "--yes",
             "widdershins",
-            f"docs/source/_static/openapi_{version}.yaml",
+            f"docs/source/_static/openapi_{version}.json",
             "--omitHeader",
             "--search",
             "false",
@@ -889,6 +888,15 @@ def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = F
         marker: Pytest marker expression
         cov_append: Whether to append to existing coverage data
     """
+    # On Windows, uv run sets PYTHONHOME to the managed Python 3.14 install dir when it
+    # starts nox. This leaks into pytest sub-processes for older Python versions (3.11-3.13)
+    # and causes them to load Python 3.14's stdlib, crashing at startup.
+    # Fix: set PYTHONHOME to None in session.env so nox strips it from the subprocess
+    # environment entirely (nox._clean_env filters out None-valued entries before passing
+    # to subprocess.Popen). Unlike os.environ.pop(), this does NOT mutate global process
+    # state; it only affects subprocesses spawned by session.run() / session.run_install().
+    if platform.system() == "Windows":
+        session.env["PYTHONHOME"] = None
     _setup_venv(session)
 
     posargs = session.posargs[:]
@@ -908,20 +916,36 @@ def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = F
     # Determine report type from python version and custom marker
     report_type = _get_report_type(session, custom_marker)
 
-    # Run parallel tests
-    _run_pytest(session, "not sequential", custom_marker, filtered_posargs, report_type)
+    # Run parallel and sequential tests, collecting failures so that coverage and cleanup
+    # always execute even when some tests fail. This ensures Codecov always receives a
+    # complete report (all JUnit XML files, full accumulated coverage) regardless of
+    # individual test failures.
+    failure: CommandFailed | None = None
 
-    # Run sequential tests
+    try:
+        _run_pytest(session, "not sequential", custom_marker, filtered_posargs, report_type)
+    except CommandFailed as exc:
+        failure = exc
+
+    # Always run sequential tests (coverage appended)
     if "--cov-append" not in filtered_posargs:
         filtered_posargs.extend(["--cov-append"])
-    _run_pytest(session, "sequential", custom_marker, filtered_posargs, report_type)
+    try:
+        _run_pytest(session, "sequential", custom_marker, filtered_posargs, report_type)
+    except CommandFailed as exc:
+        failure = failure or exc
 
-    # Generate coverage report in markdown (only after last test suite)
+    # Always generate the coverage report so reports/coverage.xml and reports/coverage.md
+    # are up-to-date for the Codecov upload step even when tests fail.
     # Note: This will be called multiple times, which is fine as it updates the same report
     _generate_coverage_report(session)
 
     # Clean up post test execution
     _cleanup_test_execution(session)
+
+    # Re-raise to propagate the failure to nox / make / CI
+    if failure is not None:
+        raise failure
 
 
 @nox.session(python=[PYTHON_VERSION])
@@ -1001,21 +1025,6 @@ def act(session: nox.Session) -> None:
         "-",
         external=True,
     )
-
-
-@nox.session(default=False)
-def bump(session: nox.Session) -> None:
-    """Bump version and push changes to git."""
-    version_part = session.posargs[0] if session.posargs else "patch"
-
-    # Check if the version_part is a specific version (e.g., 1.2.3)
-    if re.match(r"^\d+\.\d+\.\d+$", version_part):
-        session.run("bump-my-version", "bump", "--new-version", version_part, external=True)
-    else:
-        session.run("bump-my-version", "bump", version_part, external=True)
-
-    # Push changes to git including tag created
-    session.run("git", "push", "--follow-tags", "--no-verify", external=True)
 
 
 @nox.session()

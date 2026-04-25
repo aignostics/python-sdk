@@ -11,7 +11,7 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 | **wsi** | Whole slide image processing | ✅ | ✅ | ✅ |
 | **dataset** | IDC dataset downloads | ✅ | ✅ | ✅ |
 | **bucket** | Cloud storage operations | ✅ | ✅ | ✅ |
-| **utils** | Core utilities & DI | ❌ | ❌ | ✅ |
+| **utils** | Core utilities & DI | ✅ | ❌ | ✅ |
 | **gui** | Desktop launchpad | ❌ | ✅ | ✅ |
 | **notebook** | Marimo notebook server | ❌ | ✅ | ✅ |
 | **qupath** | QuPath integration | ✅ | ✅ | ✅ |
@@ -25,8 +25,8 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 
 - **Core Features**:
   - OAuth 2.0 authentication, JWT token management, API client wrapper
-  - **SDK Metadata System** (NEW): Automatic tracking of execution context, user info, CI/CD environment
-  - JSON Schema validation for metadata with versioning (v0.0.1)
+  - **SDK Metadata System**: Automatic tracking of execution context, user info, CI/CD environment
+  - JSON Schema validation for metadata with versioning (Run v0.0.4, Item v0.0.3)
   - Operation caching for non-mutating API calls
 - **CLI**:
   - `user login`, `user logout`, `user whoami` for authentication
@@ -80,10 +80,11 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 
 - **Core Features**:
   - Dependency injection, logging, settings, health checks
-  - **Enhanced User Agent** (NEW): Context-aware user agent with CI/CD tracking
+  - Enhanced user agent with CI/CD context tracking
+  - **MCP Server**: Central MCP server with auto-discovery of plugin tools (`mcp_create_server`, `mcp_run`, `mcp_list_tools`)
+  - **Navigation**: GUI sidebar navigation infrastructure (`BaseNavBuilder`, `NavItem`, `NavGroup`)
 - **Service Discovery**: `locate_implementations()`, `locate_subclasses()`
-- **User Agent**: Generates `{name}/{version} ({platform}; {test}; {github_run_url})`
-- **No CLI/GUI**: Infrastructure module
+- **User Agent**: Generates `{name}-python-sdk/{version} ({platform}; +{repo_url}; {test}; {github_run_url})`
 - **Used By**: All modules; platform module for SDK metadata
 
 ### 🖥️ gui
@@ -227,7 +228,7 @@ utils.locate_implementations(BaseService)
 
 - **Authentication**: Token cached by `platform`, used by all API calls
 - **Settings**: Managed by `utils`, consumed by all modules
-- **Logging**: Centralized through `utils.get_logger()`
+- **Logging**: Centralized through `loguru.logger`
 - **Health Checks**: All services implement `BaseService.health()`
 
 ## CLI Usage Examples
@@ -293,10 +294,10 @@ For detailed information about each module, see:
    from aignostics.utils import BaseService
 
    class Service(BaseService):
-       def health(self) -> Health:
+       async def health(self) -> Health:
            return Health(status=Health.Code.UP)
 
-       def info(self, mask_secrets=True) -> dict:
+       async def info(self, mask_secrets=True) -> dict:
            return {"version": "1.0.0"}
    ```
 

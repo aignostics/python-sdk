@@ -61,8 +61,7 @@ The Build Chain and CI/CD Module shall:
 │   ├── _docker-publish.yml  # Container image publishing
 │   ├── _codeql.yml     # GitHub CodeQL security analysis
 │   └── _ketryx_report_and_check.yml # Compliance reporting
-├── copilot-instructions.md # AI pair programming guidelines
-└── dependabot.yml      # Automated dependency updates
+└── copilot-instructions.md # AI pair programming guidelines
 
 Makefile                # Local development task orchestration
 noxfile.py             # Python environment management and task automation
@@ -423,12 +422,6 @@ uv run nox -s dist    # Package building
 ---
 
 ## Documentation Maintenance
-
-### Verification and Updates
-
-**Last Verified**: 2025-09-11 when spec was created and accuracy-verified against implementation  
-**Verification Method**: Comprehensive analysis of .github/workflows/, Makefile, noxfile.py, pyproject.toml, and actual workflow configurations  
-**Next Review Date**: 2025-12-11 (quarterly review cycle)
 
 ### Change Management
 

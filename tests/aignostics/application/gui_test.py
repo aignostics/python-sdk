@@ -3,7 +3,7 @@
 import contextlib
 import re
 import tempfile
-from asyncio import sleep
+from asyncio import sleep, to_thread
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -21,6 +21,7 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    PIPELINE_GPU_TYPE,
     SPOT_0_EXPECTED_RESULT_FILES,
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
@@ -100,7 +101,8 @@ async def test_gui_cli_submit_to_run_result_delete(
         csv_content += ";5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test"
         csv_path = tmp_path / "dummy.csv"
         csv_path.write_text(csv_content)
-        result = runner.invoke(
+        result = await to_thread(
+            runner.invoke,
             cli,
             [
                 "application",
@@ -116,6 +118,8 @@ async def test_gui_cli_submit_to_run_result_delete(
                 "test_gui_cli_submit_to_run_result_delete",
                 "--deadline",
                 (datetime.now(tz=UTC) + timedelta(minutes=5)).isoformat(),
+                "--gpu-type",
+                PIPELINE_GPU_TYPE,
             ],
         )
         assert result.exit_code == 0
@@ -277,8 +281,10 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             await user.should_see("Hard Deadline")
             await user.should_see("The platform might cancel the run if not completed by this time.", retries=100)
+            time_due_date: ui.time = user.find(marker="TIME_DUE_DATE").elements.pop()
+            time_due_date.value = (datetime.now().astimezone() + timedelta(hours=6)).strftime("%Y-%m-%d %H:%M")
             time_deadline: ui.time = user.find(marker="TIME_DEADLINE").elements.pop()
-            time_deadline.value = (datetime.now().astimezone() + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M")
+            time_deadline.value = (datetime.now().astimezone() + timedelta(hours=12)).strftime("%Y-%m-%d %H:%M")
 
             user.find(marker="BUTTON_SCHEDULING_NEXT").click()
             await assert_notified(user, "Prepared upload UI.")

@@ -1,0 +1,13 @@
+/* Make mermaid diagrams use full page width */
+.mermaid {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: auto;
+}
+
+/* Ensure the container doesn't constrain the diagram */
+.mermaid svg {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+}

@@ -7,8 +7,8 @@ from pathlib import Path
 import typer
 from loguru import logger
 
-from .constants import NOTEBOOK_DEFAULT, WINDOW_TITLE
-from .utils import (
+from aignostics.constants import NOTEBOOK_DEFAULT, WINDOW_TITLE
+from aignostics.utils import (
     __is_running_in_container__,
     __python_version__,
     __version__,
@@ -25,7 +25,7 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
     @cli.command()
     def launchpad() -> None:
         """Open Aignostics Launchpad, the graphical user interface of the Aignostics Platform."""
-        from .utils import gui_run  # noqa: PLC0415
+        from aignostics.utils import gui_run  # noqa: PLC0415
 
         gui_run(native=True, with_api=False, title=WINDOW_TITLE, icon="🔬")
 
@@ -33,7 +33,7 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
 if find_spec("marimo"):
     from typing import Annotated
 
-    from .utils import create_marimo_app
+    from aignostics.utils import create_marimo_app
 
     @cli.command()
     def notebook(
@@ -63,6 +63,61 @@ if find_spec("marimo"):
         console.print(f"Starting Python notebook server at http://{host}:{port}")
         uvicorn.run(create_marimo_app(notebook=notebook, override_if_exists=override_if_exists), host=host, port=port)
 
+
+# MCP (Model Context Protocol) server CLI
+mcp_cli = typer.Typer(name="mcp", help="MCP (Model Context Protocol) server for AI agent integration.")
+
+
+@mcp_cli.command("run")
+def mcp_run() -> None:
+    """Run the MCP server.
+
+    Starts an MCP server using `stdio` transport that exposes SDK functionality
+    to AI agents. The server automatically discovers and mounts tools from
+    the SDK and any installed plugins.
+
+    Examples:
+        uv run aignostics mcp run
+    """
+    from aignostics.utils import mcp_run  # noqa: PLC0415
+
+    mcp_run()
+
+
+@mcp_cli.command("list-tools")
+def mcp_list_tools() -> None:
+    """List all available MCP tools.
+
+    Shows all tools available in the MCP server, including tools from
+    the SDK and any installed plugins. Each tool is displayed with its
+    name and description.
+
+    Examples:
+        uv run aignostics mcp list-tools
+    """
+    import operator  # noqa: PLC0415
+
+    from rich.table import Table  # noqa: PLC0415
+
+    from aignostics.utils import mcp_list_tools  # noqa: PLC0415
+
+    tools = mcp_list_tools()
+
+    if not tools:
+        console.print("[dim]No tools discovered[/dim]")
+        return
+
+    table = Table(title="Available MCP Tools")
+    table.add_column("Name", style="cyan", no_wrap=True)
+    table.add_column("Description", style="white")
+
+    for tool in sorted(tools, key=operator.itemgetter("name")):
+        table.add_row(tool["name"], tool["description"])
+
+    console.print(table)
+
+
+cli.add_typer(mcp_cli)
 
 prepare_cli(
     cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻 // Python v{__python_version__}"
