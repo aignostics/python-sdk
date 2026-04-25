@@ -69,6 +69,7 @@ dependencies = [
     { name = "pyasn1" },
     { name = "pydantic-settings" },
     { name = "pydicom" },
+    { name = "pygments" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dateutil" },
     { name = "python-multipart" },
@@ -186,7 +187,7 @@ requires-dist = [
     { name = "html-sanitizer", specifier = ">=2.6.0,<3" },
     { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "humanize", specifier = ">=4.14.0,<5" },
-    { name = "idc-index-data", specifier = "==23.8.1" },
+    { name = "idc-index-data", specifier = "==23.10.1" },
     { name = "ijson", specifier = ">=3.4.0.post0,<4" },
     { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.8.0,<10" },
     { name = "jsf", specifier = ">=0.11.2,<1" },
@@ -216,6 +217,7 @@ requires-dist = [
     { name = "pyasn1", specifier = ">=0.6.3" },
     { name = "pydantic-settings", specifier = ">=2.12.0,<3" },
     { name = "pydicom", specifier = ">=3.0.2" },
+    { name = "pygments", specifier = ">=2.20.0" },
     { name = "pyinstaller", marker = "extra == 'pyinstaller'", specifier = ">=6.14.0,<7" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0,<3" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0,<3" },
@@ -2663,11 +2665,11 @@ wheels = [
 
 [[package]]
 name = "idc-index-data"
-version = "23.8.1"
+version = "23.10.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cc/b2/25070363a5e71e4aa52714c57b9640a44d8738612610cd8e071f6c5c1ce7/idc_index_data-23.8.1.tar.gz", hash = "sha256:7f12311e3ac7faa058d5dc58e3b8c61d5e59d87933b15b915b16928ec57cdf43", size = 85397991, upload-time = "2026-03-10T17:45:30.455Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/55/d2/9558196584ea49995a360137f0ad285feb1c801c56de59edca7a91343aa6/idc_index_data-23.10.1.tar.gz", hash = "sha256:6906a6c6685120a7c1e25c3e5fb7471cf18e3086d1d5315a3bcebc2549fa9362", size = 74104346, upload-time = "2026-04-07T22:45:24.364Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/b2/57105e5e8ad95f92d30f81d5434d3db8ab7f383b8562f213f51912c6f30e/idc_index_data-23.8.1-py3-none-any.whl", hash = "sha256:d7813757ff3977bc4ace7ea041d71cb1204d95c16abb730745e85af1e46a8893", size = 85379061, upload-time = "2026-03-10T17:45:23.956Z" },
+    { url = "https://files.pythonhosted.org/packages/46/23/839e3bc72764a3b626d26342d74951e366bc331bbeddf96338d27c50e363/idc_index_data-23.10.1-py3-none-any.whl", hash = "sha256:abd3e37b32e900596c232da8a6f00d3f4609da06c321df2f0ae87f0bc4f127de", size = 74083084, upload-time = "2026-04-07T22:45:20.526Z" },
 ]
 
 [[package]]
