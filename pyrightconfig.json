@@ -3,6 +3,7 @@
     "exclude": [
         "**/.nox/**",
         "**/.venv/**",
+        "**/.claude/worktrees/**",
         "**/dist-packages/**",
         "**/dist_vercel/.vercel/**",
         "**/dist_native/**",

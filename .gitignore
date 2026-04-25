@@ -1,5 +1,9 @@
 # .gitignore of project Aignostics Python SDK
 
+# Claude Code agent worktrees — created locally per session, never committed.
+# Note: .claude/settings.json is intentionally tracked; only worktrees are ignored.
+.claude/worktrees/
+
 # Environment
 .env
 .env.*
