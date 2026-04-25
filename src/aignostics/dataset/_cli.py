@@ -177,7 +177,7 @@ def aignostics_download(
         str,
         typer.Argument(
             help="URL to download."
-            " Example: gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
+            " Example: gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
         ),
     ],
     destination_directory: Annotated[

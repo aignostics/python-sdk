@@ -1,5 +1,6 @@
 """CLI of application module."""
 
+import asyncio
 import json
 import sys
 import time
@@ -18,6 +19,7 @@ from aignostics.platform import (
     DEFAULT_GPU_TYPE,
     DEFAULT_MAX_GPUS_PER_SLIDE,
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    ForbiddenException,
     NotFoundException,
     RunState,
 )
@@ -129,7 +131,7 @@ run_app.add_typer(result_app, name="result", help="Download or delete run result
 
 
 def _abort_if_system_unhealthy() -> None:
-    health = SystemService.health_static()
+    health = asyncio.run(SystemService.health_static())
     if not health:
         logger.error(f"Platform is not healthy: {health.reason}. Aborting.")
         console.print(f"[error]Error:[/error] Platform is not healthy: {health.reason}. Aborting.")
@@ -871,6 +873,13 @@ def run_list(  # noqa: PLR0913, PLR0917
     ] = None,
     query: Annotated[str | None, typer.Option(help="Optional query string to filter runs by note OR tags.")] = None,
     note_case_insensitive: Annotated[bool, typer.Option(help="Make note regex search case-insensitive.")] = True,
+    for_organization: Annotated[
+        str | None,
+        typer.Option(
+            "--for-organization",
+            help="Organization ID to list all runs for. Lists runs from all users in the organization.",
+        ),
+    ] = None,
     format: Annotated[  # noqa: A002
         str,
         typer.Option(help="Output format: 'text' (default) or 'json'"),
@@ -884,15 +893,19 @@ def run_list(  # noqa: PLR0913, PLR0917
             note_regex=note_regex,
             note_query_case_insensitive=note_case_insensitive,
             query=query,
+            for_organization=for_organization,
         )
         if len(runs) == 0:
             if format == "json":
                 print(json.dumps([]))
             else:
+                scope = f" for organization '{for_organization}'" if for_organization else ""
                 if tags:
-                    message = f"You did not yet create a run matching tags: {tags!r}."
+                    message = f"No runs found{scope} matching tags: {tags!r}."
                 elif note_regex:
-                    message = f"You did not yet create a run matching note pattern: {note_regex!r}."
+                    message = f"No runs found{scope} matching note pattern: {note_regex!r}."
+                elif for_organization:
+                    message = f"No runs found{scope}."
                 else:
                     message = "You did not yet create a run."
                 logger.warning(message)
@@ -907,6 +920,12 @@ def run_list(  # noqa: PLR0913, PLR0917
                 message = f"Listed '{len(runs)}' run(s)."
                 console.print(message, style="info")
             logger.debug(f"Listed '{len(runs)}' run(s).")
+    except ForbiddenException:
+        scope = f" for organization '{for_organization}'" if for_organization else ""
+        message = f"Access denied: you are not authorized to list runs{scope}."
+        logger.warning(message)
+        console.print(f"[error]Error:[/error] {message}")
+        sys.exit(2)
     except Exception as e:
         logger.exception("Failed to list runs")
         console.print(f"[error]Error:[/error] Failed to list runs: {e}")
@@ -919,6 +938,14 @@ def run_describe(
         str,
         typer.Option(help="Output format: 'text' (default) or 'json'"),
     ] = "text",
+    summarize: Annotated[
+        bool,
+        typer.Option(
+            "--summarize",
+            "-s",
+            help="Show only run and item status summary (external ID, state, error message)",
+        ),
+    ] = False,
 ) -> None:
     """Describe run."""
     logger.trace("Describing run with ID '{}'", run_id)
@@ -927,11 +954,15 @@ def run_describe(
         user_info = PlatformService.get_user_info()
         run = Service().application_run(run_id)
         if format == "json":
-            # Get run details and output as JSON
+            # Get run details and items, output as JSON
             run_details = run.details(hide_platform_queue_position=not user_info.is_internal_user)
-            print(json.dumps(run_details.model_dump(mode="json"), indent=2, default=str))
+            run_data = run_details.model_dump(mode="json")
+            run_data["items"] = [item.model_dump(mode="json") for item in run.results()]
+            print(json.dumps(run_data, indent=2, default=str))
         else:
-            retrieve_and_print_run_details(run, hide_platform_queue_position=not user_info.is_internal_user)
+            retrieve_and_print_run_details(
+                run, hide_platform_queue_position=not user_info.is_internal_user, summarize=summarize
+            )
         logger.debug("Described run with ID '{}'", run_id)
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' not found.")

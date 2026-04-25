@@ -41,7 +41,7 @@ repos:
         exclude: "^tests/fixtures/|.json|^codegen"
       - id: mixed-line-ending
       - id: name-tests-test
-        exclude: "^tests/main.py"
+        exclude: "^(tests/main\\.py|tests/resources/)"
       - id: requirements-txt-fixer
       - id: trailing-whitespace
         exclude: "docs/source/_static|ATTRIBUTIONS.md||API_REFEREENCE"
@@ -52,14 +52,14 @@ repos:
         args: ["--baseline", ".secrets.baseline"]
         additional_dependencies: ["gibberish-detector"]
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.9.7
+    rev: 0.11.6                       # GHSA-pjjw-68hj-v9mw; matches [tool.uv] required-version
     hooks:
       - id: uv-lock
   - repo: local
     hooks:
-      - id: make
-        name: make
-        entry: make
+      - id: lint
+        name: lint
+        entry: make lint
         language: system
         pass_filenames: false
         always_run: true

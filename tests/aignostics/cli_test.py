@@ -5,8 +5,10 @@ import platform
 import subprocess
 import sys
 from importlib.util import find_spec
+from unittest.mock import patch
 
 import pytest
+from fastmcp import FastMCP
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
@@ -32,9 +34,9 @@ def test_cli_built_with_love(runner) -> None:
 
 @pytest.mark.integration
 def test_cli_python_version_format(runner) -> None:
-    """Check that Python version in epilog is clean format like 'v3.14.1'.
+    """Check that Python version in epilog is clean format like 'v3.14.3'.
 
-    The epilog should show 'Python v3.14.1' not the full sys.version string
+    The epilog should show 'Python v3.14.3' not the full sys.version string
     which includes build info like '(main, Dec 2 2025, 22:17:19) [Clang 21.1.4]'.
     """
     result = runner.invoke(cli, ["--help"])
@@ -129,6 +131,10 @@ def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
 
 
 if find_spec("nicegui"):
+    # Import module explicitly to ensure it's loaded before monkeypatching with string paths.
+    # Without this, monkeypatch.setattr("aignostics.utils._gui...") fails in CI because
+    # pytest-xdist workers may not have aignostics.utils loaded as an attribute yet.
+    import aignostics.utils._gui as _utils_gui
 
     @pytest.mark.integration
     def test_cli_gui_help(runner: CliRunner) -> None:
@@ -186,7 +192,7 @@ if find_spec("nicegui"):
 
         # Apply the mocks
         monkeypatch.setattr("nicegui.ui.run", mock_ui_run)
-        monkeypatch.setattr("aignostics.utils._gui.gui_register_pages", mock_gui_register_pages)
+        monkeypatch.setattr(_utils_gui, "gui_register_pages", mock_gui_register_pages)
         monkeypatch.setattr("nicegui.app.mount", mock_app_mount)
 
         # Create a mock for native_app.find_open_port()
@@ -280,3 +286,48 @@ if find_spec("marimo") and find_spec("fastapi"):
         assert isinstance(mock_args["app"], FastAPI), "uvicorn.run was not called with a FastAPI app"
         assert mock_args["host"] == "127.0.0.1", "host parameter is incorrect"
         assert mock_args["port"] == 8001, "port parameter is incorrect"
+
+
+# =============================================================================
+# MCP CLI Tests
+# =============================================================================
+
+PATCH_MCP_LOCATE_IMPLEMENTATIONS = "aignostics.utils._mcp.locate_implementations"
+PATCH_RUN = "aignostics.utils.mcp_run"
+
+
+@pytest.mark.unit
+def test_cli_mcp_run_command(runner: CliRunner, record_property) -> None:
+    """Test run command starts the MCP server."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    with patch(PATCH_RUN) as mock_run:
+        runner.invoke(cli, ["mcp", "run"])
+        mock_run.assert_called_once()
+
+
+@pytest.mark.unit
+def test_cli_mcp_list_tools(runner: CliRunner, record_property) -> None:
+    """Test list-tools command displays discovered tools."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    test_server = FastMCP("test")
+
+    @test_server.tool
+    def test_tool() -> str:
+        """A test tool."""
+        return "test"
+
+    with patch(PATCH_MCP_LOCATE_IMPLEMENTATIONS, return_value=[test_server]):
+        result = runner.invoke(cli, ["mcp", "list-tools"])
+        assert result.exit_code == 0
+        assert "test_tool" in result.output
+        assert "A test tool" in result.output
+
+
+@pytest.mark.unit
+def test_cli_mcp_list_tools_empty(runner: CliRunner, record_property) -> None:
+    """Test list-tools command with no tools."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    with patch(PATCH_MCP_LOCATE_IMPLEMENTATIONS, return_value=[]):
+        result = runner.invoke(cli, ["mcp", "list-tools"])
+        assert result.exit_code == 0
+        assert "No tools discovered" in result.output

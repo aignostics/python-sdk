@@ -4,6 +4,7 @@ import base64
 import re
 import time
 from collections.abc import Callable, Generator
+from datetime import datetime
 from http import HTTPStatus
 from importlib.util import find_spec
 from pathlib import Path
@@ -22,6 +23,7 @@ from aignostics.platform import (
     ApplicationSummary,
     ApplicationVersion,
     Client,
+    ForbiddenException,
     InputArtifact,
     InputItem,
     NotFoundException,
@@ -46,7 +48,9 @@ from ._utils import (
     get_mime_type_for_artifact,
     get_supported_extensions_for_application,
     is_not_terminated_with_deadline_exceeded,
+    validate_deadline,
     validate_due_date,
+    validate_scheduling_constraints,
 )
 
 has_qupath_extra = find_spec("ijson")
@@ -73,7 +77,7 @@ class Service(BaseService):  # noqa: PLR0904
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -84,7 +88,7 @@ class Service(BaseService):  # noqa: PLR0904
         """
         return {}
 
-    def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
 
         Returns:
@@ -530,6 +534,7 @@ class Service(BaseService):  # noqa: PLR0904
         tags: set[str] | None = None,
         query: str | None = None,
         limit: int | None = None,
+        for_organization: str | None = None,
     ) -> list[dict[str, Any]]:
         """Get a list of all application runs, static variant.
 
@@ -548,6 +553,8 @@ class Service(BaseService):  # noqa: PLR0904
                 If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
                 Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified
+                organization. If None, only the runs of the current user are returned.
 
         Returns:
             list[RunData]: A list of all application runs.
@@ -569,7 +576,9 @@ class Service(BaseService):  # noqa: PLR0904
                 "item_succeeded_count": run.statistics.item_succeeded_count,
                 "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
                 "is_not_terminated_with_deadline_exceeded": is_not_terminated_with_deadline_exceeded(
-                    run.state, run.custom_metadata
+                    run.state,
+                    scheduling=getattr(run, "scheduling", None),
+                    custom_metadata=run.custom_metadata,
                 ),
             }
             for run in Service().application_runs(
@@ -582,6 +591,7 @@ class Service(BaseService):  # noqa: PLR0904
                 tags=tags,
                 query=query,
                 limit=limit,
+                for_organization=for_organization,
             )
         ]
 
@@ -596,6 +606,7 @@ class Service(BaseService):  # noqa: PLR0904
         tags: set[str] | None = None,
         query: str | None = None,
         limit: int | None = None,
+        for_organization: str | None = None,
     ) -> list[RunData]:
         """Get a list of all application runs.
 
@@ -614,12 +625,15 @@ class Service(BaseService):  # noqa: PLR0904
                 If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
                 Performs a union search: matches runs where the query appears in the note OR matches any tag.
             limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified
+                organization. If None, only the runs of the current user are returned.
 
         Returns:
             list[RunData]: A list of all application runs.
 
         Raises:
             ValueError: If query is used together with custom_metadata, note_regex, or tags.
+            ForbiddenException: If the user is not authorized to list runs for the specified organization.
             RuntimeError: If the application run list cannot be retrieved.
         """
         # Validate that query is not used with other metadata filters
@@ -653,6 +667,7 @@ class Service(BaseService):  # noqa: PLR0904
                     custom_metadata=custom_metadata_note,
                     sort="-submitted_at",
                     page_size=page_size,
+                    for_organization=for_organization,
                 )
                 for run in note_run_iterator:
                     if has_output and run.output == RunOutput.NONE:
@@ -672,6 +687,7 @@ class Service(BaseService):  # noqa: PLR0904
                     custom_metadata=custom_metadata_tags,
                     sort="-submitted_at",
                     page_size=page_size,
+                    for_organization=for_organization,
                 )
                 for run in tag_run_iterator:
                     if has_output and run.output == RunOutput.NONE:
@@ -679,14 +695,13 @@ class Service(BaseService):  # noqa: PLR0904
                     # Add to dict if not already present from note search
                     if run.run_id not in note_runs_dict:
                         tag_runs_dict[run.run_id] = run
-                    if limit is not None and len(note_runs_dict) + len(tag_runs_dict) >= limit:
+                    if limit is not None and len(tag_runs_dict) >= limit:
                         break
 
-                # Union of results from both searches
+                # Union of results from both searches, sorted newest-first
                 runs = list(note_runs_dict.values()) + list(tag_runs_dict.values())
-
-                # Apply limit after union
-                if limit is not None and len(runs) > limit:
+                runs.sort(key=lambda r: r.submitted_at, reverse=True)
+                if limit is not None:
                     runs = runs[:limit]
 
                 return runs
@@ -707,14 +722,18 @@ class Service(BaseService):  # noqa: PLR0904
 
             # Handle tags filter
             if tags:
-                # JSONPath filter to match all of the provided tags in the sdk.tags array
-                # PostgreSQL limitation: Cannot use && between separate path expressions as backend crashes with 500
-                # Workaround: Filter on backend for ANY tag match, then filter client-side for ALL
-                # Use regex alternation to match any of the tags
-                escaped_tags = [tag.replace('"', '\\"').replace("\\", "\\\\") for tag in tags]
-                # Create regex pattern: ^(tag1|tag2|tag3)$
-                regex_pattern = "^(" + "|".join(escaped_tags) + ")$"
-                custom_metadata = f'$.sdk.tags ? (@ like_regex "{regex_pattern}")'
+                # Use equality checks instead of like_regex for exact tag matching.
+                # PostgreSQL GIN indexes (jsonb_path_ops) can accelerate == but not like_regex.
+                # PostgreSQL JSONPath does not support combining separate path expressions
+                # (e.g. $.sdk.tags ? (...) && $.sdk.note ? (...) is invalid JSONPath syntax),
+                # so we can only filter on one path per API call.
+                # Strategy: filter on backend for ANY tag match, then filter client-side for ALL.
+                escaped_tags = [tag.replace("\\", "\\\\").replace('"', '\\"') for tag in tags]
+                if len(escaped_tags) == 1:
+                    custom_metadata = f'$.sdk.tags[*] ? (@ == "{escaped_tags[0]}")'
+                else:
+                    conditions = " || ".join(f'@ == "{t}"' for t in escaped_tags)
+                    custom_metadata = f"$.sdk.tags[*] ? ({conditions})"
 
             run_iterator = self._get_platform_client().runs.list_data(
                 application_id=application_id,
@@ -723,6 +742,7 @@ class Service(BaseService):  # noqa: PLR0904
                 custom_metadata=custom_metadata,
                 sort="-submitted_at",
                 page_size=page_size,
+                for_organization=for_organization,
             )
             for run in run_iterator:
                 if has_output and run.output == RunOutput.NONE:
@@ -762,6 +782,8 @@ class Service(BaseService):  # noqa: PLR0904
                 if limit is not None and len(runs) >= limit:
                     break
             return runs
+        except ForbiddenException:
+            raise
         except Exception as e:
             message = f"Failed to retrieve application runs: {e}"
             logger.exception(message)
@@ -1005,10 +1027,15 @@ class Service(BaseService):  # noqa: PLR0904
                 the application version ID is invalid
                 or items invalid
                 or due_date not ISO 8601
-                or due_date not in the future.
+                or due_date not in the future
+                or deadline not ISO 8601
+                or deadline not in the future
+                or due_date not before deadline.
             RuntimeError: If submitting the run failed unexpectedly.
         """
         validate_due_date(due_date)
+        validate_deadline(deadline)
+        validate_scheduling_constraints(due_date, deadline)
         try:
             if custom_metadata is None:
                 custom_metadata = {}
@@ -1022,12 +1049,20 @@ class Service(BaseService):  # noqa: PLR0904
                 sdk_metadata["workflow"] = {
                     "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
                 }
+            # Build scheduling payload for the top-level request field (not custom_metadata)
+            scheduling = None
             if due_date or deadline:
-                sdk_metadata["scheduling"] = {}
-                if due_date:
-                    sdk_metadata["scheduling"]["due_date"] = due_date
-                if deadline:
-                    sdk_metadata["scheduling"]["deadline"] = deadline
+                from aignx.codegen.models import SchedulingRequest  # noqa: PLC0415
+
+                def _parse_iso(value: str | None) -> datetime | None:
+                    if value is None:
+                        return None
+                    return datetime.fromisoformat(value)
+
+                scheduling = SchedulingRequest(
+                    due_date=_parse_iso(due_date),
+                    deadline=_parse_iso(deadline),
+                )
 
             has_gpu_config = (
                 gpu_type or gpu_provisioning_mode or max_gpus_per_slide or flex_start_max_run_duration_minutes
@@ -1070,6 +1105,7 @@ class Service(BaseService):  # noqa: PLR0904
                 items=items,
                 application_version=application_version,
                 custom_metadata=custom_metadata,
+                scheduling=scheduling,
             )
         except ValueError as e:
             message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"

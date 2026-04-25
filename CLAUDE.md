@@ -32,7 +32,7 @@ If you write code yourself, it is a strict requirement to validate your work on 
 
 If you you are creating a pull request yourself:
 
-* Add a label skip:test_long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
+* Add a label skip:test:long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
 
 ## Module Documentation Index
 
@@ -45,7 +45,7 @@ Every module has detailed CLAUDE.md documentation. For module-specific guidance,
 * [src/aignostics/wsi/CLAUDE.md](src/aignostics/wsi/CLAUDE.md) - Whole slide image processing
 * [src/aignostics/dataset/CLAUDE.md](src/aignostics/dataset/CLAUDE.md) - Dataset operations
 * [src/aignostics/bucket/CLAUDE.md](src/aignostics/bucket/CLAUDE.md) - Cloud storage management
-* [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure
+* [src/aignostics/utils/CLAUDE.md](src/aignostics/utils/CLAUDE.md) - Core infrastructure and MCP server
 * [src/aignostics/gui/CLAUDE.md](src/aignostics/gui/CLAUDE.md) - Desktop interface
 * [src/aignostics/notebook/CLAUDE.md](src/aignostics/notebook/CLAUDE.md) - Marimo notebook integration
 * [src/aignostics/qupath/CLAUDE.md](src/aignostics/qupath/CLAUDE.md) - QuPath bioimage analysis
@@ -151,9 +151,12 @@ Module/
 **utils** - Infrastructure module providing:
 
 * Dependency injection container (`locate_implementations`, `locate_subclasses`)
-* Structured logging (`get_logger`)
+* Structured logging (via `loguru.logger`)
 * Settings management (Pydantic-based)
 * Health check framework (`BaseService`, `Health`)
+* MCP server with auto-discovery of plugin tools (`mcp_create_server`, `mcp_run`, `mcp_list_tools`)
+* GUI navigation infrastructure (`BaseNavBuilder`, `NavItem`, `NavGroup`)
+* Enhanced user agent generation with CI/CD context (`user_agent`)
 
 ### API Layer
 
@@ -269,7 +272,7 @@ comprehensive view of the entire SDK's operational status.
 | **wsi** | ✅ | ✅ | ✅ | Medical image processing |
 | **dataset** | ✅ | ✅ | ✅ | Dataset downloads |
 | **bucket** | ✅ | ✅ | ✅ | Cloud storage |
-| **utils** | ✅ | ❌ | ❌ | Infrastructure |
+| **utils** | ✅ | ✅ | ❌ | Core Infrastructure |
 | **gui** | ✅ | ❌ | ✅ | Desktop launchpad |
 | **notebook** | ✅ | ❌ | ✅ | Marimo notebooks |
 | **qupath** | ✅ | ✅ | ✅ | QuPath integration |
@@ -333,6 +336,10 @@ aignostics qupath launch --project my_project.qpproj
 
 # System diagnostics
 aignostics system health
+
+# MCP server (AI agent integration)
+aignostics mcp run
+aignostics mcp list-tools
 ```
 
 ### GUI Launch
@@ -1156,7 +1163,7 @@ git push origin feat/my-feature
 gh pr create --title "feat: add operation caching" --body "Description..."
 
 # IMPORTANT: Add label to skip long-running tests
-gh pr edit --add-label "skip:test_long_running"
+gh pr edit --add-label "skip:test:long_running"
 ```
 
 **PR triggers:**
@@ -1270,48 +1277,73 @@ uv sync --all-extras  # Install all optional groups
 
 ### Version Bumping and Releases
 
-**Bump version (via Nox):**
+Releases follow a **four-phase GitHub workflow–based strategy** that allows Ketryx compliance approvals to be collected *before* publishing:
 
-```bash
-# Patch version (1.0.0 -> 1.0.1)
-make bump patch
-
-# Minor version (1.0.0 -> 1.1.0)
-make bump minor
-
-# Major version (1.0.0 -> 2.0.0)
-make bump major
+```
+Prerequisite (anytime): Create the Ketryx release in the Ketryx portal
+Phase 1:                make prepare-release x.y.z
+Phase 2:                Point Ketryx release to release/vX.Y.Z; collect approvals
+Phase 3:                make publish-release
+Phase 4:                make merge-release
 ```
 
-**This process:**
-
-1. Updates version in `pyproject.toml`
-2. Creates git commit: "Bump version: 1.0.0 → 1.0.1"
-3. Creates git tag: `v1.0.1`
-4. Generates changelog from conventional commits
-
-**Push with tags:**
+**Phase 1 — Prepare the release branch:**
 
 ```bash
-# Push commits and tags
-git push --follow-tags
-
-# CI detects tag and triggers:
-# 1. Full CI pipeline (lint + test + audit)
-# 2. Package build and publish to PyPI
-# 3. Docker image build and publish
-# 4. GitHub release creation
-# 5. Slack notification
+# Creates release/vX.Y.Z branch from main, bumps version files, and pushes.
+# No tag is created yet.
+make prepare-release 1.2.3   # explicit version
 ```
 
-**Manual release (if needed):**
+This triggers `prepare-release.yml` on GitHub Actions, which:
+
+1. Creates `release/vX.Y.Z` branch from `main`
+2. Runs `bump-my-version` (commits version files + `uv.lock`)
+3. Pushes the branch — CI runs lint/test/audit on it
+
+**Phase 2 — Collect Ketryx approvals:**
+
+Point the Ketryx release to the `release/vX.Y.Z` branch and collect required approvals. CI must be green on the branch before proceeding.
+
+**Phase 3 — Publish (tag + PyPI):**
 
 ```bash
-# Build package
-uv build
+# Generates CHANGELOG.md, creates vX.Y.Z tag, pushes → triggers CI/CD publish.
+make publish-release
 
-# Publish to PyPI (via UV_PUBLISH_TOKEN secret)
-uv publish
+# Optionally specify a branch explicitly:
+make publish-release release/v1.2.3
+```
+
+This triggers `publish-release.yml`, which:
+
+1. Generates `CHANGELOG.md` for the release range
+2. Commits the changelog
+3. Creates and pushes the annotated `vX.Y.Z` tag
+4. CI/CD fires on the tag; Ketryx check must pass before PyPI publish
+
+**Phase 4 — Merge back to main:**
+
+```bash
+# Merges the release branch into main (--no-ff) and deletes the branch.
+make merge-release
+
+# Optionally specify a branch explicitly:
+make merge-release release/v1.2.3
+```
+
+This triggers `merge-release.yml`, which:
+
+1. Merges `release/vX.Y.Z` into `main` with `--no-ff`
+2. Pushes `main`
+3. Deletes the remote release branch
+
+**What triggers CI/CD:**
+
+```
+make prepare-release  → push to release/vX.Y.Z  → lint + test + audit + Ketryx
+make publish-release  → push vX.Y.Z tag          → full CI + PyPI + Docker + GitHub release
+make merge-release    → push to main              → full CI pipeline
 ```
 
 ### CI/CD Integration
@@ -1335,7 +1367,7 @@ git commit -m "docs: update README [skip ci]"
 git commit -m "skip:ci: work in progress"
 
 # Add PR label to skip long-running tests
-gh pr edit --add-label "skip:test_long_running"
+gh pr edit --add-label "skip:test:long_running"
 ```
 
 ### IDE Setup Recommendations
@@ -1596,7 +1628,7 @@ uv run nox --list
 uv run nox -s lint
 
 # Run session with specific Python version
-uv run nox -s test-3.14.1
+uv run nox -s test-3.14.3
 
 # Run multiple sessions
 uv run nox -s lint audit
