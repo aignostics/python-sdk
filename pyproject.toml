@@ -299,6 +299,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = [
+    "RUF067",   # __init__ modules may contain initialization logic beyond re-exports
+]
 "**/tests/**/*.py" = [
     # we are more relaxed in tests, while sill applying hundreds of rules
     "S101",     # asserts allowed in tests...
@@ -320,6 +323,7 @@ ignore = [
     "ASYNC230", # async functions should not open files with blocking methods like `open`
     "S104",     # bind to all ports
     "S607",     # subprocess with partial path
+    "RUF069",   # float equality comparisons in tests are intentional
 ]
 
 [tool.ruff.format]

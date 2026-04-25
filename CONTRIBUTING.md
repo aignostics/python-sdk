@@ -269,18 +269,12 @@ client = Client()
 custom_metadata = {
     "experiment_id": "exp-2025-001",
     "dataset_version": "v2.1",
-    "custom_flags": {
-        "enable_feature_x": True
-    }
+    "custom_flags": {"enable_feature_x": True},
 }
 
 # Submit run with custom metadata
 # SDK metadata is automatically added under the "sdk" key
-run = client.runs.submit(
-    application_id="your-app",
-    items=[...],
-    custom_metadata=custom_metadata
-)
+run = client.runs.submit(application_id="your-app", items=[...], custom_metadata=custom_metadata)
 ```
 
 The SDK will merge your custom metadata with its own tracking metadata, ensuring both are included in the run submission. The SDK metadata is always placed under the `sdk` key to avoid conflicts with your custom fields.

@@ -42,15 +42,12 @@ Base URLs:
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/applications', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/applications", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -208,15 +205,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/applications/{application_id}', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/applications/{application_id}", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -295,15 +289,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/applications/{application_id}/versions/{version}', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/applications/{application_id}/versions/{version}", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -571,15 +562,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/runs', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/runs", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -962,16 +950,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.post('/api/v1/runs', headers = headers)
+headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.post("/api/v1/runs", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -1188,15 +1172,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/runs/{run_id}', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/runs/{run_id}", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -1298,15 +1279,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.post('/api/v1/runs/{run_id}/cancel', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.post("/api/v1/runs/{run_id}/cancel", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -1380,15 +1358,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/runs/{run_id}/items', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/runs/{run_id}/items", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -1798,15 +1773,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/runs/{run_id}/items/{external_id}', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/runs/{run_id}/items/{external_id}", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -1899,15 +1871,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/runs/{run_id}/artifacts/{artifact_id}/file', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/runs/{run_id}/artifacts/{artifact_id}/file", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -1983,15 +1952,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.delete('/api/v1/runs/{run_id}/artifacts', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.delete("/api/v1/runs/{run_id}/artifacts", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -2062,16 +2028,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.put('/api/v1/runs/{run_id}/custom-metadata', headers = headers)
+headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.put("/api/v1/runs/{run_id}/custom-metadata", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -2171,16 +2133,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.put('/api/v1/runs/{run_id}/items/{external_id}/custom-metadata', headers = headers)
+headers = {"Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.put("/api/v1/runs/{run_id}/items/{external_id}/custom-metadata", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript
@@ -2280,15 +2238,12 @@ OAuth2AuthorizationCodeBearer
 
 ```python
 import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
 
-r = requests.get('/api/v1/me', headers = headers)
+headers = {"Accept": "application/json", "Authorization": "Bearer {access-token}"}
+
+r = requests.get("/api/v1/me", headers=headers)
 
 print(r.json())
-
 ```
 
 ```javascript

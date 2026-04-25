@@ -96,13 +96,14 @@ make lint            # Ruff formatting + MyPy type checking
 ```python
 from aignostics.utils import BaseService, Health
 
+
 class Service(BaseService):
     def __init__(self):
         super().__init__(SettingsClass)  # Optional settings
-    
+
     def health(self) -> Health:
         return Health(status=Health.Code.UP)
-    
+
     def info(self, mask_secrets: bool = True) -> dict:
         return {"version": "1.0.0"}
 ```
@@ -113,6 +114,7 @@ import typer
 from ._service import Service
 
 cli = typer.Typer(name="module", help="Module description")
+
 
 @cli.command("action")
 def action_command(param: str):
@@ -125,6 +127,7 @@ def action_command(param: str):
 ### GUI Pattern
 ```python
 from nicegui import ui
+
 
 def create_page():
     ui.label("Module Interface")
@@ -177,9 +180,10 @@ def create_page():
 ```python
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     api_root: str = "https://platform.aignostics.com"
-    
+
     class Config:
         env_prefix = "AIGNOSTICS_"
 ```
@@ -200,7 +204,7 @@ client = platform.Client()
 run = client.runs.create(
     application_id="heta",
     application_version="1.0.0",  # version number without 'v' prefix, omit for latest
-    items=[platform.InputItem(...)]
+    items=[platform.InputItem(...)],
 )
 
 # 3. Monitor & download

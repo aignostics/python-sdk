@@ -198,7 +198,8 @@ class PageBuilder(BasePageBuilder):
                 ui.label("Download Dataset").classes("text-h6")
                 with ui.row(align_items="center").classes("w-full"):
                     source_input = (
-                        ui.input(
+                        ui
+                        .input(
                             label="Enter ID of collection, patient case, study, series or instance.",
                             placeholder="Click 🔍 Explore Portal to find IDs",
                             on_change=lambda e: _on_source_input_change(e),  # noqa: PLW0108

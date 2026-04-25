@@ -70,11 +70,7 @@ class Service(BaseService):
 
     _processes: dict[int, subprocess.Popen] = {}
 
-    def launch_qupath(
-        self,
-        project: Path | None = None,
-        headless: bool = False
-    ) -> int:
+    def launch_qupath(self, project: Path | None = None, headless: bool = False) -> int:
         """Launch QuPath with process tracking."""
 
         cmd = [str(self.get_qupath_executable())]
@@ -83,10 +79,7 @@ class Service(BaseService):
         if headless:
             cmd.append("--headless")
 
-        process = subprocess.Popen(
-            cmd,
-            creationflags=SUBPROCESS_CREATION_FLAGS
-        )
+        process = subprocess.Popen(cmd, creationflags=SUBPROCESS_CREATION_FLAGS)
 
         self._processes[process.pid] = process
         return process.pid
@@ -109,6 +102,7 @@ class AddProgress(BaseModel):
             return 0.0
         return self.processed_images / self.total_images
 
+
 class AnnotateProgress(BaseModel):
     """Progress tracking for annotations."""
 
@@ -127,6 +121,7 @@ class AnnotateProgress(BaseModel):
 ```python
 QUPATH_VERSION = "0.5.1"
 
+
 def get_download_url(version: str, system: str, machine: str) -> str:
     """Get platform-specific QuPath download URL."""
 
@@ -135,7 +130,7 @@ def get_download_url(version: str, system: str, machine: str) -> str:
         ("Windows", "AMD64"): "win-x64",
         ("Darwin", "x86_64"): "mac-x64",
         ("Darwin", "arm64"): "mac-arm64",
-        ("Linux", "x86_64"): "linux-x64"
+        ("Linux", "x86_64"): "linux-x64",
     }
 
     platform_str = platform_map.get((system, machine))
@@ -155,17 +150,12 @@ class InstallProgressState(StrEnum):
     COMPLETED = "Installation complete"
     FAILED = "Installation failed"
 
-def install_with_progress(
-    version: str,
-    path: Path,
-    progress_callback: Callable[[InstallProgress], None]
-) -> None:
+
+def install_with_progress(version: str, path: Path, progress_callback: Callable[[InstallProgress], None]) -> None:
     """Install QuPath with progress updates."""
 
     progress = InstallProgress(
-        state=InstallProgressState.DOWNLOADING,
-        total_size=get_download_size(version),
-        downloaded_size=0
+        state=InstallProgressState.DOWNLOADING, total_size=get_download_size(version), downloaded_size=0
     )
 
     # Download with progress
@@ -192,7 +182,7 @@ def create_project(project_path: Path, images: list[Path]) -> None:
             "createTimestamp": time.time() * 1000,
             "modifyTimestamp": time.time() * 1000,
             "uri": project_path.as_uri(),
-            "images": []
+            "images": [],
         })
     )
 
@@ -204,13 +194,7 @@ def create_project(project_path: Path, images: list[Path]) -> None:
         image_data_dir.mkdir(parents=True, exist_ok=True)
 
         # Create image data.qpdata file
-        (image_data_dir / "data.qpdata").write_text(
-            json.dumps({
-                "path": str(image),
-                "id": image_id,
-                "metadata": {}
-            })
-        )
+        (image_data_dir / "data.qpdata").write_text(json.dumps({"path": str(image), "id": image_id, "metadata": {}}))
 ```
 
 ### Script Execution
@@ -219,18 +203,11 @@ def create_project(project_path: Path, images: list[Path]) -> None:
 
 ```python
 def run_script(
-    script_path: Path,
-    project: Path | None = None,
-    image: Path | None = None,
-    args: dict[str, Any] | None = None
+    script_path: Path, project: Path | None = None, image: Path | None = None, args: dict[str, Any] | None = None
 ) -> str:
     """Execute QuPath Groovy script."""
 
-    cmd = [
-        str(self.get_qupath_executable()),
-        "script",
-        str(script_path)
-    ]
+    cmd = [str(self.get_qupath_executable()), "script", str(script_path)]
 
     if project:
         cmd.extend(["--project", str(project)])
@@ -239,12 +216,7 @@ def run_script(
     if args:
         cmd.extend(["--args", json.dumps(args)])
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        check=True
-    )
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     return result.stdout
 ```
@@ -260,10 +232,7 @@ service = Service()
 
 # Install QuPath if not already installed
 if not service.is_qupath_installed():
-    service.install_qupath(
-        version="0.5.1",
-        progress_callback=lambda p: print(f"Progress: {p.progress_normalized:.1%}")
-    )
+    service.install_qupath(version="0.5.1", progress_callback=lambda p: print(f"Progress: {p.progress_normalized:.1%}"))
 
 # Launch QuPath
 pid = service.launch_qupath()
@@ -289,15 +258,13 @@ images = [Path("slide1.svs"), Path("slide2.svs")]
 
 service.create_project(project_path, images)
 
+
 # Add more images with progress
 def on_progress(progress: AddProgress):
     print(f"Adding images: {progress.processed_images}/{progress.total_images}")
 
-service.add_images_to_project(
-    project_path,
-    additional_images,
-    progress_callback=on_progress
-)
+
+service.add_images_to_project(project_path, additional_images, progress_callback=on_progress)
 ```
 
 ### Script Automation
@@ -305,11 +272,7 @@ service.add_images_to_project(
 ```python
 # Run analysis script
 script = Path("cell_detection.groovy")
-results = service.run_script(
-    script_path=script,
-    project=project_path,
-    args={"threshold": 0.5, "min_area": 10}
-)
+results = service.run_script(script_path=script, project=project_path, args={"threshold": 0.5, "min_area": 10})
 
 print(f"Script output: {results}")
 ```
@@ -397,16 +360,9 @@ aignostics qupath uninstall
 **Logging Patterns:**
 
 ```python
-logger.debug("Installing QuPath", extra={
-    "version": version,
-    "path": str(path),
-    "platform": f"{system}-{machine}"
-})
+logger.debug("Installing QuPath", extra={"version": version, "path": str(path), "platform": f"{system}-{machine}"})
 
-logger.warning("QuPath process terminated unexpectedly", extra={
-    "pid": pid,
-    "exit_code": process.returncode
-})
+logger.warning("QuPath process terminated unexpectedly", extra={"pid": pid, "exit_code": process.returncode})
 ```
 
 ## Common Pitfalls & Solutions
@@ -421,11 +377,7 @@ logger.warning("QuPath process terminated unexpectedly", extra={
 def check_java_version() -> bool:
     """Verify Java 17+ is available."""
     try:
-        result = subprocess.run(
-            ["java", "-version"],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(["java", "-version"], capture_output=True, text=True)
         # Parse version from stderr
         return "17" in result.stderr or "18" in result.stderr
     except FileNotFoundError:
@@ -441,8 +393,7 @@ def check_java_version() -> bool:
 ```python
 if platform.system() == "Linux" and platform.machine() in ["aarch64", "arm64"]:
     raise UnsupportedPlatformError(
-        "QuPath is not available for ARM64 Linux. "
-        "Consider using x86_64 emulation or container."
+        "QuPath is not available for ARM64 Linux. Consider using x86_64 emulation or container."
     )
 ```
 
@@ -472,6 +423,7 @@ def mock_qupath_executable():
     with patch("aignostics.qupath._service.Service.get_qupath_executable") as mock:
         mock.return_value = Path("/mock/QuPath")
         yield mock
+
 
 def test_launch_qupath(mock_qupath_executable):
     """Test QuPath launch."""
@@ -530,8 +482,9 @@ SCRIPT_TEMPLATES = {
         def segmentTissue(server, params) {
             // Tissue segmentation logic
         }
-    """
+    """,
 }
+
 
 def get_script_template(name: str) -> str:
     """Get predefined script template."""

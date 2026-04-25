@@ -79,6 +79,7 @@ def _abort_if_system_unhealthy() -> None:
         console.print(f"[error]Error:[/error] Platform is not healthy: {health.reason}. Aborting.")
         sys.exit(1)
 
+
 # Called before upload and submit operations unless --force is used
 if not force:
     _abort_if_system_unhealthy()
@@ -112,15 +113,12 @@ def health(self) -> Health:
 
     # Check health of EVERY discovered module
     for service_class in all_services:
-        module_name = service_class.__module__.split('.')[-2]  # Extract module name
+        module_name = service_class.__module__.split(".")[-2]  # Extract module name
         try:
             service_instance = service_class()
             components[module_name] = service_instance.health()
         except Exception as e:
-            components[module_name] = Health(
-                status=Health.Code.DOWN,
-                reason=str(e)
-            )
+            components[module_name] = Health(status=Health.Code.DOWN, reason=str(e))
 
     # Determine overall status based on ALL modules
     # Priority: DOWN > DEGRADED > UP
@@ -133,18 +131,25 @@ def health(self) -> Health:
 ```python
 class AignosticsException(Exception):
     """Base exception for all SDK errors."""
+
     pass
+
 
 class AuthenticationError(AignosticsException):
     """Authentication/authorization failures."""
+
     pass
+
 
 class ConfigurationError(AignosticsException):
     """Configuration/settings errors."""
+
     pass
+
 
 class NetworkError(AignosticsException):
     """Network/connectivity issues."""
+
     pass
 ```
 
@@ -166,20 +171,20 @@ def info(self, include_environ: bool = False, mask_secrets: bool = True) -> dict
             "machine": platform.machine(),
             "processor": platform.processor(),
             "python_version": sys.version,
-            "python_implementation": platform.python_implementation()
+            "python_implementation": platform.python_implementation(),
         },
         "aignostics": {
             "version": __version__,
             "api_versions": API_VERSIONS,
             "modules": self._get_installed_modules(),
-            "extras": self._get_installed_extras()
+            "extras": self._get_installed_extras(),
         },
         "runtime": {
             "cwd": os.getcwd(),
             "user": getpass.getuser(),
             "home": str(Path.home()),
-            "data_dir": str(get_user_data_directory())
-        }
+            "data_dir": str(get_user_data_directory()),
+        },
     }
 
     if include_environ:
@@ -191,13 +196,8 @@ def info(self, include_environ: bool = False, mask_secrets: bool = True) -> dict
 **Secret Masking Pattern:**
 
 ```python
-SENSITIVE_PATTERNS = [
-    r".*TOKEN.*",
-    r".*SECRET.*",
-    r".*PASSWORD.*",
-    r".*API_KEY.*",
-    r".*PRIVATE.*"
-]
+SENSITIVE_PATTERNS = [r".*TOKEN.*", r".*SECRET.*", r".*PASSWORD.*", r".*API_KEY.*", r".*PRIVATE.*"]
+
 
 def _mask_value(key: str, value: str, mask_secrets: bool) -> str:
     """Mask sensitive values based on key patterns."""
@@ -222,13 +222,13 @@ def proxy_request(
     url: str,
     proxy_host: str = HTTP_PROXY_DEFAULT_HOST,
     proxy_port: int = HTTP_PROXY_DEFAULT_PORT,
-    proxy_scheme: str = HTTP_PROXY_DEFAULT_SCHEME
+    proxy_scheme: str = HTTP_PROXY_DEFAULT_SCHEME,
 ) -> None:
     """Test HTTP request through proxy."""
 
     proxies = {
         "http": f"{proxy_scheme}://{proxy_host}:{proxy_port}",
-        "https": f"{proxy_scheme}://{proxy_host}:{proxy_port}"
+        "https": f"{proxy_scheme}://{proxy_host}:{proxy_port}",
     }
 
     try:
@@ -245,8 +245,10 @@ def proxy_request(
 ```python
 class OutputFormat(StrEnum):
     """Supported output formats."""
+
     YAML = "yaml"
     JSON = "json"
+
 
 def format_output(data: Any, format: OutputFormat) -> str:
     """Format data for output."""
@@ -382,7 +384,7 @@ def detect_environment() -> dict:
         "is_gitlab_ci": os.getenv("GITLAB_CI") == "true",
         "is_jenkins": os.getenv("JENKINS_URL") is not None,
         "is_notebook": any(key.startswith("JUPYTER") for key in os.environ),
-        "is_vscode": os.getenv("VSCODE_PID") is not None
+        "is_vscode": os.getenv("VSCODE_PID") is not None,
     }
 ```
 
@@ -420,10 +422,7 @@ def health_with_timeout(module_name: str, timeout: float = 5.0) -> Health:
         try:
             return future.result(timeout=timeout)
         except concurrent.futures.TimeoutError:
-            return Health(
-                status=Health.Code.DOWN,
-                reason=f"Health check timed out after {timeout}s"
-            )
+            return Health(status=Health.Code.DOWN, reason=f"Health check timed out after {timeout}s")
 ```
 
 ### Circular Import Issues
@@ -437,6 +436,7 @@ def health_with_timeout(module_name: str, timeout: float = 5.0) -> Health:
 def get_module_service(module_name: str):
     """Lazy import to avoid circular dependencies."""
     from importlib import import_module
+
     module = import_module(f"aignostics.{module_name}")
     return module.Service()
 ```
@@ -454,6 +454,7 @@ def test_health_aggregation():
     assert health.status in [Health.Code.UP, Health.Code.DEGRADED, Health.Code.DOWN]
     assert "platform" in health.components
     assert isinstance(health.components, dict)
+
 
 def test_secret_masking():
     """Test sensitive values are masked."""
@@ -502,7 +503,7 @@ def add_custom_info(info: dict) -> dict:
         "gpu_available": torch.cuda.is_available() if find_spec("torch") else False,
         "memory_gb": psutil.virtual_memory().total / (1024**3),
         "cpu_count": os.cpu_count(),
-        "disk_usage": shutil.disk_usage("/").used / shutil.disk_usage("/").total
+        "disk_usage": shutil.disk_usage("/").used / shutil.disk_usage("/").total,
     }
 
     return info

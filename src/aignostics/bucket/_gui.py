@@ -250,7 +250,8 @@ class PageBuilder(BasePageBuilder):
             bucket_form.spinner.set_visibility(False)
 
             bucket_form.grid = (
-                ui.aggrid({
+                ui
+                .aggrid({
                     "columnDefs": [
                         {
                             "object": "Key",
@@ -336,7 +337,8 @@ class PageBuilder(BasePageBuilder):
                 with ui.column().classes("w-1/2"):
                     with ui.row().classes("w-full"):
                         bucket_form.download_button = (
-                            ui.button(
+                            ui
+                            .button(
                                 "Download",
                                 icon="download",
                                 on_click=_download_selected,
@@ -372,7 +374,8 @@ class PageBuilder(BasePageBuilder):
                 ui.space()
 
                 bucket_form.delete_button = (
-                    ui.button(
+                    ui
+                    .button(
                         "Delete",
                         icon="delete",
                         on_click=_delete_selected,
@@ -400,12 +403,18 @@ class PageBuilder(BasePageBuilder):
 
             ui.timer(
                 interval=1,
-                callback=lambda: bucket_form.grid.classes(
-                    add="ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham",
-                    remove="ag-theme-balham" if app.storage.general.get("dark_mode", False) else "ag-theme-balham-dark",
-                )
-                if bucket_form.grid
-                else None,
+                callback=lambda: (
+                    bucket_form.grid.classes(
+                        add="ag-theme-balham-dark"
+                        if app.storage.general.get("dark_mode", False)
+                        else "ag-theme-balham",
+                        remove="ag-theme-balham"
+                        if app.storage.general.get("dark_mode", False)
+                        else "ag-theme-balham-dark",
+                    )
+                    if bucket_form.grid
+                    else None
+                ),
             )
 
             # Timer for updating download progress

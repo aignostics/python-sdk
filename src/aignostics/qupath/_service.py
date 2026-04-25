@@ -446,13 +446,13 @@ class Service(BaseService):
             download_progress (Callable | None): Callback function for download progress.
             install_progress_queue (Any | None): Queue for download progress updates, if applicable.
 
+        Returns:
+            Path: The path object of the downloaded file.
+
         Raises:
             ValueError: If the platform.system() is not supported.
             RuntimeError: If the download fails or if the file cannot be saved.
             Exception: If there is an error during the download.
-
-        Returns:
-            Path: The path object of the downloaded file.
         """
         system = platform.system() if platform_system is None else platform_system
         machine = platform.machine() if platform_machine is None else platform_machine
@@ -593,12 +593,12 @@ class Service(BaseService):
             platform_system (str | None): The system platform. If None, it will use platform.system().
             platform_machine (str | None): The machine architecture. If None, it will use platform.machine().
 
+        Returns:
+            Path: The path to the extracted QuPath application directory.
+
         Raises:
             ValueError: If there is broken input.
             RuntimeError: If an unexpected error happens.
-
-        Returns:
-            Path: The path to the extracted QuPath application directory.
         """
         system = platform.system() if platform_system is None else platform_system
         logger.trace("Extracting QuPath archive '{}' to '{}' for system {}", archive_path, installation_path, system)
@@ -702,8 +702,10 @@ class Service(BaseService):
                         [
                             "sh",
                             "-c",
-                            f"cd '{payload_extract_dir.resolve()!s}' && "
-                            f"cat '{payload_path.resolve()!s}' | gunzip -dc | cpio -i",
+                            (
+                                f"cd '{payload_extract_dir.resolve()!s}' && "
+                                f"cat '{payload_path.resolve()!s}' | gunzip -dc | cpio -i"
+                            ),
                         ]
                         if platform.system() == "Darwin"
                         else ["7z", "x", str(payload_path.resolve()), f"-o{payload_extract_dir.resolve()!s}"]
@@ -780,12 +782,12 @@ class Service(BaseService):
             extract_progress (Callable | None): Callback function for extraction progress.
             progress_queue (queue.Queue[InstallProgress] | None): Queue for download progress updates, if applicable.
 
+        Returns:
+            Path: The path to the executable of the installed QuPath application.
+
         Raises:
             RuntimeError: If the download fails or if the file cannot be extracted.
             Exception: If there is an error during the download or extraction.
-
-        Returns:
-            Path: The path to the executable of the installed QuPath application.
         """
         if path is None:
             path = Service.get_installation_path()

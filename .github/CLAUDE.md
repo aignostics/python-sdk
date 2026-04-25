@@ -115,9 +115,11 @@ The SDK has **7 test categories** with different execution strategies.
 def test_something():
     pass
 
+
 # ❌ INCORRECT - No category marker, will NOT run in CI
 def test_something_else():
     pass
+
 
 # ✅ CORRECT - Multiple markers including category
 @pytest.mark.e2e

@@ -293,10 +293,7 @@ for app in client.applications.list():
     print(app.application_id)
 
 # Submit run
-run = client.runs.create(
-    application_id="heta",
-    files=["slide.svs"]
-)
+run = client.runs.create(application_id="heta", files=["slide.svs"])
 ```
 
 ### Service Discovery Pattern
@@ -464,6 +461,7 @@ This ensures the JSON Schema is automatically regenerated during documentation b
 ```python
 from aignostics.utils import BaseService, Health
 
+
 class Service(BaseService):
     """Module service implementation."""
 
@@ -483,6 +481,7 @@ import typer
 from ._service import Service
 
 cli = typer.Typer(name="module", help="Module description")
+
 
 @cli.command("action")
 def action_command(param: str):
@@ -709,8 +708,10 @@ details = run.details()
 if details.output.state == RunState.TERMINATED:
     if details.output.termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
         print(f"✅ Run complete: {details.output.statistics.succeeded} items succeeded")
-        print(f"❌ Failures: {details.output.statistics.user_error} user errors, "
-              f"{details.output.statistics.system_error} system errors")
+        print(
+            f"❌ Failures: {details.output.statistics.user_error} user errors, "
+            f"{details.output.statistics.system_error} system errors"
+        )
 ```
 
 See `platform/CLAUDE.md` for complete state machine diagrams and migration guide.
@@ -866,10 +867,10 @@ The test suite uses pytest-xdist for parallel execution with intelligent distrib
 ```python
 # Worker factors control parallelism
 XDIST_WORKER_FACTOR = {
-    "unit": 0.0,          # No parallelization (fast, no overhead needed)
-    "integration": 0.2,   # 20% of logical CPUs
-    "e2e": 1.0,           # 100% of logical CPUs (I/O bound)
-    "default": 1.0        # 100% for mixed test runs
+    "unit": 0.0,  # No parallelization (fast, no overhead needed)
+    "integration": 0.2,  # 20% of logical CPUs
+    "e2e": 1.0,  # 100% of logical CPUs (I/O bound)
+    "default": 1.0,  # 100% for mixed test runs
 }
 
 # Calculate workers: max(1, int(cpu_count * factor))
@@ -1008,6 +1009,7 @@ uv run pytest -m "e2e and not long_running" -v
 ```python
 import pytest
 from unittest.mock import patch
+
 
 @pytest.mark.unit
 def test_sdk_metadata_minimal(monkeypatch):

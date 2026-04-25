@@ -477,24 +477,24 @@ from aignostics import platform
 client = platform.Client()
 # submit an application run
 application_run = client.runs.submit(
-   application_id="test-app",
-   items=[
-      platform.InputItem(
-         external_id="slide-1",
-         input_artifacts=[
-            platform.InputArtifact(
-               name="whole_slide_image",
-               download_url="<a signed url to download the data>",
-               metadata={
-                  "checksum_base64_crc32c": "AAAAAA==",
-                  "resolution_mpp": 0.25,
-                  "width_px": 1000,
-                  "height_px": 1000,
-               },
-            )
-         ],
-      ),
-   ],
+    application_id="test-app",
+    items=[
+        platform.InputItem(
+            external_id="slide-1",
+            input_artifacts=[
+                platform.InputArtifact(
+                    name="whole_slide_image",
+                    download_url="<a signed url to download the data>",
+                    metadata={
+                        "checksum_base64_crc32c": "AAAAAA==",
+                        "resolution_mpp": 0.25,
+                        "width_px": 1000,
+                        "height_px": 1000,
+                    },
+                )
+            ],
+        ),
+    ],
 )
 # wait for the results and download incrementally as they become available
 application_run.download_to_folder("path/to/download/folder")
@@ -571,21 +571,23 @@ the latest version will be used automatically. Additionally, you need to define 
 want to process in the run. The input items are defined as follows:
 
 ```python
-platform.InputItem(
-    external_id="1",
-    input_artifacts=[
-        platform.InputArtifact(
-            name="whole_slide_image", # defined by the application version's input artifact schema
-            download_url="<a signed url to download the data>",
-            metadata={ # defined by the application version's input artifact schema
-                "checksum_base64_crc32c": "N+LWCg==",
-                "resolution_mpp": 0.46499982,
-                "width_px": 3728,
-                "height_px": 3640,
-            },
-        )
-    ],
-),
+(
+    platform.InputItem(
+        external_id="1",
+        input_artifacts=[
+            platform.InputArtifact(
+                name="whole_slide_image",  # defined by the application version's input artifact schema
+                download_url="<a signed url to download the data>",
+                metadata={  # defined by the application version's input artifact schema
+                    "checksum_base64_crc32c": "N+LWCg==",
+                    "resolution_mpp": 0.46499982,
+                    "width_px": 3728,
+                    "height_px": 3640,
+                },
+            )
+        ],
+    ),
+)
 ```
 
 For each item you want to process, you need to provide a unique `reference`

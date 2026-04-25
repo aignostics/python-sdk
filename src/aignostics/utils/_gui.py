@@ -100,7 +100,7 @@ def gui_run(  # noqa: PLR0913, PLR0917
 class GUILocalFilePicker:
     """Local File Picker dialog class that lazy-loads NiceGUI dependencies."""
 
-    def __new__(  # noqa: C901
+    def __new__(  # noqa: C901, PYI034
         cls,
         directory: str,
         *,
@@ -159,7 +159,8 @@ class GUILocalFilePicker:
                 with self, ui.card():
                     self.add_drives_toggle()
                     self.grid = (
-                        ui.aggrid(
+                        ui
+                        .aggrid(
                             {
                                 "columnDefs": [{"field": "name", "headerName": "File"}],
                                 "rowSelection": "multiple" if multiple else "single",
