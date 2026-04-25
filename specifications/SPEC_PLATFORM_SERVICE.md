@@ -74,14 +74,14 @@ platform/
 ### 2.2 Key Components
 
 | Component        | Type   | Purpose                                                 | Public API                                                                    |
-| ---------------- | ------ | ------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| ---------------- | ------ | ------------------------------------------------------- |-------------------------------------------------------------------------------|
 | `Client`         | Class  | Main entry point for authenticated API operations       | `__init__()`, `me()`, `application()`, `run()`<br/>Static: `get_api_client()` |
 | `Service`        | Class  | Core service with health monitoring and user operations | `login()`, `logout()`, `get_user_info()`, `health()`, `info()`                |
 | `Settings`       | Class  | Environment-aware configuration management              | Property accessors for all auth endpoints                                     |
 | `Applications`   | Class  | Application resource management                         | `list()`, `versions` accessor                                                 |
 | `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`                  |
 | `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`                            |
-| `Runs`           | Class  | Application run management and creation                 | `create()`, `list()`, `list_data()`, `__call__()`                             |
+| `Runs`           | Class  | Application run management and creation                 | `create()`, `list()` / `list_data()`, `__call__()`                            |
 | `utils`          | Module | Resource utility functions and pagination helpers       | `paginate()`                                                                  |
 
 ### 2.3 Design Patterns
@@ -286,11 +286,55 @@ class Runs:
     def create(self, application_version: str, items: list[ItemCreationRequest]) -> ApplicationRun:
         """Creates a new application run."""
 
-    def list(self, for_application_version: str | None = None) -> Generator[ApplicationRun, Any, None]:
-        """Find application runs, optionally filtered by application version."""
+    def list(
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        custom_metadata: str | None = None,
+        sort: str | None = None,
+        page_size: int = 100,
+        nocache: bool = False,
+        for_organization: str | None = None,
+    ) -> Iterator[ApplicationRun]:
+        """Find application runs, optionally filtered by application version.
 
-    def list_data(self, for_application_version: str | None = None, sort: str | None = None, page_size: int = 100) -> Iterator[ApplicationRunData]:
-        """Fetch application runs data with optional filtering and sorting."""
+        Args:
+            application_id: Filter by application ID.
+            application_version: Filter by application version.
+            external_id: Filter by external ID.
+            custom_metadata: Optional metadata filter in JSONPath format.
+            sort: Optional field to sort by. Prefix with '-' for descending order.
+            page_size: Number of results per page (default 100).
+            nocache: If True, bypass cache and force a fresh API call.
+            for_organization: Return all runs by users of the specified organization (org admins only).
+                              None = current user's runs only.
+        """
+
+    def list_data(
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        custom_metadata: str | None = None,
+        sort: str | None = None,
+        page_size: int = 100,
+        nocache: bool = False,
+        for_organization: str | None = None,
+    ) -> Iterator[ApplicationRunData]:
+        """Fetch application runs data with optional filtering and sorting.
+
+        Args:
+            application_id: Filter by application ID.
+            application_version: Filter by application version.
+            external_id: Filter by external ID.
+            custom_metadata: Optional metadata filter in JSONPath format.
+            sort: Optional field to sort by. Prefix with '-' for descending order.
+            page_size: Number of results per page (default 100).
+            nocache: If True, bypass cache and force a fresh API call.
+            for_organization: Return all runs by users of the specified organization (org admins only).
+                              None = current user's runs only.
+        """
 
     def __call__(self, application_run_id: str) -> ApplicationRun:
         """Retrieves an ApplicationRun instance for an existing run."""
@@ -409,14 +453,15 @@ The Platform module provides foundational services but does not directly expose 
 
 ### 6.1 Configuration Parameters
 
-| Parameter                       | Type | Default                           | Description                 | Required |
-| ------------------------------- | ---- | --------------------------------- | --------------------------- | -------- |
-| `api_root`                      | str  | `https://platform.aignostics.com` | Base URL of Aignostics API  | Yes      |
-| `audience`                      | str  | Environment-specific              | OAuth audience claim        | Yes      |
-| `scope`                         | str  | `offline_access`                  | OAuth scopes required       | Yes      |
-| `cache_dir`                     | str  | User cache directory              | Directory for token storage | No       |
-| `request_timeout_seconds`       | int  | 30                                | API request timeout         | No       |
-| `authorization_backoff_seconds` | int  | 3                                 | Retry backoff time          | No       |
+| Parameter                       | Type | Default                           | Description                  | Required |
+| ------------------------------- | ---- | --------------------------------- | ---------------------------- | -------- |
+| `api_root`                      | str  | `https://platform.aignostics.com` | Base URL of Aignostics API   | Yes      |
+| `audience`                      | str  | Environment-specific              | OAuth audience claim         | Yes      |
+| `scope`                         | str  | `offline_access`                  | OAuth scopes required        | Yes      |
+| `organization_id`               | str  | None                              | Auth0 organization for OAuth | No       |
+| `cache_dir`                     | str  | User cache directory              | Directory for token storage  | No       |
+| `request_timeout_seconds`       | int  | 30                                | API request timeout          | No       |
+| `authorization_backoff_seconds` | int  | 3                                 | Retry backoff time           | No       |
 
 ### 6.2 Environment Variables
 
@@ -432,6 +477,7 @@ The Platform module provides foundational services but does not directly expose 
 | `AIGNOSTICS_DEVICE_URL`                    | Custom device authorization URL  | `https://custom.auth0.com/oauth/device/code`     |
 | `AIGNOSTICS_JWS_JSON_URL`                  | Custom JWS key set URL           | `https://custom.auth0.com/.well-known/jwks.json` |
 | `AIGNOSTICS_CLIENT_ID_INTERACTIVE`         | Interactive flow client ID       | `interactive_client_123`                         |
+| `AIGNOSTICS_ORGANIZATION_ID`               | Auth0 organization for OAuth     | `my-organization`                                |
 | `AIGNOSTICS_REFRESH_TOKEN`                 | Long-lived refresh token         | `refresh_token_value`                            |
 | `AIGNOSTICS_CACHE_DIR`                     | Custom cache directory           | `/custom/cache/path`                             |
 | `AIGNOSTICS_REQUEST_TIMEOUT_SECONDS`       | API request timeout              | `60`                                             |
@@ -445,13 +491,14 @@ The Platform module provides foundational services but does not directly expose 
 
 ### 7.1 Error Categories
 
-| Error Type            | Cause                                    | Handling Strategy                                   | User Impact                                  |
-| --------------------- | ---------------------------------------- | --------------------------------------------------- | -------------------------------------------- |
-| `AuthenticationError` | Invalid credentials or network issues    | Retry with exponential backoff; clear cached tokens | User prompted to re-authenticate             |
-| `ConfigurationError`  | Invalid settings or missing endpoints    | Validate on startup; provide clear error messages   | Application fails fast with actionable error |
-| `NetworkError`        | Connection timeouts or proxy issues      | Retry with backoff; fallback to device flow         | Automatic retry or alternative auth flow     |
-| `TokenExpiredError`   | JWT token past expiration                | Automatic refresh using refresh token               | Transparent token renewal                    |
-| `ValidationError`     | Invalid input parameters or file formats | Input sanitization and validation                   | Clear validation error messages              |
+| Error Type             | Cause                                    | Handling Strategy                                   | User Impact                                  |
+| ---------------------- | ---------------------------------------- | --------------------------------------------------- | -------------------------------------------- |
+| `AuthenticationError`  | Invalid credentials or network issues    | Retry with exponential backoff; clear cached tokens | User prompted to re-authenticate             |
+| `ConfigurationError`   | Invalid settings or missing endpoints    | Validate on startup; provide clear error messages   | Application fails fast with actionable error |
+| `NetworkError`         | Connection timeouts or proxy issues      | Retry with backoff; fallback to device flow         | Automatic retry or alternative auth flow     |
+| `TokenExpiredError`    | JWT token past expiration                | Automatic refresh using refresh token               | Transparent token renewal                    |
+| `ValidationError`      | Invalid input parameters or file formats | Input sanitization and validation                   | Clear validation error messages              |
+| `ForbiddenException`   | Caller not authorized for the requested org | Caught in CLI; exit 2 with access-denied message | User informed they lack permission           |
 
 ### 7.2 Input Validation
 
@@ -492,7 +539,7 @@ The Platform module provides foundational services but does not directly expose 
 
 ### 9.1 Key Algorithms and Business Logic
 
-- **PKCE Flow**: OAuth 2.0 Authorization Code flow with Proof Key for Code Exchange for enhanced security in public clients
+- **PKCE Flow**: OAuth 2.0 Authorization Code flow with Proof Key for Code Exchange for enhanced security in public clients. Supports optional `AIGNOSTICS_ORGANIZATION_ID` parameter for Auth0 organization-specific authentication flows
 - **Token Caching**: File-based token persistence with expiration tracking and automatic cleanup
 - **Health Monitoring**: Multi-layer health checks including public endpoint availability and authenticated API access
 

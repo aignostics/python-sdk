@@ -3,6 +3,7 @@ itemId: SHR-BUCKET-1
 itemTitle: Cloud Storage File Management
 itemType: Requirement
 Requirement type: ENVIRONMENT
+itemIntroducesRisk: PYSDK-39
 ---
 
 ## Description

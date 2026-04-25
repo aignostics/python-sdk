@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v1.2.0 - built with love in Berlin 🐻 // Python v3.14.1
+🔬 Aignostics Python SDK v1.2.0 - built with love in Berlin 🐻 // Python v3.14.3
 
 **Commands**:
 
@@ -398,6 +398,7 @@ $ aignostics application run list [OPTIONS]
 * `--note-regex TEXT`: Optional regex pattern to filter runs by note metadata.
 * `--query TEXT`: Optional query string to filter runs by note OR tags.
 * `--note-case-insensitive / --no-note-case-insensitive`: Make note regex search case-insensitive.  [default: note-case-insensitive]
+* `--for-organization TEXT`: Organization ID to list all runs for. Lists runs from all users in the organization.
 * `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
 * `--help`: Show this message and exit.
 
@@ -881,7 +882,7 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 **Arguments**:
 
-* `SOURCE_URL`: URL to download. Example: gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
+* `SOURCE_URL`: URL to download. Example: gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
 * `[DESTINATION_DIRECTORY]`: Destination directory to download to  [default: (~/Library/Application Support/aignostics/datasets/aignostics)]
 
 **Options**:

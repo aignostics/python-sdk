@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "release/v*"
     tags:
       - "v*.*.*"
   pull_request:
@@ -43,13 +44,17 @@ jobs:
       - name: Get commit message
         id: get-commit-message
         shell: bash
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then
             # For PR events, get the commit message from the PR head SHA
-            COMMIT_MESSAGE=$(git log -1 --format=%B ${{ github.event.pull_request.head.sha }})
+            COMMIT_MESSAGE=$(git log -1 --format=%B $PR_HEAD_SHA)
           else
             # For push events, use the head commit message
-            COMMIT_MESSAGE='${{ github.event.head_commit.message }}'
+            COMMIT_MESSAGE="$HEAD_COMMIT_MESSAGE"
           fi
           # Export for use in other steps (multiline-safe)
           # Use printf with %s to avoid interpreting special characters
@@ -64,7 +69,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_lint.yml
@@ -78,7 +82,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_audit.yml
@@ -92,7 +95,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_test.yml
@@ -119,7 +121,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_codeql.yml
@@ -134,7 +135,6 @@ jobs:
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     runs-on: ubuntu-latest
@@ -150,7 +150,7 @@ jobs:
 
       - name: SonarQube Scan
         if: ${{ env.GITHUB_WORKFLOW_RUNTIME != 'ACT' }}
-        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
+        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -161,7 +161,6 @@ jobs:
       github.actor != 'dependabot[bot]' &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      !(github.ref_type == 'branch' && startsWith(needs.get-commit-message.outputs.commit_message, 'Bump version:')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_ketryx_report_and_check.yml

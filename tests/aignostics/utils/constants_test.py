@@ -11,7 +11,7 @@ from aignostics.utils import __python_version__, __version__
 def test_python_version_format(record_property) -> None:
     """Test that __python_version__ returns a clean semver-like version string.
 
-    The version should be in format X.Y.Z (e.g., 3.14.1) without build info,
+    The version should be in format X.Y.Z (e.g., 3.14.3) without build info,
     compiler details, or other metadata that sys.version includes.
     """
     record_property("tested-item-id", "SPEC-UTILS-CONSTANTS")
@@ -20,7 +20,7 @@ def test_python_version_format(record_property) -> None:
     version_pattern = re.compile(r"^\d+\.\d+(\.\d+)?$")
 
     assert version_pattern.match(__python_version__), (
-        f"__python_version__ should be a clean version string like '3.14.1', got '{__python_version__}'"
+        f"__python_version__ should be a clean version string like '3.14.3', got '{__python_version__}'"
     )
 
 

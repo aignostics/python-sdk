@@ -432,7 +432,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
     """Test that Runs.list() correctly combines all filter parameters.
 
     This test verifies that all filter parameters (application_id, application_version,
-    external_id, custom_metadata, sort, page_size) work together correctly.
+    for_organization, external_id, custom_metadata, sort, page_size) work together correctly.
 
     Args:
         runs: Runs instance with mock API.
@@ -441,6 +441,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
     # Arrange
     app_id = "test-app"
     app_version = "1.0.0"
+    org_id = "org-789"
     external_id = "ext-123"
     custom_metadata = "$.experiment=='test'"
     sort_field = "-created_at"
@@ -452,6 +453,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
         runs.list(
             application_id=app_id,
             application_version=app_version,
+            for_organization=org_id,
             external_id=external_id,
             custom_metadata=custom_metadata,
             sort=sort_field,
@@ -464,6 +466,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
     call_kwargs = mock_api.list_runs_v1_runs_get.call_args[1]
     assert call_kwargs["application_id"] == app_id
     assert call_kwargs["application_version"] == app_version
+    assert call_kwargs["for_organization"] == org_id
     assert call_kwargs["external_id"] == external_id
     assert call_kwargs["custom_metadata"] == custom_metadata
     assert call_kwargs["sort"] == [sort_field]
